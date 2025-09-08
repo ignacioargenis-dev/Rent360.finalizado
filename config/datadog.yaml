@@ -1,0 +1,178 @@
+# DataDog Agent Configuration for Rent360
+# Location: /etc/datadog-agent/datadog.yaml
+
+# =====================================================
+# BASIC CONFIGURATION
+# =====================================================
+
+# API Keys (Set via environment variables)
+api_key: ${DATADOG_API_KEY}
+app_key: ${DATADOG_APP_KEY}
+
+# Environment and Service
+env: production
+service: rent360
+version: 1.0.0
+
+# Hostname
+hostname: rent360-prod-server
+
+# =====================================================
+# LOG COLLECTION
+# =====================================================
+
+logs_enabled: true
+
+logs_config:
+  container_collect_all: true
+
+  logs:
+    # Application Logs
+    - type: file
+      path: "/var/log/rent360/*.log"
+      service: rent360
+      source: nodejs
+      sourcecategory: sourcecode
+
+    # Nginx Logs
+    - type: file
+      path: "/var/log/nginx/access.log"
+      service: nginx
+      source: nginx
+      sourcecategory: http_access
+
+    - type: file
+      path: "/var/log/nginx/error.log"
+      service: nginx
+      source: nginx
+      sourcecategory: http_access
+
+    # PostgreSQL Logs
+    - type: file
+      path: "/var/log/postgresql/postgresql-*.log"
+      service: postgresql
+      source: postgresql
+      sourcecategory: database
+
+    # Redis Logs
+    - type: file
+      path: "/var/log/redis/redis-server.log"
+      service: redis
+      source: redis
+      sourcecategory: database
+
+# =====================================================
+# METRIC COLLECTION
+# =====================================================
+
+# System Metrics
+system_probe_config:
+  enabled: true
+
+# Process Monitoring
+process_config:
+  enabled: true
+  intervals:
+    process: 10s
+
+# =====================================================
+# INTEGRATIONS
+# =====================================================
+
+# PostgreSQL Integration
+postgres:
+  - host: localhost
+    port: 5432
+    username: datadog
+    password: ${DATADOG_POSTGRES_PASSWORD}
+    dbname: rent360_prod
+    ssl: require
+    tags:
+      - env:production
+      - service:rent360
+
+# Redis Integration
+redisdb:
+  - host: localhost
+    port: 6379
+    password: ${REDIS_PASSWORD}
+    tags:
+      - env:production
+      - service:rent360
+
+# Nginx Integration
+nginx:
+  - nginx_status_url: http://localhost/nginx_status
+    tags:
+      - env:production
+      - service:rent360
+
+# Node.js Integration (APM)
+apm_config:
+  enabled: true
+  env: production
+  service_name: rent360
+  receiver_port: 8126
+
+# =====================================================
+# CUSTOM METRICS
+# =====================================================
+
+# Custom checks directory
+confd_path: /etc/datadog-agent/conf.d
+
+# =====================================================
+# TAGS
+# =====================================================
+
+tags:
+  - env:production
+  - service:rent360
+  - region:santiago
+  - datacenter:aws
+  - team:backend
+
+# =====================================================
+# SECURITY
+# =====================================================
+
+# Enable security agent
+security_agent:
+  enabled: true
+  compliance:
+    enabled: true
+
+# =====================================================
+# NETWORK MONITORING
+# =====================================================
+
+network_config:
+  enabled: true
+  conntrack_enabled: true
+
+# =====================================================
+# LOGS PROCESSING
+# =====================================================
+
+log_processing_rules:
+  - type: exclude_at_match
+    name: exclude_health_checks
+    pattern: 'GET /api/health'
+
+  - type: mask_sequences
+    name: mask_sensitive_data
+    pattern: '(password|token|key|secret).*'
+    replace_placeholder: '[REDACTED]'
+
+# =====================================================
+# ALERTS AND MONITORS
+# =====================================================
+# Note: Monitors are configured in DataDog dashboard
+# Key monitors to create:
+# - Application response time > 5s
+# - Error rate > 5%
+# - Database connection pool utilization > 80%
+# - Redis memory usage > 80%
+# - CPU usage > 90%
+# - Memory usage > 85%
+# - Disk usage > 90%

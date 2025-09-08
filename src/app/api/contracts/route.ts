@@ -1,0 +1,482 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { ContractStatus, UserRole } from '@/types';
+import {
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  handleApiError,
+  createApiResponse
+} from '@/lib/api-error-handler';
+import { getContractsOptimized, dbOptimizer } from '@/lib/db-optimizer';
+import { logger } from '@/lib/logger';
+import { z } from 'zod';
+
+// Schema para crear contrato
+const createContractSchema = z.object({
+  propertyId: z.string().min(1, 'ID de propiedad requerido'),
+  tenantId: z.string().min(1, 'ID de inquilino requerido'),
+  startDate: z.string().datetime('Fecha de inicio inválida'),
+  endDate: z.string().datetime('Fecha de fin inválida'),
+  rentAmount: z.number().positive('El monto de renta debe ser positivo'),
+  depositAmount: z.number().min(0, 'El depósito no puede ser negativo'),
+  terms: z.string().min(10, 'Los términos deben tener al menos 10 caracteres'),
+  status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'TERMINATED', 'CANCELLED']).default('DRAFT'),
+});
+
+// Schema para actualizar contrato
+const updateContractSchema = z.object({
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  rentAmount: z.number().positive().optional(),
+  depositAmount: z.number().min(0).optional(),
+  terms: z.string().min(10).optional(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'TERMINATED', 'CANCELLED']).optional(),
+});
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+    const startTime = Date.now();
+    
+    // Obtener parámetros de consulta
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const propertyId = searchParams.get('propertyId');
+    const tenantId = searchParams.get('tenantId');
+    const ownerId = searchParams.get('ownerId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const minRent = searchParams.get('minRent');
+    const maxRent = searchParams.get('maxRent');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    
+    const skip = (page - 1) * limit;
+    
+    // Construir where clause optimizado
+    const where: any = {};
+    
+    if (status) {
+      // Soporte para múltiples valores separados por coma
+      if (status.includes(',')) {
+        const statuses = status.split(',').map(s => s.trim()) as ContractStatus[];
+        where.status = { in: statuses };
+      } else {
+        where.status = status as ContractStatus;
+      }
+    }
+    
+    if (propertyId) {
+      where.propertyId = propertyId;
+    }
+    
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    
+    if (ownerId) {
+      where.ownerId = ownerId;
+    }
+    
+    if (startDate) {
+      where.startDate = { gte: new Date(startDate) };
+    }
+    
+    if (endDate) {
+      where.endDate = { lte: new Date(endDate) };
+    }
+    
+    if (minRent) {
+      where.rentAmount = { gte: parseFloat(minRent) };
+    }
+    
+    if (maxRent) {
+      where.rentAmount = { ...where.rentAmount, lte: parseFloat(maxRent) };
+    }
+    
+    // Aplicar filtros según el rol del usuario
+    if (user.role !== UserRole.ADMIN) {
+      switch (user.role) {
+        case UserRole.OWNER:
+          where.ownerId = user.id;
+          break;
+        case UserRole.TENANT:
+          where.tenantId = user.id;
+          break;
+        case UserRole.MAINTENANCE_PROVIDER:
+        case UserRole.SERVICE_PROVIDER:
+          // Los proveedores pueden ver contratos de propiedades donde trabajan
+          // Nota: providerId no existe en el modelo actual, se puede implementar más adelante
+          where.id = 'none'; // No mostrar contratos por ahora
+          break;
+      }
+    }
+    
+    // Construir orderBy
+    const orderBy: any = {};
+    orderBy[sortBy] = sortOrder;
+    
+    // Usar consulta optimizada con caché
+    const result = await getContractsOptimized({
+      where,
+      skip,
+      take: limit,
+      orderBy,
+      // cache: true, // Removido por incompatibilidad con Prisma
+              // cacheTTL: 300, // 5 minutos - Removido por incompatibilidad
+        // cacheKey: `contracts:${JSON.stringify({ where, skip, take: limit, sortBy, sortOrder, userId: user.id, role: user.role })}`, // Removido por incompatibilidad
+    });
+    
+    const duration = Date.now() - startTime;
+    
+    logger.info('Consulta de contratos optimizada', {
+      userId: user.id,
+      role: user.role,
+      duration,
+      filters: { status, propertyId, tenantId, ownerId },
+      resultCount: Array.isArray(result) ? result.length : 0,
+    });
+    
+    return NextResponse.json(result);
+  } catch (error) {
+    return handleApiError(error, 'GET /api/contracts');
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+    
+    // Solo admins y propietarios pueden crear contratos
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.OWNER) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para crear contratos' },
+        { status: 403 },
+      );
+    }
+    
+    const body = await request.json();
+    
+    // Validar datos del contrato
+    const validatedData = createContractSchema.parse(body);
+    
+    // Verificar que la propiedad existe y está disponible
+    const property = await db.Property.findUnique({
+      where: { id: validatedData.propertyId },
+      include: { owner: true },
+    });
+    
+    if (!property) {
+      throw new ValidationError('Propiedad no encontrada');
+    }
+    
+    if (property.status !== 'AVAILABLE') {
+      throw new ValidationError('La propiedad no está disponible para arrendar');
+    }
+    
+    // Si es propietario, verificar que la propiedad le pertenece
+    if (user.role === UserRole.OWNER && property.ownerId !== user.id) {
+      return NextResponse.json(
+        { error: 'Solo puedes crear contratos para tus propias propiedades' },
+        { status: 403 },
+      );
+    }
+    
+    // Verificar que el inquilino existe y está activo
+    const tenant = await db.User.findUnique({
+      where: { id: validatedData.tenantId },
+    });
+    
+    if (!tenant) {
+      throw new ValidationError('Inquilino no encontrado');
+    }
+    
+    if (!tenant.isActive) {
+      throw new ValidationError('El inquilino no está activo');
+    }
+    
+    // Verificar que no hay contratos activos para esta propiedad
+    const existingContract = await db.Contract.findFirst({
+      where: {
+        propertyId: validatedData.propertyId,
+        status: { in: [ContractStatus.ACTIVE, ContractStatus.DRAFT] },
+      },
+    });
+    
+    if (existingContract) {
+      throw new ValidationError('Ya existe un contrato activo para esta propiedad');
+    }
+    
+    // Verificar que las fechas son válidas
+    const startDate = new Date(validatedData.startDate);
+    const endDate = new Date(validatedData.endDate);
+    
+    if (startDate >= endDate) {
+      throw new ValidationError('La fecha de fin debe ser posterior a la fecha de inicio');
+    }
+    
+    if (startDate < new Date()) {
+      throw new ValidationError('La fecha de inicio no puede ser en el pasado');
+    }
+    
+    // Crear contrato
+    const contract = await db.Contract.create({
+      data: {
+        ...validatedData,
+        ownerId: property.ownerId,
+        startDate,
+        endDate,
+        contractNumber: `CON-${Date.now()}`,
+        monthlyRent: validatedData.rentAmount,
+        deposit: validatedData.depositAmount,
+      },
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            city: true,
+            commune: true,
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+    
+    // Actualizar estado de la propiedad
+    await db.Property.update({
+      where: { id: validatedData.propertyId },
+      data: { status: 'RENTED' },
+    });
+    
+    // Invalidar caché de contratos y propiedades
+    await Promise.all([
+      dbOptimizer.invalidateCache('contracts'),
+      dbOptimizer.invalidateCache('properties'),
+    ]);
+    
+    logger.info('Contrato creado exitosamente', {
+      userId: user.id,
+      contractId: contract.id,
+      propertyId: contract.propertyId,
+      tenantId: contract.tenantId,
+    });
+    
+    return NextResponse.json({
+      message: 'Contrato creado exitosamente',
+      contract,
+    }, { status: 201 });
+  } catch (error) {
+    logger.error('Error creando contrato', { error: error instanceof Error ? error.message : String(error) });
+    const errorResponse = handleError(error);
+    return errorResponse;
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+    
+    const body = await request.json();
+    const { id, ...updateData } = body;
+    
+    if (!id) {
+      throw new ValidationError('ID de contrato requerido');
+    }
+    
+    // Validar datos de actualización
+    const validatedData = updateContractSchema.parse(updateData);
+    
+    // Verificar que el contrato existe
+    const existingContract = await db.Contract.findUnique({
+      where: { id },
+      include: {
+        property: { select: { ownerId: true } },
+        tenant: { select: { id: true } },
+        owner: { select: { id: true } },
+      },
+    });
+    
+    if (!existingContract) {
+      return NextResponse.json(
+        { error: 'Contrato no encontrado' },
+        { status: 404 },
+      );
+    }
+    
+    // Verificar permisos
+    const canEdit = 
+      user.role === UserRole.ADMIN ||
+      existingContract.ownerId === user.id ||
+      existingContract.tenantId === user.id;
+    
+    if (!canEdit) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para editar este contrato' },
+        { status: 403 },
+      );
+    }
+    
+    // Validar fechas si se están actualizando
+    if (validatedData.startDate || validatedData.endDate) {
+      const existingStartDate = existingContract.startDate;
+      const existingEndDate = existingContract.endDate;
+      
+      const startDate = validatedData.startDate ? new Date(validatedData.startDate) : existingStartDate;
+      const endDate = validatedData.endDate ? new Date(validatedData.endDate) : existingEndDate;
+      
+      if (startDate >= endDate) {
+        throw new ValidationError('La fecha de fin debe ser posterior a la fecha de inicio');
+      }
+      
+      // Validar que la fecha de inicio no sea en el pasado si se está actualizando
+      if (validatedData.startDate && startDate < new Date()) {
+        throw new ValidationError('La fecha de inicio no puede ser en el pasado');
+      }
+    }
+    
+    // Actualizar contrato
+    const updatedContract = await db.Contract.update({
+      where: { id },
+      data: validatedData,
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+            city: true,
+            commune: true,
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+    
+    // Invalidar caché de contratos
+    await dbOptimizer.invalidateCache('contracts');
+    
+    logger.info('Contrato actualizado exitosamente', {
+      userId: user.id,
+      contractId: id,
+      updatedFields: Object.keys(validatedData),
+    });
+    
+    return NextResponse.json({
+      message: 'Contrato actualizado exitosamente',
+      contract: updatedContract,
+    });
+  } catch (error) {
+    logger.error('Error actualizando contrato', { error: error instanceof Error ? error.message : String(error) });
+    const errorResponse = handleError(error);
+    return errorResponse;
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+    
+    // Solo admins pueden eliminar contratos
+    if (user.role !== UserRole.ADMIN) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para eliminar contratos' },
+        { status: 403 },
+      );
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      throw new ValidationError('ID de contrato requerido');
+    }
+    
+    // Verificar que el contrato existe
+    const existingContract = await db.Contract.findUnique({
+      where: { id },
+      include: {
+        property: { select: { id: true, status: true } },
+      },
+    });
+    
+    if (!existingContract) {
+      return NextResponse.json(
+        { error: 'Contrato no encontrado' },
+        { status: 404 },
+      );
+    }
+    
+    // Verificar que el contrato no esté activo
+    if (existingContract.status === ContractStatus.ACTIVE) {
+      throw new ValidationError('No se puede eliminar un contrato activo');
+    }
+    
+    // Eliminar contrato
+    await db.Contract.delete({
+      where: { id },
+    });
+    
+    // Si la propiedad estaba rentada, marcarla como disponible
+    if (existingContract.property.status === 'RENTED') {
+      await db.Property.update({
+        where: { id: existingContract.property.id },
+        data: { status: 'AVAILABLE' },
+      });
+    }
+    
+    // Invalidar caché
+    await Promise.all([
+      dbOptimizer.invalidateCache('contracts'),
+      dbOptimizer.invalidateCache('properties'),
+    ]);
+    
+    logger.info('Contrato eliminado exitosamente', {
+      adminId: user.id,
+      contractId: id,
+    });
+    
+    return NextResponse.json({
+      message: 'Contrato eliminado exitosamente',
+    });
+  } catch (error) {
+    logger.error('Error eliminando contrato', { error: error instanceof Error ? error.message : String(error) });
+    const errorResponse = handleError(error);
+    return errorResponse;
+  }
+}

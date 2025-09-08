@@ -1,0 +1,1184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  OWNER
+  TENANT
+  BROKER
+  RUNNER
+  SUPPORT
+  PROVIDER
+}
+
+// User model
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  name            String
+  phone           String?
+
+  // Campos obligatorios en Chile
+  rut             String?   @unique // RUT chileno (único, obligatorio para contratos)
+  rutVerified     Boolean   @default(false)
+
+  // Campos opcionales de perfil
+  dateOfBirth     DateTime?
+  gender          String?   // 'M', 'F', 'OTHER'
+  nationality     String?   @default("CHILE")
+  address         String?
+  city            String?
+  commune         String?
+  region          String?
+
+  // Campos adicionales de contacto
+  phoneSecondary  String?
+  emergencyContact String?
+  emergencyPhone  String?
+
+  role            String    @default("TENANT")
+  avatar          String?
+  isActive        Boolean   @default(true)
+  emailVerified   Boolean   @default(false)
+  phoneVerified   Boolean   @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Nuevos campos para cuentas bancarias
+  bankAccount     BankAccount?
+
+  // Relaciones existentes
+  properties      Property[]
+  contractsAsOwner Contract[] @relation("OwnerContracts")
+  contractsAsTenant Contract[] @relation("TenantContracts")
+  contractsAsBroker Contract[] @relation("BrokerContracts")
+  payments        Payment[]
+  reviewsGiven    Review[] @relation("ReviewGiven")
+  reviewsReceived Review[] @relation("ReviewReceived")
+  messagesSent    Message[] @relation("MessageSent")
+  messagesReceived Message[] @relation("MessageReceived")
+  tickets         Ticket[]
+  assignedTickets  Ticket[] @relation("AssignedTickets")
+  ticketComments  TicketComment[]
+  visitsAsRunner  Visit[] @relation("VisitRunner")
+  visitsAsTenant  Visit[] @relation("VisitTenant")
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  signatures      ContractSignature[] @relation("UserSignatures")
+  maintenanceRequests Maintenance[] @relation("MaintenanceRequester")
+  serviceJobRequests ServiceJob[] @relation("ServiceJobRequester")
+  documents       Document[]
+
+  // Nuevas relaciones para providers
+  maintenanceProvider MaintenanceProvider?
+  serviceProvider     ServiceProvider?
+
+  // Relaciones para devoluciones de depósitos
+  tenantRefunds       DepositRefund[] @relation("TenantRefunds")
+  ownerRefunds        DepositRefund[] @relation("OwnerRefunds")
+  refundDocuments     RefundDocument[]
+  disputeInitiations  RefundDispute[] @relation("DisputeInitiator")
+  disputeResolutions  RefundDispute[] @relation("DisputeResolver")
+  refundApprovals     RefundApproval[]
+  refundAuditLogs     RefundAuditLog[]
+
+  // Relaciones para casos legales
+  legalCasesAsTenant   LegalCase[] @relation("TenantLegalCases")
+  legalCasesAsOwner    LegalCase[] @relation("OwnerLegalCases")
+  legalCasesAsBroker   LegalCase[] @relation("BrokerLegalCases")
+  legalDocumentsUploaded LegalDocument[] @relation("LegalDocumentUploader")
+  legalDocumentsVerified LegalDocument[] @relation("LegalDocumentVerifier")
+  legalNotificationsSent LegalNotification[] @relation("LegalNotificationUser")
+  legalAuditLogs      LegalAuditLog[] @relation("LegalAuditLogUser")
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([city])
+  @@index([commune])
+  @@index([createdAt])
+  @@index([lastLogin])
+}
+
+// Property model
+model Property {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  address     String
+  city        String
+  commune     String
+  region      String
+  price       Float
+  deposit     Float
+  bedrooms    Int
+  bathrooms   Int
+  area        Float
+  status      String @default("AVAILABLE")
+  type        String
+  images      String?       // JSON array of image URLs
+  features    String?       // JSON array of features
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contracts   Contract[]
+  reviews     Review[]
+  visits      Visit[]
+  maintenance Maintenance[]
+  
+  @@map("properties")
+  @@index([ownerId])
+  @@index([status])
+  @@index([city])
+  @@index([commune])
+  @@index([type])
+  @@index([price])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+// Contract model
+model Contract {
+  id             String        @id @default(cuid())
+  contractNumber String        @unique
+  propertyId     String
+  tenantId       String
+  ownerId        String
+  brokerId       String?
+  startDate      DateTime
+  endDate        DateTime
+  monthlyRent    Float
+  deposit        Float
+  status         String @default("DRAFT")
+  terms          String?
+  signedAt       DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  terminatedAt   DateTime?
+
+  // Relations
+  property       Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant         User          @relation("TenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
+  owner          User          @relation("OwnerContracts", fields: [ownerId], references: [id], onDelete: Cascade)
+  broker         User?         @relation("BrokerContracts", fields: [brokerId], references: [id], onDelete: SetNull)
+  payments       Payment[]
+  reviews        Review[]
+  signatures     ContractSignature[]
+  refunds        DepositRefund[]
+  
+  // Relaciones para casos legales
+  legalCases     LegalCase[]
+
+  @@map("contracts")
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([brokerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([createdAt])
+  @@index([signedAt])
+}
+
+// Contract Signature model
+model ContractSignature {
+  id               String   @id @default(cuid())
+  contractId       String
+  signerId         String
+  documentName     String   // Nombre del documento a firmar
+  documentHash     String   // Hash del documento para verificación
+  signatureType    String   // DIGITAL, ADVANCED, QUALIFIED
+  signatureHash    String   @unique
+  certificateData  String?  // JSON string with certificate info
+  signedAt         DateTime @default(now())
+  signatureProvider String
+  signatureData    String   // JSON string with full signature response
+  expiresAt        DateTime // Fecha de expiración de la firma
+  signers          String   // JSON array de firmantes
+  status           String   @default("pending") // pending, in_progress, completed, failed, expired, cancelled
+  metadata         String?  // JSON string with additional metadata
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  contract         Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  signer           User     @relation("UserSignatures", fields: [signerId], references: [id], onDelete: Cascade)
+  
+  @@map("contract_signatures")
+}
+
+// Payment model
+model Payment {
+  id             String        @id @default(cuid())
+  paymentNumber  String        @unique
+  contractId     String
+  payerId        String?
+  amount         Float
+  dueDate        DateTime
+  paidDate       DateTime?
+  status         String @default("PENDING")
+  method         String?
+  transactionId  String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  contract       Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payer          User?         @relation(fields: [payerId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+  @@index([contractId])
+  @@index([payerId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([paidDate])
+  @@index([createdAt])
+  @@index([contractId, status])
+  @@index([payerId, status])
+  @@index([dueDate, status])
+}
+
+// Review model
+model Review {
+  id          String   @id @default(cuid())
+  propertyId  String?
+  contractId  String?
+  reviewerId  String
+  revieweeId  String
+  rating      Int
+  comment     String?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  property    Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  reviewer    User      @relation("ReviewGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee    User      @relation("ReviewReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
+  
+  @@map("reviews")
+}
+
+// Message model
+model Message {
+  id          String        @id @default(cuid())
+  senderId    String
+  receiverId  String
+  subject     String?
+  content     String
+  status      String @default("SENT")
+  isRead      Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  readAt      DateTime?
+
+  // Relations
+  sender      User          @relation("MessageSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User          @relation("MessageReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+// Ticket model
+model Ticket {
+  id          String         @id @default(cuid())
+  ticketNumber String         @unique
+  title       String
+  description String
+  category    String
+  priority    String @default("MEDIUM")
+  status      String   @default("OPEN")
+  userId      String?
+  assignedTo  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  resolvedAt  DateTime?
+
+  // Relations
+  user        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignee    User?          @relation("AssignedTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
+  comments    TicketComment[]
+
+  @@map("tickets")
+}
+
+// Ticket Comment model
+model TicketComment {
+  id         String   @id @default(cuid())
+  ticketId   String
+  userId     String
+  content    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("ticket_comments")
+}
+
+// Visit model
+model Visit {
+  id            String      @id @default(cuid())
+  propertyId    String
+  runnerId      String
+  tenantId      String?
+  scheduledAt   DateTime
+  duration      Int         @default(30) // in minutes
+  status        String @default("SCHEDULED")
+  notes         String?
+  photosTaken   Int         @default(0)
+  rating        Int?
+  clientFeedback String?
+  earnings      Float       @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  property      Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  runner        User        @relation("VisitRunner", fields: [runnerId], references: [id], onDelete: Cascade)
+  tenant        User?       @relation("VisitTenant", fields: [tenantId], references: [id], onDelete: SetNull)
+  
+  @@map("visits")
+}
+
+// Maintenance model
+model Maintenance {
+  id             String           @id @default(cuid())
+  propertyId     String
+  title          String
+  description    String
+  category       String
+  priority       String @default("MEDIUM")
+  status         String   @default("OPEN")
+  estimatedCost  Float?
+  actualCost     Float?
+  requestedBy    String
+  assignedTo     String?
+  maintenanceProviderId String?    // Relación con el prestador de mantenimiento
+  scheduledDate  DateTime?
+  completedDate  DateTime?
+  rating         Int?             // Calificación del trabajo (1-5)
+  feedback       String?          // Comentarios del cliente
+  images         String?          // JSON array de URLs de imágenes
+  notes          String?          // Notas adicionales
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  requester      User             @relation("MaintenanceRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
+  maintenanceProvider MaintenanceProvider? @relation(fields: [maintenanceProviderId], references: [id], onDelete: SetNull)
+  transactions   ProviderTransaction[]
+  
+  @@map("maintenance")
+}
+
+// Notification model
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String @default("INFO")
+  isRead    Boolean          @default(false)
+  data      String?          // JSON for additional data
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
+// System Setting model
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String
+  description String?
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Email Template model
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  subject   String
+  content   String
+  category  String
+  variables String?  // JSON array of variables
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+// Audit Log model
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  oldValues   String?  // JSON
+  newValues   String?  // JSON
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@index([ipAddress])
+  @@index([createdAt, action])
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt, entityType])
+}
+
+// Document model (existing)
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   @default("other")
+  file_name   String
+  file_path   String
+  file_size   Int
+  file_type   String
+  tags        String?
+  uploaded_by String
+  status      String   @default("active")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [uploaded_by], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// Enums
+// UserRole enum values: TENANT, OWNER, BROKER, ADMIN, RUNNER, SUPPORT, MAINTENANCE_PROVIDER, SERVICE_PROVIDER
+
+// PropertyStatus enum values: AVAILABLE, RENTED, PENDING, MAINTENANCE
+
+// PropertyType enum values: APARTMENT, HOUSE, STUDIO, ROOM, COMMERCIAL
+
+// ContractStatus enum values: DRAFT, ACTIVE, EXPIRED, TERMINATED, CANCELLED
+
+// Cuenta bancaria para todos los usuarios
+model BankAccount {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  bank          String
+  accountType   String
+  accountNumber String
+  holderName    String
+  rut           String
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bank_accounts")
+}
+
+// Prestador de Mantenimiento
+model MaintenanceProvider {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  businessName    String
+  rut             String
+  specialty       String
+  specialties     String   // JSON array de especialidades
+  hourlyRate      Float
+  rating          Float    @default(0)
+  totalRatings    Int      @default(0)
+  completedJobs   Int      @default(0)
+  totalEarnings   Float    @default(0)
+  status          String @default("PENDING_VERIFICATION")
+  isVerified      Boolean  @default(false)
+  responseTime    Float    @default(0) // Tiempo promedio de respuesta en horas
+  address         String?
+  city            String?
+  region          String?
+  description     String?
+  profileImage    String?
+  availability    String   // JSON con horarios de disponibilidad
+  documents       ProviderDocuments?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maintenanceJobs Maintenance[]
+  transactions    ProviderTransaction[]
+
+  @@map("maintenance_providers")
+}
+
+// Prestador de Servicios
+model ServiceProvider {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  businessName    String
+  rut             String
+  serviceType     String
+  serviceTypes    String   // JSON array de tipos de servicios
+  basePrice       Float
+  rating          Float    @default(0)
+  totalRatings    Int      @default(0)
+  completedJobs   Int      @default(0)
+  totalEarnings   Float    @default(0)
+  status          String @default("PENDING_VERIFICATION")
+  isVerified      Boolean  @default(false)
+  responseTime    Float    @default(0)
+  address         String?
+  city            String?
+  region          String?
+  description     String?
+  profileImage    String?
+  availability    String   // JSON con horarios de disponibilidad
+  documents       ProviderDocuments?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceJobs     ServiceJob[]
+  transactions    ProviderTransaction[]
+
+  @@map("service_providers")
+}
+
+// Tipos de servicios
+
+// Estado de los providers
+
+// Documentos obligatorios para providers
+model ProviderDocuments {
+  id                    String   @id @default(cuid())
+  maintenanceProviderId String?  @unique
+  serviceProviderId     String?  @unique
+  criminalRecord        String   // URL del archivo PDF
+  idFront              String   // URL de la imagen
+  idBack               String   // URL de la imagen
+  businessCertificate  String   // URL del archivo PDF
+  isVerified           Boolean  @default(false)
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relaciones
+  maintenanceProvider   MaintenanceProvider? @relation(fields: [maintenanceProviderId], references: [id], onDelete: Cascade)
+  serviceProvider       ServiceProvider?     @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+
+  @@map("provider_documents")
+}
+
+// Trabajos de servicios (mudanza, limpieza, etc.)
+model ServiceJob {
+  id              String        @id @default(cuid())
+  serviceProviderId String
+  requesterId     String        // ID del inquilino que solicita
+  title           String
+  description     String
+  serviceType     String
+  status          String @default("PENDING")
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  basePrice       Float
+  finalPrice      Float?
+  rating          Int?
+  feedback        String?
+  images          String?       // JSON array de URLs
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relaciones
+  serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  requester       User           @relation("ServiceJobRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  transactions    ProviderTransaction[]
+
+  @@map("service_jobs")
+}
+
+// Transacciones de providers
+model ProviderTransaction {
+  id                String              @id @default(cuid())
+  providerType      String
+  maintenanceProviderId String?
+  serviceProviderId String?
+  serviceJobId      String?
+  maintenanceId     String?
+  amount            Float
+  commission        Float
+  netAmount         Float
+  status            String   @default("PENDING")
+  paymentMethod     String
+  reference         String?             // Referencia externa del pago
+  processedAt       DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relaciones
+  maintenanceProvider MaintenanceProvider? @relation(fields: [maintenanceProviderId], references: [id], onDelete: Cascade)
+  serviceProvider     ServiceProvider?     @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  serviceJob          ServiceJob?          @relation(fields: [serviceJobId], references: [id], onDelete: Cascade)
+  maintenance         Maintenance?         @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+
+  @@map("provider_transactions")
+}
+
+// Configuración de la plataforma
+model PlatformConfig {
+  id                    String   @id @default(cuid())
+  key                   String   @unique
+  value                 String
+  category              String
+  description           String?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("platform_config")
+}
+
+// Logs del sistema
+model SystemLog {
+  id          String   @id @default(cuid())
+  level       String   // ERROR, WARN, INFO, DEBUG, TRACE
+  message     String
+  context     String?  // JSON object
+  requestId   String?
+  userId      String?
+  ip          String?
+  userAgent   String?
+  path        String?
+  method      String?
+  duration    Int?     // milliseconds
+  error       String?  // Error stack trace
+  createdAt   DateTime @default(now())
+
+  @@map("system_logs")
+  @@index([level])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([requestId])
+}
+
+// ============================================================================
+// SISTEMA DE DEVOLUCIÓN DE DEPÓSITOS DE GARANTÍA
+// ============================================================================
+
+// Solicitud de devolución de depósito
+model DepositRefund {
+  id              String           @id @default(cuid())
+  contractId      String
+  tenantId        String
+  ownerId         String
+  refundNumber    String           @unique
+  originalDeposit Float
+  requestedAmount Float
+  approvedAmount  Float?
+  tenantClaimed   Float            @default(0)
+  ownerClaimed    Float            @default(0)
+  status          String     @default("PENDING")
+  tenantApproved  Boolean          @default(false)
+  ownerApproved   Boolean          @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relaciones
+  contract        Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  tenant          User             @relation("TenantRefunds", fields: [tenantId], references: [id], onDelete: Cascade)
+  owner           User             @relation("OwnerRefunds", fields: [ownerId], references: [id], onDelete: Cascade)
+  documents       RefundDocument[]
+  disputes        RefundDispute[]
+  approvals       RefundApproval[]
+  auditLogs       RefundAuditLog[]
+
+  @@map("deposit_refunds")
+  @@index([contractId])
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Documentos adjuntos a la devolución
+model RefundDocument {
+  id              String        @id @default(cuid())
+  refundId        String
+  uploadedBy      String
+  documentType    String
+  fileName        String
+  fileUrl         String
+  fileSize        Int
+  mimeType        String
+  description     String?
+  amount          Float?
+  createdAt       DateTime      @default(now())
+
+  // Relaciones
+  refund          DepositRefund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("refund_documents")
+  @@index([refundId])
+  @@index([uploadedBy])
+  @@index([documentType])
+}
+
+// Disputas y mediación
+model RefundDispute {
+  id              String        @id @default(cuid())
+  refundId        String
+  initiatedBy     String
+  disputeType     String
+  description     String
+  amount          Float
+  status          String @default("OPEN")
+  resolvedBy      String?
+  resolution      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relaciones
+  refund          DepositRefund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  initiator       User          @relation("DisputeInitiator", fields: [initiatedBy], references: [id], onDelete: Cascade)
+  resolver        User?         @relation("DisputeResolver", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@map("refund_disputes")
+  @@index([refundId])
+  @@index([initiatedBy])
+  @@index([status])
+}
+
+// Aprobaciones de devolución
+model RefundApproval {
+  id              String        @id @default(cuid())
+  refundId        String
+  approverId      String
+  approvalType    String
+  approved        Boolean
+  comments        String?
+  approvedAt      DateTime      @default(now())
+
+  // Relaciones
+  refund          DepositRefund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  approver        User          @relation(fields: [approverId], references: [id], onDelete: Cascade)
+
+  @@map("refund_approvals")
+  @@index([refundId])
+  @@index([approverId])
+  @@index([approvalType])
+}
+
+// Log de auditoría de devoluciones
+model RefundAuditLog {
+  id              String        @id @default(cuid())
+  refundId        String
+  userId          String
+  action          String
+  details         String
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime      @default(now())
+
+  // Relaciones
+  refund          DepositRefund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refund_audit_logs")
+  @@index([refundId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Enums para el sistema de devoluciones
+
+// ============================================================================
+// SISTEMA DE GESTIÓN LEGAL - LEY 21.461 Y 18.101
+// ============================================================================
+
+// Caso legal principal
+model LegalCase {
+  id                    String           @id @default(cuid())
+  caseNumber            String           @unique
+  contractId            String
+  tenantId              String
+  ownerId               String
+  brokerId              String?
+  caseType              String
+  status                String  @default("PRE_JUDICIAL")
+  priority              String    @default("MEDIUM")
+  totalDebt             Float            @default(0)
+  interestRate          Float            @default(0.05) // 5% mensual por defecto
+  accumulatedInterest   Float            @default(0)
+  legalFees             Float            @default(0)
+  courtFees             Float            @default(0)
+  totalAmount           Float            @default(0)
+  
+  // Fechas clave del proceso legal
+  firstDefaultDate      DateTime         // Primera fecha de impago
+  lastPaymentDate       DateTime?        // Última fecha de pago
+  extrajudicialSentDate DateTime?        // Fecha de envío del requerimiento
+  demandFiledDate       DateTime?        // Fecha de presentación de demanda
+  hearingDate           DateTime?        // Fecha de audiencia
+  judgmentDate          DateTime?        // Fecha de sentencia
+  evictionDate          DateTime?        // Fecha de lanzamiento
+  caseClosedDate        DateTime?
+  
+  // Información del proceso
+  currentPhase          String       @default("PRE_JUDICIAL")
+  nextDeadline          DateTime?
+  notes                 String?
+  internalNotes         String?          // Notas solo para administradores
+  
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  closedAt              DateTime?
+
+  // Relaciones
+  contract              Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  tenant                User             @relation("TenantLegalCases", fields: [tenantId], references: [id], onDelete: Cascade)
+  owner                 User             @relation("OwnerLegalCases", fields: [ownerId], references: [id], onDelete: Cascade)
+  broker                User?            @relation("BrokerLegalCases", fields: [brokerId], references: [id], onDelete: SetNull)
+  
+  // Relaciones del proceso legal
+  extrajudicialNotices  ExtrajudicialNotice[]
+  legalDocuments        LegalDocument[]
+  courtProceedings      CourtProceeding[]
+  legalPayments         LegalPayment[]
+  legalAuditLogs        LegalAuditLog[]
+  legalNotifications    LegalNotification[]
+
+  @@map("legal_cases")
+  @@index([contractId])
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([caseType])
+  @@index([currentPhase])
+  @@index([createdAt])
+}
+
+// Notificaciones extrajudiciales
+model ExtrajudicialNotice {
+  id                    String                    @id @default(cuid())
+  legalCaseId           String
+  noticeType            String
+  noticeNumber          String                    @unique
+  deliveryMethod        String
+  deliveryStatus        String            @default("PENDING")
+  sentDate              DateTime?
+  deliveredDate         DateTime?
+  receivedBy            String?
+  deliveryProof         String?                   // URL del comprobante
+  content               String                    // Contenido del requerimiento
+  amount                Float                     // Monto reclamado
+  deadline              DateTime                  // Plazo para cancelar
+  responseReceived      Boolean                  @default(false)
+  responseDate          DateTime?
+  responseContent       String?
+  responseAmount        Float?
+  
+  // Notificaciones adicionales
+  followUpSent          Boolean                  @default(false)
+  followUpDate          DateTime?
+  escalationSent        Boolean                  @default(false)
+  escalationDate        DateTime?
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  // Relaciones
+  legalCase             LegalCase                 @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+
+  @@map("extrajudicial_notices")
+  @@index([legalCaseId])
+  @@index([noticeType])
+  @@index([deliveryStatus])
+  @@index([sentDate])
+}
+
+// Documentos legales
+model LegalDocument {
+  id                    String           @id @default(cuid())
+  legalCaseId           String
+  documentType          String
+  documentNumber        String?          // Número de documento oficial
+  title                 String
+  description           String?
+  fileName              String
+  fileUrl               String
+  fileSize              Int              // en bytes
+  mimeType              String
+  isOfficial            Boolean          @default(false) // Documento oficial del tribunal
+  isRequired            Boolean          @default(false) // Documento obligatorio para el proceso
+  uploadedBy            String
+  uploadedAt            DateTime         @default(now())
+  verifiedBy            String?
+  verifiedAt            DateTime?
+  verificationNotes     String?
+  
+  // Metadatos del documento
+  court                 String?          // Tribunal relacionado
+  filingDate            DateTime?        // Fecha de presentación
+  responseDeadline      DateTime?        // Plazo para respuesta
+  status                String   @default("PENDING")
+  
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  // Relaciones
+  legalCase             LegalCase                 @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  uploader              User                      @relation("LegalDocumentUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  verifier              User?                     @relation("LegalDocumentVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@map("legal_documents")
+  @@index([legalCaseId])
+  @@index([documentType])
+  @@index([isOfficial])
+  @@index([isRequired])
+  @@index([status])
+  @@index([uploadedAt])
+}
+
+// Procedimientos judiciales
+model CourtProceeding {
+  id                    String              @id @default(cuid())
+  legalCaseId           String
+  proceedingType        String
+  proceedingNumber      String?             // Número de expediente del tribunal
+  court                 String              // Nombre del tribunal
+  judge                 String?             // Nombre del juez
+  status                String    @default("INITIATED")
+  
+  // Fechas del procedimiento
+  filedDate             DateTime?           // Fecha de presentación
+  notificationDate      DateTime?           // Fecha de notificación
+  oppositionDeadline    DateTime?           // Plazo para oposición
+  hearingDate           DateTime?           // Fecha de audiencia
+  evidenceDeadline      DateTime?           // Plazo para presentar pruebas
+  judgmentDeadline      DateTime?           // Plazo para fallo
+  
+  // Resultados
+  outcome               String?
+  judgmentText          String?             // Texto de la sentencia
+  judgmentDate          DateTime?
+  appealDeadline        DateTime?           // Plazo para apelación
+  appealFiled           Boolean             @default(false)
+  appealDate            DateTime?
+  
+  // Costos
+  courtFees             Float               @default(0)
+  legalFees             Float               @default(0)
+  totalCosts            Float               @default(0)
+  
+  // Notas y seguimiento
+  notes                 String?
+  nextAction            String?
+  nextDeadline          DateTime?
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  closedAt              DateTime?
+
+  // Relaciones
+  legalCase             LegalCase           @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+
+  @@map("court_proceedings")
+  @@index([legalCaseId])
+  @@index([proceedingType])
+  @@index([status])
+  @@index([court])
+  @@index([filedDate])
+}
+
+// Pagos legales
+model LegalPayment {
+  id                    String           @id @default(cuid())
+  legalCaseId           String
+  paymentType           String
+  amount                Float
+  description           String
+  dueDate               DateTime
+  paidDate              DateTime?
+  status                String     @default("PENDING")
+  paymentMethod         String?
+  transactionId         String?
+  receiptUrl            String?
+  notes                 String?
+  
+  // Relación con pagos del sistema principal
+  relatedPaymentId      String?
+  
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  // Relaciones
+  legalCase             LegalCase         @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+
+  @@map("legal_payments")
+  @@index([legalCaseId])
+  @@index([paymentType])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// Log de auditoría legal
+model LegalAuditLog {
+  id                    String           @id @default(cuid())
+  legalCaseId           String
+  userId                String
+  action                String
+  details               String
+  previousValue         String?          // Valor anterior (JSON)
+  newValue              String?          // Nuevo valor (JSON)
+  ipAddress             String?
+  userAgent             String?
+  createdAt             DateTime         @default(now())
+
+  // Relaciones
+  legalCase             LegalCase         @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  user                  User              @relation("LegalAuditLogUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("legal_audit_logs")
+  @@index([legalCaseId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Notificaciones legales
+model LegalNotification {
+  id                    String              @id @default(cuid())
+  legalCaseId           String
+  userId                String
+  notificationType      String
+  title                 String
+  message               String
+  priority              String              @default("medium")
+  status                String              @default("pending")
+  readAt                DateTime?
+  actionRequired        Boolean             @default(false)
+  actionDeadline        DateTime?
+  actionUrl             String?             // URL para acción requerida
+  
+  // Metadatos
+  metadata              String?             // JSON con datos adicionales
+  sentAt                DateTime            @default(now())
+  deliveredAt           DateTime?
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // Relaciones
+  legalCase             LegalCase           @relation(fields: [legalCaseId], references: [id], onDelete: Cascade)
+  user                  User                @relation("LegalNotificationUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("legal_notifications")
+  @@index([legalCaseId])
+  @@index([userId])
+  @@index([notificationType])
+  @@index([sentAt])
+}
+
+// ============================================================================
+// SISTEMA DE FIRMAS ELECTRÓNICAS
+// ============================================================================
+
+// Solicitud de firma
+model SignatureRequest {
+  id                String          @id @default(cuid())
+  documentId        String          // ID del documento a firmar
+  provider          String          // Proveedor de firma utilizado
+  providerRequestId String?         // ID de la solicitud en el proveedor
+  status            String          @default("pending")
+  type              String          @default("advanced")
+  expiresAt         DateTime?       // Fecha de expiración
+  metadata          String?         // JSON con metadatos adicionales
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relaciones
+  signers           SignatureSigner[]
+
+  @@map("signature_requests")
+  @@index([documentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Firmante de una solicitud de firma
+model SignatureSigner {
+  id               String   @id @default(cuid())
+  signatureRequestId String
+  email            String
+  name             String
+  role             String?  // Rol del firmante (OWNER, TENANT, etc.)
+  status           String   @default("pending")
+  signedAt         DateTime?
+  signatureData    String?  // Datos de la firma en JSON
+  metadata         String?  // JSON con metadatos adicionales
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relaciones
+  signatureRequest SignatureRequest @relation(fields: [signatureRequestId], references: [id], onDelete: Cascade)
+
+  @@map("signature_signers")
+  @@index([signatureRequestId])
+  @@index([email])
+  @@index([status])
+}
+
+// ============================================================================
+// ENUMS DEL SISTEMA LEGAL
+// ============================================================================
+

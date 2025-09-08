@@ -1,0 +1,375 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "export": "Export",
+    "import": "Import",
+    "download": "Download",
+    "upload": "Upload",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "open": "Open",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "reset": "Reset",
+    "refresh": "Refresh",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "forgotPassword": "Forgot Password",
+    "rememberMe": "Remember Me",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "language": "Language",
+    "currency": "Currency",
+    "date": "Date",
+    "time": "Time",
+    "status": "Status",
+    "type": "Type",
+    "category": "Category",
+    "description": "Description",
+    "notes": "Notes",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "files": "Files",
+    "images": "Images",
+    "documents": "Documents",
+    "reports": "Reports",
+    "analytics": "Analytics",
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "details": "Details",
+    "summary": "Summary",
+    "total": "Total",
+    "count": "Count",
+    "amount": "Amount",
+    "price": "Price",
+    "cost": "Cost",
+    "budget": "Budget",
+    "balance": "Balance",
+    "payment": "Payment",
+    "invoice": "Invoice",
+    "receipt": "Receipt",
+    "transaction": "Transaction",
+    "history": "History",
+    "activity": "Activity",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "chat": "Chat",
+    "support": "Support",
+    "help": "Help",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "about": "About",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy"
+  },
+
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Enter your credentials to access",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember Me",
+      "forgotPassword": "Forgot your password?",
+      "loginButton": "Login",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register here",
+      "errors": {
+        "invalidCredentials": "Invalid credentials",
+        "accountDisabled": "Account disabled",
+        "tooManyAttempts": "Too many failed attempts",
+        "generic": "Login error"
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Register to start using Rent360",
+      "name": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "phone": "Phone",
+      "role": "User Type",
+      "roles": {
+        "tenant": "Tenant",
+        "owner": "Owner",
+        "broker": "Broker",
+        "runner": "Runner",
+        "support": "Support",
+        "admin": "Administrator"
+      },
+      "terms": "I accept the terms and conditions",
+      "registerButton": "Create Account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Login here",
+      "errors": {
+        "emailExists": "Email already registered",
+        "passwordMismatch": "Passwords do not match",
+        "weakPassword": "Password is too weak",
+        "invalidEmail": "Invalid email",
+        "termsRequired": "You must accept the terms and conditions"
+      }
+    },
+    "forgotPassword": {
+      "title": "Recover Password",
+      "subtitle": "Enter your email to receive instructions",
+      "email": "Email",
+      "sendButton": "Send Instructions",
+      "backToLogin": "Back to Login"
+    }
+  },
+
+  "dashboard": {
+    "welcome": "Welcome to Rent360",
+    "subtitle": "Your comprehensive property management platform",
+    "stats": {
+      "totalProperties": "Total Properties",
+      "activeContracts": "Active Contracts",
+      "pendingPayments": "Pending Payments",
+      "totalUsers": "Total Users",
+      "monthlyRevenue": "Monthly Revenue",
+      "occupancyRate": "Occupancy Rate"
+    },
+    "quickActions": {
+      "addProperty": "Add Property",
+      "createContract": "Create Contract",
+      "viewPayments": "View Payments",
+      "manageUsers": "Manage Users"
+    },
+    "recentActivity": "Recent Activity",
+    "upcomingPayments": "Upcoming Payments",
+    "expiringContracts": "Expiring Contracts"
+  },
+
+  "properties": {
+    "title": "Properties",
+    "addProperty": "Add Property",
+    "search": "Search properties...",
+    "filters": {
+      "all": "All",
+      "available": "Available",
+      "rented": "Rented",
+      "maintenance": "Under Maintenance",
+      "city": "City",
+      "priceRange": "Price Range",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "type": "Type",
+      "features": "Features"
+    },
+    "types": {
+      "house": "House",
+      "apartment": "Apartment",
+      "office": "Office",
+      "warehouse": "Warehouse",
+      "land": "Land",
+      "commercial": "Commercial"
+    },
+    "status": {
+      "available": "Available",
+      "rented": "Rented",
+      "pending": "Pending",
+      "maintenance": "Under Maintenance",
+      "inactive": "Inactive"
+    },
+    "details": {
+      "address": "Address",
+      "city": "City",
+      "price": "Price",
+      "deposit": "Deposit",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "area": "Area",
+      "yearBuilt": "Year Built",
+      "parking": "Parking",
+      "furnished": "Furnished",
+      "petsAllowed": "Pets Allowed",
+      "smokingAllowed": "Smoking Allowed",
+      "description": "Description",
+      "features": "Features",
+      "images": "Images",
+      "virtualTour": "Virtual Tour",
+      "floorPlan": "Floor Plan",
+      "documents": "Documents",
+      "owner": "Owner",
+      "broker": "Broker",
+      "lastUpdated": "Last Updated"
+    }
+  },
+
+  "contracts": {
+    "title": "Contracts",
+    "addContract": "Create Contract",
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "completed": "Completed",
+      "expired": "Expired",
+      "terminated": "Terminated",
+      "cancelled": "Cancelled"
+    },
+    "details": {
+      "number": "Contract Number",
+      "property": "Property",
+      "tenant": "Tenant",
+      "owner": "Owner",
+      "broker": "Broker",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "rentAmount": "Rent Amount",
+      "depositAmount": "Deposit Amount",
+      "paymentFrequency": "Payment Frequency",
+      "terms": "Terms and Conditions",
+      "signatures": "Signatures",
+      "documents": "Attached Documents"
+    },
+    "actions": {
+      "sign": "Sign Contract",
+      "renew": "Renew Contract",
+      "terminate": "Terminate Contract",
+      "view": "View Contract",
+      "download": "Download PDF",
+      "sendReminder": "Send Reminder"
+    }
+  },
+
+  "payments": {
+    "title": "Payments",
+    "addPayment": "Record Payment",
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "failed": "Failed",
+      "refunded": "Refunded",
+      "partial": "Partial",
+      "overdue": "Overdue"
+    },
+    "methods": {
+      "cash": "Cash",
+      "bankTransfer": "Bank Transfer",
+      "creditCard": "Credit Card",
+      "debitCard": "Debit Card",
+      "check": "Check",
+      "other": "Other"
+    },
+    "details": {
+      "amount": "Amount",
+      "dueDate": "Due Date",
+      "paidDate": "Paid Date",
+      "method": "Payment Method",
+      "reference": "Reference",
+      "description": "Description",
+      "receipt": "Receipt",
+      "invoice": "Invoice"
+    }
+  },
+
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "roles": {
+      "admin": "Administrator",
+      "owner": "Owner",
+      "broker": "Broker",
+      "tenant": "Tenant",
+      "runner": "Runner",
+      "support": "Support"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "suspended": "Suspended"
+    }
+  },
+
+  "navigation": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "contracts": "Contracts",
+    "payments": "Payments",
+    "users": "Users",
+    "reports": "Reports",
+    "settings": "Settings",
+    "support": "Support",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+
+  "admin": {
+    "title": "Administration",
+    "systemHealth": "System Health",
+    "performance": "Performance",
+    "backups": "Backups",
+    "logs": "Logs",
+    "monitoring": "Monitoring",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "maintenance": "Maintenance",
+    "security": "Security",
+    "integrations": "Integrations"
+  },
+
+  "errors": {
+    "generic": "An unexpected error has occurred",
+    "network": "Network error",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied",
+    "notFound": "Resource not found",
+    "validation": "Invalid data",
+    "server": "Server error",
+    "timeout": "Timeout exceeded",
+    "rateLimit": "Too many requests",
+    "maintenance": "System under maintenance"
+  },
+
+  "success": {
+    "saved": "Data saved successfully",
+    "deleted": "Item deleted successfully",
+    "created": "Item created successfully",
+    "updated": "Item updated successfully",
+    "sent": "Message sent successfully",
+    "uploaded": "File uploaded successfully",
+    "downloaded": "File downloaded successfully"
+  },
+
+  "validation": {
+    "required": "This field is required",
+    "email": "Enter a valid email",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Cannot be more than {max} characters",
+    "numeric": "Must be a number",
+    "positive": "Must be a positive number",
+    "date": "Enter a valid date",
+    "futureDate": "Date must be in the future",
+    "phone": "Enter a valid phone number",
+    "password": "Password must be at least 8 characters",
+    "confirmPassword": "Passwords do not match"
+  }
+}

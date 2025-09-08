@@ -1,0 +1,64 @@
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: 75%
+        threshold: 1%
+        base: auto
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 75%
+        threshold: 1%
+        base: auto
+
+  ignore:
+    - "tests/"
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "**/*.spec.ts"
+    - "**/*.spec.tsx"
+    - "**/*.stories.ts"
+    - "**/*.stories.tsx"
+    - "src/pages/_app.tsx"
+    - "src/pages/_document.tsx"
+    - "**/*.d.ts"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+github_checks:
+  annotations: true
+
+flags:
+  unit:
+    paths:
+      - "tests/unit/"
+    carryforward: true
+
+  integration:
+    paths:
+      - "tests/integration/"
+    carryforward: true
+
+  e2e:
+    paths:
+      - "tests/e2e/"
+    carryforward: true
+
+  security:
+    paths:
+      - "tests/security/"
+    carryforward: true

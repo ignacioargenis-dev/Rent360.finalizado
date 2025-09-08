@@ -1,0 +1,445 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  MessageSquare, 
+  Send, 
+  Bot, 
+  User, 
+  Loader2, 
+  X, 
+  Minimize2, 
+  Maximize2,
+  Sparkles,
+  HelpCircle,
+  Building,
+  FileText,
+  DollarSign,
+  Settings,
+  Search
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { aiChatbotService } from '@/lib/ai-chatbot-service';
+
+interface ChatbotMessage {
+  id: string;
+  type: 'user' | 'bot';
+  content: string;
+  timestamp: Date;
+  context?: {
+    propertyId?: string;
+    contractId?: string;
+    userId?: string;
+    intent?: string;
+    confidence?: number;
+  };
+  suggestions?: string[];
+}
+
+interface ChatbotProps {
+  className?: string;
+  initialOpen?: boolean;
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+}
+
+const QUICK_ACTIONS = [
+  { text: 'Buscar propiedades', icon: Search, intent: 'property_search' },
+  { text: 'Ver mis contratos', icon: FileText, intent: 'contracts' },
+  { text: 'Realizar pago', icon: DollarSign, intent: 'payment' },
+  { text: 'Reportar problema', icon: HelpCircle, intent: 'maintenance' },
+  { text: 'Configuración', icon: Settings, intent: 'settings' },
+];
+
+const GREETING_MESSAGES = [
+  '¡Hola! Soy tu asistente virtual de Rent360. ¿En qué puedo ayudarte hoy?',
+  '¡Bienvenido a Rent360! Estoy aquí para ayudarte con cualquier consulta sobre propiedades, contratos o pagos.',
+  'Hola, soy tu asistente inteligente. Puedo ayudarte a buscar propiedades, gestionar contratos y mucho más.',
+];
+
+export default function Chatbot({ 
+  className, 
+  initialOpen = false, 
+  position = 'bottom-right' 
+}: ChatbotProps) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [messages, setMessages] = useState<ChatbotMessage[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Mensaje de bienvenida inicial
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      const greetingMessage: ChatbotMessage = {
+        id: 'welcome',
+        type: 'bot',
+        content: GREETING_MESSAGES[Math.floor(Math.random() * GREETING_MESSAGES.length)],
+        timestamp: new Date(),
+        suggestions: QUICK_ACTIONS.map(action => action.text),
+      };
+      setMessages([greetingMessage]);
+    }
+  }, [isOpen, messages.length]);
+
+  // Auto-scroll al último mensaje
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Focus en input cuando se abre
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen, isMinimized]);
+
+  const simulateTyping = async (response: string) => {
+    setIsTyping(true);
+    const words = response.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      currentText += words[i] + ' ';
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === 'typing' 
+            ? { ...msg, content: currentText.trim() }
+            : msg
+        )
+      );
+      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+    }
+    setIsTyping(false);
+  };
+
+  const processUserMessage = async (content: string) => {
+    setIsLoading(true);
+    
+    // Agregar mensaje del usuario
+    const userMessage: ChatbotMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+
+    // Simular procesamiento de IA
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Determinar respuesta basada en el contenido
+    const response = await generateAIResponse(content);
+    
+    // Agregar mensaje de "escribiendo"
+    const typingMessage: ChatbotMessage = {
+      id: 'typing',
+      type: 'bot',
+      content: '',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, typingMessage]);
+
+    // Simular escritura
+    await simulateTyping(response.content);
+
+    // Reemplazar mensaje de escritura con respuesta final
+    const botMessage: ChatbotMessage = {
+      id: Date.now().toString(),
+      type: 'bot',
+      content: response.content,
+      timestamp: new Date(),
+      context: response.context,
+      suggestions: response.suggestions,
+    };
+
+    setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
+    setIsLoading(false);
+  };
+
+  const generateAIResponse = async (userInput: string): Promise<{
+    content: string;
+    context?: any;
+    suggestions?: string[];
+  }> => {
+    try {
+      // Usar el servicio de IA inteligente
+      const result = await aiChatbotService.processMessage(
+        userInput,
+        'TENANT', // Por defecto, asumimos rol de inquilino
+        'user_demo', // ID de usuario de demostración
+        messages.slice(-10).map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }))
+      );
+
+      return {
+        content: result.response,
+        context: {
+          intent: result.intent,
+          confidence: result.confidence,
+          provider: result.metadata?.provider
+        },
+        suggestions: result.suggestions
+      };
+
+    } catch (error) {
+      console.error('Error generando respuesta de IA:', error);
+
+      // Fallback a respuestas programáticas si falla la IA
+      const input = userInput.toLowerCase();
+
+      if (input.includes('propiedad') || input.includes('casa') || input.includes('departamento')) {
+        return {
+          content: 'Te ayudo a buscar propiedades. Puedo mostrarte opciones según tu ubicación, presupuesto y preferencias. ¿En qué zona te interesa vivir y cuál es tu presupuesto mensual?',
+          context: { intent: 'property_search' },
+          suggestions: ['Ver propiedades disponibles', 'Filtrar por zona', 'Calcular hipoteca']
+        };
+      }
+
+      if (input.includes('contrato') || input.includes('arriendo') || input.includes('alquiler')) {
+        return {
+          content: 'Para gestionar contratos, puedes acceder a la sección "Mis Contratos" donde encontrarás todos tus documentos, fechas de vencimiento y opciones de renovación. ¿Necesitas ayuda con algún contrato específico?',
+          context: { intent: 'contracts' },
+          suggestions: ['Ver contratos activos', 'Renovar contrato', 'Descargar documento']
+        };
+      }
+
+      if (input.includes('pago') || input.includes('renta') || input.includes('dinero')) {
+        return {
+          content: 'Para realizar pagos, puedes usar la sección "Pagos" donde encontrarás múltiples métodos de pago seguros. También puedes configurar pagos automáticos para no olvidarte. ¿Qué método prefieres usar?',
+          context: { intent: 'payment' },
+          suggestions: ['Pagar ahora', 'Configurar pago automático', 'Ver historial']
+        };
+      }
+
+      if (input.includes('problema') || input.includes('mantenimiento') || input.includes('reparar')) {
+        return {
+          content: 'Para reportar un problema de mantenimiento, puedes crear un ticket en la sección "Mantenimiento". Te ayudaré a categorizar el problema y asignar la prioridad correcta. ¿Qué tipo de problema tienes?',
+          context: { intent: 'maintenance' },
+          suggestions: ['Crear ticket', 'Ver tickets activos', 'Contactar soporte']
+        };
+      }
+
+      if (input.includes('hola') || input.includes('buenos días') || input.includes('buenas')) {
+        return {
+          content: '¡Hola! ¿En qué puedo ayudarte hoy? Puedo asistirte con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento y más.',
+          suggestions: QUICK_ACTIONS.map(action => action.text)
+        };
+      }
+
+      if (input.includes('gracias') || input.includes('thanks')) {
+        return {
+          content: '¡De nada! Estoy aquí para ayudarte. Si tienes más preguntas, no dudes en preguntarme.',
+          suggestions: ['Buscar propiedades', 'Ver contratos', 'Realizar pago']
+        };
+      }
+
+      // Respuesta por defecto
+      return {
+        content: 'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento y configuración de tu cuenta. ¿Qué te gustaría hacer?',
+        suggestions: QUICK_ACTIONS.map(action => action.text)
+      };
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+    
+    const message = inputValue.trim();
+    setInputValue('');
+    await processUserMessage(message);
+  };
+
+  const handleQuickAction = async (action: string) => {
+    await processUserMessage(action);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setIsMinimized(false);
+    }
+  };
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
+
+  const positionClasses = {
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4',
+  };
+
+  if (!isOpen) {
+    return (
+      <div className={cn('fixed z-50', positionClasses[position])}>
+        <Button
+          onClick={toggleChat}
+          size="lg"
+          className="rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
+        >
+          <MessageSquare className="h-6 w-6" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('fixed z-50', positionClasses[position])}>
+      <Card className={cn(
+        'w-96 h-[500px] shadow-xl border-0',
+        isMinimized && 'h-16',
+        className
+      )}>
+        <CardHeader className="pb-3 bg-gradient-to-r from-primary to-primary/80 text-white rounded-t-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              <CardTitle className="text-lg">Asistente Rent360</CardTitle>
+              <Badge variant="secondary" className="bg-white/20 text-white">
+                <Sparkles className="h-3 w-3 mr-1" />
+                IA
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleMinimize}
+                className="text-white hover:bg-white/20"
+              >
+                {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleChat}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        {!isMinimized && (
+          <>
+            <CardContent className="p-0 flex flex-col h-[400px]">
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        'flex gap-3',
+                        message.type === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.type === 'bot' && (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                      
+                      <div
+                        className={cn(
+                          'max-w-[80%] rounded-lg px-3 py-2',
+                          message.type === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        )}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        
+                        {message.suggestions && message.suggestions.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.suggestions.map((suggestion, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                className="w-full justify-start text-xs h-7"
+                                onClick={() => handleQuickAction(suggestion)}
+                              >
+                                {suggestion}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {message.type === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="bg-muted rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Pensando...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+              
+              <div className="p-4 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Escribe tu mensaje..."
+                    className="flex-1"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim() || isLoading}
+                    size="icon"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}

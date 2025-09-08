@@ -1,0 +1,3485 @@
+{
+  "metadata": {
+    "timestamp": "2025-09-04T04:00:14.395Z",
+    "project": "Rent360",
+    "reviewer": "SystemReviewer",
+    "totalFiles": 5,
+    "totalLines": 3771
+  },
+  "statistics": {
+    "filesAnalyzed": 5,
+    "totalLines": 3771,
+    "functionsFound": 0,
+    "apisFound": 97,
+    "componentsFound": 93
+  },
+  "findings": {
+    "critical": [],
+    "high": [
+      {
+        "category": "MISSING_BUSINESS_METHOD",
+        "title": "Método de negocio faltante: validateCommission en src/lib/commission-service.ts",
+        "description": "",
+        "timestamp": "2025-09-04T04:00:13.558Z",
+        "severity": "high"
+      },
+      {
+        "category": "ML_ALGORITHM_INCOMPLETE",
+        "title": "Algoritmo de ML incompleto en src/lib/fraud-detection.ts",
+        "description": "Faltan validaciones de confianza y umbrales",
+        "timestamp": "2025-09-04T04:00:13.561Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_API_ERROR_HANDLING",
+        "title": "API sin manejo de errores: src\\app\\api\\__tests__\\auth.test.ts",
+        "description": "Agregar try/catch en todos los endpoints",
+        "timestamp": "2025-09-04T04:00:13.812Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_API_ERROR_HANDLING",
+        "title": "API sin manejo de errores: src\\app\\api\\__tests__\\contracts.test.ts",
+        "description": "Agregar try/catch en todos los endpoints",
+        "timestamp": "2025-09-04T04:00:13.812Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_API_ERROR_HANDLING",
+        "title": "API sin manejo de errores: src\\app\\api\\__tests__\\monitoring.test.ts",
+        "description": "Agregar try/catch en todos los endpoints",
+        "timestamp": "2025-09-04T04:00:13.812Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_API_ERROR_HANDLING",
+        "title": "API sin manejo de errores: src\\app\\api\\__tests__\\properties.test.ts",
+        "description": "Agregar try/catch en todos los endpoints",
+        "timestamp": "2025-09-04T04:00:13.813Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: bonusCalculation en commission-calculation",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.917Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: deductionCalculation en commission-calculation",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.917Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: accountVerification en payout-processing",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.918Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: fundsTransfer en payout-processing",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.918Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: documentUpload en kyc-verification",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.919Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: identityVerification en kyc-verification",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.919Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_BUSINESS_RULE",
+        "title": "Regla de negocio faltante: addressVerification en kyc-verification",
+        "description": "Implementar funcionalidad requerida",
+        "timestamp": "2025-09-04T04:00:13.919Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_TRANSACTION_ROLLBACK",
+        "title": "Transacción sin manejo de rollback en src\\lib\\bank-account-service.ts",
+        "description": "Agregar catch con rollback automático",
+        "timestamp": "2025-09-04T04:00:14.358Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_TRANSACTION_ROLLBACK",
+        "title": "Transacción sin manejo de rollback en src\\app\\api\\admin\\providers\\route.ts",
+        "description": "Agregar catch con rollback automático",
+        "timestamp": "2025-09-04T04:00:14.367Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_TRANSACTION_ROLLBACK",
+        "title": "Transacción sin manejo de rollback en src\\app\\api\\auth\\register-provider\\route.ts",
+        "description": "Agregar catch con rollback automático",
+        "timestamp": "2025-09-04T04:00:14.369Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_TRANSACTION_ROLLBACK",
+        "title": "Transacción sin manejo de rollback en src\\app\\api\\payments\\provider\\route.ts",
+        "description": "Agregar catch con rollback automático",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "high"
+      },
+      {
+        "category": "MISSING_TRANSACTION_ROLLBACK",
+        "title": "Transacción sin manejo de rollback en src\\app\\api\\deposits\\refunds\\[id]\\process\\route.ts",
+        "description": "Agregar catch con rollback automático",
+        "timestamp": "2025-09-04T04:00:14.377Z",
+        "severity": "high"
+      }
+    ],
+    "medium": [
+      {
+        "category": "COMMISSION_CALCULATION",
+        "title": "Cálculo de comisión sin validación de límites en src/lib/payout-service.ts",
+        "description": "Considerar agregar validaciones de rango mínimo/máximo",
+        "timestamp": "2025-09-04T04:00:13.556Z",
+        "severity": "medium"
+      },
+      {
+        "category": "CALCULATION_PATTERN",
+        "title": "Patrón de cálculo encontrado en src/lib/commission-service.ts",
+        "description": "Encontrados 6 cálculos que requieren revisión manual",
+        "timestamp": "2025-09-04T04:00:13.558Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_DB_DISCONNECT",
+        "title": "Falta manejo de desconexión de BD",
+        "description": "Agregar manejo adecuado de conexiones",
+        "timestamp": "2025-09-04T04:00:13.564Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\audit-logs\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.808Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\email-templates\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.809Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\ml\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.809Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\notifications\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.809Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\settings\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.810Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\__tests__\\monitoring.test.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.812Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\analytics\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.813Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\bank-config\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.813Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\commissions\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.813Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\database-stats\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.813Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\executive-dashboard\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.814Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\integrations\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.814Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\payouts\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.815Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\performance\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.815Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\system-metrics\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.816Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\system-stats\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.816Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\auth\\logout\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.816Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\auth\\me\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.816Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\auth\\refresh\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.816Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\broker\\commissions\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.817Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\contracts\\list\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.817Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\notifications\\[id]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.819Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\payments\\list\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.819Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\properties\\filters\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.819Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\properties\\list\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.819Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\properties\\[id]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\provider\\dashboard\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\webhook\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\[id]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\tenant\\dashboard\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\tickets\\[id]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\user\\bank-accounts\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.820Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\user\\payment-methods\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.821Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\users\\[id]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.821Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\commissions\\payouts\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.821Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\notifications\\queue\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.822Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\payouts\\process\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.822Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\payments\\khipu\\create\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.822Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\payments\\khipu\\notify\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.822Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\callback\\firmapro\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\callback\\trustfactory\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\[id]\\cancel\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\signatures\\[id]\\download\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\tickets\\[id]\\comments\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\user\\bank-accounts\\[accountId]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\admin\\integrations\\[id]\\test\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.823Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\deposits\\refunds\\[id]\\receipt\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.824Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\payments\\khipu\\status\\[paymentId]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.825Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\user\\bank-accounts\\[accountId]\\verify\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.826Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "API sin validación de entrada: src\\app\\api\\deposits\\refunds\\[id]\\documents\\[docId]\\route.ts",
+        "description": "Considerar usar Zod para validación",
+        "timestamp": "2025-09-04T04:00:13.826Z",
+        "severity": "medium"
+      },
+      {
+        "category": "INCOMPLETE_API_ENDPOINT",
+        "title": "Endpoint con solo manejo de error en src\\app\\api\\documents\\upload\\route.ts",
+        "description": "Implementar respuesta de éxito",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "medium"
+      },
+      {
+        "category": "INCOMPLETE_API_ENDPOINT",
+        "title": "Endpoint con solo manejo de error en src\\app\\api\\signatures\\callback\\firmapro\\route.ts",
+        "description": "Implementar respuesta de éxito",
+        "timestamp": "2025-09-04T04:00:13.912Z",
+        "severity": "medium"
+      },
+      {
+        "category": "INCOMPLETE_API_ENDPOINT",
+        "title": "Endpoint con solo manejo de error en src\\app\\api\\signatures\\callback\\trustfactory\\route.ts",
+        "description": "Implementar respuesta de éxito",
+        "timestamp": "2025-09-04T04:00:13.912Z",
+        "severity": "medium"
+      },
+      {
+        "category": "INCOMPLETE_API_ENDPOINT",
+        "title": "Endpoint con solo manejo de error en src\\app\\api\\support\\legal-cases\\[id]\\route.ts",
+        "description": "Implementar respuesta de éxito",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "medium"
+      },
+      {
+        "category": "UNBALANCED_TRY_CATCH",
+        "title": "Try/catch desbalanceado en src\\lib\\cache-manager.ts",
+        "description": "6 try vs 5 catch",
+        "timestamp": "2025-09-04T04:00:14.009Z",
+        "severity": "medium"
+      },
+      {
+        "category": "UNBALANCED_TRY_CATCH",
+        "title": "Try/catch desbalanceado en src\\lib\\logger.ts",
+        "description": "10 try vs 8 catch",
+        "timestamp": "2025-09-04T04:00:14.013Z",
+        "severity": "medium"
+      },
+      {
+        "category": "UNBALANCED_TRY_CATCH",
+        "title": "Try/catch desbalanceado en src\\lib\\rate-limiter.ts",
+        "description": "1 try vs 0 catch",
+        "timestamp": "2025-09-04T04:00:14.018Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\audit-logs\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.146Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\email-templates\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.147Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\ml\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.148Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\notifications\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.148Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\settings\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.149Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\analytics\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.150Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\bank-config\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.151Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\commissions\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.151Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\database-stats\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.152Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\executive-dashboard\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.153Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\integrations\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.153Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\performance\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.154Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\system-metrics\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.155Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\system-stats\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.155Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\auth\\logout\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.155Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\auth\\me\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.155Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\auth\\refresh\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.155Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\broker\\commissions\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.156Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\contracts\\list\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.156Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\notifications\\[id]\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.157Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\payments\\list\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.157Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\properties\\filters\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.158Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\properties\\list\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.159Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\properties\\[id]\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.159Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\provider\\dashboard\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.159Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\webhook\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.159Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\[id]\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.160Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\tenant\\dashboard\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.160Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\tickets\\[id]\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.160Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\user\\bank-accounts\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.160Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\user\\payment-methods\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.160Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\users\\[id]\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.161Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\commissions\\payouts\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.161Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\notifications\\queue\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.162Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\payouts\\process\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.162Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\payments\\khipu\\create\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.162Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\payments\\khipu\\notify\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.162Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\callback\\firmapro\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.163Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\callback\\trustfactory\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.163Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\[id]\\cancel\\route.ts",
+        "description": "Parámetros sin validar: id",
+        "timestamp": "2025-09-04T04:00:14.163Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\signatures\\[id]\\download\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.163Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\tickets\\[id]\\comments\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.163Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\user\\bank-accounts\\[accountId]\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.164Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\admin\\integrations\\[id]\\test\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.164Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\deposits\\refunds\\[id]\\receipt\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.165Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\payments\\khipu\\status\\[paymentId]\\route.ts",
+        "description": "Parámetros sin validar: id, email",
+        "timestamp": "2025-09-04T04:00:14.166Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\user\\bank-accounts\\[accountId]\\verify\\route.ts",
+        "description": "Parámetros sin validar: userId, id",
+        "timestamp": "2025-09-04T04:00:14.167Z",
+        "severity": "medium"
+      },
+      {
+        "category": "MISSING_INPUT_VALIDATION",
+        "title": "Validación faltante para parámetros en src\\app\\api\\deposits\\refunds\\[id]\\documents\\[docId]\\route.ts",
+        "description": "Parámetros sin validar: userId, id, email",
+        "timestamp": "2025-09-04T04:00:14.167Z",
+        "severity": "medium"
+      }
+    ],
+    "low": [
+      {
+        "category": "MISSING_DEFAULT",
+        "title": "Switch sin caso default en src/lib/commission-service.ts",
+        "description": "Agregar caso default para manejo de valores inesperados",
+        "timestamp": "2025-09-04T04:00:13.558Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_DEFAULT",
+        "title": "Switch sin caso default en src/lib/fraud-detection.ts",
+        "description": "Agregar caso default para manejo de valores inesperados",
+        "timestamp": "2025-09-04T04:00:13.561Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\lib\\bank-integrations\\base-bank-integration.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.680Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\layout.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.685Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.686Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\contact\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.688Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\demo-fase1\\page.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.688Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\documents\\page.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.688Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\features\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.689Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\offline\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.689Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\register-provider\\page.tsx",
+        "description": "11 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.690Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\[locale]\\layout.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.691Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\analytics\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.691Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\audit-logs\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.692Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\backup\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.692Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\contractors\\page.tsx",
+        "description": "12 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.693Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\contracts\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.694Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\dashboard\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.694Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\database-stats\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.695Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\executive-dashboard\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.695Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\integrations\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.695Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\maintenance\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.696Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\notifications-enhanced\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.696Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\payments\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.697Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\predictive-analytics\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.697Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\properties\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.697Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\providers\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.698Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\reports\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.698Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\signatures\\page.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.698Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\system-health\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.698Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\tickets\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.699Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\users\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.699Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\contracts\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.700Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\health\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.701Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\notifications\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.702Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\payments\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.702Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\properties\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.702Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\refunds\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.703Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\signatures\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.703Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\tickets\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.704Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\users\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.704Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\auth\\register\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.705Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\analytics\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.706Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\appointments\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.706Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\clients\\page.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.707Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\commissions\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.708Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\contracts\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.708Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\dashboard\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.709Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\maintenance\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.709Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\messages\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.710Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\properties\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.710Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\reports\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.710Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\settings\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.711Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\analytics\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.711Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\contracts\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.711Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\dashboard\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.711Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\maintenance\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.712Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\messages\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.712Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\payment-reminders\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.712Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\payments\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.712Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\properties\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.713Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\property-comparison\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.713Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\reports\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.715Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\settings\\page.tsx",
+        "description": "12 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.715Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\tenants\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.716Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\properties\\search\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.716Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\dashboard\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.717Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\earnings\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.717Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\ratings\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.717Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\requests\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.717Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\services\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.718Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\provider\\settings\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.718Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\clients\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.718Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\dashboard\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.719Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\earnings\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.719Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\messages\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.719Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\photos\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.719Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\profile\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.720Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\properties\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.720Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\reports\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.721Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\schedule\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.721Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\settings\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.722Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\tasks\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.722Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\visits\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.723Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\dashboard\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.723Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\knowledge\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.723Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\properties\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.724Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\reports\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.725Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\settings\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.725Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\tickets\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.725Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\users\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.725Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\advanced-search\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.725Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\contracts\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.726Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\maintenance\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.726Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\messages\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.726Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\payments\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.726Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\ratings\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.726Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\settings\\page.tsx",
+        "description": "12 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.727Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\payments\\pending\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.727Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\payments\\reports\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.728Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\properties\\pending\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.729Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\properties\\reported\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.729Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\reports\\financial\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.729Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\reports\\properties\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.730Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\reports\\users\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.730Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\admin\\settings\\enhanced\\page.tsx",
+        "description": "11 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.731Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\analytics\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\backups\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\bank-config\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\commissions\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\database-stats\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\executive-dashboard\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.732Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\integrations\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.733Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\notification-templates\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.733Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\payouts\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.733Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\performance\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.733Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\settings\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.734Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\system-metrics\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.735Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\system-stats\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.735Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\auth\\login\\route.ts",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.736Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\auth\\register\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.736Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\broker\\commissions\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.737Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\contracts\\list\\route.ts",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.737Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\contracts\\sign\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.737Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\contracts\\[id]\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.737Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\notifications\\[id]\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.738Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\payments\\list\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\payments\\provider\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\properties\\filters\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\properties\\list\\route.ts",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\provider\\dashboard\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\signatures\\webhook\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.739Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\signatures\\[id]\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\support\\legal-cases\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\tenant\\dashboard\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\user\\bank-accounts\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\user\\payment-methods\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\users\\favorites\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.740Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\clients\\active\\page.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.741Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\clients\\prospects\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.742Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\broker\\properties\\new\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.743Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\payments\\pending\\page.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.743Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\payments\\reports\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.743Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\owner\\properties\\new\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.744Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\reports\\conversions\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.744Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\reports\\performance\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.744Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\reports\\visits\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.744Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\runner\\visits\\new\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.745Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\reports\\resolved\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.745Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\reports\\response-time\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.745Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\reports\\satisfaction\\page.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.746Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\tickets\\new\\page.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.746Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\support\\tickets\\[id]\\page.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.746Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\payments\\methods\\page.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.746Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\tenant\\payments\\upcoming\\page.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.746Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\commissions\\payouts\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.747Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\notifications\\queue\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.747Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\admin\\payouts\\process\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.747Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\signatures\\[id]\\cancel\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.750Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\signatures\\[id]\\download\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.750Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\support\\legal-cases\\[id]\\route.ts",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.750Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\user\\bank-accounts\\[accountId]\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.751Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\app\\api\\user\\bank-accounts\\[accountId]\\verify\\route.ts",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.753Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\BackupManager.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.754Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\MonitoringDashboard.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.754Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\PerformanceMonitor.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.754Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\SystemMetricsDashboard.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.754Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\SystemSettings.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.755Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\admin\\SystemStats.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.755Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\ai\\Chatbot.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.756Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\analytics\\PredictiveAnalytics.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.757Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\calendar\\AppointmentForm.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.757Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\chat\\RealTimeChat.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.758Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\commissions\\CommissionCalculator.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.758Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\contracts\\ElectronicSignature.tsx",
+        "description": "9 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.758Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\dashboard\\EnhancedDashboardLayout.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.759Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\documents\\DigitalSignature.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.760Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\documents\\DocumentManager.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.760Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\documents\\DocumentUpload.tsx",
+        "description": "11 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.760Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\forms\\RecordForm.tsx",
+        "description": "10 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.760Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\layout\\UnifiedSidebar.tsx",
+        "description": "5 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.761Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\legal\\LegalCasesDashboard.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.761Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\legal\\LegalCasesManagement.tsx",
+        "description": "11 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.762Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\ml\\PropertyPricePredictor.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.763Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\notifications\\NotificationSystem.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.764Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\notifications\\RealTimeNotifications.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.764Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\notifications\\ToastNotifications.tsx",
+        "description": "4 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.764Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\payments\\KhipuPayment.tsx",
+        "description": "8 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.765Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\pwa\\PWAInstallPrompt.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.765Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\refunds\\RefundManagement.tsx",
+        "description": "11 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.765Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\signatures\\SignatureManagement.tsx",
+        "description": "13 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.765Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\support\\LegalCasesSupportDashboard.tsx",
+        "description": "6 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.766Z",
+        "severity": "low"
+      },
+      {
+        "category": "COMPLEX_IMPORTS",
+        "title": "Imports complejos en src\\components\\ui\\data-table.tsx",
+        "description": "7 imports que podrían simplificarse",
+        "timestamp": "2025-09-04T04:00:13.768Z",
+        "severity": "low"
+      },
+      {
+        "category": "EMPTY_CLICK_HANDLER",
+        "title": "Handler vacío en src\\components\\notifications\\NotificationSystem.tsx",
+        "description": "Implementar funcionalidad del botón",
+        "timestamp": "2025-09-04T04:00:13.852Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\audit-logs\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.897Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contractors\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.897Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contracts\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.897Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\email-templates\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.898Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\health\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.898Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\maintenance\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.898Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\messages\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.898Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\ml\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.898Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\notifications\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.899Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.899Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\properties\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.899Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\refunds\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.899Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\settings\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.899Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\tickets\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\users\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\__tests__\\auth.test.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\__tests__\\contracts.test.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\__tests__\\monitoring.test.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\__tests__\\properties.test.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.900Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\analytics\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.901Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\backups\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.901Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\database-stats\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.902Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\deposit-refunds\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.902Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\executive-dashboard\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.903Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\integrations\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.903Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\legal-cases\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.903Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\notification-templates\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.903Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\performance\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.903Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\platform-config\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.904Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\providers\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.904Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\settings\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.904Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\system-metrics\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.904Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\system-stats\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\login\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\logout\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\me\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\refresh\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\register\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\auth\\register-provider\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.905Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contractors\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contracts\\list\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contracts\\sign\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\contracts\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\documents\\upload\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\legal\\cases\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.906Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\maintenance\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\notifications\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\list\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\provider\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\properties\\filters\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\properties\\list\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\properties\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.907Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\provider\\dashboard\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.908Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\signatures\\webhook\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.908Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\support\\legal-cases\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.909Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\tenant\\dashboard\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.909Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\tickets\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.910Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\users\\favorites\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.910Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\users\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.910Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\deposit-refunds\\approve\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.911Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\deposit-refunds\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.911Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\legal-cases\\extrajudicial-notices\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.911Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\legal-cases\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.911Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.912Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\khipu\\create\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.912Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\khipu\\notify\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.912Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\signatures\\[id]\\cancel\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\support\\legal-cases\\[id]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\tickets\\[id]\\comments\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\admin\\integrations\\[id]\\test\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\approve\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\disputes\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.913Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\documents\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.914Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\process\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.914Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\receipt\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.914Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\legal\\cases\\[id]\\court-proceedings\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.914Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\legal\\cases\\[id]\\extrajudicial\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.914Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\payments\\khipu\\status\\[paymentId]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.915Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\disputes\\[disputeId]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.916Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_API_DOCS",
+        "title": "API sin documentación: src\\app\\api\\deposits\\refunds\\[id]\\documents\\[docId]\\route.ts",
+        "description": "Agregar JSDoc al endpoint",
+        "timestamp": "2025-09-04T04:00:13.916Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\lib\\input-validation.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.011Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\lib\\rut-validation.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.018Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\register-provider\\page.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.030Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\admin\\executive-dashboard\\page.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.034Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\admin\\signatures\\page.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.037Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\contractors\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.038Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\maintenance\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.039Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\tenant\\dashboard\\page.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.063Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\platform-config\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.072Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\providers\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.072Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\auth\\register-provider\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.074Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\contractors\\[id]\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.074Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\maintenance\\[id]\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.077Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\deposit-refunds\\approve\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.086Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\deposit-refunds\\[id]\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.086Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\legal-cases\\extrajudicial-notices\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.086Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\legal-cases\\[id]\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.087Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\signatures\\[id]\\cancel\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.088Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\app\\api\\admin\\integrations\\[id]\\test\\route.ts",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.089Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\BackupManager.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.092Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\MonitoringDashboard.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.093Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\PerformanceMonitor.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.093Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\SystemMetricsDashboard.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.093Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\SystemSettings.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.093Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\admin\\SystemStats.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.094Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\ai\\Chatbot.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.094Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\chat\\RealTimeChat.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.095Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\legal\\LegalCasesDashboard.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.099Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\ml\\PropertyPricePredictor.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.100Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_ERROR_LOGGING",
+        "title": "Catch sin logging en src\\components\\support\\LegalCasesSupportDashboard.tsx",
+        "description": "Agregar logger.error en bloques catch",
+        "timestamp": "2025-09-04T04:00:14.101Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\access-control.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.357Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\audit.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.358Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\commission-service.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.358Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\db-optimizer.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.358Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\math-validation.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.360Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\notification-service.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.360Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\payment-config.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.361Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\payout-service.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.361Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\query-optimization.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.362Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\ml\\predictions-clean.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.362Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\ml\\predictions.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.362Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\lib\\signature\\signature.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.362Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\contractors\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.363Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\contracts\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.363Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\email-templates\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.363Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\maintenance\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.363Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\messages\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.363Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\payments\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.364Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\refunds\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.364Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\settings\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.364Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\signatures\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.364Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\tickets\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.364Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\__tests__\\contracts.test.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.365Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\__tests__\\properties.test.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.365Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\analytics\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.365Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\database-stats\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.365Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\deposit-refunds\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.365Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\executive-dashboard\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.366Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\integrations\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.366Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\legal-cases\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.366Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\platform-config\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.367Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\providers\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.368Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\settings\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.368Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\system-stats\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.368Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\contracts\\list\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.370Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\contracts\\sign\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.370Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\deposits\\refunds\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.370Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\documents\\upload\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\legal\\cases\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\payments\\list\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\payments\\provider\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\properties\\filters\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.371Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\properties\\list\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.372Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\provider\\dashboard\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.372Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\support\\legal-cases\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.372Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\tenant\\dashboard\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.372Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\users\\favorites\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.373Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\deposit-refunds\\approve\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.374Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\admin\\legal-cases\\extrajudicial-notices\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.375Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\payments\\khipu\\notify\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.375Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\tickets\\[id]\\comments\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.376Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\deposits\\refunds\\[id]\\disputes\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.377Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\deposits\\refunds\\[id]\\documents\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.377Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\legal\\cases\\[id]\\court-proceedings\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.378Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\legal\\cases\\[id]\\extrajudicial\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.378Z",
+        "severity": "low"
+      },
+      {
+        "category": "MISSING_QUERY_TIMEOUT",
+        "title": "Consulta sin timeout en src\\app\\api\\payments\\khipu\\status\\[paymentId]\\route.ts",
+        "description": "Considerar agregar timeout para evitar consultas colgantes",
+        "timestamp": "2025-09-04T04:00:14.378Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: @anthropic-ai/sdk@^0.17.1",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: @google/generative-ai@^0.14.1",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: class-variance-authority@^0.7.0",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: lucide-react@^0.294.0",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: next-themes@^0.2.1",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      },
+      {
+        "category": "UNSTABLE_DEPENDENCY_VERSION",
+        "title": "Versión inestable de dependencia: sharp@^0.33.0",
+        "description": "Considerar usar versiones más estables",
+        "timestamp": "2025-09-04T04:00:14.384Z",
+        "severity": "low"
+      }
+    ],
+    "info": []
+  },
+  "summary": {
+    "critical": 0,
+    "high": 18,
+    "medium": 108,
+    "low": 367,
+    "info": 0,
+    "total": 493
+  }
+}

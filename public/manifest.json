@@ -1,0 +1,162 @@
+{
+  "name": "Rent360 - Plataforma de Arrendamiento Inteligente",
+  "short_name": "Rent360",
+  "description": "Plataforma completa de arrendamiento con gestión de propiedades, contratos, pagos y servicios de mantenimiento. Funciona offline.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "categories": ["business", "finance", "lifestyle"],
+  "iarc_rating_id": "",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buscar Propiedades",
+      "short_name": "Buscar",
+      "description": "Buscar propiedades disponibles",
+      "url": "/properties/search",
+      "icons": [
+        {
+          "src": "/icons/search-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Mis Contratos",
+      "short_name": "Contratos",
+      "description": "Ver mis contratos activos",
+      "url": "/tenant/contracts",
+      "icons": [
+        {
+          "src": "/icons/contracts-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Realizar Pago",
+      "short_name": "Pagar",
+      "description": "Realizar pago de renta",
+      "url": "/tenant/payments",
+      "icons": [
+        {
+          "src": "/icons/payment-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Reportar Problema",
+      "short_name": "Mantenimiento",
+      "description": "Reportar problema de mantenimiento",
+      "url": "/tenant/maintenance",
+      "icons": [
+        {
+          "src": "/icons/maintenance-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Página principal de Rent360"
+    },
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Página principal móvil de Rent360"
+    },
+    {
+      "src": "/screenshots/desktop-properties.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Búsqueda de propiedades"
+    },
+    {
+      "src": "/screenshots/mobile-properties.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Búsqueda de propiedades móvil"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+rent360",
+      "url": "/?property=%s"
+    }
+  ]
+}

@@ -1,0 +1,987 @@
+openapi: 3.0.3
+info:
+  title: Rent360 API
+  description: API completa para la plataforma de gestión inmobiliaria Rent360
+  version: 1.0.0
+  contact:
+    name: Rent360 Support
+    email: support@rent360.cl
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.rent360.cl/v1
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Authentication
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        200:
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        401:
+          description: Credenciales inválidas
+
+  /auth/register:
+    post:
+      summary: Registrar nuevo usuario
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        201:
+          description: Registro exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        400:
+          description: Datos inválidos
+        409:
+          description: Usuario ya existe
+
+  /auth/me:
+    get:
+      summary: Obtener información del usuario actual
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Información del usuario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        401:
+          description: No autorizado
+
+  # Properties
+  /properties:
+    get:
+      summary: Listar propiedades
+      tags: [Properties]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+      responses:
+        200:
+          description: Lista de propiedades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Property'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Crear nueva propiedad
+      tags: [Properties]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePropertyRequest'
+      responses:
+        201:
+          description: Propiedad creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        400:
+          description: Datos inválidos
+
+  /properties/{id}:
+    get:
+      summary: Obtener propiedad por ID
+      tags: [Properties]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Propiedad encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        404:
+          description: Propiedad no encontrada
+
+    put:
+      summary: Actualizar propiedad
+      tags: [Properties]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePropertyRequest'
+      responses:
+        200:
+          description: Propiedad actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        403:
+          description: No autorizado
+        404:
+          description: Propiedad no encontrada
+
+    delete:
+      summary: Eliminar propiedad
+      tags: [Properties]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Propiedad eliminada
+        403:
+          description: No autorizado
+        404:
+          description: Propiedad no encontrada
+
+  # Contracts
+  /contracts:
+    get:
+      summary: Listar contratos
+      tags: [Contracts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, COMPLETED, EXPIRED, TERMINATED, CANCELLED]
+      responses:
+        200:
+          description: Lista de contratos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contract'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Crear nuevo contrato
+      tags: [Contracts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        201:
+          description: Contrato creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        400:
+          description: Datos inválidos
+        403:
+          description: No autorizado
+
+  # Payments
+  /payments:
+    get:
+      summary: Listar pagos
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+      responses:
+        200:
+          description: Lista de pagos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Crear nuevo pago
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        201:
+          description: Pago creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        400:
+          description: Datos inválidos
+
+  # Signatures
+  /signatures:
+    get:
+      summary: Listar firmas
+      tags: [Signatures]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, EXPIRED, CANCELLED]
+      responses:
+        200:
+          description: Lista de firmas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SignatureRequest'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Crear nueva solicitud de firma
+      tags: [Signatures]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSignatureRequest'
+      responses:
+        201:
+          description: Solicitud de firma creada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  signatureId:
+                    type: string
+                  status:
+                    type: string
+                  provider:
+                    type: string
+        400:
+          description: Datos inválidos
+
+  /signatures/{id}/send:
+    post:
+      summary: Enviar solicitud de firma
+      tags: [Signatures]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  enum: [trustfactory, firmapro, digitalsign]
+                message:
+                  type: string
+      responses:
+        200:
+          description: Firma enviada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  signatureId:
+                    type: string
+                  provider:
+                    type: string
+        404:
+          description: Firma no encontrada
+
+  # Health Check
+  /health:
+    get:
+      summary: Health check del sistema
+      tags: [System]
+      responses:
+        200:
+          description: Sistema operativo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  responseTime:
+                    type: number
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          responseTime:
+                            type: number
+                      cache:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          memoryUsage:
+                            type: number
+                          hitRate:
+                            type: number
+                      system:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                          memoryUsage:
+                            type: object
+                            properties:
+                              heapUsed:
+                                type: number
+                              heapTotal:
+                                type: number
+                              external:
+                                type: number
+                              rss:
+                                type: number
+                          uptime:
+                            type: number
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, OWNER, TENANT, BROKER, RUNNER, SUPPORT]
+        isActive:
+          type: boolean
+        avatar:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - role
+        - rut
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [owner, tenant, broker, runner]
+        rut:
+          type: string
+        phone:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        commune:
+          type: string
+        region:
+          type: string
+        phoneSecondary:
+          type: string
+        emergencyContact:
+          type: string
+        emergencyPhone:
+          type: string
+
+    Property:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        commune:
+          type: string
+        region:
+          type: string
+        price:
+          type: number
+        deposit:
+          type: number
+        bedrooms:
+          type: number
+        bathrooms:
+          type: number
+        area:
+          type: number
+        type:
+          type: string
+          enum: [APARTMENT, HOUSE, STUDIO, ROOM, COMMERCIAL]
+        status:
+          type: string
+          enum: [AVAILABLE, RENTED, PENDING, MAINTENANCE]
+        ownerId:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePropertyRequest:
+      type: object
+      required:
+        - title
+        - description
+        - address
+        - city
+        - commune
+        - region
+        - price
+        - deposit
+        - bedrooms
+        - bathrooms
+        - area
+        - type
+      properties:
+        title:
+          type: string
+          minLength: 5
+        description:
+          type: string
+          minLength: 10
+        address:
+          type: string
+          minLength: 5
+        city:
+          type: string
+          minLength: 2
+        commune:
+          type: string
+          minLength: 2
+        region:
+          type: string
+          minLength: 2
+        price:
+          type: number
+          minimum: 0
+        deposit:
+          type: number
+          minimum: 0
+        bedrooms:
+          type: number
+          minimum: 0
+        bathrooms:
+          type: number
+          minimum: 0
+        area:
+          type: number
+          minimum: 0
+        type:
+          type: string
+          enum: [APARTMENT, HOUSE, STUDIO, ROOM, COMMERCIAL]
+        features:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            type: string
+
+    UpdatePropertyRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+        description:
+          type: string
+          minLength: 10
+        address:
+          type: string
+          minLength: 5
+        price:
+          type: number
+          minimum: 0
+        deposit:
+          type: number
+          minimum: 0
+        features:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [AVAILABLE, RENTED, PENDING, MAINTENANCE]
+
+    Contract:
+      type: object
+      properties:
+        id:
+          type: string
+        contractNumber:
+          type: string
+        propertyId:
+          type: string
+        tenantId:
+          type: string
+        ownerId:
+          type: string
+        brokerId:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        monthlyRent:
+          type: number
+        deposit:
+          type: number
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, COMPLETED, EXPIRED, TERMINATED, CANCELLED]
+        terms:
+          type: string
+        signedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateContractRequest:
+      type: object
+      required:
+        - propertyId
+        - tenantId
+        - startDate
+        - endDate
+        - rentAmount
+        - depositAmount
+        - terms
+      properties:
+        propertyId:
+          type: string
+        tenantId:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        rentAmount:
+          type: number
+          minimum: 0
+        depositAmount:
+          type: number
+          minimum: 0
+        terms:
+          type: string
+          minLength: 10
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        paymentNumber:
+          type: string
+        contractId:
+          type: string
+        payerId:
+          type: string
+        amount:
+          type: number
+        dueDate:
+          type: string
+          format: date-time
+        paidDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+        method:
+          type: string
+          enum: [khipu, stripe, paypal, webpay, transfer]
+        transactionId:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePaymentRequest:
+      type: object
+      required:
+        - contractId
+        - amount
+        - dueDate
+      properties:
+        contractId:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+        dueDate:
+          type: string
+          format: date-time
+        method:
+          type: string
+          enum: [khipu, stripe, paypal, webpay, transfer]
+        notes:
+          type: string
+
+    SignatureRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        documentId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED, EXPIRED, CANCELLED]
+        provider:
+          type: string
+        signers:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+              name:
+                type: string
+              role:
+                type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateSignatureRequest:
+      type: object
+      required:
+        - documentId
+        - documentName
+        - documentHash
+        - signers
+      properties:
+        documentId:
+          type: string
+        documentName:
+          type: string
+        documentHash:
+          type: string
+        signers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - email
+              - name
+            properties:
+              email:
+                type: string
+                format: email
+              name:
+                type: string
+              rut:
+                type: string
+              phone:
+                type: string
+              order:
+                type: number
+                minimum: 1
+              isRequired:
+                type: boolean
+                default: true
+        type:
+          type: string
+          enum: [ADVANCED, QUALIFIED]
+          default: QUALIFIED
+        provider:
+          type: string
+          enum: [trustfactory, firmapro, digitalsign]
+        expiresAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

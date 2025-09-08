@@ -1,0 +1,35 @@
+# Code owners for Rent360
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners (todos los cambios requieren revisión)
+* @rent360/maintainers
+
+# Backend/API
+src/app/api/ @rent360/backend-team
+src/lib/ @rent360/backend-team
+prisma/ @rent360/backend-team
+
+# Frontend
+src/app/ @rent360/frontend-team
+src/components/ @rent360/frontend-team
+src/hooks/ @rent360/frontend-team
+
+# Microservicios
+services/ @rent360/backend-team
+
+# Configuración
+*.config.js @rent360/devops-team
+*.config.ts @rent360/devops-team
+.github/ @rent360/devops-team
+
+# Tests
+tests/ @rent360/qa-team
+__tests__/ @rent360/qa-team
+
+# Documentación
+docs/ @rent360/docs-team
+*.md @rent360/docs-team
+
+# Security (requiere aprobación de security team)
+src/lib/security/ @rent360/security-team
+src/lib/auth/ @rent360/security-team

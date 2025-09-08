@@ -1,0 +1,167 @@
+{
+  "generated": "2025-09-04T04:07:29.618Z",
+  "unitTests": 6,
+  "integrationTests": 4,
+  "e2eTests": 4,
+  "totalTests": 14,
+  "testSuites": {
+    "unit": [
+      {
+        "name": "payout-service.test.ts",
+        "description": "Tests para el servicio de payouts",
+        "file": "src/lib/payout-service.ts",
+        "tests": [
+          "debería calcular payouts correctamente",
+          "debería validar cuenta bancaria antes del pago",
+          "debería manejar errores de integración bancaria",
+          "debería aplicar validaciones KYC",
+          "debería procesar lotes de pagos",
+          "debería evaluar riesgo de fraude"
+        ]
+      },
+      {
+        "name": "commission-service.test.ts",
+        "description": "Tests para el servicio de comisiones",
+        "file": "src/lib/commission-service.ts",
+        "tests": [
+          "debería calcular comisiones base correctamente",
+          "debería aplicar bonos y deducciones",
+          "debería validar reglas de negocio",
+          "debería manejar diferentes tipos de contrato"
+        ]
+      },
+      {
+        "name": "kyc-service.test.ts",
+        "description": "Tests para el servicio KYC",
+        "file": "src/lib/kyc-service.ts",
+        "tests": [
+          "debería verificar email correctamente",
+          "debería verificar teléfono correctamente",
+          "debería validar documentos KYC",
+          "debería determinar elegibilidad por rol",
+          "debería manejar diferentes niveles KYC"
+        ]
+      },
+      {
+        "name": "bank-account-service.test.ts",
+        "description": "Tests para el servicio de cuentas bancarias",
+        "file": "src/lib/bank-account-service.ts",
+        "tests": [
+          "debería registrar cuenta bancaria correctamente",
+          "debería verificar cuenta con bancos",
+          "debería validar formato de cuenta chileno",
+          "debería manejar errores de verificación"
+        ]
+      },
+      {
+        "name": "fraud-detection.test.ts",
+        "description": "Tests para detección de fraude",
+        "file": "src/lib/fraud-detection.ts",
+        "tests": [
+          "debería detectar patrones de velocidad",
+          "debería evaluar riesgo de montos",
+          "debería analizar ubicación del usuario",
+          "debería validar dispositivo",
+          "debería calcular score de riesgo"
+        ]
+      },
+      {
+        "name": "ai-chatbot-service.test.ts",
+        "description": "Tests para el servicio de IA del chatbot",
+        "file": "src/lib/ai-chatbot-service.ts",
+        "tests": [
+          "debería procesar mensajes correctamente",
+          "debería aplicar restricciones de seguridad",
+          "debería manejar diferentes roles de usuario",
+          "debería validar respuestas seguras"
+        ]
+      }
+    ],
+    "integration": [
+      {
+        "name": "bank-integrations.test.ts",
+        "description": "Tests de integración con bancos",
+        "tests": [
+          "WebPay debería procesar pagos correctamente",
+          "Banco Estado debería verificar cuentas",
+          "PayPal debería manejar transferencias",
+          "Stripe debería procesar pagos internacionales",
+          "debería manejar fallos de conectividad bancaria"
+        ]
+      },
+      {
+        "name": "payout-workflow.test.ts",
+        "description": "Tests del flujo completo de payouts",
+        "tests": [
+          "debería procesar payout completo desde cálculo hasta pago",
+          "debería manejar reintentos automáticos",
+          "debería notificar al usuario sobre el pago",
+          "debería manejar errores en el flujo completo"
+        ]
+      },
+      {
+        "name": "auth-workflow.test.ts",
+        "description": "Tests del flujo de autenticación",
+        "tests": [
+          "debería registrar usuario correctamente",
+          "debería autenticar usuario válido",
+          "debería manejar intentos de login fallidos",
+          "debería renovar tokens JWT correctamente"
+        ]
+      },
+      {
+        "name": "contract-workflow.test.ts",
+        "description": "Tests del flujo de contratos",
+        "tests": [
+          "debería crear contrato correctamente",
+          "debería procesar firma electrónica",
+          "debería manejar workflow de aprobación",
+          "debería notificar partes involucradas"
+        ]
+      }
+    ],
+    "e2e": [
+      {
+        "name": "user-registration-flow.test.ts",
+        "description": "Flujo completo de registro de usuario",
+        "tests": [
+          "usuario debería poder registrarse",
+          "debería recibir email de confirmación",
+          "debería poder verificar email",
+          "debería poder completar perfil"
+        ]
+      },
+      {
+        "name": "property-rental-flow.test.ts",
+        "description": "Flujo completo de arriendo de propiedad",
+        "tests": [
+          "inquilino debería poder buscar propiedades",
+          "debería poder ver detalles de propiedad",
+          "debería poder iniciar proceso de arriendo",
+          "debería poder firmar contrato digitalmente",
+          "debería poder realizar pago inicial"
+        ]
+      },
+      {
+        "name": "payout-processing-flow.test.ts",
+        "description": "Flujo completo de procesamiento de payouts",
+        "tests": [
+          "propietario debería poder configurar cuenta bancaria",
+          "sistema debería calcular comisiones automáticamente",
+          "debería procesar payout en fecha programada",
+          "usuario debería recibir notificación de pago"
+        ]
+      },
+      {
+        "name": "admin-dashboard-flow.test.ts",
+        "description": "Flujo del dashboard administrativo",
+        "tests": [
+          "admin debería poder acceder al dashboard",
+          "debería poder ver métricas en tiempo real",
+          "debería poder gestionar usuarios",
+          "debería poder configurar sistema"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+# Cloudflare Pages Configuration for Rent360
+# Location: wrangler.toml or cloudflare pages config
+
+name = "rent360-prod"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "npm run build"
+cwd = "."
+
+[build.upload]
+format = "service-worker"
+
+# Environment variables for Cloudflare Pages
+[vars]
+NODE_ENV = "production"
+NEXT_PUBLIC_APP_URL = "https://rent360.pages.dev"
+NEXT_PUBLIC_API_URL = "https://api.rent360.cl"
+
+# =====================================================
+# CLOUDFLARE PAGES FUNCTIONS (API Routes)
+# =====================================================
+
+[[pages_build_output]]
+# API routes will be handled by Next.js API routes
+# No additional configuration needed for basic setup
+
+# =====================================================
+# CLOUDFLARE WORKER CONFIGURATION
+# =====================================================
+
+# Build configuration is already defined above
+
+# =====================================================
+# CDN OPTIMIZATION RULES
+# =====================================================
+
+# Page Rules for CDN optimization
+[[page_rules]]
+# Static assets caching
+targets = ["https://rent360.pages.dev/_next/static/*"]
+actions = [
+  { type = "cache_level", value = "cache_everything" },
+  { type = "edge_cache_ttl", value = 31536000 }, # 1 year
+  { type = "browser_cache_ttl", value = 31536000 }
+]
+
+[[page_rules]]
+# Images and media caching
+targets = ["https://rent360.pages.dev/uploads/*", "https://rent360.pages.dev/images/*"]
+actions = [
+  { type = "cache_level", value = "cache_everything" },
+  { type = "edge_cache_ttl", value = 86400 }, # 24 hours
+  { type = "browser_cache_ttl", value = 86400 }
+]
+
+[[page_rules]]
+# API responses caching (selective)
+targets = ["https://rent360.pages.dev/api/public/*"]
+actions = [
+  { type = "cache_level", value = "cache_everything" },
+  { type = "edge_cache_ttl", value = 300 }, # 5 minutes
+  { type = "browser_cache_ttl", value = 0 }
+]
+
+# =====================================================
+# CLOUDFLARE WORKERS (Optional - for advanced caching)
+# =====================================================
+
+# This would be in a separate workers script if needed
+# export default {
+#   async fetch(request, env) {
+#     // Custom caching logic for dynamic content
+#     const url = new URL(request.url);
+#
+#     // Cache API responses based on user authentication
+#     if (url.pathname.startsWith('/api/')) {
+#       // Custom caching logic here
+#     }
+#
+#     return fetch(request);
+#   }
+# }
