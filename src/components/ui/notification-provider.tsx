@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { NotificationToast, NotificationType } from './notification-toast';
+import { SplashScreen } from './SplashScreen';
 
 interface Notification {
   id: string;
@@ -47,6 +48,24 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   maxNotifications = 5
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showSplash, setShowSplash] = useState<boolean>(false);
+
+  // Splash solo al ingresar a la web (no en cada cambio de ruta)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const afterLogin = sessionStorage.getItem('r360_splash_after_login');
+    if (afterLogin) {
+      setShowSplash(true);
+      sessionStorage.removeItem('r360_splash_after_login');
+      return;
+    }
+
+    const alreadyShown = sessionStorage.getItem('r360_splash_initial_shown');
+    if (!alreadyShown) {
+      setShowSplash(true);
+      sessionStorage.setItem('r360_splash_initial_shown', '1');
+    }
+  }, []);
 
   const generateId = () => `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -135,6 +154,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   return (
     <NotificationContext.Provider value={value}>
+      <SplashScreen
+        logoUrl={"https://drive.google.com/uc?export=view&id=10rtMEqpt555yXDfKyOsIObrrAltnCh3I"}
+        visible={showSplash}
+        onHidden={() => setShowSplash(false)}
+      />
       {children}
 
       {/* Portal para notificaciones */}

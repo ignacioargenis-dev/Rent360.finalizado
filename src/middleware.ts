@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
           status: rateLimitResult.statusCode || 429,
           headers: {
             'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
-            'X-RateLimit-Limit': rateLimitResult.limit?.toString() || '100',
+            'X-RateLimit-Limit': (process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
             'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
             'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
           }
@@ -93,8 +93,8 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
 
     // Headers de rate limiting informativos
-    const limit = rateLimitResult.limit || 100;
-    const remaining = Math.max(0, limit - (rateLimitResult.count || 0));
+    const limit = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 100);
+    const remaining = Math.max(0, rateLimitResult.remaining);
     const resetTime = rateLimitResult.resetTime || (Date.now() + 900000); // 15 min por defecto
 
     response.headers.set('X-RateLimit-Limit', limit.toString());
@@ -179,6 +179,8 @@ export async function middleware(request: NextRequest) {
     // En caso de error, permitir que la solicitud continúe
     return NextResponse.next();
   }
+  // Fallback explícito para satisfacer el tipo de retorno
+  return NextResponse.next();
 }
 
 export const config = {

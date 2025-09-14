@@ -40,6 +40,9 @@ export default function LoginPage() {
       if (response.ok) {
         // Redirigir al dashboard correspondiente
         const dashboardUrl = getDashboardUrl(data.user.role);
+        try {
+          sessionStorage.setItem('r360_splash_after_login', '1');
+        } catch {}
         router.push(dashboardUrl);
         router.refresh();
       } else {

@@ -57,7 +57,7 @@ const nextConfig = {
   },
   // Configuración optimizada de imágenes
   images: {
-    domains: ['ui-avatars.com', 'localhost', 'rent360.cl', 's3.amazonaws.com'],
+    domains: ['ui-avatars.com', 'localhost', 'rent360.cl', 's3.amazonaws.com', 'drive.google.com', 'lh3.googleusercontent.com'],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: false,
