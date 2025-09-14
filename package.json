@@ -134,7 +134,8 @@
     "vaul": "^1.1.2",
     "winston": "^3.17.0",
     "zod": "^3.25.76",
-    "autoprefixer": "^10.4.21"
+    "autoprefixer": "^10.4.21",
+    "cssnano": "^6.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
