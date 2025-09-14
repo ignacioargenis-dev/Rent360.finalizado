@@ -5,11 +5,13 @@ module.exports = {
       flexbox: 'no-2009',
       grid: 'autoplace',
     },
-    cssnano: process.env.NODE_ENV === 'production' ? {
-      preset: ['default', {
-        discardComments: { removeAll: true },
-        normalizeWhitespace: false,
-      }],
-    } : false,
+    ...(process.env.NODE_ENV === 'production' && {
+      cssnano: {
+        preset: ['default', {
+          discardComments: { removeAll: true },
+          normalizeWhitespace: false,
+        }],
+      }
+    }),
   },
 };
