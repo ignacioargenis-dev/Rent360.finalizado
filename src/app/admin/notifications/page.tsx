@@ -10,127 +10,108 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  CreditCard,
+  Mail,
+  MessageSquare,
   CheckCircle,
   AlertTriangle,
   Settings,
   Save,
   TestTube,
-  DollarSign,
-  Globe,
-  Shield,
-  Zap
+  Send,
+  Phone,
+  Bell
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
-interface PaymentProvider {
+interface NotificationProvider {
   name: string;
-  type: 'international' | 'chilean' | 'crypto';
+  type: 'email' | 'sms' | 'push';
   enabled: boolean;
   configured: boolean;
   features: {
-    creditCards: boolean;
-    bankTransfer: boolean;
-    digitalWallet: boolean;
-    recurringPayments: boolean;
-    refunds: boolean;
+    templates: boolean;
+    scheduling: boolean;
+    tracking: boolean;
+    bulk: boolean;
+    personalization: boolean;
     webhooks: boolean;
   };
   config: {
     apiKey?: string;
     apiSecret?: string;
-    webhookSecret?: string;
+    fromEmail?: string;
+    fromName?: string;
+    phoneNumber?: string;
     environment?: string;
-    receiverId?: string;
-    commerceCode?: string;
   };
 }
 
-export default function PaymentsAdminPage() {
-  const [providers, setProviders] = useState<PaymentProvider[]>([]);
+export default function NotificationsAdminPage() {
+  const [providers, setProviders] = useState<NotificationProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { success, error } = useToast();
 
-  // Proveedores de pago disponibles
-  const availableProviders: PaymentProvider[] = [
+  // Proveedores de notificaciones disponibles
+  const availableProviders: NotificationProvider[] = [
     {
-      name: 'Stripe',
-      type: 'international',
+      name: 'SendGrid',
+      type: 'email',
       enabled: false,
       configured: false,
       features: {
-        creditCards: true,
-        bankTransfer: true,
-        digitalWallet: true,
-        recurringPayments: true,
-        refunds: true,
+        templates: true,
+        scheduling: true,
+        tracking: true,
+        bulk: true,
+        personalization: true,
         webhooks: true
       },
       config: {
         apiKey: '',
-        apiSecret: '',
-        webhookSecret: '',
+        fromEmail: 'noreply@rent360.cl',
+        fromName: 'Rent360',
         environment: 'test'
       }
     },
     {
-      name: 'PayPal',
-      type: 'international',
+      name: 'Twilio',
+      type: 'sms',
       enabled: false,
       configured: false,
       features: {
-        creditCards: true,
-        bankTransfer: false,
-        digitalWallet: true,
-        recurringPayments: true,
-        refunds: true,
+        templates: true,
+        scheduling: true,
+        tracking: true,
+        bulk: true,
+        personalization: true,
         webhooks: true
       },
       config: {
         apiKey: '',
         apiSecret: '',
-        environment: 'sandbox'
-      }
-    },
-    {
-      name: 'Khipu',
-      type: 'chilean',
-      enabled: false,
-      configured: false,
-      features: {
-        creditCards: true,
-        bankTransfer: true,
-        digitalWallet: false,
-        recurringPayments: false,
-        refunds: true,
-        webhooks: true
-      },
-      config: {
-        apiKey: '',
-        apiSecret: '',
-        receiverId: '',
+        phoneNumber: '+56912345678',
         environment: 'test'
       }
     },
     {
-      name: 'WebPay',
-      type: 'chilean',
+      name: 'Firebase',
+      type: 'push',
       enabled: false,
       configured: false,
       features: {
-        creditCards: true,
-        bankTransfer: false,
-        digitalWallet: false,
-        recurringPayments: false,
-        refunds: true,
+        templates: true,
+        scheduling: true,
+        tracking: true,
+        bulk: true,
+        personalization: true,
         webhooks: true
       },
       config: {
         apiKey: '',
-        commerceCode: '',
-        environment: 'integration'
+        apiSecret: '',
+        environment: 'test'
       }
     }
   ];
@@ -152,23 +133,24 @@ export default function PaymentsAdminPage() {
           enabled: !!process.env[`${envPrefix}_API_KEY`],
           configured: !!(
             process.env[`${envPrefix}_API_KEY`] &&
-            process.env[`${envPrefix}_API_SECRET`]
+            (provider.type === 'email' ? process.env[`${envPrefix}_FROM_EMAIL`] : true) &&
+            (provider.type === 'sms' ? process.env[`${envPrefix}_PHONE_NUMBER`] : true)
           ),
           config: {
             ...provider.config,
             apiKey: process.env[`${envPrefix}_API_KEY`] || '',
             apiSecret: process.env[`${envPrefix}_API_SECRET`] || '',
-            webhookSecret: process.env[`${envPrefix}_WEBHOOK_SECRET`] || '',
-            environment: process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test',
-            receiverId: process.env[`${envPrefix}_RECEIVER_ID`] || '',
-            commerceCode: process.env[`${envPrefix}_COMMERCE_CODE`] || ''
+            fromEmail: process.env[`${envPrefix}_FROM_EMAIL`] || provider.config.fromEmail || '',
+            fromName: process.env[`${envPrefix}_FROM_NAME`] || provider.config.fromName || '',
+            phoneNumber: process.env[`${envPrefix}_PHONE_NUMBER`] || provider.config.phoneNumber || '',
+            environment: process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test'
           }
         };
       });
 
       setProviders(loadedProviders);
     } catch (err) {
-      error('Error al cargar configuración', 'No se pudo cargar la configuración de proveedores de pago');
+      error('Error al cargar configuración', 'No se pudo cargar la configuración de proveedores de notificaciones');
     } finally {
       setLoading(false);
     }
@@ -182,8 +164,8 @@ export default function PaymentsAdminPage() {
             config: { ...provider.config, [field]: value },
             configured: !!(
               provider.config.apiKey && 
-              provider.config.apiSecret &&
-              (provider.name === 'WebPay' ? provider.config.commerceCode : true)
+              (provider.type === 'email' ? provider.config.fromEmail : true) &&
+              (provider.type === 'sms' ? provider.config.phoneNumber : true)
             )
           }
         : provider
@@ -211,14 +193,14 @@ export default function PaymentsAdminPage() {
           settings: providers.map(provider => ({
             key: `${provider.name.toUpperCase()}_API_KEY`,
             value: provider.config.apiKey || '',
-            category: 'payment',
+            category: 'email',
             isEncrypted: true,
             isPublic: false
           })).concat(
             providers.map(provider => ({
               key: `${provider.name.toUpperCase()}_API_SECRET`,
               value: provider.config.apiSecret || '',
-              category: 'payment',
+              category: 'email',
               isEncrypted: true,
               isPublic: false
             }))
@@ -226,7 +208,7 @@ export default function PaymentsAdminPage() {
             providers.map(provider => ({
               key: `${provider.name.toUpperCase()}_ENVIRONMENT`,
               value: provider.config.environment || 'test',
-              category: 'payment',
+              category: 'email',
               isEncrypted: false,
               isPublic: false
             }))
@@ -238,9 +220,9 @@ export default function PaymentsAdminPage() {
         throw new Error('Error guardando configuración');
       }
 
-      success('Configuración guardada', 'Los proveedores de pago se han configurado correctamente');
+      success('Configuración guardada', 'Los proveedores de notificaciones se han configurado correctamente');
     } catch (err) {
-      error('Error guardando configuración', 'No se pudo guardar la configuración de proveedores de pago');
+      error('Error guardando configuración', 'No se pudo guardar la configuración de proveedores de notificaciones');
     } finally {
       setSaving(false);
     }
@@ -248,7 +230,7 @@ export default function PaymentsAdminPage() {
 
   const testProvider = async (providerName: string) => {
     try {
-      const response = await fetch(`/api/admin/payments/test/${providerName.toLowerCase()}`, {
+      const response = await fetch(`/api/admin/notifications/test/${providerName.toLowerCase()}`, {
         method: 'POST'
       });
 
@@ -262,29 +244,27 @@ export default function PaymentsAdminPage() {
     }
   };
 
-  const getProviderIcon = (provider: PaymentProvider) => {
-    switch (provider.name) {
-      case 'Stripe':
-        return <CreditCard className="h-5 w-5 text-blue-600" />;
-      case 'PayPal':
-        return <Globe className="h-5 w-5 text-blue-500" />;
-      case 'Khipu':
-        return <DollarSign className="h-5 w-5 text-green-600" />;
-      case 'WebPay':
-        return <Shield className="h-5 w-5 text-red-600" />;
+  const getProviderIcon = (provider: NotificationProvider) => {
+    switch (provider.type) {
+      case 'email':
+        return <Mail className="h-5 w-5 text-blue-600" />;
+      case 'sms':
+        return <Phone className="h-5 w-5 text-green-600" />;
+      case 'push':
+        return <Bell className="h-5 w-5 text-purple-600" />;
       default:
-        return <CreditCard className="h-5 w-5" />;
+        return <MessageSquare className="h-5 w-5" />;
     }
   };
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'international':
-        return <Badge variant="outline" className="text-blue-600">Internacional</Badge>;
-      case 'chilean':
-        return <Badge variant="outline" className="text-green-600">Chileno</Badge>;
-      case 'crypto':
-        return <Badge variant="outline" className="text-purple-600">Cripto</Badge>;
+      case 'email':
+        return <Badge variant="outline" className="text-blue-600">Email</Badge>;
+      case 'sms':
+        return <Badge variant="outline" className="text-green-600">SMS</Badge>;
+      case 'push':
+        return <Badge variant="outline" className="text-purple-600">Push</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -305,8 +285,8 @@ export default function PaymentsAdminPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Configuración de Pagos</h1>
-            <p className="text-gray-600">Gestiona los proveedores de pago y sus configuraciones</p>
+            <h1 className="text-3xl font-bold">Configuración de Notificaciones</h1>
+            <p className="text-gray-600">Gestiona los proveedores de notificaciones y sus configuraciones</p>
           </div>
           <Button onClick={saveConfiguration} disabled={saving} className="flex items-center gap-2">
             <Save className="h-4 w-4" />
@@ -317,7 +297,7 @@ export default function PaymentsAdminPage() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Las credenciales de los proveedores de pago se almacenan de forma encriptada en la base de datos.
+            Las credenciales de los proveedores de notificaciones se almacenan de forma encriptada en la base de datos.
             Solo los administradores pueden ver y modificar estas configuraciones.
           </AlertDescription>
         </Alert>
@@ -379,50 +359,52 @@ export default function PaymentsAdminPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`${provider.name}-apiSecret`}>API Secret</Label>
-                    <Input
-                      id={`${provider.name}-apiSecret`}
-                      type="password"
-                      value={provider.config.apiSecret || ''}
-                      onChange={(e) => updateProviderConfig(provider.name, 'apiSecret', e.target.value)}
-                      placeholder="Ingresa tu API Secret"
-                    />
-                  </div>
-
-                  {provider.name === 'Stripe' && (
+                  {provider.type === 'sms' && (
                     <div className="space-y-2">
-                      <Label htmlFor={`${provider.name}-webhookSecret`}>Webhook Secret</Label>
+                      <Label htmlFor={`${provider.name}-apiSecret`}>API Secret</Label>
                       <Input
-                        id={`${provider.name}-webhookSecret`}
+                        id={`${provider.name}-apiSecret`}
                         type="password"
-                        value={provider.config.webhookSecret || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'webhookSecret', e.target.value)}
-                        placeholder="Ingresa tu Webhook Secret"
+                        value={provider.config.apiSecret || ''}
+                        onChange={(e) => updateProviderConfig(provider.name, 'apiSecret', e.target.value)}
+                        placeholder="Ingresa tu API Secret"
                       />
                     </div>
                   )}
 
-                  {provider.name === 'Khipu' && (
-                    <div className="space-y-2">
-                      <Label htmlFor={`${provider.name}-receiverId`}>Receiver ID</Label>
-                      <Input
-                        id={`${provider.name}-receiverId`}
-                        value={provider.config.receiverId || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'receiverId', e.target.value)}
-                        placeholder="Ingresa tu Receiver ID"
-                      />
-                    </div>
+                  {provider.type === 'email' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor={`${provider.name}-fromEmail`}>Email de Envío</Label>
+                        <Input
+                          id={`${provider.name}-fromEmail`}
+                          type="email"
+                          value={provider.config.fromEmail || ''}
+                          onChange={(e) => updateProviderConfig(provider.name, 'fromEmail', e.target.value)}
+                          placeholder="noreply@rent360.cl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`${provider.name}-fromName`}>Nombre de Envío</Label>
+                        <Input
+                          id={`${provider.name}-fromName`}
+                          value={provider.config.fromName || ''}
+                          onChange={(e) => updateProviderConfig(provider.name, 'fromName', e.target.value)}
+                          placeholder="Rent360"
+                        />
+                      </div>
+                    </>
                   )}
 
-                  {provider.name === 'WebPay' && (
+                  {provider.type === 'sms' && (
                     <div className="space-y-2">
-                      <Label htmlFor={`${provider.name}-commerceCode`}>Commerce Code</Label>
+                      <Label htmlFor={`${provider.name}-phoneNumber`}>Número de Teléfono</Label>
                       <Input
-                        id={`${provider.name}-commerceCode`}
-                        value={provider.config.commerceCode || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'commerceCode', e.target.value)}
-                        placeholder="Ingresa tu Commerce Code"
+                        id={`${provider.name}-phoneNumber`}
+                        value={provider.config.phoneNumber || ''}
+                        onChange={(e) => updateProviderConfig(provider.name, 'phoneNumber', e.target.value)}
+                        placeholder="+56912345678"
                       />
                     </div>
                   )}

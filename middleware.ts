@@ -28,16 +28,20 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // CORS: permitir mismo origen y dominios de preview sin requerir configuración previa
+  // CORS: Configuración de seguridad mejorada para producción
   try {
     const origin = request.headers.get('origin') || '';
     const host = request.headers.get('host') || '';
     const protocol = request.nextUrl.protocol || 'https:';
     const requestOrigin = `${protocol}//${host}`;
 
+    // Verificar si es mismo origen
     const isSameOrigin = origin !== '' && origin === requestOrigin;
-    const isPreviewHost = host.endsWith('.pages.dev') || host.endsWith('.vercel.app');
-
+    
+    // Verificar si es un host de preview (desarrollo/staging)
+    const isPreviewHost = host.endsWith('.pages.dev') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
+    
+    // Verificar si está en la lista de orígenes permitidos del entorno
     const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
     const isEnvAllowed = origin !== '' && envAllowedOrigins.includes(origin);
 
@@ -45,14 +49,30 @@ export default function middleware(request: NextRequest) {
     const isCorsAllowed = !origin || isSameOrigin || isPreviewHost || isEnvAllowed;
 
     if (!isCorsAllowed) {
+      logger.warn('CORS policy violation blocked', {
+        context: 'middleware.cors',
+        origin,
+        host,
+        pathname,
+        clientIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+      });
+
       return new NextResponse('CORS policy violation', {
         status: 403,
         headers: {
           'Content-Type': 'text/plain',
+          'Access-Control-Allow-Origin': 'null',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
       });
     }
-  } catch {
+  } catch (error) {
+    logger.error('CORS evaluation error', {
+      context: 'middleware.cors',
+      error: error instanceof Error ? error.message : String(error),
+      pathname
+    });
     // En caso de fallo al evaluar CORS, continuar para no bloquear el preview
   }
 
@@ -113,30 +133,35 @@ export default function middleware(request: NextRequest) {
   // Apply internationalization middleware
   const response = intlMiddleware(request);
 
-  // Add security headers
+  // Add security headers - Configuración de seguridad mejorada
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=()');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), magnetometer=(), gyroscope=()');
   response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  response.headers.set('X-DNS-Prefetch-Control', 'off');
+  response.headers.set('X-Download-Options', 'noopen');
+  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
 
-  // Content Security Policy (CSP)
+  // Content Security Policy (CSP) - Configuración de seguridad mejorada
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://*.googleusercontent.com https://*.stripe.com https://ui-avatars.com https://drive.google.com https://lh3.googleusercontent.com",
-    "connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://*.adobesign.com https://*.docusign.net https://api.hellosign.com",
-    "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.docusign.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com https://www.googletagmanager.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+    "img-src 'self' data: blob: https://*.googleusercontent.com https://*.stripe.com https://ui-avatars.com https://drive.google.com https://lh3.googleusercontent.com https://images.unsplash.com",
+    "connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://*.adobesign.com https://*.docusign.net https://api.hellosign.com https://api.trustfactory.cl https://api.firmapro.cl https://api.digitalsign.cl",
+    "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.docusign.net https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
+    "upgrade-insecure-requests",
+    "block-all-mixed-content"
   ].join('; ');
 
   response.headers.set('Content-Security-Policy', csp);
