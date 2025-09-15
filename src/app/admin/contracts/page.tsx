@@ -238,11 +238,14 @@ export default function AdminContractsPage() {
       
       // Create contract object
       const now = new Date();
+      const isoString = now.toISOString();
+      const dateOnly = isoString.substring(0, 10); // YYYY-MM-DD format
+
       const contractData: Contract = {
         ...newContract,
         monthlyRent: parseInt(newContract.monthlyRent),
         deposit: parseInt(newContract.deposit) || parseInt(newContract.monthlyRent),
-        createdAt: now.toISOString().split('T')[0] || now.toISOString().split('T')[0],
+        createdAt: dateOnly,
         id: '', // Will be set below
       };
 
