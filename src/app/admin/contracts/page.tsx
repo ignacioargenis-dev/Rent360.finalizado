@@ -243,8 +243,8 @@ export default function AdminContractsPage() {
 
       const contractData: Contract = {
         ...newContract,
-        monthlyRent: parseInt(newContract.monthlyRent),
-        deposit: parseInt(newContract.deposit) || parseInt(newContract.monthlyRent),
+        monthlyRent: parseInt(newContract.monthlyRent || '0'),
+        deposit: parseInt(newContract.deposit || '0') || parseInt(newContract.monthlyRent || '0'),
         createdAt: dateOnly,
         id: '', // Will be set below
       };

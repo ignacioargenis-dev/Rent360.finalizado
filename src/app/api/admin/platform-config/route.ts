@@ -53,7 +53,8 @@ export async function GET(request: NextRequest) {
       if (!acc[config.category]) {
         acc[config.category] = [];
       }
-      acc[config.category].push(config);
+      // Usar optional chaining para acceso seguro
+      acc[config.category]?.push(config);
       return acc;
     }, {} as Record<string, any[]>);
 

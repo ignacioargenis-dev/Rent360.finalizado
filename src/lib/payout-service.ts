@@ -185,10 +185,10 @@ export class PayoutService {
             this.config!.schedule = setting.value as 'immediate' | 'weekly' | 'monthly';
             break;
           case 'minimumPayout':
-            this.config!.minimumPayout = parseFloat(setting.value);
+            this.config!.minimumPayout = parseFloat(setting.value || '0');
             break;
           case 'platformFee':
-            this.config!.platformFee = parseFloat(setting.value);
+            this.config!.platformFee = parseFloat(setting.value || '0');
             break;
         }
       });
