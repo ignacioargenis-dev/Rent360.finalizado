@@ -1,7 +1,5 @@
 {
-  "extends": [
-    "prettier"
-  ],
+  "extends": [],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "rules": {

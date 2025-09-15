@@ -85,3 +85,27 @@ class EdgeLogger {
 
 // Export singleton instance
 export const logger = new EdgeLogger();
+
+// Funciones adicionales para compatibilidad
+export function getSystemMetrics() {
+  return {
+    memory: {
+      used: 0,
+      total: 0,
+      free: 0
+    },
+    uptime: 0,
+    cpu: {
+      usage: 0
+    }
+  };
+}
+
+export function getMonitoringStats() {
+  return {
+    requests: 0,
+    errors: 0,
+    responseTime: 0,
+    uptime: 0
+  };
+}
