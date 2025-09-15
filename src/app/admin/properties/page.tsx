@@ -194,7 +194,7 @@ export default function AdminPropertiesPage() {
       const emptyImages: string[] = [];
       const emptyFeatures: string[] = [];
 
-      const newProperty: Property = {
+      const newProperty = {
         id: Date.now().toString(),
         title: propertyData.title || 'Nueva Propiedad',
         description: propertyData.description || 'Descripción pendiente',
@@ -207,13 +207,13 @@ export default function AdminPropertiesPage() {
         bedrooms: propertyData.bedrooms || 1,
         bathrooms: propertyData.bathrooms || 1,
         area: propertyData.area || 50,
-        status: 'AVAILABLE',
+        status: 'AVAILABLE' as const,
         images: emptyImages,
         features: emptyFeatures,
         ownerId: user?.id || 'user-admin',
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      } as Property;
 
       // Add to properties list
       setProperties([newProperty, ...properties]);
