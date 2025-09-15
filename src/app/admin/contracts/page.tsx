@@ -237,22 +237,24 @@ export default function AdminContractsPage() {
       setCreatingContract(true);
       
       // Create contract object
-      const contractData = {
+      const now = new Date();
+      const contractData: Contract = {
         ...newContract,
         monthlyRent: parseInt(newContract.monthlyRent),
         deposit: parseInt(newContract.deposit) || parseInt(newContract.monthlyRent),
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: now.toISOString().split('T')[0] || now.toISOString().split('T')[0],
+        id: '', // Will be set below
       };
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Add to contracts list
+      // Add to contracts list with generated ID
       const newContractWithId = {
         ...contractData,
         id: Date.now().toString(),
       };
-      
+
       setContracts([newContractWithId, ...contracts]);
       setShowCreateModal(false);
       setNewContract({
