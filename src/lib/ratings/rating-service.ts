@@ -109,7 +109,7 @@ export class RatingService {
 
       return newRating;
     } catch (error) {
-      logger.error('Error creando rating:', error);
+      logger.error('Error creando rating:', error as Error);
       throw error;
     }
   }

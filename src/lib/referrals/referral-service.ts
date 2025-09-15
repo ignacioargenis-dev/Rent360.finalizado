@@ -205,7 +205,7 @@ export class ReferralService {
 
       return { referralCode, referral };
     } catch (error) {
-      logger.error('Error creando referido:', error);
+      logger.error('Error creando referido:', error as Error);
       throw error;
     }
   }
@@ -246,7 +246,7 @@ export class ReferralService {
 
       return referral;
     } catch (error) {
-      logger.error('Error registrando usuario referido:', error);
+      logger.error('Error registrando usuario referido:', error as Error);
       throw error;
     }
   }
@@ -283,7 +283,7 @@ export class ReferralService {
       });
 
     } catch (error) {
-      logger.error('Error convirtiendo referido:', error);
+      logger.error('Error convirtiendo referido:', error as Error);
       throw error;
     }
   }

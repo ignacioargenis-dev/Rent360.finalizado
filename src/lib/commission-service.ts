@@ -108,7 +108,7 @@ export class CommissionService {
         SYSTEM_METRICS_TTL
       );
     } catch (error) {
-      logger.error('Error obteniendo configuración de comisiones:', error);
+      logger.error('Error obteniendo configuración de comisiones:', error as Error);
       throw new DatabaseError('Error al obtener configuración de comisiones');
     }
   }

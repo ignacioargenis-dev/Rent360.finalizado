@@ -161,7 +161,7 @@ export class RecurringServicesService {
 
       return service;
     } catch (error) {
-      logger.error('Error creando servicio recurrente:', error);
+      logger.error('Error creando servicio recurrente:', error as Error);
       throw error;
     }
   }
@@ -196,7 +196,7 @@ export class RecurringServicesService {
 
       return updatedService;
     } catch (error) {
-      logger.error('Error actualizando servicio recurrente:', error);
+      logger.error('Error actualizando servicio recurrente:', error as Error);
       throw error;
     }
   }
@@ -306,7 +306,7 @@ export class RecurringServicesService {
 
       return instance;
     } catch (error) {
-      logger.error('Error completando instancia de servicio:', error);
+      logger.error('Error completando instancia de servicio:', error as Error);
       throw error;
     }
   }
@@ -431,7 +431,7 @@ export class RecurringServicesService {
       });
 
     } catch (error) {
-      logger.error('Error programando siguiente instancia:', error);
+      logger.error('Error programando siguiente instancia:', error as Error);
     }
   }
 
@@ -519,7 +519,7 @@ export class RecurringServicesService {
         }
       }
     } catch (error) {
-      logger.error('Error en verificación automática de instancias:', error);
+      logger.error('Error en verificación automática de instancias:', error as Error);
     }
   }
 
