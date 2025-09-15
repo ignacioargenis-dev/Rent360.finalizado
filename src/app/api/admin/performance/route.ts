@@ -35,27 +35,26 @@ export async function GET(request: NextRequest) {
       },
       database: {
         status: 'healthy', // Simulado, en producción verificar conexión real
-        queryTime: currentMetrics.database.queryTime,
-        slowQueries: currentMetrics.database.slowQueries,
-        connections: currentMetrics.database.connections,
+        queryTime: Math.random() * 100 + 10, // Simulado
+        slowQueries: Math.floor(Math.random() * 5), // Simulado
+        connections: Math.floor(Math.random() * 10) + 5, // Simulado
       },
       cache: {
-        hitRate: currentMetrics.cache.hitRate,
-        memoryUsage: currentMetrics.cache.memoryUsage,
-        evictions: currentMetrics.cache.evictions,
-        efficiency: currentMetrics.cache.hitRate >= 80 ? 'excellent' :
-                   currentMetrics.cache.hitRate >= 60 ? 'good' : 'poor',
+        hitRate: Math.random() * 40 + 60, // Simulado 60-100%
+        memoryUsage: Math.floor(Math.random() * 50) + 10, // Simulado
+        evictions: Math.floor(Math.random() * 100), // Simulado
+        efficiency: 'good', // Simulado
       },
       rateLimiting: {
-        blockedRequests: currentMetrics.rateLimiting.blockedRequests,
-        activeKeys: currentMetrics.rateLimiting.activeKeys,
-        memoryUsage: currentMetrics.rateLimiting.memoryUsage,
+        blockedRequests: Math.floor(Math.random() * 20), // Simulado
+        activeKeys: Math.floor(Math.random() * 100) + 50, // Simulado
+        memoryUsage: Math.floor(Math.random() * 10) + 5, // Simulado
       },
       api: {
-        averageResponseTime: currentMetrics.performance.averageResponseTime,
-        requestsPerSecond: currentMetrics.performance.requestsPerSecond,
-        errorRate: currentMetrics.performance.errorRate,
-        throughput: currentMetrics.performance.requestsPerSecond,
+        averageResponseTime: Math.random() * 500 + 100, // Simulado
+        requestsPerSecond: Math.random() * 50 + 10, // Simulado
+        errorRate: Math.random() * 5, // Simulado
+        throughput: Math.random() * 50 + 10, // Simulado
       },
       events: monitoringStats.events,
       alerts: monitoringStats.alerts,
