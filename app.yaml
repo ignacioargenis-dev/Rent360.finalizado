@@ -1,0 +1,36 @@
+name: rent360-production
+services:
+- name: rent360-app
+  source_dir: /
+  github:
+    repo: your-username/rent360
+    branch: main
+    deploy_on_push: true
+  run_command: npm start
+  build_command: npm run build
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: professional-xs
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: NEXT_TELEMETRY_DISABLED
+    value: "1"
+  health_check:
+    http_path: /api/health
+  internal_ports:
+  - 3000
+
+databases:
+- name: rent360-db
+  engine: PG
+  version: "15"
+  size: professional-xs
+  num_nodes: 1
+
+# Configuración de dominio personalizado
+# domains:
+# - domain: rent360.cl
+#   type: PRIMARY
+#   wildcard: true
+#   zone: rent360.cl
