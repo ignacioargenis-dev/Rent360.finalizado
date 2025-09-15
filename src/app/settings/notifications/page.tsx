@@ -28,7 +28,7 @@ import {
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { firebaseNotificationService, type NotificationSettings } from '@/lib/notifications/firebase-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface NotificationCategory {
   id: string;

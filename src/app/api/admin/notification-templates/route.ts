@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
 import { handleError } from '@/lib/errors';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { z } from 'zod';
 
 // Schema para crear/actualizar template

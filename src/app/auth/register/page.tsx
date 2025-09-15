@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { validateRut, isValidRut, formatRut } from '@/lib/rut-validation';
 
 import { useState } from 'react';

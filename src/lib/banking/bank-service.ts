@@ -1,7 +1,7 @@
 import { BaseBankIntegration, BankTransferRequest, BankTransferResponse, BankAccountValidation } from './base-bank';
 import { BancoEstadoIntegration } from './banco-estado';
 import { BCIIntegration } from './bci';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 /**
  * Configuración de bancos disponibles

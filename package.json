@@ -138,7 +138,8 @@
     "postcss": "^8.4.31",
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "@typescript-eslint/parser": "^6.0.0",
+    "@types/express": "^5.0.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

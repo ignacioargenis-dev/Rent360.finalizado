@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { NextResponse } from 'next/server';
 
 export class AppError extends Error {

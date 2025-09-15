@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 import { useState, useEffect } from 'react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { signatureService } from '@/lib/signature';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { z } from 'zod';
 
 const sendSignatureSchema = z.object({

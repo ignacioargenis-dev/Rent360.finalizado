@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { cacheManager } from '@/lib/cache-manager';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { apiWrapper, getApiStats } from '@/lib/api-wrapper';

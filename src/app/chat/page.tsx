@@ -37,7 +37,7 @@ import {
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { chatService, MessageType, ChatStatus } from '@/lib/chat/chat-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface ChatMessage {
   id: string;

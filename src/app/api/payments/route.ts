@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { PaymentStatus, PaymentMethod, UserRole } from '@/types';
 import { ValidationError, handleError } from '@/lib/errors';
 import { getPaymentsOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { z } from 'zod';
 
 // Schema para crear pago

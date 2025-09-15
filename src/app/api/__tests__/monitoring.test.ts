@@ -1,4 +1,4 @@
-import { logger, getSystemMetrics, checkSystemHealth, getMonitoringStats } from '@/lib/logger';
+import { logger, getSystemMetrics, checkSystemHealth, getMonitoringStats } from '@/lib/logger-edge';
 
 // Mock de las dependencias
 jest.mock('@/lib/db', () => ({

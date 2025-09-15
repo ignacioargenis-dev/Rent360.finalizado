@@ -1,6 +1,5 @@
 {
   "extends": [
-    "@typescript-eslint/recommended",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",

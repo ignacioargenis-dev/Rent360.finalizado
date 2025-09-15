@@ -2,7 +2,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface PageErrorBoundaryProps {
   children: ReactNode;

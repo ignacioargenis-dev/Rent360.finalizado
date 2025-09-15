@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { UserRole } from '@/types';
 import { ValidationError, handleError } from '@/lib/errors';
 import { getUsersOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { z } from 'zod';
 
 // Schema para crear usuario

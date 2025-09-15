@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { ValidationResult } from '@/lib/file-validation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

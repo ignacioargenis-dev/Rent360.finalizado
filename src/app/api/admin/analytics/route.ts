@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { withCache, CacheKeys, ANALYTICS_DASHBOARD_TTL } from '@/lib/cache';
 import { preloadCommonData } from '@/lib/query-optimization';
 

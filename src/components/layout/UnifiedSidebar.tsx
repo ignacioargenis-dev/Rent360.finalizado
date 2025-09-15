@@ -45,7 +45,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserType } from '@/types';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface MenuItem {
   title: string;

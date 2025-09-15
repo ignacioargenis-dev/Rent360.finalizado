@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { PaymentStatus, ContractStatus, NotificationType } from '@prisma/client';

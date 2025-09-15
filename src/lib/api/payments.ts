@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger'
+import { logger } from '@/lib/logger-edge'
 
 // Configuración de APIs de pagos
 const PAYMENT_API_CONFIG = {

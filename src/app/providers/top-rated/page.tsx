@@ -21,7 +21,7 @@ import {
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, type ProviderRatingSummary } from '@/lib/ratings/rating-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface TopProvider {
   providerId: string;

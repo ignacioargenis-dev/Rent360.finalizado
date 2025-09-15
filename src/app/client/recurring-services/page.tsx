@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 
 interface RecurringService {
   id: string;

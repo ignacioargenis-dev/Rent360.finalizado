@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/types';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import UnifiedSidebar from './UnifiedSidebar';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
