@@ -35,33 +35,9 @@ import { Building,
   Info
 } from 'lucide-react';
 import Link from 'next/link';
-import { User } from '@/types';
+import { User, Property } from '@/types';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  type: 'apartment' | 'house' | 'office' | 'commercial' | 'other';
-  address: string;
-  city: string;
-  neighborhood: string;
-  price: number;
-  status: 'available' | 'rented' | 'maintenance' | 'unavailable';
-  bedrooms: number;
-  bathrooms: number;
-  area: number;
-  features: string[];
-  images: string[];
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone: string;
-  createdAt: string;
-  updatedAt: string;
-  views: number;
-  inquiries: number;
-  featured: boolean;
-}
 
 interface PropertyStats {
   totalProperties: number;

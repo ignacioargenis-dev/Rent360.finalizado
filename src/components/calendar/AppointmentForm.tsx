@@ -19,7 +19,7 @@ import { Calendar,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface Property {
+interface PropertyOption {
   id: string;
   title: string;
   address: string;
@@ -38,7 +38,7 @@ interface AppointmentFormProps {
   onSave: (appointment: any) => void;
   selectedDate?: Date;
   selectedTime?: string;
-  properties?: Property[];
+  properties?: PropertyOption[];
   clients?: Client[];
   editingAppointment?: any;
 }

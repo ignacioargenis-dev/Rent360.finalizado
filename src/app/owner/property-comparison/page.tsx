@@ -25,28 +25,8 @@ import {
   Info,
   X } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
-import { User } from '@/types';
+import { User, Property } from '@/types';
 
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  type: 'apartment' | 'house' | 'office' | 'commercial' | 'other';
-  address: string;
-  city: string;
-  neighborhood: string;
-  price: number;
-  status: 'available' | 'rented' | 'maintenance' | 'unavailable';
-  bedrooms: number;
-  bathrooms: number;
-  area: number;
-  features: string[];
-  images: string[];
-  tenantName?: string;
-  tenantEmail?: string;
-  tenantPhone?: string;
-  contractStart?: string;
-  contractEnd?: string;
   monthlyRevenue: number;
   occupancyRate: number;
   totalRevenue: number;
