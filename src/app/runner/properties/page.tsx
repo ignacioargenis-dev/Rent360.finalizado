@@ -239,7 +239,7 @@ return 'No programada';
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.ownerId.toLowerCase().includes(searchTerm.toLowerCase());
+                         property.owner.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     
     return matchesSearch && matchesStatus;
