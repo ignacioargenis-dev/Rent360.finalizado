@@ -240,7 +240,7 @@ export default function AdminPropertiesReports() {
         property.area,
         property.owner,
         property.ownerEmail,
-        formatDate(property.createdAt),
+        formatDate(property.createdAt.toISOString()),
         property.views,
         property.inquiries,
         property.rating.toFixed(1),
@@ -484,7 +484,7 @@ export default function AdminPropertiesReports() {
                             {property.address}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Creado: {formatDate(property.createdAt)}
+                            Creado: {formatDate(property.createdAt.toISOString())}
                           </div>
                         </div>
                       </td>

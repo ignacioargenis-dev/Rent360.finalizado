@@ -543,7 +543,7 @@ return `Hace ${diffDays} días`;
                             <div>
                               <div className="font-medium text-sm">{ticket.createdBy}</div>
                               <div className="text-xs text-gray-500">
-                                {formatDate(ticket.createdAt)}
+                                {formatDate(ticket.createdAt.toISOString())}
                               </div>
                             </div>
                           </div>
