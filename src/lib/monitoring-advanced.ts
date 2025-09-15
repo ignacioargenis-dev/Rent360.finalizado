@@ -5,8 +5,9 @@ import { rateLimiter } from './rate-limiter';
 export interface SystemMetrics {
   timestamp: number;
   memory: {
-    heapUsed: number;
-    heapTotal: number;
+    used: number;
+    total: number;
+    free: number;
     external: number;
     rss: number;
   };
@@ -98,8 +99,9 @@ class AdvancedMonitoringSystem {
     return {
       timestamp: Date.now(),
       memory: {
-        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        free: Math.round((memoryUsage.heapTotal - memoryUsage.heapUsed) / 1024 / 1024),
         external: Math.round(memoryUsage.external / 1024 / 1024),
         rss: Math.round(memoryUsage.rss / 1024 / 1024),
       },
@@ -131,13 +133,13 @@ class AdvancedMonitoringSystem {
     const timestamp = Date.now();
 
     // Verificar uso de memoria
-    const memoryUsagePercent = (metrics.memory.heapUsed / metrics.memory.heapTotal) * 100;
+    const memoryUsagePercent = (metrics.memory.used / metrics.memory.total) * 100;
     if (memoryUsagePercent > this.config.alertThresholds.memoryUsage) {
       newAlerts.push({
         id: `memory-${timestamp}`,
         type: memoryUsagePercent > 90 ? 'critical' : 'warning',
         title: 'Alto uso de memoria',
-        message: `Uso de memoria: ${memoryUsagePercent.toFixed(1)}% (${metrics.memory.heapUsed}MB / ${metrics.memory.heapTotal}MB)`,
+        message: `Uso de memoria: ${memoryUsagePercent.toFixed(1)}% (${metrics.memory.used}MB / ${metrics.memory.total}MB)`,
         timestamp,
         resolved: false,
       });
@@ -216,7 +218,7 @@ class AdvancedMonitoringSystem {
       logger.info('System metrics collected', {
         context: 'monitoring.metrics',
         timestamp: metrics.timestamp,
-        memoryUsage: `${metrics.memory.heapUsed}MB / ${metrics.memory.heapTotal}MB`,
+        memoryUsage: `${metrics.memory.used}MB / ${metrics.memory.total}MB`,
         cpuUsage: `${metrics.cpu.usage.toFixed(1)}%`,
         cacheHitRate: `${metrics.cache.hitRate.toFixed(1)}%`,
         responseTime: `${metrics.performance.averageResponseTime.toFixed(0)}ms`,
@@ -317,7 +319,7 @@ class AdvancedMonitoringSystem {
     let score = 100;
 
     // Evaluar memoria
-    const memoryUsagePercent = (latestMetrics.memory.heapUsed / latestMetrics.memory.heapTotal) * 100;
+    const memoryUsagePercent = (latestMetrics.memory.used / latestMetrics.memory.total) * 100;
     if (memoryUsagePercent > 90) {
       issues.push(`Uso crítico de memoria: ${memoryUsagePercent.toFixed(1)}%`);
       score -= 30;

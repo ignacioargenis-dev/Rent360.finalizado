@@ -78,8 +78,9 @@ interface SystemStats {
       free: number;
       used: number;
       process: {
-        heapUsed: number;
-        heapTotal: number;
+        used: number;
+        total: number;
+        free: number;
         external: number;
         rss: number;
       };
@@ -281,9 +282,9 @@ return `${hours}h ${minutes}m`;
               <HardDrive className="w-8 h-8 text-purple-500" />
               <div>
                 <p className="text-sm text-gray-600">Proceso</p>
-                <p className="font-semibold">{formatBytes(stats.system.memory.process.heapUsed)}</p>
+                <p className="font-semibold">{formatBytes(stats.system.memory.process.used)}</p>
                 <p className="text-xs text-gray-500">
-                  Heap: {formatBytes(stats.system.memory.process.heapTotal)}
+                  Heap: {formatBytes(stats.system.memory.process.total)}
                 </p>
               </div>
             </div>

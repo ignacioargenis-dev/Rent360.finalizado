@@ -67,8 +67,9 @@ async function healthHandler(request: NextRequest) {
         system: {
           status: memoryStatus,
           memoryUsage: {
-            heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-            heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+            used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+            total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+            free: Math.round((memoryUsage.heapTotal - memoryUsage.heapUsed) / 1024 / 1024),
             external: Math.round(memoryUsage.external / 1024 / 1024),
             rss: Math.round(memoryUsage.rss / 1024 / 1024)
           },

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const baseMetrics = {
       timestamp: Date.now(),
       system: {
-        memoryUsage: Math.round((currentMetrics.memory.heapUsed / currentMetrics.memory.heapTotal) * 100),
+        memoryUsage: Math.round((currentMetrics.memory.used / currentMetrics.memory.total) * 100),
         cpuUsage: currentMetrics.cpu.usage,
         uptime: process.uptime(),
         loadAverage: currentMetrics.cpu.loadAverage,

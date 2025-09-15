@@ -56,8 +56,9 @@ describe('Monitoring System', () => {
       expect(metrics).toHaveProperty('rateLimiting');
       expect(metrics).toHaveProperty('performance');
 
-      expect(metrics.memory).toHaveProperty('heapUsed');
-      expect(metrics.memory).toHaveProperty('heapTotal');
+      expect(metrics.memory).toHaveProperty('used');
+      expect(metrics.memory).toHaveProperty('total');
+      expect(metrics.memory).toHaveProperty('free');
       expect(metrics.cpu).toHaveProperty('usage');
       expect(metrics.cpu).toHaveProperty('loadAverage');
     });

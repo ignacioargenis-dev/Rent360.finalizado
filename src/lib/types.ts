@@ -284,8 +284,9 @@ export interface SystemLog {
 export interface SystemMetrics {
   timestamp: number;
   memory: {
-    heapUsed: number;
-    heapTotal: number;
+    used: number;
+    total: number;
+    free: number;
     external: number;
     rss: number;
   };

@@ -76,8 +76,9 @@ interface LogEntry {
 interface SystemMetrics {
   timestamp: number;
   memory: {
-    heapUsed: number;
-    heapTotal: number;
+    used: number;
+    total: number;
+    free: number;
     external: number;
     rss: number;
     gc?: {
@@ -501,8 +502,9 @@ class Logger {
     return {
       timestamp: Date.now(),
       memory: {
-        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        free: Math.round((memoryUsage.heapTotal - memoryUsage.heapUsed) / 1024 / 1024),
         external: Math.round(memoryUsage.external / 1024 / 1024),
         rss: Math.round(memoryUsage.rss / 1024 / 1024),
       },
@@ -647,7 +649,7 @@ class Logger {
   // Verificar umbrales
   private async checkThresholds(metrics: SystemMetrics): Promise<void> {
     // Verificar memoria
-    const memoryUsagePercent = (metrics.memory.heapUsed / metrics.memory.heapTotal) * 100;
+    const memoryUsagePercent = (metrics.memory.used / metrics.memory.total) * 100;
     if (memoryUsagePercent > 80) {
       await this.createAlert(
         'high_memory',
