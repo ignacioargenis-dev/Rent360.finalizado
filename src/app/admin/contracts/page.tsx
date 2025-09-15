@@ -110,7 +110,7 @@ export default function AdminContractsPage() {
               ownerId: 'user-owner-1',
               createdAt: new Date('2024-01-01'),
               updatedAt: new Date('2024-01-01'),
-            },
+            } as any,
             owner: {
               id: 'user-owner-1',
               email: 'maria@example.com',
@@ -121,7 +121,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-01-01'),
               updatedAt: new Date('2024-01-01'),
-            },
+            } as any,
             tenant: {
               id: 'user-tenant-1',
               email: 'carlos@example.com',
@@ -132,7 +132,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-01-01'),
               updatedAt: new Date('2024-01-01'),
-            },
+            } as any,
           },
           {
             id: '2',
@@ -166,7 +166,7 @@ export default function AdminContractsPage() {
               ownerId: 'user-owner-2',
               createdAt: new Date('2024-02-15'),
               updatedAt: new Date('2024-02-15'),
-            },
+            } as any,
             owner: {
               id: 'user-owner-2',
               email: 'empresa@example.com',
@@ -177,7 +177,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-02-15'),
               updatedAt: new Date('2024-02-15'),
-            },
+            } as any,
             tenant: {
               id: 'user-tenant-2',
               email: 'techcorp@example.com',
@@ -188,7 +188,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-02-15'),
               updatedAt: new Date('2024-02-15'),
-            },
+            } as any,
           },
           {
             id: '3',
@@ -222,7 +222,7 @@ export default function AdminContractsPage() {
               ownerId: 'user-owner-3',
               createdAt: new Date('2024-03-01'),
               updatedAt: new Date('2024-03-01'),
-            },
+            } as any,
             owner: {
               id: 'user-owner-3',
               email: 'pedro@example.com',
@@ -233,7 +233,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-03-01'),
               updatedAt: new Date('2024-03-01'),
-            },
+            } as any,
             tenant: {
               id: 'user-tenant-3',
               email: 'ana@example.com',
@@ -244,7 +244,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2024-03-01'),
               updatedAt: new Date('2024-03-01'),
-            },
+            } as any,
           },
           {
             id: '4',
@@ -278,7 +278,7 @@ export default function AdminContractsPage() {
               ownerId: 'user-owner-4',
               createdAt: new Date('2023-06-01'),
               updatedAt: new Date('2024-06-01'),
-            },
+            } as any,
             owner: {
               id: 'user-owner-4',
               email: 'luis@example.com',
@@ -289,7 +289,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2023-06-01'),
               updatedAt: new Date('2024-06-01'),
-            },
+            } as any,
             tenant: {
               id: 'user-tenant-4',
               email: 'sofia@example.com',
@@ -300,7 +300,7 @@ export default function AdminContractsPage() {
               emailVerified: true,
               createdAt: new Date('2023-06-01'),
               updatedAt: new Date('2024-06-01'),
-            },
+            } as any,
           },
         ];
 
@@ -432,7 +432,7 @@ export default function AdminContractsPage() {
           ownerId: newContract.ownerId,
           createdAt: now,
           updatedAt: now,
-        },
+        } as any,
         owner: {
           id: newContract.ownerId,
           email: `${newContract.ownerId}@example.com`,
@@ -442,7 +442,7 @@ export default function AdminContractsPage() {
           emailVerified: true,
           createdAt: now,
           updatedAt: now,
-        },
+        } as any,
         tenant: {
           id: newContract.tenantId,
           email: `${newContract.tenantId}@example.com`,
@@ -452,7 +452,7 @@ export default function AdminContractsPage() {
           emailVerified: true,
           createdAt: now,
           updatedAt: now,
-        },
+        } as any,
       };
 
       // Simulate API call
