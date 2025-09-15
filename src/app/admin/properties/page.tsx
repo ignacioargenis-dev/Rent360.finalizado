@@ -151,8 +151,8 @@ export default function AdminPropertiesPage() {
           },
         ];
 
-        setProperties(mockProperties as Property[]);
-        setFilteredProperties(mockProperties as Property[]);
+        setProperties(mockProperties as unknown as Property[]);
+        setFilteredProperties(mockProperties as unknown as Property[]);
         setLoading(false);
       } catch (error) {
         logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
