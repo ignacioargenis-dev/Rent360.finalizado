@@ -26,22 +26,8 @@ import { FileText,
   X,
   Loader2
 } from 'lucide-react';
-import { User } from '@/types';
+import { User, Contract } from '@/types';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
-
-interface Contract {
-  id: string;
-  title: string;
-  property: string;
-  owner: string;
-  tenant: string;
-  startDate: string;
-  endDate: string;
-  monthlyRent: number;
-  status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'TERMINATED';
-  deposit: number;
-  createdAt: string;
-}
 
 export default function AdminContractsPage() {
 
@@ -62,15 +48,15 @@ export default function AdminContractsPage() {
   const [creatingContract, setCreatingContract] = useState(false);
 
   const [newContract, setNewContract] = useState({
-    title: '',
-    property: '',
-    owner: '',
-    tenant: '',
+    propertyId: '',
+    ownerId: '',
+    tenantId: '',
     startDate: '',
     endDate: '',
     monthlyRent: '',
     deposit: '',
-    status: 'PENDING' as Contract['status'],
+    status: 'DRAFT' as Contract['status'],
+    terms: '',
   });
 
   useEffect(() => {
@@ -90,59 +76,211 @@ export default function AdminContractsPage() {
     // Load contracts data
     const loadContracts = async () => {
       try {
-        // Mock data for demo
+        // Mock data for demo - compatible with global Contract interface
         const mockContracts: Contract[] = [
           {
             id: '1',
-            title: 'Contrato Arriendo Depto Las Condes',
-            property: 'Departamento Las Condes',
-            owner: 'María González',
-            tenant: 'Carlos Ramírez',
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
+            contractNumber: 'CNT-001-2024',
+            propertyId: 'prop-1',
+            ownerId: 'user-owner-1',
+            tenantId: 'user-tenant-1',
+            startDate: new Date('2024-01-01'),
+            endDate: new Date('2024-12-31'),
             monthlyRent: 550000,
-            status: 'ACTIVE',
             deposit: 550000,
-            createdAt: '2024-01-01',
+            status: 'ACTIVE',
+            createdAt: new Date('2024-01-01'),
+            updatedAt: new Date('2024-01-01'),
+            property: {
+              id: 'prop-1',
+              title: 'Departamento Las Condes',
+              description: 'Hermoso departamento en Las Condes',
+              address: 'Las Condes, Santiago',
+              city: 'Santiago',
+              commune: 'Las Condes',
+              region: 'Metropolitana',
+              price: 550000,
+              bedrooms: 2,
+              bathrooms: 1,
+              area: 65,
+              status: 'RENTED',
+              ownerId: 'user-owner-1',
+              createdAt: new Date('2024-01-01'),
+              updatedAt: new Date('2024-01-01'),
+            },
+            owner: {
+              id: 'user-owner-1',
+              email: 'maria@example.com',
+              name: 'María González',
+              role: 'owner',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-01-01'),
+              updatedAt: new Date('2024-01-01'),
+            },
+            tenant: {
+              id: 'user-tenant-1',
+              email: 'carlos@example.com',
+              name: 'Carlos Ramírez',
+              role: 'tenant',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-01-01'),
+              updatedAt: new Date('2024-01-01'),
+            },
           },
           {
             id: '2',
-            title: 'Contrato Oficina Providencia',
-            property: 'Oficina Providencia',
-            owner: 'Empresa Soluciones Ltda.',
-            tenant: 'TechCorp SA',
-            startDate: '2024-02-15',
-            endDate: '2025-02-14',
+            contractNumber: 'CNT-002-2024',
+            propertyId: 'prop-2',
+            ownerId: 'user-owner-2',
+            tenantId: 'user-tenant-2',
+            startDate: new Date('2024-02-15'),
+            endDate: new Date('2025-02-14'),
             monthlyRent: 350000,
-            status: 'ACTIVE',
             deposit: 350000,
-            createdAt: '2024-02-15',
+            status: 'ACTIVE',
+            createdAt: new Date('2024-02-15'),
+            updatedAt: new Date('2024-02-15'),
+            property: {
+              id: 'prop-2',
+              title: 'Oficina Providencia',
+              description: 'Oficina moderna en Providencia',
+              address: 'Providencia, Santiago',
+              city: 'Santiago',
+              commune: 'Providencia',
+              region: 'Metropolitana',
+              price: 350000,
+              bedrooms: 0,
+              bathrooms: 1,
+              area: 45,
+              status: 'RENTED',
+              ownerId: 'user-owner-2',
+              createdAt: new Date('2024-02-15'),
+              updatedAt: new Date('2024-02-15'),
+            },
+            owner: {
+              id: 'user-owner-2',
+              email: 'empresa@example.com',
+              name: 'Empresa Soluciones Ltda.',
+              role: 'owner',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-02-15'),
+              updatedAt: new Date('2024-02-15'),
+            },
+            tenant: {
+              id: 'user-tenant-2',
+              email: 'techcorp@example.com',
+              name: 'TechCorp SA',
+              role: 'tenant',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-02-15'),
+              updatedAt: new Date('2024-02-15'),
+            },
           },
           {
             id: '3',
-            title: 'Contrato Casa Vitacura',
-            property: 'Casa Vitacura',
-            owner: 'Pedro Silva',
-            tenant: 'Ana Martínez',
-            startDate: '2024-03-01',
-            endDate: '2025-02-28',
+            contractNumber: 'CNT-003-2024',
+            propertyId: 'prop-3',
+            ownerId: 'user-owner-3',
+            tenantId: 'user-tenant-3',
+            startDate: new Date('2024-03-01'),
+            endDate: new Date('2025-02-28'),
             monthlyRent: 1200000,
-            status: 'PENDING',
             deposit: 1200000,
-            createdAt: '2024-03-01',
+            status: 'ACTIVE',
+            createdAt: new Date('2024-03-01'),
+            updatedAt: new Date('2024-03-01'),
+            property: {
+              id: 'prop-3',
+              title: 'Casa Vitacura',
+              description: 'Amplia casa familiar en Vitacura',
+              address: 'Vitacura, Santiago',
+              city: 'Santiago',
+              commune: 'Vitacura',
+              region: 'Metropolitana',
+              price: 1200000,
+              bedrooms: 4,
+              bathrooms: 3,
+              area: 180,
+              status: 'RENTED',
+              ownerId: 'user-owner-3',
+              createdAt: new Date('2024-03-01'),
+              updatedAt: new Date('2024-03-01'),
+            },
+            owner: {
+              id: 'user-owner-3',
+              email: 'pedro@example.com',
+              name: 'Pedro Silva',
+              role: 'owner',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-03-01'),
+              updatedAt: new Date('2024-03-01'),
+            },
+            tenant: {
+              id: 'user-tenant-3',
+              email: 'ana@example.com',
+              name: 'Ana Martínez',
+              role: 'tenant',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2024-03-01'),
+              updatedAt: new Date('2024-03-01'),
+            },
           },
           {
             id: '4',
-            title: 'Contrato Estudio Centro',
-            property: 'Estudio Centro Histórico',
-            owner: 'Luis Fernández',
-            tenant: 'Sofía López',
-            startDate: '2023-06-01',
-            endDate: '2024-05-31',
+            contractNumber: 'CNT-004-2023',
+            propertyId: 'prop-4',
+            ownerId: 'user-owner-4',
+            tenantId: 'user-tenant-4',
+            startDate: new Date('2023-06-01'),
+            endDate: new Date('2024-05-31'),
             monthlyRent: 280000,
-            status: 'EXPIRED',
             deposit: 280000,
-            createdAt: '2023-06-01',
+            status: 'EXPIRED',
+            createdAt: new Date('2023-06-01'),
+            updatedAt: new Date('2024-06-01'),
+            property: {
+              id: 'prop-4',
+              title: 'Estudio Centro Histórico',
+              description: 'Acogedor estudio en el centro',
+              address: 'Centro, Santiago',
+              city: 'Santiago',
+              commune: 'Santiago',
+              region: 'Metropolitana',
+              price: 280000,
+              bedrooms: 1,
+              bathrooms: 1,
+              area: 35,
+              status: 'AVAILABLE',
+              ownerId: 'user-owner-4',
+              createdAt: new Date('2023-06-01'),
+              updatedAt: new Date('2024-06-01'),
+            },
+            owner: {
+              id: 'user-owner-4',
+              email: 'luis@example.com',
+              name: 'Luis Fernández',
+              role: 'owner',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2023-06-01'),
+              updatedAt: new Date('2024-06-01'),
+            },
+            tenant: {
+              id: 'user-tenant-4',
+              email: 'sofia@example.com',
+              name: 'Sofía López',
+              role: 'tenant',
+              isActive: true,
+              emailVerified: true,
+              createdAt: new Date('2023-06-01'),
+              updatedAt: new Date('2024-06-01'),
+            },
           },
         ];
 
@@ -165,10 +303,11 @@ export default function AdminContractsPage() {
 
     if (searchQuery) {
       filtered = filtered.filter(contract =>
-        contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.tenant.toLowerCase().includes(searchQuery.toLowerCase()),
+        contract.contractNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.property?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.property?.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.owner?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.tenant?.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -188,8 +327,8 @@ export default function AdminContractsPage() {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -227,7 +366,7 @@ export default function AdminContractsPage() {
   };
 
   const createContract = async () => {
-    if (!newContract.title || !newContract.property || !newContract.owner || !newContract.tenant || 
+    if (!newContract.propertyId || !newContract.ownerId || !newContract.tenantId ||
         !newContract.startDate || !newContract.endDate || !newContract.monthlyRent) {
       alert('Por favor completa todos los campos obligatorios');
       return;
@@ -235,41 +374,43 @@ export default function AdminContractsPage() {
 
     try {
       setCreatingContract(true);
-      
-      // Create contract object
+
+      // Create contract object compatible with global Contract interface
       const now = new Date();
-      const isoString = now.toISOString();
-      const dateOnly = isoString.substring(0, 10); // YYYY-MM-DD format
+      const contractNumber = `CNT-${Date.now().toString().slice(-6)}-2024`;
 
       const contractData: Contract = {
-        ...newContract,
+        id: Date.now().toString(),
+        contractNumber,
+        propertyId: newContract.propertyId,
+        ownerId: newContract.ownerId,
+        tenantId: newContract.tenantId,
+        startDate: new Date(newContract.startDate),
+        endDate: new Date(newContract.endDate),
         monthlyRent: parseInt(newContract.monthlyRent || '0'),
         deposit: parseInt(newContract.deposit || '0') || parseInt(newContract.monthlyRent || '0'),
-        createdAt: dateOnly,
-        id: '', // Will be set below
+        status: newContract.status,
+        terms: newContract.terms || undefined,
+        createdAt: now,
+        updatedAt: now,
+        // Note: In a real app, property, owner, and tenant would be populated from database
       };
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Add to contracts list with generated ID
-      const newContractWithId = {
-        ...contractData,
-        id: Date.now().toString(),
-      };
 
-      setContracts([newContractWithId, ...contracts]);
+      setContracts([contractData, ...contracts]);
       setShowCreateModal(false);
       setNewContract({
-        title: '',
-        property: '',
-        owner: '',
-        tenant: '',
+        propertyId: '',
+        ownerId: '',
+        tenantId: '',
         startDate: '',
         endDate: '',
         monthlyRent: '',
         deposit: '',
-        status: 'PENDING',
+        status: 'DRAFT',
+        terms: '',
       });
     } catch (error) {
       logger.error('Error creating contract:', { error: error instanceof Error ? error.message : String(error) });
@@ -370,7 +511,7 @@ export default function AdminContractsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
-                    placeholder="Buscar contratos, propiedades, propietarios o inquilinos..."
+                    placeholder="Buscar por número de contrato, propiedad, propietario o inquilino..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -422,7 +563,7 @@ export default function AdminContractsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         {getStatusIcon(contract.status)}
-                        <h3 className="text-lg font-semibold">{contract.title}</h3>
+                        <h3 className="text-lg font-semibold">{contract.contractNumber}</h3>
                         {getStatusBadge(contract.status)}
                       </div>
                       
@@ -430,17 +571,17 @@ export default function AdminContractsPage() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Building className="w-4 h-4" />
-                            <span>{contract.property}</span>
+                            <span>{contract.property?.title || 'Propiedad no disponible'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Users className="w-4 h-4" />
-                            <span>Propietario: {contract.owner}</span>
+                            <span>Propietario: {contract.owner?.name || 'No disponible'}</span>
                           </div>
                         </div>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Users className="w-4 h-4" />
-                            <span>Inquilino: {contract.tenant}</span>
+                            <span>Inquilino: {contract.tenant?.name || 'No disponible'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar className="w-4 h-4" />
@@ -512,15 +653,15 @@ export default function AdminContractsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Propiedad *
+                    ID de Propiedad *
                   </label>
                   <Input
-                    value={newContract.property}
-                    onChange={(e) => setNewContract({...newContract, property: e.target.value})}
-                    placeholder="Departamento Las Condes"
+                    value={newContract.propertyId}
+                    onChange={(e) => setNewContract({...newContract, propertyId: e.target.value})}
+                    placeholder="prop-1"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Estado
@@ -530,35 +671,36 @@ export default function AdminContractsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="PENDING">Pendiente</SelectItem>
+                      <SelectItem value="DRAFT">Borrador</SelectItem>
                       <SelectItem value="ACTIVE">Activo</SelectItem>
                       <SelectItem value="EXPIRED">Expirado</SelectItem>
                       <SelectItem value="TERMINATED">Terminado</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Propietario *
+                    ID de Propietario *
                   </label>
                   <Input
-                    value={newContract.owner}
-                    onChange={(e) => setNewContract({...newContract, owner: e.target.value})}
-                    placeholder="María González"
+                    value={newContract.ownerId}
+                    onChange={(e) => setNewContract({...newContract, ownerId: e.target.value})}
+                    placeholder="user-owner-1"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Inquilino *
+                    ID de Inquilino *
                   </label>
                   <Input
-                    value={newContract.tenant}
-                    onChange={(e) => setNewContract({...newContract, tenant: e.target.value})}
-                    placeholder="Carlos Ramírez"
+                    value={newContract.tenantId}
+                    onChange={(e) => setNewContract({...newContract, tenantId: e.target.value})}
+                    placeholder="user-tenant-1"
                   />
                 </div>
               </div>
@@ -599,7 +741,7 @@ export default function AdminContractsPage() {
                     placeholder="550000"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Depósito (CLP)
@@ -611,6 +753,19 @@ export default function AdminContractsPage() {
                     placeholder="550000"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Términos y Condiciones
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  value={newContract.terms}
+                  onChange={(e) => setNewContract({...newContract, terms: e.target.value})}
+                  placeholder="Ingrese los términos y condiciones del contrato..."
+                />
               </div>
             </div>
             
