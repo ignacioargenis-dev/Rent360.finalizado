@@ -141,7 +141,7 @@ async function getSystemMetrics() {
       quickMetrics: {
         memoryUsage: Math.round((systemStats.memory.used / systemStats.memory.total) * 100),
         cpuUsage: systemStats.cpu.loadAverage[0] * 100,
-        cacheHitRate: cacheStats.hitRate,
+        cacheHitRate: cacheStats.hitRate || 0,
         activeAlerts: activeAlerts.length
       },
       systemHealth: {
@@ -151,10 +151,10 @@ async function getSystemMetrics() {
       },
       performance: {
         cache: {
-          hitRate: cacheStats.hitRate,
-          memoryUsage: Math.round(cacheStats.memoryUsage / 1024 / 1024), // Convertir a MB
-          totalRequests: cacheStats.totalRequests,
-          efficiency: cacheStats.hitRate >= 80 ? 'excellent' : cacheStats.hitRate >= 60 ? 'good' : 'poor'
+          hitRate: cacheStats.hitRate || 0,
+          memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024), // Convertir a MB
+          totalRequests: cacheStats.totalRequests || 0,
+          efficiency: (cacheStats.hitRate || 0) >= 80 ? 'excellent' : (cacheStats.hitRate || 0) >= 60 ? 'good' : 'poor'
         },
         rateLimiting: {
           blockedRequests: rateLimitStats.blockedRequests || 0,
@@ -291,12 +291,12 @@ async function getActiveAlerts() {
     
     // Verificar estadísticas de caché
     const cacheStats = await cacheManager.getStats();
-    if (cacheStats.hitRate < 50) {
+    if ((cacheStats.hitRate || 0) < 50) {
       alerts.push({
         id: 'cache-poor',
         type: 'warning',
         title: 'Rendimiento de caché bajo',
-        message: `Hit rate del caché: ${cacheStats.hitRate.toFixed(1)}%`,
+        message: `Hit rate del caché: ${(cacheStats.hitRate || 0).toFixed(1)}%`,
         timestamp: Date.now()
       });
     }
@@ -336,8 +336,8 @@ function calculateHealthScore(dbStats: any, systemStats: any, cacheStats: any, r
   else if (memoryPercent > 70) score -= 5;
   
   // Penalizar por rendimiento de caché
-  if (cacheStats.hitRate < 50) score -= 10;
-  else if (cacheStats.hitRate < 70) score -= 5;
+  if ((cacheStats.hitRate || 0) < 50) score -= 10;
+  else if ((cacheStats.hitRate || 0) < 70) score -= 5;
   
   return Math.max(0, score);
 }
@@ -359,7 +359,7 @@ function generateRecommendations(dbStats: any, systemStats: any, cacheStats: any
     recommendations.push('Considerar escalar recursos de memoria');
   }
   
-  if (cacheStats.hitRate < 70) {
+  if ((cacheStats.hitRate || 0) < 70) {
     recommendations.push('Optimizar estrategia de caché');
   }
   

@@ -24,11 +24,11 @@ async function healthHandler(request: NextRequest) {
 
     // Verificar estado del cache
     const cacheStats = await cacheManager.getStats();
-    const cacheStatus = cacheStats.memoryUsage < 100 * 1024 * 1024 ? 'healthy' : 'warning';
+    const cacheStatus = (cacheStats.memoryUsage || 0) < 100 * 1024 * 1024 ? 'healthy' : 'warning';
 
     // Verificar estado del rate limiter
     const rateLimitStats = rateLimiter.getStats();
-    const rateLimitStatus = rateLimitStats.memoryUsage < 50 * 1024 * 1024 ? 'healthy' : 'warning';
+    const rateLimitStatus = (rateLimitStats.memoryUsage || 0) < 50 * 1024 * 1024 ? 'healthy' : 'warning';
 
     // Verificar uso de memoria del sistema
     const memoryUsage = process.memoryUsage();
@@ -56,12 +56,12 @@ async function healthHandler(request: NextRequest) {
         },
         cache: {
           status: cacheStatus,
-          memoryUsage: cacheStats.memoryUsage,
-          hitRate: cacheStats.hitRate
+          memoryUsage: cacheStats.memoryUsage || 0,
+          hitRate: cacheStats.hitRate || 0
         },
         rateLimiter: {
           status: rateLimitStatus,
-          memoryUsage: rateLimitStats.memoryUsage,
+          memoryUsage: rateLimitStats.memoryUsage || 0,
           activeKeys: rateLimitStats.activeKeys
         },
         system: {

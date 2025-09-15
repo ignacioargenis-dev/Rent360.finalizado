@@ -518,14 +518,14 @@ class Logger {
         slowQueries: Math.floor(Math.random() * 5), // Simulado
       },
       cache: {
-        hitRate: cacheStats.hitRate,
-        memoryUsage: Math.round(cacheStats.memoryUsage / 1024 / 1024),
+        hitRate: cacheStats.hitRate || 0,
+        memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024),
         evictions: Math.floor(Math.random() * 10), // Simulado
       },
       rateLimiting: {
         blockedRequests: Math.floor(Math.random() * 20), // Simulado
         activeKeys: rateLimitStats.activeKeys,
-        memoryUsage: Math.round(rateLimitStats.memoryUsage / 1024 / 1024),
+        memoryUsage: Math.round((rateLimitStats.memoryUsage || 0) / 1024 / 1024),
       },
       performance: {
         averageResponseTime: Math.random() * 1000 + 100, // Simulado
@@ -596,7 +596,7 @@ class Logger {
     try {
       const cacheMgr = await getCacheManager();
       const cacheStats = await cacheMgr.cacheManager.getStats();
-      return cacheStats.hitRate > 50;
+      return (cacheStats.hitRate || 0) > 50;
     } catch (error) {
       return false;
     }

@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       statsSummary: {
         totalTables: 15, // Tablas principales del sistema
         totalQueries: Object.keys(queryStats).length,
-        cacheHitRate: cacheStats.hitRate,
+        cacheHitRate: cacheStats.hitRate || 0,
       },
     });
 
@@ -344,7 +344,7 @@ function generateCacheRecommendations(cacheStats: any) {
     priority: string;
   }> = [];
 
-  if (cacheStats.hitRate < 50) {
+  if ((cacheStats.hitRate || 0) < 50) {
     recommendations.push({
       type: 'warning',
       message: 'La tasa de aciertos del caché es baja. Considerar aumentar el TTL o agregar más datos al caché.',
@@ -360,7 +360,7 @@ function generateCacheRecommendations(cacheStats: any) {
     });
   }
 
-  if (cacheStats.memoryUsage > 50 * 1024 * 1024) { // 50MB
+  if ((cacheStats.memoryUsage || 0) > 50 * 1024 * 1024) { // 50MB
     recommendations.push({
       type: 'warning',
       message: 'El caché está usando mucha memoria. Considerar reducir el tamaño máximo.',

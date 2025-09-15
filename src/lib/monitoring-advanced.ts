@@ -115,14 +115,14 @@ class AdvancedMonitoringSystem {
         slowQueries: Math.floor(Math.random() * 5), // 0-5
       },
       cache: {
-        hitRate: cacheStats.hitRate,
-        memoryUsage: Math.round(cacheStats.memoryUsage / 1024 / 1024),
+        hitRate: cacheStats.hitRate || 0,
+        memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024),
         evictions: Math.floor(Math.random() * 10), // 0-10
       },
       rateLimiting: {
         blockedRequests: Math.floor(Math.random() * 20), // 0-20
         activeKeys: rateLimitStats.activeKeys,
-        memoryUsage: Math.round(rateLimitStats.memoryUsage / 1024 / 1024),
+        memoryUsage: Math.round((rateLimitStats.memoryUsage || 0) / 1024 / 1024),
       },
       performance: performanceMetrics,
     };
@@ -403,7 +403,7 @@ export function getQuickMetrics(): {
   return {
     memoryUsage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
     cpuUsage: Math.round(Math.random() * 30 + 20), // Simulado
-    cacheHitRate: Math.round(cacheStats.hitRate),
+    cacheHitRate: Math.round(cacheStats.hitRate || 0),
     activeAlerts,
   };
 }
