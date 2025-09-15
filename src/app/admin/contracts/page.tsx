@@ -91,48 +91,6 @@ export default function AdminContractsPage() {
             status: 'ACTIVE' as const,
             createdAt: new Date('2024-01-01'),
             updatedAt: new Date('2024-01-01'),
-            property: {
-              id: 'prop-1',
-              title: 'Departamento Las Condes',
-              description: 'Hermoso departamento en Las Condes',
-              address: 'Las Condes, Santiago',
-              city: 'Santiago',
-              commune: 'Las Condes',
-              region: 'Metropolitana',
-              price: 550000,
-              deposit: 550000,
-              bedrooms: 2,
-              bathrooms: 1,
-              area: 65,
-              status: 'RENTED' as const,
-              images: [],
-              features: [],
-              ownerId: 'user-owner-1',
-              createdAt: new Date('2024-01-01'),
-              updatedAt: new Date('2024-01-01'),
-            } as any,
-            owner: {
-              id: 'user-owner-1',
-              email: 'maria@example.com',
-              name: 'María González',
-              role: 'owner' as const,
-              phone: '+56912345678',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-01-01'),
-              updatedAt: new Date('2024-01-01'),
-            } as any,
-            tenant: {
-              id: 'user-tenant-1',
-              email: 'carlos@example.com',
-              name: 'Carlos Ramírez',
-              role: 'tenant' as const,
-              phone: '+56987654321',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-01-01'),
-              updatedAt: new Date('2024-01-01'),
-            } as any,
           },
           {
             id: '2',
@@ -147,48 +105,6 @@ export default function AdminContractsPage() {
             status: 'ACTIVE' as const,
             createdAt: new Date('2024-02-15'),
             updatedAt: new Date('2024-02-15'),
-            property: {
-              id: 'prop-2',
-              title: 'Oficina Providencia',
-              description: 'Oficina moderna en Providencia',
-              address: 'Providencia, Santiago',
-              city: 'Santiago',
-              commune: 'Providencia',
-              region: 'Metropolitana',
-              price: 350000,
-              deposit: 350000,
-              bedrooms: 0,
-              bathrooms: 1,
-              area: 45,
-              status: 'RENTED' as const,
-              images: [],
-              features: [],
-              ownerId: 'user-owner-2',
-              createdAt: new Date('2024-02-15'),
-              updatedAt: new Date('2024-02-15'),
-            } as any,
-            owner: {
-              id: 'user-owner-2',
-              email: 'empresa@example.com',
-              name: 'Empresa Soluciones Ltda.',
-              role: 'owner' as const,
-              phone: '+56212345678',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-02-15'),
-              updatedAt: new Date('2024-02-15'),
-            } as any,
-            tenant: {
-              id: 'user-tenant-2',
-              email: 'techcorp@example.com',
-              name: 'TechCorp SA',
-              role: 'tenant' as const,
-              phone: '+56287654321',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-02-15'),
-              updatedAt: new Date('2024-02-15'),
-            } as any,
           },
           {
             id: '3',
@@ -203,48 +119,6 @@ export default function AdminContractsPage() {
             status: 'ACTIVE' as const,
             createdAt: new Date('2024-03-01'),
             updatedAt: new Date('2024-03-01'),
-            property: {
-              id: 'prop-3',
-              title: 'Casa Vitacura',
-              description: 'Amplia casa familiar en Vitacura',
-              address: 'Vitacura, Santiago',
-              city: 'Santiago',
-              commune: 'Vitacura',
-              region: 'Metropolitana',
-              price: 1200000,
-              deposit: 1200000,
-              bedrooms: 4,
-              bathrooms: 3,
-              area: 180,
-              status: 'RENTED' as const,
-              images: [],
-              features: [],
-              ownerId: 'user-owner-3',
-              createdAt: new Date('2024-03-01'),
-              updatedAt: new Date('2024-03-01'),
-            } as any,
-            owner: {
-              id: 'user-owner-3',
-              email: 'pedro@example.com',
-              name: 'Pedro Silva',
-              role: 'owner' as const,
-              phone: '+56911223344',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-03-01'),
-              updatedAt: new Date('2024-03-01'),
-            } as any,
-            tenant: {
-              id: 'user-tenant-3',
-              email: 'ana@example.com',
-              name: 'Ana Martínez',
-              role: 'tenant' as const,
-              phone: '+56944332211',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2024-03-01'),
-              updatedAt: new Date('2024-03-01'),
-            } as any,
           },
           {
             id: '4',
@@ -259,48 +133,6 @@ export default function AdminContractsPage() {
             status: 'EXPIRED' as const,
             createdAt: new Date('2023-06-01'),
             updatedAt: new Date('2024-06-01'),
-            property: {
-              id: 'prop-4',
-              title: 'Estudio Centro Histórico',
-              description: 'Acogedor estudio en el centro',
-              address: 'Centro, Santiago',
-              city: 'Santiago',
-              commune: 'Santiago',
-              region: 'Metropolitana',
-              price: 280000,
-              deposit: 280000,
-              bedrooms: 1,
-              bathrooms: 1,
-              area: 35,
-              status: 'AVAILABLE' as const,
-              images: [],
-              features: [],
-              ownerId: 'user-owner-4',
-              createdAt: new Date('2023-06-01'),
-              updatedAt: new Date('2024-06-01'),
-            } as any,
-            owner: {
-              id: 'user-owner-4',
-              email: 'luis@example.com',
-              name: 'Luis Fernández',
-              role: 'owner' as const,
-              phone: '+56955667788',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2023-06-01'),
-              updatedAt: new Date('2024-06-01'),
-            } as any,
-            tenant: {
-              id: 'user-tenant-4',
-              email: 'sofia@example.com',
-              name: 'Sofía López',
-              role: 'tenant' as const,
-              phone: '+56988776655',
-              isActive: true,
-              emailVerified: true,
-              createdAt: new Date('2023-06-01'),
-              updatedAt: new Date('2024-06-01'),
-            } as any,
           },
         ];
 
@@ -324,10 +156,9 @@ export default function AdminContractsPage() {
     if (searchQuery) {
       filtered = filtered.filter(contract =>
         contract.contractNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.property?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.property?.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.owner?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.tenant?.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        contract.propertyId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.ownerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.tenantId.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -413,46 +244,6 @@ export default function AdminContractsPage() {
         terms: newContract.terms || undefined,
         createdAt: now,
         updatedAt: now,
-        property: {
-          id: newContract.propertyId,
-          title: `Propiedad ${newContract.propertyId}`,
-          description: 'Propiedad creada desde formulario',
-          address: 'Dirección por definir',
-          city: 'Santiago',
-          commune: 'Centro',
-          region: 'Metropolitana',
-          price: parseInt(newContract.monthlyRent || '0'),
-          deposit: parseInt(newContract.deposit || '0'),
-          bedrooms: 1,
-          bathrooms: 1,
-          area: 50,
-          status: 'RENTED' as const,
-          images: [],
-          features: [],
-          ownerId: newContract.ownerId,
-          createdAt: now,
-          updatedAt: now,
-        } as any,
-        owner: {
-          id: newContract.ownerId,
-          email: `${newContract.ownerId}@example.com`,
-          name: `Propietario ${newContract.ownerId}`,
-          role: 'owner' as const,
-          isActive: true,
-          emailVerified: true,
-          createdAt: now,
-          updatedAt: now,
-        } as any,
-        tenant: {
-          id: newContract.tenantId,
-          email: `${newContract.tenantId}@example.com`,
-          name: `Inquilino ${newContract.tenantId}`,
-          role: 'tenant' as const,
-          isActive: true,
-          emailVerified: true,
-          createdAt: now,
-          updatedAt: now,
-        } as any,
       };
 
       // Simulate API call
@@ -570,7 +361,7 @@ export default function AdminContractsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
-                    placeholder="Buscar por número de contrato, propiedad, propietario o inquilino..."
+                    placeholder="Buscar por número de contrato, ID de propiedad, propietario o inquilino..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -630,17 +421,17 @@ export default function AdminContractsPage() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Building className="w-4 h-4" />
-                            <span>{contract.property?.title || 'Propiedad no disponible'}</span>
+                            <span>Propiedad ID: {contract.propertyId}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Users className="w-4 h-4" />
-                            <span>Propietario: {contract.owner?.name || 'No disponible'}</span>
+                            <span>Propietario ID: {contract.ownerId}</span>
                           </div>
                         </div>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Users className="w-4 h-4" />
-                            <span>Inquilino: {contract.tenant?.name || 'No disponible'}</span>
+                            <span>Inquilino ID: {contract.tenantId}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar className="w-4 h-4" />
