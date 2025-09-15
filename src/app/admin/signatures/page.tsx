@@ -136,7 +136,7 @@ export default function SignaturesAdminPage() {
             apiSecret: process.env[`${envPrefix}_API_SECRET`] || '',
             certificateId: process.env[`${envPrefix}_CERTIFICATE_ID`] || '',
             bankIntegration: provider.name === 'DigitalSign' ?
-              process.env[`${envPrefix}_BANK_INTEGRATION`] === 'true' : undefined
+              process.env[`${envPrefix}_BANK_INTEGRATION`] === 'true' : false
           }
         };
       });
