@@ -196,14 +196,27 @@ export async function PUT(request: NextRequest) {
       finalValue = validatedData.value;
     }
     
+    // Preparar datos limpios para Prisma (filtrar undefined)
+    const updateData: any = {
+      value: finalValue !== undefined ? finalValue : existingSetting.value,
+      updatedAt: new Date()
+    };
+
+    // Solo incluir campos definidos (no undefined)
+    if (validatedData.description !== undefined) {
+      updateData.description = validatedData.description ?? null;
+    }
+    if (validatedData.category !== undefined) {
+      updateData.category = validatedData.category;
+    }
+    if (validatedData.isActive !== undefined) {
+      updateData.isActive = validatedData.isActive;
+    }
+
     // Actualizar configuración
     const updatedSetting = await db.systemSetting.update({
       where: { key },
-      data: {
-        ...validatedData,
-        value: finalValue !== undefined ? finalValue : existingSetting.value,
-        updatedAt: new Date()
-      }
+      data: updateData
     });
     
     logger.info('Configuración del sistema actualizada', { 
@@ -250,17 +263,27 @@ export async function PATCH(request: NextRequest) {
         let finalValue = settingData.value;
         
         if (existingSetting) {
+          // Preparar datos limpios para bulk update (filtrar undefined)
+          const bulkUpdateData: any = {
+            value: finalValue,
+            updatedAt: new Date()
+          };
+
+          // Solo incluir campos definidos (no undefined)
+          if (settingData.description !== undefined) {
+            bulkUpdateData.description = settingData.description ?? null;
+          }
+          if (settingData.category !== undefined) {
+            bulkUpdateData.category = settingData.category;
+          }
+          if (settingData.isActive !== undefined) {
+            bulkUpdateData.isActive = settingData.isActive;
+          }
+
           // Actualizar configuración existente
           const updatedSetting = await db.systemSetting.update({
             where: { key: settingData.key },
-            data: {
-              value: finalValue,
-              description: settingData.description ?? null,
-              category: settingData.category,
-              // TODO: Implementar encriptación cuando sea necesario: settingData.// TODO: Implementar encriptación cuando sea necesario,
-              isActive: settingData.isActive,
-              updatedAt: new Date()
-            }
+            data: bulkUpdateData
           });
           
           results.push({
@@ -273,16 +296,26 @@ export async function PATCH(request: NextRequest) {
             }
           });
         } else {
+          // Preparar datos limpios para bulk create (filtrar undefined)
+          const bulkCreateData: any = {
+            key: settingData.key,
+            value: finalValue
+          };
+
+          // Solo incluir campos definidos (no undefined)
+          if (settingData.description !== undefined) {
+            bulkCreateData.description = settingData.description ?? null;
+          }
+          if (settingData.category !== undefined) {
+            bulkCreateData.category = settingData.category;
+          }
+          if (settingData.isActive !== undefined) {
+            bulkCreateData.isActive = settingData.isActive;
+          }
+
           // Crear nueva configuración
           const newSetting = await db.systemSetting.create({
-            data: {
-              key: settingData.key,
-              value: finalValue,
-              description: settingData.description ?? null,
-              category: settingData.category,
-              // TODO: Implementar encriptación cuando sea necesario: settingData.// TODO: Implementar encriptación cuando sea necesario,
-              isPublic: settingData.isPublic
-            }
+            data: bulkCreateData
           });
           
           results.push({
