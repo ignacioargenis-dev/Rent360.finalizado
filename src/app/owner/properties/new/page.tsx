@@ -103,8 +103,8 @@ export default function NewPropertyPage() {
     bathrooms: 1,
     area: 0,
     propertyType: 'apartment',
-    features: [] as string[],
-    images: [] as string[],
+    features: [],
+    images: [],
     availabilityDate: '',
     contactPreference: 'platform',
   });
