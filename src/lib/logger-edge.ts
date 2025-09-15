@@ -115,7 +115,7 @@ export function getMonitoringStats() {
     },
     health: {
       current: 'healthy',
-      history: []
+      history: [{ timestamp: Date.now() }]
     },
     requests: 0,
     errors: 0,

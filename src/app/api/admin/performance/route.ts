@@ -63,13 +63,21 @@ export async function GET(request: NextRequest) {
 
     const performanceMetrics = detailed ? {
       ...baseMetrics,
-      history: monitoringStats.health.history.map(h => ({
-        timestamp: h.timestamp,
-        memoryUsage: 0,
-        cpuUsage: 0,
-        responseTime: 0,
-        errorRate: 0,
-      }))
+      history: monitoringStats.health.history.length > 0
+        ? monitoringStats.health.history.map((h: any) => ({
+            timestamp: h.timestamp || Date.now(),
+            memoryUsage: 0,
+            cpuUsage: 0,
+            responseTime: 0,
+            errorRate: 0,
+          }))
+        : [{
+            timestamp: Date.now(),
+            memoryUsage: 0,
+            cpuUsage: 0,
+            responseTime: 0,
+            errorRate: 0,
+          }]
     } : baseMetrics;
 
     // Calcular estado general del sistema
