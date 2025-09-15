@@ -48,6 +48,7 @@ export default function AdminContractsPage() {
   const [creatingContract, setCreatingContract] = useState(false);
 
   const [newContract, setNewContract] = useState({
+    title: '',
     propertyId: '',
     ownerId: '',
     tenantId: '',
@@ -271,6 +272,7 @@ export default function AdminContractsPage() {
       setContracts([contractData, ...contracts]);
       setShowCreateModal(false);
       setNewContract({
+        title: '',
         propertyId: '',
         ownerId: '',
         tenantId: '',
