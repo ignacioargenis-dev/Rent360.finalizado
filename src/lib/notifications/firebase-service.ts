@@ -80,7 +80,7 @@ class FirebaseNotificationService {
         });
       }
     } catch (error) {
-      logger.error('Error initializing Firebase:', error);
+      logger.error('Error initializing Firebase:', error as Error);
       throw error;
     }
   }
@@ -100,7 +100,7 @@ class FirebaseNotificationService {
         return false;
       }
     } catch (error) {
-      logger.error('Error requesting notification permission:', error);
+      logger.error('Error requesting notification permission:', error as Error);
       return false;
     }
   }

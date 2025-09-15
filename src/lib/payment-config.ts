@@ -148,7 +148,7 @@ export class PaymentConfigService {
       return serviceConfig;
 
     } catch (error) {
-      logger.error(`Error obteniendo configuración para ${serviceId}:`, error);
+      logger.error(`Error obteniendo configuración para ${serviceId}:`, error as Error);
       throw new DatabaseError(`Error al obtener configuración del servicio ${serviceId}`);
     }
   }
@@ -171,7 +171,7 @@ export class PaymentConfigService {
       return configs;
 
     } catch (error) {
-      logger.error('Error obteniendo todas las configuraciones:', error);
+      logger.error('Error obteniendo todas las configuraciones:', error as Error);
       throw new DatabaseError('Error al obtener configuraciones de servicios');
     }
   }
@@ -229,7 +229,7 @@ export class PaymentConfigService {
       logger.info(`Configuración actualizada para servicio: ${serviceId}`);
 
     } catch (error) {
-      logger.error(`Error actualizando configuración para ${serviceId}:`, error);
+      logger.error(`Error actualizando configuración para ${serviceId}:`, error as Error);
       throw error;
     }
   }
@@ -299,7 +299,7 @@ export class PaymentConfigService {
       };
 
     } catch (error) {
-      logger.error(`Error probando conexión para ${serviceId}:`, error);
+      logger.error(`Error probando conexión para ${serviceId}:`, error as Error);
       return {
         success: false,
         responseTime: 0,
@@ -451,7 +451,7 @@ export class PaymentConfigService {
       logger.info(`Cargadas ${this.configs.size} configuraciones de servicios de pago`);
 
     } catch (error) {
-      logger.error('Error cargando configuraciones de servicios:', error);
+      logger.error('Error cargando configuraciones de servicios:', error as Error);
       throw new DatabaseError('Error al cargar configuraciones de servicios de pago');
     }
   }

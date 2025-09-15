@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo payouts de runners:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error obteniendo payouts de runners:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error calculando payouts de runners:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error calculando payouts de runners:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }

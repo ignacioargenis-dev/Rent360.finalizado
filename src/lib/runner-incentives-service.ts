@@ -339,7 +339,7 @@ export class RunnerIncentivesService {
       return grantedIncentives;
 
     } catch (error) {
-      logger.error('Error evaluando incentivos:', error);
+      logger.error('Error evaluando incentivos:', error as Error);
       throw error;
     }
   }
@@ -372,7 +372,7 @@ export class RunnerIncentivesService {
       return incentives;
 
     } catch (error) {
-      logger.error('Error obteniendo incentivos de runner:', error);
+      logger.error('Error obteniendo incentivos de runner:', error as Error);
       throw error;
     }
   }
@@ -428,7 +428,7 @@ export class RunnerIncentivesService {
       return true;
 
     } catch (error) {
-      logger.error('Error reclamando incentivo:', error);
+      logger.error('Error reclamando incentivo:', error as Error);
       throw error;
     }
   }
@@ -515,7 +515,7 @@ export class RunnerIncentivesService {
       };
 
     } catch (error) {
-      logger.error('Error generando leaderboard de incentivos:', error);
+      logger.error('Error generando leaderboard de incentivos:', error as Error);
       return {
         period,
         startDate: new Date(),
@@ -605,7 +605,7 @@ export class RunnerIncentivesService {
       return incentive;
 
     } catch (error) {
-      logger.error('Error otorgando incentivo:', error);
+      logger.error('Error otorgando incentivo:', error as Error);
       return null;
     }
   }
@@ -657,7 +657,7 @@ export class RunnerIncentivesService {
       });
 
     } catch (error) {
-      logger.error('Error notificando incentivo:', error);
+      logger.error('Error notificando incentivo:', error as Error);
     }
   }
 
@@ -706,7 +706,7 @@ export class RunnerIncentivesService {
       }
 
     } catch (error) {
-      logger.error('Error aplicando recompensas:', error);
+      logger.error('Error aplicando recompensas:', error as Error);
     }
   }
 
@@ -761,7 +761,7 @@ export class RunnerIncentivesService {
       return topPerformers;
 
     } catch (error) {
-      logger.error('Error obteniendo top performers:', error);
+      logger.error('Error obteniendo top performers:', error as Error);
       return [];
     }
   }
@@ -805,7 +805,7 @@ export class RunnerIncentivesService {
       });
 
     } catch (error) {
-      logger.error('Error en evaluación automática de incentivos:', error);
+      logger.error('Error en evaluación automática de incentivos:', error as Error);
     }
   }
 }

@@ -74,7 +74,7 @@ class WebSocketServer {
 
         next();
       } catch (error) {
-        logger.error('WebSocket authentication failed:', error);
+        logger.error('WebSocket authentication failed:', error as Error);
         next(new Error('Authentication failed'));
       }
     });
