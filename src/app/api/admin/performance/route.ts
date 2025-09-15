@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
         memoryUsage: Math.round((currentMetrics.memory.used / currentMetrics.memory.total) * 100),
         cpuUsage: currentMetrics.cpu.usage,
         uptime: process.uptime(),
-        loadAverage: currentMetrics.cpu.loadAverage,
       },
       database: {
         status: 'healthy', // Simulado, en producción verificar conexión real
