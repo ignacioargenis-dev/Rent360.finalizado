@@ -1,0 +1,5 @@
+[33mc170fcd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m fix: Corregir tipos en funcion handleCreateProperty
+[33md81d6b7[m fix: Corregir tipos en funcion handleCreateProperty
+[33mb94bfc9[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Corregir property.owner -> property.ownerId en filtros de busqueda
+[33mf04aa26[m fix: Usar conversion segura de tipos 'as unknown as Property[]'
+[33m7e71c6e[m fix: Resolver problema de inferencia de tipos en mockProperties

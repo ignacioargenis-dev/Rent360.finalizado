@@ -207,6 +207,7 @@ export default function AdminPropertiesPage() {
         bedrooms: propertyData.bedrooms || 1,
         bathrooms: propertyData.bathrooms || 1,
         area: propertyData.area || 50,
+        type: 'APARTMENT' as const,
         status: 'AVAILABLE' as const,
         images: emptyImages,
         features: emptyFeatures,

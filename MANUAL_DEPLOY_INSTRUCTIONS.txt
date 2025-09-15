@@ -1,0 +1,41 @@
+INSTRUCCIONES MANUALES PARA DEPLOYMENT - PROBLEMA DE DIGITAlOCEAN
+
+PROBLEMA: DigitalOcean está usando commit anterior (b94bfc9) en lugar del último (c170fcd) que contiene las correcciones de TypeScript.
+
+SOLUCIÓN MANUAL:
+
+1. ABRIR UNA TERMINAL NUEVA EN EL DIRECTORIO DEL PROYECTO:
+   cd "C:\Users\Perrita\Documents\GitHub\Rent360.finalizado"
+
+2. VERIFICAR EL ESTADO ACTUAL:
+   git status
+   git log --oneline -5
+
+3. HACER PUSH FORZADO PARA ASEGURAR QUE TODOS LOS COMMITS ESTÉN EN EL REMOTE:
+   git push --force origin master
+
+4. VERIFICAR QUE EL REMOTE ESTÉ ACTUALIZADO:
+   git log --oneline -5 origin/master
+
+5. SI AÚN HAY PROBLEMAS, CREAR UN NUEVO COMMIT VACÍO:
+   git commit --allow-empty -m "fix: Force deployment update - TypeScript fixes applied"
+   git push origin master
+
+6. VERIFICAR QUE EL COMMIT MÁS RECIENTE CONTENGA LAS CORRECCIONES:
+   El commit c170fcd debe contener:
+   - Eliminación de anotación Property[] explícita
+   - Uso de 'as const' para status
+   - Conversión 'as Property' al final del objeto
+   - Corrección de property.owner -> property.ownerId
+
+7. UNA VEZ QUE EL REMOTE ESTÉ ACTUALIZADO, PROBAR EL BUILD EN DIGITALOCEAN NUEVAMENTE.
+
+ARCHIVO CORREGIDO: src/app/admin/properties/page.tsx (líneas 197-216)
+
+CAMBIOS APLICADOS:
+- Eliminada anotación explícita: const newProperty: Property = {
+- Agregado 'as const' al status: status: 'AVAILABLE' as const,
+- Agregada conversión final: } as Property;
+
+ESTOS CAMBIOS RESUELVEN EL ERROR:
+Type error: Type 'string[]' is not assignable to type 'string'.
