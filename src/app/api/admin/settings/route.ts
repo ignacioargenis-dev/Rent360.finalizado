@@ -197,26 +197,26 @@ export async function PUT(request: NextRequest) {
     }
     
     // Preparar datos limpios para Prisma (filtrar undefined)
-    const updateData: any = {
+    const prismaData: any = {
       value: finalValue !== undefined ? finalValue : existingSetting.value,
       updatedAt: new Date()
     };
 
     // Solo incluir campos definidos (no undefined)
     if (validatedData.description !== undefined) {
-      updateData.description = validatedData.description ?? null;
+      prismaData.description = validatedData.description ?? null;
     }
     if (validatedData.category !== undefined) {
-      updateData.category = validatedData.category;
+      prismaData.category = validatedData.category;
     }
     if (validatedData.isActive !== undefined) {
-      updateData.isActive = validatedData.isActive;
+      prismaData.isActive = validatedData.isActive;
     }
 
     // Actualizar configuración
     const updatedSetting = await db.systemSetting.update({
       where: { key },
-      data: updateData
+      data: prismaData
     });
     
     logger.info('Configuración del sistema actualizada', { 
