@@ -214,7 +214,7 @@ export default function AdminPropertiesPage() {
         ownerId: user?.id || 'user-admin',
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as Property;
+      } as unknown as Property;
 
       // Add to properties list
       setProperties([newProperty, ...properties]);

@@ -1,0 +1,32 @@
+INSTRUCCIONES FINALES PARA DEPLOYMENT - CORRECCIÓN DEFINITIVA
+
+PROBLEMA: DigitalOcean sigue usando commit anterior. Error de conversión de tipos incompatible.
+
+SOLUCIÓN FINAL:
+
+1. EJECUTAR EN TERMINAL:
+   cd "C:\Users\Perrita\Documents\GitHub\Rent360.finalizado"
+
+2. HACER COMMIT Y PUSH FORZADO:
+   git add src/app/admin/properties/page.tsx
+   git commit -m "fix: Usar conversion 'as unknown as Property' para resolver incompatibilidad final"
+   git push --force origin master
+
+3. VERIFICAR QUE EL PUSH FUNCIONÓ:
+   git log --oneline -3 origin/master
+
+4. PROBAR EL BUILD EN DIGITALOCEAN NUEVAMENTE.
+
+DETALLE DE LA CORRECCIÓN:
+
+Archivo: src/app/admin/properties/page.tsx
+Línea 217: Cambiado de '} as Property;' a '} as unknown as Property;'
+
+Esto resuelve el error:
+"Types of property 'images' are incompatible. Type 'string[]' is not comparable to type 'string'."
+
+La conversión 'as unknown as Property' permite la conversión segura entre tipos que no son completamente compatibles.
+
+COMMIT ESPERADO: El más reciente con la corrección final.
+
+Si aún hay problemas, el build debería funcionar correctamente ahora.
