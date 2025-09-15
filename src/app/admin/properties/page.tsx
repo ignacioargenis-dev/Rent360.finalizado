@@ -65,6 +65,9 @@ export default function AdminPropertiesPage() {
     const loadProperties = async () => {
       try {
         // Mock data for demo
+        const emptyImages: string[] = [];
+        const emptyFeatures: string[] = [];
+
         const mockProperties: Property[] = [
           {
             id: '1',
@@ -80,8 +83,8 @@ export default function AdminPropertiesPage() {
             bathrooms: 2,
             area: 85,
             status: 'RENTED',
-            images: [],
-            features: [],
+            images: emptyImages,
+            features: emptyFeatures,
             ownerId: 'user-owner-1',
             createdAt: new Date('2024-01-15'),
             updatedAt: new Date('2024-03-10'),
@@ -100,8 +103,8 @@ export default function AdminPropertiesPage() {
             bathrooms: 1,
             area: 45,
             status: 'RENTED',
-            images: [],
-            features: [],
+            images: emptyImages,
+            features: emptyFeatures,
             ownerId: 'user-owner-2',
             createdAt: new Date('2024-02-01'),
             updatedAt: new Date('2024-03-15'),
@@ -120,8 +123,8 @@ export default function AdminPropertiesPage() {
             bathrooms: 3,
             area: 180,
             status: 'AVAILABLE',
-            images: [],
-            features: [],
+            images: emptyImages,
+            features: emptyFeatures,
             ownerId: 'user-owner-3',
             createdAt: new Date('2024-02-15'),
             updatedAt: new Date('2024-03-20'),
@@ -140,8 +143,8 @@ export default function AdminPropertiesPage() {
             bathrooms: 1,
             area: 30,
             status: 'MAINTENANCE',
-            images: [],
-            features: [],
+            images: emptyImages,
+            features: emptyFeatures,
             ownerId: 'user-owner-4',
             createdAt: new Date('2024-01-20'),
             updatedAt: new Date('2024-03-18'),
@@ -188,6 +191,9 @@ export default function AdminPropertiesPage() {
   const handleCreateProperty = async (propertyData: any) => {
     try {
       // Create property object with ID compatible with global Property interface
+      const emptyImages: string[] = [];
+      const emptyFeatures: string[] = [];
+
       const newProperty: Property = {
         id: Date.now().toString(),
         title: propertyData.title || 'Nueva Propiedad',
@@ -202,8 +208,8 @@ export default function AdminPropertiesPage() {
         bathrooms: propertyData.bathrooms || 1,
         area: propertyData.area || 50,
         status: 'AVAILABLE',
-        images: [],
-        features: [],
+        images: emptyImages,
+        features: emptyFeatures,
         ownerId: user?.id || 'user-admin',
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -106,6 +106,10 @@ const regions = [
 export default function BrokerNewPropertyPage() {
   const { user, loading: userLoading } = useUserState();
 
+  // Define empty arrays with explicit types
+  const emptyFeatures: string[] = [];
+  const emptyImages: string[] = [];
+
   const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
     description: '',
@@ -119,8 +123,8 @@ export default function BrokerNewPropertyPage() {
     bathrooms: 1,
     area: 0,
     propertyType: 'apartment',
-    features: [],
-    images: [],
+    features: emptyFeatures,
+    images: emptyImages,
     availabilityDate: '',
     ownerName: '',
     ownerEmail: '',

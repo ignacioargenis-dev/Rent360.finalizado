@@ -42,6 +42,8 @@ export default function TenantContractsPage() {
 
   useEffect(() => {
     // Mock data for demo
+    const emptyImages: string[] = [];
+
     setTimeout(() => {
       setContracts([
                 {
@@ -72,7 +74,7 @@ export default function TenantContractsPage() {
             area: 85,
             status: 'RENTED' as any,
             type: 'APARTMENT' as any,
-            images: [],
+            images: emptyImages,
             features: ['Estacionamiento', 'Bodega', 'Gimnasio'],
             ownerId: '2',
             createdAt: new Date(),
@@ -108,7 +110,7 @@ export default function TenantContractsPage() {
             area: 45,
             status: 'RENTED' as any,
             type: 'COMMERCIAL' as any,
-            images: [],
+            images: emptyImages,
             features: ['Seguridad 24/7', 'Recepción'],
             ownerId: '3',
             createdAt: new Date(),

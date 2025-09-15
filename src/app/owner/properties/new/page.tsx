@@ -90,6 +90,11 @@ const regions = [
 
 export default function NewPropertyPage() {
   const { user } = useUserState();
+
+  // Define empty arrays with explicit types
+  const emptyFeatures: string[] = [];
+  const emptyImages: string[] = [];
+
   const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
     description: '',
@@ -103,8 +108,8 @@ export default function NewPropertyPage() {
     bathrooms: 1,
     area: 0,
     propertyType: 'apartment',
-    features: [],
-    images: [],
+    features: emptyFeatures,
+    images: emptyImages,
     availabilityDate: '',
     contactPreference: 'platform',
   });
