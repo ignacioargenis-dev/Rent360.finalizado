@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo payouts de proveedores:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error calculando payouts por período:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }

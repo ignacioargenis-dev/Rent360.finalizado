@@ -123,7 +123,7 @@ class FirebaseNotificationService {
         return null;
       }
     } catch (error) {
-      logger.error('Error retrieving registration token:', error);
+      logger.error('Error retrieving registration token:', error as Error);
       return null;
     }
   }
@@ -145,7 +145,7 @@ class FirebaseNotificationService {
         throw new Error('Failed to subscribe to topic');
       }
     } catch (error) {
-      logger.error(`Error subscribing to topic ${topic}:`, error);
+      logger.error(`Error subscribing to topic ${topic}:`, error as Error);
       return false;
     }
   }
@@ -167,7 +167,7 @@ class FirebaseNotificationService {
         throw new Error('Failed to unsubscribe from topic');
       }
     } catch (error) {
-      logger.error(`Error unsubscribing from topic ${topic}:`, error);
+      logger.error(`Error unsubscribing from topic ${topic}:`, error as Error);
       return false;
     }
   }
@@ -200,7 +200,7 @@ class FirebaseNotificationService {
         throw new Error('Failed to send notification');
       }
     } catch (error) {
-      logger.error('Error sending notification:', error);
+      logger.error('Error sending notification:', error as Error);
       return false;
     }
   }
@@ -233,7 +233,7 @@ class FirebaseNotificationService {
         throw new Error('Failed to send notification to topic');
       }
     } catch (error) {
-      logger.error(`Error sending notification to topic ${topic}:`, error);
+      logger.error(`Error sending notification to topic ${topic}:`, error as Error);
       return false;
     }
   }

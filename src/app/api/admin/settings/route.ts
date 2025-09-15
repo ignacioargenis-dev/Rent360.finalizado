@@ -35,6 +35,13 @@ function encryptValue(value: string): string {
 function decryptValue(encryptedValue: string): string {
   try {
     const [ivHex, encrypted] = encryptedValue.split(':');
+
+    // Validar que ambos valores existan y no sean undefined
+    if (!ivHex || !encrypted) {
+      logger.warn('Formato de valor encriptado inválido:', { encryptedValue });
+      return encryptedValue;
+    }
+
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -93,7 +100,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo configuraciones:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -150,7 +157,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error creando configuración:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -214,7 +221,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error actualizando configuración:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -314,7 +321,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error en actualización masiva de configuraciones:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -358,7 +365,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error eliminando configuración:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }

@@ -205,7 +205,7 @@ export class KYCService {
       };
 
     } catch (error) {
-      logger.error('Error iniciando KYC:', error);
+      logger.error('Error iniciando KYC:', error as Error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido'
