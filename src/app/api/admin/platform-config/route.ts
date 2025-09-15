@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleError(error as Error);
   }
 }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleError(error as Error);
   }
 }
 
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleError(error as Error);
   }
 }
 
@@ -206,6 +206,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleError(error as Error);
   }
 }

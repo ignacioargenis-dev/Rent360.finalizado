@@ -280,7 +280,7 @@ export class RunnerReportsService {
       };
 
     } catch (error) {
-      logger.error('Error generando métricas de rendimiento:', error);
+      logger.error('Error generando métricas de rendimiento:', error as Error);
       throw error;
     }
   }
@@ -424,7 +424,7 @@ export class RunnerReportsService {
       };
 
     } catch (error) {
-      logger.error('Error generando reporte semanal:', error);
+      logger.error('Error generando reporte semanal:', error as Error);
       throw error;
     }
   }
@@ -490,7 +490,7 @@ export class RunnerReportsService {
       return rankingData;
 
     } catch (error) {
-      logger.error('Error obteniendo ranking semanal:', error);
+      logger.error('Error obteniendo ranking semanal:', error as Error);
       return [];
     }
   }
@@ -551,7 +551,7 @@ export class RunnerReportsService {
       });
 
     } catch (error) {
-      logger.error('Error en envío masivo de reportes semanales:', error);
+      logger.error('Error en envío masivo de reportes semanales:', error as Error);
     }
   }
 
@@ -720,7 +720,7 @@ export class RunnerReportsService {
       }));
 
     } catch (error) {
-      logger.error('Error obteniendo próximas visitas:', error);
+      logger.error('Error obteniendo próximas visitas:', error as Error);
       return [];
     }
   }

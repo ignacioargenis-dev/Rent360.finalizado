@@ -73,7 +73,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       return this.accessToken;
 
     } catch (error) {
-      logger.error('Error obteniendo token de acceso Banco Estado:', error);
+      logger.error('Error obteniendo token de acceso Banco Estado:', error as Error);
       throw new BusinessLogicError('Error de autenticación con Banco Estado');
     }
   }
@@ -124,7 +124,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       return result;
 
     } catch (error) {
-      logger.error('Error en transferencia Banco Estado:', error);
+      logger.error('Error en transferencia Banco Estado:', error as Error);
       return this.handleBankError(error);
     }
   }
@@ -253,7 +253,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error verificando cuenta con Banco Estado:', error);
+      logger.error('Error verificando cuenta con Banco Estado:', error as Error);
       return {
         isValid: false,
         verificationMethod: 'api',
@@ -296,7 +296,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando saldo Banco Estado:', error);
+      logger.error('Error consultando saldo Banco Estado:', error as Error);
       throw new BusinessLogicError('Error obteniendo saldo de cuenta');
     }
   }
@@ -353,7 +353,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }));
 
     } catch (error) {
-      logger.error('Error obteniendo historial Banco Estado:', error);
+      logger.error('Error obteniendo historial Banco Estado:', error as Error);
       return [];
     }
   }
@@ -385,7 +385,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando estado de transferencia:', error);
+      logger.error('Error consultando estado de transferencia:', error as Error);
       return {
         status: 'failed',
         errorMessage: error instanceof Error ? error.message : 'Error desconocido'
@@ -453,7 +453,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando transferencia programada:', error);
+      logger.error('Error creando transferencia programada:', error as Error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -479,7 +479,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error cancelando transferencia programada:', error);
+      logger.error('Error cancelando transferencia programada:', error as Error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error cancelando transferencia'

@@ -57,8 +57,8 @@ export async function POST(
     }
 
   } catch (error) {
-    logger.error('Error aprobando payout de runner:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error aprobando payout de runner:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }

@@ -151,7 +151,7 @@ export class ProviderPayoutsService {
       return payouts;
 
     } catch (error) {
-      logger.error('Error calculando payouts de mantenimiento:', error);
+      logger.error('Error calculando payouts de mantenimiento:', error as Error);
       throw error;
     }
   }
@@ -262,7 +262,7 @@ export class ProviderPayoutsService {
       return payouts;
 
     } catch (error) {
-      logger.error('Error calculando payouts de servicios:', error);
+      logger.error('Error calculando payouts de servicios:', error as Error);
       throw error;
     }
   }
@@ -292,7 +292,7 @@ export class ProviderPayoutsService {
       return allPayouts;
 
     } catch (error) {
-      logger.error('Error calculando payouts pendientes:', error);
+      logger.error('Error calculando payouts pendientes:', error as Error);
       throw error;
     }
   }
@@ -366,7 +366,7 @@ export class ProviderPayoutsService {
       return { success: true };
 
     } catch (error) {
-      logger.error('Error procesando payout de proveedor:', error);
+      logger.error('Error procesando payout de proveedor:', error as Error);
       return { success: false, error: 'Error interno del servidor' };
     }
   }
@@ -449,7 +449,7 @@ export class ProviderPayoutsService {
       }
 
     } catch (error) {
-      logger.error('Error aprobando payout de proveedor:', error);
+      logger.error('Error aprobando payout de proveedor:', error as Error);
       return { success: false, error: 'Error interno del servidor' };
     }
   }
@@ -560,7 +560,7 @@ export class ProviderPayoutsService {
       });
 
     } catch (error) {
-      logger.error('Error enviando notificación de payout:', error);
+      logger.error('Error enviando notificación de payout:', error as Error);
     }
   }
 
@@ -632,7 +632,7 @@ export class ProviderPayoutsService {
       };
 
     } catch (error) {
-      logger.error('Error obteniendo estadísticas de payouts:', error);
+      logger.error('Error obteniendo estadísticas de payouts:', error as Error);
       return {
         totalProviders: 0,
         totalPaid: 0,

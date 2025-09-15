@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     logger.error('Error obteniendo métricas de performance:', {
       error: error instanceof Error ? error.message : String(error)
     });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }

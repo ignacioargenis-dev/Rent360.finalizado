@@ -246,7 +246,7 @@ export class RunnerRatingService {
       return rating;
 
     } catch (error) {
-      logger.error('Error creando calificación de runner:', error);
+      logger.error('Error creando calificación de runner:', error as Error);
       throw error;
     }
   }
@@ -415,7 +415,7 @@ export class RunnerRatingService {
       };
 
     } catch (error) {
-      logger.error('Error obteniendo resumen de calificaciones:', error);
+      logger.error('Error obteniendo resumen de calificaciones:', error as Error);
       throw error;
     }
   }
@@ -438,7 +438,7 @@ export class RunnerRatingService {
 
       return ratings;
     } catch (error) {
-      logger.error('Error obteniendo calificaciones de runner:', error);
+      logger.error('Error obteniendo calificaciones de runner:', error as Error);
       throw error;
     }
   }
@@ -520,7 +520,7 @@ export class RunnerRatingService {
       return ranking.slice(0, limit);
 
     } catch (error) {
-      logger.error('Error calculando ranking de runners:', error);
+      logger.error('Error calculando ranking de runners:', error as Error);
       return [];
     }
   }
@@ -558,7 +558,7 @@ export class RunnerRatingService {
       });
 
     } catch (error) {
-      logger.error('Error notificando calificación:', error);
+      logger.error('Error notificando calificación:', error as Error);
     }
   }
 
@@ -591,7 +591,7 @@ export class RunnerRatingService {
       }
 
     } catch (error) {
-      logger.error('Error verificando incentivos por rating:', error);
+      logger.error('Error verificando incentivos por rating:', error as Error);
     }
   }
 
@@ -627,7 +627,7 @@ export class RunnerRatingService {
       return !existingRating;
 
     } catch (error) {
-      logger.error('Error validando si se puede calificar visita:', error);
+      logger.error('Error validando si se puede calificar visita:', error as Error);
       return false;
     }
   }

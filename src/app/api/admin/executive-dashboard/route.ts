@@ -315,7 +315,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error generating executive dashboard data:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
