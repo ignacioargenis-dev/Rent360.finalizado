@@ -145,7 +145,7 @@ export default function AdminAnalytics() {
       date.setDate(date.getDate() + i);
       const count = Math.floor((total * (i + 5)) / days);
       data.push({
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().substring(0, 10),
         count,
       });
     }
@@ -163,7 +163,7 @@ export default function AdminAnalytics() {
       date.setDate(date.getDate() + i);
       const amount = Math.floor((total * (i + 5)) / days);
       data.push({
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().substring(0, 10),
         amount,
       });
     }

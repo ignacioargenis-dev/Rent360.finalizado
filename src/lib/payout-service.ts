@@ -1546,8 +1546,8 @@ export class RunnerPayoutService {
       if (!runner) return;
 
       // Obtener información del período
-      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const periodEnd = new Date().toISOString().split('T')[0];
+      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+      const periodEnd = new Date().toISOString().substring(0, 10);
 
       // Obtener conteo de visitas para este período
       const visitCount = await db.visit.count({

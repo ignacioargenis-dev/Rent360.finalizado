@@ -518,8 +518,8 @@ export class ProviderPayoutsService {
       if (!providerUser) return;
 
       // Calcular período
-      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const periodEnd = new Date().toISOString().split('T')[0];
+      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+      const periodEnd = new Date().toISOString().substring(0, 10);
 
       // Obtener conteo de trabajos
       let jobCount = 0;

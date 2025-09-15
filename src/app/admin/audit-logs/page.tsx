@@ -93,7 +93,7 @@ export default function AdminAuditLogs() {
     const loadAuditLogs = async () => {
       try {
         // Obtener logs reales de la API
-        const response = await fetch(`/api/audit-logs?page=1&limit=50&startDate=${dateRange === '7d' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : ''}`);
+        const response = await fetch(`/api/audit-logs?page=1&limit=50&startDate=${dateRange === '7d' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10) : ''}`);
         if (!response.ok) {
           throw new Error('Error al obtener logs de auditoría');
         }

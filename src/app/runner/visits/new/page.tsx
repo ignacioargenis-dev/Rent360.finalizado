@@ -467,7 +467,7 @@ return;
                             }`}
                             value={formData.scheduledDate}
                             onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={new Date().toISOString().substring(0, 10)}
                           />
                           {errors.scheduledDate && <p className="text-red-500 text-sm mt-1">{errors.scheduledDate}</p>}
                         </div>

@@ -373,7 +373,7 @@ export class RunnerReportsService {
           : 0;
 
         dailyPerformance.push({
-          date: date.toISOString().split('T')[0],
+          date: date.toISOString().substring(0, 10),
           visits: dayVisits.length,
           earnings: dayEarnings,
           rating: dayRating,
@@ -713,7 +713,7 @@ export class RunnerReportsService {
       });
 
       return upcomingVisits.map(visit => ({
-        date: visit.scheduledAt.toISOString().split('T')[0],
+        date: visit.scheduledAt.toISOString().substring(0, 10),
         time: visit.scheduledAt.toTimeString().substring(0, 5),
         propertyAddress: visit.property?.address || 'Dirección no disponible',
         clientName: visit.tenant?.name || 'Cliente'

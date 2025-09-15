@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
         : monthlyCommissions;
 
       commissionTrend.push({
-        date: monthStart.toISOString().split('T')[0],
+        date: monthStart.toISOString().substring(0, 10),
         value: monthlyCommissions,
         previousValue: previousMonthCommissions
       });

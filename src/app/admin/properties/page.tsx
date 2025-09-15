@@ -214,8 +214,8 @@ export default function AdminPropertiesPage() {
         ownerEmail: user?.email || 'admin@rent360.cl',
         views: 0,
         inquiries: 0,
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString().substring(0, 10),
+        updatedAt: new Date().toISOString().substring(0, 10),
       };
 
       // Add to properties list

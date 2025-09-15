@@ -322,8 +322,8 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       const historyData = {
         numeroCuenta: account.accountNumber,
         rut: account.rut,
-        fechaDesde: startDate.toISOString().split('T')[0],
-        fechaHasta: endDate.toISOString().split('T')[0],
+        fechaDesde: startDate.toISOString().substring(0, 10),
+        fechaHasta: endDate.toISOString().substring(0, 10),
         tipoMovimiento: 'todos' // debito, credito, todos
       };
 
