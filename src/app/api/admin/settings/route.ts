@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       data: {
         key: validatedData.key,
         value: finalValue,
-        description: validatedData.description,
+        description: validatedData.description ?? null,
         category: validatedData.category,
         // TODO: Implementar encriptación cuando sea necesario: validatedData.// TODO: Implementar encriptación cuando sea necesario,
         isActive: validatedData.isActive
@@ -255,7 +255,7 @@ export async function PATCH(request: NextRequest) {
             where: { key: settingData.key },
             data: {
               value: finalValue,
-              description: settingData.description,
+              description: settingData.description ?? null,
               category: settingData.category,
               // TODO: Implementar encriptación cuando sea necesario: settingData.// TODO: Implementar encriptación cuando sea necesario,
               isActive: settingData.isActive,
@@ -278,7 +278,7 @@ export async function PATCH(request: NextRequest) {
             data: {
               key: settingData.key,
               value: finalValue,
-              description: settingData.description,
+              description: settingData.description ?? null,
               category: settingData.category,
               // TODO: Implementar encriptación cuando sea necesario: settingData.// TODO: Implementar encriptación cuando sea necesario,
               isPublic: settingData.isPublic
