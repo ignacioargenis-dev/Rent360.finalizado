@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo estadísticas de proveedores:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error obteniendo estadísticas de proveedores:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
