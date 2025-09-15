@@ -172,7 +172,7 @@ export default function AdminPropertiesPage() {
       filtered = filtered.filter(property =>
         property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.ownerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.commune.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
