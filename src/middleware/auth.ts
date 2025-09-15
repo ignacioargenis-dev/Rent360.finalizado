@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger-edge';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
@@ -95,7 +96,7 @@ async function validateWithAuthService(token: string, userId: string): Promise<b
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn('Auth service validation failed', {
+      logger.warn('Auth service validation failed', {
         status: response.status,
         statusText: response.statusText
       });
@@ -106,7 +107,7 @@ async function validateWithAuthService(token: string, userId: string): Promise<b
     return data.success === true;
 
   } catch (error) {
-    console.error('Auth service communication error', {
+    logger.error('Auth service communication error', {
       error: error instanceof Error ? error.message : String(error)
     });
 
@@ -139,7 +140,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       : cookieToken;
 
     if (!token) {
-      console.warn('No authentication token provided', {
+      logger.warn('No authentication token provided', {
         pathname,
         clientIP,
         userAgent
@@ -168,7 +169,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     const isValidWithService = await validateWithAuthService(token, decoded.userId);
 
     if (!isValidWithService) {
-      console.warn('Token validation failed with auth service', {
+      logger.warn('Token validation failed with auth service', {
         userId: decoded.userId,
         email: decoded.email,
         pathname,
@@ -191,7 +192,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     // Verificar roles requeridos
     const requiredRoles = getRequiredRoles(pathname);
     if (requiredRoles && !requiredRoles.includes(decoded.role)) {
-      console.warn('Insufficient permissions for route', {
+      logger.warn('Insufficient permissions for route', {
         userId: decoded.userId,
         email: decoded.email,
         role: decoded.role,
@@ -222,7 +223,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     };
 
     // Log de acceso autorizado
-    console.log('Authenticated request authorized', {
+    logger.info('Authenticated request authorized', {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
@@ -237,7 +238,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Authentication error';
 
-    console.error('Authentication middleware error', {
+    logger.error('Authentication middleware error', {
       error: errorMessage,
       pathname,
       clientIP,
@@ -286,7 +287,7 @@ export async function ownershipMiddleware(
     // Por ahora, asumimos que el usuario tiene acceso si está autenticado
     // En una implementación real, consultaríamos la base de datos
 
-    console.log('Resource ownership verified', {
+    logger.info('Resource ownership verified', {
       userId: user.userId,
       resourceType,
       resourceId
@@ -295,7 +296,7 @@ export async function ownershipMiddleware(
     return null;
 
   } catch (error) {
-    console.error('Resource ownership verification failed', {
+    logger.error('Resource ownership verification failed', {
       userId: user.userId,
       resourceType,
       resourceId,
