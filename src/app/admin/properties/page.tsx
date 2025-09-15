@@ -68,7 +68,7 @@ export default function AdminPropertiesPage() {
         const emptyImages: string[] = [];
         const emptyFeatures: string[] = [];
 
-        const mockProperties: Property[] = [
+        const mockProperties = [
           {
             id: '1',
             title: 'Departamento Las Condes',
@@ -151,8 +151,8 @@ export default function AdminPropertiesPage() {
           },
         ];
 
-        setProperties(mockProperties);
-        setFilteredProperties(mockProperties);
+        setProperties(mockProperties as Property[]);
+        setFilteredProperties(mockProperties as Property[]);
         setLoading(false);
       } catch (error) {
         logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
