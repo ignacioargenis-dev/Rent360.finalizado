@@ -118,7 +118,13 @@ export class KYCService {
   static async initiateKYC(
     userId: string,
     level: KYCLevel = KYCLevel.BASIC
-  ): Promise<KYCVerification> {
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    sessionId?: string;
+    requirements?: string[];
+    expiresAt?: Date;
+  }> {
     try {
       // Verificar si ya existe una verificación activa
       const existingKYC = await this.getActiveKYC(userId);
@@ -191,11 +197,19 @@ export class KYCService {
         level
       });
 
-      return kycVerification;
+      return {
+        success: true,
+        sessionId: kycVerification.id,
+        requirements: this.getRequiredDocuments(level),
+        expiresAt: kycVerification.expiresAt
+      };
 
     } catch (error) {
       logger.error('Error iniciando KYC:', error);
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      };
     }
   }
 

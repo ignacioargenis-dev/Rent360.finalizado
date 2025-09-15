@@ -135,7 +135,10 @@
     "winston": "^3.17.0",
     "zod": "^3.25.76",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.4.31"
+    "postcss": "^8.4.31",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
@@ -146,8 +149,6 @@
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@types/supertest": "^6.0.3",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
     "cssnano": "^7.1.1",
     "eslint": "^8.54.0",
     "eslint-config-next": "^14.0.3",
