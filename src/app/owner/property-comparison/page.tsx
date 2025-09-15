@@ -27,18 +27,6 @@ import {
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import { User, Property } from '@/types';
 
-  monthlyRevenue: number;
-  occupancyRate: number;
-  totalRevenue: number;
-  lastMaintenance?: string;
-  nextMaintenance?: string;
-  createdAt: string;
-  updatedAt: string;
-  views: number;
-  inquiries: number;
-  featured: boolean;
-}
-
 interface ComparisonMetrics {
   pricePerSqm: number;
   roi: number;
