@@ -22,31 +22,10 @@ import {
   MoreHorizontal,
   Grid,
   List } from 'lucide-react';
-import { User } from '@/types';
+import { User, Property } from '@/types';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import RecordModal from '@/components/forms/RecordModal';
 
-interface Property {
-  id: string;
-  title: string;
-  address: string;
-  city: string;
-  commune: string;
-  price: number;
-  deposit: number;
-  bedrooms: number;
-  bathrooms: number;
-  area: number;
-  status: 'AVAILABLE' | 'RENTED' | 'PENDING' | 'MAINTENANCE';
-  owner: string;
-  ownerEmail: string;
-  tenant?: string;
-  views: number;
-  inquiries: number;
-  createdAt: string;
-  updatedAt: string;
-  images?: string[];
-}
 
 export default function AdminPropertiesPage() {
 
@@ -90,80 +69,82 @@ export default function AdminPropertiesPage() {
           {
             id: '1',
             title: 'Departamento Las Condes',
+            description: 'Hermoso departamento en zona exclusiva',
             address: 'Av. Apoquindo 3400, Las Condes',
             city: 'Santiago',
             commune: 'Las Condes',
+            region: 'Metropolitana',
             price: 550000,
             deposit: 550000,
             bedrooms: 2,
             bathrooms: 2,
             area: 85,
-            status: 'RENTED',
-            owner: 'María González',
-            ownerEmail: 'maria@ejemplo.com',
-            tenant: 'Carlos Ramírez',
-            views: 245,
-            inquiries: 18,
-            createdAt: '2024-01-15',
-            updatedAt: '2024-03-10',
+            status: 'RENTED' as const,
+            images: [],
+            features: [],
+            ownerId: 'user-owner-1',
+            createdAt: new Date('2024-01-15'),
+            updatedAt: new Date('2024-03-10'),
           },
           {
             id: '2',
             title: 'Oficina Providencia',
+            description: 'Oficina moderna en el corazón de Providencia',
             address: 'Av. Providencia 1245, Providencia',
             city: 'Santiago',
             commune: 'Providencia',
+            region: 'Metropolitana',
             price: 350000,
             deposit: 350000,
             bedrooms: 1,
             bathrooms: 1,
             area: 45,
-            status: 'RENTED',
-            owner: 'Empresa Soluciones Ltda.',
-            ownerEmail: 'contacto@soluciones.cl',
-            tenant: 'TechCorp SA',
-            views: 189,
-            inquiries: 12,
-            createdAt: '2024-02-01',
-            updatedAt: '2024-03-15',
+            status: 'RENTED' as const,
+            images: [],
+            features: [],
+            ownerId: 'user-owner-2',
+            createdAt: new Date('2024-02-01'),
+            updatedAt: new Date('2024-03-15'),
           },
           {
             id: '3',
             title: 'Casa Vitacura',
+            description: 'Amplia casa familiar con jardín',
             address: 'Av. Vitacura 8900, Vitacura',
             city: 'Santiago',
             commune: 'Vitacura',
+            region: 'Metropolitana',
             price: 1200000,
             deposit: 1200000,
             bedrooms: 4,
             bathrooms: 3,
             area: 180,
-            status: 'AVAILABLE',
-            owner: 'Pedro Silva',
-            ownerEmail: 'pedro@ejemplo.com',
-            views: 312,
-            inquiries: 25,
-            createdAt: '2024-02-15',
-            updatedAt: '2024-03-20',
+            status: 'AVAILABLE' as const,
+            images: [],
+            features: [],
+            ownerId: 'user-owner-3',
+            createdAt: new Date('2024-02-15'),
+            updatedAt: new Date('2024-03-20'),
           },
           {
             id: '4',
             title: 'Estudio Centro Histórico',
+            description: 'Acogedor estudio en el centro histórico',
             address: 'Bandera 123, Santiago Centro',
             city: 'Santiago',
             commune: 'Santiago Centro',
+            region: 'Metropolitana',
             price: 280000,
             deposit: 280000,
             bedrooms: 1,
             bathrooms: 1,
             area: 30,
-            status: 'MAINTENANCE',
-            owner: 'Luis Fernández',
-            ownerEmail: 'luis@ejemplo.com',
-            views: 156,
-            inquiries: 8,
-            createdAt: '2024-01-20',
-            updatedAt: '2024-03-18',
+            status: 'MAINTENANCE' as const,
+            images: [],
+            features: [],
+            ownerId: 'user-owner-4',
+            createdAt: new Date('2024-01-20'),
+            updatedAt: new Date('2024-03-18'),
           },
         ];
 
@@ -206,16 +187,26 @@ export default function AdminPropertiesPage() {
 
   const handleCreateProperty = async (propertyData: any) => {
     try {
-      // Create property object with ID
-      const newProperty = {
-        ...propertyData,
+      // Create property object with ID compatible with global Property interface
+      const newProperty: Property = {
         id: Date.now().toString(),
-        owner: user?.name || 'Administrador',
-        ownerEmail: user?.email || 'admin@rent360.cl',
-        views: 0,
-        inquiries: 0,
-        createdAt: new Date().toISOString().substring(0, 10),
-        updatedAt: new Date().toISOString().substring(0, 10),
+        title: propertyData.title || 'Nueva Propiedad',
+        description: propertyData.description || 'Descripción pendiente',
+        address: propertyData.address || 'Dirección pendiente',
+        city: propertyData.city || 'Santiago',
+        commune: propertyData.commune || 'Centro',
+        region: 'Metropolitana',
+        price: propertyData.price || 0,
+        deposit: propertyData.deposit || 0,
+        bedrooms: propertyData.bedrooms || 1,
+        bathrooms: propertyData.bathrooms || 1,
+        area: propertyData.area || 50,
+        status: 'AVAILABLE' as const,
+        images: [],
+        features: [],
+        ownerId: user?.id || 'user-admin',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Add to properties list
@@ -297,18 +288,16 @@ export default function AdminPropertiesPage() {
         </div>
         
         <div className="text-xs text-gray-500 mb-3">
-          <div>Propietario: {property.owner}</div>
-          {property.tenant && (
-            <div>Inquilino: {property.tenant}</div>
-          )}
+          <div>Propietario ID: {property.ownerId}</div>
+          <div>Estado: {property.status}</div>
         </div>
-        
+
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Eye className="w-3 h-3" />
-            <span>{property.views}</span>
+            <span>Ver detalles</span>
             <Users className="w-3 h-3 ml-2" />
-            <span>{property.inquiries}</span>
+            <span>Propietario</span>
           </div>
           
           <div className="flex gap-1">
@@ -341,14 +330,11 @@ export default function AdminPropertiesPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Users className="w-4 h-4" />
-                <span>Propietario: {property.owner}</span>
+                <span>Propietario ID: {property.ownerId}</span>
               </div>
-              {property.tenant && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Users className="w-4 h-4" />
-                  <span>Inquilino: {property.tenant}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>Estado: {property.status}</span>
+              </div>
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-4 text-sm">
@@ -379,11 +365,11 @@ export default function AdminPropertiesPage() {
             </div>
             <div className="flex items-center gap-2">
               <Eye className="w-4 h-4 text-blue-600" />
-              <span>{property.views} vistas</span>
+              <span>Ver detalles</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-600" />
-              <span>{property.inquiries} consultas</span>
+              <span>Propietario</span>
             </div>
           </div>
         </div>
