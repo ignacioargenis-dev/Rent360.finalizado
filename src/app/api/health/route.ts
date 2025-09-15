@@ -62,7 +62,7 @@ async function healthHandler(request: NextRequest) {
         rateLimiter: {
           status: rateLimitStatus,
           memoryUsage: rateLimitStats.memoryUsage || 0,
-          activeKeys: rateLimitStats.activeKeys
+          activeKeys: rateLimitStats.activeKeys || 0
         },
         system: {
           status: memoryStatus,

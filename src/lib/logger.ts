@@ -524,7 +524,7 @@ class Logger {
       },
       rateLimiting: {
         blockedRequests: Math.floor(Math.random() * 20), // Simulado
-        activeKeys: rateLimitStats.activeKeys,
+        activeKeys: rateLimitStats.activeKeys || 0,
         memoryUsage: Math.round((rateLimitStats.memoryUsage || 0) / 1024 / 1024),
       },
       performance: {
