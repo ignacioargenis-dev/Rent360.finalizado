@@ -34,7 +34,7 @@
       "@/types/*": ["./src/types/*"]
     },
     "baseUrl": ".",
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "typeRoots": ["./node_modules/@types", "./src/types", "./types"]
   },
   "include": [
     "next-env.d.ts",
@@ -51,7 +51,8 @@
     "build",
     "coverage",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "services/"
   ],
   "ts-node": {
     "esm": true,

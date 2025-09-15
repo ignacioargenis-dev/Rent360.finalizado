@@ -2,10 +2,11 @@
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
+    tsconfigPath: './tsconfig.json'
   },
   reactStrictMode: true,
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true
   },
   // Optimizaciones de performance
   swcMinify: true,

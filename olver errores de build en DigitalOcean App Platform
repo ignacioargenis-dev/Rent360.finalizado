@@ -1,0 +1,3 @@
+[33mf21b005[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: corregir configuración de ESLint para resolver errores de build
+[33m5500e7e[m feat: configurar despliegue completo en DigitalOcean App Platform
+[33m8be5b78[m fix: resolve remaining build errors for DigitalOcean deployment
