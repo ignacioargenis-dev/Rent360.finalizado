@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { ProviderPayoutsService } from '@/lib/provider-payouts-service';
+import { ProviderPayoutsService, ProviderPayoutCalculation } from '@/lib/provider-payouts-service';
 import { logger } from '@/lib/logger-edge';
 import { handleError } from '@/lib/errors';
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    let payouts;
+    let payouts: ProviderPayoutCalculation[];
 
     if (status === 'pending') {
       // Obtener payouts pendientes para aprobación
