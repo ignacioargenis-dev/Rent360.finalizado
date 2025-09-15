@@ -47,7 +47,18 @@ export default function AdminContractsPage() {
 
   const [creatingContract, setCreatingContract] = useState(false);
 
-  const [newContract, setNewContract] = useState({
+  const [newContract, setNewContract] = useState<{
+    title: string;
+    propertyId: string;
+    ownerId: string;
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    monthlyRent: string;
+    deposit: string;
+    status: Contract['status'];
+    terms: string;
+  }>({
     title: '',
     propertyId: '',
     ownerId: '',
@@ -56,7 +67,7 @@ export default function AdminContractsPage() {
     endDate: '',
     monthlyRent: '',
     deposit: '',
-    status: 'DRAFT' as const,
+    status: 'DRAFT',
     terms: '',
   });
 
@@ -280,7 +291,7 @@ export default function AdminContractsPage() {
         endDate: '',
         monthlyRent: '',
         deposit: '',
-        status: 'DRAFT' as const,
+        status: 'DRAFT',
         terms: '',
       });
     } catch (error) {
