@@ -276,8 +276,9 @@ export default function BrokerProperties() {
           return acc;
         }, {} as Record<string, number>);
         
-        const mostPopularType = Object.entries(typeCount)
-          .sort(([,a], [,b]) => b - a)[0]?.[0] || '';
+        const sortedTypes = Object.entries(typeCount)
+          .sort(([,a], [,b]) => b - a);
+        const mostPopularType = sortedTypes.length > 0 ? sortedTypes[0][0] : '';
         
         const featuredProperties = mockProperties.filter(p => p.featured).length;
 

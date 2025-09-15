@@ -389,8 +389,8 @@ export class RunnerRatingService {
       const sortedCategories = Object.entries(categoryAverages)
         .sort(([,a], [,b]) => b - a);
 
-      const bestCategory = sortedCategories[0]?.[0] || '';
-      const worstCategory = sortedCategories[sortedCategories.length - 1]?.[0] || '';
+      const bestCategory = sortedCategories.length > 0 ? sortedCategories[0][0] : '';
+      const worstCategory = sortedCategories.length > 0 ? sortedCategories[sortedCategories.length - 1][0] : '';
 
       return {
         runnerId,

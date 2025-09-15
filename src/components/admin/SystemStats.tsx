@@ -262,7 +262,7 @@ return `${hours}h ${minutes}m`;
                 <p className="text-sm text-gray-600">CPU</p>
                 <p className="font-semibold">{stats.system.cpu.cores} cores</p>
                 <p className="text-xs text-gray-500">
-                  Load: {stats.system.cpu.loadAverage[0]?.toFixed(2) || '0.00'}
+                  Usage: {stats.system.cpu.usage?.toFixed(1) || '0.0'}%
                 </p>
               </div>
             </div>

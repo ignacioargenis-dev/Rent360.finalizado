@@ -238,8 +238,9 @@ export default function BrokerCommissions() {
           return acc;
         }, {} as Record<string, number>);
         
-        const topPropertyType = Object.entries(propertyTypeCount)
-          .sort(([,a], [,b]) => b - a)[0]?.[0] || '';
+        const sortedTypes = Object.entries(propertyTypeCount)
+          .sort(([,a], [,b]) => b - a);
+        const topPropertyType = sortedTypes.length > 0 ? sortedTypes[0][0] : '';
         
         const successRate = totalContracts > 0 ? 
           ((paidCommissions.length + approvedCommissions.length) / totalContracts) * 100 : 0;

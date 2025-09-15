@@ -103,6 +103,20 @@ export function getSystemMetrics() {
 
 export function getMonitoringStats() {
   return {
+    events: {
+      total: 0,
+      byType: {},
+      bySeverity: {}
+    },
+    alerts: {
+      total: 0,
+      active: 0,
+      byType: {}
+    },
+    health: {
+      current: 'healthy',
+      history: []
+    },
     requests: 0,
     errors: 0,
     responseTime: 0,

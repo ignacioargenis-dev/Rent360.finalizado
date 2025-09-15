@@ -354,9 +354,11 @@ export default function OwnerPropertyComparison() {
     
     if (selectedProperties.length >= 2) {
       // Find best performing property
-      const bestProperty = selectedProperties.reduce((best, current) => 
-        comparisonMetrics[current.id]?.overallScore > comparisonMetrics[best.id]?.overallScore ? current : best,
-      );
+      const bestProperty = selectedProperties.reduce((best, current) => {
+        const currentScore = comparisonMetrics[current.id]?.overallScore || 0;
+        const bestScore = comparisonMetrics[best.id]?.overallScore || 0;
+        return currentScore > bestScore ? current : best;
+      });
       
       recs.push({
         type: 'strength',
