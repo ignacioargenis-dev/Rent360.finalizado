@@ -101,14 +101,14 @@ export async function POST(request: NextRequest) {
         update: {
           value: validatedData.value,
           category: validatedData.category,
-          description: validatedData.description,
+          description: validatedData.description ?? null,
           updatedAt: new Date(),
         },
         create: {
           key: validatedData.key,
           value: validatedData.value,
           category: validatedData.category,
-          description: validatedData.description,
+          description: validatedData.description ?? null,
         },
       });
 
