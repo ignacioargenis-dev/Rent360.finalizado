@@ -86,8 +86,8 @@ class AdvancedMonitoringSystem {
 
   private async collectMetrics(): Promise<SystemMetrics> {
     const memoryUsage = process.memoryUsage();
-    const cacheStats = cacheManager.getStats();
-    const rateLimitStats = rateLimiter.getStats();
+    const cacheStats = await cacheManager.getStats();
+    const rateLimitStats = await rateLimiter.getStats();
 
     // Calcular métricas de performance (simuladas para desarrollo)
     const performanceMetrics = {
@@ -397,7 +397,7 @@ export function getQuickMetrics(): {
   activeAlerts: number;
 } {
   const memoryUsage = process.memoryUsage();
-  const cacheStats = cacheManager.getStats();
+  const cacheStats = await cacheManager.getStats();
   const activeAlerts = advancedMonitoring.getActiveAlerts().length;
 
   return {

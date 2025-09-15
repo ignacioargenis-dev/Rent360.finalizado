@@ -23,7 +23,7 @@ async function healthHandler(request: NextRequest) {
     }
 
     // Verificar estado del cache
-    const cacheStats = cacheManager.getStats();
+    const cacheStats = await cacheManager.getStats();
     const cacheStatus = cacheStats.memoryUsage < 100 * 1024 * 1024 ? 'healthy' : 'warning';
 
     // Verificar estado del rate limiter

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const queryStats = dbOptimizer.getQueryStats();
     
     // Obtener estadísticas de caché
-    const cacheStats = cacheManager.getStats();
+    const cacheStats = await cacheManager.getStats();
     
     // Generar recomendaciones de índices
     const indexRecommendations = await dbOptimizer.generateIndexRecommendations();

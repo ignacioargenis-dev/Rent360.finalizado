@@ -106,7 +106,7 @@ async function getSystemMetrics() {
     const systemStats = getSystemStats();
     
     // Obtener estadísticas de caché
-    const cacheStats = cacheManager.getStats();
+    const cacheStats = await cacheManager.getStats();
     
     // Obtener estadísticas de rate limiting
     const rateLimitStats = rateLimiter.getStats();
@@ -290,7 +290,7 @@ async function getActiveAlerts() {
     }
     
     // Verificar estadísticas de caché
-    const cacheStats = cacheManager.getStats();
+    const cacheStats = await cacheManager.getStats();
     if (cacheStats.hitRate < 50) {
       alerts.push({
         id: 'cache-poor',

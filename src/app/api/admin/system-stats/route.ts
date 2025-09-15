@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const rateLimitStats = rateLimiter.getStats();
 
     // Obtener estadísticas de caché
-    const cacheStats = cacheManager.getStats();
+    const cacheStats = await cacheManager.getStats();
 
     // Obtener estadísticas de base de datos
     const dbStats = await getDatabaseStats();
