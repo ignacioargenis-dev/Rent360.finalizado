@@ -12,11 +12,13 @@ const settingSchema = z.object({
   value: z.string().min(1, 'Valor requerido'),
   description: z.string().optional(),
   category: z.enum(['system', 'integration', 'security', 'email', 'payment', 'signature', 'maps', 'sms']),
-  isPublic: z.boolean().default(false)
+  isActive: z.boolean().default(true)
 });
 
 const bulkUpdateSchema = z.object({
-  settings: z.array(settingSchema)
+  settings: z.array(settingSchema.omit({ isActive: true }).extend({
+    isActive: z.boolean().optional()
+  }))
 });
 
 // Clave de encriptación (en producción usar variable de entorno)
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
         description: validatedData.description,
         category: validatedData.category,
         // TODO: Implementar encriptación cuando sea necesario: validatedData.// TODO: Implementar encriptación cuando sea necesario,
-        isPublic: validatedData.isPublic
+        isActive: validatedData.isActive
       }
     });
     
@@ -256,7 +258,7 @@ export async function PATCH(request: NextRequest) {
               description: settingData.description,
               category: settingData.category,
               // TODO: Implementar encriptación cuando sea necesario: settingData.// TODO: Implementar encriptación cuando sea necesario,
-              isPublic: settingData.isPublic,
+              isActive: settingData.isActive,
               updatedAt: new Date()
             }
           });
