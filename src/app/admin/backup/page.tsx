@@ -213,8 +213,8 @@ export default function AdminBackup() {
         const backupStats: BackupStats = {
           totalBackups: mockBackups.length,
           totalSize,
-          lastBackup: completedBackups.length > 0 ? 
-            completedBackups[completedBackups.length - 1].completedAt || '' : '',
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
           nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
           successRate,
           storageUsed: totalSize,
