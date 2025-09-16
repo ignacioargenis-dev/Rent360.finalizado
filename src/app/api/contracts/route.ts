@@ -288,8 +288,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     logger.error('Error creando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error as Error);
-    return errorResponse;
+    return handleApiError(error as Error, 'POST /api/contracts');
   }
 }
 
@@ -403,8 +402,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error actualizando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error as Error);
-    return errorResponse;
+    return handleApiError(error as Error, 'PUT /api/contracts');
   }
 }
 
@@ -476,7 +474,6 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error eliminando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error as Error);
-    return errorResponse;
+    return handleApiError(error as Error, 'DELETE /api/contracts');
   }
 }
