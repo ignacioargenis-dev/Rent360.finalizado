@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { DisputeStatus } from '@prisma/client';
+type DisputeStatus = 'OPEN' | 'UNDER_MEDIATION' | 'RESOLVED' | 'REJECTED';
 
 // Esquemas de validación
 const resolveDisputeSchema = z.object({
