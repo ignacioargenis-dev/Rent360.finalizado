@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el usuario ya existe por email
-    const existingUserByEmail = await db.User.findUnique({
+    const existingUserByEmail = await db.user.findUnique({
       where: { email },
     });
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el RUT ya existe
-    const existingUserByRut = await db.User.findUnique({
+    const existingUserByRut = await db.user.findUnique({
       where: { rut },
     });
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       emergencyPhone: emergencyPhone || null,
     };
 
-    const user = await db.User.create({
+    const user = await db.user.create({
       data: userData,
     });
 

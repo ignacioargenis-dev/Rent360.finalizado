@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const decoded = jwt.verify(token, JWT_SECRET!) as any;
     
     // Buscar usuario en la base de datos usando Prisma
-    const user = await db.User.findUnique({
+    const user = await db.user.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,

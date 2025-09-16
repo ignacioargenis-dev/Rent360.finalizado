@@ -26,7 +26,7 @@ async function loginHandler(request: NextRequest) {
     logger.debug('Buscando usuario en base de datos');
     
     // Usar Prisma para buscar usuario
-    const user = await db.User.findUnique({
+    const user = await db.user.findUnique({
       where: { email },
       select: {
         id: true,

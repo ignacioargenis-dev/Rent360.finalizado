@@ -22,7 +22,7 @@ export async function POST(
     const validatedData = sendSignatureSchema.parse(body);
 
     // Verificar que la firma existe y pertenece al usuario
-    const signature = await db.SignatureRequest.findUnique({
+    const signature = await db.signatureRequest.findUnique({
       where: { id: signatureId },
       include: { signers: true },
     });

@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     const validatedData = createContractSchema.parse(body);
     
     // Verificar que la propiedad existe y está disponible
-    const property = await db.Property.findUnique({
+    const property = await db.property.findUnique({
       where: { id: validatedData.propertyId },
       include: { owner: true },
     });
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Verificar que el inquilino existe y está activo
-    const tenant = await db.User.findUnique({
+    const tenant = await db.user.findUnique({
       where: { id: validatedData.tenantId },
     });
     
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Verificar que no hay contratos activos para esta propiedad
-    const existingContract = await db.Contract.findFirst({
+    const existingContract = await db.contract.findFirst({
       where: {
         propertyId: validatedData.propertyId,
         status: { in: [ContractStatus.ACTIVE, ContractStatus.DRAFT] },
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Crear contrato
-    const contract = await db.Contract.create({
+    const contract = await db.contract.create({
       data: {
         ...validatedData,
         ownerId: property.ownerId,
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
     });
     
     // Actualizar estado de la propiedad
-    await db.Property.update({
+    await db.property.update({
       where: { id: validatedData.propertyId },
       data: { status: 'RENTED' },
     });
@@ -308,7 +308,7 @@ export async function PUT(request: NextRequest) {
     const validatedData = updateContractSchema.parse(updateData);
     
     // Verificar que el contrato existe
-    const existingContract = await db.Contract.findUnique({
+    const existingContract = await db.contract.findUnique({
       where: { id },
       include: {
         property: { select: { ownerId: true } },
@@ -356,7 +356,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Actualizar contrato
-    const updatedContract = await db.Contract.update({
+    const updatedContract = await db.contract.update({
       where: { id },
       data: validatedData,
       include: {
@@ -428,7 +428,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Verificar que el contrato existe
-    const existingContract = await db.Contract.findUnique({
+    const existingContract = await db.contract.findUnique({
       where: { id },
       include: {
         property: { select: { id: true, status: true } },
@@ -448,13 +448,13 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Eliminar contrato
-    await db.Contract.delete({
+    await db.contract.delete({
       where: { id },
     });
     
     // Si la propiedad estaba rentada, marcarla como disponible
     if (existingContract.property.status === 'RENTED') {
-      await db.Property.update({
+      await db.property.update({
         where: { id: existingContract.property.id },
         data: { status: 'AVAILABLE' },
       });

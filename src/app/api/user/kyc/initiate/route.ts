@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const validatedData = initiateKYCSchema.parse(body);
 
     // Verificar que el usuario existe
-    const dbUser = await db.User.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: user.id },
       select: {
         id: true,
