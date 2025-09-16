@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { CommissionService } from '@/lib/commission-service';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { handleError } from '@/lib/errors';
 
 /**
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo estadísticas de comisiones:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error obteniendo estadísticas de comisiones:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error calculando comisión:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error calculando comisión:', error as Error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
