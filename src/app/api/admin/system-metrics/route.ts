@@ -157,7 +157,7 @@ async function getSystemMetrics() {
           efficiency: (cacheStats.hitRate || 0) >= 80 ? 'excellent' : (cacheStats.hitRate || 0) >= 60 ? 'good' : 'poor'
         },
         rateLimiting: {
-          blockedRequests: rateLimitStats.blockedRequests || 0,
+          blockedRequests: (rateLimitStats.totalKeys - rateLimitStats.activeKeys) || 0,
           activeKeys: rateLimitStats.activeKeys || 0,
           memoryUsage: Math.round((rateLimitStats.memoryUsage || 0) / 1024 / 1024), // Convertir a MB
           efficiency: 'good' // Por defecto
