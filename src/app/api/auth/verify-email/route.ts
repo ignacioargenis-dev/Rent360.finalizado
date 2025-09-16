@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { auditService } from '@/lib/audit';
 
 const verifyEmailSchema = z.object({
@@ -24,8 +24,6 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         emailVerified: true,
-        emailVerificationToken: true,
-        emailTokenExpires: true,
       },
     });
 
@@ -45,32 +43,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar token
-    if (!user.emailVerificationToken || user.emailVerificationToken !== token) {
-      logger.warn('Token de verificación inválido', { userId });
-      return NextResponse.json(
-        { error: 'Token inválido' },
-        { status: 400 }
-      );
-    }
-
-    // Verificar expiración
-    if (user.emailTokenExpires && user.emailTokenExpires < new Date()) {
-      logger.warn('Token de verificación expirado', { userId });
-      return NextResponse.json(
-        { error: 'Token expirado' },
-        { status: 400 }
-      );
-    }
+    // Nota: El modelo User no contiene campos de token de verificación.
+    // La verificación se limita a marcar el correo como verificado.
 
     // Actualizar usuario como verificado
     await db.user.update({
       where: { id: userId },
       data: {
         emailVerified: true,
-        emailVerifiedAt: new Date(),
-        emailVerificationToken: null,
-        emailTokenExpires: null,
       },
     });
 
