@@ -104,7 +104,7 @@ export async function POST(
         approverId: user.id,
         approvalType,
         approved: validatedData.approved,
-        comments: validatedData.comments,
+        comments: validatedData.comments ?? null,
       },
       include: {
         approver: {
