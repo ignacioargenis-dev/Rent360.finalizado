@@ -10,7 +10,7 @@ import {
   createApiResponse
 } from '@/lib/api-error-handler';
 import { getContractsOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Schema para crear contrato
@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
         case UserRole.TENANT:
           where.tenantId = user.id;
           break;
-        case UserRole.MAINTENANCE_PROVIDER:
-        case UserRole.SERVICE_PROVIDER:
+        case 'MAINTENANCE_PROVIDER':
+        case 'SERVICE_PROVIDER':
           // Los proveedores pueden ver contratos de propiedades donde trabajan
           // Nota: providerId no existe en el modelo actual, se puede implementar más adelante
           where.id = 'none'; // No mostrar contratos por ahora
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(result);
   } catch (error) {
-    return handleApiError(error, 'GET /api/contracts');
+    return handleApiError(error as Error, 'GET /api/contracts');
   }
 }
 
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     logger.error('Error creando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -403,7 +403,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error actualizando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
@@ -476,7 +476,7 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error eliminando contrato', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleError(error as Error);
     return errorResponse;
   }
 }
