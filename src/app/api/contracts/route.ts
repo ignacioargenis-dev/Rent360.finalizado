@@ -354,10 +354,19 @@ export async function PUT(request: NextRequest) {
       }
     }
     
+    // Construir objeto de actualización compatible con Prisma
+    const prismaUpdateData: any = {};
+    if (validatedData.status !== undefined) prismaUpdateData.status = validatedData.status;
+    if (validatedData.startDate !== undefined) prismaUpdateData.startDate = new Date(validatedData.startDate);
+    if (validatedData.endDate !== undefined) prismaUpdateData.endDate = new Date(validatedData.endDate);
+    if (validatedData.terms !== undefined) prismaUpdateData.terms = validatedData.terms;
+    if (validatedData.rentAmount !== undefined) prismaUpdateData.monthlyRent = validatedData.rentAmount;
+    if (validatedData.depositAmount !== undefined) prismaUpdateData.deposit = validatedData.depositAmount;
+
     // Actualizar contrato
     const updatedContract = await db.contract.update({
       where: { id },
-      data: validatedData,
+      data: prismaUpdateData,
       include: {
         property: {
           select: {
