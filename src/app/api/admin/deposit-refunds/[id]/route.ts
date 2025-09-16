@@ -129,8 +129,8 @@ export async function PUT(
       requestedAmount: validatedData.requestedAmount || contract.property.deposit,
       approvedAmount: validatedData.approvedAmount || contract.property.deposit,
       status: validatedData.status || 'PENDING',
-      notes: validatedData.notes,
-      internalNotes: validatedData.internalNotes,
+      notes: validatedData.notes ?? null,
+      internalNotes: validatedData.internalNotes ?? null,
       updatedAt: new Date(),
     };
 

@@ -138,7 +138,7 @@ export async function POST(
           paidDate: new Date(),
           status: 'COMPLETED',
           method: validatedData.paymentMethod as any,
-          transactionId: validatedData.transactionId,
+          transactionId: validatedData.transactionId ?? null,
           notes: `Devolución de depósito: ${validatedData.notes || ''}`,
         }
       });

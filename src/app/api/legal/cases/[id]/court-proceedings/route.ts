@@ -128,12 +128,12 @@ export async function POST(
         proceedingType: validatedData.proceedingType,
         proceedingNumber,
         court: validatedData.court,
-        judge: validatedData.judge,
+        judge: validatedData.judge ?? null,
         courtFees: validatedData.courtFees,
         legalFees: validatedData.legalFees,
         totalCosts: validatedData.courtFees + validatedData.legalFees,
-        notes: validatedData.notes,
-        nextAction: validatedData.nextAction,
+        notes: validatedData.notes ?? null,
+        nextAction: validatedData.nextAction ?? null,
         nextDeadline: validatedData.nextDeadline ? new Date(validatedData.nextDeadline) : null
       }
     });

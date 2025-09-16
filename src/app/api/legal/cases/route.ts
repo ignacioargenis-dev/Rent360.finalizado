@@ -139,8 +139,8 @@ export async function POST(request: NextRequest) {
         totalAmount: validatedData.totalDebt + accumulatedInterest,
         firstDefaultDate,
         currentPhase: 'PRE_JUDICIAL',
-        notes: validatedData.notes,
-        internalNotes: validatedData.internalNotes,
+        notes: validatedData.notes ?? null,
+        internalNotes: validatedData.internalNotes ?? null,
         nextDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) // 10 días para respuesta
       }
     });
