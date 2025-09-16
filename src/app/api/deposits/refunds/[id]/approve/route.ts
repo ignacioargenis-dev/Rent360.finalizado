@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { ApprovalType } from '@prisma/client';
+type ApprovalType = 'ADMIN_APPROVAL' | 'TENANT_APPROVAL' | 'OWNER_APPROVAL';
 
 // Esquemas de validación
 const approveRefundSchema = z.object({
