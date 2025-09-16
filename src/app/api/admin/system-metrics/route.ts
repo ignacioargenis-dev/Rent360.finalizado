@@ -153,7 +153,7 @@ async function getSystemMetrics() {
         cache: {
           hitRate: cacheStats.hitRate || 0,
           memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024), // Convertir a MB
-          totalRequests: cacheStats.totalRequests || 0,
+          totalRequests: cacheStats.total || 0,
           efficiency: (cacheStats.hitRate || 0) >= 80 ? 'excellent' : (cacheStats.hitRate || 0) >= 60 ? 'good' : 'poor'
         },
         rateLimiting: {
