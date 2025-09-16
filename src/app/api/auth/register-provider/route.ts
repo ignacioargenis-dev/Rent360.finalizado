@@ -177,18 +177,19 @@ export async function POST(request: NextRequest) {
 
       // Crear proveedor según el tipo
       if (providerType === 'maintenance') {
+        const maintenanceData = validatedData as z.infer<typeof maintenanceProviderSchema>;
         const maintenanceProvider = await tx.maintenanceProvider.create({
           data: {
             userId: user.id,
-            businessName: validatedData.businessName,
-            rut: validatedData.rut,
-            specialty: validatedData.specialty,
-            specialties: JSON.stringify(validatedData.specialties),
-            hourlyRate: validatedData.hourlyRate,
-            address: validatedData.address ?? null,
-            city: validatedData.city ?? null,
-            region: validatedData.region ?? null,
-            description: validatedData.description ?? null,
+            businessName: maintenanceData.businessName,
+            rut: maintenanceData.rut,
+            specialty: maintenanceData.specialty,
+            specialties: JSON.stringify(maintenanceData.specialties),
+            hourlyRate: maintenanceData.hourlyRate,
+            address: maintenanceData.address ?? null,
+            city: maintenanceData.city ?? null,
+            region: maintenanceData.region ?? null,
+            description: maintenanceData.description ?? null,
             status: 'PENDING_VERIFICATION',
             isVerified: false,
             availability: JSON.stringify({}), // Horarios vacíos por defecto
@@ -203,18 +204,19 @@ export async function POST(request: NextRequest) {
 
         return { user, maintenanceProvider, bankAccount, documents };
       } else {
+        const serviceData = validatedData as z.infer<typeof serviceProviderSchema>;
         const serviceProvider = await tx.serviceProvider.create({
           data: {
             userId: user.id,
-            businessName: validatedData.businessName,
-            rut: validatedData.rut,
-            serviceType: validatedData.serviceType,
-            serviceTypes: JSON.stringify(validatedData.serviceTypes),
-            basePrice: validatedData.basePrice,
-            address: validatedData.address ?? null,
-            city: validatedData.city ?? null,
-            region: validatedData.region ?? null,
-            description: validatedData.description ?? null,
+            businessName: serviceData.businessName,
+            rut: serviceData.rut,
+            serviceType: serviceData.serviceType,
+            serviceTypes: JSON.stringify(serviceData.serviceTypes),
+            basePrice: serviceData.basePrice,
+            address: serviceData.address ?? null,
+            city: serviceData.city ?? null,
+            region: serviceData.region ?? null,
+            description: serviceData.description ?? null,
             status: 'PENDING_VERIFICATION',
             isVerified: false,
             availability: JSON.stringify({}), // Horarios vacíos por defecto
