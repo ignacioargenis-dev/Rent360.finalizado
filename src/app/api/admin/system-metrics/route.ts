@@ -109,7 +109,7 @@ async function getSystemMetrics() {
     const cacheStats = await cacheManager.getStats();
     
     // Obtener estadísticas de rate limiting
-    const rateLimitStats = rateLimiter.getStats();
+    const rateLimitStats = await rateLimiter.getStats();
     
     // Obtener estadísticas de rendimiento
     const performanceStats = await getPerformanceStats();
