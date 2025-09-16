@@ -58,10 +58,15 @@ export async function POST(request: NextRequest) {
     const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    await auditService.logUserAction(userId, 'EMAIL_VERIFIED', 'user', {
-      email: user.email,
-      verifiedAt: new Date().toISOString(),
-    }, clientIP, userAgent);
+    await auditService.logUpdate(
+      userId,
+      'user',
+      userId,
+      { emailVerified: false },
+      { emailVerified: true },
+      clientIP || undefined,
+      userAgent || undefined
+    );
 
     logger.info('Email verificado exitosamente', { userId });
 
