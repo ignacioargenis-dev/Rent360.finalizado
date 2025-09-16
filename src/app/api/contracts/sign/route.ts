@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -20,7 +20,13 @@ const signatureSchema = z.object({
 });
 
 // Configuración de proveedores de firma electrónica
-const SIGNATURE_PROVIDERS = {
+type SignatureProviderKey = 'ADVANCED' | 'QUALIFIED';
+const SIGNATURE_PROVIDERS: Record<SignatureProviderKey, {
+  name: string;
+  apiUrl: string | undefined;
+  apiKey: string | undefined;
+  secretKey: string | undefined;
+}> = {
   ADVANCED: {
     name: 'Firma Electrónica Avanzada',
     apiUrl: process.env.ADVANCED_SIGNATURE_API_URL,
@@ -85,8 +91,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Obtener configuración del proveedor
-    const provider = SIGNATURE_PROVIDERS[signatureType];
+    // Obtener configuración del proveedor (normalizar DIGITAL -> ADVANCED)
+    const providerKey: SignatureProviderKey = signatureType === 'DIGITAL' ? 'ADVANCED' : signatureType;
+    const provider = SIGNATURE_PROVIDERS[providerKey];
     if (!provider || !provider.apiUrl || !provider.apiKey) {
       return NextResponse.json(
         { error: 'Proveedor de firma electrónica no configurado' },
@@ -198,7 +205,7 @@ requiredSignatures.push(contract.brokerId);
     
       } catch (error) {
       logger.error('Error en firma electrónica:', { error: error instanceof Error ? error.message : String(error) });
-      return handleError(error);
+      return handleError(error as Error);
     }
 }
 
