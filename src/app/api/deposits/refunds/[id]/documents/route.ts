@@ -104,8 +104,8 @@ export async function POST(
         fileUrl: validatedData.fileUrl,
         fileSize: validatedData.fileSize,
         mimeType: validatedData.mimeType,
-        description: validatedData.description,
-        amount: validatedData.amount,
+        description: validatedData.description ?? null,
+        amount: validatedData.amount ?? null,
       },
       include: {
         user: {
