@@ -3,11 +3,12 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { DisputeType, DisputeStatus } from '@prisma/client';
+type DisputeType = 'DAMAGE' | 'CLEANING' | 'UNPAID_RENT' | 'OTHER';
+type DisputeStatus = 'OPEN' | 'UNDER_MEDIATION' | 'RESOLVED' | 'REJECTED';
 
 // Esquemas de validación
 const createDisputeSchema = z.object({
-  disputeType: z.nativeEnum(DisputeType),
+  disputeType: z.enum(['DAMAGE', 'CLEANING', 'UNPAID_RENT', 'OTHER']),
   description: z.string().min(10, 'Descripción debe tener al menos 10 caracteres'),
   amount: z.number().min(0, 'Monto debe ser mayor o igual a 0'),
 });
