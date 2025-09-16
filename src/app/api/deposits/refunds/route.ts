@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { RefundStatus, DocumentType } from '@prisma/client';
+type RefundStatus = 'PENDING' | 'UNDER_REVIEW' | 'DISPUTED' | 'APPROVED' | 'PROCESSED' | 'REJECTED';
 
 // Esquemas de validación
 const createRefundSchema = z.object({
@@ -17,7 +17,7 @@ const updateRefundSchema = z.object({
   requestedAmount: z.number().min(0).optional(),
   tenantClaimed: z.number().min(0).optional(),
   ownerClaimed: z.number().min(0).optional(),
-  status: z.nativeEnum(RefundStatus).optional(),
+  status: z.enum(['PENDING', 'UNDER_REVIEW', 'DISPUTED', 'APPROVED', 'PROCESSED', 'REJECTED']).optional(),
   tenantApproved: z.boolean().optional(),
   ownerApproved: z.boolean().optional(),
 });
@@ -25,7 +25,7 @@ const updateRefundSchema = z.object({
 const getRefundsSchema = z.object({
   page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
   limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default(10),
-  status: z.nativeEnum(RefundStatus).optional(),
+  status: z.enum(['PENDING', 'UNDER_REVIEW', 'DISPUTED', 'APPROVED', 'PROCESSED', 'REJECTED']).optional(),
   contractId: z.string().optional(),
   tenantId: z.string().optional(),
   ownerId: z.string().optional(),

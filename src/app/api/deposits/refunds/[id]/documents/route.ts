@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { DocumentType } from '@prisma/client';
+type DocumentType = 'INVOICE' | 'RECEIPT' | 'PHOTO' | 'REPORT' | 'OTHER';
 
 // Esquemas de validación
 const uploadDocumentSchema = z.object({
-  documentType: z.nativeEnum(DocumentType),
+  documentType: z.enum(['INVOICE', 'RECEIPT', 'PHOTO', 'REPORT', 'OTHER']),
   fileName: z.string().min(1, 'Nombre de archivo es requerido'),
   fileUrl: z.string().url('URL de archivo inválida'),
   fileSize: z.number().min(1, 'Tamaño de archivo debe ser mayor a 0'),
