@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { cacheManager } from '@/lib/cache-manager';
 import { db } from '@/lib/db';
@@ -18,13 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener estadísticas de logging desde el logger
-    const logStats = logger.getLogStats ? logger.getLogStats() : {
-      total: 0,
-      info: 0,
-      warn: 0,
-      error: 0,
-      debug: 0
-    };
+    const logStats = logger.getLogStats();
 
     // Obtener estadísticas de rate limiting
     const rateLimitStats = rateLimiter.getStats();

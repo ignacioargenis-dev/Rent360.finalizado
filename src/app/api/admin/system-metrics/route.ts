@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { cacheManager, CacheKeys, SYSTEM_METRICS_TTL, withCache } from '@/lib/cache';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { dbOptimizer } from '@/lib/db-optimizer';
