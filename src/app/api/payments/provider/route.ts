@@ -102,20 +102,31 @@ export async function POST(request: NextRequest) {
     // Crear transacción en una transacción de base de datos
     const result = await db.$transaction(async (tx) => {
       // Crear transacción de provider
+      const transactionData: any = {
+        providerType: validatedData.providerType === 'maintenance' ? 'MAINTENANCE' : 'SERVICE',
+        amount: validatedData.amount,
+        commission: commissionAmount,
+        netAmount,
+        status: 'PENDING',
+        paymentMethod: validatedData.paymentMethod,
+        processedAt: null,
+      };
+
+      if (validatedData.providerType === 'maintenance') {
+        transactionData.maintenanceProviderId = validatedData.providerId;
+      } else {
+        transactionData.serviceProviderId = validatedData.providerId;
+      }
+
+      if (validatedData.providerType === 'service' && validatedData.jobId) {
+        transactionData.serviceJobId = validatedData.jobId;
+      }
+      if (validatedData.providerType === 'maintenance' && validatedData.jobId) {
+        transactionData.maintenanceId = validatedData.jobId;
+      }
+
       const providerTransaction = await tx.providerTransaction.create({
-        data: {
-          providerType: validatedData.providerType === 'maintenance' ? 'MAINTENANCE' : 'SERVICE',
-          maintenanceProviderId: validatedData.providerType === 'maintenance' ? validatedData.providerId : undefined,
-          serviceProviderId: validatedData.providerType === 'service' ? validatedData.providerId : undefined,
-          amount: validatedData.amount,
-          commission: commissionAmount,
-          netAmount,
-          status: 'PENDING',
-          paymentMethod: validatedData.paymentMethod,
-          ...(validatedData.providerType === 'service' && validatedData.jobId ? { serviceJobId: validatedData.jobId } : {}),
-          ...(validatedData.providerType === 'maintenance' && validatedData.jobId ? { maintenanceId: validatedData.jobId } : {}),
-          processedAt: null,
-        },
+        data: transactionData,
       });
 
       // Actualizar estadísticas del provider

@@ -468,7 +468,7 @@ export async function PUT(
             priority: 'high',
             status: 'pending',
             actionRequired: true,
-            actionDeadline: validatedData.hearingDate ? new Date(validatedData.hearingDate) : undefined
+            ...(validatedData.hearingDate ? { actionDeadline: new Date(validatedData.hearingDate) } : {})
           },
           {
             legalCaseId: params.id,
@@ -479,7 +479,7 @@ export async function PUT(
             priority: 'high',
             status: 'pending',
             actionRequired: true,
-            actionDeadline: validatedData.hearingDate ? new Date(validatedData.hearingDate) : undefined
+            ...(validatedData.hearingDate ? { actionDeadline: new Date(validatedData.hearingDate) } : {})
           }
         ]
       });

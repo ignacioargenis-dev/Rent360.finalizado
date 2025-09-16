@@ -26,15 +26,17 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined;
 
     // Usar el servicio de auditoría para consultar logs
-    const query = {
-      userId: userId || undefined,
-      action: action || undefined,
-      entityType: entityType || undefined,
-      startDate,
-      endDate,
+    const query: any = {
       limit,
       offset: (page - 1) * limit
     };
+
+    // Solo agregar propiedades que no sean undefined
+    if (userId) query.userId = userId;
+    if (action) query.action = action;
+    if (entityType) query.entityType = entityType;
+    if (startDate) query.startDate = startDate;
+    if (endDate) query.endDate = endDate;
 
     const logs = await auditService.queryLogs(query);
 

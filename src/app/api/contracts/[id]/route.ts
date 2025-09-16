@@ -157,16 +157,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     } = data;
     
     // Actualizar contrato
+    const updateData: any = {};
+    
+    if (startDate) updateData.startDate = new Date(startDate);
+    if (endDate) updateData.endDate = new Date(endDate);
+    if (monthlyRent) updateData.monthlyRent = parseFloat(monthlyRent);
+    if (deposit) updateData.deposit = parseFloat(deposit);
+    if (status) updateData.status = status;
+    if (terms) updateData.terms = terms;
+
     const updatedContract = await db.contract.update({
       where: { id: params.id },
-      data: {
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
-        monthlyRent: monthlyRent ? parseFloat(monthlyRent) : undefined,
-        deposit: deposit ? parseFloat(deposit) : undefined,
-        status: status || undefined,
-        terms: terms || undefined,
-      },
+      data: updateData,
       include: {
         property: {
           select: {
