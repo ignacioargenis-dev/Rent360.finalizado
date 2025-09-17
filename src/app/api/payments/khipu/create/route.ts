@@ -1,7 +1,10 @@
 import { logger } from '@/lib/logger-edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { PaymentStatus, PaymentMethod } from '@prisma/client';
+
+// Definir tipos locales para enums de Prisma
+type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIAL' | 'OVERDUE';
+type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CHECK' | 'OTHER' | 'KHIPU' | 'DIGITAL_WALLET';
 
 interface KhipuPaymentRequest {
   amount: number

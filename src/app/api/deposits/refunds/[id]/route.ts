@@ -3,14 +3,16 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
-import { RefundStatus } from '@prisma/client';
+
+// Definir tipos locales para enums de Prisma
+type RefundStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PROCESSED' | 'CANCELLED' | 'DISPUTED';
 
 // Esquemas de validación
 const updateRefundSchema = z.object({
   requestedAmount: z.number().min(0).optional(),
   tenantClaimed: z.number().min(0).optional(),
   ownerClaimed: z.number().min(0).optional(),
-  status: z.nativeEnum(RefundStatus).optional(),
+  status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'PROCESSED', 'CANCELLED', 'DISPUTED']).optional(),
   tenantApproved: z.boolean().optional(),
   ownerApproved: z.boolean().optional(),
 });

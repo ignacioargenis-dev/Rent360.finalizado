@@ -1,7 +1,11 @@
 import { logger } from '@/lib/logger-edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { PaymentStatus, ContractStatus, NotificationType } from '@prisma/client';
+
+// Definir tipos locales para enums de Prisma
+type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIAL' | 'OVERDUE';
+type ContractStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' | 'TERMINATED';
+type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 
 export async function POST(request: NextRequest) {
   try {

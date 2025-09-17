@@ -26,7 +26,7 @@ export type {
   ContractSignature,
 } from '@prisma/client';
 
-// Re-export enums
+// Re-export enums from main types file
 export {
   UserRole,
   PropertyStatus,
@@ -47,4 +47,6 @@ export {
   ServiceJobStatus,
   ProviderType,
   TransactionStatus,
-} from '@prisma/client';
+  SignatureStatus,
+  RefundStatus,
+} from './types';

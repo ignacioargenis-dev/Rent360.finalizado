@@ -26,27 +26,153 @@ export type {
   ContractSignature,
 } from '@prisma/client';
 
-// Re-export enums
-export {
-  PropertyStatus,
-  PropertyType,
-  ContractStatus,
-  PaymentStatus,
-  PaymentMethod,
-  MessageStatus,
-  TicketPriority,
-  TicketStatus,
-  VisitStatus,
-  MaintenancePriority,
-  MaintenanceStatus,
-  NotificationType,
-  AccountType,
-  ServiceType,
-  ProviderStatus,
-  ServiceJobStatus,
-  ProviderType,
-  TransactionStatus,
-} from '@prisma/client';
+// Definir enums locales ya que no están disponibles en @prisma/client
+export enum PropertyStatus {
+  AVAILABLE = 'AVAILABLE',
+  RENTED = 'RENTED',
+  PENDING = 'PENDING',
+  MAINTENANCE = 'MAINTENANCE',
+}
+
+export enum PropertyType {
+  APARTMENT = 'APARTMENT',
+  HOUSE = 'HOUSE',
+  STUDIO = 'STUDIO',
+  ROOM = 'ROOM',
+  COMMERCIAL = 'COMMERCIAL',
+}
+
+export enum ContractStatus {
+  DRAFT = 'DRAFT',
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  TERMINATED = 'TERMINATED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
+  PARTIAL = 'PARTIAL',
+  OVERDUE = 'OVERDUE',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  CREDIT_CARD = 'CREDIT_CARD',
+  DEBIT_CARD = 'DEBIT_CARD',
+  CHECK = 'CHECK',
+  OTHER = 'OTHER',
+  KHIPU = 'KHIPU',
+  DIGITAL_WALLET = 'DIGITAL_WALLET',
+}
+
+export enum MessageStatus {
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
+  FAILED = 'FAILED',
+}
+
+export enum TicketPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export enum TicketStatus {
+  OPEN = 'OPEN',
+  IN_PROGRESS = 'IN_PROGRESS',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
+}
+
+export enum VisitStatus {
+  SCHEDULED = 'SCHEDULED',
+  CONFIRMED = 'CONFIRMED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum MaintenancePriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export enum MaintenanceStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum NotificationType {
+  INFO = 'INFO',
+  SUCCESS = 'SUCCESS',
+  WARNING = 'WARNING',
+  ERROR = 'ERROR',
+}
+
+export enum AccountType {
+  CHECKING = 'CHECKING',
+  SAVINGS = 'SAVINGS',
+}
+
+export enum ServiceType {
+  CLEANING = 'CLEANING',
+  MAINTENANCE = 'MAINTENANCE',
+  REPAIR = 'REPAIR',
+  OTHER = 'OTHER',
+}
+
+export enum ProviderStatus {
+  PENDING_VERIFICATION = 'PENDING_VERIFICATION',
+  VERIFIED = 'VERIFIED',
+  SUSPENDED = 'SUSPENDED',
+  REJECTED = 'REJECTED',
+}
+
+export enum ServiceJobStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum ProviderType {
+  MAINTENANCE = 'MAINTENANCE',
+  SERVICE = 'SERVICE',
+}
+
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum SignatureStatus {
+  PENDING = 'PENDING',
+  SIGNED = 'SIGNED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum RefundStatus {
+  PENDING = 'PENDING',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PROCESSED = 'PROCESSED',
+  CANCELLED = 'CANCELLED',
+  DISPUTED = 'DISPUTED',
+}
 
 // Enum personalizado para UserRole (SQLite no soporta enums)
 export enum UserRole {
