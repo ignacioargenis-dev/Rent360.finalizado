@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PaymentStatus, PaymentMethod, UserRole } from '@/types';
-import { ValidationError, handleError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/errors';
 import { getPaymentsOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Schema para crear pago
@@ -149,8 +149,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     logger.error('Error en consulta optimizada de pagos', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'GET /api/payments');
   }
 }
 
@@ -263,8 +262,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     logger.error('Error creando pago', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'POST /api/payments');
   }
 }
 
@@ -332,7 +330,14 @@ export async function PUT(request: NextRequest) {
     // Actualizar pago
     const updatedPayment = await db.payment.update({
       where: { id },
-      data: validatedData,
+      data: {
+        amount: validatedData.amount ?? null,
+        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
+        method: validatedData.method ?? null,
+        description: validatedData.description ?? null,
+        status: validatedData.status ?? null,
+        paidDate: validatedData.paidDate ? new Date(validatedData.paidDate) : null,
+      },
       include: {
         contract: {
           select: {
@@ -383,8 +388,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error actualizando pago', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'PUT /api/payments');
   }
 }
 
@@ -442,7 +446,6 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error eliminando pago', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'DELETE /api/payments');
   }
 }

@@ -239,7 +239,14 @@ export async function PUT(
     // Actualizar la solicitud
     const updatedRefund = await db.depositRefund.update({
       where: { id },
-      data: validatedData,
+      data: {
+        requestedAmount: validatedData.requestedAmount ?? null,
+        tenantClaimed: validatedData.tenantClaimed ?? null,
+        ownerClaimed: validatedData.ownerClaimed ?? null,
+        status: validatedData.status ?? null,
+        tenantApproved: validatedData.tenantApproved ?? null,
+        ownerApproved: validatedData.ownerApproved ?? null,
+      },
       include: {
         contract: {
           include: {

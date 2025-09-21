@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { UserRole } from '@/types';
-import { ValidationError, handleError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/errors';
 import { getUsersOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Schema para crear usuario
@@ -94,8 +94,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     logger.error('Error en consulta optimizada de usuarios', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'GET /api/users');
   }
 }
 
@@ -156,8 +155,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     logger.error('Error creando usuario', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'POST /api/users');
   }
 }
 
@@ -202,7 +200,14 @@ export async function PUT(request: NextRequest) {
     // Actualizar usuario
     const updatedUser = await db.user.update({
       where: { id },
-      data: validatedData,
+      data: {
+        name: validatedData.name ?? null,
+        email: validatedData.email ?? null,
+        role: validatedData.role ?? null,
+        phone: validatedData.phone ?? null,
+        avatar: validatedData.avatar ?? null,
+        isActive: validatedData.isActive ?? null,
+      },
       select: {
         id: true,
         name: true,
@@ -231,8 +236,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error actualizando usuario', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'PUT /api/users');
   }
 }
 
@@ -304,7 +308,6 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error eliminando usuario', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
-    return errorResponse;
+    return handleApiError(error, 'DELETE /api/users');
   }
 }
