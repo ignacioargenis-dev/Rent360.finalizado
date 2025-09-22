@@ -83,14 +83,14 @@ export async function GET(request: NextRequest) {
     
     if (overdue === 'true') {
       where.dueDate = { lt: new Date() };
-      where.status = PaymentStatus.PENDING;
+      where.status = 'PENDING';
     }
 
     if (upcoming === 'true') {
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
       where.dueDate = { lte: nextWeek, gte: new Date() };
-      where.status = PaymentStatus.PENDING;
+      where.status = 'PENDING';
     }
     
     // Aplicar filtros según el rol del usuario
@@ -323,7 +323,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Si se está marcando como pagado, establecer fecha de pago
-    if (validatedData.status === PaymentStatus.COMPLETED && !validatedData.paidDate) {
+    if (validatedData.status === 'COMPLETED' && !validatedData.paidDate) {
       validatedData.paidDate = new Date().toISOString();
     }
 
@@ -426,7 +426,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Verificar que el pago no esté pagado
-    if (existingPayment.status === PaymentStatus.COMPLETED) {
+    if (existingPayment.status === 'COMPLETED') {
       throw new ValidationError('No se puede eliminar un pago que ya fue realizado');
     }
     

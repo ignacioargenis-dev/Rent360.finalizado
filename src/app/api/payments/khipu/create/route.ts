@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       paymentNumber: paymentId,
       amount: body.amount,
       dueDate: new Date(),
-      status: PaymentStatus.PENDING,
+      status: 'PENDING',
       method: 'DIGITAL_WALLET',
       transactionId: khipuResponse.payment_id,
       notes: `Pago Khipu: ${body.subject}`,

@@ -55,16 +55,16 @@ export async function POST(request: NextRequest) {
     let paymentStatus: PaymentStatus;
     switch (status) {
       case 'completed':
-        paymentStatus = PaymentStatus.COMPLETED;
+        paymentStatus = 'COMPLETED';
         break;
       case 'failed':
-        paymentStatus = PaymentStatus.FAILED;
+        paymentStatus = 'FAILED';
         break;
       case 'pending':
-        paymentStatus = PaymentStatus.PENDING;
+        paymentStatus = 'PENDING';
         break;
       default:
-        paymentStatus = PaymentStatus.PENDING;
+        paymentStatus = 'PENDING';
     }
 
     // Buscar el pago por el transaction_id o payment_id
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         data: {
           status: paymentStatus,
           transactionId: transactionId?.toString(),
-          paidDate: paymentStatus === PaymentStatus.COMPLETED ? new Date() : null,
+          paidDate: paymentStatus === 'COMPLETED' ? new Date() : null,
           notes: payment.notes ? `${payment.notes}\nNotificación Khipu: ${status}` : `Notificación Khipu: ${status}`,
         },
       });
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Si el pago se completó, realizar acciones adicionales
-    if (paymentStatus === PaymentStatus.COMPLETED) {
+    if (paymentStatus === 'COMPLETED') {
       logger.info('Pago completado, ejecutando acciones post-pago...', { paymentId: payment.id });
       
       // Actualizar estado del contrato si existe

@@ -173,13 +173,13 @@ export const ticketSchema = z.object({
   }
 
   // Fix PaymentStatus.PAID to PaymentStatus.COMPLETED
-  newContent = newContent.replace(/PaymentStatus\.PAID/g, 'PaymentStatus.COMPLETED');
+  newContent = newContent.replace(/PaymentStatus\.PAID/g, "'COMPLETED'");
 
   // Fix missing paymentNumber in PaymentCreateInput
   if (filePath.includes('payments/route.ts')) {
     newContent = newContent.replace(
       /data:\s*\{\s*dueDate:\s*Date;\s*contractId:\s*string;\s*amount:\s*number;\s*description:\s*string;\s*status:\s*PaymentStatus;\s*method\?\s*:\s*PaymentMethod\s*\|\s*undefined;\s*\}/g,
-      'data: {\n        dueDate: new Date(),\n        contractId: "",\n        amount: 0,\n        description: "",\n        status: PaymentStatus.PENDING,\n        paymentNumber: "",\n        method: undefined,\n      }'
+      'data: {\n        dueDate: new Date(),\n        contractId: "",\n        amount: 0,\n        description: "",\n        status: 'PENDING',\n        paymentNumber: "",\n        method: undefined,\n      }'
     );
   }
 
