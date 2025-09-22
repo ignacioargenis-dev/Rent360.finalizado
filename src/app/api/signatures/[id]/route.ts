@@ -30,12 +30,11 @@ export async function GET(
       );
     }
 
-    // Verificar permisos (solo el creador, firmantes o admin pueden ver)
-    const isCreator = signature.createdBy === user.id;
+    // Verificar permisos (solo firmantes o admin pueden ver)
     const isSigner = signature.signers.some(s => s.email === user.email);
     const isAdmin = user.role === 'ADMIN';
 
-    if (!isCreator && !isSigner && !isAdmin) {
+    if (!isSigner && !isAdmin) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver esta firma' },
         { status: 403 }
