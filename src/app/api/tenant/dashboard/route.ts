@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { ValidationError, handleError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
