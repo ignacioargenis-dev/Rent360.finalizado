@@ -60,7 +60,8 @@ model User {
   bankAccount     BankAccount?
 
   // Relaciones existentes
-  properties      Property[]
+  properties        Property[]
+  propertyFavorites PropertyFavorite[]
   contractsAsOwner Contract[] @relation("OwnerContracts")
   contractsAsTenant Contract[] @relation("TenantContracts")
   contractsAsBroker Contract[] @relation("BrokerContracts")
@@ -136,11 +137,12 @@ model Property {
   updatedAt   DateTime      @updatedAt
 
   // Relations
-  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  contracts   Contract[]
-  reviews     Review[]
-  visits      Visit[]
-  maintenance Maintenance[]
+  owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  propertyFavorites PropertyFavorite[]
+  contracts         Contract[]
+  reviews           Review[]
+  visits            Visit[]
+  maintenance       Maintenance[]
   
   @@map("properties")
   @@index([ownerId])
@@ -1179,6 +1181,28 @@ model SignatureSigner {
   @@index([signatureRequestId])
   @@index([email])
   @@index([status])
+}
+
+// ============================================================================
+// FAVORITOS DE PROPIEDADES
+// ============================================================================
+
+// Favoritos de propiedades por usuario
+model PropertyFavorite {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relaciones
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId]) // Un usuario no puede tener la misma propiedad favorita más de una vez
+  @@map("property_favorites")
+  @@index([userId])
+  @@index([propertyId])
 }
 
 // ============================================================================
