@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { NotificationService } from '@/lib/notification-service';
-import { logger } from '@/lib/logger-edge';
-import { handleError } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/api-error-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error sending notification:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error sending notification:', { error });
+    const errorResponse = handleApiError(error, 'POST /api/notifications');
     return errorResponse;
   }
 }
@@ -73,8 +73,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error getting notification stats:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error getting notification stats:', { error });
+    const errorResponse = handleApiError(error, 'GET /api/notifications');
     return errorResponse;
   }
 }
