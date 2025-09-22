@@ -546,8 +546,8 @@ return `Hace ${diffDays} días`;
               status: apt.status,
               type: apt.type,
               priority: apt.priority,
-              propertyTitle: apt.propertyTitle,
-              propertyAddress: apt.propertyAddress,
+              propertyTitle: apt.propertyTitle || '',
+              propertyAddress: apt.propertyAddress || '',
             }))}
             onDateClick={handleDateClick}
             onAppointmentClick={(apt) => {
