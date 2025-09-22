@@ -332,13 +332,6 @@ export async function PUT(request: NextRequest) {
             tenant: true,
             property: true
           }
-        },
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
         }
       }
     });
