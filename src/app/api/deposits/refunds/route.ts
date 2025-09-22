@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
         tenantApproved: false,
         ownerApproved: false,
         reason: validatedData.reason,
-        description: validatedData.description ?? null,
-        bankAccount: validatedData.bankAccount ? JSON.stringify(validatedData.bankAccount) : undefined,
+        ...(validatedData.description && { description: validatedData.description }),
+        ...(validatedData.bankAccount && { bankAccount: JSON.stringify(validatedData.bankAccount) }),
       },
       include: {
         contract: {
