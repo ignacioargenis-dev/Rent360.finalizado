@@ -120,13 +120,18 @@ export async function POST(request: NextRequest) {
     // Importar bcrypt para hashear la contraseña
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash(validatedData.password, 12);
-    
+
+    // Preparar datos convirtiendo undefined a null para campos opcionales
+    const userData = {
+      ...validatedData,
+      password: hashedPassword,
+      phone: validatedData.phone ?? null,
+      avatar: validatedData.avatar ?? null,
+    };
+
     // Crear usuario con Prisma
     const newUser = await db.user.create({
-      data: {
-        ...validatedData,
-        password: hashedPassword,
-      },
+      data: userData,
       select: {
         id: true,
         name: true,
