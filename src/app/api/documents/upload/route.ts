@@ -76,6 +76,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       url: string;
       size: number;
       status: string;
+      validation: any;
     }> = [];
     
     for (let i = 0; i < files.length; i++) {
