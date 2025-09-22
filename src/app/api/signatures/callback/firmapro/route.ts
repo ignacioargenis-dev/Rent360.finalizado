@@ -73,12 +73,13 @@ export async function POST(request: NextRequest) {
           data: {
             status: signer.status === 'signed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metadata: {
-              ...existingSignature.signers.find(s => s.email === signer.email)?.metadata,
+            metadata: JSON.stringify({
+              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata ?
+                JSON.parse(existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}') : {}),
               firmaProSignerData: signer,
               signerRole: role,
               contractType: 'ARRIENDO_INMUEBLE'
-            }
+            })
           }
         });
       }
