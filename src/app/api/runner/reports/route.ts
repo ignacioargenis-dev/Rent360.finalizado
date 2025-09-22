@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error generando reporte:', error);
+    logger.error('Error generando reporte:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

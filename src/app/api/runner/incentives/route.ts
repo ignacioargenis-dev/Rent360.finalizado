@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo incentivos del runner:', error);
+    logger.error('Error obteniendo incentivos del runner:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

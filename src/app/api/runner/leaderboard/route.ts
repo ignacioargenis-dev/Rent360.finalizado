@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo leaderboard:', error);
+    logger.error('Error obteniendo leaderboard:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
