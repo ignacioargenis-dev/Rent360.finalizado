@@ -101,52 +101,51 @@ export async function POST(request: NextRequest) {
         data: updateData,
       });
 
-    logger.info('Pago actualizado a estado:', { paymentId: payment.id, status: paymentStatus });
-    } else {
-      logger.warn('No se encontró pago para la notificación:', { paymentId, customData });
-    }
+      logger.info('Pago actualizado a estado:', { paymentId: payment.id, status: paymentStatus });
 
-    // Si el pago se completó, realizar acciones adicionales
-    if (paymentStatus === 'COMPLETED') {
-      logger.info('Pago completado, ejecutando acciones post-pago...', { paymentId: payment.id });
-      
-      // Actualizar estado del contrato si existe
-      if (customData.contract_id) {
-        try {
-          await db.contract.update({
-            where: { id: customData.contract_id },
-            data: { 
-              status: ContractStatus.ACTIVE,
-            },
-          });
-          logger.info('Contrato actualizado:', { contractId: customData.contract_id });
-        } catch (error) {
-          logger.error('Error actualizando contrato:', { error: error instanceof Error ? error.message : String(error) });
+      // Si el pago se completó, realizar acciones adicionales
+      if (paymentStatus === 'COMPLETED') {
+        logger.info('Pago completado, ejecutando acciones post-pago...', { paymentId: payment.id });
+
+        // Actualizar estado del contrato si existe
+        if (customData.contract_id) {
+          try {
+            await db.contract.update({
+              where: { id: customData.contract_id },
+              data: {
+                status: ContractStatus.ACTIVE,
+              },
+            });
+            logger.info('Contrato actualizado:', { contractId: customData.contract_id });
+          } catch (error) {
+            logger.error('Error actualizando contrato:', { error: error instanceof Error ? error.message : String(error) });
+          }
         }
-      }
 
-      // Crear notificación para el usuario
-      if (customData.user_id) {
-        try {
-          await db.notification.create({
-            data: {
-              userId: customData.user_id,
-              title: 'Pago Completado',
-              message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
-              type: NotificationType.SUCCESS,
-              data: JSON.stringify({
-                payment_id: payment?.id,
-                amount: amount,
-                currency: currency,
-                transaction_id: transactionId,
-              }),
-            },
-          });
+        // Crear notificación para el usuario
+        if (customData.user_id) {
+          try {
+            await db.notification.create({
+              data: {
+                userId: customData.user_id,
+                title: 'Pago Completado',
+                message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
+                type: NotificationType.SUCCESS,
+                data: JSON.stringify({
+                  payment_id: payment.id,
+                  amount: amount,
+                  currency: currency,
+                  transaction_id: transactionId,
+                }),
+              },
+            });
           logger.info('Notificación creada para usuario:', { userId: customData.user_id });
         } catch (error) {
           logger.error('Error creando notificación:', { error: error instanceof Error ? error.message : String(error) });
         }
       }
+    } else {
+      logger.warn('No se encontró pago para la notificación:', { paymentId, customData });
     }
 
     // Responder a Khipu que recibimos la notificación
