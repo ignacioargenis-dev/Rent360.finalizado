@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PaymentStatus, PaymentMethod, UserRole } from '@/types';
-import { ValidationError, handleApiError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 import { getPaymentsOptimized, dbOptimizer } from '@/lib/db-optimizer';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
@@ -326,18 +326,20 @@ export async function PUT(request: NextRequest) {
     if (validatedData.status === PaymentStatus.COMPLETED && !validatedData.paidDate) {
       validatedData.paidDate = new Date().toISOString();
     }
-    
+
+    // Construir objeto de actualización compatible con Prisma
+    const prismaUpdateData: any = {};
+    if (validatedData.amount !== undefined) prismaUpdateData.amount = validatedData.amount;
+    if (validatedData.dueDate !== undefined) prismaUpdateData.dueDate = new Date(validatedData.dueDate);
+    if (validatedData.method !== undefined) prismaUpdateData.method = validatedData.method;
+    if (validatedData.description !== undefined) prismaUpdateData.description = validatedData.description;
+    if (validatedData.status !== undefined) prismaUpdateData.status = validatedData.status;
+    if (validatedData.paidDate !== undefined) prismaUpdateData.paidDate = new Date(validatedData.paidDate);
+
     // Actualizar pago
     const updatedPayment = await db.payment.update({
       where: { id },
-      data: {
-        amount: validatedData.amount ?? null,
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
-        method: validatedData.method ?? null,
-        description: validatedData.description ?? null,
-        status: validatedData.status ?? null,
-        paidDate: validatedData.paidDate ? new Date(validatedData.paidDate) : null,
-      },
+      data: prismaUpdateData,
       include: {
         contract: {
           select: {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/api-error-handler';
 import { requireAuth } from '@/lib/auth';
 
 // Definir tipos locales para enums de Prisma
@@ -145,10 +146,7 @@ export async function GET(
       userId: request.headers.get('user-id'),
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'GET /api/deposits/refunds/[id]');
   }
 }
 
@@ -236,17 +234,19 @@ export async function PUT(
       }
     }
 
+    // Construir objeto de actualización compatible con Prisma
+    const prismaUpdateData: any = {};
+    if (validatedData.requestedAmount !== undefined) prismaUpdateData.requestedAmount = validatedData.requestedAmount;
+    if (validatedData.tenantClaimed !== undefined) prismaUpdateData.tenantClaimed = validatedData.tenantClaimed;
+    if (validatedData.ownerClaimed !== undefined) prismaUpdateData.ownerClaimed = validatedData.ownerClaimed;
+    if (validatedData.status !== undefined) prismaUpdateData.status = validatedData.status;
+    if (validatedData.tenantApproved !== undefined) prismaUpdateData.tenantApproved = validatedData.tenantApproved;
+    if (validatedData.ownerApproved !== undefined) prismaUpdateData.ownerApproved = validatedData.ownerApproved;
+
     // Actualizar la solicitud
     const updatedRefund = await db.depositRefund.update({
       where: { id },
-      data: {
-        requestedAmount: validatedData.requestedAmount ?? null,
-        tenantClaimed: validatedData.tenantClaimed ?? null,
-        ownerClaimed: validatedData.ownerClaimed ?? null,
-        status: validatedData.status ?? null,
-        tenantApproved: validatedData.tenantApproved ?? null,
-        ownerApproved: validatedData.ownerApproved ?? null,
-      },
+      data: prismaUpdateData,
       include: {
         contract: {
           include: {
@@ -326,17 +326,7 @@ export async function PUT(
       userId: request.headers.get('user-id'),
     });
 
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Datos inválidos', details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'PUT /api/deposits/refunds/[id]');
   }
 }
 
@@ -467,9 +457,6 @@ export async function DELETE(
       userId: request.headers.get('user-id'),
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'DELETE /api/deposits/refunds/[id]');
   }
 }

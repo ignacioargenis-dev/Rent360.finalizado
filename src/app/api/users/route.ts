@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { UserRole } from '@/types';
-import { ValidationError, handleApiError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 import { getUsersOptimized, dbOptimizer } from '@/lib/db-optimizer';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
@@ -197,17 +197,19 @@ export async function PUT(request: NextRequest) {
       }
     }
     
+    // Construir objeto de actualización compatible con Prisma
+    const prismaUpdateData: any = {};
+    if (validatedData.name !== undefined) prismaUpdateData.name = validatedData.name;
+    if (validatedData.email !== undefined) prismaUpdateData.email = validatedData.email;
+    if (validatedData.role !== undefined) prismaUpdateData.role = validatedData.role;
+    if (validatedData.phone !== undefined) prismaUpdateData.phone = validatedData.phone;
+    if (validatedData.avatar !== undefined) prismaUpdateData.avatar = validatedData.avatar;
+    if (validatedData.isActive !== undefined) prismaUpdateData.isActive = validatedData.isActive;
+
     // Actualizar usuario
     const updatedUser = await db.user.update({
       where: { id },
-      data: {
-        name: validatedData.name ?? null,
-        email: validatedData.email ?? null,
-        role: validatedData.role ?? null,
-        phone: validatedData.phone ?? null,
-        avatar: validatedData.avatar ?? null,
-        isActive: validatedData.isActive ?? null,
-      },
+      data: prismaUpdateData,
       select: {
         id: true,
         name: true,
