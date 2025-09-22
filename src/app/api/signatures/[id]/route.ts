@@ -106,11 +106,7 @@ export async function DELETE(
     const signature = await db.signatureRequest.findUnique({
       where: { id: signatureId },
       include: {
-        document: {
-          include: {
-            contract: true
-          }
-        }
+        signers: true
       }
     });
 
@@ -121,8 +117,11 @@ export async function DELETE(
       );
     }
 
-    // Verificar permisos (solo el creador o admin pueden cancelar)
-    if (signature.createdBy !== user.id && user.role !== 'ADMIN') {
+    // Verificar permisos (solo firmantes o admin pueden cancelar)
+    const isSigner = signature.signers.some(s => s.email === user.email);
+    const isAdmin = user.role === 'ADMIN';
+
+    if (!isSigner && !isAdmin) {
       return NextResponse.json(
         { error: 'No tienes permisos para cancelar esta firma' },
         { status: 403 }
