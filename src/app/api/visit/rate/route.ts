@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error creando calificación:', error);
+    logger.error('Error creando calificación:', { error: error instanceof Error ? error.message : String(error) });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
