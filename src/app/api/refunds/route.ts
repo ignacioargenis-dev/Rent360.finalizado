@@ -11,7 +11,6 @@ const refundRequestSchema = z.object({
   amount: z.number().positive('Monto debe ser positivo'),
   reason: z.string().min(1, 'Motivo requerido'),
   description: z.string().optional(),
-  documents: z.array(z.string()).optional(),
   bankAccount: z.object({
     accountNumber: z.string().min(1, 'Número de cuenta requerido'),
     accountType: z.enum(['checking', 'savings']),
@@ -222,7 +221,6 @@ export async function POST(request: NextRequest) {
         amount: validatedData.amount,
         reason: validatedData.reason,
         description: validatedData.description,
-        documents: validatedData.documents,
         bankAccount: validatedData.bankAccount,
         status: 'pending',
         createdAt: new Date(),
@@ -412,7 +410,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Solo permitir actualizar ciertos campos
-    const allowedUpdates = ['description', 'documents', 'bankAccount'];
+    const allowedUpdates = ['description', 'bankAccount'];
     const filteredUpdates: any = {};
     
     for (const [key, value] of Object.entries(updateData)) {
