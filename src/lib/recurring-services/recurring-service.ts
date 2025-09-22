@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 /**
  * Frecuencia de servicios recurrentes

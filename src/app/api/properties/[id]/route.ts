@@ -1,4 +1,4 @@
-// import { logger } from '@/lib/logger'; // Logger no disponible
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';

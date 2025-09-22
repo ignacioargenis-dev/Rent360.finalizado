@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { handleError } from '@/lib/errors';
 import {
   predictPropertyPrice,

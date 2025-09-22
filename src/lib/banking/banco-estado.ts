@@ -1,5 +1,5 @@
 import { BaseBankIntegration, BankTransferRequest, BankTransferResponse, BankAccountValidation } from './base-bank';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 /**
  * Integración con Banco Estado - API de Transferencias

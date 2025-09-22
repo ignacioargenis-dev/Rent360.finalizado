@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
 import { RefundStatus } from '@/types';
 

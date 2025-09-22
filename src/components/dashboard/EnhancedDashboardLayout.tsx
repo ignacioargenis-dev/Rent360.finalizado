@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';

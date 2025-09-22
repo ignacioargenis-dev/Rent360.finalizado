@@ -1,5 +1,5 @@
 import { BaseBankIntegration, BankTransferRequest, BankTransferResponse, BankAccountValidation } from './base-bank';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import * as crypto from 'crypto';
 
 /**

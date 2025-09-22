@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { handleError } from '@/lib/errors';

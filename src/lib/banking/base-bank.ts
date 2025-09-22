@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 /**
  * Interfaz base para todas las integraciones bancarias chilenas

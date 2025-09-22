@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 interface FirebaseConfig {
   apiKey: string;

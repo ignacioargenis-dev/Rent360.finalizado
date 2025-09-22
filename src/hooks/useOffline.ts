@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 interface OfflineState {
   isOnline: boolean;

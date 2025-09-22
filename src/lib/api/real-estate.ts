@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge'
+import { logger } from '@/lib/logger'
 
 // Configuración de APIs externas
 const REAL_ESTATE_API_CONFIG = {

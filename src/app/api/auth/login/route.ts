@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validations';
 import { generateTokens, setAuthCookies, verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { notificationService } from '@/lib/notifications';
 import { auditService } from '@/lib/audit';
 import { apiWrapper, createSuccessResponse, createErrorResponse } from '@/lib/api-wrapper';

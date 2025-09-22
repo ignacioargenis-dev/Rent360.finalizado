@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { clearAuthCookies } from '@/lib/auth';
 

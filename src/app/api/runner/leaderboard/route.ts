@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { RunnerIncentivesService } from '@/lib/runner-incentives-service';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 import { handleError } from '@/lib/errors';
 
 /**

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { logger } from '@/lib/logger-edge';
+import { logger } from '@/lib/logger';
 
 interface User {
   id: string;
