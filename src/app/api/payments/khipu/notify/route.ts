@@ -83,15 +83,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (payment) {
+      // Construir objeto de actualización compatible con Prisma
+      const updateData: any = {
+        status: paymentStatus,
+        paidDate: paymentStatus === 'COMPLETED' ? new Date() : null,
+        notes: payment.notes ? `${payment.notes}\nNotificación Khipu: ${status}` : `Notificación Khipu: ${status}`,
+      };
+
+      // Solo agregar transactionId si existe
+      if (transactionId) {
+        updateData.transactionId = transactionId.toString();
+      }
+
       // Actualizar el pago
       await db.payment.update({
         where: { id: payment.id },
-        data: {
-          status: paymentStatus,
-          transactionId: transactionId?.toString(),
-          paidDate: paymentStatus === 'COMPLETED' ? new Date() : null,
-          notes: payment.notes ? `${payment.notes}\nNotificación Khipu: ${status}` : `Notificación Khipu: ${status}`,
-        },
+        data: updateData,
       });
 
     logger.info('Pago actualizado a estado:', { paymentId: payment.id, status: paymentStatus });
