@@ -137,10 +137,13 @@ export async function DELETE(
     }
 
     // Cancelar en el proveedor
-    const cancelResult = await signatureService.cancelSignatureRequest(signatureId);
-
-    if (!cancelResult) {
-      logger.warn('Error cancelando firma en proveedor:', { signatureId });
+    try {
+      await signatureService.cancelSignatureRequest(signatureId);
+    } catch (error) {
+      logger.warn('Error cancelando firma en proveedor:', {
+        signatureId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       // Continuar con cancelación en BD aunque falle en proveedor
     }
 
