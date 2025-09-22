@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       include: {
         property: true,
         payments: {
-          where: { type: 'DEPOSIT' },
+          where: { method: 'DEPOSIT' },
           orderBy: { createdAt: 'desc' },
           take: 1
         }
