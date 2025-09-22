@@ -11,6 +11,14 @@ const createRefundSchema = z.object({
   requestedAmount: z.number().min(0, 'Monto solicitado debe ser mayor o igual a 0'),
   tenantClaimed: z.number().min(0, 'Monto reclamado por inquilino debe ser mayor o igual a 0').default(0),
   ownerClaimed: z.number().min(0, 'Monto reclamado por propietario debe ser mayor o igual a 0').default(0),
+  reason: z.string().min(1, 'Motivo es requerido'),
+  description: z.string().optional(),
+  bankAccount: z.object({
+    accountNumber: z.string().min(1, 'Número de cuenta requerido'),
+    accountType: z.enum(['checking', 'savings']),
+    bankName: z.string().min(1, 'Nombre del banco requerido'),
+    rut: z.string().min(1, 'RUT requerido')
+  }).optional(),
 });
 
 const updateRefundSchema = z.object({
@@ -100,6 +108,9 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         tenantApproved: false,
         ownerApproved: false,
+        reason: validatedData.reason,
+        description: validatedData.description ?? null,
+        bankAccount: validatedData.bankAccount ? JSON.stringify(validatedData.bankAccount) : null,
       },
       include: {
         contract: {
