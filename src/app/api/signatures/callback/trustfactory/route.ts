@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
     const existingSignature = await db.signatureRequest.findUnique({
       where: { id: signatureId },
       include: {
-        document: true,
         signers: true
       }
     });
@@ -38,21 +37,23 @@ export async function POST(request: NextRequest) {
     const internalStatus = mapTrustFactoryStatus(status);
 
     // Actualizar el estado de la firma
+    const currentMetadata = existingSignature.metadata ? JSON.parse(existingSignature.metadata) : {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      trustFactoryCallback: {
+        receivedAt: new Date().toISOString(),
+        eventType,
+        status,
+        certificateData,
+        signerData
+      }
+    };
+
     await db.signatureRequest.update({
       where: { id: signatureId },
       data: {
         status: internalStatus,
-        completedAt: internalStatus === SignatureStatus.COMPLETED ? new Date() : null,
-        metadata: {
-          ...existingSignature.metadata,
-          trustFactoryCallback: {
-            receivedAt: new Date().toISOString(),
-            eventType,
-            status,
-            certificateData,
-            signerData
-          }
-        }
+        metadata: JSON.stringify(updatedMetadata)
       }
     });
 
@@ -67,58 +68,18 @@ export async function POST(request: NextRequest) {
           data: {
             status: signer.status === 'completed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metadata: {
-              ...existingSignature.signers.find(s => s.email === signer.email)?.metadata,
+            metadata: JSON.stringify({
+              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata ?
+                JSON.parse(existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}') : {}),
               trustFactorySignerData: signer
-            }
+            })
           }
         });
       }
     }
 
-    // Si la firma se completó, actualizar el contrato relacionado
-    if (internalStatus === SignatureStatus.COMPLETED && existingSignature.document) {
-      await db.contract.update({
-        where: { id: existingSignature.document.contractId },
-        data: {
-          status: 'SIGNED',
-          signedAt: new Date(),
-          metadata: {
-            ...existingSignature.document.metadata,
-            signatureCompletedAt: new Date().toISOString(),
-            signatureProvider: 'TrustFactory',
-            certificateData
-          }
-        }
-      });
-
-      // Crear entrada en el log de auditoría
-      await db.auditLog.create({
-        data: {
-          action: 'CONTRACT_SIGNED',
-          entityType: 'CONTRACT',
-          entityId: existingSignature.document.contractId,
-          userId: existingSignature.createdBy,
-          details: {
-            signatureId,
-            provider: 'TrustFactory',
-            certificateData,
-            compliance: {
-              law: '19.799',
-              decree: '181/2020'
-            }
-          },
-          ipAddress: request.headers.get('x-forwarded-for') || request.ip || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'TrustFactory Callback'
-        }
-      });
-
-      logger.info('Contrato firmado exitosamente via TrustFactory:', {
-        signatureId,
-        contractId: existingSignature.document.contractId,
-        certificateId: certificateData?.certificateId
-      });
-    }
+    // Nota: La actualización automática de contratos se maneja en otros endpoints
+    // El callback solo actualiza el estado de la firma
 
     // Notificar a los usuarios interesados (implementar sistema de notificaciones)
 
