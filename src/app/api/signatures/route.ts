@@ -188,6 +188,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verificar que tenemos un ID válido
+    if (!signatureResult.signatureId) {
+      logger.error('No se recibió signatureId del servicio de firmas');
+      return NextResponse.json(
+        { error: 'Error interno al crear la firma' },
+        { status: 500 }
+      );
+    }
+
     // Guardar en base de datos
     const dbSignature = await db.signatureRequest.create({
       data: {
@@ -196,7 +205,9 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         status: signatureResult.status,
         provider: signatureResult.provider,
-        expiresAt: signatureResult.metadata?.expiresAt,
+        ...(signatureResult.metadata?.expiresAt && {
+          expiresAt: new Date(signatureResult.metadata.expiresAt)
+        }),
         metadata: JSON.stringify(signatureResult.metadata || {}),
         signers: {
           create: validatedData.signers.map(signer => ({
