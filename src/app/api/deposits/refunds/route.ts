@@ -23,8 +23,8 @@ const updateRefundSchema = z.object({
 });
 
 const getRefundsSchema = z.object({
-  page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
-  limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default(10),
+  page: z.string().default('1').transform(Number).pipe(z.number().min(1)),
+  limit: z.string().default('10').transform(Number).pipe(z.number().min(1).max(100)),
   status: z.enum(['PENDING', 'UNDER_REVIEW', 'DISPUTED', 'APPROVED', 'PROCESSED', 'REJECTED']).optional(),
   contractId: z.string().optional(),
   tenantId: z.string().optional(),

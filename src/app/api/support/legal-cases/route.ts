@@ -8,8 +8,8 @@ import { cacheManager, createCacheKey } from '@/lib/cache-manager';
 
 // Esquemas de validación
 const getLegalCasesSchema = z.object({
-  page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
-  limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default(10),
+  page: z.string().default('1').transform(Number).pipe(z.number().min(1)),
+  limit: z.string().default('10').transform(Number).pipe(z.number().min(1).max(100)),
   status: z.enum([
     'PRE_JUDICIAL',
     'EXTRAJUDICIAL_NOTICE',
