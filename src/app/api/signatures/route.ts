@@ -148,10 +148,9 @@ export async function POST(request: NextRequest) {
     // Validar datos de entrada
     const validatedData = createSignatureSchema.parse(body);
 
-    // Verificar que el documento existe y pertenece al usuario
+    // Verificar que el documento existe
     const document = await db.document.findUnique({
-      where: { id: validatedData.documentId },
-      include: { contract: true }
+      where: { id: validatedData.documentId }
     });
 
     if (!document) {
@@ -161,11 +160,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar permisos (solo el propietario o admin pueden crear firmas)
-    if (document.contract.ownerId !== user.id && user.role !== 'ADMIN') {
+    // Verificar permisos básicos (documento debe estar activo)
+    if (document.status !== 'active') {
       return NextResponse.json(
-        { error: 'No tienes permisos para firmar este documento' },
-        { status: 403 }
+        { error: 'El documento no está disponible para firma' },
+        { status: 400 }
       );
     }
 
