@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // Extraer parámetros de la propiedad
-    const propertyData = {
+    const propertyData: any = {
       area: parseFloat(searchParams.get('area') || '0'),
       bedrooms: parseInt(searchParams.get('bedrooms') || '0'),
       bathrooms: parseInt(searchParams.get('bathrooms') || '0'),
@@ -40,9 +40,14 @@ export async function GET(request: NextRequest) {
       commune: searchParams.get('commune') || '',
       type: searchParams.get('type') || '',
       furnished: searchParams.get('furnished') === 'true',
-      petsAllowed: searchParams.get('petsAllowed') === 'true',
-      yearBuilt: searchParams.get('yearBuilt') ? parseInt(searchParams.get('yearBuilt')!) : undefined
+      petsAllowed: searchParams.get('petsAllowed') === 'true'
     };
+
+    // Solo incluir yearBuilt si existe
+    const yearBuiltParam = searchParams.get('yearBuilt');
+    if (yearBuiltParam) {
+      propertyData.yearBuilt = parseInt(yearBuiltParam);
+    }
 
     // Validar datos requeridos
     if (!propertyData.area || !propertyData.bedrooms || !propertyData.city || !propertyData.type) {
