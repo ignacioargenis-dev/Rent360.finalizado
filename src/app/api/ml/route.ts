@@ -18,7 +18,7 @@ const initializeModels = async () => {
       modelsInitialized = true;
       logger.info('Modelos ML inicializados para API');
     } catch (error) {
-      logger.error('Error inicializando modelos ML:', error);
+      logger.error('Error inicializando modelos ML:', error instanceof Error ? error.message : String(error));
     }
   }
 };
