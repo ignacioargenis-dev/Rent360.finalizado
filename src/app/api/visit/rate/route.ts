@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       where: { id: visitId },
       include: {
         runner: { select: { id: true } },
-        client: { select: { id: true } }
+        tenant: { select: { id: true } }
       }
     });
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el usuario es el cliente de la visita
-    if (visit.clientId !== user.id) {
+    if (visit.tenantId !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permiso para calificar esta visita' },
         { status: 403 }
