@@ -150,9 +150,10 @@ export async function GET(request: NextRequest) {
       recentActivity: recentActivity.map(activity => ({
         id: activity.id,
         action: activity.action,
-        resource: activity.resource,
+        entityType: activity.entityType,
+        entityId: activity.entityId,
         createdAt: activity.createdAt.toISOString(),
-        details: activity.details
+        newValues: activity.newValues
       }))
     };
 
