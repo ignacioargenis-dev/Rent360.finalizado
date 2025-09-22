@@ -178,13 +178,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Construir objeto de datos compatible con Prisma
+    const maintenanceData: any = {
+      title: validatedData.title,
+      description: validatedData.description,
+      category: validatedData.category,
+      priority: validatedData.priority,
+      propertyId: validatedData.propertyId,
+      requestedBy: user.id,
+      images: JSON.stringify(validatedData.images || []),
+    };
+
+    if (validatedData.estimatedCost !== undefined) {
+      maintenanceData.estimatedCost = validatedData.estimatedCost;
+    }
+
+    if (validatedData.scheduledDate !== undefined) {
+      maintenanceData.scheduledDate = new Date(validatedData.scheduledDate);
+    }
+
     // Crear la solicitud de mantenimiento
     const maintenanceRequest = await db.maintenance.create({
-      data: {
-        ...validatedData,
-        requestedBy: user.id,
-        images: JSON.stringify(validatedData.images || []),
-      },
+      data: maintenanceData,
       include: {
         property: {
           select: {
