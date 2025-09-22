@@ -201,14 +201,22 @@ export async function POST(request: NextRequest) {
       status: body.status || PropertyStatus.AVAILABLE,
     });
     
+    // Construir objeto de creación compatible con Prisma
+    const createData: any = {
+      ...validatedData,
+      images: validatedData.images ? JSON.stringify(validatedData.images) : null,
+      features: validatedData.features ? JSON.stringify(validatedData.features) : null,
+      ownerId: user.id,
+    };
+
+    // Remover propiedades undefined para compatibilidad con exactOptionalPropertyTypes
+    if (createData.status === undefined) {
+      delete createData.status;
+    }
+
     // Create property with Prisma
     const property = await db.property.create({
-      data: {
-        ...validatedData,
-        images: validatedData.images ? JSON.stringify(validatedData.images) : null,
-        features: validatedData.features ? JSON.stringify(validatedData.features) : null,
-        ownerId: user.id,
-      },
+      data: createData,
       include: {
         owner: {
           select: {
