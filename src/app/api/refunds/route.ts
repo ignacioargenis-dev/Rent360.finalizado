@@ -118,13 +118,6 @@ export async function GET(request: NextRequest) {
             email: true,
             rut: true
           }
-        },
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
         }
       },
       orderBy: { createdAt: 'desc' },
