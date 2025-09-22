@@ -75,18 +75,12 @@ export async function GET(request: NextRequest) {
       // Trabajos recientes
       db.serviceJob.findMany({
         where: { serviceProviderId: user.id },
-        include: {
-          maintenance: {
-            select: {
-              title: true,
-              property: {
-                select: {
-                  address: true,
-                  city: true
-                }
-              }
-            }
-          }
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          createdAt: true,
+          finalPrice: true
         },
         orderBy: { updatedAt: 'desc' },
         take: 10
