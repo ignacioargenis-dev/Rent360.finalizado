@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
-import { handleError } from '@/lib/errors';
-// import { logger } from '@/lib/logger'; // Logger no disponible
+import { handleApiError } from '@/lib/api-error-handler';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +33,7 @@ export async function GET(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error, 'GET /api/notifications/[id]');
   }
 }
 
@@ -66,7 +66,7 @@ export async function PUT(
     );
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error, 'GET /api/notifications/[id]');
   }
 }
 
@@ -106,6 +106,6 @@ export async function DELETE(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error, 'GET /api/notifications/[id]');
   }
 }
