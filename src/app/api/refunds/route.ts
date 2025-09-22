@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
         requestedAmount: validatedData.amount,
         reason: validatedData.reason,
         description: validatedData.description ?? null,
-        bankAccount: validatedData.bankAccount ? JSON.stringify(validatedData.bankAccount) : null,
+        bankAccount: validatedData.bankAccount ? JSON.stringify(validatedData.bankAccount) : undefined,
         status: 'pending'
       },
       include: {
