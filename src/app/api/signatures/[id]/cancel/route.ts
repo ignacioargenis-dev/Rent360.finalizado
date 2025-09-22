@@ -35,7 +35,7 @@ export async function POST(
     }
 
     // Cancelar firma
-    const result = await signatureService.cancelSignature(signatureId);
+    const result = await signatureService.cancelSignatureRequest(signatureId);
 
     if (result.success) {
       return NextResponse.json({
