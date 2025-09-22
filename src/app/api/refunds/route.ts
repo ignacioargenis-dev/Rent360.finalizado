@@ -212,12 +212,18 @@ export async function POST(request: NextRequest) {
     if (validatedData.amount > depositAmount) {
       throw new ValidationError(`El monto no puede exceder el depósito de $${depositAmount.toLocaleString()}`);
     }
-    
+
+    // Generar número único de devolución
+    const refundNumber = `REF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
     // Crear solicitud de reembolso
     const refund = await db.depositRefund.create({
       data: {
         contractId: validatedData.contractId,
         tenantId: user.id,
+        ownerId: contract.ownerId,
+        refundNumber,
+        originalDeposit: depositAmount,
         requestedAmount: validatedData.amount,
         reason: validatedData.reason,
         ...(validatedData.description && { description: validatedData.description }),
