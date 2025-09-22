@@ -19,11 +19,6 @@ export async function GET(
     const signature = await db.signatureRequest.findUnique({
       where: { id: signatureId },
       include: {
-        document: {
-          include: {
-            contract: true
-          }
-        },
         signers: true
       }
     });
