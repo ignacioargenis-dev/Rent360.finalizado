@@ -52,8 +52,7 @@ export async function GET(
           await db.signatureRequest.update({
             where: { id: signatureId },
             data: {
-              status: currentStatus,
-              completedAt: currentStatus === 'COMPLETED' ? new Date() : null
+              status: currentStatus
             }
           });
         }
