@@ -53,20 +53,28 @@ export async function GET(request: NextRequest) {
       // Inquilinos solo ven sus propios reembolsos
       where.tenantId = user.id;
     } else if (user.role === 'OWNER' || user.role === 'BROKER') {
-      // Propietarios y corredores ven reembolsos de sus propiedades
-      const userProperties = await db.property.findMany({
-        where: {
-          OR: [
-            { ownerId: user.id },
-            { brokerId: user.id }
-          ]
-        },
-        select: { id: true }
-      });
-      
+      // Propietarios y corredores ven reembolsos de sus propiedades/contratos
+      let propertyIds: string[] = [];
+
+      if (user.role === 'OWNER') {
+        // Para propietarios: buscar propiedades directamente
+        const userProperties = await db.property.findMany({
+          where: { ownerId: user.id },
+          select: { id: true }
+        });
+        propertyIds = userProperties.map(p => p.id);
+      } else if (user.role === 'BROKER') {
+        // Para corredores: buscar contratos donde son brokers, luego obtener propertyIds
+        const brokerContracts = await db.contract.findMany({
+          where: { brokerId: user.id },
+          select: { propertyId: true }
+        });
+        propertyIds = brokerContracts.map(c => c.propertyId);
+      }
+
       where.contract = {
         propertyId: {
-          in: userProperties.map(p => p.id)
+          in: propertyIds
         }
       };
     }
