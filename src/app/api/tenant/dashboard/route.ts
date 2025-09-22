@@ -80,9 +80,10 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           action: true,
-          resource: true,
-          createdAt: true,
-          details: true
+          entityType: true,
+          entityId: true,
+          newValues: true,
+          createdAt: true
         }
       })
     ]);
