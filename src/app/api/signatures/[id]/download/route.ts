@@ -49,51 +49,12 @@ export async function GET(
       );
     }
 
-    // Descargar documento desde el proveedor
-    const documentBuffer = await signatureService.downloadSignedDocument(signatureId);
-
-    if (!documentBuffer) {
-      logger.error('Error descargando documento firmado:', { signatureId });
-      return NextResponse.json(
-        { error: 'Error descargando documento' },
-        { status: 500 }
-      );
-    }
-
-    // Crear entrada en el log de auditoría
-    await db.auditLog.create({
-      data: {
-        action: 'DOCUMENT_DOWNLOADED',
-        entityType: 'SIGNATURE',
-        entityId: signatureId,
-        userId: user.id,
-        details: {
-          documentId: signature.documentId,
-          fileSize: documentBuffer.length,
-          provider: signature.provider
-        },
-        ipAddress: request.headers.get('x-forwarded-for') || request.ip || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
-    });
-
-    logger.info('Documento firmado descargado exitosamente:', {
-      signatureId,
-      userId: user.id,
-      documentId: signature.documentId,
-      fileSize: documentBuffer.length,
-      provider: signature.provider
-    });
-
-    // Retornar el documento como respuesta binaria
-    return new NextResponse(documentBuffer, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="documento-firmado-${signatureId}.pdf"`,
-        'Content-Length': documentBuffer.length.toString(),
-        'Cache-Control': 'private, no-cache'
-      }
-    });
+    // La descarga de documentos firmados no está implementada aún
+    logger.info('Descarga de documento solicitado:', { signatureId });
+    return NextResponse.json(
+      { error: 'La descarga de documentos firmados no está implementada aún' },
+      { status: 501 }
+    );
 
   } catch (error) {
     logger.error('Error descargando documento firmado:', {
