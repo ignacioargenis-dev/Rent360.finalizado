@@ -35,8 +35,9 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
     if (!validation.valid) {
       const errors = validation.results
-        .filter(r => !r.valid)
-        .map((r, index) => `${files[index].name}: ${r.errors.join(', ')}`);
+        .map((r, index) => ({ result: r, file: files[index] }))
+        .filter(({ result }) => !result.valid)
+        .map(({ file, result }) => `${file.name}: ${result.errors.join(', ')}`);
 
       logger.warn('Archivos rechazados por validación:', {
         errors,
@@ -53,8 +54,9 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
     // Registrar warnings si existen
     const warnings = validation.results
-      .filter(r => r.warnings.length > 0)
-      .map((r, index) => `${files[index].name}: ${r.warnings.join(', ')}`);
+      .map((r, index) => ({ result: r, file: files[index] }))
+      .filter(({ result }) => result.warnings.length > 0)
+      .map(({ file, result }) => `${file.name}: ${result.warnings.join(', ')}`);
 
     if (warnings.length > 0) {
       logger.warn('Warnings de validación de archivos:', { warnings });
