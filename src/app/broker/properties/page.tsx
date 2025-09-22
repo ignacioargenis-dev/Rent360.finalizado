@@ -590,7 +590,7 @@ return `Hace ${diffDays} días`;
                     
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span>{property.neighborhood}, {property.city}</span>
+                      <span>{property.commune}, {property.city}</span>
                     </div>
                     
                     <div className="flex items-center gap-4 text-sm text-gray-600">
