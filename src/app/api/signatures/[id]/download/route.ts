@@ -38,14 +38,11 @@ export async function GET(
       );
     }
 
-    // Verificar permisos (solo el creador, firmantes o admin pueden descargar)
-    const isCreator = signature.createdBy === user.id;
+    // Verificar permisos (firmantes o admin pueden descargar)
     const isSigner = signature.signers.some(s => s.email === user.email);
     const isAdmin = user.role === 'ADMIN';
-    const isContractParty = signature.document.contract.ownerId === user.id ||
-                           signature.document.contract.tenantId === user.id;
 
-    if (!isCreator && !isSigner && !isAdmin && !isContractParty) {
+    if (!isSigner && !isAdmin) {
       return NextResponse.json(
         { error: 'No tienes permisos para descargar este documento' },
         { status: 403 }
