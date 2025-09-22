@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
     const existingSignature = await db.signatureRequest.findUnique({
       where: { id: contractId },
       include: {
-        document: true,
         signers: true
       }
     });
@@ -39,22 +38,24 @@ export async function POST(request: NextRequest) {
     const internalStatus = mapFirmaProStatus(status);
 
     // Actualizar el estado de la firma
+    const currentMetadata = existingSignature.metadata ? JSON.parse(existingSignature.metadata) : {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      firmaProCallback: {
+        receivedAt: new Date().toISOString(),
+        eventType,
+        status,
+        contractType,
+        certificateData,
+        signerData
+      }
+    };
+
     await db.signatureRequest.update({
       where: { id: contractId },
       data: {
         status: internalStatus,
-        completedAt: internalStatus === SignatureStatus.COMPLETED ? new Date() : null,
-        metadata: {
-          ...existingSignature.metadata,
-          firmaProCallback: {
-            receivedAt: new Date().toISOString(),
-            eventType,
-            status,
-            contractType,
-            certificateData,
-            signerData
-          }
-        }
+        metadata: JSON.stringify(updatedMetadata)
       }
     });
 
@@ -83,58 +84,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Si la firma se completó, actualizar el contrato relacionado
-    if (internalStatus === SignatureStatus.COMPLETED && existingSignature.document) {
-      await db.contract.update({
-        where: { id: existingSignature.document.contractId },
-        data: {
-          status: 'SIGNED',
-          signedAt: new Date(),
-          metadata: {
-            ...existingSignature.document.metadata,
-            signatureCompletedAt: new Date().toISOString(),
-            signatureProvider: 'FirmaPro',
-            contractType: 'ARRIENDO_INMUEBLE',
-            certificateData,
-            specializedCompliance: {
-              law: '19.799',
-              decree: '181/2020',
-              specialized: true
-            }
-          }
-        }
-      });
-
-      // Crear entrada en el log de auditoría
-      await db.auditLog.create({
-        data: {
-          action: 'CONTRACT_SIGNED',
-          entityType: 'CONTRACT',
-          entityId: existingSignature.document.contractId,
-          userId: existingSignature.createdBy,
-          details: {
-            signatureId: contractId,
-            provider: 'FirmaPro',
-            contractType: 'ARRIENDO_INMUEBLE',
-            certificateData,
-            compliance: {
-              law: '19.799',
-              decree: '181/2020',
-              specialized: true
-            }
-          },
-          ipAddress: request.headers.get('x-forwarded-for') || request.ip || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'FirmaPro Callback'
-        }
-      });
-
-      logger.info('Contrato de arriendo firmado exitosamente via FirmaPro:', {
-        contractId,
-        contractType: 'ARRIENDO_INMUEBLE',
-        realContractId: existingSignature.document.contractId,
-        certificateId: certificateData?.certificateId
-      });
-    }
+    // Nota: La actualización automática de contratos se maneja en otros endpoints
+    // El callback solo actualiza el estado de la firma
 
     // Notificar a los usuarios interesados (implementar sistema de notificaciones)
 
