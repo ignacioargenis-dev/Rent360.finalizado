@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo estadísticas del proveedor:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error obteniendo estadísticas del proveedor:', { error });
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
