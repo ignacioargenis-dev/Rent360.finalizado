@@ -272,6 +272,49 @@ export class SignatureService {
     }
   }
 
+  // Descargar documento firmado
+  async downloadSignedDocument(requestId: string): Promise<Buffer | null> {
+    try {
+      const signatureRequest = await db.signatureRequest.findUnique({
+        where: { id: requestId },
+        include: { signers: true }
+      });
+
+      if (!signatureRequest) {
+        throw new Error('Signature request not found');
+      }
+
+      // Verificar que la firma esté completada
+      if (signatureRequest.status !== SignatureStatus.COMPLETED) {
+        return null;
+      }
+
+      const provider = await this.getProvider(signatureRequest.provider);
+      if (!provider) {
+        throw new Error('Signature provider not available');
+      }
+
+      // Intentar descargar desde el proveedor
+      try {
+        const documentBuffer = await provider.downloadSignedDocument(signatureRequest.providerRequestId || '');
+        return documentBuffer;
+      } catch (error) {
+        logger.error('Error downloading from provider:', {
+          error: error instanceof Error ? error.message : String(error),
+          provider: signatureRequest.provider,
+          requestId
+        });
+        return null;
+      }
+
+    } catch (error) {
+      logger.error('Error downloading signed document:', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return null;
+    }
+  }
+
   // Cancelar solicitud de firma
   async cancelSignatureRequest(requestId: string): Promise<void> {
     try {
