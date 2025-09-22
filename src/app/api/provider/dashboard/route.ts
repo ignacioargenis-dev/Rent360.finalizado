@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       activeServices,
       completedJobs,
       pendingRequests,
-      totalEarnings: totalEarnings._sum.price || 0,
+      totalEarnings: totalEarnings._sum.finalPrice || 0,
       averageRating: averageRating._avg.rating || 0,
       monthlyRevenue: 0, // Calcular ingresos del mes actual
       satisfactionRate: 0 // Calcular tasa de satisfacción
