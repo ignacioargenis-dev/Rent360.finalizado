@@ -148,16 +148,18 @@ export async function DELETE(
     }
 
     // Cancelar en base de datos
+    const currentMetadata = signature.metadata ? JSON.parse(signature.metadata) : {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      cancelledBy: user.id,
+      cancelledAt: new Date().toISOString()
+    };
+
     await db.signatureRequest.update({
       where: { id: signatureId },
       data: {
         status: 'CANCELLED',
-        cancelledAt: new Date(),
-        metadata: {
-          ...signature.metadata,
-          cancelledBy: user.id,
-          cancelledAt: new Date().toISOString()
-        }
+        metadata: JSON.stringify(updatedMetadata)
       }
     });
 
@@ -168,10 +170,11 @@ export async function DELETE(
         entityType: 'SIGNATURE',
         entityId: signatureId,
         userId: user.id,
-        details: {
+        newValues: JSON.stringify({
           provider: signature.provider,
-          originalStatus: signature.status
-        },
+          originalStatus: signature.status,
+          cancelledAt: new Date().toISOString()
+        }),
         ipAddress: request.headers.get('x-forwarded-for') || request.ip || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown'
       }
