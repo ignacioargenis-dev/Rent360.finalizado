@@ -208,13 +208,21 @@ export async function POST(request: NextRequest) {
       throw new ValidationError('La fecha de vencimiento no puede ser en el pasado');
     }
     
+    // Construir objeto de creación compatible con Prisma
+    const createData: any = {
+      ...validatedData,
+      dueDate,
+      paymentNumber: `PAY-${Date.now()}`,
+    };
+
+    // Remover propiedades undefined para compatibilidad con exactOptionalPropertyTypes
+    if (createData.method === undefined) {
+      delete createData.method;
+    }
+
     // Crear pago
     const payment = await db.payment.create({
-      data: {
-        ...validatedData,
-        dueDate,
-        paymentNumber: `PAY-${Date.now()}`,
-      },
+      data: createData,
       include: {
         contract: {
           select: {
