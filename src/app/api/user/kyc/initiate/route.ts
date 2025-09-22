@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const initiateKYCSchema = z.object({
   documentType: z.enum(['national_id', 'passport', 'drivers_license']).default('national_id'),
-  level: z.enum(['basic', 'standard', 'premium']).default('standard'),
+  level: z.enum(['basic', 'intermediate', 'advanced', 'premium']).default('basic'),
 });
 
 export async function POST(request: NextRequest) {
