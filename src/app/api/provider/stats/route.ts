@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/provider/stats
