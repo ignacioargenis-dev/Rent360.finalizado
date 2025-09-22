@@ -86,7 +86,7 @@ export async function GET(
     });
 
     // Retornar el documento como respuesta binaria
-    return new NextResponse(documentBuffer, {
+    return new Response(documentBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="documento-firmado-${signatureId}.pdf"`,
