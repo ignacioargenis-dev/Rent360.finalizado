@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     // Khipu envía notificaciones como form data
     const formData = await request.formData();
-
+    
     const notificationToken = formData.get('notification_token');
     const paymentId = formData.get('payment_id');
     const transactionId = formData.get('transaction_id');
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar token de notificación (debería coincidir con el configurado en Khipu)
     const NOTIFICATION_TOKEN = process.env.KHIPU_NOTIFICATION_TOKEN;
-
+    
     if (!notificationToken || notificationToken !== NOTIFICATION_TOKEN) {
       logger.error('Token de notificación inválido:', { error: notificationToken instanceof Error ? notificationToken.message : String(notificationToken) });
       return NextResponse.json(
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+// eslint-disable-next-line no-console
     logger.info('Notificación de Khipu recibida:', {
       paymentId,
       transactionId,
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
             await db.contract.update({
               where: { id: customData.contract_id },
               data: {
-                status: 'ACTIVE',
+                status: ContractStatus.ACTIVE,
               },
             });
             logger.info('Contrato actualizado:', { contractId: customData.contract_id });
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
                 userId: customData.user_id,
                 title: 'Pago Completado',
                 message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
-                type: 'SUCCESS',
+                type: NotificationType.SUCCESS,
                 data: JSON.stringify({
                   payment_id: payment.id,
                   amount: amount,
@@ -138,10 +139,9 @@ export async function POST(request: NextRequest) {
                 }),
               },
             });
-            logger.info('Notificación creada para usuario:', { userId: customData.user_id });
-          } catch (error) {
-            logger.error('Error creando notificación:', { error: error instanceof Error ? error.message : String(error) });
-          }
+          logger.info('Notificación creada para usuario:', { userId: customData.user_id });
+        } catch (error) {
+          logger.error('Error creando notificación:', { error: error instanceof Error ? error.message : String(error) });
         }
       }
     } else {
