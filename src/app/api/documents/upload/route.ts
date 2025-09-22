@@ -82,6 +82,16 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       const file = files[i];
       const validationResult = validation.results[i];
 
+      if (!file) {
+        logger.error('Archivo no encontrado en índice', { index: i, totalFiles: files.length });
+        continue;
+      }
+
+      if (!validationResult) {
+        logger.error('Resultado de validación no encontrado en índice', { index: i, totalResults: validation.results.length });
+        continue;
+      }
+
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
