@@ -67,11 +67,11 @@ export async function GET(
         entityType: 'SIGNATURE',
         entityId: signatureId,
         userId: user.id,
-        details: {
+        newValues: JSON.stringify({
           documentId: signature.documentId,
           fileSize: documentBuffer.length,
           provider: signature.provider
-        },
+        }),
         ipAddress: request.headers.get('x-forwarded-for') || request.ip || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown'
       }
