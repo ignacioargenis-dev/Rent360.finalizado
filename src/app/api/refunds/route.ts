@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     // Los ADMIN pueden ver todos los reembolsos
     
     // Obtener reembolsos con información relacionada
-    const refunds = await db.refund.findMany({
+    const refunds = await db.depositRefund.findMany({
       where,
       include: {
         contract: {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Obtener total de reembolsos para paginación
-    const total = await db.refund.count({ where });
+    const total = await db.depositRefund.count({ where });
     
     logger.info('Reembolsos obtenidos', { 
       userId: user.id, 
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Verificar que no haya una solicitud pendiente
-    const existingRefund = await db.refund.findFirst({
+    const existingRefund = await db.depositRefund.findFirst({
       where: {
         contractId: validatedData.contractId,
         status: { in: ['pending', 'approved', 'processing'] }
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Crear solicitud de reembolso
-    const refund = await db.refund.create({
+    const refund = await db.depositRefund.create({
       data: {
         contractId: validatedData.contractId,
         tenantId: user.id,
@@ -306,7 +306,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Verificar que el reembolso existe
-    const existingRefund = await db.refund.findUnique({
+    const existingRefund = await db.depositRefund.findUnique({
       where: { id: refundId },
       include: {
         contract: {
@@ -326,7 +326,7 @@ export async function PUT(request: NextRequest) {
     const validatedData = refundUpdateSchema.parse(updateData);
     
     // Actualizar reembolso
-    const updatedRefund = await db.refund.update({
+    const updatedRefund = await db.depositRefund.update({
       where: { id: refundId },
       data: {
         ...validatedData,
@@ -401,7 +401,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Verificar que el reembolso existe y pertenece al usuario
-    const existingRefund = await db.refund.findUnique({
+    const existingRefund = await db.depositRefund.findUnique({
       where: { id: refundId }
     });
     
@@ -433,7 +433,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Actualizar reembolso
-    const updatedRefund = await db.refund.update({
+    const updatedRefund = await db.depositRefund.update({
       where: { id: refundId },
       data: {
         ...filteredUpdates,
