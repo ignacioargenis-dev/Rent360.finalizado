@@ -71,7 +71,7 @@ export async function GET(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -186,6 +186,6 @@ export async function DELETE(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
