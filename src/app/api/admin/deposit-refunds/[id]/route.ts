@@ -148,7 +148,7 @@ export async function PUT(
       );
     }
 
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 

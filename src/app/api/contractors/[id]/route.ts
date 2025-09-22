@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 
 // Schema de validación para actualizar contractor
@@ -68,7 +68,7 @@ export async function GET(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -126,7 +126,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -181,6 +181,6 @@ export async function DELETE(
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
