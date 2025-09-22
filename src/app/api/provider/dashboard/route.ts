@@ -101,12 +101,12 @@ export async function GET(request: NextRequest) {
       stats,
       recentJobs: recentJobs.map(job => ({
         id: job.id,
-        title: job.maintenance?.title || 'Servicio',
-        propertyAddress: job.maintenance?.property.address || '',
+        title: job.title,
+        propertyAddress: '', // No hay información de propiedad disponible
         status: job.status,
-        price: job.price,
-        rating: job.rating,
-        completedAt: job.updatedAt.toISOString()
+        price: job.finalPrice || 0,
+        rating: null, // Rating no incluido en select
+        completedAt: job.createdAt.toISOString()
       }))
     };
 
