@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       // Solicitudes de mantenimiento abiertas
       db.maintenance.count({
         where: {
-          userId: user.id,
+          requestedBy: user.id,
           status: { in: ['OPEN', 'IN_PROGRESS'] }
         }
       }),
