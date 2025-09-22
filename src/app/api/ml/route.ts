@@ -18,7 +18,7 @@ const initializeModels = async () => {
       modelsInitialized = true;
       logger.info('Modelos ML inicializados para API');
     } catch (error) {
-      logger.error('Error inicializando modelos ML:', error instanceof Error ? error.message : String(error));
+      logger.error('Error inicializando modelos ML:', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 };
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error in price prediction API:', error);
+    logger.error('Error in price prediction API:', { error: error instanceof Error ? error.message : String(error) });
     const errorResponse = handleError(error);
     return errorResponse;
   }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error in market stats API:', error);
+    logger.error('Error in market stats API:', { error: error instanceof Error ? error.message : String(error) });
     const errorResponse = handleError(error);
     return errorResponse;
   }
@@ -144,7 +144,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error in demand prediction API:', error);
+    logger.error('Error in demand prediction API:', { error: error instanceof Error ? error.message : String(error) });
     const errorResponse = handleError(error);
     return errorResponse;
   }
