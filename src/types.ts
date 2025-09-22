@@ -182,7 +182,9 @@ export enum UserRole {
   BROKER = 'BROKER',
   RUNNER = 'RUNNER',
   SUPPORT = 'SUPPORT',
-  PROVIDER = 'PROVIDER'
+  PROVIDER = 'PROVIDER',
+  MAINTENANCE_PROVIDER = 'MAINTENANCE_PROVIDER',
+  SERVICE_PROVIDER = 'SERVICE_PROVIDER'
 }
 
 // Tipos personalizados que no están en Prisma
