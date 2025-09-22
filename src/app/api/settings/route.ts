@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       if (!acc[setting.category]) {
         acc[setting.category] = {};
       }
-      acc[setting.category][setting.key] = {
+      (acc[setting.category] as Record<string, any>)[setting.key] = {
         value: setting.value,
         description: setting.description,
         isActive: setting.isActive,
