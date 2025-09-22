@@ -8,3 +8,8 @@
 [33m652d18e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: corregir error de tipos en contratos y optimizar configuración de build
 [33m90e1345[m fix: corregir errores de TypeScript en acceso a arrays
 [33md8eb6e2[m fix: eliminar archivo mal nombrado
+[33m8bcb6c8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Corregir creación de pago con propiedad method opcional
+[33m15600fd[m feat: Agregar roles MAINTENANCE_PROVIDER y SERVICE_PROVIDER al enum UserRole
+[33m619e76a[m fix: Recrear archivo khipu notify route con sintaxis corregida
+[33m739d7f8[m fix: Recrear líneas problemáticas para corregir errores de sintaxis
+[33m9c277b1[m fix: Corregir acceso a payment.id fuera del scope de null check

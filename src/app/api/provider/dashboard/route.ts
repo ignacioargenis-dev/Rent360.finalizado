@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       // Servicios activos del proveedor
       db.serviceJob.count({
         where: {
-          providerId: user.id,
+          serviceProviderId: user.id,
           status: { in: ['ASSIGNED', 'IN_PROGRESS'] }
         }
       }),
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       // Trabajos completados este mes
       db.serviceJob.count({
         where: {
-          providerId: user.id,
+          serviceProviderId: user.id,
           status: 'COMPLETED',
           updatedAt: {
             gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       // Solicitudes pendientes
       db.serviceJob.count({
         where: {
-          providerId: user.id,
+          serviceProviderId: user.id,
           status: 'PENDING'
         }
       }),
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       // Ganancias totales
       db.serviceJob.aggregate({
         where: {
-          providerId: user.id,
+          serviceProviderId: user.id,
           status: 'COMPLETED'
         },
         _sum: { price: true }
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       // Rating promedio
       db.serviceJob.aggregate({
         where: {
-          providerId: user.id,
+          serviceProviderId: user.id,
           status: 'COMPLETED'
         },
         _avg: { rating: true }
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
       // Trabajos recientes
       db.serviceJob.findMany({
-        where: { providerId: user.id },
+        where: { serviceProviderId: user.id },
         include: {
           maintenance: {
             select: {
