@@ -68,12 +68,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar el pago por el transaction_id o payment_id
+    const whereConditions: any[] = [];
+    if (paymentId) {
+      whereConditions.push({ transactionId: paymentId.toString() });
+    }
+    if (customData.payment_id) {
+      whereConditions.push({ paymentNumber: customData.payment_id.toString() });
+    }
+
     const payment = await db.payment.findFirst({
       where: {
-        OR: [
-          { transactionId: paymentId?.toString() },
-          { paymentNumber: customData.payment_id?.toString() },
-        ],
+        OR: whereConditions,
       },
     });
 
