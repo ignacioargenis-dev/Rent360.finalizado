@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
       data: {
         contractId: validatedData.contractId,
         tenantId: user.id,
-        amount: validatedData.amount,
+        requestedAmount: validatedData.amount,
         reason: validatedData.reason,
         description: validatedData.description,
         bankAccount: validatedData.bankAccount,
@@ -347,7 +347,7 @@ export async function PUT(request: NextRequest) {
         userId: existingRefund.tenantId,
         type: 'REFUND_STATUS_UPDATE',
         title: `Estado de reembolso actualizado`,
-        message: `Tu solicitud de reembolso por $${existingRefund.amount.toLocaleString()} ha sido ${validatedData.status === 'approved' ? 'aprobada' : validatedData.status === 'rejected' ? 'rechazada' : 'actualizada'}`,
+        message: `Tu solicitud de reembolso por $${existingRefund.requestedAmount.toLocaleString()} ha sido ${validatedData.status === 'approved' ? 'aprobada' : validatedData.status === 'rejected' ? 'rechazada' : 'actualizada'}`,
         data: { refundId: refundId, status: validatedData.status },
         createdAt: new Date()
       }
