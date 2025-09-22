@@ -104,18 +104,24 @@ export async function POST(
     // Generar número único de notificación
     const noticeNumber = `EN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+    // Construir objeto de datos compatible con Prisma
+    const noticeData: any = {
+      noticeNumber,
+      legalCaseId: params.id,
+      noticeType: validatedData.noticeType,
+      deliveryMethod: validatedData.deliveryMethod,
+      content: validatedData.content,
+      amount: validatedData.amount,
+      deadline: new Date(validatedData.deadline)
+    };
+
+    if (validatedData.deliveryProof !== undefined) {
+      noticeData.deliveryProof = validatedData.deliveryProof;
+    }
+
     // Crear la notificación extrajudicial
     const extrajudicialNotice = await db.extrajudicialNotice.create({
-      data: {
-        noticeNumber,
-        legalCaseId: params.id,
-        noticeType: validatedData.noticeType,
-        deliveryMethod: validatedData.deliveryMethod,
-        content: validatedData.content,
-        amount: validatedData.amount,
-        deadline: new Date(validatedData.deadline),
-        deliveryProof: validatedData.deliveryProof
-      }
+      data: noticeData
     });
 
     // Actualizar el estado del caso legal
