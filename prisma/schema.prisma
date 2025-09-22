@@ -86,6 +86,10 @@ model User {
   maintenanceProvider MaintenanceProvider?
   serviceProvider     ServiceProvider?
 
+  // Relaciones de calificaciones de runners
+  runnerRatingsGiven RunnerRating[] @relation("RunnerRatings") // Calificaciones que dio como runner
+  clientRatingsGiven RunnerRating[] @relation("ClientRatings") // Calificaciones que dio como cliente
+
   // Relaciones para devoluciones de depósitos
   tenantRefunds       DepositRefund[] @relation("TenantRefunds")
   ownerRefunds        DepositRefund[] @relation("OwnerRefunds")
@@ -358,10 +362,11 @@ model Visit {
   updatedAt     DateTime    @updatedAt
 
   // Relations
-  property      Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  runner        User        @relation("VisitRunner", fields: [runnerId], references: [id], onDelete: Cascade)
-  tenant        User?       @relation("VisitTenant", fields: [tenantId], references: [id], onDelete: SetNull)
-  
+  property      Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  runner        User            @relation("VisitRunner", fields: [runnerId], references: [id], onDelete: Cascade)
+  tenant        User?           @relation("VisitTenant", fields: [tenantId], references: [id], onDelete: SetNull)
+  runnerRatings RunnerRating[]
+
   @@map("visits")
 }
 
@@ -1203,6 +1208,56 @@ model PropertyFavorite {
   @@map("property_favorites")
   @@index([userId])
   @@index([propertyId])
+}
+
+// ============================================================================
+// CALIFICACIONES DE RUNNERS
+// ============================================================================
+
+// Calificaciones de runners por clientes
+model RunnerRating {
+  id         String   @id @default(cuid())
+  visitId    String
+  runnerId   String
+  clientId   String
+  clientName String
+  clientEmail String
+
+  // Calificaciones (1-5)
+  overallRating            Int // 1-5
+  punctualityRating        Int // 1-5
+  professionalismRating    Int // 1-5
+  communicationRating      Int // 1-5
+  propertyKnowledgeRating  Int // 1-5
+
+  // Feedback detallado
+  comment         String?
+  positiveFeedback String[] // JSON array
+  improvementAreas String[] // JSON array
+
+  // Información de contexto
+  propertyAddress String
+  visitDate       DateTime
+  visitDuration   Int
+  propertyType    String
+
+  // Metadata
+  isAnonymous Boolean  @default(false)
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  visit  Visit  @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  runner User   @relation("RunnerRatings", fields: [runnerId], references: [id], onDelete: Cascade)
+  client User   @relation("ClientRatings", fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([visitId, clientId]) // Un cliente solo puede calificar una visita una vez
+  @@map("runner_ratings")
+  @@index([visitId])
+  @@index([runnerId])
+  @@index([clientId])
+  @@index([createdAt])
 }
 
 // ============================================================================

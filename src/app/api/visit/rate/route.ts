@@ -38,27 +38,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que el usuario pueda calificar esta visita
-    const canRate = await RunnerRatingService.canRateVisit(visitId, user.id);
-    if (!canRate) {
+    // Obtener la visita y verificar permisos
+    const visit = await db.visit.findUnique({
+      where: { id: visitId },
+      include: {
+        runner: { select: { id: true } },
+        client: { select: { id: true } }
+      }
+    });
+
+    if (!visit) {
       return NextResponse.json(
-        { error: 'No tienes permiso para calificar esta visita o ya ha sido calificada' },
+        { error: 'Visita no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Verificar que el usuario es el cliente de la visita
+    if (visit.clientId !== user.id) {
+      return NextResponse.json(
+        { error: 'No tienes permiso para calificar esta visita' },
         { status: 403 }
+      );
+    }
+
+    // Verificar que no haya una calificación existente
+    const existingRating = await db.runnerRating.findUnique({
+      where: {
+        visitId_clientId: {
+          visitId,
+          clientId: user.id
+        }
+      }
+    });
+
+    if (existingRating) {
+      return NextResponse.json(
+        { error: 'Ya has calificado esta visita' },
+        { status: 409 }
       );
     }
 
     // Crear la calificación
     const rating = await RunnerRatingService.createRunnerRating({
       visitId,
+      runnerId: visit.runner.id,
       clientId: user.id,
       overallRating,
       punctualityRating,
       professionalismRating,
       communicationRating,
       propertyKnowledgeRating,
-      comment,
-      positiveFeedback,
-      improvementAreas,
+      comment: comment || null,
+      positiveFeedback: positiveFeedback || [],
+      improvementAreas: improvementAreas || [],
       isAnonymous
     });
 
