@@ -185,7 +185,7 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error retraining models:', error);
+    logger.error('Error retraining models:', { error: error instanceof Error ? error.message : String(error) });
     const errorResponse = handleError(error);
     return errorResponse;
   }
