@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { KYCService } from '@/lib/kyc-service';
+import { KYCService, KYCLevel } from '@/lib/kyc-service';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Iniciar proceso KYC
     const kycResult = await KYCService.initiateKYC(
       user.id,
-      validatedData.level
+      validatedData.level as KYCLevel
     );
 
     if (!kycResult.success) {
