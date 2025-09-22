@@ -140,8 +140,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
           file_type: file.type,
           tags: tags && tags.length > 0 ? JSON.stringify(tags) : null,
           uploaded_by: session.user?.email || 'unknown',
-          status: 'active',
-          metadata: JSON.stringify(metadata)
+          status: 'active'
         },
       });
 
