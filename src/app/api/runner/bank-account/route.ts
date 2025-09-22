@@ -155,10 +155,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Actualizar cuenta bancaria
-    const updatedAccount = await BankAccountService.updateBankAccount(
-      primaryAccount.id,
-      updates
-    );
+    const updatedAccount = await db.bankAccount.update({
+      where: { id: primaryAccount.id },
+      data: updates
+    });
 
     logger.info('Cuenta bancaria del runner actualizada', {
       userId: user.id,
