@@ -97,11 +97,14 @@ export default function BrokerProperties() {
             address: 'Av. Providencia 1234',
             city: 'Santiago',
             commune: 'Providencia',
+            region: 'Metropolitana',
             price: 450000,
-            status: 'available',
+            deposit: 450000,
             bedrooms: 2,
             bathrooms: 1,
             area: 65,
+            status: 'available',
+            type: 'apartment',
             features: '["Amoblado", "Estacionamiento", "Gimnasio", "Piscina"]',
             images: '["/placeholder1.jpg", "/placeholder2.jpg"]',
             ownerId: 'owner-1',
@@ -115,11 +118,14 @@ export default function BrokerProperties() {
             address: 'Calle El Alba 567',
             city: 'Santiago',
             commune: 'Las Condes',
+            region: 'Metropolitana',
             price: 1200000,
-            status: 'rented',
+            deposit: 1200000,
             bedrooms: 4,
             bathrooms: 3,
             area: 180,
+            status: 'rented',
+            type: 'house',
             features: '["Jardín", "Terraza", "Estacionamiento 2 autos", "Seguridad 24h"]',
             images: '["/placeholder3.jpg", "/placeholder4.jpg"]',
             ownerId: 'owner-2',
@@ -133,11 +139,14 @@ export default function BrokerProperties() {
             address: 'Av. Kennedy 4567',
             city: 'Santiago',
             commune: 'Vitacura',
+            region: 'Metropolitana',
             price: 800000,
-            status: 'available',
+            deposit: 800000,
             bedrooms: 0,
             bathrooms: 2,
             area: 120,
+            status: 'available',
+            type: 'office',
             features: '["Aire acondicionado", "Estacionamiento", "Recepción", "Seguridad"]',
             images: '["/placeholder5.jpg", "/placeholder6.jpg"]',
             ownerId: 'owner-3',
@@ -151,11 +160,14 @@ export default function BrokerProperties() {
             address: 'Av. Apoquindo 6789',
             city: 'Santiago',
             commune: 'Las Condes',
+            region: 'Metropolitana',
             price: 1500000,
-            status: 'available',
+            deposit: 1500000,
             bedrooms: 0,
             bathrooms: 1,
             area: 200,
+            status: 'available',
+            type: 'commercial',
             features: '["Vidrio frontal", "Alarma", "Estacionamiento clientes", "Zona de carga"]',
             images: '["/placeholder7.jpg", "/placeholder8.jpg"]',
             ownerId: 'owner-4',
@@ -169,11 +181,14 @@ export default function BrokerProperties() {
             address: 'Av. Costanera 890',
             city: 'Viña del Mar',
             commune: 'Reñaca',
+            region: 'Valparaíso',
             price: 600000,
-            status: 'maintenance',
+            deposit: 600000,
             bedrooms: 3,
             bathrooms: 2,
             area: 95,
+            status: 'maintenance',
+            type: 'apartment',
             features: '["Vista al mar", "Balcón", "Piscina edificio", "Gimnasio"]',
             images: '["/placeholder9.jpg", "/placeholder10.jpg"]',
             ownerId: 'owner-5',
@@ -187,11 +202,14 @@ export default function BrokerProperties() {
             address: 'Calle Los Leones 345',
             city: 'Santiago',
             commune: 'La Reina',
+            region: 'Metropolitana',
             price: 900000,
-            status: 'available',
+            deposit: 900000,
             bedrooms: 3,
             bathrooms: 2,
             area: 150,
+            status: 'available',
+            type: 'house',
             features: '["Patio", "Estacionamiento", "Calefacción", "Bodega"]',
             images: '["/placeholder11.jpg", "/placeholder12.jpg"]',
             ownerId: 'owner-6',
@@ -220,7 +238,7 @@ export default function BrokerProperties() {
           .sort(([,a], [,b]) => b - a);
         const mostPopularType = sortedTypes.length > 0 ? sortedTypes[0][0] : '';
         
-        const featuredProperties = 0; // Temporarily disabled - featured field removed from mock data
+        const featuredProperties = mockProperties.filter(p => p.type === 'apartment').length; // Count apartments as featured for demo
 
         const propertyStats: PropertyStats = {
           totalProperties,
@@ -253,13 +271,14 @@ export default function BrokerProperties() {
     ));
   };
 
-  // const toggleFeatured = async (propertyId: string) => {
-  //   setProperties(prev => prev.map(property =>
-  //     property.id === propertyId
-  //       ? { ...property, featured: !property.featured }
-  //       : property,
-  //   ));
-  // };
+  const toggleFeatured = async (propertyId: string) => {
+    // For demo purposes, we'll toggle between apartment types
+    setProperties(prev => prev.map(property =>
+      property.id === propertyId
+        ? { ...property, type: property.type === 'apartment' ? 'house' : 'apartment' }
+        : property,
+    ));
+  };
 
   const deleteProperty = async (propertyId: string) => {
     setProperties(prev => prev.filter(property => property.id !== propertyId));
@@ -356,7 +375,7 @@ return `Hace ${diffDays} días`;
   };
 
   const filteredProperties = properties.filter(property => {
-    const matchesFilter = filter === 'all' || property.status === filter;
+    const matchesFilter = filter === 'all' || property.status === filter || property.type === filter;
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.city.toLowerCase().includes(searchTerm.toLowerCase());
@@ -542,20 +561,19 @@ return `Hace ${diffDays} días`;
                           <Badge variant="outline" className="text-xs">
                             {getTypeName('apartment')}
                           </Badge>
-                          {/* Featured badge temporarily disabled */}
-                          {/* {property.featured && (
+                          {property.type === 'apartment' && (
                             <Badge className="bg-yellow-100 text-yellow-800">
                               <Star className="w-3 h-3 mr-1" />
                               Destacada
                             </Badge>
-                          )} */}
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      {/* <Button size="sm" variant="ghost" onClick={() => toggleFeatured(property.id)}>
-                        <Star className={`w-4 h-4 ${property.featured ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button> */}
+                      <Button size="sm" variant="ghost" onClick={() => toggleFeatured(property.id)}>
+                        <Star className={`w-4 h-4 ${property.type === 'apartment' ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                      </Button>
                     </div>
                   </div>
 
