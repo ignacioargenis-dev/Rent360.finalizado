@@ -25,8 +25,6 @@ export async function POST(request: NextRequest) {
         email: true,
         name: true,
         rut: true,
-        kycStatus: true,
-        kycLevel: true,
       },
     });
 
