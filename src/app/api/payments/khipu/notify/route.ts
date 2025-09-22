@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Notificación recibida y procesada',
     });
-
   } catch (error) {
     logger.error('Error procesando notificación de Khipu:', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
