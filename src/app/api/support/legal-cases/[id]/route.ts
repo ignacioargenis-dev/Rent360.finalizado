@@ -56,10 +56,7 @@ async function getLegalCaseDetails(
                   // propertyType: true, // Campo no existe en el esquema
                   bedrooms: true,
                   bathrooms: true,
-                  parkingSpaces: true,
                   area: true,
-                  yearBuilt: true,
-                  amenities: true,
                   images: true
                 }
               },
