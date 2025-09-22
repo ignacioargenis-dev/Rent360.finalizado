@@ -842,7 +842,7 @@ return `Hace ${diffDays} días`;
           setEditingAppointment(null);
         }}
         onSave={handleSaveAppointment}
-        selectedDate={selectedDate || undefined}
+        selectedDate={selectedDate || new Date()}
         selectedTime={selectedTime}
         properties={properties}
         clients={clients}
