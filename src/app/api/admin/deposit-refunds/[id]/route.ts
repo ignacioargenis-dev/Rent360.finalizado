@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 // Schema para actualizar devolución
 const updateRefundSchema = z.object({

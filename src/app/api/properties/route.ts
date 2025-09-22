@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PropertyStatus, PropertyType, UserRole } from '@/types';
-import { ValidationError, handleError } from '@/lib/errors';
+import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 import { getPropertiesOptimized, dbOptimizer } from '@/lib/db-optimizer';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
