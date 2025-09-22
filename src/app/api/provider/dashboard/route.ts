@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           serviceProviderId: user.id,
           status: 'COMPLETED'
         },
-        _sum: { price: true }
+        _sum: { finalPrice: true }
       }),
 
       // Rating promedio
