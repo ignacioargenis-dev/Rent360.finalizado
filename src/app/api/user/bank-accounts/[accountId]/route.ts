@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { BankAccountService } from '@/lib/bank-account-service';
 import { logger } from '@/lib/logger-edge';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 interface RouteParams {
   params: {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   } catch (error) {
     logger.error('Error obteniendo cuenta bancaria:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -107,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   } catch (error) {
     logger.error('Error actualizando cuenta bancaria:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
   } catch (error) {
     logger.error('Error eliminando cuenta bancaria:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

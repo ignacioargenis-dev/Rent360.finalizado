@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { signatureService } from '@/lib/signature';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { db } from '@/lib/db';
 
 export async function POST(
@@ -52,6 +52,6 @@ export async function POST(
       }, { status: 400 });
     }
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

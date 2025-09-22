@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { RunnerPayoutService } from '@/lib/payout-service';
 import { logger } from '@/lib/logger-edge';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * POST /api/admin/runners/payouts/[transactionId]/approve
@@ -58,7 +58,7 @@ export async function POST(
 
   } catch (error) {
     logger.error('Error aprobando payout de runner:', error as Error);
-    const errorResponse = handleError(error as Error);
+    const errorResponse = handleApiError(error as Error);
     return errorResponse;
   }
 }
