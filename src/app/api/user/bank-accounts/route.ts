@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo cuentas bancarias:', error);
+    logger.error('Error obteniendo cuentas bancarias:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error registrando cuenta bancaria:', error);
+    logger.error('Error registrando cuenta bancaria:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
