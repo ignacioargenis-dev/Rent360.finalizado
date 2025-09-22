@@ -726,6 +726,9 @@ model DepositRefund {
   status          String     @default("PENDING")
   tenantApproved  Boolean          @default(false)
   ownerApproved   Boolean          @default(false)
+  reason          String
+  description     String?
+  bankAccount     Json?
   processedAt     DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

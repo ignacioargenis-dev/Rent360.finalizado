@@ -220,11 +220,9 @@ export async function POST(request: NextRequest) {
         tenantId: user.id,
         requestedAmount: validatedData.amount,
         reason: validatedData.reason,
-        description: validatedData.description,
-        bankAccount: validatedData.bankAccount,
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        description: validatedData.description ?? null,
+        bankAccount: validatedData.bankAccount ? JSON.stringify(validatedData.bankAccount) : null,
+        status: 'pending'
       },
       include: {
         contract: {
