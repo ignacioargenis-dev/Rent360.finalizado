@@ -303,7 +303,7 @@ export default function BrokerCommissions() {
         ? { 
             ...commission, 
             status: newStatus as Commission['status'],
-            paidDate: newStatus === 'paid' ? new Date().toISOString() : commission.paidDate,
+            paidDate: newStatus === 'paid' ? new Date().toISOString() : (commission.paidDate || null),
           }
         : commission,
     ));
