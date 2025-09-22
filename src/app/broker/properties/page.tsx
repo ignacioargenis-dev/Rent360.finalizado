@@ -94,10 +94,9 @@ export default function BrokerProperties() {
             id: '1',
             title: 'Departamento Amoblado Centro',
             description: 'Hermoso departamento amoblado en el corazón de Santiago, cerca de todo',
-            type: 'apartment',
             address: 'Av. Providencia 1234',
             city: 'Santiago',
-            neighborhood: 'Providencia',
+            commune: 'Providencia',
             price: 450000,
             status: 'available',
             bedrooms: 2,
@@ -105,23 +104,17 @@ export default function BrokerProperties() {
             area: 65,
             features: '["Amoblado", "Estacionamiento", "Gimnasio", "Piscina"]',
             images: '["/placeholder1.jpg", "/placeholder2.jpg"]',
-            ownerName: 'Carlos Rodríguez',
-            ownerEmail: 'carlos.rodriguez@email.com',
-            ownerPhone: '+56 9 1234 5678',
+            ownerId: 'owner-1',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-            views: 1250,
-            inquiries: 45,
-            featured: true,
           },
           {
             id: '2',
             title: 'Casa Las Condes',
             description: 'Espaciosa casa familiar en Las Condes con jardín y terraza',
-            type: 'house',
             address: 'Calle El Alba 567',
             city: 'Santiago',
-            neighborhood: 'Las Condes',
+            commune: 'Las Condes',
             price: 1200000,
             status: 'rented',
             bedrooms: 4,
@@ -129,23 +122,17 @@ export default function BrokerProperties() {
             area: 180,
             features: '["Jardín", "Terraza", "Estacionamiento 2 autos", "Seguridad 24h"]',
             images: '["/placeholder3.jpg", "/placeholder4.jpg"]',
-            ownerName: 'María González',
-            ownerEmail: 'maria.gonzalez@email.com',
-            ownerPhone: '+56 9 8765 4321',
+            ownerId: 'owner-2',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-            views: 890,
-            inquiries: 23,
-            featured: false,
           },
           {
             id: '3',
             title: 'Oficina Vitacura',
             description: 'Moderna oficina en Vitacura con excelente ubicación',
-            type: 'office',
             address: 'Av. Kennedy 4567',
             city: 'Santiago',
-            neighborhood: 'Vitacura',
+            commune: 'Vitacura',
             price: 800000,
             status: 'available',
             bedrooms: 0,
@@ -153,23 +140,17 @@ export default function BrokerProperties() {
             area: 120,
             features: '["Aire acondicionado", "Estacionamiento", "Recepción", "Seguridad"]',
             images: '["/placeholder5.jpg", "/placeholder6.jpg"]',
-            ownerName: 'Pedro Silva',
-            ownerEmail: 'pedro.silva@email.com',
-            ownerPhone: '+56 9 2345 6789',
+            ownerId: 'owner-3',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-            views: 567,
-            inquiries: 12,
-            featured: true,
           },
           {
             id: '4',
             title: 'Local Comercial',
             description: 'Local comercial en zona de alto tráfico',
-            type: 'commercial',
             address: 'Av. Apoquindo 6789',
             city: 'Santiago',
-            neighborhood: 'Las Condes',
+            commune: 'Las Condes',
             price: 1500000,
             status: 'available',
             bedrooms: 0,
@@ -177,23 +158,17 @@ export default function BrokerProperties() {
             area: 200,
             features: '["Vidrio frontal", "Alarma", "Estacionamiento clientes", "Zona de carga"]',
             images: '["/placeholder7.jpg", "/placeholder8.jpg"]',
-            ownerName: 'Ana Martínez',
-            ownerEmail: 'ana.martinez@email.com',
-            ownerPhone: '+56 9 3456 7890',
+            ownerId: 'owner-4',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-            views: 445,
-            inquiries: 8,
-            featured: false,
           },
           {
             id: '5',
             title: 'Departamento Playa',
             description: 'Departamento con vista al mar en Viña del Mar',
-            type: 'apartment',
             address: 'Av. Costanera 890',
             city: 'Viña del Mar',
-            neighborhood: 'Reñaca',
+            commune: 'Reñaca',
             price: 600000,
             status: 'maintenance',
             bedrooms: 3,
@@ -201,23 +176,17 @@ export default function BrokerProperties() {
             area: 95,
             features: '["Vista al mar", "Balcón", "Piscina edificio", "Gimnasio"]',
             images: '["/placeholder9.jpg", "/placeholder10.jpg"]',
-            ownerName: 'Roberto López',
-            ownerEmail: 'roberto.lopez@email.com',
-            ownerPhone: '+56 9 4567 8901',
+            ownerId: 'owner-5',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-            views: 1100,
-            inquiries: 34,
-            featured: true,
           },
           {
             id: '6',
             title: 'Casa Familiar La Reina',
             description: 'Acogedora casa familiar en La Reina',
-            type: 'house',
             address: 'Calle Los Leones 345',
             city: 'Santiago',
-            neighborhood: 'La Reina',
+            commune: 'La Reina',
             price: 900000,
             status: 'available',
             bedrooms: 3,
@@ -225,14 +194,9 @@ export default function BrokerProperties() {
             area: 150,
             features: '["Patio", "Estacionamiento", "Calefacción", "Bodega"]',
             images: '["/placeholder11.jpg", "/placeholder12.jpg"]',
-            ownerName: 'Laura Fernández',
-            ownerEmail: 'laura.fernandez@email.com',
-            ownerPhone: '+56 9 5678 9012',
+            ownerId: 'owner-6',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-            views: 780,
-            inquiries: 19,
-            featured: false,
           },
         ];
 
@@ -256,7 +220,7 @@ export default function BrokerProperties() {
           .sort(([,a], [,b]) => b - a);
         const mostPopularType = sortedTypes.length > 0 ? sortedTypes[0][0] : '';
         
-        const featuredProperties = mockProperties.filter(p => p.featured).length;
+        const featuredProperties = 0; // Temporarily disabled - featured field removed from mock data
 
         const propertyStats: PropertyStats = {
           totalProperties,
@@ -289,13 +253,13 @@ export default function BrokerProperties() {
     ));
   };
 
-  const toggleFeatured = async (propertyId: string) => {
-    setProperties(prev => prev.map(property => 
-      property.id === propertyId 
-        ? { ...property, featured: !property.featured }
-        : property,
-    ));
-  };
+  // const toggleFeatured = async (propertyId: string) => {
+  //   setProperties(prev => prev.map(property =>
+  //     property.id === propertyId
+  //       ? { ...property, featured: !property.featured }
+  //       : property,
+  //   ));
+  // };
 
   const deleteProperty = async (propertyId: string) => {
     setProperties(prev => prev.filter(property => property.id !== propertyId));
@@ -392,11 +356,10 @@ return `Hace ${diffDays} días`;
   };
 
   const filteredProperties = properties.filter(property => {
-    const matchesFilter = filter === 'all' || property.status === filter || property.type === filter;
+    const matchesFilter = filter === 'all' || property.status === filter;
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.neighborhood.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.ownerName.toLowerCase().includes(searchTerm.toLowerCase());
+                         property.city.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -565,33 +528,34 @@ return `Hace ${diffDays} días`;
             </div>
           ) : (
             filteredProperties.map((property) => (
-              <Card key={property.id} className={`border-l-4 ${getStatusColor(property.status)} ${property.featured ? 'ring-2 ring-yellow-200' : ''}`}>
+              <Card key={property.id} className={`border-l-4 ${getStatusColor(property.status)}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className={`p-1 rounded ${getStatusColor(property.status)}`}>
-                        {getTypeIcon(property.type)}
+                        {getTypeIcon('apartment')}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 text-sm">{property.title}</h3>
                         <div className="flex items-center gap-1 mt-1">
                           {getStatusBadge(property.status)}
                           <Badge variant="outline" className="text-xs">
-                            {getTypeName(property.type)}
+                            {getTypeName('apartment')}
                           </Badge>
-                          {property.featured && (
+                          {/* Featured badge temporarily disabled */}
+                          {/* {property.featured && (
                             <Badge className="bg-yellow-100 text-yellow-800">
                               <Star className="w-3 h-3 mr-1" />
                               Destacada
                             </Badge>
-                          )}
+                          )} */}
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => toggleFeatured(property.id)}>
+                      {/* <Button size="sm" variant="ghost" onClick={() => toggleFeatured(property.id)}>
                         <Star className={`w-4 h-4 ${property.featured ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
 
