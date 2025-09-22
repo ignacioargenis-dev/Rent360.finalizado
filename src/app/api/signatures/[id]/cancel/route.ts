@@ -35,22 +35,14 @@ export async function POST(
     }
 
     // Cancelar firma
-    const result = await signatureService.cancelSignatureRequest(signatureId);
+    await signatureService.cancelSignatureRequest(signatureId);
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        signatureId: result.signatureId,
-        status: result.status,
-        message: result.message,
-        provider: result.provider,
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: result.message,
-      }, { status: 400 });
-    }
+    return NextResponse.json({
+      success: true,
+      signatureId,
+      status: 'CANCELLED',
+      message: 'Firma cancelada exitosamente',
+    });
   } catch (error) {
     return handleApiError(error);
   }
