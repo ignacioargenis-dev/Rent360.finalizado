@@ -324,9 +324,7 @@ export async function PUT(request: NextRequest) {
     const updatedRefund = await db.depositRefund.update({
       where: { id: refundId },
       data: {
-        ...validatedData,
-        adminId: user.id,
-        updatedAt: new Date()
+        ...validatedData
       },
       include: {
         contract: {
