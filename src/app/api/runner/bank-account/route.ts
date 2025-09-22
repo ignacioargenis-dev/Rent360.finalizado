@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo cuenta bancaria del runner:', error);
+    logger.error('Error obteniendo cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error registrando cuenta bancaria del runner:', error);
+    logger.error('Error registrando cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -176,7 +176,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error actualizando cuenta bancaria del runner:', error);
+    logger.error('Error actualizando cuenta bancaria del runner:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

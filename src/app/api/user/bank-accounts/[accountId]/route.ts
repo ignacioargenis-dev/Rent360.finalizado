@@ -45,7 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo cuenta bancaria:', error);
+    logger.error('Error obteniendo cuenta bancaria:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -106,7 +106,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
   } catch (error) {
-    logger.error('Error actualizando cuenta bancaria:', error);
+    logger.error('Error actualizando cuenta bancaria:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
   } catch (error) {
-    logger.error('Error eliminando cuenta bancaria:', error);
+    logger.error('Error eliminando cuenta bancaria:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

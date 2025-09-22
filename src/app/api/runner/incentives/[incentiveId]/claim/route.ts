@@ -51,7 +51,7 @@ export async function POST(
     }
 
   } catch (error) {
-    logger.error('Error reclamando incentivo:', error);
+    logger.error('Error reclamando incentivo:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

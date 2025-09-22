@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
   } catch (error) {
-    logger.error('Error verificando cuenta bancaria:', error);
+    logger.error('Error verificando cuenta bancaria:', { error });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
