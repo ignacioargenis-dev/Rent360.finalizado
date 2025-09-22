@@ -576,7 +576,7 @@ return `Hace ${diffDays} días`;
                     </div>
                     <div className="absolute top-2 right-2">
                       <Badge className="bg-black bg-opacity-70 text-white text-xs">
-                        {property.images.length} fotos
+                        {property.images ? JSON.parse(property.images).length : 0} fotos
                       </Badge>
                     </div>
                   </div>
