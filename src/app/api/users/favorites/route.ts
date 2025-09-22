@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo favoritos:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error agregando propiedad a favoritos:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -180,7 +180,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error eliminando propiedad de favoritos:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { RunnerReportsService } from '@/lib/runner-reports-service';
 import { RunnerRatingService } from '@/lib/runner-rating-service';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/runner/reports
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error generando reporte:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

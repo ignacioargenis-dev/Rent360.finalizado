@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { CommissionService } from '@/lib/commission-service';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/admin/commissions/config
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo configuración de comisiones:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error calculando comisión:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

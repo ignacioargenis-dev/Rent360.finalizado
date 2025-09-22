@@ -205,7 +205,7 @@ requiredSignatures.push(contract.brokerId);
     
       } catch (error) {
       logger.error('Error en firma electrónica:', { error: error instanceof Error ? error.message : String(error) });
-      return handleError(error as Error);
+      return handleApiError(error as Error);
     }
 }
 

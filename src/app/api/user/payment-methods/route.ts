@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/user/payment-methods
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo métodos de pago:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error agregando método de pago:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

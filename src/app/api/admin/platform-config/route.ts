@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 
 // Schema para configuración de comisiones
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error as Error);
+    return handleApiError(error as Error);
   }
 }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error as Error);
+    return handleApiError(error as Error);
   }
 }
 
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error as Error);
+    return handleApiError(error as Error);
   }
 }
 
@@ -206,6 +206,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error as Error);
+    return handleApiError(error as Error);
   }
 }

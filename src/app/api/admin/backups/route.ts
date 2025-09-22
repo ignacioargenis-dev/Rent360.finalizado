@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     logger.error('Error obteniendo historial de backups:', {
       error: error instanceof Error ? error.message : String(error)
     });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     logger.error('Error creando backup:', {
       error: error instanceof Error ? error.message : String(error)
     });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -168,7 +168,7 @@ export async function PUT(request: NextRequest) {
     logger.error('Error actualizando configuración de backup:', {
       error: error instanceof Error ? error.message : String(error)
     });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -206,7 +206,7 @@ export async function PATCH(request: NextRequest) {
     logger.error('Error restaurando backup:', {
       error: error instanceof Error ? error.message : String(error)
     });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

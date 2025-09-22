@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/provider/transactions
@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error obteniendo transacciones del proveedor:', error);
-    const errorResponse = handleError(error);
+    logger.error('Error obteniendo transacciones del proveedor:', { error });
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

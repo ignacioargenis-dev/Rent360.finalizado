@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo reembolsos:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error creando solicitud de reembolso:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -368,7 +368,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error actualizando estado de reembolso:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -447,7 +447,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error actualizando reembolso:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

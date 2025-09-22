@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PropertyStatus, PropertyType, UserRole } from '@/types';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { cacheManager, createCacheKey, cacheConfigs } from '@/lib/cache-manager';
 import { safeAverage, roundToDecimal } from '@/lib/math-utils';
 
@@ -227,7 +227,7 @@ where.price.lte = parseFloat(maxPrice);
     
   } catch (error) {
     logger.error('Error fetching properties:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { PayoutService } from '@/lib/payout-service';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * POST /api/admin/payouts/process
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error procesando lote de payouts:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 
 // Schema de validación para crear solicitud de mantenimiento
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -221,6 +221,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

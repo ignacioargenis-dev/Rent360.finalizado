@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { dbOptimizer } from '@/lib/db-optimizer';
 import { cacheManager } from '@/lib/cache-manager';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -442,6 +442,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

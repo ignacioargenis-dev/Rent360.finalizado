@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { cacheManager } from '@/lib/cache-manager';
 import { db } from '@/lib/db';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -254,6 +254,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

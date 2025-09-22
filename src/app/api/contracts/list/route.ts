@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ContractStatus, UserRole } from '@/types';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { cacheManager, createCacheKey, cacheConfigs } from '@/lib/cache-manager';
 import { safeSum, daysBetween, roundToDecimal, formatCurrency } from '@/lib/math-utils';
 
@@ -289,7 +289,7 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     logger.error('Error fetching contracts:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

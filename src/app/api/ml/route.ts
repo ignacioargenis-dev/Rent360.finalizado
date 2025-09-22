@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import {
   predictPropertyPrice,
   getMarketStatistics,
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error in price prediction API:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error in market stats API:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error in demand prediction API:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -186,7 +186,7 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error retraining models:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }

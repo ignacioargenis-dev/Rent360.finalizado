@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 // Configuración por defecto de integraciones
 const DEFAULT_INTEGRATIONS = [
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
       integrations,
     });
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
       integration: integrationConfig,
     });
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 

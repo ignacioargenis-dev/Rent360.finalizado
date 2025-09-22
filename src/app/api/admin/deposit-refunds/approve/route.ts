@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 // Schema para aprobar devolución
 const approveRefundSchema = z.object({
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -113,6 +113,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return handleError(error);
+    return handleApiError(error);
   }
 }

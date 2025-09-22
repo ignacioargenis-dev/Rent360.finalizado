@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -137,7 +137,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }
 
@@ -185,6 +185,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

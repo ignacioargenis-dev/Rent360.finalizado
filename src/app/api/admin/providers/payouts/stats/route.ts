@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { ProviderPayoutsService } from '@/lib/provider-payouts-service';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/admin/providers/payouts/stats
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo estadísticas de proveedores:', error as Error);
-    const errorResponse = handleError(error as Error);
+    const errorResponse = handleApiError(error as Error);
     return errorResponse;
   }
 }

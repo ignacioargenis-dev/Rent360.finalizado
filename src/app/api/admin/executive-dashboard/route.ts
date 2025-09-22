@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { CommissionService } from '@/lib/commission-service';
 
 interface DashboardMetrics {
@@ -315,7 +315,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error generating executive dashboard data:', { error: error instanceof Error ? error.message : String(error) });
-    const errorResponse = handleError(error as Error);
+    const errorResponse = handleApiError(error as Error);
     return errorResponse;
   }
 }

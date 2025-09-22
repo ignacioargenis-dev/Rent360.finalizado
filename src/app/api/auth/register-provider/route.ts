@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 import { hash } from 'bcryptjs';
 import { z } from 'zod';
 import { validateRut, validateEmail, validatePhone, validatePassword  } from '@/lib/validations';
@@ -245,6 +245,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    return handleError(error);
+    return handleApiError(error);
   }
 }

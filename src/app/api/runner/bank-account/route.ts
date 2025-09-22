@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { BankAccountService } from '@/lib/bank-account-service';
 import { logger } from '@/lib/logger';
-import { handleError } from '@/lib/errors';
+import { handleApiError } from '@/lib/api-error-handler';
 
 /**
  * GET /api/runner/bank-account
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error obteniendo cuenta bancaria del runner:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error registrando cuenta bancaria del runner:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
@@ -177,7 +177,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     logger.error('Error actualizando cuenta bancaria del runner:', error);
-    const errorResponse = handleError(error);
+    const errorResponse = handleApiError(error);
     return errorResponse;
   }
 }
