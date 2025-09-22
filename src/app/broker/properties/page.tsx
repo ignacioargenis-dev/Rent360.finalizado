@@ -230,7 +230,7 @@ export default function BrokerProperties() {
         
         const sortedTypes = Object.entries(typeCount)
           .sort(([,a], [,b]) => b - a);
-        const mostPopularType = sortedTypes.length > 0 ? sortedTypes[0][0] : '';
+        const mostPopularType = sortedTypes.length > 0 && sortedTypes[0] ? sortedTypes[0][0] : '';
         
         const featuredProperties = mockProperties.filter(p => p.type === 'apartment').length; // Count apartments as featured for demo
 
