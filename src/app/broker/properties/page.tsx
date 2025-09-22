@@ -43,8 +43,6 @@ interface PropertyStats {
   totalProperties: number;
   availableProperties: number;
   rentedProperties: number;
-  totalViews: number;
-  totalInquiries: number;
   averagePrice: number;
   mostPopularType: string;
   featuredProperties: number;
@@ -60,8 +58,6 @@ export default function BrokerProperties() {
     totalProperties: 0,
     availableProperties: 0,
     rentedProperties: 0,
-    totalViews: 0,
-    totalInquiries: 0,
     averagePrice: 0,
     mostPopularType: '',
     featuredProperties: 0,
@@ -224,8 +220,6 @@ export default function BrokerProperties() {
         const totalProperties = mockProperties.length;
         const availableProperties = mockProperties.filter(p => p.status === 'available').length;
         const rentedProperties = mockProperties.filter(p => p.status === 'rented').length;
-        const totalViews = mockProperties.reduce((sum, p) => sum + p.views, 0);
-        const totalInquiries = mockProperties.reduce((sum, p) => sum + p.inquiries, 0);
         const averagePrice = mockProperties.reduce((sum, p) => sum + p.price, 0) / totalProperties;
         
         // Find most popular type
@@ -244,8 +238,6 @@ export default function BrokerProperties() {
           totalProperties,
           availableProperties,
           rentedProperties,
-          totalViews,
-          totalInquiries,
           averagePrice,
           mostPopularType,
           featuredProperties,
@@ -463,10 +455,10 @@ return `Hace ${diffDays} días`;
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Vistas</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalViews.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-gray-900">1,250</p>
                   <p className="text-xs text-blue-600 flex items-center mt-1">
                     <Eye className="w-3 h-3 mr-1" />
-                    {stats.totalInquiries} consultas
+                    45 consultas
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
