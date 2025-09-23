@@ -556,16 +556,19 @@ export default function BrokerReportsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {index > 0 && monthlyData[index - 1] && (
-                      <>
-                        {data.contracts > monthlyData[index - 1].contracts && (
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                        )}
-                        {data.commission > monthlyData[index - 1].commission && (
-                          <DollarSign className="w-4 h-4 text-green-600" />
-                        )}
-                      </>
-                    )}
+                    {index > 0 && monthlyData[index - 1] && (() => {
+                      const prevData = monthlyData[index - 1]!;
+                      return (
+                        <>
+                          {data.contracts > prevData.contracts && (
+                            <TrendingUp className="w-4 h-4 text-green-600" />
+                          )}
+                          {data.commission > prevData.commission && (
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
