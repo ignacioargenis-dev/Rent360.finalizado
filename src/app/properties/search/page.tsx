@@ -526,10 +526,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.city || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { city: undefined } : { city: value }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.city;
+                        } else {
+                          newFilters.city = value;
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar ciudad" />
@@ -547,10 +552,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.commune || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { commune: undefined } : { commune: value }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.commune;
+                        } else {
+                          newFilters.commune = value;
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar comuna" />
@@ -575,19 +585,29 @@ export default function PropertySearch() {
                         type="number"
                         placeholder="Mínimo"
                         value={filters.minPrice || ''}
-                        onChange={(e) => setFilters(prev => ({
-                          ...prev,
-                          ...(e.target.value ? { minPrice: parseInt(e.target.value) } : { minPrice: undefined }),
-                        }))}
+                        onChange={(e) => setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (e.target.value) {
+                            newFilters.minPrice = parseInt(e.target.value);
+                          } else {
+                            delete newFilters.minPrice;
+                          }
+                          return newFilters;
+                        })}
                       />
                       <Input
                         type="number"
                         placeholder="Máximo"
                         value={filters.maxPrice || ''}
-                        onChange={(e) => setFilters(prev => ({
-                          ...prev,
-                          ...(e.target.value ? { maxPrice: parseInt(e.target.value) } : { maxPrice: undefined }),
-                        }))}
+                        onChange={(e) => setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (e.target.value) {
+                            newFilters.maxPrice = parseInt(e.target.value);
+                          } else {
+                            delete newFilters.maxPrice;
+                          }
+                          return newFilters;
+                        })}
                       />
                     </div>
                   </div>
@@ -598,10 +618,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.bedrooms?.toString() || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { bedrooms: undefined } : { bedrooms: parseInt(value) }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.bedrooms;
+                        } else {
+                          newFilters.bedrooms = parseInt(value);
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquiera" />
@@ -622,10 +647,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.bathrooms?.toString() || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { bathrooms: undefined } : { bathrooms: parseInt(value) }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.bathrooms;
+                        } else {
+                          newFilters.bathrooms = parseInt(value);
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquiera" />
@@ -648,19 +678,29 @@ export default function PropertySearch() {
                         type="number"
                         placeholder="Mínimo"
                         value={filters.minArea || ''}
-                        onChange={(e) => setFilters(prev => ({
-                          ...prev,
-                          ...(e.target.value ? { minArea: parseInt(e.target.value) } : { minArea: undefined }),
-                        }))}
+                        onChange={(e) => setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (e.target.value) {
+                            newFilters.minArea = parseInt(e.target.value);
+                          } else {
+                            delete newFilters.minArea;
+                          }
+                          return newFilters;
+                        })}
                       />
                       <Input
                         type="number"
                         placeholder="Máximo"
                         value={filters.maxArea || ''}
-                        onChange={(e) => setFilters(prev => ({
-                          ...prev,
-                          ...(e.target.value ? { maxArea: parseInt(e.target.value) } : { maxArea: undefined }),
-                        }))}
+                        onChange={(e) => setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (e.target.value) {
+                            newFilters.maxArea = parseInt(e.target.value);
+                          } else {
+                            delete newFilters.maxArea;
+                          }
+                          return newFilters;
+                        })}
                       />
                     </div>
                   </div>
@@ -671,10 +711,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.type || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { type: undefined } : { type: value }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.type;
+                        } else {
+                          newFilters.type = value;
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquier tipo" />
@@ -696,10 +741,15 @@ export default function PropertySearch() {
                     </label>
                     <Select 
                       value={filters.status || 'all'} 
-                      onValueChange={(value) => setFilters(prev => ({
-                        ...prev,
-                        ...(value === 'all' ? { status: undefined } : { status: value }),
-                      }))}
+                      onValueChange={(value) => setFilters(prev => {
+                        const newFilters = { ...prev };
+                        if (value === 'all') {
+                          delete newFilters.status;
+                        } else {
+                          newFilters.status = value;
+                        }
+                        return newFilters;
+                      })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquier estado" />
