@@ -36,25 +36,8 @@ import {
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { chatService, MessageType, ChatStatus, ChatConversation as ServiceChatConversation, ChatParticipant, ChatParticipantType } from '@/lib/chat/chat-service';
+import { chatService, MessageType, ChatStatus, ChatConversation as ServiceChatConversation, ChatParticipant, ChatParticipantType, ChatMessage } from '@/lib/chat/chat-service';
 import { logger } from '@/lib/logger';
-
-interface ChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  messageType: MessageType;
-  timestamp: Date;
-  isRead: boolean;
-  attachments?: Array<{
-    id: string;
-    name: string;
-    type: string;
-    url: string;
-    size: number;
-  }>;
-}
 
 
 export default function ChatPage() {
