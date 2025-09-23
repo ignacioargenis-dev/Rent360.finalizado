@@ -299,14 +299,14 @@ export default function PropertySearch() {
           
           {property.features && Array.isArray(property.features) && property.features.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {property.features.slice(0, 3).map((feature, index) => (
+              {(property.features as string[]).slice(0, 3).map((feature, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {feature}
                 </Badge>
               ))}
-              {property.features.length > 3 && (
+              {(property.features as string[]).length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{property.features.length - 3}
+                  +{(property.features as string[]).length - 3}
                 </Badge>
               )}
             </div>
