@@ -221,7 +221,11 @@ export default function ChatPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Mensajes">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Mensajes"
+      subtitle="Gestiona tus conversaciones y mensajes"
+    >
       <DashboardHeader
         user={user}
         title="💬 Mensajes"
