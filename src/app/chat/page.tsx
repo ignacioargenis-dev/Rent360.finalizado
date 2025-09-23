@@ -72,14 +72,16 @@ export default function ChatPage() {
 
       // Obtener información del usuario
       const userResponse = await fetch('/api/auth/me');
+      let userData = null;
       if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData.user);
+        const responseData = await userResponse.json();
+        userData = responseData.user;
+        setUser(userData);
       }
 
-      // Obtener conversaciones del usuario
-      if (user) {
-        const userConversations = await chatService.getUserConversations(user.id);
+      // Obtener conversaciones del usuario si se obtuvo el usuario
+      if (userData?.id) {
+        const userConversations = await chatService.getUserConversations(userData.id);
         setConversations(userConversations);
       }
 
@@ -135,14 +137,14 @@ export default function ChatPage() {
       const participants: ChatParticipant[] = [
         {
           userId: user.id,
-          userType: user.role as ChatParticipantType,
-          userName: user.name || user.email,
+          userType: (user.role as ChatParticipantType) || ChatParticipantType.TENANT,
+          userName: user.name || user.email || `Usuario ${user.id.slice(-4)}`,
           joinedAt: new Date(),
           isOnline: true
         },
         ...participantIds.map(id => ({
           userId: id,
-          userType: ChatParticipantType.TENANT,
+          userType: ChatParticipantType.TENANT, // Default to TENANT for new participants
           userName: `Usuario ${id.slice(-4)}`, // Mock name
           joinedAt: new Date(),
           isOnline: false
@@ -194,7 +196,7 @@ export default function ChatPage() {
   };
 
   const getMessageStatusIcon = (message: ChatMessage) => {
-    if (message.senderId !== user?.id) return null;
+    if (!user?.id || message.senderId !== user.id) return null;
 
     if (message.isRead) {
       return <CheckCheck className="w-3 h-3 text-blue-500" />;
@@ -386,7 +388,7 @@ export default function ChatPage() {
                     {messages.map((message, index) => {
                       const isOwn = message.senderId === user?.id;
                       const showDateSeparator = index === 0 ||
-                        formatDate(message.timestamp) !== formatDate(messages[index - 1]?.timestamp);
+                        (index > 0 && formatDate(message.timestamp) !== formatDate(messages[index - 1]?.timestamp || message.timestamp));
 
                       return (
                         <div key={message.id}>
