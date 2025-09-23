@@ -658,8 +658,8 @@ return `Hace ${diffDays} días`;
                   {/* Owner Info */}
                   <div className="border-t pt-3 mb-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Propietario:</span>
-                      <span className="font-medium">{property.ownerName}</span>
+                      <span className="text-gray-600">ID Propietario:</span>
+                      <span className="font-medium">{property.ownerId}</span>
                     </div>
                   </div>
 
