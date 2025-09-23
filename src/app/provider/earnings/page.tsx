@@ -159,6 +159,7 @@ export default function ProviderEarningsPage() {
       title="Mis Ganancias"
       subtitle="Revisa y gestiona tus ganancias como proveedor"
     >
+
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -281,6 +282,6 @@ export default function ProviderEarningsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }
