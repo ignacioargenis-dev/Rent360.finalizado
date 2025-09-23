@@ -311,9 +311,9 @@ export default function ChatPage() {
                             <p className="text-sm text-gray-600 truncate">
                               {conversation.lastMessage?.content || 'Sin mensajes'}
                             </p>
-                            {conversation.unreadCount > 0 && (
+                            {user && conversation.unreadCount[user.id] > 0 && (
                               <Badge className="bg-blue-600 text-white text-xs px-2 py-1">
-                                {conversation.unreadCount}
+                                {conversation.unreadCount[user.id]}
                               </Badge>
                             )}
                           </div>
