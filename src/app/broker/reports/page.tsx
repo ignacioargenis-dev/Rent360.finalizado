@@ -556,7 +556,7 @@ export default function BrokerReportsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {index > 0 && (
+                    {index > 0 && monthlyData[index - 1] && (
                       <>
                         {data.contracts > monthlyData[index - 1].contracts && (
                           <TrendingUp className="w-4 h-4 text-green-600" />
