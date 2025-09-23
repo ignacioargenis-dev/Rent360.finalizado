@@ -40,6 +40,20 @@ interface ComparisonMetrics {
   overallScore: number;
 }
 
+interface ExtendedProperty extends Property {
+  tenantName?: string;
+  tenantEmail?: string;
+  tenantPhone?: string;
+  contractStart?: string;
+  contractEnd?: string;
+  monthlyRevenue?: number;
+  occupancyRate?: number;
+  totalRevenue?: number;
+  lastMaintenance?: string;
+  nextMaintenance?: string;
+  featured?: boolean;
+}
+
 interface Recommendation {
   type: 'strength' | 'weakness' | 'opportunity' | 'threat';
   title: string;
@@ -50,8 +64,8 @@ interface Recommendation {
 
 export default function OwnerPropertyComparison() {
   const [user, setUser] = useState<User | null>(null);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<ExtendedProperty[]>([]);
+  const [selectedProperties, setSelectedProperties] = useState<ExtendedProperty[]>([]);
   const [comparisonMetrics, setComparisonMetrics] = useState<{[key: string]: ComparisonMetrics}>({});
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +88,7 @@ export default function OwnerPropertyComparison() {
     const loadProperties = async () => {
       try {
         // Mock properties data
-        const mockProperties: Property[] = [
+        const mockProperties: ExtendedProperty[] = [
           {
             id: '1',
             title: 'Departamento Amoblado Centro',
