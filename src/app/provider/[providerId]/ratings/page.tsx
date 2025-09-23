@@ -367,7 +367,7 @@ export default function ProviderRatingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600">
-                      {(summary.totalRatings || 0) > 0 ? Math.round(((summary.convertedReferrals || 0) / (summary.totalRatings || 1)) * 100) : 0}%
+                      {summary.trustScore || 0}%
                     </div>
                     <div className="text-sm text-gray-600">Tasa de satisfacción</div>
                   </div>
