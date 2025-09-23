@@ -615,14 +615,14 @@ return `Hace ${diffDays} días`;
 
                   {/* Features */}
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {property.features && JSON.parse(property.features).slice(0, 3).map((feature, index) => (
+                    {property.features && (JSON.parse(property.features) as string[]).slice(0, 3).map((feature: string, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {feature}
                       </Badge>
                     ))}
-                    {property.features && JSON.parse(property.features).length > 3 && (
+                    {property.features && (JSON.parse(property.features) as string[]).length > 3 && (
                       <Badge variant="outline" className="text-xs">
-                        +{JSON.parse(property.features).length - 3}
+                        +{(JSON.parse(property.features) as string[]).length - 3}
                       </Badge>
                     )}
                   </div>
