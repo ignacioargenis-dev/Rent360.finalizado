@@ -62,15 +62,14 @@ interface ProviderStats {
 export default function ProviderEarningsPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<ProviderTransaction[]>([]);
   const [stats, setStats] = useState<ProviderStats | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTransaction, setSelectedTransaction] = useState<ProviderTransaction | null>(null);
 
   useEffect(() => {
-    loadUser();
-    loadTransactions();
-    loadStats();
+    loadPageData();
   }, []);
 
   const loadUser = async () => {
@@ -79,24 +78,28 @@ export default function ProviderEarningsPage() {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        setError(null);
+      } else {
+        setError('Error al cargar la información del usuario');
       }
     } catch (error) {
       console.error('Error loading user:', error);
+      setError('Error al cargar la información del usuario');
     }
   };
 
   const loadTransactions = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/provider/transactions');
       if (response.ok) {
         const data = await response.json();
         setTransactions(data.data);
+      } else {
+        throw new Error('Error al cargar las transacciones');
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
@@ -106,9 +109,29 @@ export default function ProviderEarningsPage() {
       if (response.ok) {
         const data = await response.json();
         setStats(data.data);
+      } else {
+        throw new Error('Error al cargar las estadísticas');
       }
     } catch (error) {
       console.error('Error loading stats:', error);
+      throw error;
+    }
+  };
+
+  const loadPageData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await Promise.all([
+        loadUser(),
+        loadTransactions(),
+        loadStats()
+      ]);
+    } catch (error) {
+      console.error('Error loading page data:', error);
+      setError('Error al cargar los datos de la página');
+    } finally {
+      setLoading(false);
     }
   };
 
