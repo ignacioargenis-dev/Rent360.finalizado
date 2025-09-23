@@ -24,7 +24,8 @@ import {
   Banknote,
   AlertTriangle,
   RefreshCw,
-  BarChart3
+  BarChart3,
+  Info
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
