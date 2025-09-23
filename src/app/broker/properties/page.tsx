@@ -627,16 +627,8 @@ return `Hace ${diffDays} días`;
                     )}
                   </div>
 
-                  {/* Stats */}
-                  <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-3 h-3" />
-                      <span>{property.views}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Activity className="w-3 h-3" />
-                      <span>{property.inquiries} consultas</span>
-                    </div>
+                  {/* Last Updated */}
+                  <div className="flex justify-end text-xs text-gray-500 mb-3">
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       <span>Actualizado {formatRelativeTime(property.updatedAt)}</span>
