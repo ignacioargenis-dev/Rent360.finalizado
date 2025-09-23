@@ -272,15 +272,18 @@ export default function RecurringServicesPage() {
                 <div>
                   <p className="text-sm font-medium text-yellow-700">Próximo Servicio</p>
                   <p className="text-lg font-bold text-yellow-900">
-                    {services
-                      .filter(s => s.status === 'active')
-                      .sort((a, b) => new Date(a.nextScheduledDate).getTime() - new Date(b.nextScheduledDate).getTime())[0]
-                      ?.nextScheduledDate
-                      ? new Date(services
-                          .filter(s => s.status === 'active')
-                          .sort((a, b) => new Date(a.nextScheduledDate).getTime() - new Date(b.nextScheduledDate).getTime())[0]
-                          .nextScheduledDate
-                        ).toLocaleDateString('es-CL')
+                    {services && services.length > 0
+                      ? (() => {
+                          const activeServices = services.filter(s => s.status === 'active');
+                          if (activeServices.length === 0) return 'Sin servicios activos';
+
+                          const nextService = activeServices
+                            .sort((a, b) => new Date(a.nextScheduledDate).getTime() - new Date(b.nextScheduledDate).getTime())[0];
+
+                          return nextService?.nextScheduledDate
+                            ? new Date(nextService.nextScheduledDate).toLocaleDateString('es-CL')
+                            : 'Sin fecha programada';
+                        })()
                       : 'Sin servicios'
                     }
                   </p>
