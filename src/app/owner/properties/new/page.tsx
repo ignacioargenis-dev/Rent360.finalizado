@@ -93,7 +93,7 @@ export default function NewPropertyPage() {
 
   // Define empty arrays with explicit types
   const emptyFeatures: string[] = [];
-  const emptyImages: string[] = [];
+  const emptyImages: File[] = [];
 
   const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
