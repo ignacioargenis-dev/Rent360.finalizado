@@ -413,11 +413,11 @@ export default function ProviderRatingsPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback>
-                              {rating.senderName ? rating.senderName.substring(0, 2).toUpperCase() : '??'}
+                              {rating.clientId ? rating.clientId.substring(0, 2).toUpperCase() : '??'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{rating.senderName || 'Usuario anónimo'}</div>
+                            <div className="font-medium">Cliente {rating.clientId.substring(0, 8)}</div>
                             <div className="text-sm text-gray-600">
                               {rating.createdAt ? formatDate(rating.createdAt) : 'Fecha desconocida'}
                             </div>
