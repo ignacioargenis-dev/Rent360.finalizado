@@ -120,7 +120,7 @@ export default function ProviderRatingsPage() {
   };
 
   const getRatingDistribution = (type: RatingType) => {
-    if (!summary) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    if (!summary || !summary.ratingDistribution) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     return summary.ratingDistribution[type];
   };
 
@@ -204,7 +204,11 @@ export default function ProviderRatingsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title={`Perfil de ${provider.businessName}`}>
+    <EnhancedDashboardLayout
+      user={user}
+      title={`Perfil de ${provider.businessName}`}
+      subtitle="Perfil y calificaciones del proveedor"
+    >
       <DashboardHeader
         user={user}
         title={provider.businessName}
@@ -235,7 +239,7 @@ export default function ProviderRatingsPage() {
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600">
-                        Miembro desde {provider.memberSince.getFullYear()}
+                        Miembro desde {provider.memberSince ? provider.memberSince.getFullYear() : new Date().getFullYear()}
                       </span>
                     </div>
                   </div>
@@ -245,15 +249,15 @@ export default function ProviderRatingsPage() {
               {/* Estadísticas Principales */}
               <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{summary.overallAverage.toFixed(1)}</div>
+                  <div className="text-2xl font-bold text-gray-900">{summary.overallAverage?.toFixed(1) || '0.0'}</div>
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    {renderStars(summary.overallAverage)}
+                    {renderStars(summary.overallAverage || 0)}
                   </div>
                   <div className="text-sm text-gray-600">Calificación general</div>
                 </div>
 
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{summary.totalRatings}</div>
+                  <div className="text-2xl font-bold text-gray-900">{summary.totalRatings || 0}</div>
                   <div className="text-sm text-gray-600">Reseñas totales</div>
                 </div>
 
@@ -263,9 +267,9 @@ export default function ProviderRatingsPage() {
                 </div>
 
                 <div className="text-center">
-                  <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTrustScoreColor(summary.trustScore)}`}>
+                  <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTrustScoreColor(summary.trustScore || 0)}`}>
                     <Shield className="w-4 h-4" />
-                    {summary.trustScore}
+                    {summary.trustScore || 0}
                   </div>
                   <div className="text-sm text-gray-600">Trust Score</div>
                 </div>
@@ -282,7 +286,7 @@ export default function ProviderRatingsPage() {
                 ))}
               </div>
 
-              {provider.certifications.length > 0 && (
+              {provider.certifications && provider.certifications.length > 0 && (
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">Certificaciones:</span>
@@ -342,7 +346,7 @@ export default function ProviderRatingsPage() {
                           {type.replace('_', ' ').toLowerCase()}
                         </span>
                         <div className="flex items-center gap-2">
-                          {renderStars(summary.averageRatings[type] || 0, 'sm')}
+                          {renderStars(summary.averageRatings ? (summary.averageRatings[type] || 0) : 0, 'sm')}
                         </div>
                       </div>
                     ))}
@@ -363,19 +367,19 @@ export default function ProviderRatingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600">
-                      {Math.round((summary.convertedReferrals / summary.totalRatings) * 100)}%
+                      {(summary.totalRatings || 0) > 0 ? Math.round(((summary.convertedReferrals || 0) / (summary.totalRatings || 1)) * 100) : 0}%
                     </div>
                     <div className="text-sm text-gray-600">Tasa de satisfacción</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-600">
-                      {summary.recentRatings.filter(r => r.ratings.overall >= 4).length}
+                      {summary.recentRatings ? summary.recentRatings.filter(r => (r.ratings?.overall ?? 0) >= 4).length : 0}
                     </div>
                     <div className="text-sm text-gray-600">Reseñas positivas recientes</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-purple-600">
-                      {summary.totalRatings > 0 ? Math.round(summary.totalRatings / 30) : 0}
+                      {(summary.totalRatings || 0) > 0 ? Math.round((summary.totalRatings || 0) / 30) : 0}
                     </div>
                     <div className="text-sm text-gray-600">Reseñas por mes</div>
                   </div>
@@ -409,18 +413,18 @@ export default function ProviderRatingsPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback>
-                              {rating.senderName.substring(0, 2).toUpperCase()}
+                              {rating.senderName ? rating.senderName.substring(0, 2).toUpperCase() : '??'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{rating.senderName}</div>
+                            <div className="font-medium">{rating.senderName || 'Usuario anónimo'}</div>
                             <div className="text-sm text-gray-600">
-                              {formatDate(rating.createdAt)}
+                              {rating.createdAt ? formatDate(rating.createdAt) : 'Fecha desconocida'}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {renderStars(rating.ratings.overall)}
+                          {renderStars(rating.ratings?.overall || 0)}
                           {!rating.isVerified && (
                             <Badge variant="outline" className="text-yellow-600">
                               Pendiente verificación
@@ -435,7 +439,7 @@ export default function ProviderRatingsPage() {
 
                       {/* Ratings detallados */}
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        {Object.entries(rating.ratings).map(([type, value]) => {
+                        {rating.ratings && Object.entries(rating.ratings).map(([type, value]) => {
                           if (type === 'overall') return null;
                           return (
                             <div key={type} className="text-sm">
