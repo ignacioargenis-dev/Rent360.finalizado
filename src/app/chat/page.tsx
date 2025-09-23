@@ -386,7 +386,7 @@ export default function ChatPage() {
                     {messages.map((message, index) => {
                       const isOwn = message.senderId === user?.id;
                       const showDateSeparator = index === 0 ||
-                        formatDate(message.timestamp) !== formatDate(messages[index - 1].timestamp);
+                        formatDate(message.timestamp) !== formatDate(messages[index - 1]?.timestamp);
 
                       return (
                         <div key={message.id}>
