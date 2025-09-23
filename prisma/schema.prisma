@@ -136,6 +136,8 @@ model Property {
   type        String
   images      String?       // JSON array of image URLs
   features    String?       // JSON array of features
+  views       Int           @default(0) // Número de vistas de la propiedad
+  inquiries   Int           @default(0) // Número de consultas/inquiries
   ownerId     String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -155,6 +157,8 @@ model Property {
   @@index([commune])
   @@index([type])
   @@index([price])
+  @@index([views])
+  @@index([inquiries])
   @@index([createdAt])
   @@index([updatedAt])
 }

@@ -103,6 +103,8 @@ export default function BrokerProperties() {
             type: 'apartment',
             features: '["Amoblado", "Estacionamiento", "Gimnasio", "Piscina"]',
             images: '["/placeholder1.jpg", "/placeholder2.jpg"]',
+            views: 145,
+            inquiries: 23,
             ownerId: 'owner-1',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
@@ -124,6 +126,8 @@ export default function BrokerProperties() {
             type: 'house',
             features: '["Jardín", "Terraza", "Estacionamiento 2 autos", "Seguridad 24h"]',
             images: '["/placeholder3.jpg", "/placeholder4.jpg"]',
+            views: 89,
+            inquiries: 12,
             ownerId: 'owner-2',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
@@ -145,6 +149,8 @@ export default function BrokerProperties() {
             type: 'office',
             features: '["Aire acondicionado", "Estacionamiento", "Recepción", "Seguridad"]',
             images: '["/placeholder5.jpg", "/placeholder6.jpg"]',
+            views: 67,
+            inquiries: 8,
             ownerId: 'owner-3',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
@@ -166,6 +172,8 @@ export default function BrokerProperties() {
             type: 'commercial',
             features: '["Vidrio frontal", "Alarma", "Estacionamiento clientes", "Zona de carga"]',
             images: '["/placeholder7.jpg", "/placeholder8.jpg"]',
+            views: 234,
+            inquiries: 45,
             ownerId: 'owner-4',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
@@ -187,6 +195,8 @@ export default function BrokerProperties() {
             type: 'apartment',
             features: '["Vista al mar", "Balcón", "Piscina edificio", "Gimnasio"]',
             images: '["/placeholder9.jpg", "/placeholder10.jpg"]',
+            views: 178,
+            inquiries: 31,
             ownerId: 'owner-5',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
@@ -208,6 +218,8 @@ export default function BrokerProperties() {
             type: 'house',
             features: '["Patio", "Estacionamiento", "Calefacción", "Bodega"]',
             images: '["/placeholder11.jpg", "/placeholder12.jpg"]',
+            views: 92,
+            inquiries: 15,
             ownerId: 'owner-6',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
@@ -627,8 +639,16 @@ return `Hace ${diffDays} días`;
                     )}
                   </div>
 
-                  {/* Last Updated */}
-                  <div className="flex justify-end text-xs text-gray-500 mb-3">
+                  {/* Stats */}
+                  <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      <span>{property.views} vistas</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Activity className="w-3 h-3" />
+                      <span>{property.inquiries} consultas</span>
+                    </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       <span>Actualizado {formatRelativeTime(property.updatedAt)}</span>
