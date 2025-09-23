@@ -75,6 +75,8 @@ export default function AdminReportedPropertiesPage() {
             area: 65,
             status: 'AVAILABLE' as any,
             type: 'APARTMENT' as any,
+            views: 125,
+            inquiries: 18,
             ownerId: 'owner-1',
             createdAt: new Date('2024-01-15'),
             updatedAt: new Date('2024-01-15'),
