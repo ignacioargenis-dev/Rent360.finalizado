@@ -304,7 +304,7 @@ export default function OwnerPropertyComparison() {
     
     selectedProperties.forEach(property => {
       const pricePerSqm = property.price / property.area;
-      const roi = property.totalRevenue > 0 ? (property.totalRevenue / property.price) * 100 : 0;
+      const roi = (property.totalRevenue ?? 0) > 0 ? ((property.totalRevenue ?? 0) / property.price) * 100 : 0;
       const daysOnMarket = Math.floor((Date.now() - new Date(property.createdAt).getTime()) / (1000 * 60 * 60 * 24));
       const inquiriesPerView = property.views > 0 ? property.inquiries / property.views : 0;
       
