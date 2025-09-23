@@ -184,6 +184,8 @@ where.price.lte = parseFloat(maxPrice);
       status: property.status,
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images ? JSON.parse(property.images) : [],
+      views: property.views,
+      inquiries: property.inquiries,
       owner: property.owner,
       currentTenant: property.contracts[0]?.tenant || null,
       averageRating: safeAverage(property.reviews.map(review => review.rating)),
