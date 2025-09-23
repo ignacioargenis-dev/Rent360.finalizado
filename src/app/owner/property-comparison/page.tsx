@@ -363,7 +363,7 @@ export default function OwnerPropertyComparison() {
       recs.push({
         type: 'strength',
         title: 'Mejor Rendimiento',
-        description: `${bestProperty.title} tiene el mejor rendimiento general con un puntaje de ${comparisonMetrics[bestProperty.id]?.overallScore.toFixed(1)}/100`,
+        description: `${bestProperty.title} tiene el mejor rendimiento general con un puntaje de ${(comparisonMetrics[bestProperty.id]?.overallScore ?? 0).toFixed(1)}/100`,
         impact: 'high',
         properties: [bestProperty.id],
       });
@@ -381,7 +381,7 @@ export default function OwnerPropertyComparison() {
       }
 
       // Find properties with high ROI
-      const highRoi = selectedProperties.filter(p => comparisonMetrics[p.id]?.roi > 50);
+      const highRoi = selectedProperties.filter(p => (comparisonMetrics[p.id]?.roi ?? 0) > 50);
       if (highRoi.length > 0) {
         recs.push({
           type: 'opportunity',
