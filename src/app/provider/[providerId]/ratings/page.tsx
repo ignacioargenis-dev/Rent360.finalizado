@@ -176,7 +176,11 @@ export default function ProviderRatingsPage() {
 
   if (!provider || !summary) {
     return (
-      <EnhancedDashboardLayout title="Proveedor no encontrado">
+      <EnhancedDashboardLayout
+        user={user}
+        title="Proveedor no encontrado"
+        subtitle="El proveedor solicitado no existe"
+      >
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Card className="max-w-md w-full">
             <CardContent className="pt-6">

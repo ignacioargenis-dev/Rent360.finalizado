@@ -262,7 +262,11 @@ export default function RateServicePage() {
 
   if (!job || !user) {
     return (
-      <EnhancedDashboardLayout title="Servicio no encontrado">
+      <EnhancedDashboardLayout
+        user={user}
+        title="Servicio no encontrado"
+        subtitle="No se pudo encontrar la información del servicio solicitado"
+      >
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Card className="max-w-md w-full">
             <CardContent className="pt-6">
@@ -286,7 +290,11 @@ export default function RateServicePage() {
 
   if (existingRating) {
     return (
-      <EnhancedDashboardLayout title="Reseña ya enviada">
+      <EnhancedDashboardLayout
+        user={user}
+        title="Reseña ya enviada"
+        subtitle="Ya has calificado este servicio anteriormente"
+      >
         <DashboardHeader
           user={user}
           title="Reseña ya enviada"
@@ -322,7 +330,11 @@ export default function RateServicePage() {
 
   if (submitted) {
     return (
-      <EnhancedDashboardLayout title="Reseña enviada">
+      <EnhancedDashboardLayout
+        user={user}
+        title="Reseña enviada"
+        subtitle="Gracias por tu evaluación del servicio"
+      >
         <DashboardHeader
           user={user}
           title="¡Reseña enviada!"
@@ -353,7 +365,11 @@ export default function RateServicePage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Calificar Servicio">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Calificar Servicio"
+      subtitle={`Deja tu opinión sobre el servicio de ${job.providerName}`}
+    >
       <DashboardHeader
         user={user}
         title="Calificar Servicio"
