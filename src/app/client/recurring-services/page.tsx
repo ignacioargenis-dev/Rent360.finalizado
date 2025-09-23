@@ -224,7 +224,11 @@ export default function RecurringServicesPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Servicios Recurrentes">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Servicios Recurrentes"
+      subtitle="Gestiona tus servicios de mantenimiento programados"
+    >
       <DashboardHeader
         user={user}
         title="🔄 Servicios Recurrentes"

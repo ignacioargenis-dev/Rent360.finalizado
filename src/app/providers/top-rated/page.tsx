@@ -176,7 +176,11 @@ export default function TopRatedProvidersPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Proveedores Mejor Calificados">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Proveedores Mejor Calificados"
+      subtitle="Descubre los proveedores más confiables y mejor evaluados"
+    >
       <DashboardHeader
         user={user}
         title="🏆 Proveedores Mejor Calificados"

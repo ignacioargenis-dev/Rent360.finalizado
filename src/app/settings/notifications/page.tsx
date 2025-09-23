@@ -250,7 +250,11 @@ export default function NotificationSettingsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Configuración de Notificaciones">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Configuración de Notificaciones"
+      subtitle="Gestiona tus preferencias de notificaciones"
+    >
       <DashboardHeader
         user={user}
         title="🔔 Configuración de Notificaciones"
