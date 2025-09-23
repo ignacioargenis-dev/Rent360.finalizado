@@ -416,10 +416,10 @@ export default function ProviderEarningsPage() {
   const filteredTransactions = transactions.filter(transaction => {
     const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus;
     const matchesSearch = !searchTerm ||
-      transaction.jobs.some(job =>
-        job.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.type.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      (transaction.jobs && transaction.jobs.some(job =>
+        (job.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (job.type?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      ));
     return matchesStatus && matchesSearch;
   });
 
@@ -751,10 +751,10 @@ export default function ProviderEarningsPage() {
                             }`} />
                             <div>
                               <p className="font-medium">
-                                {transaction.jobs.length > 0 ? transaction.jobs[0].type : 'Servicio'}
+                                {transaction.jobs?.[0]?.type || 'Servicio'}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {transaction.jobs.length > 0 ? transaction.jobs[0].clientName : 'Cliente'}
+                                {transaction.jobs?.[0]?.clientName || 'Cliente'}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {transaction.providerType === 'MAINTENANCE' ? '🏠 Mantenimiento' : '🔧 Servicio General'}
