@@ -23,7 +23,8 @@ import {
   Truck,
   Banknote,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  BarChart3
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
