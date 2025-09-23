@@ -160,7 +160,7 @@ export default function RateServicePage() {
 
       const ratingData = {
         providerId: job.providerId,
-        providerType: job.providerType,
+        providerType: job.providerType === 'MAINTENANCE_PROVIDER' ? 'MAINTENANCE' : 'SERVICE',
         clientId: user.id,
         jobId: job.id,
         ratings: {
