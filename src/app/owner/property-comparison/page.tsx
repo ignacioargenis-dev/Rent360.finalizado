@@ -369,7 +369,7 @@ export default function OwnerPropertyComparison() {
       });
 
       // Find properties with low occupancy
-      const lowOccupancy = selectedProperties.filter(p => p.occupancyRate < 50);
+      const lowOccupancy = selectedProperties.filter(p => (p.occupancyRate ?? 0) < 50);
       if (lowOccupancy.length > 0) {
         recs.push({
           type: 'weakness',
@@ -714,11 +714,11 @@ export default function OwnerPropertyComparison() {
                       {selectedProperties.map(property => (
                         <td key={property.id} className="text-center p-3">
                           <span className={`font-medium ${
-                            property.occupancyRate > 80 ? 'text-green-600' :
-                            property.occupancyRate > 50 ? 'text-yellow-600' :
+                            (property.occupancyRate ?? 0) > 80 ? 'text-green-600' :
+                            (property.occupancyRate ?? 0) > 50 ? 'text-yellow-600' :
                             'text-red-600'
                           }`}>
-                            {formatPercentage(property.occupancyRate)}
+                            {formatPercentage(property.occupancyRate ?? 0)}
                           </span>
                         </td>
                       ))}
@@ -727,7 +727,7 @@ export default function OwnerPropertyComparison() {
                       <td className="p-3 font-medium">Ingreso Mensual</td>
                       {selectedProperties.map(property => (
                         <td key={property.id} className="text-center p-3">
-                          {formatPrice(property.monthlyRevenue)}
+                          {formatPrice(property.monthlyRevenue ?? 0)}
                         </td>
                       ))}
                     </tr>
@@ -735,7 +735,7 @@ export default function OwnerPropertyComparison() {
                       <td className="p-3 font-medium">Ingreso Total</td>
                       {selectedProperties.map(property => (
                         <td key={property.id} className="text-center p-3">
-                          {formatPrice(property.totalRevenue)}
+                          {formatPrice(property.totalRevenue ?? 0)}
                         </td>
                       ))}
                     </tr>
@@ -804,11 +804,11 @@ export default function OwnerPropertyComparison() {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Ocupación:</span>
                         <span className={`font-medium ${
-                          property.occupancyRate > 80 ? 'text-green-600' :
-                          property.occupancyRate > 50 ? 'text-yellow-600' :
+                          (property.occupancyRate ?? 0) > 80 ? 'text-green-600' :
+                          (property.occupancyRate ?? 0) > 50 ? 'text-yellow-600' :
                           'text-red-600'
                         }`}>
-                          {formatPercentage(property.occupancyRate)}
+                          {formatPercentage(property.occupancyRate ?? 0)}
                         </span>
                       </div>
                     </div>
