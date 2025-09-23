@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { requireAuth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import SignatureManagement from '@/components/signatures/SignatureManagement';
 
 export const metadata: Metadata = {
@@ -8,8 +8,19 @@ export const metadata: Metadata = {
 };
 
 export default async function SignaturesPage() {
-  // Verificar autenticación del usuario
-  await requireAuth();
+  // Verificar autenticación del usuario - en páginas usamos fetch a /api/auth/me
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/me`, {
+      cache: 'no-store', // No cache para verificar autenticación
+    });
+
+    if (!response.ok) {
+      redirect('/auth/login');
+    }
+  } catch (error) {
+    console.error('Error verificando autenticación:', error);
+    redirect('/auth/login');
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
