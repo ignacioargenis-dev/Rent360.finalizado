@@ -101,7 +101,7 @@ export default function ChatPage() {
       }
 
     } catch (error) {
-      logger.error('Error cargando conversaciones:', error);
+      logger.error('Error cargando conversaciones:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ export default function ChatPage() {
       const conversationMessages = await chatService.getConversationMessages(conversationId, user?.id);
       setMessages(conversationMessages);
     } catch (error) {
-      logger.error('Error cargando mensajes:', error);
+      logger.error('Error cargando mensajes:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -138,7 +138,7 @@ export default function ChatPage() {
       await loadData();
 
     } catch (error) {
-      logger.error('Error enviando mensaje:', error);
+      logger.error('Error enviando mensaje:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al enviar el mensaje. Por favor intenta nuevamente.');
     } finally {
       setSending(false);
@@ -172,7 +172,7 @@ export default function ChatPage() {
       setSelectedConversation(newConversation);
 
     } catch (error) {
-      logger.error('Error creando conversación:', error);
+      logger.error('Error creando conversación:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al crear la conversación.');
     }
   };
