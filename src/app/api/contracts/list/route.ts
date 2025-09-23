@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       where.ownerId = user.id;
     } else if (user.role === 'tenant') {
       where.tenantId = user.id;
-    } else if (user.role === 'broker') {
+    } else if (user.role === UserRole.BROKER) {
       where.OR = [
         { brokerId: user.id },
         { ownerId: user.id },

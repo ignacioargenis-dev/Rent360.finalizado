@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Filtro por rol de usuario
     if (user.role === 'owner') {
       where.ownerId = user.id;
-    } else if (user.role === 'broker') {
+    } else if (user.role === UserRole.BROKER) {
       where.OR = [
         { ownerId: user.id },
         { brokerId: user.id },

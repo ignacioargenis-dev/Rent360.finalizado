@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { CommissionService } from '@/lib/commission-service';
 import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/api-error-handler';
+import { UserRole } from '@/types';
 
 /**
  * GET /api/broker/commissions
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Solo corredores pueden acceder a sus comisiones
-    if (user.role !== 'broker') {
+    if (user.role !== UserRole.BROKER) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo corredores pueden acceder a esta información.' },
         { status: 403 }
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'broker') {
+    if (user.role !== UserRole.BROKER) {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo corredores pueden calcular comisiones.' },
         { status: 403 }
