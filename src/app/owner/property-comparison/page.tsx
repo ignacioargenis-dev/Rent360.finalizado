@@ -335,9 +335,9 @@ export default function OwnerPropertyComparison() {
       metrics[property.id] = {
         pricePerSqm,
         roi,
-        occupancyRate: property.occupancyRate,
-        monthlyRevenue: property.monthlyRevenue,
-        totalRevenue: property.totalRevenue,
+        occupancyRate: property.occupancyRate ?? 0,
+        monthlyRevenue: property.monthlyRevenue ?? 0,
+        totalRevenue: property.totalRevenue ?? 0,
         daysOnMarket,
         inquiriesPerView,
         maintenanceScore,
