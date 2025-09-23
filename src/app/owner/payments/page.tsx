@@ -205,6 +205,8 @@ export default function OwnerPaymentsPage() {
             status: 'RENTED' as any,
             images: '',
             features: 'Jardín, Estacionamiento, Seguridad',
+            views: 678,
+            inquiries: 42,
             ownerId: 'owner2',
             createdAt: new Date(),
             updatedAt: new Date(),
