@@ -313,7 +313,7 @@ export default function OwnerPropertyComparison() {
       const daysSinceMaintenance = Math.floor((Date.now() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
       const maintenanceScore = Math.max(0, 100 - (daysSinceMaintenance / 365) * 20);
       
-      // Calculate location score (based on neighborhood - simplified)
+      // Calculate location score (based on commune - simplified)
       const locationScores: {[key: string]: number} = {
         'Providencia': 90,
         'Las Condes': 95,
@@ -321,7 +321,7 @@ export default function OwnerPropertyComparison() {
         'La Reina': 85,
         'Reñaca': 88,
       };
-      const locationScore = locationScores[property.neighborhood] || 75;
+      const locationScore = locationScores[property.commune] || 75;
       
       // Calculate overall score
       const overallScore = (
@@ -586,7 +586,7 @@ export default function OwnerPropertyComparison() {
                     {getTypeIcon(property.type)}
                     <div>
                       <p className="font-medium text-sm">{property.title}</p>
-                      <p className="text-xs text-gray-600">{property.neighborhood}</p>
+                      <p className="text-xs text-gray-600">{property.commune}</p>
                     </div>
                     <Button 
                       variant="ghost" 
@@ -786,7 +786,7 @@ export default function OwnerPropertyComparison() {
                         {getTypeIcon(property.type)}
                         <div>
                           <h3 className="font-semibold text-sm">{property.title}</h3>
-                          <p className="text-xs text-gray-600">{property.neighborhood}</p>
+                          <p className="text-xs text-gray-600">{property.commune}</p>
                         </div>
                       </div>
                       {getStatusBadge(property.status)}
