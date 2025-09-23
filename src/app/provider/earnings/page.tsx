@@ -21,7 +21,9 @@ import {
   Clock,
   Wrench,
   Truck,
-  Banknote
+  Banknote,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -112,7 +114,8 @@ export default function ProviderEarningsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout 
+      <EnhancedDashboardLayout
+        user={user}
         title="Mis Ganancias"
         subtitle="Cargando información..."
       >
@@ -122,13 +125,14 @@ export default function ProviderEarningsPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
+      <EnhancedDashboardLayout
+        user={user}
         title="Mis Ganancias"
         subtitle="Error al cargar la página"
       >
@@ -145,12 +149,13 @@ export default function ProviderEarningsPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout 
+    <EnhancedDashboardLayout
+      user={user}
       title="Mis Ganancias"
       subtitle="Revisa y gestiona tus ganancias como proveedor"
     >
