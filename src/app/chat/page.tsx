@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { chatService, MessageType, ChatStatus } from '@/lib/chat/chat-service';
+import { chatService, MessageType, ChatStatus, ChatConversation as ServiceChatConversation, ChatParticipant, ChatParticipantType } from '@/lib/chat/chat-service';
 import { logger } from '@/lib/logger';
 
 interface ChatMessage {
@@ -56,34 +56,11 @@ interface ChatMessage {
   }>;
 }
 
-interface ChatConversation {
-  id: string;
-  title: string;
-  participants: Array<{
-    id: string;
-    name: string;
-    avatar?: string;
-    isOnline: boolean;
-    role: string;
-  }>;
-  lastMessage?: {
-    content: string;
-    senderName: string;
-    timestamp: Date;
-    isRead: boolean;
-  };
-  unreadCount: number;
-  status: ChatStatus;
-  propertyId?: string;
-  jobId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export default function ChatPage() {
   const [user, setUser] = useState<any>(null);
-  const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
+  const [conversations, setConversations] = useState<ServiceChatConversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<ServiceChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -172,11 +149,18 @@ export default function ChatPage() {
     try {
       if (!user) return;
 
-      const participants = [
-        { id: user.id, name: user.name || user.email, joinedAt: new Date(), isOnline: true },
+      const participants: ChatParticipant[] = [
+        {
+          userId: user.id,
+          userType: user.role as ChatParticipantType,
+          userName: user.name || user.email,
+          joinedAt: new Date(),
+          isOnline: true
+        },
         ...participantIds.map(id => ({
-          id,
-          name: `Usuario ${id.slice(-4)}`, // Mock name
+          userId: id,
+          userType: ChatParticipantType.TENANT,
+          userName: `Usuario ${id.slice(-4)}`, // Mock name
           joinedAt: new Date(),
           isOnline: false
         }))
@@ -238,7 +222,7 @@ export default function ChatPage() {
   const filteredConversations = conversations.filter(conversation =>
     conversation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conversation.participants.some(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      p.userName.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
