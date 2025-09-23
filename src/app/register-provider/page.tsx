@@ -462,7 +462,7 @@ return;
                       </div>
                       <div>
                         <Label htmlFor="specialty">Especialidad Principal *</Label>
-                        <Select value={formData.specialty} onValueChange={(value) => handleInputChange('specialty', value)}>
+                        <Select value={formData.specialty || ''} onValueChange={(value) => handleInputChange('specialty', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona tu especialidad" />
                           </SelectTrigger>
@@ -559,7 +559,7 @@ return;
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="bank">Banco *</Label>
-                        <Select value={formData.bank} onValueChange={(value) => handleInputChange('bank', value)}>
+                        <Select value={formData.bank || ''} onValueChange={(value) => handleInputChange('bank', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona tu banco" />
                           </SelectTrigger>
@@ -573,7 +573,7 @@ return;
                       </div>
                       <div>
                         <Label htmlFor="accountType">Tipo de Cuenta *</Label>
-                        <Select value={formData.accountType} onValueChange={(value: 'CHECKING' | 'SAVINGS') => handleInputChange('accountType', value)}>
+                        <Select value={formData.accountType || ''} onValueChange={(value: 'CHECKING' | 'SAVINGS') => handleInputChange('accountType', value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -793,7 +793,7 @@ return;
                       </div>
                       <div>
                         <Label htmlFor="serviceType">Tipo de Servicio Principal *</Label>
-                        <Select value={formData.serviceType} onValueChange={(value: 'MOVING' | 'CLEANING' | 'GARDENING' | 'PACKING' | 'STORAGE' | 'OTHER') => handleInputChange('serviceType', value)}>
+                        <Select value={formData.serviceType || ''} onValueChange={(value: 'MOVING' | 'CLEANING' | 'GARDENING' | 'PACKING' | 'STORAGE' | 'OTHER') => handleInputChange('serviceType', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona tu servicio principal" />
                           </SelectTrigger>
@@ -893,7 +893,7 @@ return;
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="bank">Banco *</Label>
-                        <Select value={formData.bank} onValueChange={(value) => handleInputChange('bank', value)}>
+                        <Select value={formData.bank || ''} onValueChange={(value) => handleInputChange('bank', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona tu banco" />
                           </SelectTrigger>
@@ -907,7 +907,7 @@ return;
                       </div>
                       <div>
                         <Label htmlFor="accountType">Tipo de Cuenta *</Label>
-                        <Select value={formData.accountType} onValueChange={(value: 'CHECKING' | 'SAVINGS') => handleInputChange('accountType', value)}>
+                        <Select value={formData.accountType || ''} onValueChange={(value: 'CHECKING' | 'SAVINGS') => handleInputChange('accountType', value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
