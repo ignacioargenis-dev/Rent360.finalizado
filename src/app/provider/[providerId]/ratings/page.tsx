@@ -89,7 +89,7 @@ export default function ProviderRatingsPage() {
       setRatings(recentRatings);
 
     } catch (error) {
-      logger.error('Error cargando datos del proveedor:', error);
+      logger.error('Error cargando datos del proveedor:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ export default function ProviderRatingsPage() {
       await ratingService.reportRating(ratingId, reason, user?.id || 'anonymous');
       alert('Gracias por reportar. Revisaremos la calificación.');
     } catch (error) {
-      logger.error('Error reportando rating:', error);
+      logger.error('Error reportando rating:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al reportar la calificación');
     }
   };

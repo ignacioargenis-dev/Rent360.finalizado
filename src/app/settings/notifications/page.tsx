@@ -128,7 +128,7 @@ export default function NotificationSettingsPage() {
       }
 
     } catch (error) {
-      logger.error('Error cargando configuración de notificaciones:', error);
+      logger.error('Error cargando configuración de notificaciones:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export default function NotificationSettingsPage() {
         setPermissionStatus('denied');
       }
     } catch (error) {
-      logger.error('Error requesting notification permission:', error);
+      logger.error('Error requesting notification permission:', { error: error instanceof Error ? error.message : String(error) });
       setPermissionStatus('denied');
     }
   };
@@ -177,7 +177,7 @@ export default function NotificationSettingsPage() {
       }
 
     } catch (error) {
-      logger.error('Error guardando configuración:', error);
+      logger.error('Error guardando configuración:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al guardar la configuración');
     } finally {
       setSaving(false);
@@ -209,7 +209,7 @@ export default function NotificationSettingsPage() {
       }
 
     } catch (error) {
-      logger.error('Error sending test notification:', error);
+      logger.error('Error sending test notification:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al enviar la notificación de prueba');
     }
   };

@@ -107,7 +107,7 @@ export default function TopRatedProvidersPage() {
       setStats(leaderboardStats);
 
     } catch (error) {
-      logger.error('Error cargando leaderboard:', error);
+      logger.error('Error cargando leaderboard:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }

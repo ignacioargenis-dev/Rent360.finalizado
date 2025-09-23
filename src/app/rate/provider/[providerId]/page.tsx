@@ -78,7 +78,7 @@ export default function RateProviderPage() {
       setJob(mockJob);
 
     } catch (error) {
-      logger.error('Error cargando datos para rating:', error);
+      logger.error('Error cargando datos para rating:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -159,7 +159,7 @@ export default function RateProviderPage() {
       }, 3000);
 
     } catch (error) {
-      logger.error('Error enviando rating:', error);
+      logger.error('Error enviando rating:', { error: error instanceof Error ? error.message : String(error) });
       setErrors(['Error al enviar la calificación. Por favor intenta nuevamente.']);
     } finally {
       setSubmitting(false);

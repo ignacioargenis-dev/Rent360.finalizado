@@ -113,7 +113,7 @@ export default function RateServicePage() {
       }
 
     } catch (error) {
-      logger.error('Error cargando datos del servicio:', error);
+      logger.error('Error cargando datos del servicio:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ export default function RateServicePage() {
       }, 3000);
 
     } catch (error) {
-      logger.error('Error enviando reseña:', error);
+      logger.error('Error enviando reseña:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al enviar la reseña. Por favor intenta nuevamente.');
     } finally {
       setSubmitting(false);

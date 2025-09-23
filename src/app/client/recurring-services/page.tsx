@@ -101,7 +101,7 @@ export default function RecurringServicesPage() {
       }
 
     } catch (error) {
-      logger.error('Error cargando servicios recurrentes:', error);
+      logger.error('Error cargando servicios recurrentes:', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ export default function RecurringServicesPage() {
         setServiceInstances(data.instances);
       }
     } catch (error) {
-      logger.error('Error cargando instancias del servicio:', error);
+      logger.error('Error cargando instancias del servicio:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -132,7 +132,7 @@ export default function RecurringServicesPage() {
         throw new Error('Error al cambiar el estado del servicio');
       }
     } catch (error) {
-      logger.error(`Error ${action} servicio:`, error);
+      logger.error(`Error ${action} servicio:`, { error: error instanceof Error ? error.message : String(error) });
       alert('Error al cambiar el estado del servicio');
     }
   };
