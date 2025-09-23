@@ -23,6 +23,19 @@ import { Search,
   Eye } from 'lucide-react';
 import { Property } from '@/types';
 
+interface PropertyFilters {
+  city?: string;
+  commune?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  minArea?: number;
+  maxArea?: number;
+  status?: string;
+  type?: string;
+}
+
 const communes = [
   'Las Condes', 'Vitacura', 'Lo Barnechea', 'Providencia', 'Ñuñoa', 
   'Santiago Centro', 'La Reina', 'Macul', 'San Miguel', 'Estación Central',
@@ -286,7 +299,7 @@ export default function PropertySearch() {
           
           {property.features && Array.isArray(property.features) && property.features.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {property.features?.split(',').slice(0, 3).map((feature, index) => (
+              {property.features.slice(0, 3).map((feature, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {feature}
                 </Badge>
