@@ -326,7 +326,7 @@ export default function OwnerPropertyComparison() {
       // Calculate overall score
       const overallScore = (
         (roi * 0.3) +
-        (property.occupancyRate * 0.25) +
+        ((property.occupancyRate ?? 0) * 0.25) +
         (maintenanceScore * 0.2) +
         (locationScore * 0.15) +
         (inquiriesPerView * 100 * 0.1)
