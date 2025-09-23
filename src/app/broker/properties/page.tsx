@@ -48,11 +48,18 @@ interface PropertyStats {
   featuredProperties: number;
 }
 
+// Extended interface for mock data that includes owner information
+interface PropertyWithOwner extends Property {
+  ownerName: string;
+  ownerEmail: string;
+  ownerPhone: string;
+}
+
 export default function BrokerProperties() {
 
   const [user, setUser] = useState<User | null>(null);
 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<PropertyWithOwner[]>([]);
 
   const [stats, setStats] = useState<PropertyStats>({
     totalProperties: 0,
@@ -85,7 +92,7 @@ export default function BrokerProperties() {
     const loadProperties = async () => {
       try {
         // Mock properties data
-        const mockProperties: Property[] = [
+        const mockProperties: PropertyWithOwner[] = [
           {
             id: '1',
             title: 'Departamento Amoblado Centro',
