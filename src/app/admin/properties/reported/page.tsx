@@ -111,6 +111,8 @@ export default function AdminReportedPropertiesPage() {
             area: 120,
             status: 'AVAILABLE' as any,
             type: 'HOUSE' as any,
+            views: 89,
+            inquiries: 15,
             ownerId: 'owner-2',
             createdAt: new Date('2024-01-10'),
             updatedAt: new Date('2024-01-10'),
