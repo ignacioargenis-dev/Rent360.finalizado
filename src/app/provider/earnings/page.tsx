@@ -45,6 +45,10 @@ import {
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
+// INTERFACES PARA DASHBOARD DE GANANCIAS
+// Compatible con ambos tipos de proveedores: MAINTENANCE y SERVICE
+// La funcionalidad es genérica y funciona igual para ambos tipos
+
 interface ProviderTransaction {
   id: string;
   amount: number;
@@ -55,7 +59,7 @@ interface ProviderTransaction {
   createdAt: Date;
   processedAt?: Date;
   notes?: string;
-  providerType: 'MAINTENANCE' | 'SERVICE';
+  providerType: 'MAINTENANCE' | 'SERVICE'; // Compatible con ambos tipos
   jobs: {
     id: string;
     type: string;
@@ -124,6 +128,21 @@ export default function ProviderEarningsPage() {
   const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalMethod, setWithdrawalMethod] = useState<'bank' | 'paypal' | 'crypto'>('bank');
+
+  // Estados para formularios
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [newGoalAmount, setNewGoalAmount] = useState('');
+  const [newGoalDeadline, setNewGoalDeadline] = useState('');
+
+  // Función para formatear montos en pesos chilenos
+  const formatCLP = (amount: number): string => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
 
   useEffect(() => {
     loadPageData();
@@ -197,13 +216,16 @@ export default function ProviderEarningsPage() {
 
   const loadEarningsGoals = async () => {
     try {
+      // En producción: const response = await fetch('/api/provider/goals');
+      // const data = await response.json();
+
       // Mock data - En producción esto vendría de una API
       const mockGoals: EarningsGoal[] = [
         {
           id: '1',
           title: 'Meta Mensual Octubre',
-          targetAmount: 3000,
-          currentAmount: 2450,
+          targetAmount: 3000000, // $3.000.000 CLP
+          currentAmount: 2450000, // $2.450.000 CLP
           deadline: new Date('2025-10-31'),
           category: 'monthly',
           status: 'active'
@@ -211,16 +233,21 @@ export default function ProviderEarningsPage() {
         {
           id: '2',
           title: 'Meta Trimestral Q4',
-          targetAmount: 10000,
-          currentAmount: 8500,
+          targetAmount: 10000000, // $10.000.000 CLP
+          currentAmount: 8500000, // $8.500.000 CLP
           deadline: new Date('2025-12-31'),
           category: 'quarterly',
           status: 'active'
         }
       ];
+
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       setEarningsGoals(mockGoals);
     } catch (error) {
       console.error('Error loading earnings goals:', error);
+      setError('Error al cargar las metas financieras');
     }
   };
 
@@ -256,15 +283,15 @@ export default function ProviderEarningsPage() {
     try {
       // Mock data - En producción esto vendría de una API
       const mockChartData: ChartData[] = [
-        { month: 'Ene', earnings: 2100, jobs: 8, growth: 5.2 },
-        { month: 'Feb', earnings: 2350, jobs: 9, growth: 12.0 },
-        { month: 'Mar', earnings: 2800, jobs: 11, growth: 19.1 },
-        { month: 'Abr', earnings: 2600, jobs: 10, growth: -7.1 },
-        { month: 'May', earnings: 3200, jobs: 13, growth: 23.1 },
-        { month: 'Jun', earnings: 2900, jobs: 12, growth: -9.4 },
-        { month: 'Jul', earnings: 3500, jobs: 14, growth: 20.7 },
-        { month: 'Ago', earnings: 3800, jobs: 15, growth: 8.6 },
-        { month: 'Sep', earnings: 4200, jobs: 17, growth: 10.5 }
+        { month: 'Ene', earnings: 2100000, jobs: 8, growth: 5.2 },  // $2.100.000 CLP
+        { month: 'Feb', earnings: 2350000, jobs: 9, growth: 12.0 },  // $2.350.000 CLP
+        { month: 'Mar', earnings: 2800000, jobs: 11, growth: 19.1 }, // $2.800.000 CLP
+        { month: 'Abr', earnings: 2600000, jobs: 10, growth: -7.1 }, // $2.600.000 CLP
+        { month: 'May', earnings: 3200000, jobs: 13, growth: 23.1 }, // $3.200.000 CLP
+        { month: 'Jun', earnings: 2900000, jobs: 12, growth: -9.4 }, // $2.900.000 CLP
+        { month: 'Jul', earnings: 3500000, jobs: 14, growth: 20.7 }, // $3.500.000 CLP
+        { month: 'Ago', earnings: 3800000, jobs: 15, growth: 8.6 },  // $3.800.000 CLP
+        { month: 'Sep', earnings: 4200000, jobs: 17, growth: 10.5 }  // $4.200.000 CLP
       ];
       setChartData(mockChartData);
     } catch (error) {
@@ -272,41 +299,119 @@ export default function ProviderEarningsPage() {
     }
   };
 
+  const validateWithdrawalAmount = (amount: number, availableBalance: number = 2450): string | null => {
+    if (amount <= 0) return 'El monto debe ser mayor a 0';
+    if (amount > availableBalance) return 'El monto excede tu saldo disponible';
+    if (amount < 50000) return `El monto mínimo de retiro es ${formatCLP(50000)}`;
+    if (amount > 5000000) return `El monto máximo de retiro es ${formatCLP(5000000)} por transacción`;
+    return null;
+  };
+
   const handleWithdrawalRequest = async () => {
-    if (!withdrawalAmount || parseFloat(withdrawalAmount) <= 0) {
+    const amount = parseFloat(withdrawalAmount);
+
+    // Validaciones
+    if (!withdrawalAmount || isNaN(amount)) {
       setError('Por favor ingresa un monto válido');
       return;
     }
 
+    const validationError = validateWithdrawalAmount(amount);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     try {
-      // Mock API call - En producción esto haría una llamada real
+      // Simular procesamiento
+      setError(null);
+
       const newWithdrawal: WithdrawalRequest = {
         id: Date.now().toString(),
-        amount: parseFloat(withdrawalAmount),
+        amount: amount,
         method: withdrawalMethod,
         status: 'pending',
         requestedAt: new Date(),
-        notes: 'Solicitud de retiro enviada'
+        notes: 'Solicitud de retiro enviada - Procesamiento en 1-3 días hábiles'
       };
+
+      // Simular delay de procesamiento
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setWithdrawalRequests(prev => [newWithdrawal, ...prev]);
       setShowWithdrawalDialog(false);
       setWithdrawalAmount('');
-      setError(null);
+      setWithdrawalMethod('bank');
 
-      // Aquí iría la lógica para enviar la solicitud a la API
-      console.log('Withdrawal request:', newWithdrawal);
+      // Mostrar confirmación temporal
+      setError(''); // Limpiar error
+      console.log('Withdrawal request created:', newWithdrawal);
+
+      // En producción aquí iría la llamada a la API
+      // const response = await fetch('/api/provider/withdrawals', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ amount, method: withdrawalMethod })
+      // });
+
     } catch (error) {
       console.error('Error creating withdrawal request:', error);
-      setError('Error al procesar la solicitud de retiro');
+      setError('Error al procesar la solicitud de retiro. Inténtalo nuevamente.');
     }
   };
 
   const exportData = (format: 'csv' | 'pdf') => {
     // Mock export functionality
     console.log(`Exporting data as ${format}`);
-    // En producción esto generaría y descargaría el archivo
+
+    // En producción implementar exportación real
+    if (format === 'csv') {
+      const csvContent = [
+        ['Fecha', 'Tipo', 'Cliente', 'Monto Bruto', 'Comisión', 'Monto Neto', 'Estado'],
+        ...filteredTransactions.map(t => [
+          new Date(t.createdAt).toLocaleDateString(),
+          t.jobs[0]?.type || 'Servicio',
+          t.jobs[0]?.clientName || 'Cliente',
+          t.amount.toString(),
+          t.commission.toString(),
+          t.netAmount.toString(),
+          t.status
+        ])
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transacciones-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Para PDF se necesitaría una librería como jsPDF o react-pdf
   };
+
+  const createNewGoal = async (goalData: Omit<EarningsGoal, 'id' | 'currentAmount' | 'status'>) => {
+    try {
+      // En producción: enviar a API
+      const newGoal: EarningsGoal = {
+        id: Date.now().toString(),
+        ...goalData,
+        currentAmount: 0,
+        status: 'active'
+      };
+
+      setEarningsGoals(prev => [...prev, newGoal]);
+      console.log('Nueva meta creada:', newGoal);
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      setError('Error al crear la meta');
+    }
+  };
+
+  // Paginación básica - En producción implementar paginación del servidor
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus;
@@ -317,6 +422,18 @@ export default function ProviderEarningsPage() {
       );
     return matchesStatus && matchesSearch;
   });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset paginación cuando cambian filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, searchTerm]);
 
   if (loading) {
     return (
@@ -375,7 +492,7 @@ export default function ProviderEarningsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$12,450</div>
+              <div className="text-2xl font-bold">{formatCLP(stats?.totalEarnings || 12450)}</div>
               <p className="text-xs text-muted-foreground">
                 +15% desde el mes pasado
               </p>
@@ -388,7 +505,7 @@ export default function ProviderEarningsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$3,250</div>
+              <div className="text-2xl font-bold">{formatCLP(stats?.monthlyEarnings || 3250)}</div>
               <p className="text-xs text-muted-foreground">
                 +8% desde el mes pasado
               </p>
@@ -414,7 +531,7 @@ export default function ProviderEarningsPage() {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$276</div>
+              <div className="text-2xl font-bold">{formatCLP(276)}</div>
               <p className="text-xs text-muted-foreground">
                 +3% desde el mes pasado
               </p>
@@ -491,7 +608,7 @@ export default function ProviderEarningsPage() {
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">${chartData.reduce((sum, item) => sum + item.earnings, 0).toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-green-600">{formatCLP(chartData.reduce((sum, item) => sum + item.earnings, 0))}</div>
                     <p className="text-xs text-muted-foreground">Total últimos 9 meses</p>
                   </div>
                   <div className="text-center">
@@ -530,7 +647,7 @@ export default function ProviderEarningsPage() {
                           {isExpiring && !isCompleted && <AlertCircle className="w-4 h-4 text-orange-500" />}
                         </div>
                         <Badge variant={isCompleted ? "default" : "secondary"}>
-                          {goal.currentAmount.toLocaleString()} / {goal.targetAmount.toLocaleString()}
+                          {formatCLP(goal.currentAmount)} / {formatCLP(goal.targetAmount)}
                         </Badge>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -618,30 +735,74 @@ export default function ProviderEarningsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredTransactions.slice(0, 10).map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-3 h-3 rounded-full ${
-                          transaction.status === 'COMPLETED' ? 'bg-green-500' :
-                          transaction.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} />
-                        <div>
-                          <p className="font-medium">
-                            {transaction.jobs.length > 0 ? transaction.jobs[0].type : 'Servicio'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {transaction.jobs.length > 0 ? transaction.jobs[0].clientName : 'Cliente'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">${transaction.netAmount.toFixed(2)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(transaction.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+                  {paginatedTransactions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600">No se encontraron transacciones</p>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      {paginatedTransactions.map((transaction) => (
+                        <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-3 h-3 rounded-full ${
+                              transaction.status === 'COMPLETED' ? 'bg-green-500' :
+                              transaction.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`} />
+                            <div>
+                              <p className="font-medium">
+                                {transaction.jobs.length > 0 ? transaction.jobs[0].type : 'Servicio'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.jobs.length > 0 ? transaction.jobs[0].clientName : 'Cliente'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {transaction.providerType === 'MAINTENANCE' ? '🏠 Mantenimiento' : '🔧 Servicio General'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                        <p className="font-medium">{formatCLP(transaction.netAmount)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Comisión: {formatCLP(transaction.commission)}
+                        </p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Controles de paginación */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="text-sm text-muted-foreground">
+                            Mostrando {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredTransactions.length)} de {filteredTransactions.length} transacciones
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronUp className="w-4 h-4 rotate-90" />
+                              Anterior
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              disabled={currentPage === totalPages}
+                            >
+                              Siguiente
+                              <ChevronUp className="w-4 h-4 -rotate-90" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -733,7 +894,7 @@ export default function ProviderEarningsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${withdrawal.amount.toFixed(2)}</p>
+                        <p className="font-medium">{formatCLP(withdrawal.amount)}</p>
                         <Badge variant={
                           withdrawal.status === 'completed' ? 'default' :
                           withdrawal.status === 'processing' ? 'secondary' : 'outline'
@@ -769,18 +930,52 @@ export default function ProviderEarningsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium">Título</label>
-                      <Input placeholder="Ej: Meta Q4 2025" />
+                      <Input
+                        placeholder="Ej: Meta Q4 2025"
+                        value={newGoalTitle}
+                        onChange={(e) => setNewGoalTitle(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium">Monto Objetivo</label>
-                      <Input type="number" placeholder="5000" />
+                      <Input
+                        type="number"
+                        placeholder="5000"
+                        value={newGoalAmount}
+                        onChange={(e) => setNewGoalAmount(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium">Fecha Límite</label>
-                      <Input type="date" />
+                      <Input
+                        type="date"
+                        value={newGoalDeadline}
+                        onChange={(e) => setNewGoalDeadline(e.target.value)}
+                      />
                     </div>
                   </div>
-                  <Button className="mt-4">
+                  <Button
+                    className="mt-4"
+                    onClick={async () => {
+                      if (!newGoalTitle || !newGoalAmount || !newGoalDeadline) {
+                        setError('Por favor completa todos los campos');
+                        return;
+                      }
+
+                      await createNewGoal({
+                        title: newGoalTitle,
+                        targetAmount: parseFloat(newGoalAmount),
+                        deadline: new Date(newGoalDeadline),
+                        category: 'monthly' // Por defecto mensual, se puede hacer configurable
+                      });
+
+                      // Limpiar formulario
+                      setNewGoalTitle('');
+                      setNewGoalAmount('');
+                      setNewGoalDeadline('');
+                    }}
+                    disabled={!newGoalTitle || !newGoalAmount || !newGoalDeadline}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Crear Meta
                   </Button>
@@ -800,8 +995,8 @@ export default function ProviderEarningsPage() {
                           </div>
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                              <span>${goal.currentAmount.toLocaleString()}</span>
-                              <span>${goal.targetAmount.toLocaleString()}</span>
+                              <span>{formatCLP(goal.currentAmount)}</span>
+                              <span>{formatCLP(goal.targetAmount)}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-3">
                               <div
