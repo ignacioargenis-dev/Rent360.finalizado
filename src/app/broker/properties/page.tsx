@@ -106,6 +106,9 @@ export default function BrokerProperties() {
             views: 145,
             inquiries: 23,
             ownerId: 'owner-1',
+            ownerName: 'Juan Pérez',
+            ownerEmail: 'juan.perez@email.com',
+            ownerPhone: '+56912345678',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
           },
@@ -129,6 +132,9 @@ export default function BrokerProperties() {
             views: 89,
             inquiries: 12,
             ownerId: 'owner-2',
+            ownerName: 'María González',
+            ownerEmail: 'maria.gonzalez@email.com',
+            ownerPhone: '+56987654321',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
           },
@@ -152,6 +158,9 @@ export default function BrokerProperties() {
             views: 67,
             inquiries: 8,
             ownerId: 'owner-3',
+            ownerName: 'Carlos Rodríguez',
+            ownerEmail: 'carlos.rodriguez@email.com',
+            ownerPhone: '+56911223344',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
           },
@@ -175,6 +184,9 @@ export default function BrokerProperties() {
             views: 234,
             inquiries: 45,
             ownerId: 'owner-4',
+            ownerName: 'Ana López',
+            ownerEmail: 'ana.lopez@email.com',
+            ownerPhone: '+56955667788',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
           },
@@ -198,6 +210,9 @@ export default function BrokerProperties() {
             views: 178,
             inquiries: 31,
             ownerId: 'owner-5',
+            ownerName: 'Pedro Sánchez',
+            ownerEmail: 'pedro.sanchez@email.com',
+            ownerPhone: '+56999887766',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
           },
@@ -221,6 +236,9 @@ export default function BrokerProperties() {
             views: 92,
             inquiries: 15,
             ownerId: 'owner-6',
+            ownerName: 'Laura Martínez',
+            ownerEmail: 'laura.martinez@email.com',
+            ownerPhone: '+56933445566',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35),
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
           },
@@ -658,8 +676,16 @@ return `Hace ${diffDays} días`;
                   {/* Owner Info */}
                   <div className="border-t pt-3 mb-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">ID Propietario:</span>
-                      <span className="font-medium">{property.ownerId}</span>
+                      <span className="text-gray-600">Propietario:</span>
+                      <span className="font-medium">{property.ownerName}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-1">
+                      <span className="text-gray-600">Email:</span>
+                      <span className="font-medium">{property.ownerEmail}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-1">
+                      <span className="text-gray-600">Teléfono:</span>
+                      <span className="font-medium">{property.ownerPhone}</span>
                     </div>
                   </div>
 
