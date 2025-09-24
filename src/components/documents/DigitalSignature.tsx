@@ -151,8 +151,8 @@ return;
     setIsDrawing(true);
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const x = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -174,8 +174,8 @@ return;
 }
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const x = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -277,13 +277,13 @@ return;
       const signature: SignatureData = {
         id: `sig_${Date.now()}`,
         document_id: document.id,
-        signer_id: currentUser.id,
-        signer_name: currentUser.name,
-        signer_email: currentUser.email,
+        signer_id: currentUser?.id || '',
+        signer_name: currentUser?.name || 'Usuario',
+        signer_email: currentUser?.email || '',
         signature_image: signatureData || typedSignature,
         signature_date: new Date().toISOString(),
         ip_address: '192.168.1.1', // Esto debería obtenerse del servidor
-        user_agent: navigator.userAgent,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
         status: 'signed',
         verification_hash: `hash_${Date.now()}_${Math.random().toString(36)}`,
       };
@@ -423,12 +423,12 @@ return;
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {document.parties.map((party, index) => (
+            {document.parties?.map((party, index) => (
               <div key={index} className="border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <User className="w-4 h-4" />
                   <span className="font-medium">{party.name}</span>
-                  {party.email === currentUser.email && (
+                  {party.email === currentUser?.email && (
                     <Badge className="bg-blue-100 text-blue-800">Yo</Badge>
                   )}
                 </div>
@@ -584,7 +584,7 @@ return;
                   <span className="font-medium text-blue-800">Verificación de Identidad</span>
                 </div>
                 <p className="text-sm text-blue-700 mb-3">
-                  Hemos enviado un código de verificación a tu correo: {currentUser.email}
+                  Hemos enviado un código de verificación a tu correo: {currentUser?.email || 'correo@ejemplo.com'}
                 </p>
                 <div className="flex items-center gap-2">
                   <Input
