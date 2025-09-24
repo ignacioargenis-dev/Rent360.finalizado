@@ -115,7 +115,7 @@ export default function BackupManager() {
       }
 
       const data = await response.json();
-      success(data.message);
+      success('Éxito', data.message);
 
       // Actualizar lista de backups
       await fetchBackupData();
@@ -140,7 +140,7 @@ export default function BackupManager() {
       }
 
       const data = await response.json();
-      success(data.message);
+      success('Éxito', data.message);
       setConfig(data.data);
     } catch (err) {
       showError('Error', 'Error actualizando configuración: ' + (err instanceof Error ? err.message : String(err)));
@@ -161,7 +161,7 @@ export default function BackupManager() {
       }
 
       const data = await response.json();
-      success(data.message);
+      success('Éxito', data.message);
     } catch (err) {
       showError('Error', 'Error restaurando backup: ' + (err instanceof Error ? err.message : String(err)));
     }
