@@ -90,11 +90,18 @@ const SystemMetricsDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMetrics();
-    
+
+    let interval: NodeJS.Timeout | undefined;
+
     if (autoRefresh) {
-      const interval = setInterval(fetchMetrics, 30000); // Actualizar cada 30 segundos
-      return () => clearInterval(interval);
+      interval = setInterval(fetchMetrics, 30000); // Actualizar cada 30 segundos
     }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [autoRefresh]);
 
   const fetchMetrics = async () => {
