@@ -293,7 +293,7 @@ export default function BrokerProperties() {
   }, []);
 
   const updatePropertyStatus = async (propertyId: string, newStatus: string) => {
-    setProperties(prev => prev.map(property => 
+    setProperties((prev: PropertyWithOwner[]) => prev.map(property => 
       property.id === propertyId 
         ? { ...property, status: newStatus as Property['status'] }
         : property,
@@ -302,7 +302,7 @@ export default function BrokerProperties() {
 
   const toggleFeatured = async (propertyId: string) => {
     // For demo purposes, we'll toggle between apartment types
-    setProperties(prev => prev.map(property =>
+    setProperties((prev: PropertyWithOwner[]) => prev.map(property =>
       property.id === propertyId
         ? { ...property, type: property.type === 'apartment' ? 'house' : 'apartment' }
         : property,
@@ -310,7 +310,7 @@ export default function BrokerProperties() {
   };
 
   const deleteProperty = async (propertyId: string) => {
-    setProperties(prev => prev.filter(property => property.id !== propertyId));
+    setProperties((prev: PropertyWithOwner[]) => prev.filter(property => property.id !== propertyId));
   };
 
   const getTypeIcon = (type: string) => {

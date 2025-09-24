@@ -146,7 +146,7 @@ return;
       newFiles.push(documentFile);
     });
 
-    setFiles(prev => [...prev, ...newFiles].slice(0, maxFiles));
+    setFiles((prev: DocumentFile[]) => [...prev, ...newFiles].slice(0, maxFiles));
     
     // Simulate upload progress
     newFiles.filter(f => f.status === 'uploading').forEach(file => {
@@ -161,14 +161,14 @@ return;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
-        setFiles(prev => prev.map(f => 
-          f.id === fileId 
+        setFiles((prev: DocumentFile[]) => prev.map(f =>
+          f.id === fileId
             ? { ...f, status: 'completed', progress: 100 }
             : f,
         ));
       } else {
-        setFiles(prev => prev.map(f => 
-          f.id === fileId 
+        setFiles((prev: DocumentFile[]) => prev.map(f =>
+          f.id === fileId
             ? { ...f, progress }
             : f,
         ));

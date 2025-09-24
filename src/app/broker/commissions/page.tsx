@@ -298,7 +298,7 @@ export default function BrokerCommissions() {
   }, []);
 
   const updateCommissionStatus = async (commissionId: string, newStatus: string) => {
-    setCommissions(prev => prev.map(commission =>
+    setCommissions((prev: Commission[]) => prev.map(commission =>
       commission.id === commissionId
         ? {
             ...commission,

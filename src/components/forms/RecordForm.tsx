@@ -300,14 +300,14 @@ export default function RecordForm({
   };
 
   const handleInputChange = (fieldName: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       [fieldName]: value,
     }));
 
     // Clear error when user starts typing
     if (errors[fieldName]) {
-      setErrors(prev => {
+      setErrors((prev: Record<string, string> & { submit?: string }) => {
         const newErrors = { ...prev };
         delete newErrors[fieldName];
         return newErrors;
@@ -318,12 +318,12 @@ export default function RecordForm({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...newFiles]);
+      setFiles((prev: File[]) => [...prev, ...newFiles]);
     }
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev: File[]) => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = (): boolean => {
