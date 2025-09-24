@@ -241,6 +241,8 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
 
       return () => clearTimeout(timer);
     }
+    // No cleanup needed when autoClose is disabled
+    return undefined;
   }, [toast.autoClose, toast.duration, onRemove]);
 
   const handleClose = () => {
