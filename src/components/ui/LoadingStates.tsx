@@ -225,9 +225,9 @@ export function AsyncState({
 
   if (error) {
     return (
-      <ErrorState 
+      <ErrorState
         message={errorMessage || error.message}
-        onRetry={onRetry}
+        {...(onRetry && { onRetry })}
       />
     );
   }
