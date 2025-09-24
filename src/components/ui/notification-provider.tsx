@@ -86,7 +86,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return notify({
       type: 'success',
       title,
-      message,
+      ...(message && { message }),
       duration: 5000,
       ...options
     });
@@ -96,7 +96,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return notify({
       type: 'error',
       title,
-      message,
+      ...(message && { message }),
       duration: 7000,
       persistent: true,
       ...options
@@ -107,7 +107,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return notify({
       type: 'warning',
       title,
-      message,
+      ...(message && { message }),
       duration: 6000,
       ...options
     });
@@ -117,7 +117,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return notify({
       type: 'info',
       title,
-      message,
+      ...(message && { message }),
       duration: 5000,
       ...options
     });
@@ -127,7 +127,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return notify({
       type: 'loading',
       title,
-      message,
+      ...(message && { message }),
       persistent: true,
       ...options
     });
