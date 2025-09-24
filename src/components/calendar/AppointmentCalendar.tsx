@@ -178,7 +178,7 @@ export default function AppointmentCalendar({
                     <div className="flex items-center gap-1">
                       {getTypeIcon(appointment.type)}
                       <span className="truncate font-medium">
-                        {format(parseISO(`${appointment.date}T${appointment.time}`), 'HH:mm')}
+                        {appointment.time ? format(parseISO(`${appointment.date}T${appointment.time}`), 'HH:mm') : 'Sin hora'}
                       </span>
                     </div>
                     <div className="truncate text-xs opacity-75">
@@ -224,7 +224,7 @@ export default function AppointmentCalendar({
         <div className="space-y-1">
           {hours.map(hour => {
             const hourAppointments = dayAppointments.filter(appointment => {
-              const appointmentHour = parseInt(appointment.time.split(':')[0]);
+              const appointmentHour = appointment.time ? parseInt(appointment.time.split(':')[0]) : 0;
               return appointmentHour === hour;
             });
             
@@ -248,7 +248,7 @@ export default function AppointmentCalendar({
                         <div className="flex items-center gap-2">
                           {getTypeIcon(appointment.type)}
                           <span className="font-medium text-sm">
-                            {appointment.time} - {appointment.clientName}
+                            {appointment.time || 'Sin hora'} - {appointment.clientName}
                           </span>
                         </div>
                         <Badge className="text-xs">
