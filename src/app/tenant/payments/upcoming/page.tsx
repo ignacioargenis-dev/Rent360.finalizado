@@ -18,7 +18,28 @@ import { CreditCard,
   Info } from 'lucide-react';
 import { Payment } from '@/types';
 
-interface UpcomingPayment extends Payment {
+interface UpcomingPayment {
+  id: string;
+  paymentNumber: string;
+  contractId: string;
+  amount: number;
+  dueDate: Date;
+  paidDate?: Date;
+  status: string;
+  method?: string;
+  transactionId?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  contract?: {
+    id: string;
+    contractNumber: string;
+    property?: {
+      id: string;
+      title: string;
+      address: string;
+    };
+  };
   propertyName: string;
   propertyAddress: string;
   daysUntilDue: number;
@@ -43,7 +64,7 @@ export default function TenantUpcomingPaymentsPage() {
       const response = await fetch('/api/payments?upcoming=true');
       if (response.ok) {
         const data = await response.json();
-        const upcomingPayments = data.payments.map((payment: Payment) => ({
+        const upcomingPayments = data.payments.map((payment: Payment & { contract?: { id: string; contractNumber: string; property?: { id: string; title: string; address: string; }; }; }) => ({
           ...payment,
           propertyName: payment.contract?.property?.title || 'N/A',
           propertyAddress: payment.contract?.property?.address || 'N/A',
