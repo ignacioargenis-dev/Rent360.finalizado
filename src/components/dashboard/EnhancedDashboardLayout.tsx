@@ -548,20 +548,23 @@ export default function EnhancedDashboardLayout({
           </div>
         </div>
         
-        {user && (
-          <div className="p-2 border-t">
-            <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={user?.avatar} alt={user?.name || 'Usuario'} />
-                <AvatarFallback>{(user?.name || 'U').charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.name || 'Usuario'}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+        {user && (() => {
+          const currentUser = user as User;
+          return (
+            <div className="p-2 border-t">
+              <div className="flex items-center gap-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.name || 'Usuario'} />
+                  <AvatarFallback>{(currentUser.name || 'U').charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{currentUser.name || 'Usuario'}</p>
+                  <p className="text-xs text-gray-500 truncate">{currentUser.email || ''}</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden">
