@@ -305,7 +305,7 @@ return;
       setUploadProgress(100);
 
       logger.info('Documento creado exitosamente:', {
-        title: title || files[0].name,
+        title: title || (files.length > 0 ? files[0].name : 'Documentos'),
         fileCount: result.files?.length,
         summary: result.summary
       });
