@@ -35,14 +35,14 @@ export class AuditService {
     try {
       await db.auditLog.create({
         data: {
-          userId: data.userId,
+          ...(data.userId && { userId: data.userId }),
           action: data.action,
           entityType: data.entityType,
-          entityId: data.entityId,
+          ...(data.entityId && { entityId: data.entityId }),
           oldValues: data.oldValues ? JSON.stringify(data.oldValues) : null,
           newValues: data.newValues ? JSON.stringify(data.newValues) : null,
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
+          ...(data.ipAddress && { ipAddress: data.ipAddress }),
+          ...(data.userAgent && { userAgent: data.userAgent }),
         }
       });
 
