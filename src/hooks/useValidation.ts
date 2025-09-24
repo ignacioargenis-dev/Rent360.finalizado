@@ -71,7 +71,9 @@ export function useValidation() {
       if (!validation.success) {
         validation.errors.forEach(error => {
           const [fieldName, message] = error.split(': ');
-          newErrors[fieldName] = message;
+          if (fieldName) {
+            newErrors[fieldName] = message;
+          }
         });
       }
 
