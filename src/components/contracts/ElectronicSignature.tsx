@@ -81,7 +81,7 @@ export default function ElectronicSignature({
   const [signatureInfo, setSignatureInfo] = useState<SignatureInfo | null>(null);
 
   const [polling, setPolling] = useState(false);
-  const { success, error } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Establecer fecha de expiración por defecto (7 días)
@@ -126,12 +126,20 @@ export default function ElectronicSignature({
 
   const createSignatureRequest = async () => {
     if (!validateSigners()) {
-      error('Error', 'Por favor completa todos los campos requeridos de los firmantes');
+      toast({
+        title: 'Error',
+        description: 'Por favor completa todos los campos requeridos de los firmantes',
+        variant: 'destructive'
+      });
       return;
     }
 
     if (!expiresAt) {
-      error('Error', 'Por favor establece una fecha de expiración');
+      toast({
+        title: 'Error',
+        description: 'Por favor establece una fecha de expiración',
+        variant: 'destructive'
+      });
       return;
     }
 
@@ -161,7 +169,11 @@ export default function ElectronicSignature({
       const data = await response.json();
 
       if (data.success) {
-        success('Firma Creada', 'Solicitud de firma creada exitosamente');
+        toast({
+          title: 'Firma Creada',
+          description: 'Solicitud de firma creada exitosamente',
+          variant: 'default'
+        });
         setSignatureInfo({
           id: data.signatureId,
           status: data.status,
@@ -177,10 +189,18 @@ export default function ElectronicSignature({
         
         onSignatureComplete?.(data.signatureId);
       } else {
-        error('Error', data.error || 'Error al crear la solicitud de firma');
+        toast({
+          title: 'Error',
+          description: data.error || 'Error al crear la solicitud de firma',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
-      error('Error', 'Error al crear la solicitud de firma');
+      toast({
+        title: 'Error',
+        description: 'Error al crear la solicitud de firma',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -209,11 +229,23 @@ export default function ElectronicSignature({
             setPolling(false);
             
             if (data.status === 'completed') {
-              success('Firma Completada', 'El documento ha sido firmado exitosamente');
+              toast({
+                title: 'Firma Completada',
+                description: 'El documento ha sido firmado exitosamente',
+                variant: 'default'
+              });
             } else if (data.status === 'failed') {
-              error('Firma Fallida', 'La firma no pudo ser completada');
+              toast({
+                title: 'Firma Fallida',
+                description: 'La firma no pudo ser completada',
+                variant: 'destructive'
+              });
             } else if (data.status === 'expired') {
-              error('Firma Expirada', 'La solicitud de firma ha expirado');
+              toast({
+                title: 'Firma Expirada',
+                description: 'La solicitud de firma ha expirado',
+                variant: 'destructive'
+              });
             }
           }
         }
@@ -260,15 +292,27 @@ return;
       const data = await response.json();
 
       if (data.success) {
-        success('Firma Cancelada', 'La solicitud de firma ha sido cancelada');
+        toast({
+          title: 'Firma Cancelada',
+          description: 'La solicitud de firma ha sido cancelada',
+          variant: 'default'
+        });
         setSignatureInfo(null);
         setPolling(false);
         onSignatureCancel?.();
       } else {
-        error('Error', data.error || 'Error al cancelar la firma');
+        toast({
+          title: 'Error',
+          description: data.error || 'Error al cancelar la firma',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
-      error('Error', 'Error al cancelar la firma');
+      toast({
+        title: 'Error',
+        description: 'Error al cancelar la firma',
+        variant: 'destructive'
+      });
     }
   };
 

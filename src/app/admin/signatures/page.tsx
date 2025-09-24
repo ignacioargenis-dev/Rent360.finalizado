@@ -49,7 +49,7 @@ export default function SignaturesAdminPage() {
   const [providers, setProviders] = useState<SignatureProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { success, error } = useToast();
+  const { toast } = useToast();
 
   // Proveedores autorizados por SII
   const authorizedProviders: SignatureProvider[] = [
@@ -143,7 +143,11 @@ export default function SignaturesAdminPage() {
 
       setProviders(loadedProviders);
     } catch (err) {
-      error('Error al cargar configuración', 'No se pudo cargar la configuración de proveedores');
+      toast({
+        title: 'Error al cargar configuración',
+        description: 'No se pudo cargar la configuración de proveedores',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -177,9 +181,17 @@ export default function SignaturesAdminPage() {
       // Por ahora solo mostramos éxito
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      success('Configuración guardada', 'Los proveedores de firma han sido configurados exitosamente');
+      toast({
+        title: 'Configuración guardada',
+        description: 'Los proveedores de firma han sido configurados exitosamente',
+        variant: 'default'
+      });
     } catch (err) {
-      error('Error al guardar', 'No se pudo guardar la configuración');
+      toast({
+        title: 'Error al guardar',
+        description: 'No se pudo guardar la configuración',
+        variant: 'destructive'
+      });
     } finally {
       setSaving(false);
     }
@@ -190,9 +202,17 @@ export default function SignaturesAdminPage() {
       // Simular test de conexión
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      success('Prueba exitosa', `${providerName} está funcionando correctamente`);
+      toast({
+        title: 'Prueba exitosa',
+        description: `${providerName} está funcionando correctamente`,
+        variant: 'default'
+      });
     } catch (err) {
-      error('Prueba fallida', `Error al conectar con ${providerName}`);
+      toast({
+        title: 'Prueba fallida',
+        description: `Error al conectar con ${providerName}`,
+        variant: 'destructive'
+      });
     }
   };
 

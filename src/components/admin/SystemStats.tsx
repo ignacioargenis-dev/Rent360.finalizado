@@ -113,7 +113,7 @@ export default function SystemStats() {
   const [loading, setLoading] = useState(true);
 
   const [refreshing, setRefreshing] = useState(false);
-  const { success, error } = useToast();
+  const { toast } = useToast();
 
   const fetchStats = async () => {
     try {
@@ -123,10 +123,18 @@ export default function SystemStats() {
       if (data.success) {
         setStats(data.data);
       } else {
-        error('Error', data.error || 'Error al obtener estadísticas');
+        toast({
+          title: 'Error',
+          description: data.error || 'Error al obtener estadísticas',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
-      error('Error', 'Error al obtener estadísticas del sistema');
+      toast({
+        title: 'Error',
+        description: 'Error al obtener estadísticas del sistema',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -141,13 +149,25 @@ export default function SystemStats() {
       const data = await response.json();
 
       if (data.success) {
-        success('Éxito', `${data.deletedCount} logs antiguos eliminados`);
+        toast({
+          title: 'Éxito',
+          description: `${data.deletedCount} logs antiguos eliminados`,
+          variant: 'default'
+        });
         fetchStats(); // Refrescar estadísticas
       } else {
-        error('Error', data.error || 'Error al limpiar logs');
+        toast({
+          title: 'Error',
+          description: data.error || 'Error al limpiar logs',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
-      error('Error', 'Error al limpiar logs antiguos');
+      toast({
+        title: 'Error',
+        description: 'Error al limpiar logs antiguos',
+        variant: 'destructive'
+      });
     }
   };
 
