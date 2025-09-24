@@ -33,8 +33,11 @@ import { FileText,
   Upload
 } from 'lucide-react';
 import DocumentUpload from '@/components/documents/DocumentUpload';
+import DigitalSignature from '@/components/documents/DigitalSignature';
 import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState } from 'react';
 
 interface Document {
   id: string
@@ -78,6 +81,8 @@ export default function DocumentsPage() {
   const [activeTab, setActiveTab] = useState('documents');
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -89,10 +94,155 @@ export default function DocumentsPage() {
       const response = await fetch('/api/documents/upload');
       if (response.ok) {
         const data = await response.json();
-        setDocuments(data.documents || []);
+        // Agregar documentos mock para firma digital
+        const mockDocuments: Document[] = [
+          {
+            id: 'doc-1',
+            title: 'Acuerdo de Confidencialidad',
+            description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+            category: 'agreement',
+            file_name: 'acuerdo-confidencialidad.pdf',
+            file_path: '/uploads/acuerdo-confidencialidad.pdf',
+            file_size: 245760,
+            file_type: 'application/pdf',
+            tags: 'confidencial, acuerdo',
+            uploaded_by: 'admin',
+            status: 'active',
+            created_at: '2024-01-15T10:30:00Z',
+            updated_at: '2024-01-15T10:30:00Z',
+          },
+          {
+            id: 'doc-2',
+            title: 'Contrato de Servicios',
+            description: 'Contrato de prestación de servicios entre proveedor y cliente.',
+            category: 'contract',
+            file_name: 'contrato-servicios.pdf',
+            file_path: '/uploads/contrato-servicios.pdf',
+            file_size: 512000,
+            file_type: 'application/pdf',
+            tags: 'contrato, servicios',
+            uploaded_by: 'admin',
+            status: 'active',
+            created_at: '2024-01-20T14:15:00Z',
+            updated_at: '2024-01-20T14:15:00Z',
+          },
+          {
+            id: 'doc-3',
+            title: 'Acuerdo de Uso',
+            description: 'Términos y condiciones de uso de la plataforma Rent360.',
+            category: 'agreement',
+            file_name: 'acuerdo-uso.pdf',
+            file_path: '/uploads/acuerdo-uso.pdf',
+            file_size: 189440,
+            file_type: 'application/pdf',
+            tags: 'términos, condiciones',
+            uploaded_by: 'system',
+            status: 'active',
+            created_at: '2024-01-10T09:00:00Z',
+            updated_at: '2024-01-10T09:00:00Z',
+          },
+        ];
+        setDocuments([...(data.documents || []), ...mockDocuments]);
+      } else {
+        // Si no hay API, usar documentos mock
+        setDocuments([
+          {
+            id: 'doc-1',
+            title: 'Acuerdo de Confidencialidad',
+            description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+            category: 'agreement',
+            file_name: 'acuerdo-confidencialidad.pdf',
+            file_path: '/uploads/acuerdo-confidencialidad.pdf',
+            file_size: 245760,
+            file_type: 'application/pdf',
+            tags: 'confidencial, acuerdo',
+            uploaded_by: 'admin',
+            status: 'active',
+            created_at: '2024-01-15T10:30:00Z',
+            updated_at: '2024-01-15T10:30:00Z',
+          },
+          {
+            id: 'doc-2',
+            title: 'Contrato de Servicios',
+            description: 'Contrato de prestación de servicios entre proveedor y cliente.',
+            category: 'contract',
+            file_name: 'contrato-servicios.pdf',
+            file_path: '/uploads/contrato-servicios.pdf',
+            file_size: 512000,
+            file_type: 'application/pdf',
+            tags: 'contrato, servicios',
+            uploaded_by: 'admin',
+            status: 'active',
+            created_at: '2024-01-20T14:15:00Z',
+            updated_at: '2024-01-20T14:15:00Z',
+          },
+          {
+            id: 'doc-3',
+            title: 'Acuerdo de Uso',
+            description: 'Términos y condiciones de uso de la plataforma Rent360.',
+            category: 'agreement',
+            file_name: 'acuerdo-uso.pdf',
+            file_path: '/uploads/acuerdo-uso.pdf',
+            file_size: 189440,
+            file_type: 'application/pdf',
+            tags: 'términos, condiciones',
+            uploaded_by: 'system',
+            status: 'active',
+            created_at: '2024-01-10T09:00:00Z',
+            updated_at: '2024-01-10T09:00:00Z',
+          },
+        ]);
       }
     } catch (error) {
       logger.error('Error fetching documents:', { error: error instanceof Error ? error.message : String(error) });
+      // Fallback a documentos mock
+      setDocuments([
+        {
+          id: 'doc-1',
+          title: 'Acuerdo de Confidencialidad',
+          description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+          category: 'agreement',
+          file_name: 'acuerdo-confidencialidad.pdf',
+          file_path: '/uploads/acuerdo-confidencialidad.pdf',
+          file_size: 245760,
+          file_type: 'application/pdf',
+          tags: 'confidencial, acuerdo',
+          uploaded_by: 'admin',
+          status: 'active',
+          created_at: '2024-01-15T10:30:00Z',
+          updated_at: '2024-01-15T10:30:00Z',
+        },
+        {
+          id: 'doc-2',
+          title: 'Contrato de Servicios',
+          description: 'Contrato de prestación de servicios entre proveedor y cliente.',
+          category: 'contract',
+          file_name: 'contrato-servicios.pdf',
+          file_path: '/uploads/contrato-servicios.pdf',
+          file_size: 512000,
+          file_type: 'application/pdf',
+          tags: 'contrato, servicios',
+          uploaded_by: 'admin',
+          status: 'active',
+          created_at: '2024-01-20T14:15:00Z',
+          updated_at: '2024-01-20T14:15:00Z',
+        },
+        {
+          id: 'doc-3',
+          title: 'Acuerdo de Uso',
+          description: 'Términos y condiciones de uso de la plataforma Rent360.',
+          category: 'agreement',
+          file_name: 'acuerdo-uso.pdf',
+          file_path: '/uploads/acuerdo-uso.pdf',
+          file_size: 189440,
+          file_type: 'application/pdf',
+          tags: 'términos, condiciones',
+          uploaded_by: 'system',
+          status: 'active',
+          created_at: '2024-01-10T09:00:00Z',
+          updated_at: '2024-01-10T09:00:00Z',
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -146,6 +296,24 @@ return '0 Bytes';
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const handleSignDocument = (document: Document) => {
+    setSelectedDocument(document);
+    setShowSignatureDialog(true);
+  };
+
+  const handleSignatureComplete = (signatureData: any) => {
+    // Aquí se podría guardar la firma en la base de datos
+    setShowSignatureDialog(false);
+    setSelectedDocument(null);
+    // Refrescar documentos para mostrar el estado actualizado
+    fetchDocuments();
+  };
+
+  const handleSignatureCancel = () => {
+    setShowSignatureDialog(false);
+    setSelectedDocument(null);
   };
 
   const getCategoryLabel = (category: string) => {
@@ -336,6 +504,47 @@ return '📊';
                             )}
                           </div>
                           <div className="flex gap-2">
+                            {(document.category === 'agreement' || document.category === 'contract') && (
+                              <Dialog open={showSignatureDialog && selectedDocument?.id === document.id} onOpenChange={setShowSignatureDialog}>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" onClick={() => handleSignDocument(document)}>
+                                    <PenTool className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle>Firmar Documento - {document.title}</DialogTitle>
+                                  </DialogHeader>
+                                  {selectedDocument && user && (
+                                    <DigitalSignature
+                                      document={{
+                                        id: selectedDocument.id,
+                                        title: selectedDocument.title,
+                                        type: selectedDocument.category as any,
+                                        content: selectedDocument.description || 'Contenido del documento',
+                                        parties: [{
+                                          name: user.name || 'Usuario',
+                                          email: user.email || 'usuario@email.com',
+                                          phone: user.phone || '+56912345678',
+                                          role: 'signer'
+                                        }],
+                                        metadata: {}
+                                      }}
+                                      currentUser={{
+                                        id: user.id || '1',
+                                        name: user.name || 'Usuario',
+                                        email: user.email || 'usuario@email.com',
+                                        phone: user.phone || '+56912345678',
+                                        role: user.role || 'tenant'
+                                      }}
+                                      mode="sign"
+                                      onSigned={handleSignatureComplete}
+                                      onSave={handleSignatureComplete}
+                                    />
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+                            )}
                             <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>

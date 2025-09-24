@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-import { 
-  Download, 
-  Eye, 
-  DollarSign, 
+import {
+  Download,
+  Eye,
+  DollarSign,
   Home,
   Clock,
   CheckCircle,
@@ -23,6 +23,8 @@ import { Contract, Property } from '@/types';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
+import ElectronicSignature from '@/components/contracts/ElectronicSignature';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ContractWithDetails extends Contract {
   property?: Property;
@@ -40,12 +42,56 @@ export default function TenantContractsPage() {
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
+
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+
   useEffect(() => {
     // Mock data for demo
     const emptyImages: string[] = [];
 
     setTimeout(() => {
       setContracts([
+                {
+          id: 'pending-tenant-1',
+          contractNumber: 'CTR-2024-004',
+          propertyId: '4',
+          tenantId: '1',
+          ownerId: '6',
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2025-02-28'),
+          monthlyRent: 450000,
+          deposit: 450000,
+          status: 'PENDING' as any,
+          brokerId: null,
+          terms: 'Contrato residencial estándar - Pendiente de firma del propietario',
+          signedAt: null,
+          terminatedAt: null,
+          createdAt: new Date('2024-02-15'),
+          updatedAt: new Date('2024-02-15'),
+          property: {
+            id: '4',
+            title: 'Casa Ñuñoa',
+            description: 'Casa familiar moderna en Ñuñoa',
+            address: 'Av. Irarrázaval 2345, Ñuñoa',
+            city: 'Santiago',
+            commune: 'Ñuñoa',
+            region: 'Metropolitana',
+            price: 450000,
+            deposit: 450000,
+            bedrooms: 3,
+            bathrooms: 2,
+            area: 120,
+            status: 'AVAILABLE' as any,
+            type: 'HOUSE' as any,
+            images: JSON.stringify(emptyImages),
+            features: JSON.stringify(['Jardín', 'Estacionamiento', 'Amoblado']),
+            ownerId: '6',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          ownerName: 'Propietario Ñuñoa',
+        },
                 {
           id: '1',
           contractNumber: 'CTR-2024-001',
@@ -152,6 +198,27 @@ export default function TenantContractsPage() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const handleSignContract = (contract: ContractWithDetails) => {
+    setSelectedContract(contract);
+    setShowSignatureDialog(true);
+  };
+
+  const handleSignatureComplete = (signatureId: string) => {
+    // Actualizar el estado del contrato a firmado
+    setContracts(prev => prev.map(contract =>
+      contract.id === selectedContract?.id
+        ? { ...contract, status: 'ACTIVE' as any }
+        : contract
+    ));
+    setShowSignatureDialog(false);
+    setSelectedContract(null);
+  };
+
+  const handleSignatureCancel = () => {
+    setShowSignatureDialog(false);
+    setSelectedContract(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -350,6 +417,30 @@ export default function TenantContractsPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                    {contract.status === 'PENDING' && (
+                      <Dialog open={showSignatureDialog && selectedContract?.id === contract.id} onOpenChange={setShowSignatureDialog}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="flex-1" onClick={() => handleSignContract(contract)}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Firmar Contrato
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Firmar Contrato - {contract.property?.title}</DialogTitle>
+                          </DialogHeader>
+                          {selectedContract && (
+                            <ElectronicSignature
+                              contractId={selectedContract.id}
+                              documentName={`Contrato ${selectedContract.contractNumber}`}
+                              documentHash="mock-hash"
+                              onSignatureComplete={handleSignatureComplete}
+                              onSignatureCancel={handleSignatureCancel}
+                            />
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    )}
                     <Button size="sm" className="flex-1">
                       <Eye className="w-4 h-4 mr-2" />
                       Ver Detalles

@@ -21,7 +21,7 @@ import { FileText,
   Shield,
   Zap,
   Trash2 } from 'lucide-react';
-import { useToast } from '@/components/notifications/NotificationSystem';
+import { useToast } from '@/hooks/use-toast';
 import { SignatureStatus, SignatureType } from '@/lib/signature';
 
 interface ElectronicSignatureProps {

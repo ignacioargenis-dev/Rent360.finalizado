@@ -21,7 +21,7 @@ import {
   Banknote,
   Zap
 } from 'lucide-react';
-import { useToast } from '@/components/notifications/NotificationSystem';
+import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface SignatureProvider {
