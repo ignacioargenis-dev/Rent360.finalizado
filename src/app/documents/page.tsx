@@ -37,7 +37,6 @@ import DigitalSignature from '@/components/documents/DigitalSignature';
 import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useState } from 'react';
 
 interface Document {
   id: string
