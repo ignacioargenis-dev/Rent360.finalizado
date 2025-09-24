@@ -158,7 +158,7 @@ export default function AdminPropertiesReports() {
           propertiesData.forEach((p: any) => {
             typeCounts[p.type || 'departamento'] = (typeCounts[p.type || 'departamento'] || 0) + 1;
           });
-          const topPropertyType = Object.entries(typeCounts).reduce((a, b) => a[1] > b[1] ? a : b)?.[0];
+          const topPropertyType = Object.entries(typeCounts).reduce((a, b) => a[1] > b[1] ? a : b)?.[0] || 'Sin tipo';
 
           setStats({
             totalProperties: propertiesData.length,
