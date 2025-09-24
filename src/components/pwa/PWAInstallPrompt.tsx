@@ -46,12 +46,16 @@ export default function PWAInstallPrompt({
 
       return () => clearTimeout(timer);
     }
+    // No cleanup needed when conditions are not met
+    return undefined;
   }, [autoShow, canInstall, isInstalled, isDismissed, delay]);
 
   useEffect(() => {
     if (isInstalled) {
       setIsVisible(false);
     }
+    // No cleanup needed for this effect
+    return undefined;
   }, [isInstalled]);
 
   const handleInstall = async () => {
