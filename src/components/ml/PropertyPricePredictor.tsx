@@ -70,10 +70,17 @@ export default function PropertyPricePredictor() {
   const { success, error: showError } = useToast();
 
   const handleInputChange = (field: keyof PropertyData, value: any) => {
-    setPropertyData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setPropertyData(prev => {
+      if (value === null) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      }
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   };
 
   const handlePredict = async () => {
@@ -180,7 +187,10 @@ export default function PropertyPricePredictor() {
                   type="number"
                   placeholder="2020"
                   value={propertyData.yearBuilt || ''}
-                  onChange={(e) => handleInputChange('yearBuilt', parseInt(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    handleInputChange('yearBuilt', isNaN(value) ? null : value);
+                  }}
                 />
               </div>
             </div>
