@@ -105,11 +105,15 @@ export default function TenantPaymentMethodsPage() {
       const newMethod: PaymentMethod = {
         id: Date.now().toString(),
         type: newPaymentMethod.type,
-        brand: newPaymentMethod.type === 'credit_card' ? getCardBrand(newPaymentMethod.cardNumber) : undefined,
-        last4: newPaymentMethod.type === 'credit_card' ? newPaymentMethod.cardNumber.slice(-4) : undefined,
-        bank: (newPaymentMethod.type as string) === 'bank_transfer' ? newPaymentMethod.bank : undefined,
-        accountType: (newPaymentMethod.type as string) === 'bank_transfer' ? newPaymentMethod.accountType : undefined,
-        accountNumber: (newPaymentMethod.type as string) === 'bank_transfer' ? `****${newPaymentMethod.accountNumber.slice(-4)}` : undefined,
+        ...(newPaymentMethod.type === 'credit_card' && {
+          brand: getCardBrand(newPaymentMethod.cardNumber),
+          last4: newPaymentMethod.cardNumber.slice(-4),
+        }),
+        ...((newPaymentMethod.type as string) === 'bank_transfer' && {
+          bank: newPaymentMethod.bank,
+          accountType: newPaymentMethod.accountType,
+          accountNumber: `****${newPaymentMethod.accountNumber.slice(-4)}`,
+        }),
         isDefault: paymentMethods.length === 0,
         isActive: true,
         addedAt: new Date(),
