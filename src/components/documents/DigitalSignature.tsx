@@ -151,8 +151,9 @@ return;
     setIsDrawing(true);
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const isTouchEvent = 'touches' in e && e.touches && e.touches[0];
+    const x = isTouchEvent ? (e as React.TouchEvent).touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+    const y = isTouchEvent ? (e as React.TouchEvent).touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -174,8 +175,9 @@ return;
 }
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e && e.touches && e.touches[0] ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const isTouchEvent = 'touches' in e && e.touches && e.touches[0];
+    const x = isTouchEvent ? (e as React.TouchEvent).touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+    const y = isTouchEvent ? (e as React.TouchEvent).touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
 
     ctx.lineTo(x, y);
     ctx.stroke();
