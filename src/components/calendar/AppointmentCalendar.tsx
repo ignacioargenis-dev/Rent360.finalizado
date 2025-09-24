@@ -224,7 +224,7 @@ export default function AppointmentCalendar({
         <div className="space-y-1">
           {hours.map(hour => {
             const hourAppointments = dayAppointments.filter(appointment => {
-              const appointmentHour = appointment.time ? parseInt(appointment.time.split(':')[0]) : 0;
+              const appointmentHour = appointment.time ? parseInt(appointment.time.split(':')[0] || '0') : 0;
               return appointmentHour === hour;
             });
             
