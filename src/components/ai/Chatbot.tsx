@@ -81,7 +81,7 @@ export default function Chatbot({
       const greetingMessage: ChatbotMessage = {
         id: 'welcome',
         type: 'bot',
-        content: GREETING_MESSAGES[Math.floor(Math.random() * GREETING_MESSAGES.length)] || GREETING_MESSAGES[0],
+        content: GREETING_MESSAGES[Math.floor(Math.random() * GREETING_MESSAGES.length)] as string,
         timestamp: new Date(),
         suggestions: QUICK_ACTIONS.map(action => action.text),
       };
