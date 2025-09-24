@@ -192,7 +192,7 @@ export default function Chatbot({
           confidence: result.confidence,
           provider: result.metadata?.provider
         },
-        suggestions: result.suggestions
+        ...(result.suggestions && { suggestions: result.suggestions })
       };
 
     } catch (error) {
