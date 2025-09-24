@@ -132,7 +132,7 @@ export default function MonitoringDashboard() {
 
       setOverview(processedData);
     } catch (err) {
-      showError('Error cargando datos del dashboard: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error cargando datos del dashboard: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

@@ -192,7 +192,7 @@ export default function RefundManagement() {
         throw new Error(errorData.error || 'Error creando solicitud');
       }
 
-      success('Solicitud de reembolso creada exitosamente');
+      success('Éxito', 'Solicitud de reembolso creada exitosamente');
       setShowForm(false);
       setFormData({
         contractId: '',
@@ -229,10 +229,10 @@ export default function RefundManagement() {
         throw new Error('Error actualizando estado');
       }
 
-      success('Estado de reembolso actualizado exitosamente');
+      success('Éxito', 'Estado de reembolso actualizado exitosamente');
       await fetchRefunds();
     } catch (err) {
-      error('Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
