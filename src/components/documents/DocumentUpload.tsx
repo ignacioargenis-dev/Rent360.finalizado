@@ -139,7 +139,7 @@ return;
         type: file.type,
         status: error ? 'error' : 'uploading',
         progress: 0,
-        error: error || undefined,
+        ...(error && { error }),
       };
       newFiles.push(documentFile);
     });
