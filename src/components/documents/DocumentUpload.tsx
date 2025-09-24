@@ -236,7 +236,7 @@ return;
         formData.append('files', file as any);
       });
 
-      formData.append('title', title || files[0].name);
+      formData.append('title', title || (files.length > 0 ? files[0].name : 'Documentos'));
       formData.append('description', description);
       formData.append('category', selectedCategory);
       tags.forEach(tag => formData.append('tags', tag));
