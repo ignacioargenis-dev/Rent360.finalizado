@@ -20,7 +20,7 @@ import {
   CreditCard,
   TrendingUp
 } from 'lucide-react';
-import { useToast } from '@/components/notifications/NotificationSystem';
+import { useToast } from '@/hooks/use-toast';
 
 interface SystemStats {
   timestamp: string;
