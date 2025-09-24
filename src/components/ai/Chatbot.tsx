@@ -161,7 +161,7 @@ export default function Chatbot({
       content: response.content,
       timestamp: new Date(),
       context: response.context,
-      suggestions: response.suggestions,
+      ...(response.suggestions && { suggestions: response.suggestions }),
     };
 
     setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
