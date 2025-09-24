@@ -82,6 +82,7 @@ export default function DocumentUpload({
   const [tags, setTags] = useState<string[]>([]);
 
   const [newTag, setNewTag] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getFileIcon = (type: string) => {
