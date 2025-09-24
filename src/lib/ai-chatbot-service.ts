@@ -93,7 +93,7 @@ export class AIChatbotService {
       logger.info('Usando lógica local para chatbot (sin IA externa)');
 
     } catch (error) {
-      logger.error('Error inicializando proveedores de IA:', error);
+      logger.error('Error inicializando proveedores de IA:', { error: error instanceof Error ? error.message : String(error) });
       // Fallback a lógica local
       this.config = {
         provider: 'local',
@@ -182,7 +182,7 @@ export class AIChatbotService {
       };
 
     } catch (error) {
-      logger.error('Error procesando mensaje:', error);
+      logger.error('Error procesando mensaje:', { error: error instanceof Error ? error.message : String(error) });
 
       // Respuesta de fallback segura
       return {
@@ -534,7 +534,7 @@ Respuesta:
       return success;
 
     } catch (error) {
-      logger.error('Error cambiando proveedor de IA:', error);
+      logger.error('Error cambiando proveedor de IA:', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
