@@ -104,6 +104,23 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+interface ChartTooltipContentProps {
+  active?: boolean;
+  payload?: any[];
+  className?: string;
+  indicator?: 'dot' | 'line' | 'dashed';
+  hideLabel?: boolean;
+  hideIndicator?: boolean;
+  label?: string;
+  labelFormatter?: (label: any) => string;
+  labelClassName?: string;
+  formatter?: (value: any, name: string) => [string | number, string];
+  color?: string;
+  nameKey?: string;
+  itemConfig?: Record<string, any>;
+  hideDot?: boolean;
+}
+
 function ChartTooltipContent({
   active,
   payload,
@@ -125,6 +142,7 @@ function ChartTooltipContent({
     indicator?: 'line' | 'dot' | 'dashed'
     nameKey?: string
     labelKey?: string
+    payload?: any[]
   }) {
   const { config } = useChart();
 
