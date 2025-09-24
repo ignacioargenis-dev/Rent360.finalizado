@@ -157,15 +157,13 @@ return;
     let y: number;
 
     if ('touches' in e && e.touches && e.touches.length > 0) {
-      // Touch event
-      const touchEvent = e as React.TouchEvent;
-      x = touchEvent.touches[0].clientX - rect.left;
-      y = touchEvent.touches[0].clientY - rect.top;
+      // Touch event - safe access after length check
+      x = (e as React.TouchEvent).touches[0]!.clientX - rect.left;
+      y = (e as React.TouchEvent).touches[0]!.clientY - rect.top;
     } else {
       // Mouse event
-      const mouseEvent = e as React.MouseEvent;
-      x = mouseEvent.clientX - rect.left;
-      y = mouseEvent.clientY - rect.top;
+      x = (e as React.MouseEvent).clientX - rect.left;
+      y = (e as React.MouseEvent).clientY - rect.top;
     }
 
     ctx.beginPath();
@@ -194,15 +192,13 @@ return;
     let y: number;
 
     if ('touches' in e && e.touches && e.touches.length > 0) {
-      // Touch event
-      const touchEvent = e as React.TouchEvent;
-      x = touchEvent.touches[0].clientX - rect.left;
-      y = touchEvent.touches[0].clientY - rect.top;
+      // Touch event - safe access after length check
+      x = (e as React.TouchEvent).touches[0]!.clientX - rect.left;
+      y = (e as React.TouchEvent).touches[0]!.clientY - rect.top;
     } else {
       // Mouse event
-      const mouseEvent = e as React.MouseEvent;
-      x = mouseEvent.clientX - rect.left;
-      y = mouseEvent.clientY - rect.top;
+      x = (e as React.MouseEvent).clientX - rect.left;
+      y = (e as React.MouseEvent).clientY - rect.top;
     }
 
     ctx.lineTo(x, y);
