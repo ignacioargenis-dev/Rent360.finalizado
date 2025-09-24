@@ -148,7 +148,7 @@ export default function AppointmentForm({
       clientPhone: selectedClient?.phone || '',
       propertyTitle: selectedProperty?.title || '',
       propertyAddress: selectedProperty?.address || '',
-      id: editingAppointment?.id || undefined,
+      ...(editingAppointment && { id: editingAppointment.id }),
     };
 
     onSave(appointmentData);
