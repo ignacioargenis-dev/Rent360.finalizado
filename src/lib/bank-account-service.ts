@@ -59,7 +59,6 @@ export const CHILEAN_BANK_CODES = {
   '027': 'Corpbanca',
   '028': 'Banco Santander',
   '031': 'Banco HSBC Bank Chile',
-  '037': 'Banco Itaú Chile',
   '039': 'Banco Itaú Corpbanca',
   '049': 'Banco Security',
   '051': 'Banco Falabella',
