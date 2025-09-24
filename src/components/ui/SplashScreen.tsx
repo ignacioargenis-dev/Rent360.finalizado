@@ -21,6 +21,8 @@ export function SplashScreen({ logoUrl, visible, onHidden, durationMs = 1200 }: 
       }, durationMs);
       return () => clearTimeout(timeout);
     }
+    // No cleanup needed when not visible
+    return undefined;
   }, [visible, durationMs, onHidden]);
 
   if (!show) return null;

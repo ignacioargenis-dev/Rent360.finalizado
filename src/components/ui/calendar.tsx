@@ -183,8 +183,9 @@ function CalendarDayButton({
   const ref = React.useRef<HTMLButtonElement>(null);
   React.useEffect(() => {
     if (modifiers.focused) {
-ref.current?.focus();
-}
+      ref.current?.focus();
+    }
+    return undefined;
   }, [modifiers.focused]);
 
   return (

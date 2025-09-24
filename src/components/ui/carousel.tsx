@@ -92,15 +92,16 @@ return;
 
   React.useEffect(() => {
     if (!api || !setApi) {
-return;
-}
+      return undefined;
+    }
     setApi(api);
+    return undefined;
   }, [api, setApi]);
 
   React.useEffect(() => {
     if (!api) {
-return;
-}
+      return undefined;
+    }
     onSelect(api);
     api.on('reInit', onSelect);
     api.on('select', onSelect);
