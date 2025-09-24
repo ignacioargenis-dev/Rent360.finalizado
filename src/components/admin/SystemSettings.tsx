@@ -114,8 +114,8 @@ export default function SystemSettings() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            key: editingSetting.key,
-            ...formData
+            ...formData,
+            key: editingSetting.key
           })
         });
 
