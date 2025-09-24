@@ -444,7 +444,7 @@ export default function EnhancedDashboardLayout({
   };
 
   const userRole = user?.role || 'tenant';
-  const items = menuItems[userRole] || menuItems.tenant;
+  const items = menuItems[userRole] || menuItems.tenant || [];
 
   const renderMenuItem = (item: MenuItem, level = 0) => {
     const hasSubmenu = item.submenu && item.submenu.length > 0;
@@ -552,12 +552,12 @@ export default function EnhancedDashboardLayout({
           <div className="p-2 border-t">
             <div className="flex items-center gap-2">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.avatar || undefined} alt={user.name || 'Usuario'} />
+                <AvatarFallback>{(user.name || 'U').charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-sm font-medium truncate">{user.name || 'Usuario'}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email || ''}</p>
               </div>
             </div>
           </div>
