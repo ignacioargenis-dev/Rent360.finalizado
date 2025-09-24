@@ -566,7 +566,7 @@ return;
                               type="button"
                               className={`p-3 border rounded-lg text-center transition-colors ${
                                 formData.priority === option.value
-                                  ? `border-${option.color.split('-')[1]}-500 bg-${option.color.split('-')[1]}-50 text-${option.color.split('-')[1]}-700`
+                                  ? `border-${option.color.split('-')?.[1] || 'blue'}-500 bg-${option.color.split('-')?.[1] || 'blue'}-50 text-${option.color.split('-')?.[1] || 'blue'}-700`
                                   : 'border-gray-300 hover:border-gray-400'
                               }`}
                               onClick={() => handleInputChange('priority', option.value)}

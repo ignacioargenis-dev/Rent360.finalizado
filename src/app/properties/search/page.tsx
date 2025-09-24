@@ -237,8 +237,8 @@ export default function PropertySearch() {
       <div className="relative">
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
           {property.images && property.images.length > 0 ? (
-            <img 
-              src={property.images[0]} 
+            <img
+              src={property.images?.[0] || '/placeholder-property.jpg'}
               alt={property.title}
               className="w-full h-full object-cover"
             />
@@ -340,8 +340,8 @@ export default function PropertySearch() {
         <div className="flex gap-4">
           <div className="w-32 h-24 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
             {property.images && property.images.length > 0 ? (
-              <img 
-                src={property.images[0]} 
+              <img
+                src={property.images?.[0] || '/placeholder-property.jpg'}
                 alt={property.title}
                 className="w-full h-full object-cover"
               />

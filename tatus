@@ -69,3 +69,13 @@
 [35msrc/app/api/user/payment-methods/route.ts[m
 [35msrc/app/api/users/favorites/route.ts[m
 [35msrc/app/api/visit/rate/route.ts[m
+[33ma84b713[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Agregar propiedades views e inquiries a interfaz Property
+[33mfddf7e4[m fix: Corregir uso de useToast en archivos de admin y contratos
+[33mdaae82f[m fix: Eliminar imports duplicados de useState en páginas de documentos y contratos
+[33m6c3a70c[m feat: Implementar sistema híbrido de firmas electrónicas
+[33m6678129[m fix: Corregir propiedades opcionales en DigitalSignature
+[33mec568a6[m fix: Corregir iconos Signature no válidos de lucide-react
+[33med96146[m fix: Corregir propiedades opcionales en EnhancedDashboardLayout
+[33m172e32b[m fix: Corregir acceso seguro a split(':')[0] en AppointmentCalendar
+[33m7a22e35[m fix: Corregir acceso seguro a propiedad time opcional en AppointmentCalendar
+[33mfce96b1[m fix: Corregir propiedad opcional suggestions en respuesta IA del Chatbot

@@ -478,7 +478,7 @@ export default function PredictiveAnalytics({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {occupancyData[0]?.factors && Object.entries(occupancyData[0].factors).map(([factor, value]) => (
+                {occupancyData?.[0]?.factors && Object.entries(occupancyData[0].factors).map(([factor, value]) => (
                   <div key={factor} className="text-center">
                     <div className="text-2xl font-bold text-primary">
                       {Math.round(value * 100)}%

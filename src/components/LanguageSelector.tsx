@@ -40,7 +40,7 @@ export default function LanguageSelector() {
     setIsOpen(false);
   };
 
-  const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages[0];
+  const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages?.[0];
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
