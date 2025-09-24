@@ -545,7 +545,7 @@ export default function UnifiedSidebar({
   };
 
   const userRole = user?.role?.toLowerCase() || 'tenant';
-  const items = menuItems[userRole] || menuItems.tenant;
+  const items = menuItems[userRole] || menuItems.tenant || [];
 
   const isActiveRoute = (url: string) => {
     return pathname === url || pathname.startsWith(url + '/');
