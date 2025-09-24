@@ -90,7 +90,7 @@ export default function BackupManager() {
       setConfig(data.data.config);
       setStats(data.data.stats);
     } catch (err) {
-      showError('Error cargando datos de backup: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error cargando datos de backup: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function BackupManager() {
       // Actualizar lista de backups
       await fetchBackupData();
     } catch (err) {
-      showError('Error creando backup: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error creando backup: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setCreatingBackup(false);
     }
@@ -143,7 +143,7 @@ export default function BackupManager() {
       success(data.message);
       setConfig(data.data);
     } catch (err) {
-      showError('Error actualizando configuración: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error actualizando configuración: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -163,7 +163,7 @@ export default function BackupManager() {
       const data = await response.json();
       success(data.message);
     } catch (err) {
-      showError('Error restaurando backup: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error restaurando backup: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
