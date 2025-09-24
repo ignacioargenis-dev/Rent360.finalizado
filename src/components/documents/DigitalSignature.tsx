@@ -10,19 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
+  FileText,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   Download,
-  Upload, 
+  Upload,
   Shield,
   User,
   Mail,
   Phone,
   Hash,
-  Signature,
+  PenTool,
   RotateCcw,
   Save,
   Send,
@@ -457,7 +457,7 @@ return;
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Signature className="w-5 h-5" />
+              <PenTool className="w-5 h-5" />
               Firma Digital
             </CardTitle>
             <CardDescription>
