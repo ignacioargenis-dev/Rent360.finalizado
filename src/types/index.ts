@@ -37,6 +37,8 @@ export interface Property {
   status: 'AVAILABLE' | 'RENTED' | 'PENDING' | 'MAINTENANCE';
   images?: string[];
   features?: string[];
+  views: number;
+  inquiries: number;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;

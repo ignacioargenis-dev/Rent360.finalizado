@@ -86,6 +86,8 @@ export default function TenantContractsPage() {
             type: 'HOUSE' as any,
             images: JSON.stringify(emptyImages),
             features: JSON.stringify(['Jardín', 'Estacionamiento', 'Amoblado']),
+            views: 156,
+            inquiries: 12,
             ownerId: '6',
             createdAt: new Date(),
             updatedAt: new Date(),
