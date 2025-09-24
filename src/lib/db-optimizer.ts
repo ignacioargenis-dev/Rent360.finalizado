@@ -441,6 +441,7 @@ export async function getPaymentsOptimized(options: {
             select: {
               id: true,
               title: true,
+              address: true,
             },
           },
         },
