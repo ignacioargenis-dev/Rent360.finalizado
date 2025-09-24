@@ -67,8 +67,8 @@ export class AuditService {
       action: 'login',
       entityType: 'user',
       entityId: userId,
-      ipAddress,
-      userAgent,
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent }),
       metadata: { event: 'successful_login' }
     });
   }
@@ -82,8 +82,8 @@ export class AuditService {
       action: 'logout',
       entityType: 'user',
       entityId: userId,
-      ipAddress,
-      userAgent,
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent }),
       metadata: { event: 'logout' }
     });
   }
@@ -105,8 +105,8 @@ export class AuditService {
       entityType,
       entityId,
       newValues,
-      ipAddress,
-      userAgent
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent })
     });
   }
 
@@ -129,8 +129,8 @@ export class AuditService {
       entityId,
       oldValues,
       newValues,
-      ipAddress,
-      userAgent
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent })
     });
   }
 
@@ -151,8 +151,8 @@ export class AuditService {
       entityType,
       entityId,
       oldValues,
-      ipAddress,
-      userAgent
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent })
     });
   }
 
@@ -167,11 +167,11 @@ export class AuditService {
     userAgent?: string
   ): Promise<void> {
     await this.log({
-      userId: userId || undefined,
+      ...(userId && { userId }),
       action: `unauthorized_${action}`,
       entityType,
-      ipAddress,
-      userAgent,
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent }),
       metadata: { event: 'unauthorized_access' }
     });
   }
@@ -189,8 +189,8 @@ export class AuditService {
       action: 'password_change',
       entityType: 'user',
       entityId: userId,
-      ipAddress,
-      userAgent,
+      ...(ipAddress && { ipAddress }),
+      ...(userAgent && { userAgent }),
       metadata: { event: 'password_changed' }
     });
   }
