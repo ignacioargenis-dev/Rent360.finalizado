@@ -15,7 +15,7 @@ export const useAccessibility = (options: AccessibilityOptions = {}) => {
     skipLinks = false
   } = options;
 
-  const announcementRef = useRef<HTMLDivElement>(null);
+  const announcementRef = useRef<HTMLDivElement | null>(null);
 
   // Función para anunciar mensajes a lectores de pantalla
   const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
