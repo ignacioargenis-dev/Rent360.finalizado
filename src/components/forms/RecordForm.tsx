@@ -130,6 +130,8 @@ export default function RecordForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [formData, setFormData] = useState<any>(initialData || {});
+  const [errors, setErrors] = useState<Record<string, string> & { submit?: string }>({});
 
   const getFormFields = (): FormField[] => {
     switch (type) {
