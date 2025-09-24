@@ -236,7 +236,7 @@ return;
         formData.append('files', file as any);
       });
 
-      formData.append('title', title || (files.length > 0 ? files[0].name : 'Documentos'));
+      formData.append('title', title || (files.length > 0 ? files[0]!.name : 'Documentos'));
       formData.append('description', description);
       formData.append('category', selectedCategory);
       tags.forEach(tag => formData.append('tags', tag));
@@ -305,7 +305,7 @@ return;
       setUploadProgress(100);
 
       logger.info('Documento creado exitosamente:', {
-        title: title || (files.length > 0 ? files[0].name : 'Documentos'),
+        title: title || (files.length > 0 ? files[0]!.name : 'Documentos'),
         fileCount: result.files?.length,
         summary: result.summary
       });
