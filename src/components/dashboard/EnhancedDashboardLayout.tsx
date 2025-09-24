@@ -552,7 +552,7 @@ export default function EnhancedDashboardLayout({
           <div className="p-2 border-t">
             <div className="flex items-center gap-2">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={user.avatar || undefined} alt={user.name || 'Usuario'} />
+                <AvatarImage src={user.avatar} alt={user.name || 'Usuario'} />
                 <AvatarFallback>{(user.name || 'U').charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
