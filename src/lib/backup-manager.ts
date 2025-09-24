@@ -82,11 +82,11 @@ class BackupManager {
     try {
       // Crear directorio de backups si no existe
       const backupDir = path.join(process.cwd(), 'backups');
-      await fs.mkdir(backupDir, { recursive: true });
+      await fsPromises.mkdir(backupDir, { recursive: true });
 
       // Crear directorio de configuración si no existe
       const configDir = path.join(process.cwd(), 'config');
-      await fs.mkdir(configDir, { recursive: true });
+      await fsPromises.mkdir(configDir, { recursive: true });
 
       logger.info('Sistema de backup inicializado', {
         context: 'backup.init',
@@ -168,7 +168,7 @@ class BackupManager {
       if (this.config.compression) {
         finalPath = await this.compressBackup(backupPath);
         // Eliminar archivo original no comprimido
-        await fs.unlink(backupPath);
+        await fsPromises.unlink(backupPath);
       }
 
       // Encriptar si está habilitado
@@ -186,7 +186,7 @@ class BackupManager {
       await this.cleanupOldBackups(type);
 
       const duration = Date.now() - startTime;
-      const stats = await fs.stat(finalPath);
+      const stats = await fsPromises.stat(finalPath);
 
       const result: BackupResult = {
         id: backupId,
@@ -312,7 +312,7 @@ class BackupManager {
   private async cleanupOldBackups(currentType: string): Promise<void> {
     try {
       const backupDir = path.join(process.cwd(), 'backups');
-      const files = await fs.readdir(backupDir);
+      const files = await fsPromises.readdir(backupDir);
 
       const filteredFiles = files.filter(file => file.endsWith('.db') || file.endsWith('.db.gz') || file.endsWith('.db.enc'));
 
@@ -359,7 +359,7 @@ class BackupManager {
       }
 
       for (const file of toDelete) {
-        await fs.unlink(file.path);
+        await fsPromises.unlink(file.path);
         logger.info('Backup antiguo eliminado', {
           context: 'backup.cleanup',
           file: file.name,
@@ -421,7 +421,7 @@ class BackupManager {
       },
     });
 
-    const fileContent = await fs.readFile(filePath);
+    const fileContent = await fsPromises.readFile(filePath);
     const key = `backups/${remotePath}`;
 
     const command = new PutObjectCommand({
