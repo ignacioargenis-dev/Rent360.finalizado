@@ -74,7 +74,7 @@ export default function PropertyPricePredictor() {
       if (value === null) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [field]: _, ...rest } = prev;
-        return rest;
+        return rest as PropertyData;
       }
       return {
         ...prev,
