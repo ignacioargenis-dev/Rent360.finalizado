@@ -50,7 +50,6 @@ interface LegalCase {
   status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
   adminNotes?: string;
   rejectionReason?: string;
-  assignedLawyer?: string;
   nextHearingDate?: string;
   courtCaseNumber?: string;
   createdAt: Date;
