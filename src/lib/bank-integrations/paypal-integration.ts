@@ -174,7 +174,7 @@ export class PayPalIntegration extends BaseBankIntegration {
           { code: 'TECHNICAL_ERROR', message: 'Error técnico en procesamiento PayPal' }
         ];
 
-        const error = errors[Math.floor(Math.random() * errors.length)];
+        const error = errors[Math.floor(Math.random() * errors.length)] || errors[0];
 
         return {
           success: false,

@@ -130,7 +130,7 @@ export class WebPayIntegration extends BaseBankIntegration {
           { code: 'TECHNICAL_ERROR', message: 'Error técnico WebPay' }
         ];
 
-        const error = errors[Math.floor(Math.random() * errors.length)];
+        const error = errors[Math.floor(Math.random() * errors.length)] || errors[0];
 
         return {
           success: false,

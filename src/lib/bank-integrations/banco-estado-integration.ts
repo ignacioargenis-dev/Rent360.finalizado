@@ -166,7 +166,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
           { code: 'TECHNICAL_ERROR', message: 'Error técnico en procesamiento' }
         ];
 
-        const error = errors[Math.floor(Math.random() * errors.length)];
+        const error = errors[Math.floor(Math.random() * errors.length)] || errors[0];
 
         return {
           success: false,

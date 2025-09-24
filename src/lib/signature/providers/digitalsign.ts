@@ -144,7 +144,7 @@ export class DigitalSignProvider extends SignatureProvider {
     try {
       // Simular consulta de estado en DigitalSign
       const statuses = [SignatureStatus.PENDING, SignatureStatus.IN_PROGRESS, SignatureStatus.COMPLETED];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)] || statuses[0];
 
       logger.info('Estado de firma DigitalSign obtenido', {
         signatureId,

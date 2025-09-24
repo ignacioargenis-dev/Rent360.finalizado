@@ -227,7 +227,7 @@ export abstract class BaseBankIntegration {
 
     // Simular diferentes escenarios
     const scenarios = ['success', 'error', 'timeout'];
-    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)] || scenarios[0];
 
     switch (scenario) {
       case 'success':
