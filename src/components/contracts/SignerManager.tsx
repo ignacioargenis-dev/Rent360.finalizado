@@ -34,7 +34,7 @@ export const SignerManager: React.FC<SignerManagerProps> = ({
 
   const addSigner = () => {
     if (signers.length >= maxSigners) {
-      error(`Máximo ${maxSigners} firmantes permitidos`);
+      error('Error', `Máximo ${maxSigners} firmantes permitidos`);
       return;
     }
 
@@ -53,7 +53,7 @@ export const SignerManager: React.FC<SignerManagerProps> = ({
 
   const removeSigner = (id: string) => {
     if (signers.length <= 1) {
-      error('Debe haber al menos un firmante');
+      error('Error', 'Debe haber al menos un firmante');
       return;
     }
 

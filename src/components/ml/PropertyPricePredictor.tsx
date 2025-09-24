@@ -78,7 +78,7 @@ export default function PropertyPricePredictor() {
 
   const handlePredict = async () => {
     if (!propertyData.area || !propertyData.city || !propertyData.type) {
-      showError('Por favor complete todos los campos requeridos');
+      showError('Error', 'Por favor complete todos los campos requeridos');
       return;
     }
 
@@ -106,13 +106,13 @@ export default function PropertyPricePredictor() {
 
       if (data.success) {
         setPrediction(data.data.prediction);
-        success('Predicción generada exitosamente');
+        success('Éxito', 'Predicción generada exitosamente');
       } else {
         throw new Error(data.error || 'Error en la predicción');
       }
 
     } catch (err) {
-      showError('Error generando predicción: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error generando predicción: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

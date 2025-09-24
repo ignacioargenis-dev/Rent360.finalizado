@@ -91,7 +91,7 @@ export default function RealTimeNotifications() {
       // Mostrar notificación del sistema si es importante
       const highPriorityNotif = newNotifications.find(n => n.priority === 'high');
       if (highPriorityNotif) {
-        success(highPriorityNotif.title);
+        success('Notificación', highPriorityNotif.title);
       }
     }
   }, [wsNotifications, success]);

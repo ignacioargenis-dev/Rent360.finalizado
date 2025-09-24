@@ -156,7 +156,7 @@ export default function RefundManagement() {
       const data = await response.json();
       setRefunds(data.data || []);
     } catch (err) {
-      error('Error cargando reembolsos: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error cargando reembolsos: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -177,7 +177,7 @@ export default function RefundManagement() {
   const handleSubmit = async () => {
     try {
       if (!formData.contractId || !formData.amount || !formData.reason) {
-        error('Por favor completa todos los campos requeridos');
+        error('Error', 'Por favor completa todos los campos requeridos');
         return;
       }
 
@@ -209,7 +209,7 @@ export default function RefundManagement() {
       });
       await fetchRefunds();
     } catch (err) {
-      error('Error creando solicitud: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error creando solicitud: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 

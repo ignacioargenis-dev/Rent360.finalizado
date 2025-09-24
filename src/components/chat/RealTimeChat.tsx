@@ -79,7 +79,7 @@ export default function RealTimeChat({ currentUserId, currentUserName }: RealTim
           } : undefined
         })));
       } catch (err) {
-        showError('Error al cargar las conversaciones');
+        showError('Error', 'Error al cargar las conversaciones');
       }
     }
   }, []);
@@ -201,7 +201,7 @@ export default function RealTimeChat({ currentUserId, currentUserName }: RealTim
       )
     );
 
-    success('Mensaje enviado');
+    success('Éxito', 'Mensaje enviado');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

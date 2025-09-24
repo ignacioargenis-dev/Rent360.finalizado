@@ -192,7 +192,7 @@ export default function LegalCasesManagement() {
       const data = await response.json();
       setLegalCases(data.data || []);
     } catch (err) {
-      error('Error cargando causas legales: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error cargando causas legales: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -213,7 +213,7 @@ export default function LegalCasesManagement() {
   const handleSubmit = async () => {
     try {
       if (!formData.contractId || !formData.description || !formData.amount || !formData.legalBasis || formData.requestedActions.length === 0) {
-        error('Por favor completa todos los campos requeridos');
+        error('Error', 'Por favor completa todos los campos requeridos');
         return;
       }
 
@@ -231,7 +231,7 @@ export default function LegalCasesManagement() {
       const result = await response.json();
 
       // Solo resetear y cerrar el formulario si la operación fue exitosa
-      success('Causa legal creada exitosamente');
+      success('Éxito', 'Causa legal creada exitosamente');
       setShowForm(false);
       setFormData({
         contractId: '',
@@ -250,7 +250,7 @@ export default function LegalCasesManagement() {
       // Recargar la lista de casos legales
       await fetchLegalCases();
     } catch (err) {
-      error('Error creando causa legal: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error creando causa legal: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -270,10 +270,10 @@ export default function LegalCasesManagement() {
         throw new Error('Error actualizando estado');
       }
 
-      success('Estado de causa legal actualizado exitosamente');
+      success('Éxito', 'Estado de causa legal actualizado exitosamente');
       await fetchLegalCases();
     } catch (err) {
-      error('Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 

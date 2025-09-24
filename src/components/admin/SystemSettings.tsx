@@ -98,7 +98,7 @@ export default function SystemSettings() {
       const data = await response.json();
       setSettings(data.data || []);
     } catch (err) {
-      error('Error cargando configuraciones: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error cargando configuraciones: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function SystemSettings() {
           throw new Error('Error actualizando configuración');
         }
 
-        success('Configuración actualizada exitosamente');
+        success('Éxito', 'Configuración actualizada exitosamente');
       } else {
         // Crear nueva configuración
         const response = await fetch('/api/admin/settings', {
@@ -136,7 +136,7 @@ export default function SystemSettings() {
           throw new Error('Error creando configuración');
         }
 
-        success('Configuración creada exitosamente');
+        success('Éxito', 'Configuración creada exitosamente');
       }
 
       // Limpiar formulario y recargar
@@ -153,7 +153,7 @@ export default function SystemSettings() {
       
       await fetchSettings();
     } catch (err) {
-      error('Error guardando configuración: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error guardando configuración: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -186,10 +186,10 @@ export default function SystemSettings() {
         throw new Error('Error eliminando configuración');
       }
 
-      success('Configuración eliminada exitosamente');
+      success('Éxito', 'Configuración eliminada exitosamente');
       await fetchSettings();
     } catch (err) {
-      error('Error eliminando configuración: ' + (err instanceof Error ? err.message : String(err)));
+      error('Error', 'Error eliminando configuración: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 

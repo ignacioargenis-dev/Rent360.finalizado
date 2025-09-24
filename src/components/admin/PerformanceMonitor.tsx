@@ -93,7 +93,7 @@ export default function PerformanceMonitor() {
       const data = await response.json();
       setMetrics(data.data);
     } catch (err) {
-      showError('Error cargando métricas de performance: ' + (err instanceof Error ? err.message : String(err)));
+      showError('Error', 'Error cargando métricas de performance: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
