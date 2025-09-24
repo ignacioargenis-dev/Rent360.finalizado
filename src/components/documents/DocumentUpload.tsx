@@ -294,7 +294,7 @@ return;
             status: 'completed',
             progress: 100,
             validation: uploadedFile.validation,
-            warnings: uploadedFile.validation?.warnings || []
+            ...(uploadedFile.validation?.warnings && { warnings: uploadedFile.validation.warnings })
           };
         }
         return file;
