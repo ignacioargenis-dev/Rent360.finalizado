@@ -143,6 +143,7 @@ function ChartTooltipContent({
     nameKey?: string
     labelKey?: string
     payload?: any[]
+    label?: string
   }) {
   const { config } = useChart();
 
