@@ -57,6 +57,10 @@ export default function TenantContractsPage() {
           monthlyRent: 550000,
           deposit: 550000,
           status: 'ACTIVE' as any,
+          brokerId: '3',
+          terms: 'Contrato estándar de arrendamiento por 12 meses con cláusulas de garantía y mantenimiento.',
+          signedAt: new Date('2023-12-20'),
+          terminatedAt: null,
           createdAt: new Date('2023-12-15'),
           updatedAt: new Date('2024-01-01'),
           property: {
@@ -95,6 +99,10 @@ export default function TenantContractsPage() {
           monthlyRent: 350000,
           deposit: 350000,
           status: 'ACTIVE' as any,
+          brokerId: '4',
+          terms: 'Contrato de arrendamiento comercial con opción a compra al término del período.',
+          signedAt: new Date('2023-05-20'),
+          terminatedAt: null,
           createdAt: new Date('2023-05-15'),
           updatedAt: new Date('2023-06-01'),
           property: {
