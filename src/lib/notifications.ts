@@ -389,7 +389,7 @@ class AdvancedNotificationService {
       : enabledChannels;
 
     if (availableChannels.length === 0) {
-      return enabledChannels[0];
+      return enabledChannels.length > 0 ? enabledChannels[0] : 'email'; // Default fallback
     }
 
     // Algoritmo de selección basado en tipo y prioridad
@@ -476,7 +476,14 @@ class AdvancedNotificationService {
         // Programar para después de las horas silenciosas
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(parseInt(endTime.split(':')[0]), parseInt(endTime.split(':')[1]), 0, 0);
+        const endParts = endTime.split(':');
+        if (endParts.length === 2) {
+          const endHour = parseInt(endParts[0]);
+          const endMinute = parseInt(endParts[1]);
+          if (!isNaN(endHour) && !isNaN(endMinute)) {
+            tomorrow.setHours(endHour, endMinute, 0, 0);
+          }
+        }
         return tomorrow;
       }
     }
@@ -487,7 +494,7 @@ class AdvancedNotificationService {
     
     if (!bestHours.includes(hour)) {
       // Encontrar la próxima mejor hora
-      const nextBestHour = bestHours.find(h => h > hour) || bestHours[0];
+      const nextBestHour = bestHours.find(h => h > hour) || (bestHours.length > 0 ? bestHours[0] : 9); // 9 AM default
       const optimalTime = new Date(now);
       
       if (nextBestHour > hour) {

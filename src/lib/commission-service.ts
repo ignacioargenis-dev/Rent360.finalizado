@@ -427,7 +427,7 @@ export class CommissionService {
       logger.info('Procesando pago de comisión:', { payoutId });
 
       // Simular procesamiento de pago
-      const brokerId = payoutId.split('_')[1]; // Extraer brokerId del payoutId simulado
+      const brokerId = payoutId.split('_')[1] || 'unknown'; // Extraer brokerId del payoutId simulado
       const amount = Math.floor(Math.random() * 1000000) + 50000; // Monto simulado
 
       // Enviar notificación de pago procesado

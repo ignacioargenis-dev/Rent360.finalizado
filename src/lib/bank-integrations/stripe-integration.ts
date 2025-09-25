@@ -180,9 +180,9 @@ export class StripeIntegration extends BaseBankIntegration {
         },
         business_type: 'individual',
         individual: {
-          first_name: account.accountHolder.split(' ')[0],
-          last_name: account.accountHolder.split(' ').slice(1).join(' '),
-          email: account.accountHolder, // Asumir que contiene email
+          first_name: account.accountHolder?.split(' ')?.[0] || 'Unknown',
+          last_name: account.accountHolder?.split(' ')?.slice(1)?.join(' ') || 'User',
+          email: account.accountHolder || 'user@example.com', // Asumir que contiene email
           phone: '+56999999999', // Placeholder
           address: {
             line1: 'Dirección de ejemplo',

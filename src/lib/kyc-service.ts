@@ -160,8 +160,8 @@ export class KYCService {
         riskScore: 0,
         riskLevel: 'low',
         personalInfo: {
-          firstName: user.name.split(' ')[0],
-          lastName: user.name.split(' ').slice(1).join(' '),
+          firstName: user.name?.split(' ')?.[0] || 'Unknown',
+          lastName: user.name?.split(' ')?.slice(1)?.join(' ') || 'User',
           dateOfBirth: new Date(), // Placeholder
           nationality: 'CL',
           documentType: 'RUT',
