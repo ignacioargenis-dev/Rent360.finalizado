@@ -367,9 +367,9 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
    */
   async getTransferStatus(transferId: string): Promise<{
     status: 'completed' | 'pending' | 'failed' | 'cancelled';
-    description?: string;
-    processedAt?: Date;
-    errorMessage?: string;
+    description?: string | undefined;
+    processedAt?: Date | undefined;
+    errorMessage?: string | undefined;
   }> {
     try {
       await this.initialize();
