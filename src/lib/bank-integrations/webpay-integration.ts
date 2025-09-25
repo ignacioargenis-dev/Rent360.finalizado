@@ -21,9 +21,9 @@ export class WebPayIntegration extends BaseBankIntegration {
   protected async initialize(): Promise<void> {
     await super.initialize();
 
-    this.apiKey = this.config.credentials.apiKey || '';
-    this.commerceCode = this.config.credentials.merchantId || '';
-    this.apiUrl = this.config.config.baseUrl || 'https://api.webpay.cl';
+    this.apiKey = this.config!.credentials.apiKey || '';
+    this.commerceCode = this.config!.credentials.merchantId || '';
+    this.apiUrl = this.config!.config.baseUrl || 'https://api.webpay.cl';
 
     if (!this.apiKey || !this.commerceCode) {
       throw new BusinessLogicError('Credenciales de WebPay incompletas');
@@ -62,7 +62,7 @@ export class WebPayIntegration extends BaseBankIntegration {
         commerceCode: this.commerceCode,
         buyOrder: this.generateTransactionId(),
         amount,
-        returnUrl: this.config.config.returnUrl,
+        returnUrl: this.config!.config.returnUrl,
         sessionId: `session_${Date.now()}`,
         details: [{
           commerceCode: this.commerceCode,
@@ -320,7 +320,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       const mallData = {
         buyOrder: this.generateTransactionId(),
         sessionId: `session_${Date.now()}`,
-        returnUrl: this.config.config.returnUrl,
+        returnUrl: this.config!.config.returnUrl,
         details: transactions.map((txn, index) => ({
           commerceCode: txn.commerceCode,
           buyOrder: `${this.generateTransactionId()}_${index}`,

@@ -21,9 +21,9 @@ export class StripeIntegration extends BaseBankIntegration {
   protected async initialize(): Promise<void> {
     await super.initialize();
 
-    this.apiKey = this.config.credentials.apiKey || '';
-    this.publishableKey = this.config.credentials.publishableKey || '';
-    this.apiUrl = this.config.config.baseUrl || 'https://api.stripe.com';
+    this.apiKey = this.config!.credentials.apiKey || '';
+    this.publishableKey = this.config!.credentials.publishableKey || '';
+    this.apiUrl = this.config!.config.baseUrl || 'https://api.stripe.com';
 
     if (!this.apiKey) {
       throw new BusinessLogicError('API Key de Stripe requerida');
@@ -558,7 +558,7 @@ export class StripeIntegration extends BaseBankIntegration {
       await this.initialize();
 
       // Verificar firma del webhook
-      const webhookSecret = this.config.credentials.webhookSecret;
+      const webhookSecret = this.config!.credentials.webhookSecret;
       if (!webhookSecret) {
         return {
           success: false,

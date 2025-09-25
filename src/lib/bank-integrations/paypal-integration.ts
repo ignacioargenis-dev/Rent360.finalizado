@@ -23,9 +23,9 @@ export class PayPalIntegration extends BaseBankIntegration {
   protected async initialize(): Promise<void> {
     await super.initialize();
 
-    this.clientId = this.config.credentials.clientId || '';
-    this.clientSecret = this.config.credentials.clientSecret || '';
-    this.apiUrl = this.config.config.baseUrl || 'https://api.paypal.com';
+    this.clientId = this.config!.credentials.clientId || '';
+    this.clientSecret = this.config!.credentials.clientSecret || '';
+    this.apiUrl = this.config!.config.baseUrl || 'https://api.paypal.com';
 
     if (!this.clientId || !this.clientSecret) {
       throw new BusinessLogicError('Credenciales de PayPal incompletas');
@@ -390,8 +390,8 @@ export class PayPalIntegration extends BaseBankIntegration {
           description: description || 'Pago Rent360'
         }],
         application_context: {
-          return_url: this.config.config.returnUrl,
-          cancel_url: `${this.config.config.returnUrl}?cancelled=true`,
+          return_url: this.config!.config.returnUrl,
+          cancel_url: `${this.config!.config.returnUrl}?cancelled=true`,
           user_action: 'PAY_NOW'
         }
       };

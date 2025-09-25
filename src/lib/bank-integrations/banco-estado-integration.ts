@@ -23,9 +23,9 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
   protected async initialize(): Promise<void> {
     await super.initialize();
 
-    this.clientId = this.config.credentials.clientId || '';
-    this.clientSecret = this.config.credentials.clientSecret || '';
-    this.apiUrl = this.config.config.baseUrl || 'https://api.bancoestado.cl';
+    this.clientId = this.config!.credentials.clientId || '';
+    this.clientSecret = this.config!.credentials.clientSecret || '';
+    this.apiUrl = this.config!.config.baseUrl || 'https://api.bancoestado.cl';
 
     if (!this.clientId || !this.clientSecret) {
       throw new BusinessLogicError('Credenciales de Banco Estado incompletas');
