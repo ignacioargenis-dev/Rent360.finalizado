@@ -295,12 +295,10 @@ export class StripeIntegration extends BaseBankIntegration {
         endDate
       });
 
-      const params = {
-        created: {
-          gte: Math.floor(startDate.getTime() / 1000),
-          lte: Math.floor(endDate.getTime() / 1000)
-        },
-        limit: 100
+      const params: Record<string, string> = {
+        'created[gte]': Math.floor(startDate.getTime() / 1000).toString(),
+        'created[lte]': Math.floor(endDate.getTime() / 1000).toString(),
+        'limit': '100'
       };
 
       const response = await this.makeBankRequest('/v1/balance_transactions', 'GET', null, params);
