@@ -22,10 +22,10 @@ export interface BankAccountInfo {
   rut?: string | undefined; // RUT del titular (Chile)
 
   // Información adicional
-  branchCode?: string; // Código de sucursal
-  iban?: string; // IBAN para cuentas internacionales
-  swiftCode?: string; // Código SWIFT/BIC
-  routingNumber?: string; // Número de ruta (US)
+  branchCode?: string | undefined; // Código de sucursal
+  iban?: string | undefined; // IBAN para cuentas internacionales
+  swiftCode?: string | undefined; // Código SWIFT/BIC
+  routingNumber?: string | undefined; // Número de ruta (US)
 
   // Estado y verificación
   isPrimary: boolean; // Cuenta primaria
@@ -35,12 +35,12 @@ export interface BankAccountInfo {
 
   // Metadata
   metadata: {
-    lastVerificationAttempt?: Date;
+    lastVerificationAttempt?: Date | undefined;
     verificationAttempts: number;
-    microDepositAmounts?: [number, number]; // Para verificación por microdepósitos
-    documentsRequired?: string[]; // Documentos requeridos
-    riskScore?: number;
-    notes?: string;
+    microDepositAmounts?: [number, number] | undefined; // Para verificación por microdepósitos
+    documentsRequired?: string[] | undefined; // Documentos requeridos
+    riskScore?: number | undefined;
+    notes?: string | undefined;
   };
 
   createdAt: Date;
