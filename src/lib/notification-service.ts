@@ -621,7 +621,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending notification:', error);
+      logger.error('Error sending notification', { error: error instanceof Error ? error.message : String(error) });
 
       // Registrar notificación fallida
       await this.logNotification({
@@ -750,7 +750,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending runner payout notification:', error);
+      logger.error('Error sending runner payout notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -801,7 +801,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending runner incentive notification:', error);
+      logger.error('Error sending runner incentive notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -852,7 +852,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending runner rating notification:', error);
+      logger.error('Error sending runner rating notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -901,7 +901,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending runner weekly report notification:', error);
+      logger.error('Error sending runner weekly report notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -948,7 +948,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending runner ranking notification:', error);
+      logger.error('Error sending runner ranking notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -1031,7 +1031,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending provider payout notification:', error);
+      logger.error('Error sending provider payout notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -1058,7 +1058,7 @@ Equipo Rent360`,
         status: notification.status
       });
     } catch (error) {
-      logger.error('Error logging notification:', error);
+      logger.error('Error logging notification', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -1078,7 +1078,7 @@ Equipo Rent360`,
       logger.info('Scheduled notifications processed', { processedCount: 0 });
 
     } catch (error) {
-      logger.error('Error processing scheduled notifications:', error);
+      logger.error('Error processing scheduled notifications', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

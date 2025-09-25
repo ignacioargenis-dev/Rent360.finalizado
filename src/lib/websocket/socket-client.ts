@@ -69,27 +69,27 @@ class WebSocketClient {
 
     // Manejadores de eventos de negocio
     this.socket.on('notification', (data) => {
-      logger.info('Notification received', data);
+      logger.info('Notification received', { data });
       this.emitEvent('notification', data);
     });
 
     this.socket.on('contract-update', (data) => {
-      logger.info('Contract update received', data);
+      logger.info('Contract update received', { data });
       this.emitEvent('contract-update', data);
     });
 
     this.socket.on('payment-update', (data) => {
-      logger.info('Payment update received', data);
+      logger.info('Payment update received', { data });
       this.emitEvent('payment-update', data);
     });
 
     this.socket.on('new-message', (data) => {
-      logger.info('New message received', data);
+      logger.info('New message received', { data });
       this.emitEvent('new-message', data);
     });
 
     this.socket.on('system-alert', (data) => {
-      logger.info('System alert received', data);
+      logger.info('System alert received', { data });
       this.emitEvent('system-alert', data);
     });
 

@@ -91,7 +91,7 @@ export class NotificationQueue {
       await Promise.allSettled(promises);
 
     } catch (error) {
-      logger.error('Error processing notification queue:', error);
+      logger.error('Error processing notification queue', { error: error instanceof Error ? error.message : String(error) });
     } finally {
       this.isProcessing = false;
     }
@@ -363,7 +363,7 @@ export class NotificationQueue {
       logger.info('Recurring notifications scheduled');
 
     } catch (error) {
-      logger.error('Error scheduling recurring notifications:', error);
+      logger.error('Error scheduling recurring notifications', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

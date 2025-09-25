@@ -270,7 +270,7 @@ export async function initializeMLModels(): Promise<void> {
     await pricePredictionModel.train();
     logger.info('Modelos de Machine Learning inicializados exitosamente');
   } catch (error) {
-    logger.error('Error inicializando modelos de ML:', error);
+    logger.error('Error inicializando modelos de ML', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 

@@ -142,7 +142,7 @@ export class GuaranteeService {
 
       return guarantee;
     } catch (error) {
-      logger.error('Error creando garantía:', error);
+      logger.error('Error creando garantía', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -246,7 +246,7 @@ export class GuaranteeService {
 
       return claim;
     } catch (error) {
-      logger.error('Error creando reclamación:', error);
+      logger.error('Error creando reclamación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -308,7 +308,7 @@ export class GuaranteeService {
 
       return claim;
     } catch (error) {
-      logger.error('Error actualizando reclamación:', error);
+      logger.error('Error actualizando reclamación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -349,7 +349,7 @@ export class GuaranteeService {
 
       return resolutionData;
     } catch (error) {
-      logger.error('Error resolviendo reclamación:', error);
+      logger.error('Error resolviendo reclamación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -482,7 +482,7 @@ export class GuaranteeService {
         logger.info(`Garantías expiradas: ${expiredCount}`);
       }
     } catch (error) {
-      logger.error('Error verificando garantías expiradas:', error);
+      logger.error('Error verificando garantías expiradas', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

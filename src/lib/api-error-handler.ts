@@ -138,9 +138,9 @@ export function handleApiError(error: unknown, context?: string): NextResponse {
   };
 
   if (apiError.isOperational) {
-    logger.warn(`API Error: ${apiError.message}`, logData);
+    logger.warn('API Error', logData);
   } else {
-    logger.error(`API Error: ${apiError.message}`, logData);
+    logger.error('API Error', logData);
   }
 
   // Crear respuesta HTTP
