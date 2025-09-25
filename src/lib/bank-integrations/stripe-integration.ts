@@ -7,9 +7,9 @@ import { BusinessLogicError } from '../errors';
  * Integración con Stripe
  */
 export class StripeIntegration extends BaseBankIntegration {
-  private apiKey: string;
-  private publishableKey: string;
-  private apiUrl: string;
+  private apiKey!: string;
+  private publishableKey!: string;
+  private apiUrl!: string;
 
   constructor() {
     super('stripe');

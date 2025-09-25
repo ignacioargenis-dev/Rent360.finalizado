@@ -7,9 +7,9 @@ import { BusinessLogicError } from '../errors';
  * Integración con Banco Estado de Chile
  */
 export class BancoEstadoIntegration extends BaseBankIntegration {
-  private clientId: string;
-  private clientSecret: string;
-  private apiUrl: string;
+  private clientId!: string;
+  private clientSecret!: string;
+  private apiUrl!: string;
   private accessToken: string | null = null;
   private tokenExpiry: Date | null = null;
 

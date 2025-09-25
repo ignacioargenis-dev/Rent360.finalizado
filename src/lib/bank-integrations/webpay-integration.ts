@@ -7,9 +7,9 @@ import { BusinessLogicError } from '../errors';
  * Integración con WebPay (Transbank)
  */
 export class WebPayIntegration extends BaseBankIntegration {
-  private apiKey: string;
-  private commerceCode: string;
-  private apiUrl: string;
+  private apiKey!: string;
+  private commerceCode!: string;
+  private apiUrl!: string;
 
   constructor() {
     super('webpay');
