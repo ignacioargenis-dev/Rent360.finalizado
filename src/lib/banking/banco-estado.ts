@@ -227,7 +227,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       logger.error('Error consultando transacción Banco Estado', { error: error instanceof Error ? error.message : String(error) });
       return {
         status: 'FAILED',
-        details: { error: error.message }
+        details: { error: error instanceof Error ? error.message : String(error) }
       };
     }
   }
