@@ -328,7 +328,7 @@ export abstract class BaseBankIntegration {
     };
 
     const errorCode = error.code || 'TECHNICAL_ERROR';
-    const errorInfo = errorMappings[errorCode] || errorMappings.TECHNICAL_ERROR;
+    const errorInfo = errorMappings[errorCode] || errorMappings.TECHNICAL_ERROR!;
 
     return {
       success: false,
