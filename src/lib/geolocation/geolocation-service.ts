@@ -215,7 +215,7 @@ export class GeolocationService {
       return results.slice(0, 20); // Máximo 20 resultados
 
     } catch (error) {
-      logger.error('Error buscando proveedores cercanos:', error);
+      logger.error('Error buscando proveedores cercanos', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -239,7 +239,7 @@ export class GeolocationService {
       });
 
     } catch (error) {
-      logger.error('Error registrando ubicación de proveedor:', error);
+      logger.error('Error registrando ubicación de proveedor', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -260,7 +260,7 @@ export class GeolocationService {
       logger.info('Ubicación de proveedor actualizada:', { providerId });
 
     } catch (error) {
-      logger.error('Error actualizando ubicación de proveedor:', error);
+      logger.error('Error actualizando ubicación de proveedor', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -341,7 +341,7 @@ export class GeolocationService {
       return defaultLocation;
 
     } catch (error) {
-      logger.error('Error geocodificando dirección:', error);
+      logger.error('Error geocodificando dirección', { error: error instanceof Error ? error.message : String(error) });
       throw new Error('No se pudo geocodificar la dirección');
     }
   }
@@ -391,7 +391,7 @@ export class GeolocationService {
       return closestLocation;
 
     } catch (error) {
-      logger.error('Error en reverse geocoding:', error);
+      logger.error('Error en reverse geocoding', { error: error instanceof Error ? error.message : String(error) });
       throw new Error('No se pudo obtener la dirección');
     }
   }

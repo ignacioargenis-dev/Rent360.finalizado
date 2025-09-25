@@ -398,7 +398,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending commission calculated notification:', error);
+      logger.error('Error sending commission calculated notification', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -458,7 +458,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending commission paid notification:', error);
+      logger.error('Error sending commission paid notification', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -505,7 +505,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending payout ready notification:', error);
+      logger.error('Error sending payout ready notification', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -554,7 +554,7 @@ Equipo Rent360`,
       });
 
     } catch (error) {
-      logger.error('Error sending system alert notification:', error);
+      logger.error('Error sending system alert notification', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
