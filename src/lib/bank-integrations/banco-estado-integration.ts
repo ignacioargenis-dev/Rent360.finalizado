@@ -166,19 +166,19 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
           { code: 'TECHNICAL_ERROR', message: 'Error técnico en procesamiento' }
         ];
 
-        const error = errors[Math.floor(Math.random() * errors.length)] || errors[0];
+        const simulatedError = errors[Math.floor(Math.random() * errors.length)] || errors[0];
 
         return {
           success: false,
           amount,
           currency: 'CLP',
           status: 'failed',
-          errorCode: error.code,
-          errorMessage: error.message,
+          errorCode: simulatedError.code,
+          errorMessage: simulatedError.message,
           processedAt: new Date(),
           metadata: {
             bancoEstadoId: response.idTransferencia,
-            errorDetails: error
+            errorDetails: simulatedError
           }
         };
       }
