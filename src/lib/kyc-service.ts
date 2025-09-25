@@ -120,10 +120,10 @@ export class KYCService {
     level: KYCLevel = KYCLevel.BASIC
   ): Promise<{
     success: boolean;
-    error?: string;
-    sessionId?: string;
-    requirements?: string[];
-    expiresAt?: Date;
+    error?: string | undefined;
+    sessionId?: string | undefined;
+    requirements?: string[] | undefined;
+    expiresAt?: Date | undefined;
   }> {
     try {
       // Verificar si ya existe una verificación activa
@@ -399,8 +399,8 @@ export class KYCService {
   ): Promise<{
     approved: boolean;
     confidence: number;
-    extractedData?: Record<string, any>;
-    issues?: string[];
+    extractedData?: Record<string, any> | undefined;
+    issues?: string[] | undefined;
   }> {
     try {
       // Simular verificación de documento usando OCR/AI
@@ -455,7 +455,7 @@ export class KYCService {
   ): Promise<{
     verified: boolean;
     confidence: number;
-    suggestions?: string[];
+    suggestions?: string[] | undefined;
   }> {
     try {
       // Simular verificación de dirección
@@ -648,10 +648,10 @@ export class KYCService {
    */
   static async canReceivePayouts(userId: string): Promise<{
     canReceive: boolean;
-    reason?: string;
+    reason?: string | undefined;
     requiredLevel: KYCLevel;
-    currentLevel?: KYCLevel;
-    nextSteps?: string[];
+    currentLevel?: KYCLevel | undefined;
+    nextSteps?: string[] | undefined;
   }> {
     try {
       const kyc = await this.getActiveKYC(userId);
