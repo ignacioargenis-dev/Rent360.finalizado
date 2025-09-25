@@ -28,7 +28,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
   private async authenticate(): Promise<string> {
     try {
       if (this.accessToken && this.tokenExpiration && this.tokenExpiration > new Date()) {
-        return this.accessToken;
+        return this.accessToken!;
       }
 
       const response = await fetch(`${this.baseUrl}/oauth2/token`, {
@@ -52,9 +52,9 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       this.accessToken = data.access_token;
       this.tokenExpiration = new Date(Date.now() + (data.expires_in * 1000));
 
-      return this.accessToken;
+      return this.accessToken!;
     } catch (error) {
-      logger.error('Error en autenticación Banco Estado:', error);
+      logger.error('Error en autenticación Banco Estado', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -64,7 +64,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
    */
   protected generateAuthHeaders(): Record<string, string> {
     return {
-      'Authorization': `Bearer ${this.accessToken}`,
+      'Authorization': `Bearer ${this.accessToken!}`,
       'Content-Type': 'application/json',
       'X-API-Key': this.apiKey
     };
@@ -178,7 +178,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error validando cuenta Banco Estado:', error);
+      logger.error('Error validando cuenta Banco Estado', { error: error instanceof Error ? error.message : String(error) });
       return {
         ...validation,
         isValid: false,
@@ -224,7 +224,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando transacción Banco Estado:', error);
+      logger.error('Error consultando transacción Banco Estado', { error: error instanceof Error ? error.message : String(error) });
       return {
         status: 'FAILED',
         details: { error: error.message }
@@ -261,7 +261,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error obteniendo saldo Banco Estado:', error);
+      logger.error('Error obteniendo saldo Banco Estado', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
