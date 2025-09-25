@@ -496,7 +496,7 @@ export class KYCService {
       return null;
 
     } catch (error) {
-      logger.error('Error obteniendo KYC activo:', error);
+      logger.error('Error obteniendo KYC activo', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }
@@ -510,7 +510,7 @@ export class KYCService {
       return null;
 
     } catch (error) {
-      logger.error('Error obteniendo KYC por ID:', error);
+      logger.error('Error obteniendo KYC por ID', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }
@@ -707,7 +707,7 @@ export class KYCService {
       return result;
 
     } catch (error) {
-      logger.error('Error verificando elegibilidad para payouts:', error);
+      logger.error('Error verificando elegibilidad para payouts', { error: error instanceof Error ? error.message : String(error) });
       return {
         canReceive: false,
         reason: 'Error en verificación',
