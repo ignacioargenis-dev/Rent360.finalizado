@@ -47,8 +47,8 @@ export enum PaymentStatus {
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: string;
-  message?: string;
+  error?: string | undefined;
+  message?: string | undefined;
   pagination?: {
     page: number;
     limit: number;
@@ -72,7 +72,7 @@ export interface User {
   name: string;
   role: UserRole;
   isActive: boolean;
-  avatar?: string;
+    avatar?: string | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,13 +105,13 @@ export interface Contract {
   propertyId: string;
   tenantId: string;
   ownerId: string;
-  brokerId?: string;
+    brokerId?: string | undefined;
   startDate: Date;
   endDate: Date;
   monthlyRent: number;
   deposit: number;
   status: ContractStatus;
-  terms?: string;
+    terms?: string | undefined;
   signedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -121,14 +121,14 @@ export interface Payment {
   id: string;
   paymentNumber: string;
   contractId: string;
-  payerId?: string;
+    payerId?: string | undefined;
   amount: number;
   dueDate: Date;
   paidDate?: Date;
   status: PaymentStatus;
-  method?: string;
-  transactionId?: string;
-  notes?: string;
+  method?: string | undefined;
+  transactionId?: string | undefined;
+  notes?: string | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -137,8 +137,8 @@ export interface Payment {
 export interface ServiceResult<T = any> {
   success: boolean;
   data?: T;
-  error?: string;
-  message?: string;
+  error?: string | undefined;
+  message?: string | undefined;
 }
 
 export interface ValidationResult {
@@ -149,9 +149,9 @@ export interface ValidationResult {
 
 export interface FileUploadResult {
   success: boolean;
-  fileId?: string;
-  url?: string;
-  error?: string;
+    fileId?: string | undefined;
+  url?: string | undefined;
+  error?: string | undefined;
 }
 
 // Tipos para notificaciones
@@ -168,8 +168,8 @@ export interface NotificationData {
 
 // Tipos para búsqueda y filtros
 export interface SearchFilters {
-  query?: string;
-  city?: string;
+  query?: string | undefined;
+  city?: string | undefined;
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
@@ -249,8 +249,8 @@ export interface AppConfig {
   };
   storage: {
     provider: 'local' | 's3' | 'gcs';
-    bucket?: string;
-    region?: string;
+    bucket?: string | undefined;
+    region?: string | undefined;
     credentials?: {
       accessKeyId: string;
       secretAccessKey: string;
@@ -261,14 +261,14 @@ export interface AppConfig {
 // Tipos para logs y auditoría
 export interface AuditLog {
   id: string;
-  userId?: string;
+  userId?: string | undefined;
   action: string;
   entityType: string;
-  entityId?: string;
+  entityId?: string | undefined;
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
-  ipAddress?: string;
-  userAgent?: string;
+  ipAddress?: string | undefined;
+  userAgent?: string | undefined;
   createdAt: Date;
 }
 
@@ -331,8 +331,8 @@ export interface SignatureRequest {
   signers: Array<{
     email: string;
     name: string;
-    rut?: string;
-    role?: string;
+    rut?: string | undefined;
+    role?: string | undefined;
   }>;
   type: SignatureType;
   status: SignatureStatus;

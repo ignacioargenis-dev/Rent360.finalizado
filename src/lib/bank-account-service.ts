@@ -144,9 +144,9 @@ export class BankAccountService {
       accountType: 'checking' | 'savings' | 'business';
       accountNumber: string;
       accountHolder: string;
-      rut?: string;
-      branchCode?: string;
-      isPrimary?: boolean;
+      rut?: string | undefined;
+      branchCode?: string | undefined;
+      isPrimary?: boolean | undefined;
     }
   ): Promise<BankAccountInfo> {
     try {

@@ -16,10 +16,10 @@ export interface BankTransferRequest {
 
 export interface BankTransferResponse {
   success: boolean;
-  transactionId?: string;
-  status?: 'PENDING' | 'COMPLETED' | 'FAILED';
-  errorMessage?: string;
-  trackingCode?: string;
+  transactionId?: string | undefined;
+  status?: 'PENDING' | 'COMPLETED' | 'FAILED' | undefined;
+  errorMessage?: string | undefined;
+  trackingCode?: string | undefined;
 }
 
 export interface BankAccountValidation {
@@ -27,8 +27,8 @@ export interface BankAccountValidation {
   rut: string;
   bankCode: string;
   isValid: boolean;
-  accountHolder?: string;
-  errorMessage?: string;
+  accountHolder?: string | undefined;
+  errorMessage?: string | undefined;
 }
 
 /**
@@ -55,17 +55,17 @@ export abstract class BaseBankIntegration {
   /**
    * Realiza una transferencia bancaria
    */
-  abstract async transfer(request: BankTransferRequest): Promise<BankTransferResponse>;
+  abstract transfer(request: BankTransferRequest): Promise<BankTransferResponse>;
 
   /**
    * Valida una cuenta bancaria
    */
-  abstract async validateAccount(validation: BankAccountValidation): Promise<BankAccountValidation>;
+  abstract validateAccount(validation: BankAccountValidation): Promise<BankAccountValidation>;
 
   /**
    * Consulta el estado de una transacción
    */
-  abstract async getTransactionStatus(transactionId: string): Promise<{
+  abstract getTransactionStatus(transactionId: string): Promise<{
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     details?: any;
   }>;
@@ -73,7 +73,7 @@ export abstract class BaseBankIntegration {
   /**
    * Obtiene el saldo disponible
    */
-  abstract async getBalance(): Promise<{
+  abstract getBalance(): Promise<{
     available: number;
     currency: string;
     lastUpdated: Date;
