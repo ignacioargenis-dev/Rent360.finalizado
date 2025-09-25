@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export class AppError extends Error {
   public statusCode: number;
   public isOperational: boolean;
-  public code?: string;
+  public code?: string | undefined;
 
   constructor(message: string, statusCode = 500, code?: string) {
     super(message);
@@ -16,7 +16,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  public details?: any;
+  public details?: any | undefined;
   
   constructor(message: string, details?: any) {
     super(message, 400, 'VALIDATION_ERROR');
@@ -61,7 +61,7 @@ export class DatabaseError extends AppError {
 }
 
 export class ExternalServiceError extends AppError {
-  public service?: string;
+  public service?: string | undefined;
 
   constructor(message = 'External service error', service?: string) {
     super(message, 502, 'EXTERNAL_SERVICE_ERROR');
@@ -71,7 +71,7 @@ export class ExternalServiceError extends AppError {
 }
 
 export class RateLimitError extends AppError {
-  public retryAfter?: number;
+  public retryAfter?: number | undefined;
 
   constructor(message = 'Rate limit exceeded', retryAfter?: number) {
     super(message, 429, 'RATE_LIMIT_ERROR');
@@ -81,8 +81,8 @@ export class RateLimitError extends AppError {
 }
 
 export class FileUploadError extends AppError {
-  public maxSize?: number;
-  public allowedTypes?: string[];
+  public maxSize?: number | undefined;
+  public allowedTypes?: string[] | undefined;
 
   constructor(message = 'File upload failed', maxSize?: number, allowedTypes?: string[]) {
     super(message, 400, 'FILE_UPLOAD_ERROR');
@@ -93,7 +93,7 @@ export class FileUploadError extends AppError {
 }
 
 export class BusinessLogicError extends AppError {
-  public businessRule?: string;
+  public businessRule?: string | undefined;
 
   constructor(message = 'Business rule violation', businessRule?: string) {
     super(message, 400, 'BUSINESS_LOGIC_ERROR');
