@@ -50,8 +50,8 @@ class CacheManager {
     persistenceInterval: 5 * 60 * 1000, // 5 minutos
     enablePersistence: true
   };
-  private cleanupInterval: NodeJS.Timeout;
-  private persistenceInterval: NodeJS.Timeout;
+  private cleanupInterval!: NodeJS.Timeout;
+  private persistenceInterval!: NodeJS.Timeout;
 
   constructor(config?: Partial<CacheConfig>) {
     if (config) {

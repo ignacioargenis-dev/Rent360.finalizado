@@ -49,7 +49,7 @@ export interface BackupResult {
 }
 
 class BackupManager {
-  private config: BackupConfig;
+  private config!: BackupConfig;
   private backupHistory: BackupResult[] = [];
   private isRunning: boolean = false;
 

@@ -53,7 +53,7 @@ interface CacheConfig {
 // Driver de cache en memoria
 class MemoryCacheDriver implements CacheDriver {
   private cache: Map<string, CacheEntry<any>> = new Map();
-  private config: CacheConfig;
+  private config!: CacheConfig;
   private hitCount = 0;
   private missCount = 0;
   private startTime = Date.now();
@@ -318,8 +318,8 @@ class RedisCacheDriver implements CacheDriver {
 }
 
 class DistributedCacheManager {
-  private driver: CacheDriver;
-  private config: CacheConfig;
+  private driver!: CacheDriver;
+  private config!: CacheConfig;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = {

@@ -51,7 +51,7 @@ export interface PaymentMethod {
 
 // Clase para manejar pagos con Stripe
 export class StripePaymentService {
-  private stripe: any
+  private stripe!: any
 
   constructor() {
     if (PAYMENT_API_CONFIG.stripe.secretKey) {

@@ -181,8 +181,8 @@ interface RequestContext {
 }
 
 class Logger {
-  private logLevel: LogLevel;
-  private isDevelopment: boolean;
+  private logLevel!: LogLevel;
+  private isDevelopment!: boolean;
   private logBuffer: LogEntry[] = [];
   private maxBufferSize = 1000;
 

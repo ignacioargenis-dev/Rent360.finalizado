@@ -30,7 +30,7 @@ export interface BankConfig {
  */
 export class BankService {
   private banks: Map<string, BaseBankIntegration> = new Map();
-  private bankConfigs: BankConfig;
+  private bankConfigs!: BankConfig;
 
   constructor(config: BankConfig) {
     this.bankConfigs = config;

@@ -17,7 +17,7 @@ export interface LogEntry {
 }
 
 class EdgeLogger {
-  private logLevel: LogLevel;
+  private logLevel!: LogLevel;
 
   constructor() {
     this.logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';

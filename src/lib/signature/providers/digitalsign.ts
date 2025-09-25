@@ -14,11 +14,11 @@ import { logger } from '../../logger';
  * Validez jurídica plena en Chile con integración bancaria
  */
 export class DigitalSignProvider extends SignatureProvider {
-  private apiKey: string;
-  private apiSecret: string;
-  private baseUrl: string;
-  private certificateId: string;
-  private bankIntegration: boolean;
+  private apiKey!: string;
+  private apiSecret!: string;
+  private baseUrl!: string;
+  private certificateId!: string;
+  private bankIntegration!: boolean;
 
   constructor(config: Record<string, any>) {
     super('DigitalSign', SignatureType.QUALIFIED, config);

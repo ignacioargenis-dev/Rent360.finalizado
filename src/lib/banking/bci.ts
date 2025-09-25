@@ -9,8 +9,8 @@ import * as crypto from 'crypto';
 export class BCIIntegration extends BaseBankIntegration {
   private accessToken: string | null = null;
   private tokenExpiration: Date | null = null;
-  private clientId: string;
-  private clientSecret: string;
+  private clientId!: string;
+  private clientSecret!: string;
 
   constructor(config: {
     clientId: string;

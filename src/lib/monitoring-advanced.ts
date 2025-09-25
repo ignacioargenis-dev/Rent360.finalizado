@@ -63,7 +63,7 @@ export interface MonitoringConfig {
 class AdvancedMonitoringSystem {
   private metrics: SystemMetrics[] = [];
   private alerts: Alert[] = [];
-  private config: MonitoringConfig;
+  private config!: MonitoringConfig;
   private checkInterval!: NodeJS.Timeout;
   private isRunning: boolean = false;
 
