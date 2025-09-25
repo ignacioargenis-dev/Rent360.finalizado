@@ -283,7 +283,7 @@ export class FirmaProProvider extends SignatureProvider {
   }
 
   // Método auxiliar para hacer llamadas a la API de FirmaPro
-  private async makeAPIRequest(endpoint: string, method: string = 'GET', data?: any): Promise<{ success: boolean; data?: any; statusCode?: number; message?: string; error?: any }> {
+  private async makeAPIRequest(endpoint: string, method: string = 'GET', data?: any): Promise<{ success: boolean; data?: any; statusCode?: number | undefined; message?: string | undefined; error?: any }> {
     try {
       const url = `${this.baseUrl}${endpoint}`;
       const timestamp = new Date().toISOString();
