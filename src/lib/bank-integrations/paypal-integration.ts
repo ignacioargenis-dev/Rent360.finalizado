@@ -46,7 +46,7 @@ export class PayPalIntegration extends BaseBankIntegration {
     try {
       // Verificar si el token actual es válido
       if (this.accessToken && this.tokenExpiry && this.tokenExpiry > new Date()) {
-        return this.accessToken;
+        return this.accessToken!;
       }
 
       const auth = btoa(`${this.clientId}:${this.clientSecret}`);
@@ -69,10 +69,10 @@ export class PayPalIntegration extends BaseBankIntegration {
 
       logger.info('Token de acceso PayPal obtenido');
 
-      return this.accessToken;
+      return this.accessToken!;
 
     } catch (error) {
-      logger.error('Error obteniendo token de acceso PayPal:', error);
+      logger.error('Error obteniendo token de acceso PayPal', { error: error instanceof Error ? error.message : String(error) });
       throw new BusinessLogicError('Error de autenticación con PayPal');
     }
   }
@@ -131,7 +131,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       return result;
 
     } catch (error) {
-      logger.error('Error en transferencia PayPal:', error);
+      logger.error('Error en transferencia PayPal', { error: error instanceof Error ? error.message : String(error) });
       return this.handleBankError(error);
     }
   }
@@ -262,7 +262,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error verificando cuenta PayPal:', error);
+      logger.error('Error verificando cuenta PayPal', { error: error instanceof Error ? error.message : String(error) });
       return {
         isValid: false,
         verificationMethod: 'api',
@@ -305,7 +305,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando saldo PayPal:', error);
+      logger.error('Error consultando saldo PayPal', { error: error instanceof Error ? error.message : String(error) });
       throw new BusinessLogicError('Error obteniendo saldo de cuenta PayPal');
     }
   }
@@ -358,7 +358,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       }));
 
     } catch (error) {
-      logger.error('Error obteniendo historial PayPal:', error);
+      logger.error('Error obteniendo historial PayPal', { error: error instanceof Error ? error.message : String(error) });
       return [];
     }
   }
@@ -414,7 +414,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando orden PayPal:', error);
+      logger.error('Error creando orden PayPal', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -456,7 +456,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error capturando orden PayPal:', error);
+      logger.error('Error capturando orden PayPal', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error de captura'
@@ -534,7 +534,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando payout masivo PayPal:', error);
+      logger.error('Error creando payout masivo PayPal', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
