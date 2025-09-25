@@ -86,7 +86,7 @@ export class StripeIntegration extends BaseBankIntegration {
       return result;
 
     } catch (error) {
-      logger.error('Error en transferencia Stripe:', error);
+      logger.error('Error en transferencia Stripe', { error: error instanceof Error ? error.message : String(error) });
       return this.handleBankError(error);
     }
   }
@@ -227,7 +227,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error verificando cuenta Stripe:', error);
+      logger.error('Error verificando cuenta Stripe', { error: error instanceof Error ? error.message : String(error) });
       return {
         isValid: false,
         verificationMethod: 'api',
@@ -273,7 +273,7 @@ export class StripeIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando saldo Stripe:', error);
+      logger.error('Error consultando saldo Stripe', { error: error instanceof Error ? error.message : String(error) });
       throw new BusinessLogicError('Error obteniendo saldo de cuenta Stripe');
     }
   }
@@ -328,7 +328,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }));
 
     } catch (error) {
-      logger.error('Error obteniendo historial Stripe:', error);
+      logger.error('Error obteniendo historial Stripe', { error: error instanceof Error ? error.message : String(error) });
       return [];
     }
   }
@@ -379,7 +379,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando Payment Intent:', error);
+      logger.error('Error creando Payment Intent', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -424,7 +424,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error confirmando Payment Intent:', error);
+      logger.error('Error confirmando Payment Intent', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error de confirmación'
@@ -486,7 +486,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando sesión de checkout:', error);
+      logger.error('Error creando sesión de checkout', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -534,7 +534,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando transferencia:', error);
+      logger.error('Error creando transferencia', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -584,7 +584,7 @@ export class StripeIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error procesando webhook Stripe:', error);
+      logger.error('Error procesando webhook Stripe', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error procesando webhook'
@@ -618,7 +618,7 @@ export class StripeIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error obteniendo detalles de pago:', error);
+      logger.error('Error obteniendo detalles de pago', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
