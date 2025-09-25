@@ -381,7 +381,7 @@ export class GeolocationService {
       if (locations.length === 0) {
         throw new Error('No hay ubicaciones disponibles para comparación');
       }
-      let closestLocation = locations[0];
+      let closestLocation = locations[0]!;
       if (!closestLocation.coordinates) {
         throw new Error('La ubicación más cercana no tiene coordenadas válidas');
       }
