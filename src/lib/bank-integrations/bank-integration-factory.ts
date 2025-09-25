@@ -139,9 +139,9 @@ export class BankIntegrationFactory {
     bankCode: string;
     name: string;
     available: boolean;
-    lastUsed?: Date;
-    successRate?: number;
-    averageResponseTime?: number;
+    lastUsed?: Date | undefined;
+    successRate?: number | undefined;
+    averageResponseTime?: number | undefined;
   }>> {
     const banks = await this.getAvailableBanks();
 
