@@ -221,7 +221,7 @@ export class BankAccountService {
       return bankAccount;
 
     } catch (error) {
-      logger.error('Error registrando cuenta bancaria:', error);
+      logger.error('Error registrando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -262,7 +262,7 @@ export class BankAccountService {
       return mockAccounts.filter(account => account.userId === userId);
 
     } catch (error) {
-      logger.error('Error obteniendo cuentas bancarias:', error);
+      logger.error('Error obteniendo cuentas bancarias', { error: error instanceof Error ? error.message : String(error) });
       throw new DatabaseError('Error al obtener cuentas bancarias');
     }
   }
@@ -317,7 +317,7 @@ export class BankAccountService {
       return verificationResult;
 
     } catch (error) {
-      logger.error('Error verificando cuenta bancaria:', error);
+      logger.error('Error verificando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         status: 'failed',
@@ -353,7 +353,7 @@ export class BankAccountService {
       }
 
     } catch (error) {
-      logger.error('Error iniciando verificación:', error);
+      logger.error('Error iniciando verificación', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -671,7 +671,7 @@ export class BankAccountService {
       logger.info('Cuenta bancaria eliminada', { accountId, userId });
 
     } catch (error) {
-      logger.error('Error eliminando cuenta bancaria:', error);
+      logger.error('Error eliminando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
