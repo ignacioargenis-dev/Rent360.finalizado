@@ -317,7 +317,7 @@ export async function getPropertiesOptimized(options: {
         },
       },
     },
-  });
+  };
 
   // Agregar propiedades opcionales solo si están definidas
   if (skip !== undefined) {
@@ -327,8 +327,7 @@ export async function getPropertiesOptimized(options: {
     queryOptions.take = take;
   }
 
-  const properties = await db.property.findMany(queryOptions);
-  return properties;
+  return await db.property.findMany(queryOptions);
 }
 
 export async function getUsersOptimized(options: {
@@ -354,7 +353,7 @@ export async function getUsersOptimized(options: {
       createdAt: true,
       updatedAt: true,
     },
-  });
+  };
 
   // Agregar propiedades opcionales solo si están definidas
   if (skip !== undefined) {
@@ -416,7 +415,7 @@ export async function getContractsOptimized(options: {
         },
       },
     },
-  });
+  };
 
   // Agregar propiedades opcionales solo si están definidas
   if (skip !== undefined) {
@@ -468,7 +467,7 @@ export async function getPaymentsOptimized(options: {
         },
       },
     },
-  });
+  };
 
   // Agregar propiedades opcionales solo si están definidas
   if (skip !== undefined) {
