@@ -355,6 +355,16 @@ export abstract class BaseBankIntegration {
   }
 
   /**
+   * Obtiene los límites de monto para esta integración
+   */
+  public getAmountLimits(): { min: number; max: number } {
+    return {
+      min: this.config.config.minAmount || 100,
+      max: this.config.config.maxAmount || 100000000
+    };
+  }
+
+  /**
    * Genera un ID único para transacciones
    */
   protected generateTransactionId(): string {

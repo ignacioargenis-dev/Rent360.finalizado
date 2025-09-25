@@ -206,8 +206,8 @@ export class BankIntegrationFactory {
 
         if (available) {
           // Verificar límites
-          if (amount >= (integration.config.config.minAmount || 0) &&
-              amount <= (integration.config.config.maxAmount || Number.MAX_SAFE_INTEGER)) {
+          const limits = integration.getAmountLimits();
+          if (amount >= limits.min && amount <= limits.max) {
             logger.info('Integración recomendada encontrada', {
               bankCode,
               fromAccount: fromAccount.bankCode,
