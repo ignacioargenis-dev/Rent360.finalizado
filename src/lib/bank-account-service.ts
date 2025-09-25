@@ -19,7 +19,7 @@ export interface BankAccountInfo {
   accountType: 'checking' | 'savings' | 'business';
   accountNumber: string; // Número de cuenta enmascarado
   accountHolder: string; // Titular de la cuenta
-  rut?: string; // RUT del titular (Chile)
+  rut?: string | undefined; // RUT del titular (Chile)
 
   // Información adicional
   branchCode?: string; // Código de sucursal
