@@ -424,8 +424,8 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
     description?: string
   ): Promise<{
     success: boolean;
-    scheduledTransferId?: string;
-    error?: string;
+    scheduledTransferId?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -470,7 +470,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
    */
   async cancelScheduledTransfer(scheduledTransferId: string): Promise<{
     success: boolean;
-    error?: string;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
