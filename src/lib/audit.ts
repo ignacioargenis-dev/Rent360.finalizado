@@ -13,7 +13,7 @@ export interface AuditLogData {
   newValues?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 export interface AuditQuery {

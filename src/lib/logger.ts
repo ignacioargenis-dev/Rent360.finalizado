@@ -136,7 +136,7 @@ interface Alert {
   autoResolve?: boolean; // Si se puede resolver automáticamente
   escalationLevel?: number; // Nivel de escalamiento
   tags?: string[]; // Tags para categorización
-  metadata?: Record<string, any>; // Información adicional
+  metadata?: Record<string, any> | undefined; // Información adicional
 }
 
 interface MonitoringEvent {
@@ -144,7 +144,7 @@ interface MonitoringEvent {
   type: 'error' | 'warning' | 'info' | 'success';
   message: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
@@ -166,7 +166,7 @@ interface PerformanceMetric {
   startTime: number;
   endTime?: number;
   duration?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
   tags?: string[];
 }
 

@@ -5,7 +5,7 @@ export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, any> | undefined;
   context?: string;
   userId?: string;
   sessionId?: string;

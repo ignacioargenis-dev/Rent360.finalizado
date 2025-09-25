@@ -161,7 +161,7 @@ export interface NotificationData {
   type: string;
   title: string;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, any> | undefined;
   isRead: boolean;
   createdAt: Date;
 }
@@ -265,8 +265,8 @@ export interface AuditLog {
   action: string;
   entityType: string;
   entityId?: string | undefined;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  oldValues?: Record<string, any> | undefined;
+  newValues?: Record<string, any> | undefined;
   ipAddress?: string | undefined;
   userAgent?: string | undefined;
   createdAt: Date;
@@ -276,7 +276,7 @@ export interface SystemLog {
   id: string;
   level: 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, any> | undefined;
   timestamp: Date;
 }
 

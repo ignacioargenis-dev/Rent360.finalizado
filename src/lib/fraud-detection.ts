@@ -21,7 +21,7 @@ export interface FraudPattern {
   riskScore: number;
   confidence: number;
   triggeredAt: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 /**

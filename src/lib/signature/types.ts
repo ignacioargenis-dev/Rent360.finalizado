@@ -23,7 +23,7 @@ export interface SignatureRequest {
   signers: Signer[];
   type: SignatureType;
   expiresAt: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 export interface Signer {
@@ -43,7 +43,7 @@ export interface SignatureResult {
   message: string;
   provider: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 // SignatureProvider se define en signature.ts para evitar conflictos
@@ -111,7 +111,7 @@ export interface SignatureDocument {
   type: 'contract' | 'agreement' | 'receipt' | 'form' | 'other';
   content: string;
   hash: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -128,7 +128,7 @@ export interface SignatureRequestRecord {
   updatedAt: Date;
   completedAt?: Date;
   cancelledAt?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 // Historial de firma
@@ -139,5 +139,5 @@ export interface SignatureHistory {
   userId?: string;
   userEmail?: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }

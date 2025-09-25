@@ -117,7 +117,7 @@ interface ChartTooltipContentProps {
   formatter?: (value: any, name: string) => [string | number, string];
   color?: string;
   nameKey?: string;
-  itemConfig?: Record<string, any>;
+  itemConfig?: Record<string, any> | undefined;
   hideDot?: boolean;
 }
 

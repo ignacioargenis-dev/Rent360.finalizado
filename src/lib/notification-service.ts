@@ -40,7 +40,7 @@ export interface CommissionNotification {
     start: Date;
     end: Date;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 export interface SystemNotification {

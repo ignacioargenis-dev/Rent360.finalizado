@@ -296,7 +296,7 @@ class AdvancedNotificationService {
       priority?: NotificationPriority;
       channels?: NotificationChannel[];
       scheduledFor?: Date;
-      personalization?: Record<string, any>;
+      personalization?: Record<string, any> | undefined;
     } = {}
   ): Promise<SmartNotification> {
     try {

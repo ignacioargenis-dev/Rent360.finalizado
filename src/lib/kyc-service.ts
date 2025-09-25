@@ -38,7 +38,7 @@ export interface KYCDocument {
   reviewedAt?: Date;
   reviewedBy?: string;
   rejectionReason?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | undefined;
 }
 
 /**

@@ -485,7 +485,7 @@ export function createErrorResponse(
     message: string;
     code: string;
     timestamp: string;
-    context?: Record<string, any>;
+    context?: Record<string, any> | undefined;
   };
 } {
   const timestamp = new Date().toISOString();

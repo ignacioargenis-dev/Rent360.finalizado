@@ -118,7 +118,7 @@ export class AIChatbotService {
     confidence: number;
     intent?: string;
     suggestions?: string[];
-    metadata?: Record<string, any>;
+    metadata?: Record<string, any> | undefined;
   }> {
     try {
       if (!this.config) {

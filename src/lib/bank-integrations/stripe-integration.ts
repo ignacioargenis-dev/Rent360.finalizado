@@ -338,7 +338,7 @@ export class StripeIntegration extends BaseBankIntegration {
     amount: number,
     currency: string = 'CLP',
     description?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any> | undefined
   ): Promise<{
     success: boolean;
     clientSecret?: string | undefined;
@@ -447,7 +447,7 @@ export class StripeIntegration extends BaseBankIntegration {
     }>,
     successUrl: string,
     cancelUrl: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any> | undefined
   ): Promise<{
     success: boolean;
     sessionId?: string | undefined;

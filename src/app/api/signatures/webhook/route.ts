@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       signatureId: string;
       status: string;
       provider: string;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, any> | undefined;
     };
 
     // Buscar la firma en la base de datos

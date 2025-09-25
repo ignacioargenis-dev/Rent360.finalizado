@@ -16,7 +16,7 @@ interface PushNotificationPayload {
   body: string;
   icon?: string;
   badge?: string;
-  data?: Record<string, any>;
+  data?: Record<string, any> | undefined;
   actions?: Array<{
     action: string;
     title: string;
