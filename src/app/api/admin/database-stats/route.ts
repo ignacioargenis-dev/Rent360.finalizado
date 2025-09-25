@@ -377,9 +377,9 @@ function generateQueryRecommendations(queryStats: any) {
     type: string;
     message: string;
     priority: string;
-    queryType?: string;
-    avgTime?: number;
-    count?: number;
+    queryType?: string | undefined;
+    avgTime?: number | undefined;
+    count?: number | undefined;
   }> = [];
 
   const slowQueries = Object.entries(queryStats)
