@@ -166,10 +166,10 @@ export class KYCService {
           nationality: 'CL',
           documentType: 'RUT',
           documentNumber: user.rut || '',
-          taxId: user.rut
+          taxId: user.rut || ''
         },
         contactInfo: {
-          email: user.email,
+          email: user.email || '',
           phone: user.phone || '',
           address: {
             street: user.address || '',
