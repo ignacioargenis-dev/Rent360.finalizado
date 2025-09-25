@@ -43,9 +43,9 @@ export interface ChatParticipant {
   userId: string;
   userType: ChatParticipantType;
   userName: string;
-  avatar?: string;
+  avatar?: string | undefined;
   joinedAt: Date;
-  lastSeen?: Date;
+  lastSeen?: Date | undefined;
   isOnline: boolean;
 }
 
@@ -63,8 +63,8 @@ export interface ChatMessage {
   timestamp: Date;
   isRead: boolean;
   readBy: string[]; // IDs de usuarios que han leído el mensaje
-  attachments?: ChatAttachment[];
-  metadata?: Record<string, any>; // Para datos específicos del tipo de mensaje
+  attachments?: ChatAttachment[] | undefined;
+  metadata?: Record<string, any> | undefined; // Para datos específicos del tipo de mensaje
 }
 
 /**
@@ -85,14 +85,14 @@ export interface ChatAttachment {
 export interface ChatConversation {
   id: string;
   title: string;
-  description?: string;
+  description?: string | undefined;
   participants: ChatParticipant[];
   status: ChatStatus;
   createdAt: Date;
   updatedAt: Date;
-  lastMessage?: ChatMessage;
-  propertyId?: string;
-  jobId?: string;
+  lastMessage?: ChatMessage | undefined;
+  propertyId?: string | undefined;
+  jobId?: string | undefined;
   unreadCount: Record<string, number>; // Conteo de mensajes no leídos por usuario
   tags: string[]; // Etiquetas para categorización
 }
@@ -140,10 +140,10 @@ export class ChatService {
     title: string,
     participants: Omit<ChatParticipant, 'joinedAt' | 'isOnline'>[],
     options: {
-      propertyId?: string;
-      jobId?: string;
-      description?: string;
-      tags?: string[];
+      propertyId?: string | undefined;
+      jobId?: string | undefined;
+      description?: string | undefined;
+      tags?: string[] | undefined;
     } = {}
   ): Promise<ChatConversation> {
     try {
@@ -205,8 +205,8 @@ export class ChatService {
     content: string,
     messageType: MessageType = MessageType.TEXT,
     options: {
-      attachments?: Omit<ChatAttachment, 'id' | 'uploadedAt'>[];
-      metadata?: Record<string, any>;
+      attachments?: Omit<ChatAttachment, 'id' | 'uploadedAt'>[] | undefined;
+      metadata?: Record<string, any> | undefined;
     } = {}
   ): Promise<ChatMessage> {
     try {
@@ -355,9 +355,9 @@ export class ChatService {
     chatId: string,
     userId: string,
     options: {
-      limit?: number;
-      offset?: number;
-      before?: Date;
+      limit?: number | undefined;
+      offset?: number | undefined;
+      before?: Date | undefined;
     } = {}
   ): Promise<ChatMessage[]> {
     try {
