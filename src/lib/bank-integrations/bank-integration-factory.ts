@@ -266,7 +266,7 @@ export class BankIntegrationFactory {
         const webpayIntegration = this.getBankIntegration('webpay');
         return await webpayIntegration.transfer(fromAccount, toAccount, amount, description);
       } catch (fallbackError) {
-        logger.error('Error en fallback con WebPay:', fallbackError);
+        logger.error('Error en fallback con WebPay', { error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) });
         throw error; // Retornar error original
       }
     }
