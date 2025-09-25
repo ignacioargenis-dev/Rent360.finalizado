@@ -181,6 +181,7 @@ export class GeolocationService {
         }
 
         // Calcular distancia
+        if (!provider.location.coordinates) continue;
         const distance = this.calculateDistance(criteria.location, provider.location.coordinates);
 
         // Filtrar por distancia máxima
@@ -272,7 +273,7 @@ export class GeolocationService {
     const providers: ProviderLocation[] = [];
 
     for (const [providerId, provider] of this.providers) {
-      if (!provider.isActive) continue;
+      if (!provider.isActive || !provider.location.coordinates) continue;
 
       const distance = this.calculateDistance(center, provider.location.coordinates);
       if (distance <= radiusKm) {
@@ -381,9 +382,13 @@ export class GeolocationService {
         throw new Error('No hay ubicaciones disponibles para comparación');
       }
       let closestLocation = locations[0];
-      let minDistance = this.calculateDistance(coordinates, locations[0].coordinates);
+      if (!closestLocation.coordinates) {
+        throw new Error('La ubicación más cercana no tiene coordenadas válidas');
+      }
+      let minDistance = this.calculateDistance(coordinates, closestLocation.coordinates);
 
       for (const location of locations.slice(1)) {
+        if (!location.coordinates) continue;
         const distance = this.calculateDistance(coordinates, location.coordinates);
         if (distance < minDistance) {
           minDistance = distance;
