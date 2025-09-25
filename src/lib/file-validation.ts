@@ -294,7 +294,7 @@ async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; has
     // Calcular hash simple (en producción usar crypto.subtle)
     let hash = 0;
     for (let i = 0; i < bytes.length; i++) {
-      const byte = bytes[i];
+      const byte = bytes[i]!;
       hash = ((hash << 5) - hash) + byte;
       hash = hash & hash; // Convertir a 32 bits
     }
@@ -302,7 +302,7 @@ async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; has
     // Calcular checksum simple
     let checksum = 0;
     for (let i = 0; i < bytes.length; i++) {
-      checksum = (checksum + bytes[i]) % 256;
+      checksum = (checksum + bytes[i]!) % 256;
     }
 
     const hashString = Math.abs(hash).toString(16);

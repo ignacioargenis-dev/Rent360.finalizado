@@ -184,9 +184,11 @@ export function weightedAverage(values: number[], weights: number[]): number {
   let totalWeight = 0;
 
   for (let i = 0; i < values.length; i++) {
-    if (isFinite(values[i]) && isFinite(weights[i]) && weights[i] >= 0) {
-      weightedSum += values[i] * weights[i];
-      totalWeight += weights[i];
+    const value = values[i];
+    const weight = weights[i];
+    if (value !== undefined && weight !== undefined && isFinite(value) && isFinite(weight) && weight >= 0) {
+      weightedSum += value * weight;
+      totalWeight += weight;
     }
   }
 
@@ -444,8 +446,9 @@ export function calculateNPV(initialInvestment: number, cashFlows: number[], dis
   let npv = -initialInvestment;
 
   for (let i = 0; i < cashFlows.length; i++) {
-    if (isFinite(cashFlows[i])) {
-      const discountedFlow = cashFlows[i] / Math.pow(1 + discountRate, i + 1);
+    const cashFlow = cashFlows[i];
+    if (cashFlow !== undefined && isFinite(cashFlow)) {
+      const discountedFlow = cashFlow / Math.pow(1 + discountRate, i + 1);
       npv += discountedFlow;
     }
   }
@@ -512,11 +515,11 @@ export function calculateStatistics(values: number[]): {
 
   const sorted = [...finiteValues].sort((a, b) => a - b);
   const median = count % 2 === 0
-    ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2
-    : sorted[Math.floor(count / 2)];
+    ? (sorted[count / 2 - 1]! + sorted[count / 2]!) / 2
+    : sorted[Math.floor(count / 2)]!;
 
-  const min = sorted[0];
-  const max = sorted[count - 1];
+  const min = sorted[0]!;
+  const max = sorted[count - 1]!;
 
   // Varianza
   const squaredDiffs = finiteValues.map(val => Math.pow(val - average, 2));

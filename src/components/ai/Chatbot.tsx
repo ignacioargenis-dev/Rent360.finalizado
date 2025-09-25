@@ -109,7 +109,7 @@ export default function Chatbot({
     let currentText = '';
     
     for (let i = 0; i < words.length; i++) {
-      currentText += words[i] + ' ';
+      currentText += words[i]! + ' ';
       setMessages(prev => 
         prev.map(msg => 
           msg.id === 'typing' 
