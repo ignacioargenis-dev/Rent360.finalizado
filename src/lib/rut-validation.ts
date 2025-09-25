@@ -68,7 +68,12 @@ export function calculateDV(rut: string): string {
 
   // Procesar de derecha a izquierda
   for (let i = body.length - 1; i >= 0; i--) {
-    sum += parseInt(body[i]) * multiplier;
+    const digit = body[i];
+    if (digit && /^\d$/.test(digit)) {
+      sum += parseInt(digit) * multiplier;
+    } else {
+      throw new Error('Carácter inválido en el cuerpo del RUT');
+    }
     multiplier = multiplier === 7 ? 2 : multiplier + 1;
   }
 

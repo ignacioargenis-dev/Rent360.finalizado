@@ -246,7 +246,12 @@ Validación: RUT${this.bankIntegration ? ' + Banco' : ''}
 
     // Calcular suma ponderada
     for (let i = rutNumber.length - 1; i >= 0; i--) {
-      sum += parseInt(rutNumber[i]) * multiplier;
+      const digit = rutNumber[i];
+      if (digit && /^\d$/.test(digit)) {
+        sum += parseInt(digit) * multiplier;
+      } else {
+        return false; // Carácter inválido
+      }
       multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
 

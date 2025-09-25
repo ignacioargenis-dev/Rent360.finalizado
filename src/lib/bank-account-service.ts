@@ -104,7 +104,12 @@ export class BankAccountService {
 
     // Calcular suma ponderada
     for (let i = rutNumber.length - 1; i >= 0; i--) {
-      sum += parseInt(rutNumber[i]) * multiplier;
+      const digit = rutNumber[i];
+      if (digit && /^\d$/.test(digit)) {
+        sum += parseInt(digit) * multiplier;
+      } else {
+        return false; // Carácter inválido
+      }
       multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
 
@@ -473,7 +478,7 @@ export class BankAccountService {
     }
 
     // Validar RUT si es Chile
-    if (data.rut && !this.validateRUT(data.rut)) {
+    if (data.rut && !this.validateRut(data.rut)) {
       errors.push('RUT inválido');
     }
 
@@ -640,32 +645,6 @@ export class BankAccountService {
     };
   }
 
-  /**
-   * Valida formato de RUT chileno
-   */
-  private static validateRUT(rut: string): boolean {
-    // Remover puntos y guión
-    const cleanRUT = rut.replace(/\./g, '').replace(/-/g, '');
-
-    if (cleanRUT.length < 8 || cleanRUT.length > 9) return false;
-
-    const body = cleanRUT.slice(0, -1);
-    const dv = cleanRUT.slice(-1).toUpperCase();
-
-    // Calcular dígito verificador
-    let sum = 0;
-    let multiplier = 2;
-
-    for (let i = body.length - 1; i >= 0; i--) {
-      sum += parseInt(body[i]) * multiplier;
-      multiplier = multiplier === 7 ? 2 : multiplier + 1;
-    }
-
-    const expectedDV = 11 - (sum % 11);
-    const calculatedDV = expectedDV === 11 ? '0' : expectedDV === 10 ? 'K' : expectedDV.toString();
-
-    return calculatedDV === dv;
-  }
 
   /**
    * Elimina una cuenta bancaria

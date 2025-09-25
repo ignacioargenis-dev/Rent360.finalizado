@@ -204,7 +204,12 @@ export const validateRut = (rut: string): boolean => {
   let multiplier = 2;
   
   for (let i = body.length - 1; i >= 0; i--) {
-    sum += parseInt(body[i]) * multiplier;
+    const digit = body[i];
+    if (digit && /^\d$/.test(digit)) {
+      sum += parseInt(digit) * multiplier;
+    } else {
+      return false; // Carácter inválido
+    }
     multiplier = multiplier === 7 ? 2 : multiplier + 1;
   }
   
