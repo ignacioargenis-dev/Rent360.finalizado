@@ -152,15 +152,15 @@ export class PayPalIntegration extends BaseBankIntegration {
       if (success) {
         return {
           success: true,
-          transactionId: `pp_${response.batch_header.payout_batch_id}`,
-          externalReference: response.batch_header.payout_batch_id,
+          transactionId: `pp_${response.batch_header?.payout_batch_id || 'unknown'}`,
+          externalReference: response.batch_header?.payout_batch_id || 'unknown',
           amount,
           currency: 'CLP',
           status: 'completed',
           description: 'Transferencia procesada exitosamente vía PayPal',
           processedAt: new Date(),
           metadata: {
-            paypalBatchId: response.batch_header.payout_batch_id,
+            paypalBatchId: response.batch_header?.payout_batch_id || 'unknown',
             paypalCorrelationId: response.links?.[0]?.href,
             exchangeRate: this.getExchangeRate(),
             usdAmount: (amount / this.getExchangeRate()).toFixed(2)
@@ -181,11 +181,11 @@ export class PayPalIntegration extends BaseBankIntegration {
           amount,
           currency: 'CLP',
           status: 'failed',
-          errorCode: error.code,
-          errorMessage: error.message,
+          errorCode: error?.code || 'UNKNOWN_ERROR',
+          errorMessage: error?.message || 'Error desconocido',
           processedAt: new Date(),
           metadata: {
-            paypalBatchId: response.batch_header.payout_batch_id,
+            paypalBatchId: response.batch_header?.payout_batch_id || 'unknown',
             errorDetails: error
           }
         };
@@ -437,14 +437,14 @@ export class PayPalIntegration extends BaseBankIntegration {
 
       const response = await this.makeBankRequest(`/v2/checkout/orders/${orderId}/capture`, 'POST');
 
-      if (response && response.status === 'COMPLETED') {
+      if (response && response.status === 'COMPLETED' && response.purchase_units?.[0]) {
         const purchaseUnit = response.purchase_units[0];
-        const amount = parseFloat(purchaseUnit.payments.captures[0].amount.value);
+        const amount = parseFloat(purchaseUnit.payments?.captures?.[0]?.amount?.value || '0');
 
         return {
           success: true,
-          transactionId: purchaseUnit.payments.captures[0].id,
-          amount: purchaseUnit.payments.captures[0].amount.currency_code === 'USD'
+          transactionId: purchaseUnit.payments?.captures?.[0]?.id || 'unknown',
+          amount: purchaseUnit.payments?.captures?.[0]?.amount?.currency_code === 'USD'
             ? amount * this.getExchangeRate()
             : amount
         };
