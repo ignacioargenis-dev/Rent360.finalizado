@@ -8,15 +8,15 @@ import { DatabaseError, BusinessLogicError } from '../errors';
  */
 export interface BankTransactionResult {
   success: boolean;
-  transactionId?: string;
-  externalReference?: string;
+  transactionId?: string | undefined;
+  externalReference?: string | undefined;
   amount: number;
   currency: string;
   status: 'completed' | 'pending' | 'failed' | 'cancelled';
-  description?: string;
-  errorCode?: string;
-  errorMessage?: string;
-  metadata?: Record<string, any>;
+  description?: string | undefined;
+  errorCode?: string | undefined;
+  errorMessage?: string | undefined;
+  metadata?: Record<string, any> | undefined;
   processedAt: Date;
 }
 
@@ -25,12 +25,12 @@ export interface BankTransactionResult {
  */
 export interface BankVerificationResult {
   isValid: boolean;
-  accountHolder?: string;
-  accountStatus?: 'active' | 'inactive' | 'frozen' | 'closed';
+  accountHolder?: string | undefined;
+  accountStatus?: 'active' | 'inactive' | 'frozen' | 'closed' | undefined;
   verificationMethod: 'api' | 'manual' | 'micro_deposit';
   confidence: number; // 0-1, nivel de confianza
-  errorMessage?: string;
-  metadata?: Record<string, any>;
+  errorMessage?: string | undefined;
+  metadata?: Record<string, any> | undefined;
 }
 
 /**
@@ -233,7 +233,7 @@ export abstract class BaseBankIntegration {
     success: boolean;
     status: number;
     data?: any;
-    error?: string;
+    error?: string | undefined;
   }> {
     // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));

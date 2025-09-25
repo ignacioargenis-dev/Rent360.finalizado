@@ -310,9 +310,9 @@ export class WebPayIntegration extends BaseBankIntegration {
     }>
   ): Promise<{
     success: boolean;
-    token?: string;
-    url?: string;
-    error?: string;
+    token?: string | undefined;
+    url?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -358,9 +358,9 @@ export class WebPayIntegration extends BaseBankIntegration {
    */
   async confirmTransaction(token: string): Promise<{
     success: boolean;
-    transactionId?: string;
-    authorizationCode?: string;
-    error?: string;
+    transactionId?: string | undefined;
+    authorizationCode?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -401,8 +401,8 @@ export class WebPayIntegration extends BaseBankIntegration {
     commerceCode?: string
   ): Promise<{
     success: boolean;
-    reversalId?: string;
-    error?: string;
+    reversalId?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();

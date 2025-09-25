@@ -10,17 +10,17 @@ export interface BankConfig {
   bancoEstado: {
     apiKey: string;
     apiSecret: string;
-    baseUrl?: string;
+    baseUrl?: string | undefined;
   };
   bci: {
     clientId: string;
     clientSecret: string;
-    baseUrl?: string;
+    baseUrl?: string | undefined;
   };
   santander: {
     clientId: string;
     clientSecret: string;
-    baseUrl?: string;
+    baseUrl?: string | undefined;
   };
 }
 

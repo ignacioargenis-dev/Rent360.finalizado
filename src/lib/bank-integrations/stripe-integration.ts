@@ -341,9 +341,9 @@ export class StripeIntegration extends BaseBankIntegration {
     metadata?: Record<string, any>
   ): Promise<{
     success: boolean;
-    clientSecret?: string;
-    paymentIntentId?: string;
-    error?: string;
+    clientSecret?: string | undefined;
+    paymentIntentId?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -393,9 +393,9 @@ export class StripeIntegration extends BaseBankIntegration {
     paymentMethodId?: string
   ): Promise<{
     success: boolean;
-    status?: string;
-    chargeId?: string;
-    error?: string;
+    status?: string | undefined;
+    chargeId?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -439,7 +439,7 @@ export class StripeIntegration extends BaseBankIntegration {
         currency: string;
         product_data: {
           name: string;
-          description?: string;
+          description?: string | undefined;
         };
         unit_amount: number;
       };
@@ -450,9 +450,9 @@ export class StripeIntegration extends BaseBankIntegration {
     metadata?: Record<string, any>
   ): Promise<{
     success: boolean;
-    sessionId?: string;
-    url?: string;
-    error?: string;
+    sessionId?: string | undefined;
+    url?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -501,8 +501,8 @@ export class StripeIntegration extends BaseBankIntegration {
     description?: string
   ): Promise<{
     success: boolean;
-    transferId?: string;
-    error?: string;
+    transferId?: string | undefined;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -548,9 +548,9 @@ export class StripeIntegration extends BaseBankIntegration {
     signature: string
   ): Promise<{
     success: boolean;
-    eventType?: string;
+    eventType?: string | undefined;
     data?: any;
-    error?: string;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();
@@ -596,7 +596,7 @@ export class StripeIntegration extends BaseBankIntegration {
   async getPaymentDetails(paymentIntentId: string): Promise<{
     success: boolean;
     payment?: any;
-    error?: string;
+    error?: string | undefined;
   }> {
     try {
       await this.initialize();

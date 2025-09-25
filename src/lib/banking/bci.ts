@@ -15,8 +15,8 @@ export class BCIIntegration extends BaseBankIntegration {
   constructor(config: {
     clientId: string;
     clientSecret: string;
-    apiKey?: string;
-    baseUrl?: string;
+    apiKey?: string | undefined;
+    baseUrl?: string | undefined;
   }) {
     super({
       bankName: 'BCI',

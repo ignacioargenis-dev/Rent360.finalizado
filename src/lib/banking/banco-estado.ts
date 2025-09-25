@@ -12,7 +12,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
   constructor(config: {
     apiKey: string;
     apiSecret: string;
-    baseUrl?: string;
+    baseUrl?: string | undefined;
   }) {
     super({
       bankName: 'Banco Estado',
