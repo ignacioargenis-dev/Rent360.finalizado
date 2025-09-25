@@ -5,7 +5,7 @@ interface QueryStats {
   query: string;
   duration: number;
   timestamp: Date;
-  table?: string;
+  table?: string | undefined;
 }
 
 interface OptimizationResult {
