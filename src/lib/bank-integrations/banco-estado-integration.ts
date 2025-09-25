@@ -46,7 +46,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
     try {
       // Verificar si el token actual es válido
       if (this.accessToken && this.tokenExpiry && this.tokenExpiry > new Date()) {
-        return this.accessToken;
+        return this.accessToken!;
       }
 
       const tokenData = {

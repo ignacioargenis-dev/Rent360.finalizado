@@ -156,7 +156,7 @@ export class PayPalPaymentService {
 
   private async getAccessToken() {
     if (this.accessToken && Date.now() < this.tokenExpiry) {
-      return this.accessToken
+      return this.accessToken!
     }
 
     try {
@@ -180,7 +180,7 @@ export class PayPalPaymentService {
       this.accessToken = data.access_token
       this.tokenExpiry = Date.now() + (data.expires_in * 1000)
 
-      return this.accessToken
+      return this.accessToken!
     } catch (error) {
       logger.error('Error obteniendo token de PayPal', { 
         error: error instanceof Error ? error.message : error 

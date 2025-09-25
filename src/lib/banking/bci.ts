@@ -35,7 +35,7 @@ export class BCIIntegration extends BaseBankIntegration {
   private async authenticate(): Promise<string> {
     try {
       if (this.accessToken && this.tokenExpiration && this.tokenExpiration > new Date()) {
-        return this.accessToken;
+        return this.accessToken!;
       }
 
       const authString = `${this.clientId}:${this.clientSecret}`;
@@ -61,7 +61,7 @@ export class BCIIntegration extends BaseBankIntegration {
       this.accessToken = data.access_token;
       this.tokenExpiration = new Date(Date.now() + (data.expires_in * 1000));
 
-      return this.accessToken;
+      return this.accessToken!;
     } catch (error) {
       logger.error('Error en autenticación BCI', { error: error instanceof Error ? error.message : String(error) });
       throw error;
