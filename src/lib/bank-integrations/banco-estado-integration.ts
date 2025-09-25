@@ -145,17 +145,17 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       if (success) {
         return {
           success: true,
-          transactionId: `be_${response.idTransferencia}`,
-          externalReference: response.idTransferencia,
+          transactionId: `be_${response!.idTransferencia}`,
+          externalReference: response!.idTransferencia,
           amount,
           currency: 'CLP',
           status: 'completed',
           description: 'Transferencia procesada exitosamente vía Banco Estado',
           processedAt: new Date(),
           metadata: {
-            bancoEstadoId: response.idTransferencia,
-            authorizationCode: response.codigoAutorizacion,
-            processingTime: response.tiempoProcesamiento
+            bancoEstadoId: response!.idTransferencia,
+            authorizationCode: response!.codigoAutorizacion,
+            processingTime: response!.tiempoProcesamiento
           }
         };
       } else {
@@ -166,7 +166,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
           { code: 'TECHNICAL_ERROR', message: 'Error técnico en procesamiento' }
         ];
 
-        const simulatedError = errors[Math.floor(Math.random() * errors.length)] || errors[0];
+        const simulatedError = errors[Math.floor(Math.random() * errors.length)] || errors[0]!;
 
         return {
           success: false,
@@ -177,7 +177,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
           errorMessage: simulatedError.message,
           processedAt: new Date(),
           metadata: {
-            bancoEstadoId: response.idTransferencia,
+            bancoEstadoId: response!.idTransferencia,
             errorDetails: simulatedError
           }
         };
@@ -206,8 +206,8 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       await this.getAccessToken();
 
       logger.info('Verificando cuenta con Banco Estado', {
-        accountNumber: account.accountNumber,
-        rut: account.rut
+        accountNumber: account!.accountNumber,
+        rut: account!.rut
       });
 
       const verificationData = {
@@ -223,19 +223,19 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
       // Procesar resultado de verificación
-      const isValid = response.valida && Math.random() > 0.1; // 90% de validaciones exitosas
+      const isValid = response!.valida && Math.random() > 0.1; // 90% de validaciones exitosas
 
       if (isValid) {
         return {
           isValid: true,
-          accountHolder: response.nombreTitular || account.accountHolder,
-          accountStatus: response.estadoCuenta === 'activa' ? 'active' : 'inactive',
+          accountHolder: response!.nombreTitular || account!.accountHolder,
+          accountStatus: response!.estadoCuenta === 'activa' ? 'active' : 'inactive',
           verificationMethod: 'api',
           confidence: 0.95,
           metadata: {
-            bancoEstadoVerificationId: response.idVerificacion,
-            accountType: response.tipoCuenta,
-            branchCode: response.codigoSucursal,
+            bancoEstadoVerificationId: response!.idVerificacion,
+            accountType: response!.tipoCuenta,
+            branchCode: response!.codigoSucursal,
             verifiedAt: new Date().toISOString()
           }
         };
@@ -244,10 +244,10 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
           isValid: false,
           verificationMethod: 'api',
           confidence: 0,
-          errorMessage: response.mensajeError || 'Cuenta no pudo ser verificada',
+          errorMessage: response!.mensajeError || 'Cuenta no pudo ser verificada',
           metadata: {
-            failureReason: response.motivoRechazo,
-            bancoEstadoVerificationId: response.idVerificacion
+            failureReason: response!.motivoRechazo,
+            bancoEstadoVerificationId: response!.idVerificacion
           }
         };
       }
@@ -272,7 +272,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       await this.getAccessToken();
 
       logger.info('Consultando saldo Banco Estado', {
-        accountNumber: account.accountNumber
+        accountNumber: account!.accountNumber
       });
 
       const balanceData = {
@@ -289,10 +289,10 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
       return {
-        available: response.saldoDisponible || 0,
-        current: response.saldoActual || 0,
+        available: response!.saldoDisponible || 0,
+        current: response!.saldoActual || 0,
         currency: 'CLP',
-        lastUpdated: new Date(response.fechaActualizacion || Date.now())
+        lastUpdated: new Date(response!.fechaActualizacion || Date.now())
       };
 
     } catch (error) {
@@ -314,7 +314,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       await this.getAccessToken();
 
       logger.info('Consultando historial Banco Estado', {
-        accountNumber: account.accountNumber,
+        accountNumber: account!.accountNumber,
         startDate,
         endDate
       });
@@ -336,19 +336,19 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
       // Transformar respuesta al formato estándar
-      return response.movimientos.map((mov: any) => ({
-        transactionId: mov.idMovimiento,
-        date: new Date(mov.fechaMovimiento).toISOString(),
-        amount: Math.abs(mov.monto),
-        type: mov.monto > 0 ? 'credit' : 'debit',
-        description: mov.descripcion || mov.glosa,
+      return response!.movimientos!.map((mov: any) => ({
+        transactionId: mov!.idMovimiento,
+        date: new Date(mov!.fechaMovimiento).toISOString(),
+        amount: Math.abs(mov!.monto),
+        type: mov!.monto > 0 ? 'credit' : 'debit',
+        description: mov!.descripcion || mov!.glosa,
         status: 'completed',
-        balance: mov.saldoPostMovimiento,
-        reference: mov.numeroReferencia,
+        balance: mov!.saldoPostMovimiento,
+        reference: mov!.numeroReferencia,
         metadata: {
-          bancoEstadoId: mov.idMovimiento,
-          transactionType: mov.tipoMovimiento,
-          channel: mov.canal
+          bancoEstadoId: mov!.idMovimiento,
+          transactionType: mov!.tipoMovimiento,
+          channel: mov!.canal
         }
       }));
 
@@ -378,10 +378,10 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       }
 
       return {
-        status: this.mapBancoEstadoStatus(response.estado),
-        description: response.descripcion,
-        processedAt: response.fechaProcesamiento ? new Date(response.fechaProcesamiento) : undefined,
-        errorMessage: response.mensajeError
+        status: this.mapBancoEstadoStatus(response!.estado),
+        description: response!.descripcion,
+        processedAt: response!.fechaProcesamiento ? new Date(response!.fechaProcesamiento) : undefined,
+        errorMessage: response!.mensajeError
       };
 
     } catch (error) {
@@ -440,10 +440,10 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
 
       const response = await this.makeBankRequest('/api/transferencias/programadas', 'POST', scheduledData);
 
-      if (response && response.idTransferenciaProgramada) {
+      if (response && response!.idTransferenciaProgramada) {
         return {
           success: true,
-          scheduledTransferId: response.idTransferenciaProgramada
+          scheduledTransferId: response!.idTransferenciaProgramada
         };
       } else {
         return {
@@ -475,7 +475,7 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
       const response = await this.makeBankRequest(`/api/transferencias/programadas/${scheduledTransferId}`, 'DELETE');
 
       return {
-        success: response && response.cancelada === true
+        success: response && response!.cancelada === true
       };
 
     } catch (error) {
