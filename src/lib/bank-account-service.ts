@@ -95,6 +95,10 @@ export class BankAccountService {
     const rutNumber = rutParts[0];
     const dv = rutParts[1];
 
+    if (!rutNumber || !dv) {
+      return false;
+    }
+
     let sum = 0;
     let multiplier = 2;
 
