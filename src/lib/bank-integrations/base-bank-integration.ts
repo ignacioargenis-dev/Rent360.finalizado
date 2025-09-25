@@ -47,7 +47,7 @@ export interface AccountBalance {
  * Clase base para integraciones bancarias
  */
 export abstract class BaseBankIntegration {
-  protected config: PaymentServiceConfig;
+  protected config!: PaymentServiceConfig;
   protected bankCode: string;
 
   constructor(bankCode: string) {
