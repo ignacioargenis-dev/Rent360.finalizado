@@ -47,7 +47,7 @@ export interface AccountBalance {
  * Clase base para integraciones bancarias
  */
 export abstract class BaseBankIntegration {
-  protected config!: PaymentServiceConfig;
+  protected config!: PaymentServiceConfig | null;
   protected bankCode: string;
 
   constructor(bankCode: string) {
@@ -109,6 +109,11 @@ export abstract class BaseBankIntegration {
    */
   protected async validateCredentials(): Promise<boolean> {
     try {
+      if (!this.config) {
+        logger.warn(`Configuración no inicializada para banco ${this.bankCode}`);
+        return false;
+      }
+
       if (!this.config.credentials) {
         return false;
       }
@@ -145,6 +150,10 @@ export abstract class BaseBankIntegration {
     headers?: Record<string, string>
   ): Promise<any> {
     try {
+      if (!this.config) {
+        throw new BusinessLogicError(`Configuración no inicializada para banco ${this.bankCode}`);
+      }
+
       const url = `${this.config.config.baseUrl}${endpoint}`;
 
       const requestHeaders = {
@@ -190,6 +199,10 @@ export abstract class BaseBankIntegration {
    * Genera header de autorización
    */
   protected getAuthorizationHeader(): string {
+    if (!this.config) {
+      throw new BusinessLogicError(`Configuración no inicializada para banco ${this.bankCode}`);
+    }
+
     const { credentials } = this.config;
 
     // Implementar según el método de autenticación del banco
@@ -345,6 +358,10 @@ export abstract class BaseBankIntegration {
       throw new BusinessLogicError('Monto debe ser mayor a cero');
     }
 
+    if (!this.config) {
+      throw new BusinessLogicError(`Configuración no inicializada para banco ${this.bankCode}`);
+    }
+
     if (amount > (this.config.config.maxAmount || 100000000)) {
       throw new BusinessLogicError('Monto excede el límite máximo permitido');
     }
@@ -358,6 +375,10 @@ export abstract class BaseBankIntegration {
    * Obtiene los límites de monto para esta integración
    */
   public getAmountLimits(): { min: number; max: number } {
+    if (!this.config) {
+      throw new BusinessLogicError(`Configuración no inicializada para banco ${this.bankCode}`);
+    }
+
     return {
       min: this.config.config.minAmount || 100,
       max: this.config.config.maxAmount || 100000000
