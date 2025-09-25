@@ -137,7 +137,7 @@ export default function KhipuPayment({
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      setError('errorMessage');
+      setError(errorMessage);
       onError?.(errorMessage);
     } finally {
       setLoading(false);

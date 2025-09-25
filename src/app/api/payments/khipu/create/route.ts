@@ -14,9 +14,9 @@ interface KhipuPaymentRequest {
   return_url: string
   cancel_url: string
   notify_url: string
-  payer_email?: string
-  payer_name?: string
-  contract_id?: string
+  payer_email?: string | undefined
+  payer_name?: string | undefined
+  contract_id?: string | undefined
   user_id: string
 }
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      logger.error('Error de Khipu:', { error: errorData instanceof Error ? errorData.message : String(errorData) });
+      logger.error('Error de Khipu', { error: errorData instanceof Error ? errorData.message : String(errorData) });
       return NextResponse.json(
         { 
           error: 'Error al crear pago en Khipu', 
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     // Validar respuesta de Khipu
     if (!khipuResponse.payment_url && !khipuResponse.simplified_transfer_url) {
-      logger.error('Invalid Khipu response:', { error: khipuResponse instanceof Error ? khipuResponse.message : String(khipuResponse) });
+      logger.error('Invalid Khipu response', { error: khipuResponse instanceof Error ? khipuResponse.message : String(khipuResponse) });
       return NextResponse.json(
         { 
           error: 'Respuesta inválida del proveedor de pagos',
