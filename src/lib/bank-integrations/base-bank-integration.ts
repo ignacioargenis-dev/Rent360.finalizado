@@ -125,7 +125,7 @@ export abstract class BaseBankIntegration {
 
       return true;
     } catch (error) {
-      logger.error('Error validando credenciales:', error);
+      logger.error('Error validando credenciales', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -283,7 +283,7 @@ export abstract class BaseBankIntegration {
         amount: result.amount
       });
     } catch (error) {
-      logger.error('Error registrando transacción:', error);
+      logger.error('Error registrando transacción', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

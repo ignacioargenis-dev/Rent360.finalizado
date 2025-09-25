@@ -258,7 +258,7 @@ export class BankIntegrationFactory {
       return await integration.transfer(fromAccount, toAccount, amount, description);
 
     } catch (error) {
-      logger.error('Error en transferencia inteligente:', error);
+      logger.error('Error en transferencia inteligente', { error: error instanceof Error ? error.message : String(error) });
 
       // Intentar con WebPay como último recurso
       try {
