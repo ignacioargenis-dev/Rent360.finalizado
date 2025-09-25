@@ -87,7 +87,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       return result;
 
     } catch (error) {
-      logger.error('Error en transferencia WebPay:', error);
+      logger.error('Error en transferencia WebPay', { error: error instanceof Error ? error.message : String(error) });
       return this.handleBankError(error);
     }
   }
@@ -213,7 +213,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error verificando cuenta con WebPay:', error);
+      logger.error('Error verificando cuenta con WebPay', { error: error instanceof Error ? error.message : String(error) });
       return {
         isValid: false,
         verificationMethod: 'api',
@@ -240,7 +240,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       throw new BusinessLogicError('Consulta de saldo no soportada por WebPay');
 
     } catch (error) {
-      logger.error('Error consultando saldo en WebPay:', error);
+      logger.error('Error consultando saldo en WebPay', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -294,7 +294,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       ];
 
     } catch (error) {
-      logger.error('Error obteniendo historial WebPay:', error);
+      logger.error('Error obteniendo historial WebPay', { error: error instanceof Error ? error.message : String(error) });
       return [];
     }
   }
@@ -345,7 +345,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error creando transacción OneClick Mall:', error);
+      logger.error('Error creando transacción OneClick Mall', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'
@@ -385,7 +385,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error confirmando transacción WebPay:', error);
+      logger.error('Error confirmando transacción WebPay', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error de confirmación'
@@ -427,7 +427,7 @@ export class WebPayIntegration extends BaseBankIntegration {
       }
 
     } catch (error) {
-      logger.error('Error reversando transacción WebPay:', error);
+      logger.error('Error reversando transacción WebPay', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error de reversión'
