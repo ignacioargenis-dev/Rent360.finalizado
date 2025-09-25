@@ -656,7 +656,13 @@ export class KYCService {
     try {
       const kyc = await this.getActiveKYC(userId);
 
-      const result = {
+      const result: {
+        canReceive: boolean;
+        reason?: string | undefined;
+        requiredLevel: KYCLevel;
+        currentLevel?: KYCLevel | undefined;
+        nextSteps?: string[] | undefined;
+      } = {
         canReceive: false,
         requiredLevel: KYCLevel.INTERMEDIATE,
         nextSteps: [] as string[]
