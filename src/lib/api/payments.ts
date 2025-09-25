@@ -248,11 +248,18 @@ export class PayPalPaymentService {
       )
 
       const data = await response.json()
+      const purchaseUnit = data.purchase_units?.[0]
+      const capture = purchaseUnit?.payments?.captures?.[0]
+
+      if (!capture) {
+        throw new Error('No capture data found in PayPal response')
+      }
+
       return {
         id: data.id,
         status: data.status,
-        amount: parseFloat(data.purchase_units[0].payments.captures[0].amount.value), // CORREGIDO: conversión segura a float
-        currency: data.purchase_units[0].payments.captures[0].amount.currency_code,
+        amount: parseFloat(capture.amount?.value || '0'), // CORREGIDO: conversión segura a float
+        currency: capture.amount?.currency_code || 'USD',
       }
     } catch (error) {
       logger.error('Error capturando orden de PayPal', { 

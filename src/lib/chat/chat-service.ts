@@ -180,7 +180,7 @@ export class ChatService {
       await this.addSystemMessage(
         conversationId,
         `Conversación creada: ${title}`,
-        { createdBy: participants[0].userId }
+        { createdBy: participants[0]?.userId || 'system' }
       );
 
       logger.info('Conversación creada:', {

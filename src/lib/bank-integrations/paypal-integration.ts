@@ -438,7 +438,7 @@ export class PayPalIntegration extends BaseBankIntegration {
       const response = await this.makeBankRequest(`/v2/checkout/orders/${orderId}/capture`, 'POST');
 
       if (response && response.status === 'COMPLETED' && response.purchase_units?.[0]) {
-        const purchaseUnit = response.purchase_units[0];
+        const purchaseUnit = response.purchase_units[0]!;
         const amount = parseFloat(purchaseUnit.payments?.captures?.[0]?.amount?.value || '0');
 
         return {

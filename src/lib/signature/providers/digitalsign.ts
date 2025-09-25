@@ -238,6 +238,9 @@ Validación: RUT${this.bankIntegration ? ' + Banco' : ''}
   // Validar dígito verificador del RUT
   private validateRutDigit(rut: string): boolean {
     const rutParts = rut.split('-');
+    if (rutParts.length !== 2) {
+      return false;
+    }
     const rutNumber = rutParts[0];
     const dv = rutParts[1];
 
