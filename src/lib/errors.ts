@@ -1,6 +1,11 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 
+// Extend global type to include rateLimits
+declare global {
+  var rateLimits: Map<string, number[]> | undefined;
+}
+
 export class AppError extends Error {
   public statusCode: number;
   public isOperational: boolean;
