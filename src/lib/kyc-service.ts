@@ -589,7 +589,7 @@ export class KYCService {
       [KYCLevel.PREMIUM]: ['id_card', 'selfie', 'proof_of_address', 'video']
     };
 
-    return docsByLevel[level] || [];
+    return (docsByLevel[level] || []) as KYCDocument['type'][];
   }
 
   /**
