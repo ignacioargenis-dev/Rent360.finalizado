@@ -74,7 +74,7 @@ export abstract class BaseBankIntegration {
   /**
    * Realiza una transferencia bancaria
    */
-  abstract async transfer(
+  abstract transfer(
     fromAccount: BankAccountInfo,
     toAccount: BankAccountInfo,
     amount: number,
@@ -84,21 +84,21 @@ export abstract class BaseBankIntegration {
   /**
    * Verifica una cuenta bancaria
    */
-  abstract async verifyAccount(
+  abstract verifyAccount(
     account: BankAccountInfo
   ): Promise<BankVerificationResult>;
 
   /**
    * Consulta el saldo de una cuenta
    */
-  abstract async getBalance(
+  abstract getBalance(
     account: BankAccountInfo
   ): Promise<AccountBalance>;
 
   /**
    * Obtiene el historial de transacciones
    */
-  abstract async getTransactionHistory(
+  abstract getTransactionHistory(
     account: BankAccountInfo,
     startDate: Date,
     endDate: Date
