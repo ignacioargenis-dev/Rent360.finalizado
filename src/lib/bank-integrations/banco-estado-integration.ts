@@ -275,14 +275,16 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
         accountNumber: account!.accountNumber
       });
 
-      const balanceData = {
-        numeroCuenta: account.accountNumber,
-        rut: account.rut
+      const balanceData: Record<string, string> = {
+        numeroCuenta: account!.accountNumber
       };
 
-      const response = await this.makeBankRequest('/api/cuentas/saldo', 'GET', null, {
-        ...balanceData
-      });
+      // Agregar RUT solo si existe
+      if (account!.rut) {
+        balanceData.rut = account!.rut;
+      }
+
+      const response = await this.makeBankRequest('/api/cuentas/saldo', 'GET', null, balanceData);
 
       if (!response) {
         throw new Error('No se pudo obtener el saldo');
@@ -319,17 +321,19 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
         endDate
       });
 
-      const historyData = {
-        numeroCuenta: account.accountNumber,
-        rut: account.rut,
+      const historyData: Record<string, string> = {
+        numeroCuenta: account!.accountNumber,
         fechaDesde: startDate.toISOString().substring(0, 10),
         fechaHasta: endDate.toISOString().substring(0, 10),
         tipoMovimiento: 'todos' // debito, credito, todos
       };
 
-      const response = await this.makeBankRequest('/api/cuentas/movimientos', 'GET', null, {
-        ...historyData
-      });
+      // Agregar RUT solo si existe
+      if (account!.rut) {
+        historyData.rut = account!.rut;
+      }
+
+      const response = await this.makeBankRequest('/api/cuentas/movimientos', 'GET', null, historyData);
 
       if (!response || !response.movimientos) {
         return [];
