@@ -63,7 +63,7 @@ class WebSocketClient {
     });
 
     this.socket.on('connect_error', (error) => {
-      logger.error('WebSocket connection error', error as Error);
+      logger.error('WebSocket connection error', { error: error instanceof Error ? error.message : String(error) });
       this.attemptReconnect();
     });
 

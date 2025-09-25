@@ -191,7 +191,7 @@ export class ChatService {
 
       return conversation;
     } catch (error) {
-      logger.error('Error creando conversación:', error);
+      logger.error('Error creando conversación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -269,7 +269,7 @@ export class ChatService {
 
       return message;
     } catch (error) {
-      logger.error('Error enviando mensaje:', error);
+      logger.error('Error enviando mensaje', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -309,7 +309,7 @@ export class ChatService {
       });
 
     } catch (error) {
-      logger.error('Error marcando mensajes como leídos:', error);
+      logger.error('Error marcando mensajes como leídos', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -343,7 +343,7 @@ export class ChatService {
 
       return userConversations;
     } catch (error) {
-      logger.error('Error obteniendo conversaciones del usuario:', error);
+      logger.error('Error obteniendo conversaciones del usuario', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -397,7 +397,7 @@ export class ChatService {
 
       return messages.reverse(); // Más antiguo primero para mostrar
     } catch (error) {
-      logger.error('Error obteniendo mensajes de conversación:', error);
+      logger.error('Error obteniendo mensajes de conversación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -440,7 +440,7 @@ export class ChatService {
       });
 
     } catch (error) {
-      logger.error('Error agregando participante:', error);
+      logger.error('Error agregando participante', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -468,7 +468,7 @@ export class ChatService {
       logger.info('Conversación cerrada:', { chatId, closedBy });
 
     } catch (error) {
-      logger.error('Error cerrando conversación:', error);
+      logger.error('Error cerrando conversación', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -492,7 +492,7 @@ export class ChatService {
       logger.info('Configuración de notificaciones actualizada:', { userId });
 
     } catch (error) {
-      logger.error('Error actualizando configuración de notificaciones:', error);
+      logger.error('Error actualizando configuración de notificaciones', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -522,7 +522,7 @@ export class ChatService {
       logger.info('Estado online actualizado:', { userId, isOnline });
 
     } catch (error) {
-      logger.error('Error actualizando estado online:', error);
+      logger.error('Error actualizando estado online', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -551,7 +551,7 @@ export class ChatService {
         }
       }
     } catch (error) {
-      logger.error('Error enviando notificaciones:', error);
+      logger.error('Error enviando notificaciones', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
