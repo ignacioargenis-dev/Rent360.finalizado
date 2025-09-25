@@ -354,7 +354,7 @@ export class GeolocationService {
       // En una implementación real, usaríamos una API de geocodificación inversa
       // Por ahora simulamos basado en coordenadas conocidas
 
-      logger.info('Reverse geocoding:', coordinates);
+      logger.info('Reverse geocoding', { coordinates });
 
       // Simular reverse geocoding para Santiago
       const locations = [

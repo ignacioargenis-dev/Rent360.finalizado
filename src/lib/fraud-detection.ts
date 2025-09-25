@@ -224,7 +224,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de velocidad:', error);
+      logger.warn('Error analizando patrones de velocidad', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;
@@ -284,7 +284,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de montos:', error);
+      logger.warn('Error analizando patrones de montos', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;
@@ -346,7 +346,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de ubicación:', error);
+      logger.warn('Error analizando patrones de ubicación', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;
@@ -404,7 +404,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de dispositivo:', error);
+      logger.warn('Error analizando patrones de dispositivo', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;
@@ -460,7 +460,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de comportamiento:', error);
+      logger.warn('Error analizando patrones de comportamiento', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;
@@ -518,7 +518,7 @@ export class FraudDetectionService {
       }
 
     } catch (error) {
-      logger.warn('Error analizando patrones de red:', error);
+      logger.warn('Error analizando patrones de red', { error: error instanceof Error ? error.message : String(error) });
     }
 
     return patterns;

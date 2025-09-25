@@ -443,7 +443,7 @@ export class PaymentConfigService {
           const serviceConfig: PaymentServiceConfig = JSON.parse(config.value);
           this.configs.set(config.key, serviceConfig);
         } catch (parseError) {
-          logger.warn(`Error parseando configuración para ${config.key}:`, parseError);
+          logger.warn(`Error parseando configuración para ${config.key}`, { error: parseError instanceof Error ? parseError.message : String(parseError) });
         }
       }
 
@@ -579,7 +579,7 @@ export class PaymentConfigService {
         await this.updateServiceConfig(serviceId, config);
         logger.info(`Configuración por defecto creada para: ${serviceId}`);
       } catch (error) {
-        logger.warn(`Error creando configuración por defecto para ${serviceId}:`, error);
+        logger.warn(`Error creando configuración por defecto para ${serviceId}`, { error: error instanceof Error ? error.message : String(error) });
       }
     }
   }

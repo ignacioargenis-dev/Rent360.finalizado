@@ -75,12 +75,12 @@ class FirebaseNotificationService {
 
         // Handle incoming messages when app is in foreground
         onMessage(this.messaging, (payload) => {
-          logger.info('Received foreground message:', payload);
+          logger.info('Received foreground message', { payload });
           this.handleForegroundMessage(payload);
         });
       }
     } catch (error) {
-      logger.error('Error initializing Firebase:', error as Error);
+      logger.error('Error initializing Firebase', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
