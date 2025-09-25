@@ -377,6 +377,9 @@ export class GeolocationService {
       ];
 
       // Encontrar la ubicación más cercana
+      if (locations.length === 0) {
+        throw new Error('No hay ubicaciones disponibles para comparación');
+      }
       let closestLocation = locations[0];
       let minDistance = this.calculateDistance(coordinates, locations[0].coordinates);
 

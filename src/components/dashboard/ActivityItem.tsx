@@ -95,7 +95,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
               <Avatar className="w-6 h-6 mr-2">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="text-xs">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-gray-500">

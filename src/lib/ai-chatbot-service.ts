@@ -226,7 +226,7 @@ export class AIChatbotService {
     });
 
     const response = message.content[0]?.type === 'text'
-      ? message.content[0].text
+      ? message.content[0]?.text
       : 'Lo siento, no pude generar una respuesta.';
     const confidence = 0.90; // Claude generalmente tiene muy alta confianza
 

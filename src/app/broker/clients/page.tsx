@@ -390,7 +390,7 @@ return `Hace ${diffDays} días`;
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium text-blue-600">
-              {client.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              {client.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'C'}
             </span>
           </div>
           <div>
