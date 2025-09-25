@@ -52,7 +52,7 @@ export class TrustFactoryProvider extends SignatureProvider {
         signers: signers.map((s, index) => ({
           id: `signer_${index + 1}`,
           email: s.email,
-          name: s.name,
+          name: s.name || '',
           rut: '',
           phone: '',
           order: index + 1,
@@ -76,7 +76,7 @@ export class TrustFactoryProvider extends SignatureProvider {
         signers: signers.map((s, index) => ({
           id: `signer_${index + 1}`,
           email: s.email,
-          name: s.name,
+          name: s.name || '',
           rut: '',
           phone: '',
           order: index + 1,
@@ -163,9 +163,9 @@ export class TrustFactoryProvider extends SignatureProvider {
             legalValidity: true
           },
           signers: signatureRequest.signers.map(s => ({
-            rut: s.rut,
+            rut: s.rut || '',
             email: s.email,
-            name: s.name,
+            name: s.name || '',
             status: 'pending'
           })),
           apiResponse: response.data

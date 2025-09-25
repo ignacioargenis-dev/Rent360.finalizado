@@ -57,7 +57,7 @@ export class FirmaProProvider extends SignatureProvider {
         signers: signers.map((s, index) => ({
           id: `signer_${index + 1}`,
           email: s.email,
-          name: s.name,
+          name: s.name || '',
           rut: '',
           phone: '',
           order: index + 1,
@@ -158,9 +158,9 @@ export class FirmaProProvider extends SignatureProvider {
             contractType: 'ARRIENDO_INMUEBLE'
           },
           signers: request.signers.map(s => ({
-            rut: s.rut,
+            rut: s.rut || '',
             email: s.email,
-            name: s.name,
+            name: s.name || '',
             role: this.determineSignerRole(s),
             status: 'pending'
           })),

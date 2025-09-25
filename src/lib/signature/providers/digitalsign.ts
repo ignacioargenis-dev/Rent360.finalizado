@@ -56,7 +56,7 @@ export class DigitalSignProvider extends SignatureProvider {
         signers: signers.map((s, index) => ({
           id: `signer_${index + 1}`,
           email: s.email,
-          name: s.name,
+          name: s.name || '',
           rut: '',
           phone: '',
           order: index + 1,
@@ -115,9 +115,9 @@ export class DigitalSignProvider extends SignatureProvider {
             bankIntegration: this.bankIntegration
           },
           signers: request.signers.map(s => ({
-            rut: s.rut,
+            rut: s.rut || '',
             email: s.email,
-            name: s.name,
+            name: s.name || '',
             role: this.determineContractRole(s),
             bankVerified: this.bankIntegration,
             status: 'pending'
