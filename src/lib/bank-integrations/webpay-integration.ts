@@ -137,8 +137,8 @@ export class WebPayIntegration extends BaseBankIntegration {
           amount: transferData.amount,
           currency: 'CLP',
           status: 'failed',
-          errorCode: error.code,
-          errorMessage: error.message,
+          errorCode: error?.code || 'UNKNOWN_ERROR',
+          errorMessage: error?.message || 'Error desconocido',
           processedAt: new Date(),
           metadata: {
             webpayToken: token,
