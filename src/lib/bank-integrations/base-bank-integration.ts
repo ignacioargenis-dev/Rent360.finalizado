@@ -405,7 +405,7 @@ export abstract class BaseBankIntegration {
   public async isAvailable(): Promise<boolean> {
     try {
       await this.initialize();
-      return this.config.enabled && await this.validateCredentials();
+      return this.config!.enabled && await this.validateCredentials();
     } catch (error) {
       return false;
     }
