@@ -151,7 +151,7 @@ export class FraudDetectionService {
       return assessment;
 
     } catch (error) {
-      logger.error('Error evaluando transacción para fraude:', error);
+      logger.error('Error evaluando transacción para fraude', { error: error instanceof Error ? error.message : String(error) });
 
       // En caso de error, asumir riesgo bajo pero marcar para revisión
       return {
@@ -674,7 +674,7 @@ export class FraudDetectionService {
       };
 
     } catch (error) {
-      logger.error('Error entrenando modelo:', error);
+      logger.error('Error entrenando modelo', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido'
@@ -746,7 +746,7 @@ export class FraudDetectionService {
       };
 
     } catch (error) {
-      logger.error('Error reportando falso positivo:', error);
+      logger.error('Error reportando falso positivo', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error interno'

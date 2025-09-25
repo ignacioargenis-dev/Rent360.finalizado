@@ -262,7 +262,7 @@ export class KYCService {
       return document;
 
     } catch (error) {
-      logger.error('Error subiendo documento KYC:', error);
+      logger.error('Error subiendo documento KYC', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -343,7 +343,7 @@ export class KYCService {
       };
 
     } catch (error) {
-      logger.error('Error verificando KYC:', error);
+      logger.error('Error verificando KYC', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -364,7 +364,7 @@ export class KYCService {
       return isValid;
 
     } catch (error) {
-      logger.error('Error verificando email:', error);
+      logger.error('Error verificando email', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -385,7 +385,7 @@ export class KYCService {
       return isValid;
 
     } catch (error) {
-      logger.error('Error verificando teléfono:', error);
+      logger.error('Error verificando teléfono', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -435,7 +435,7 @@ export class KYCService {
       return result;
 
     } catch (error) {
-      logger.error('Error verificando documento:', error);
+      logger.error('Error verificando documento', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -482,7 +482,7 @@ export class KYCService {
       return result;
 
     } catch (error) {
-      logger.error('Error verificando dirección:', error);
+      logger.error('Error verificando dirección', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
