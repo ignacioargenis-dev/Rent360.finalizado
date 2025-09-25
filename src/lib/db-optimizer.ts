@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { sql } from '@prisma/client';
 import { logger } from './logger';
 
 interface QueryStats {
@@ -65,7 +66,7 @@ export class DatabaseOptimizer {
         if (!allowedTables.includes(table)) {
           throw new Error(`Tabla no permitida: ${table}`);
         }
-        const analysis = await db.$queryRaw(`ANALYZE ${table}`);
+        const analysis = await db.$queryRaw(sql`ANALYZE ${table}`);
         
         const duration = Date.now() - startTime;
         results.push({
