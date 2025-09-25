@@ -108,12 +108,12 @@ export class TrustFactoryProvider extends SignatureProvider {
           }
         },
         signers: signatureRequest.signers.map(signer => ({
-          rut: signer.rut,
+          rut: signer.rut || '',
           email: signer.email,
-          name: signer.name,
-          phone: signer.phone,
-          order: signer.order,
-          required: signer.isRequired,
+          name: signer.name || '',
+          phone: signer.phone || '',
+          order: signer.order || 1,
+          required: signer.isRequired || true,
           role: this.determineSignerRole(signer)
         })),
         expiresAt: signatureRequest.expiresAt.toISOString(),

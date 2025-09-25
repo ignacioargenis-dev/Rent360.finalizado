@@ -212,12 +212,12 @@ export async function POST(request: NextRequest) {
         signers: {
           create: validatedData.signers.map(signer => ({
             email: signer.email,
-            name: signer.name,
+            name: signer.name || '',
             role: determineSignerRole(signer, validatedData.signers.length),
             status: 'pending',
             metadata: JSON.stringify({
               rut: signer.rut,
-              phone: signer.phone,
+              phone: signer.phone || '',
               order: signer.order,
               isRequired: signer.isRequired
             })
