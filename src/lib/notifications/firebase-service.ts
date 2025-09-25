@@ -271,8 +271,21 @@ class FirebaseNotificationService {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
-    const [startHour, startMinute] = settings.quietHours.start.split(':').map(Number);
-    const [endHour, endMinute] = settings.quietHours.end.split(':').map(Number);
+    const startParts = settings.quietHours.start.split(':');
+    const endParts = settings.quietHours.end.split(':');
+
+    if (startParts.length !== 2 || endParts.length !== 2) {
+      return false; // Formato inválido, permitir notificaciones
+    }
+
+    const startHour = Number(startParts[0]);
+    const startMinute = Number(startParts[1]);
+    const endHour = Number(endParts[0]);
+    const endMinute = Number(endParts[1]);
+
+    if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+      return false; // Valores inválidos, permitir notificaciones
+    }
 
     const startTime = startHour * 60 + startMinute;
     const endTime = endHour * 60 + endMinute;

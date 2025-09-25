@@ -579,7 +579,15 @@ export class ChatService {
    * Convierte tiempo HH:mm a minutos
    */
   private timeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
+    const parts = time.split(':');
+    if (parts.length !== 2) {
+      return 0; // Valor por defecto si el formato es inválido
+    }
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    if (isNaN(hours) || isNaN(minutes)) {
+      return 0; // Valor por defecto si no son números válidos
+    }
     return hours * 60 + minutes;
   }
 
