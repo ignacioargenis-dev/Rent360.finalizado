@@ -286,10 +286,8 @@ export async function getPropertiesOptimized(options: {
   const { where, skip, take, cache = false, cacheTTL = 300, cacheKey, orderBy } = options || {};
   
   // Optimizar consulta con índices y selección específica
-  const properties = await db.property.findMany({
+  const queryOptions: any = {
     where,
-    skip,
-    take,
     orderBy: orderBy || { createdAt: 'desc' },
     select: {
       id: true,
@@ -320,7 +318,16 @@ export async function getPropertiesOptimized(options: {
       },
     },
   });
-  
+
+  // Agregar propiedades opcionales solo si están definidas
+  if (skip !== undefined) {
+    queryOptions.skip = skip;
+  }
+  if (take !== undefined) {
+    queryOptions.take = take;
+  }
+
+  const properties = await db.property.findMany(queryOptions);
   return properties;
 }
 
@@ -331,11 +338,9 @@ export async function getUsersOptimized(options: {
   orderBy?: any;
 }) {
   const { where, skip, take, orderBy } = options || {};
-  
-  return await db.user.findMany({
+
+  const queryOptions: any = {
     where,
-    skip,
-    take,
     orderBy: orderBy || { createdAt: 'desc' },
     select: {
       id: true,
@@ -350,6 +355,16 @@ export async function getUsersOptimized(options: {
       updatedAt: true,
     },
   });
+
+  // Agregar propiedades opcionales solo si están definidas
+  if (skip !== undefined) {
+    queryOptions.skip = skip;
+  }
+  if (take !== undefined) {
+    queryOptions.take = take;
+  }
+
+  return await db.user.findMany(queryOptions);
 }
 
 export async function getContractsOptimized(options: {
@@ -359,11 +374,9 @@ export async function getContractsOptimized(options: {
   orderBy?: any;
 }) {
   const { where, skip, take, orderBy } = options || {};
-  
-  return await db.contract.findMany({
+
+  const queryOptions: any = {
     where,
-    skip,
-    take,
     orderBy: orderBy || { createdAt: 'desc' },
     select: {
       id: true,
@@ -404,6 +417,16 @@ export async function getContractsOptimized(options: {
       },
     },
   });
+
+  // Agregar propiedades opcionales solo si están definidas
+  if (skip !== undefined) {
+    queryOptions.skip = skip;
+  }
+  if (take !== undefined) {
+    queryOptions.take = take;
+  }
+
+  return await db.contract.findMany(queryOptions);
 }
 
 export async function getPaymentsOptimized(options: {
@@ -413,11 +436,9 @@ export async function getPaymentsOptimized(options: {
   orderBy?: any;
 }) {
   const { where, skip, take, orderBy } = options || {};
-  
-  return await db.payment.findMany({
+
+  const queryOptions: any = {
     where,
-    skip,
-    take,
     orderBy: orderBy || { dueDate: 'desc' },
     select: {
       id: true,
@@ -448,6 +469,16 @@ export async function getPaymentsOptimized(options: {
       },
     },
   });
+
+  // Agregar propiedades opcionales solo si están definidas
+  if (skip !== undefined) {
+    queryOptions.skip = skip;
+  }
+  if (take !== undefined) {
+    queryOptions.take = take;
+  }
+
+  return await db.payment.findMany(queryOptions);
 }
 
 // Ejecutar optimización automática cada 24 horas
