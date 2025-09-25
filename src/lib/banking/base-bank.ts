@@ -88,15 +88,15 @@ export abstract class BaseBankIntegration {
    * Maneja errores de la API bancaria
    */
   protected handleBankError(error: any, operation: string): BankTransferResponse {
-    logger.error(`Error en integración bancaria ${this.bankName} - ${operation}:`, {
-      error: error.message || error,
+    logger.error(`Error en integración bancaria ${this.bankName} - ${operation}`, {
+      error: error instanceof Error ? error.message : String(error),
       operation,
       bank: this.bankName
     });
 
     return {
       success: false,
-      errorMessage: error.message || 'Error desconocido en la integración bancaria',
+      errorMessage: error instanceof Error ? error.message : 'Error desconocido en la integración bancaria',
       status: 'FAILED'
     };
   }

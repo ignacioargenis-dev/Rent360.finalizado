@@ -18,8 +18,8 @@ export interface BankConfig {
     baseUrl?: string;
   };
   santander: {
-    apiKey: string;
-    apiSecret: string;
+    clientId: string;
+    clientSecret: string;
     baseUrl?: string;
   };
 }
@@ -56,7 +56,7 @@ export class BankService {
 
       logger.info('Integraciones bancarias inicializadas correctamente');
     } catch (error) {
-      logger.error('Error inicializando integraciones bancarias:', error);
+      logger.error('Error inicializando integraciones bancarias', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -101,7 +101,7 @@ export class BankService {
 
       return result;
     } catch (error) {
-      logger.error('Error en transferencia bancaria:', error);
+      logger.error('Error en transferencia bancaria', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : 'Error desconocido',
@@ -130,7 +130,7 @@ export class BankService {
 
       return result;
     } catch (error) {
-      logger.error('Error validando cuenta bancaria:', error);
+      logger.error('Error validando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
       return {
         ...validation,
         isValid: false,
@@ -157,10 +157,10 @@ export class BankService {
 
       return result;
     } catch (error) {
-      logger.error('Error consultando transacción:', error);
+      logger.error('Error consultando transacción', { error: error instanceof Error ? error.message : String(error) });
       return {
         status: 'FAILED',
-        details: { error: error.message }
+        details: { error: error instanceof Error ? error.message : String(error) }
       };
     }
   }
@@ -185,7 +185,7 @@ export class BankService {
 
       return result;
     } catch (error) {
-      logger.error('Error obteniendo saldo bancario:', error);
+      logger.error('Error obteniendo saldo bancario', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -277,8 +277,8 @@ export function getBankService(): BankService {
         baseUrl: process.env.BCI_BASE_URL
       },
       santander: {
-        apiKey: process.env.SANTANDER_API_KEY || '',
-        apiSecret: process.env.SANTANDER_API_SECRET || '',
+        clientId: process.env.SANTANDER_CLIENT_ID || '',
+        clientSecret: process.env.SANTANDER_CLIENT_SECRET || '',
         baseUrl: process.env.SANTANDER_BASE_URL
       }
     };

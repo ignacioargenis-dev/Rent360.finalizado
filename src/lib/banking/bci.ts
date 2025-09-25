@@ -63,7 +63,7 @@ export class BCIIntegration extends BaseBankIntegration {
 
       return this.accessToken;
     } catch (error) {
-      logger.error('Error en autenticación BCI:', error);
+      logger.error('Error en autenticación BCI', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -216,7 +216,7 @@ export class BCIIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error validando cuenta BCI:', error);
+      logger.error('Error validando cuenta BCI', { error: error instanceof Error ? error.message : String(error) });
       return {
         ...validation,
         isValid: false,
@@ -260,10 +260,10 @@ export class BCIIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error consultando transacción BCI:', error);
+      logger.error('Error consultando transacción BCI', { error: error instanceof Error ? error.message : String(error) });
       return {
         status: 'FAILED',
-        details: { error: error.message }
+        details: { error: error instanceof Error ? error.message : String(error) }
       };
     }
   }
@@ -297,7 +297,7 @@ export class BCIIntegration extends BaseBankIntegration {
       };
 
     } catch (error) {
-      logger.error('Error obteniendo saldo BCI:', error);
+      logger.error('Error obteniendo saldo BCI', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
