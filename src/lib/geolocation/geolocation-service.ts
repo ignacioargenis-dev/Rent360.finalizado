@@ -487,7 +487,9 @@ export class GeolocationService {
     const providers = Array.from(this.providers.values());
     const activeProviders = providers.filter(p => p.isActive);
 
-    const averageRadius = activeProviders.reduce((sum, p) => sum + p.serviceRadius, 0) / activeProviders.length;
+    const averageRadius = activeProviders.length > 0
+      ? activeProviders.reduce((sum, p) => sum + p.serviceRadius, 0) / activeProviders.length
+      : 0;
 
     const coverageAreas = [...new Set(
       activeProviders.flatMap(p => p.serviceAreas)

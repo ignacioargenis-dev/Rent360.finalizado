@@ -301,7 +301,7 @@ export default function BrokerClientsPage() {
         .filter(c => c.averageRating > 0)
         .reduce((sum, c) => sum + c.averageRating, 0) / 
         mockClients.filter(c => c.averageRating > 0).length;
-      const conversionRate = (activeClients / totalClients) * 100;
+      const conversionRate = totalClients > 0 ? (activeClients / totalClients) * 100 : 0;
 
       setStats({
         totalClients,
