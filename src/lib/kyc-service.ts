@@ -631,7 +631,7 @@ export class KYCService {
   ): Promise<string> {
     // Simular subida a storage
     const fileId = `kyc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const fileExtension = fileName.split('.').pop();
+    const fileExtension = fileName.split('.').pop()!;
     const storageUrl = `https://storage.rent360.cl/kyc/${fileId}.${fileExtension}`;
 
     logger.info('Archivo subido a storage', {

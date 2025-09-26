@@ -478,8 +478,8 @@ class AdvancedNotificationService {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const endParts = endTime.split(':');
         if (endParts.length === 2) {
-          const endHour = parseInt(endParts[0]);
-          const endMinute = parseInt(endParts[1]);
+          const endHour = parseInt(endParts[0]!);
+          const endMinute = parseInt(endParts[1]!);
           if (!isNaN(endHour) && !isNaN(endMinute)) {
             tomorrow.setHours(endHour, endMinute, 0, 0);
           }
@@ -605,7 +605,7 @@ class AdvancedNotificationService {
       message += ' ¡Gracias por tu confianza!';
     } else if (userEngagement === 'low') {
       // Usuarios con bajo engagement reciben mensajes más concisos
-      message = message.split('.')[0] + '.';
+      message = message.split('.')[0]! + '.';
     }
     
     return message;

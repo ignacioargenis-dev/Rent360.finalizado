@@ -583,8 +583,8 @@ export class ChatService {
     if (parts.length !== 2) {
       return 0; // Valor por defecto si el formato es inválido
     }
-    const hours = Number(parts[0]);
-    const minutes = Number(parts[1]);
+    const hours = Number(parts[0]!);
+    const minutes = Number(parts[1]!);
     if (isNaN(hours) || isNaN(minutes)) {
       return 0; // Valor por defecto si no son números válidos
     }
