@@ -704,8 +704,8 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
         const properties = await db.property.findMany({
           where: {
             ...whereClause,
-            price: { not: { equals: null } },
-            area: { not: { equals: null } }
+            price: { not: null },
+            area: { not: null }
           },
           select: {
             price: true,
@@ -722,8 +722,8 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
           // Si no hay datos específicos, calcular estadísticas generales
           const allProperties = await db.property.findMany({
             where: {
-              price: { not: { equals: null } },
-              area: { not: { equals: null } }
+              price: { not: null },
+              area: { not: null }
             },
             select: {
               price: true,
