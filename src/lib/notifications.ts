@@ -389,7 +389,7 @@ class AdvancedNotificationService {
       : enabledChannels;
 
     if (availableChannels.length === 0) {
-      return enabledChannels.length > 0 ? enabledChannels[0]! : 'email'; // Default fallback
+      return enabledChannels.length > 0 ? enabledChannels[0]! : NotificationChannel.IN_APP; // Default fallback
     }
 
     // Algoritmo de selección basado en tipo y prioridad
