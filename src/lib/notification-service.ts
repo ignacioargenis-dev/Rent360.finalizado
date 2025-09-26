@@ -44,7 +44,7 @@ export interface CommissionNotification {
 }
 
 export interface SystemNotification {
-  type: 'system_alert' | 'maintenance' | 'feature_update' | 'security_alert';
+  type: 'system_alert' | 'maintenance' | 'system_maintenance' | 'feature_update' | 'security_alert';
   title: string;
   message: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
