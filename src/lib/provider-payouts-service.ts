@@ -313,26 +313,26 @@ export class ProviderPayoutsService {
           include: {
             user: {
               include: {
-                bankAccounts: true
+                bankAccount: true
               }
             }
           }
         });
 
-        bankAccount = provider?.user?.bankAccounts?.[0];
+        bankAccount = provider?.user?.bankAccount;
       } else {
         const provider = await db.serviceProvider.findUnique({
           where: { id: payout.recipientId },
           include: {
             user: {
               include: {
-                bankAccounts: true
+                bankAccount: true
               }
             }
           }
         });
 
-        bankAccount = provider?.user?.bankAccounts?.[0];
+        bankAccount = provider?.user?.bankAccount;
       }
 
       if (!bankAccount) {

@@ -21,7 +21,7 @@ describe('Payout Workflow Integration', () => {
     name: 'Juan Pérez',
     role: 'BROKER',
     isActive: true,
-    bankAccounts: [{
+    bankAccount: {
       id: 'bank_123',
       userId: 'user_123',
       bankCode: '012',
@@ -29,7 +29,7 @@ describe('Payout Workflow Integration', () => {
       accountNumber: '123456789',
       isVerified: true,
       isPrimary: true
-    }]
+    }
   };
 
   const mockContract = {
@@ -53,7 +53,7 @@ describe('Payout Workflow Integration', () => {
     // Mock database calls
     (db.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
     (db.contract.findUnique as jest.Mock).mockResolvedValue(mockContract);
-    (db.bankAccount.findFirst as jest.Mock).mockResolvedValue(mockUser.bankAccounts[0]);
+    (db.bankAccount.findFirst as jest.Mock).mockResolvedValue(mockUser.bankAccount);
 
     // Mock notification service
     (NotificationService.notifyCommissionPaid as jest.Mock).mockResolvedValue(undefined);
@@ -113,8 +113,8 @@ describe('Payout Workflow Integration', () => {
       expect(payoutCalculation.breakdown.netAmount).toBe(23750);
 
       // 4. Verify bank account exists and is verified
-      expect(mockUser.bankAccounts[0].isVerified).toBe(true);
-      expect(mockUser.bankAccounts[0].isPrimary).toBe(true);
+      expect(mockUser.bankAccount.isVerified).toBe(true);
+      expect(mockUser.bankAccount.isPrimary).toBe(true);
 
       // 5. Process payment through bank integration
       const paymentResult = {
@@ -159,7 +159,7 @@ describe('Payout Workflow Integration', () => {
           name: 'Bank account not verified',
           setup: () => {
             (db.bankAccount.findFirst as jest.Mock).mockResolvedValue({
-              ...mockUser.bankAccounts[0],
+              ...mockUser.bankAccount,
               isVerified: false
             });
           },
@@ -198,7 +198,7 @@ describe('Payout Workflow Integration', () => {
         contractId: mockContract.id,
         brokerId: mockUser.id,
         amount: 25000,
-        bankAccountId: mockUser.bankAccounts[0].id,
+        bankAccountId: mockUser.bankAccount.id,
         signatureId: 'sig_123',
         notificationId: 'notif_123'
       };
@@ -210,7 +210,7 @@ describe('Payout Workflow Integration', () => {
 
       // Verify foreign key relationships
       expect(mockContract.brokerId).toBe(workflowData.brokerId);
-      expect(mockUser.bankAccounts[0].id).toBeDefined();
+      expect(mockUser.bankAccount.id).toBeDefined();
     });
   });
 
