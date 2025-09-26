@@ -282,6 +282,7 @@ class PricePredictionModel {
     });
 
     // Calcular bias
+    const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
     const avgPrice = sumY / this.model.trainingData.length;
     const avgArea = this.model.trainingData.reduce((sum, item) => sum + item.area, 0) / this.model.trainingData.length;
     this.model.bias = avgPrice - (this.model.weights['area'] || 0) * avgArea;
