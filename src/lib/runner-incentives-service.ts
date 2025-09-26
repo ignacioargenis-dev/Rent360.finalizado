@@ -799,13 +799,15 @@ export class RunnerIncentivesService {
 
         if (categoryIncentives.length > 0) {
           const incentive = categoryIncentives[0];
-          topPerformers.push({
-            category,
-            runnerId: incentive.runnerId,
-            runnerName: incentive.runner?.name || 'Runner',
-            achievement: (incentive.incentiveRule as IncentiveRule).name,
-            reward: this.formatRewardDescription(incentive.rewardsGranted as any)
-          });
+          if (incentive) {
+            topPerformers.push({
+              category,
+              runnerId: incentive.runnerId,
+              runnerName: incentive.runner?.name || 'Runner',
+              achievement: (incentive.incentiveRule as IncentiveRule).name,
+              reward: this.formatRewardDescription(incentive.rewardsGranted as any)
+            });
+          }
         }
       }
 
