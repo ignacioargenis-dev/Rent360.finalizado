@@ -22,7 +22,7 @@ const getDb = async () => {
 const getCacheManager = async () => {
   if (!cacheManager) {
     const cacheModule = await import('@/lib/cache');
-    cacheManager = cacheModule.default || cacheModule;
+    cacheManager = cacheModule.cacheManager;
   }
   return cacheManager;
 };
@@ -30,7 +30,7 @@ const getCacheManager = async () => {
 const getRateLimiter = async () => {
   if (!rateLimiter) {
     const rateLimiterModule = await import('@/lib/rate-limiter');
-    rateLimiter = rateLimiterModule.default || rateLimiterModule;
+    rateLimiter = rateLimiterModule.rateLimiter;
   }
   return rateLimiter;
 };
