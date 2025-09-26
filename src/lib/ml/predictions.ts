@@ -852,7 +852,7 @@ export async function predictMarketDemand(city: string, commune: string, months:
     // Calcular tasa de contratos por mes
     const contractsPerMonth = contracts.length / months;
     const activeContracts = contracts.filter(c => ['ACTIVE', 'PENDING'].includes(c.status)).length;
-    const occupancyRate = (activeContracts / contracts.length) * 100;
+    const occupancyRate = contracts.length > 0 ? (activeContracts / contracts.length) * 100 : 0;
 
     // Calcular tendencia basada en contratos recientes vs antiguos
     const midPoint = Math.floor(contracts.length / 2);
