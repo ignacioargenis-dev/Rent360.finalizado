@@ -641,7 +641,7 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
 // Función para generar recomendaciones inteligentes
 function generateSmartRecommendations(
   propertyData: Partial<PropertyData>,
-  prediction: any,
+  prediction: { price: number; confidence: number; factors: Record<string, number>; modelInfo: any },
   marketData: MarketData
 ): string[] {
   const recommendations: string[] = [];
@@ -649,7 +649,7 @@ function generateSmartRecommendations(
   // Recomendaciones basadas en factores del modelo
   if (prediction.factors) {
     const topFactors = Object.entries(prediction.factors)
-      .sort(([,a], [,b]) => Math.abs(b) - Math.abs(a))
+      .sort(([,a]: [string, number], [,b]: [string, number]) => Math.abs(b) - Math.abs(a))
       .slice(0, 3);
 
     if (topFactors.some(([factor]) => factor === 'area')) {
