@@ -108,6 +108,9 @@ model User {
   legalNotificationsSent LegalNotification[] @relation("LegalNotificationUser")
   legalAuditLogs      LegalAuditLog[] @relation("LegalAuditLogUser")
 
+  // Relaciones de incentivos para runners
+  runnerIncentives RunnerIncentive[]
+
   @@map("users")
   @@index([email])
   @@index([role])
@@ -1325,6 +1328,7 @@ model RunnerIncentive {
   updatedAt DateTime @updatedAt
 
   // Relaciones
+  runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
   incentiveRule IncentiveRule @relation(fields: [incentiveRuleId], references: [id], onDelete: Cascade)
 
   @@map("runner_incentives")
