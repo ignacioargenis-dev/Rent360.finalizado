@@ -165,9 +165,14 @@ export class RunnerRatingService {
         throw new BusinessLogicError('Solo se pueden calificar visitas completadas');
       }
 
-      // Verificar que no exista ya una calificación para esta visita
+      // Verificar que no exista ya una calificación para esta visita por este cliente
       const existingRating = await db.runnerRating.findUnique({
-        where: { visitId: ratingData.visitId }
+        where: {
+          visitId_clientId: {
+            visitId: ratingData.visitId,
+            clientId: ratingData.clientId
+          }
+        }
       });
 
       if (existingRating) {
