@@ -78,8 +78,10 @@ class PricePredictionModel {
       const properties = await db.property.findMany({
         where: {
           status: 'ACTIVE',
-          price: { not: null },
-          area: { not: null }
+          AND: [
+            { price: { not: null } },
+            { area: { not: null } }
+          ]
         },
         select: {
           id: true,
