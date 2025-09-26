@@ -203,10 +203,7 @@ export class PaymentConfigService {
       // Actualizar en base de datos
       await db.systemSetting.upsert({
         where: {
-          category_key: {
-            category: 'payment_service',
-            key: serviceId
-          }
+          key: serviceId
         },
         update: {
           value: JSON.stringify(updatedConfig),
