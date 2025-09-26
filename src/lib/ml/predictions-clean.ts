@@ -263,7 +263,7 @@ class PricePredictionModel {
     logger.info('Entrenando modelo de predicción de precios');
 
     // Implementación simplificada de regresión lineal
-    const features = ['area', 'bedrooms', 'bathrooms', 'views', 'favorites'];
+    const features = ['area', 'bedrooms', 'bathrooms', 'views', 'inquiries', 'age', 'pricePerSqm', 'depositRatio', 'contractCount', 'reviewCount', 'visitCount'];
     const target = 'price';
 
     // Calcular pesos usando mínimos cuadrados (simplificado)
@@ -302,7 +302,13 @@ class PricePredictionModel {
       bedrooms: propertyData.bedrooms || 0,
       bathrooms: propertyData.bathrooms || 0,
       views: propertyData.views || 0,
-      favorites: propertyData.favorites || 0
+      inquiries: propertyData.inquiries || 0,
+      age: propertyData.age || 0,
+      pricePerSqm: propertyData.pricePerSqm || 0,
+      depositRatio: propertyData.depositRatio || 0,
+      contractCount: propertyData.contractCount || 0,
+      reviewCount: propertyData.reviewCount || 0,
+      visitCount: propertyData.visitCount || 0
     };
 
     let prediction = this.model.bias;
