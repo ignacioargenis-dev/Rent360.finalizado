@@ -14,31 +14,31 @@ export interface IncentiveRule {
 
   // Criterios de elegibilidad
   criteria: {
-    minVisits?: number;
-    minRating?: number;
-    minEarnings?: number;
-    minCompletionRate?: number;
-    consecutivePeriods?: number;
-    rankingPosition?: number;
+    minVisits?: number | undefined;
+    minRating?: number | undefined;
+    minEarnings?: number | undefined;
+    minCompletionRate?: number | undefined;
+    consecutivePeriods?: number | undefined;
+    rankingPosition?: number | undefined;
   };
 
   // Recompensas
   rewards: {
-    bonusAmount?: number;
-    bonusPercentage?: number;
-    priorityBonus?: number;
-    badge?: string;
-    title?: string;
-    features?: string[];
+    bonusAmount?: number | undefined;
+    bonusPercentage?: number | undefined;
+    priorityBonus?: number | undefined;
+    badge?: string | undefined;
+    title?: string | undefined;
+    features?: string[] | undefined;
   };
 
   // Configuración
   isActive: boolean;
   autoGrant: boolean;
-  maxRecipients?: number;
+  maxRecipients?: number | undefined;
   cooldownPeriod: number; // días entre grants del mismo incentivo
   validFrom: Date;
-  validUntil?: Date;
+  validUntil?: Date | undefined;
 }
 
 export interface RunnerIncentive {
@@ -47,33 +47,33 @@ export interface RunnerIncentive {
   incentiveRuleId: string;
   status: 'earned' | 'granted' | 'claimed' | 'expired';
   earnedAt: Date;
-  grantedAt?: Date;
-  claimedAt?: Date;
-  expiresAt?: Date;
+  grantedAt?: Date | undefined;
+  claimedAt?: Date | undefined;
+  expiresAt?: Date | undefined;
 
   // Detalles del logro
   achievementData: {
-    visitsCompleted?: number;
-    ratingAchieved?: number;
-    earningsGenerated?: number;
-    rankingPosition?: number;
+    visitsCompleted?: number | undefined;
+    ratingAchieved?: number | undefined;
+    earningsGenerated?: number | undefined;
+    rankingPosition?: number | undefined;
     periodStart: Date;
     periodEnd: Date;
   };
 
   // Recompensas otorgadas
   rewardsGranted: {
-    bonusAmount?: number;
-    badge?: string;
-    title?: string;
-    features?: string[];
+    bonusAmount?: number | undefined;
+    badge?: string | undefined;
+    title?: string | undefined;
+    features?: string[] | undefined;
   };
 
   // Metadata
   notificationSent: boolean;
   adminApprovalRequired: boolean;
-  approvedBy?: string;
-  notes?: string;
+  approvedBy?: string | undefined;
+  notes?: string | undefined;
 }
 
 export interface RunnerIncentiveWithRule extends RunnerIncentive {
@@ -375,17 +375,17 @@ export class RunnerIncentivesService {
         id: incentive.id,
         runnerId: incentive.runnerId,
         incentiveRuleId: incentive.incentiveRuleId,
-        status: incentive.status as 'earned' | 'granted' | 'claimed' | 'expired',
+        status: incentive.status,
         earnedAt: incentive.earnedAt,
-        grantedAt: incentive.grantedAt || undefined,
-        claimedAt: incentive.claimedAt || undefined,
-        expiresAt: incentive.expiresAt || undefined,
+        grantedAt: incentive.grantedAt ?? undefined,
+        claimedAt: incentive.claimedAt ?? undefined,
+        expiresAt: incentive.expiresAt ?? undefined,
         achievementData: incentive.achievementData as RunnerIncentive['achievementData'],
         rewardsGranted: incentive.rewardsGranted as RunnerIncentive['rewardsGranted'],
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
-        approvedBy: incentive.approvedBy || undefined,
-        notes: incentive.notes || undefined
+        approvedBy: incentive.approvedBy ?? undefined,
+        notes: incentive.notes ?? undefined
       }));
 
     } catch (error) {
