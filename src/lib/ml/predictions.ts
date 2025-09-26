@@ -655,7 +655,7 @@ function generateSmartRecommendations(
     if (topFactors.some(([factor]) => factor === 'area')) {
       recommendations.push('El área es un factor determinante del precio');
     }
-    if (topFactors.some(([factor]) => factor === 'isFurnished' && prediction.factors.isFurnished > 0)) {
+    if (topFactors.some(([factor]) => factor === 'isFurnished' && prediction.factors['isFurnished']! > 0)) {
       recommendations.push('Las propiedades amobladas tienen mayor valor de mercado');
     }
   }
