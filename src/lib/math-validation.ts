@@ -234,12 +234,12 @@ export async function validateContractCalculations(contractId: string): Promise<
     }
 
     // Validar depósito razonable (máximo 2 meses de arriendo)
-    if (contract.deposit > contract.monthlyRent * 2) {
+    if (contract.deposit !== undefined && contract.monthlyRent !== undefined && contract.deposit > contract.monthlyRent * 2) {
       issues.push(`Depósito (${contract.deposit}) excede 2 meses de arriendo (${contract.monthlyRent * 2})`);
     }
 
     // Validar precio por m² si hay información de área
-    if (contract.property?.area && contract.property.area > 0) {
+    if (contract.property?.area && contract.property.area > 0 && contract.monthlyRent !== undefined) {
       const pricePerSqm = calculatePricePerSquareMeter(contract.monthlyRent * 12, contract.property.area);
       summary.pricePerSqm = pricePerSqm;
 
@@ -312,16 +312,16 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
       price: property.price,
       deposit: property.deposit,
       area: property.area,
-      totalReviews: property.reviews.length
+      totalReviews: property.reviews?.length || 0
     };
 
     // Validar relación precio/depósito (depósito máximo 2 meses)
-    if (property.deposit > property.price * 0.1) { // 10% del precio total
+    if (property.deposit !== undefined && property.price !== undefined && property.deposit > property.price * 0.1) { // 10% del precio total
       issues.push(`Depósito (${property.deposit}) excede 10% del precio total (${property.price * 0.1})`);
     }
 
     // Validar precio por m² razonable
-    if (property.area && property.area > 0) {
+    if (property.area && property.area > 0 && property.price !== undefined) {
       const pricePerSqm = calculatePricePerSquareMeter(property.price, property.area);
       summary.pricePerSqm = pricePerSqm;
 
@@ -352,10 +352,12 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
     // Validar que no haya contratos activos con precios inconsistentes
     if (property.contracts.length > 0) {
       const activeContract = property.contracts[0];
-      const expectedMonthlyRent = Math.round(property.price / 12); // Aproximado
+      if (activeContract && activeContract.monthlyRent !== undefined) {
+        const expectedMonthlyRent = Math.round(property.price / 12); // Aproximado
 
-      if (Math.abs(activeContract.monthlyRent - expectedMonthlyRent) / expectedMonthlyRent > 0.2) { // 20% de tolerancia
-        issues.push(`Renta mensual del contrato (${activeContract.monthlyRent}) no coincide con precio esperado (${expectedMonthlyRent})`);
+        if (Math.abs(activeContract.monthlyRent - expectedMonthlyRent) / expectedMonthlyRent > 0.2) { // 20% de tolerancia
+          issues.push(`Renta mensual del contrato (${activeContract.monthlyRent}) no coincide con precio esperado (${expectedMonthlyRent})`);
+        }
       }
     }
 
