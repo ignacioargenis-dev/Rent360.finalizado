@@ -1267,6 +1267,66 @@ model RunnerRating {
 }
 
 // ============================================================================
+// Incentive Rule model
+model IncentiveRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  type        String   // 'performance' | 'rating' | 'volume' | 'loyalty' | 'seasonal'
+  category    String   // 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond'
+
+  // Criterios de elegibilidad (JSON)
+  criteria    String
+
+  // Recompensas (JSON)
+  rewards     String
+
+  // Configuración
+  isActive      Boolean  @default(true)
+  autoGrant     Boolean  @default(true)
+  maxRecipients Int?
+  cooldownPeriod Int     // días entre grants del mismo incentivo
+  validFrom     DateTime
+  validUntil    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  runnerIncentives RunnerIncentive[]
+
+  @@map("incentive_rules")
+}
+
+// Runner Incentive model
+model RunnerIncentive {
+  id               String   @id @default(cuid())
+  runnerId         String   // ID del runner (referencia a User)
+  incentiveRuleId  String
+  status           String   @default("earned") // 'earned' | 'granted' | 'claimed' | 'expired'
+  earnedAt         DateTime
+  grantedAt        DateTime?
+  claimedAt        DateTime?
+  expiresAt        DateTime?
+
+  // Detalles del logro (JSON)
+  achievementData  String
+
+  // Recompensas otorgadas (JSON)
+  rewardsGranted   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  incentiveRule IncentiveRule @relation(fields: [incentiveRuleId], references: [id], onDelete: Cascade)
+
+  @@map("runner_incentives")
+  @@index([runnerId])
+  @@index([incentiveRuleId])
+  @@index([status])
+}
+
 // ENUMS DEL SISTEMA LEGAL
 // ============================================================================
 
