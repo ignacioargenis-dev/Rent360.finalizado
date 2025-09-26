@@ -88,14 +88,8 @@ class PricePredictionModel {
           city: true,
           commune: true,
           type: true,
-          furnished: true,
-          petsAllowed: true,
-          yearBuilt: true,
-          coordinates: true,
           views: true,
-          favorites: true,
           createdAt: true,
-          rentedAt: true,
           _count: {
             select: {
               contracts: true
@@ -115,15 +109,8 @@ class PricePredictionModel {
         city: prop.city,
         commune: prop.commune,
         type: prop.type,
-        furnished: prop.furnished,
-        petsAllowed: prop.petsAllowed,
-        yearBuilt: prop.yearBuilt || undefined,
-        coordinates: prop.coordinates || undefined,
         views: prop.views || 0,
-        favorites: prop.favorites || 0,
-        createdAt: prop.createdAt,
-        rentedAt: prop.rentedAt || undefined,
-        rentalPeriod: prop.rentedAt ? Math.floor((prop.rentedAt.getTime() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)) : undefined
+        createdAt: prop.createdAt
       }));
 
       logger.info(`Datos de entrenamiento cargados: ${this.model.trainingData.length} propiedades`);
