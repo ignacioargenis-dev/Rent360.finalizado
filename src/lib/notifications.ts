@@ -1,5 +1,5 @@
 // Sistema de Notificaciones Avanzado - Rent360
-// import { logger } from './logger';
+import { logger } from './logger';
 import React from 'react';
 
 export enum NotificationType {
