@@ -292,7 +292,7 @@ export class PaymentConfigService {
       return {
         success: testResult.success,
         responseTime,
-        error: testResult.error
+        ...(testResult.error && { error: testResult.error })
       };
 
     } catch (error) {
