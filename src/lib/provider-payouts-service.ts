@@ -191,7 +191,7 @@ export class ProviderPayoutsService {
               }
             },
             include: {
-              tenant: {
+              requester: {
                 select: {
                   name: true
                 }
@@ -248,7 +248,7 @@ export class ProviderPayoutsService {
             type: 'service',
             amount: job.finalPrice || job.basePrice,
             date: job.completedDate!,
-            clientName: job.tenant?.name || 'Cliente'
+            clientName: job.requester?.name || 'Cliente'
           }))
         });
       }
