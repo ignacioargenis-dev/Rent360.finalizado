@@ -315,6 +315,10 @@ class AdvancedMonitoringSystem {
     }
 
     const latestMetrics = recentMetrics[recentMetrics.length - 1];
+    if (!latestMetrics) {
+      return { status: 'healthy', score: 100, issues: [] };
+    }
+
     const issues: string[] = [];
     let score = 100;
 
