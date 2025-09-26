@@ -712,7 +712,6 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
             area: true,
             status: true,
             createdAt: true,
-            rentedAt: true,
             _count: {
               select: { contracts: true }
             }
@@ -733,7 +732,6 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
               city: true,
               commune: true,
               createdAt: true,
-              rentedAt: true,
               _count: {
                 select: { contracts: true }
               }
@@ -791,13 +789,8 @@ async function calculateMarketStats(properties: any[], city?: string, commune?: 
     ? areas.reduce((sum, area) => sum + area, 0) / areas.length
     : 90;
 
-  // Calcular período de alquiler promedio
-  const rentalPeriods = properties
-    .filter(p => p.rentedAt && p.createdAt)
-    .map(p => Math.floor((p.rentedAt.getTime() - p.createdAt.getTime()) / (1000 * 60 * 60 * 24)));
-  const averageRentalPeriod = rentalPeriods.length > 0
-    ? rentalPeriods.reduce((sum, period) => sum + period, 0) / rentalPeriods.length
-    : 30;
+  // Calcular período de alquiler promedio (estimación por defecto)
+  const averageRentalPeriod = 30; // 30 días promedio
 
   // Calcular índice de demanda basado en contratos recientes
   const recentContracts = properties.filter(p => {
