@@ -79,8 +79,8 @@ class PricePredictionModel {
         where: {
           status: 'ACTIVE',
           AND: [
-            { price: { not: null } },
-            { area: { not: null } }
+            { price: { not: { equals: null } } },
+            { area: { not: { equals: null } } }
           ]
         },
         select: {

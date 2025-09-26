@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       db.depositRefund.aggregate({
         where: { 
           status: 'PROCESSED',
-          processedAt: { not: null }
+          processedAt: { not: { equals: null } }
         },
         _avg: {
           originalDeposit: true

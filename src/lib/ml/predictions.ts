@@ -95,8 +95,8 @@ class PricePredictionModel {
       const properties = await db.property.findMany({
         where: {
           status: 'ACTIVE',
-          price: { not: null },
-          area: { not: null }
+          price: { not: { equals: null } },
+          area: { not: { equals: null } }
         },
         select: {
           id: true,
@@ -588,8 +588,8 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
         const properties = await db.property.findMany({
           where: {
             ...whereClause,
-            price: { not: null },
-            area: { not: null }
+            price: { not: { equals: null } },
+            area: { not: { equals: null } }
           },
           select: {
             price: true,
@@ -607,8 +607,8 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
           // Si no hay datos específicos, calcular estadísticas generales
           const allProperties = await db.property.findMany({
             where: {
-              price: { not: null },
-              area: { not: null }
+              price: { not: { equals: null } },
+              area: { not: { equals: null } }
             },
             select: {
               price: true,
