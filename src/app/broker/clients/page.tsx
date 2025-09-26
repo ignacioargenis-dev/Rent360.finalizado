@@ -37,7 +37,7 @@ interface Client {
   activeContracts: number;
   totalRevenue: number;
   lastContact: string;
-  nextFollowUp?: string;
+  nextFollowUp?: string | undefined;
   averageRating: number;
   properties: Array<{
     id: string;
@@ -45,7 +45,7 @@ interface Client {
     address: string;
     status: string;
   }>;
-  notes?: string;
+  notes?: string | undefined;
   preferences: {
     contactMethod: 'email' | 'phone' | 'whatsapp';
     propertyTypes: string[];

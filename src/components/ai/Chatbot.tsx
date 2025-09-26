@@ -32,19 +32,19 @@ interface ChatbotMessage {
   content: string;
   timestamp: Date;
   context?: {
-    propertyId?: string;
-    contractId?: string;
-    userId?: string;
-    intent?: string;
-    confidence?: number;
-  };
-  suggestions?: string[];
+    propertyId?: string | undefined;
+    contractId?: string | undefined;
+    userId?: string | undefined;
+    intent?: string | undefined;
+    confidence?: number | undefined;
+  } | undefined;
+  suggestions?: string[] | undefined;
 }
 
 interface ChatbotProps {
-  className?: string;
-  initialOpen?: boolean;
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  className?: string | undefined;
+  initialOpen?: boolean | undefined;
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | undefined;
 }
 
 const QUICK_ACTIONS = [

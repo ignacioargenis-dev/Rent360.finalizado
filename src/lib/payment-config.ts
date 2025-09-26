@@ -20,17 +20,17 @@ export interface PaymentServiceConfig {
 
   // Credenciales de acceso
   credentials: {
-    apiKey?: string;
-    apiSecret?: string;
-    clientId?: string;
-    clientSecret?: string;
-    username?: string;
-    password?: string;
-    merchantId?: string;
-    terminalId?: string;
-    webhookSecret?: string;
-    publicKey?: string;
-    privateKey?: string;
+    apiKey?: string | undefined;
+    apiSecret?: string | undefined;
+    clientId?: string | undefined;
+    clientSecret?: string | undefined;
+    username?: string | undefined;
+    password?: string | undefined;
+    merchantId?: string | undefined;
+    terminalId?: string | undefined;
+    webhookSecret?: string | undefined;
+    publicKey?: string | undefined;
+    privateKey?: string | undefined;
     // Campos específicos por banco/servicio
     [key: string]: any;
   };
@@ -38,26 +38,26 @@ export interface PaymentServiceConfig {
   // Configuración específica del servicio
   config: {
     // URLs de endpoints
-    baseUrl?: string;
-    webhookUrl?: string;
-    returnUrl?: string;
+    baseUrl?: string | undefined;
+    webhookUrl?: string | undefined;
+    returnUrl?: string | undefined;
 
     // Límites y restricciones
-    minAmount?: number;
-    maxAmount?: number;
-    dailyLimit?: number;
-    monthlyLimit?: number;
+    minAmount?: number | undefined;
+    maxAmount?: number | undefined;
+    dailyLimit?: number | undefined;
+    monthlyLimit?: number | undefined;
 
     // Configuración técnica
-    timeout?: number;
-    retryAttempts?: number;
-    rateLimit?: number;
+    timeout?: number | undefined;
+    retryAttempts?: number | undefined;
+    rateLimit?: number | undefined;
 
     // Configuración específica
-    supportedCurrencies?: string[];
-    supportedCountries?: string[];
-    requiresKYC?: boolean;
-    supportsRecurring?: boolean;
+    supportedCurrencies?: string[] | undefined;
+    supportedCountries?: string[] | undefined;
+    requiresKYC?: boolean | undefined;
+    supportsRecurring?: boolean | undefined;
 
     // Campos adicionales específicos del servicio
     [key: string]: any;
@@ -65,16 +65,16 @@ export interface PaymentServiceConfig {
 
   // Metadata
   metadata: {
-    description?: string;
-    version?: string;
-    lastTested?: Date;
-    testMode?: boolean;
-    maintenance?: boolean;
+    description?: string | undefined;
+    version?: string | undefined;
+    lastTested?: Date | undefined;
+    testMode?: boolean | undefined;
+    maintenance?: boolean | undefined;
     contactInfo?: {
-      email?: string;
-      phone?: string;
-      website?: string;
-    };
+      email?: string | undefined;
+      phone?: string | undefined;
+      website?: string | undefined;
+    } | undefined;
   };
 
   createdAt: Date;

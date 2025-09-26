@@ -7,7 +7,7 @@ export interface ApiError {
   code: string;
   statusCode: number;
   details?: any;
-  isOperational?: boolean;
+  isOperational?: boolean | undefined;
 }
 
 export class AppError extends Error implements ApiError {

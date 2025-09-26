@@ -14,20 +14,20 @@ interface FirebaseConfig {
 interface PushNotificationPayload {
   title: string;
   body: string;
-  icon?: string;
-  badge?: string;
+  icon?: string | undefined;
+  badge?: string | undefined;
   data?: Record<string, any> | undefined;
   actions?: Array<{
     action: string;
     title: string;
-    icon?: string;
-  }>;
+    icon?: string | undefined;
+  }> | undefined;
 }
 
 interface NotificationSettings {
   userId: string;
   enabled: boolean;
-  token?: string;
+  token?: string | undefined;
   topics: string[];
   quietHours: {
     enabled: boolean;
