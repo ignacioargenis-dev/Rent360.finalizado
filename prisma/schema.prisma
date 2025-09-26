@@ -669,6 +669,7 @@ model ProviderTransaction {
   paymentMethod     String
   reference         String?             // Referencia externa del pago
   approvedBy        String?             // ID del admin que aprobó (null para automático)
+  notes             String?             // Notas adicionales sobre la transacción
   processedAt       DateTime?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
