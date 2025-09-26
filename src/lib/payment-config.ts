@@ -359,7 +359,7 @@ export class PaymentConfigService {
 
     return {
       success,
-      error: success ? undefined : 'Error de conexión con el banco'
+      ...(success ? {} : { error: 'Error de conexión con el banco' })
     };
   }
 
@@ -390,7 +390,7 @@ export class PaymentConfigService {
 
     return {
       success,
-      error: success ? undefined : 'Error de autenticación con gateway'
+      ...(success ? {} : { error: 'Error de autenticación con gateway' })
     };
   }
 
@@ -408,7 +408,7 @@ export class PaymentConfigService {
 
     return {
       success,
-      error: success ? undefined : 'Error de conexión con wallet'
+      ...(success ? {} : { error: 'Error de conexión con wallet' })
     };
   }
 

@@ -44,7 +44,7 @@ export function validateCalculation(
     actual: roundToDecimal(actual),
     difference: roundToDecimal(difference),
     tolerance,
-    error: difference > tolerance ? `Diferencia ${difference} excede tolerancia ${tolerance}` : undefined
+    ...(difference > tolerance ? { error: `Diferencia ${difference} excede tolerancia ${tolerance}` } : {})
   };
 }
 
