@@ -243,7 +243,31 @@ export class RunnerRatingService {
       });
 
       // Enviar notificación al runner sobre la nueva calificación
-      await this.notifyRunnerOfRating(rating);
+      const ratingForNotification: RunnerRating = {
+        id: rating.id,
+        visitId: rating.visitId,
+        runnerId: rating.runnerId,
+        clientId: rating.clientId,
+        clientName: rating.clientName,
+        clientEmail: rating.clientEmail,
+        overallRating: rating.overallRating,
+        punctualityRating: rating.punctualityRating,
+        professionalismRating: rating.professionalismRating,
+        communicationRating: rating.communicationRating,
+        propertyKnowledgeRating: rating.propertyKnowledgeRating,
+        comment: rating.comment || '',
+        positiveFeedback: rating.positiveFeedback,
+        improvementAreas: rating.improvementAreas,
+        propertyAddress: rating.propertyAddress,
+        visitDate: rating.visitDate,
+        visitDuration: rating.visitDuration,
+        propertyType: rating.propertyType,
+        isAnonymous: rating.isAnonymous,
+        isVerified: rating.isVerified,
+        createdAt: rating.createdAt,
+        updatedAt: rating.updatedAt
+      };
+      await this.notifyRunnerOfRating(ratingForNotification);
 
       // Verificar si se alcanzan incentivos por rating
       await this.checkRatingBasedIncentives(ratingData.runnerId);
