@@ -394,12 +394,12 @@ class AdvancedMonitoringSystem {
 export const advancedMonitoring = new AdvancedMonitoringSystem();
 
 // Función helper para obtener métricas rápidas
-export function getQuickMetrics(): {
+export async function getQuickMetrics(): Promise<{
   memoryUsage: number;
   cpuUsage: number;
   cacheHitRate: number;
   activeAlerts: number;
-} {
+}> {
   const memoryUsage = process.memoryUsage();
   const cacheStats = await cacheManager.getStats();
   const activeAlerts = advancedMonitoring.getActiveAlerts().length;
