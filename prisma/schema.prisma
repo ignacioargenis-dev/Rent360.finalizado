@@ -668,6 +668,7 @@ model ProviderTransaction {
   status            String   @default("PENDING")
   paymentMethod     String
   reference         String?             // Referencia externa del pago
+  approvedBy        String?             // ID del admin que aprobó (null para automático)
   processedAt       DateTime?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
