@@ -77,11 +77,7 @@ class PricePredictionModel {
       // Query para obtener datos históricos de propiedades
       const properties = await db.property.findMany({
         where: {
-          status: 'ACTIVE',
-          AND: [
-            { price: { not: { equals: null } } },
-            { area: { not: { equals: null } } }
-          ]
+          status: 'ACTIVE'
         },
         select: {
           id: true,
