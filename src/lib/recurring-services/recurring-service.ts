@@ -284,10 +284,18 @@ export class RecurringServicesService {
       instance.actualDate = completionData.actualDate;
       instance.actualDuration = completionData.actualDuration;
       instance.workDescription = completionData.workDescription;
-      instance.materials = completionData.materials;
-      instance.photos = completionData.photos;
-      instance.issues = completionData.issues;
-      instance.notes = completionData.notes;
+      if (completionData.materials) {
+        instance.materials = completionData.materials;
+      }
+      if (completionData.photos) {
+        instance.photos = completionData.photos;
+      }
+      if (completionData.issues) {
+        instance.issues = completionData.issues;
+      }
+      if (completionData.notes) {
+        instance.notes = completionData.notes;
+      }
       instance.updatedAt = new Date();
 
       // Actualizar estadísticas del servicio recurrente
