@@ -375,8 +375,9 @@ export class ReferralService {
    */
   private calculateReferrerLevel(convertedCount: number): ReferrerLevel {
     for (let i = this.commissionConfigs.length - 1; i >= 0; i--) {
-      if (convertedCount >= this.commissionConfigs[i].minimumReferrals) {
-        return this.commissionConfigs[i].level;
+      const config = this.commissionConfigs[i];
+      if (config && config.minimumReferrals !== undefined && convertedCount >= config.minimumReferrals) {
+        return config.level;
       }
     }
     return ReferrerLevel.BRONZE;
