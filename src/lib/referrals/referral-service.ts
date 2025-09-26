@@ -389,7 +389,11 @@ export class ReferralService {
   private getNextLevel(currentLevel: ReferrerLevel): ReferrerLevel | null {
     const levels = Object.values(ReferrerLevel);
     const currentIndex = levels.indexOf(currentLevel);
-    return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+    if (currentIndex < levels.length - 1) {
+      const nextLevel = levels[currentIndex + 1];
+      return nextLevel as ReferrerLevel;
+    }
+    return null;
   }
 
   /**
