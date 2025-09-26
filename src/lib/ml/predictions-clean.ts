@@ -5,24 +5,28 @@ import { db } from '../db';
 interface PropertyData {
   id: string;
   price: number;
+  deposit: number;
   area: number;
   bedrooms: number;
   bathrooms: number;
   city: string;
   commune: string;
+  region: string;
   type: string;
-  furnished: boolean;
-  petsAllowed: boolean;
-  yearBuilt?: number | undefined;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  } | undefined;
   views: number;
-  favorites: number;
+  inquiries: number;
+  age: number; // Edad en días
+  pricePerSqm: number; // Precio por metro cuadrado
+  depositRatio: number; // Relación depósito/precio
+  hasParking: boolean;
+  hasGarden: boolean;
+  hasPool: boolean;
+  contractCount: number;
+  reviewCount: number;
+  favoriteCount: number;
+  visitCount: number;
+  maintenanceCount: number;
   createdAt: Date;
-  rentedAt?: Date | undefined;
-  rentalPeriod?: number | undefined; // días
 }
 
 // Modelo de ML simplificado con datos de entrenamiento
@@ -82,17 +86,27 @@ class PricePredictionModel {
         select: {
           id: true,
           price: true,
+          deposit: true,
           area: true,
           bedrooms: true,
           bathrooms: true,
           city: true,
           commune: true,
+          region: true,
           type: true,
+          images: true,
+          features: true,
           views: true,
+          inquiries: true,
           createdAt: true,
+          updatedAt: true,
           _count: {
             select: {
-              contracts: true
+              contracts: true,
+              reviews: true,
+              propertyFavorites: true,
+              visits: true,
+              maintenance: true
             }
           }
         },
@@ -100,18 +114,53 @@ class PricePredictionModel {
       });
 
       // Transformar datos para el modelo
-      this.model.trainingData = properties.map(prop => ({
-        id: prop.id,
-        price: prop.price,
-        area: prop.area,
-        bedrooms: prop.bedrooms || 0,
-        bathrooms: prop.bathrooms || 0,
-        city: prop.city,
-        commune: prop.commune,
-        type: prop.type,
-        views: prop.views || 0,
-        createdAt: prop.createdAt
-      }));
+      this.model.trainingData = properties.map(prop => {
+        const age = Math.floor((Date.now() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)); // Edad en días
+        const pricePerSqm = prop.area > 0 ? prop.price / prop.area : 0;
+        const depositRatio = prop.deposit > 0 ? prop.deposit / prop.price : 0;
+
+        // Extraer características del campo features (JSON)
+        let hasParking = false;
+        let hasGarden = false;
+        let hasPool = false;
+        try {
+          if (prop.features) {
+            const features = JSON.parse(prop.features);
+            hasParking = features.includes('parking') || features.includes('estacionamiento');
+            hasGarden = features.includes('garden') || features.includes('jardín');
+            hasPool = features.includes('pool') || features.includes('piscina');
+          }
+        } catch (e) {
+          // Ignorar errores de parsing
+        }
+
+        return {
+          id: prop.id,
+          price: prop.price,
+          deposit: prop.deposit,
+          area: prop.area,
+          bedrooms: prop.bedrooms || 0,
+          bathrooms: prop.bathrooms || 0,
+          city: prop.city,
+          commune: prop.commune,
+          region: prop.region,
+          type: prop.type,
+          views: prop.views || 0,
+          inquiries: prop.inquiries || 0,
+          age: age,
+          pricePerSqm: pricePerSqm,
+          depositRatio: depositRatio,
+          hasParking: hasParking,
+          hasGarden: hasGarden,
+          hasPool: hasPool,
+          contractCount: prop._count.contracts || 0,
+          reviewCount: prop._count.reviews || 0,
+          favoriteCount: prop._count.propertyFavorites || 0,
+          visitCount: prop._count.visits || 0,
+          maintenanceCount: prop._count.maintenance || 0,
+          createdAt: prop.createdAt
+        };
+      });
 
       logger.info(`Datos de entrenamiento cargados: ${this.model.trainingData.length} propiedades`);
     } catch (error) {
@@ -127,38 +176,80 @@ class PricePredictionModel {
       {
         id: 'sample-1',
         price: 500000,
+        deposit: 500000,
         area: 80,
         bedrooms: 2,
         bathrooms: 1,
         city: 'Santiago',
         commune: 'Providencia',
+        region: 'Metropolitana',
         type: 'APARTMENT',
-        furnished: false,
-        petsAllowed: true,
-        yearBuilt: 2010,
-        coordinates: { latitude: -33.4489, longitude: -70.6693 },
         views: 150,
-        favorites: 25,
-        createdAt: new Date('2024-01-01'),
-        rentalPeriod: 365
+        inquiries: 12,
+        age: 90, // 90 días
+        pricePerSqm: 6250, // 500000 / 80
+        depositRatio: 1.0, // depósito igual al precio
+        hasParking: true,
+        hasGarden: false,
+        hasPool: false,
+        contractCount: 2,
+        reviewCount: 8,
+        favoriteCount: 25,
+        visitCount: 35,
+        maintenanceCount: 1,
+        createdAt: new Date('2024-01-01')
       },
       {
         id: 'sample-2',
         price: 750000,
+        deposit: 750000,
         area: 120,
         bedrooms: 3,
         bathrooms: 2,
         city: 'Santiago',
         commune: 'Las Condes',
+        region: 'Metropolitana',
         type: 'HOUSE',
-        furnished: true,
-        petsAllowed: false,
-        yearBuilt: 2015,
-        coordinates: { latitude: -33.4155, longitude: -70.5831 },
         views: 200,
-        favorites: 45,
-        createdAt: new Date('2024-01-15'),
-        rentalPeriod: 730
+        inquiries: 18,
+        age: 75, // 75 días
+        pricePerSqm: 6250, // 750000 / 120
+        depositRatio: 1.0,
+        hasParking: true,
+        hasGarden: true,
+        hasPool: true,
+        contractCount: 1,
+        reviewCount: 12,
+        favoriteCount: 45,
+        visitCount: 50,
+        maintenanceCount: 0,
+        createdAt: new Date('2024-01-15')
+      },
+      {
+        id: 'sample-3',
+        price: 350000,
+        deposit: 350000,
+        area: 60,
+        bedrooms: 1,
+        bathrooms: 1,
+        city: 'Santiago',
+        commune: 'Ñuñoa',
+        region: 'Metropolitana',
+        type: 'APARTMENT',
+        views: 80,
+        inquiries: 6,
+        age: 120, // 120 días
+        pricePerSqm: 5833, // 350000 / 60
+        depositRatio: 1.0,
+        hasParking: false,
+        hasGarden: false,
+        hasPool: false,
+        contractCount: 3,
+        reviewCount: 5,
+        favoriteCount: 15,
+        visitCount: 20,
+        maintenanceCount: 2,
+        createdAt: new Date('2023-12-15')
       }
     ];
   }
