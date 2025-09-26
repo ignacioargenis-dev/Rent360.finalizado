@@ -435,7 +435,24 @@ export class RunnerIncentivesService {
       });
 
       // Aplicar recompensas (bonos, etc.)
-      await this.applyIncentiveRewards(incentive);
+      const mappedIncentive: RunnerIncentive = {
+        id: incentive.id,
+        runnerId: incentive.runnerId,
+        incentiveRuleId: incentive.incentiveRuleId,
+        status: incentive.status,
+        earnedAt: incentive.earnedAt,
+        grantedAt: incentive.grantedAt ?? undefined,
+        claimedAt: incentive.claimedAt ?? undefined,
+        expiresAt: incentive.expiresAt ?? undefined,
+        achievementData: incentive.achievementData as unknown as RunnerIncentive['achievementData'],
+        rewardsGranted: incentive.rewardsGranted as unknown as RunnerIncentive['rewardsGranted'],
+        notificationSent: incentive.notificationSent,
+        adminApprovalRequired: incentive.adminApprovalRequired,
+        approvedBy: incentive.approvedBy ?? undefined,
+        notes: incentive.notes ?? undefined
+      };
+
+      await this.applyIncentiveRewards(mappedIncentive);
 
       logger.info('Incentivo reclamado exitosamente', {
         incentiveId,
