@@ -422,7 +422,7 @@ export class ProviderPayoutsService {
             status: 'COMPLETED',
             processedAt: new Date(),
             approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
-            reference: paymentResult.transactionId
+            ...(paymentResult.transactionId && { reference: paymentResult.transactionId })
           }
         });
 
