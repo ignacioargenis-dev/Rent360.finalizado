@@ -76,6 +76,10 @@ export interface RunnerIncentive {
   notes?: string;
 }
 
+export interface RunnerIncentiveWithRule extends RunnerIncentive {
+  incentiveRule: IncentiveRule;
+}
+
 export interface IncentiveLeaderboard {
   period: 'daily' | 'weekly' | 'monthly' | 'yearly';
   startDate: Date;
@@ -307,7 +311,7 @@ export class RunnerIncentivesService {
           const totalRecipients = await db.runnerIncentive.count({
             where: {
               incentiveRuleId: rule.id,
-              status: 'granted',
+              status: 'GRANTED',
               grantedAt: {
                 gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000)
               }
@@ -360,16 +364,29 @@ export class RunnerIncentivesService {
 
       const incentives = await db.runnerIncentive.findMany({
         where: whereClause,
-        include: {
-          incentiveRule: true
-        },
         orderBy: {
           earnedAt: 'desc'
         },
         take: limit
       });
 
-      return incentives;
+      // Mapear los resultados de Prisma a la interfaz RunnerIncentive
+      return incentives.map(incentive => ({
+        id: incentive.id,
+        runnerId: incentive.runnerId,
+        incentiveRuleId: incentive.incentiveRuleId,
+        status: incentive.status as 'earned' | 'granted' | 'claimed' | 'expired',
+        earnedAt: incentive.earnedAt,
+        grantedAt: incentive.grantedAt || undefined,
+        claimedAt: incentive.claimedAt || undefined,
+        expiresAt: incentive.expiresAt || undefined,
+        achievementData: incentive.achievementData as RunnerIncentive['achievementData'],
+        rewardsGranted: incentive.rewardsGranted as RunnerIncentive['rewardsGranted'],
+        notificationSent: incentive.notificationSent,
+        adminApprovalRequired: incentive.adminApprovalRequired,
+        approvedBy: incentive.approvedBy || undefined,
+        notes: incentive.notes || undefined
+      }));
 
     } catch (error) {
       logger.error('Error obteniendo incentivos de runner:', error as Error);
@@ -394,7 +411,7 @@ export class RunnerIncentivesService {
         throw new BusinessLogicError('No tienes permiso para reclamar este incentivo');
       }
 
-      if (incentive.status !== 'granted') {
+      if (incentive.status !== 'GRANTED') {
         throw new BusinessLogicError('El incentivo no está disponible para reclamar');
       }
 
@@ -402,7 +419,7 @@ export class RunnerIncentivesService {
       if (incentive.expiresAt && new Date() > incentive.expiresAt) {
         await db.runnerIncentive.update({
           where: { id: incentiveId },
-          data: { status: 'expired' }
+          data: { status: 'EXPIRED' }
         });
         throw new BusinessLogicError('El incentivo ha expirado');
       }
@@ -411,7 +428,7 @@ export class RunnerIncentivesService {
       await db.runnerIncentive.update({
         where: { id: incentiveId },
         data: {
-          status: 'claimed',
+          status: 'CLAIMED',
           claimedAt: new Date()
         }
       });
@@ -453,7 +470,7 @@ export class RunnerIncentivesService {
             lte: now
           },
           status: {
-            in: ['granted', 'claimed']
+            in: ['GRANTED', 'CLAIMED'] as const
           }
         },
         include: {
@@ -578,7 +595,7 @@ export class RunnerIncentivesService {
         data: {
           runnerId,
           incentiveRuleId: rule.id,
-          status: rule.autoGrant ? 'granted' : 'earned',
+          status: rule.autoGrant ? 'GRANTED' : 'EARNED',
           earnedAt: new Date(),
           grantedAt: rule.autoGrant ? new Date() : undefined,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para reclamar

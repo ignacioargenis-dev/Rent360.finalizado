@@ -1303,7 +1303,7 @@ model RunnerIncentive {
   id               String   @id @default(cuid())
   runnerId         String   // ID del runner (referencia a User)
   incentiveRuleId  String
-  status           String   @default("earned") // 'earned' | 'granted' | 'claimed' | 'expired'
+  status           RunnerIncentiveStatus   @default(EARNED)
   earnedAt         DateTime
   grantedAt        DateTime?
   claimedAt        DateTime?
@@ -1335,4 +1335,12 @@ model RunnerIncentive {
 
 // ENUMS DEL SISTEMA LEGAL
 // ============================================================================
+
+// Runner Incentive Status enum
+enum RunnerIncentiveStatus {
+  EARNED    // Incentivo ganado pero no otorgado
+  GRANTED   // Incentivo otorgado y disponible para reclamar
+  CLAIMED   // Incentivo reclamado por el runner
+  EXPIRED   // Incentivo expirado sin reclamar
+}
 
