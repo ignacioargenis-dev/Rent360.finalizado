@@ -281,7 +281,7 @@ export class RatingService {
    * Calcula el trust score basado en múltiples factores
    */
   private calculateTrustScore(ratings: ProviderRating[]): number {
-    if (ratings.length === 0) return 0;
+    if (ratings.length === 0 || !ratings[0]) return 0;
 
     const summary = this.summaries.get(ratings[0].providerId);
     if (!summary) return 0;
