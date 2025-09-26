@@ -343,8 +343,8 @@ export class ProviderPayoutsService {
       const transaction = await db.providerTransaction.create({
         data: {
           providerType: payout.recipientType === 'maintenance_provider' ? 'MAINTENANCE' : 'SERVICE',
-          maintenanceProviderId: payout.recipientType === 'maintenance_provider' ? payout.recipientId : undefined,
-          serviceProviderId: payout.recipientType === 'service_provider' ? payout.recipientId : undefined,
+          ...(payout.recipientType === 'maintenance_provider' && { maintenanceProviderId: payout.recipientId }),
+          ...(payout.recipientType === 'service_provider' && { serviceProviderId: payout.recipientId }),
           amount: payout.breakdown.grossAmount,
           commission: payout.breakdown.commission,
           netAmount: payout.amount,
