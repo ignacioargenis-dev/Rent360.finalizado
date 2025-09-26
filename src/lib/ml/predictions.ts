@@ -375,23 +375,23 @@ class PricePredictionModel {
 
     // Calcular MSE (Mean Squared Error)
     const mse = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.pow(actual - predictedPrices[i], 2), 0) / n;
+      sum + Math.pow(actual - (predictedPrices[i]!), 2), 0) / n;
 
     // Calcular MAE (Mean Absolute Error)
     const mae = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.abs(actual - predictedPrices[i]), 0) / n;
+      sum + Math.abs(actual - (predictedPrices[i]!)), 0) / n;
 
     // Calcular R² (Coeficiente de determinación)
     const avgPrice = actualPrices.reduce((sum, price) => sum + price, 0) / n;
     const ssRes = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.pow(actual - predictedPrices[i], 2), 0);
+      sum + Math.pow(actual - (predictedPrices[i]!), 2), 0);
     const ssTot = actualPrices.reduce((sum, actual) =>
       sum + Math.pow(actual - avgPrice, 2), 0);
     const r2 = ssTot !== 0 ? 1 - (ssRes / ssTot) : 0;
 
     // Calcular precisión (porcentaje de predicciones dentro del 20% del precio real)
     const accuracy = actualPrices.reduce((count, actual, i) => {
-      const diff = Math.abs(actual - predictedPrices[i]) / actual;
+      const diff = Math.abs(actual - (predictedPrices[i]!)) / actual;
       return count + (diff <= 0.2 ? 1 : 0);
     }, 0) / n;
 
