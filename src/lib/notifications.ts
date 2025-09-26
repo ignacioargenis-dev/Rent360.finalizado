@@ -336,9 +336,9 @@ class AdvancedNotificationService {
         metadata,
         status: 'pending',
         createdAt: new Date(),
-        scheduledFor: options.scheduledFor || undefined,
         retryCount: 0,
         maxRetries: 3,
+        ...(options.scheduledFor && { scheduledFor: options.scheduledFor }),
       };
 
       // Guardar notificación
