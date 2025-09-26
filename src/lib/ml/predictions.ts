@@ -585,10 +585,17 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
 
     // Obtener estadísticas de mercado reales
     const marketStats = await getMarketStatistics(propertyData.city, propertyData.commune);
-    const marketData = marketStats[0] || {
+    const marketData: MarketData = marketStats[0] || {
+      city: propertyData.city || 'Santiago',
+      commune: propertyData.commune || 'Providencia',
       averagePrice: prediction.price,
+      averageArea: 90,
       totalProperties: 100,
-      occupancyRate: 0.7
+      availableProperties: 30,
+      occupancyRate: 0.7,
+      averageRentalPeriod: 24,
+      demandIndex: 65,
+      priceTrend: 'stable'
     };
 
     // Generar recomendaciones inteligentes
