@@ -272,7 +272,7 @@ export class RunnerRatingService {
       // Verificar si se alcanzan incentivos por rating
       await this.checkRatingBasedIncentives(ratingData.runnerId);
 
-      return rating;
+      return ratingForNotification;
 
     } catch (error) {
       logger.error('Error creando calificación de runner:', error as Error);
