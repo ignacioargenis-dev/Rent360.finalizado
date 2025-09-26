@@ -13,16 +13,16 @@ interface PropertyData {
   type: string;
   furnished: boolean;
   petsAllowed: boolean;
-  yearBuilt?: number;
+  yearBuilt?: number | undefined;
   coordinates?: {
     latitude: number;
     longitude: number;
-  };
+  } | undefined;
   views: number;
   favorites: number;
   createdAt: Date;
-  rentedAt?: Date;
-  rentalPeriod?: number; // días
+  rentedAt?: Date | undefined;
+  rentalPeriod?: number | undefined; // días
 }
 
 // Modelo de ML simplificado con datos de entrenamiento

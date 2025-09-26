@@ -154,20 +154,20 @@ interface AlertRule {
   condition: (metrics: SystemMetrics) => boolean;
   type: 'warning' | 'error' | 'critical';
   message: string;
-  threshold?: number;
+  threshold?: number | undefined;
   cooldown: number; // Tiempo entre alertas similares
-  lastTriggered?: number;
+  lastTriggered?: number | undefined;
   enabled: boolean;
-  tags?: string[];
+  tags?: string[] | undefined;
 }
 
 interface PerformanceMetric {
   name: string;
   startTime: number;
-  endTime?: number;
-  duration?: number;
+  endTime?: number | undefined;
+  duration?: number | undefined;
   metadata?: Record<string, any> | undefined;
-  tags?: string[];
+  tags?: string[] | undefined;
 }
 
 interface RequestContext {
@@ -175,9 +175,9 @@ interface RequestContext {
   startTime: number;
   path: string;
   method: string;
-  userId?: string;
-  ip?: string;
-  userAgent?: string;
+  userId?: string | undefined;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
 }
 
 class Logger {

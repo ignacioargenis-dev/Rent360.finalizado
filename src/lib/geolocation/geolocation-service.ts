@@ -44,10 +44,10 @@ export interface ProviderSearchCriteria {
   location: Coordinates;
   serviceType: 'MAINTENANCE' | 'SERVICE';
   maxDistance: number; // en kilómetros
-  specialties?: string[];
-  minRating?: number;
-  maxPrice?: number;
-  availability?: Date;
+  specialties?: string[] | undefined;
+  minRating?: number | undefined;
+  maxPrice?: number | undefined;
+  availability?: Date | undefined;
 }
 
 /**

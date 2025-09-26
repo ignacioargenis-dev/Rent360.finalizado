@@ -9,11 +9,11 @@ export interface QueuedNotification {
   data: CommissionNotification | SystemNotification | ScheduledNotification;
   scheduledFor: Date;
   createdAt: Date;
-  processedAt?: Date;
+  processedAt?: Date | undefined;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   retryCount: number;
   maxRetries: number;
-  errorMessage?: string;
+  errorMessage?: string | undefined;
 }
 
 export interface ScheduledNotification {
@@ -23,7 +23,7 @@ export interface ScheduledNotification {
   recurring?: {
     interval: 'daily' | 'weekly' | 'monthly';
     nextExecution: Date;
-  };
+  } | undefined;
 }
 
 /**

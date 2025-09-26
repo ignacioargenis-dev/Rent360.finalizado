@@ -13,9 +13,9 @@ export interface NotificationTemplate {
 
 export interface NotificationRecipient {
   id: string;
-  email?: string;
-  phone?: string;
-  deviceToken?: string; // Para push notifications
+  email?: string | undefined;
+  phone?: string | undefined;
+  deviceToken?: string | undefined; // Para push notifications
   preferences: {
     email: boolean;
     sms: boolean;
@@ -28,18 +28,18 @@ export interface NotificationMessage {
   recipientId: string;
   variables: Record<string, any>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  scheduledFor?: Date;
+  scheduledFor?: Date | undefined;
 }
 
 export interface CommissionNotification {
   brokerId: string;
   type: 'commission_calculated' | 'commission_paid' | 'commission_pending' | 'payout_ready';
   amount: number;
-  contractId?: string;
+  contractId?: string | undefined;
   period?: {
     start: Date;
     end: Date;
-  };
+  } | undefined;
   metadata?: Record<string, any> | undefined;
 }
 
@@ -48,7 +48,7 @@ export interface SystemNotification {
   title: string;
   message: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  targetUsers?: string[]; // IDs de usuarios específicos, o vacío para todos
+  targetUsers?: string[] | undefined; // IDs de usuarios específicos, o vacío para todos
 }
 
 /**
