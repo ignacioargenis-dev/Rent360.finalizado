@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { RunnerIncentivesService } from '@/lib/runner-incentives-service';
 import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/api-error-handler';
+import { RunnerIncentiveStatus } from '@prisma/client';
 
 /**
  * GET /api/runner/incentives
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') as 'earned' | 'granted' | 'claimed' | 'expired' | undefined;
+    const statusParam = searchParams.get('status');
+    const status = statusParam ? (statusParam.toUpperCase() as RunnerIncentiveStatus) : undefined;
 
     const incentives = await RunnerIncentivesService.getRunnerIncentives(
       user.id,
