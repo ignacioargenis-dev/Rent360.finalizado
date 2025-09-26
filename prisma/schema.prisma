@@ -1310,10 +1310,10 @@ model RunnerIncentive {
   expiresAt        DateTime?
 
   // Detalles del logro (JSON)
-  achievementData  String
+  achievementData  Json
 
   // Recompensas otorgadas (JSON)
-  rewardsGranted   String
+  rewardsGranted   Json
 
   // Metadata adicional
   notificationSent       Boolean @default(false)
