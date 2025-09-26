@@ -4,6 +4,7 @@ import { DatabaseError, BusinessLogicError } from './errors';
 import { NotificationService } from './notification-service';
 import { RunnerReportsService } from './runner-reports-service';
 import { RunnerRatingService } from './runner-rating-service';
+import { RunnerIncentiveStatus } from '@prisma/client';
 
 export interface IncentiveRule {
   id: string;
@@ -45,7 +46,7 @@ export interface RunnerIncentive {
   id: string;
   runnerId: string;
   incentiveRuleId: string;
-  status: 'earned' | 'granted' | 'claimed' | 'expired';
+  status: RunnerIncentiveStatus;
   earnedAt: Date;
   grantedAt?: Date | undefined;
   claimedAt?: Date | undefined;
@@ -311,7 +312,7 @@ export class RunnerIncentivesService {
           const totalRecipients = await db.runnerIncentive.count({
             where: {
               incentiveRuleId: rule.id,
-              status: 'GRANTED',
+              status: RunnerIncentiveStatus.GRANTED,
               grantedAt: {
                 gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000)
               }
@@ -353,7 +354,7 @@ export class RunnerIncentivesService {
    */
   static async getRunnerIncentives(
     runnerId: string,
-    status?: 'earned' | 'granted' | 'claimed' | 'expired',
+    status?: RunnerIncentiveStatus,
     limit: number = 20
   ): Promise<RunnerIncentive[]> {
     try {
@@ -411,7 +412,7 @@ export class RunnerIncentivesService {
         throw new BusinessLogicError('No tienes permiso para reclamar este incentivo');
       }
 
-      if (incentive.status !== 'GRANTED') {
+      if (incentive.status !== RunnerIncentiveStatus.GRANTED) {
         throw new BusinessLogicError('El incentivo no está disponible para reclamar');
       }
 
@@ -419,7 +420,7 @@ export class RunnerIncentivesService {
       if (incentive.expiresAt && new Date() > incentive.expiresAt) {
         await db.runnerIncentive.update({
           where: { id: incentiveId },
-          data: { status: 'EXPIRED' }
+          data: { status: RunnerIncentiveStatus.EXPIRED }
         });
         throw new BusinessLogicError('El incentivo ha expirado');
       }
@@ -428,7 +429,7 @@ export class RunnerIncentivesService {
       await db.runnerIncentive.update({
         where: { id: incentiveId },
         data: {
-          status: 'CLAIMED',
+          status: RunnerIncentiveStatus.CLAIMED,
           claimedAt: new Date()
         }
       });
@@ -470,7 +471,7 @@ export class RunnerIncentivesService {
             lte: now
           },
           status: {
-            in: ['GRANTED', 'CLAIMED'] as const
+            in: [RunnerIncentiveStatus.GRANTED, RunnerIncentiveStatus.CLAIMED]
           }
         },
         include: {
@@ -595,7 +596,7 @@ export class RunnerIncentivesService {
         data: {
           runnerId,
           incentiveRuleId: rule.id,
-          status: rule.autoGrant ? 'GRANTED' : 'EARNED',
+          status: rule.autoGrant ? RunnerIncentiveStatus.GRANTED : RunnerIncentiveStatus.EARNED,
           earnedAt: new Date(),
           grantedAt: rule.autoGrant ? new Date() : undefined,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para reclamar
