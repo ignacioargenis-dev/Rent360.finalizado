@@ -540,7 +540,7 @@ Equipo Rent360`,
         templateId: 'system_alert',
         recipientId: userId,
         variables,
-        priority: notification.severity === 'critical' ? 'urgent' : 'high'
+        priority: (notification.severity === 'critical' ? 'urgent' : 'high') as 'low' | 'medium' | 'high' | 'urgent'
       }));
 
       await Promise.all(
