@@ -511,26 +511,34 @@ class Logger {
       cpu: {
         usage: Math.random() * 30 + 20, // Simulado
         loadAverage: Math.random() * 2 + 0.5, // Simulado
+        cores: 4, // Número de núcleos CPU (valor fijo simulado)
       },
       database: {
         connections: Math.floor(Math.random() * 10) + 5, // Simulado
         queryTime: Math.random() * 100 + 10, // Simulado
         slowQueries: Math.floor(Math.random() * 5), // Simulado
+        connectionPoolSize: 10, // Tamaño del pool de conexiones
+        activeConnections: Math.floor(Math.random() * 5) + 1, // Conexiones activas
       },
       cache: {
         hitRate: cacheStats.hitRate || 0,
         memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024),
         evictions: Math.floor(Math.random() * 10), // Simulado
+        keysCount: cacheStats.keysCount || 0,
+        uptime: Math.floor(Date.now() / 1000), // Uptime en segundos
       },
       rateLimiting: {
         blockedRequests: Math.floor(Math.random() * 20), // Simulado
         activeKeys: rateLimitStats.activeKeys || 0,
         memoryUsage: Math.round((rateLimitStats.memoryUsage || 0) / 1024 / 1024),
+        totalRequests: rateLimitStats.totalRequests || 0,
       },
       performance: {
         averageResponseTime: Math.random() * 1000 + 100, // Simulado
         requestsPerSecond: Math.random() * 50 + 10, // Simulado
         errorRate: Math.random() * 3, // Simulado
+        p95ResponseTime: Math.random() * 2000 + 500, // Percentil 95 simulado
+        p99ResponseTime: Math.random() * 3000 + 1000, // Percentil 99 simulado
       },
     };
   }
