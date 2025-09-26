@@ -95,7 +95,7 @@ export class ProviderPayoutsService {
       for (const provider of maintenanceProviders) {
         if (provider.maintenanceJobs.length === 0) continue;
 
-        const totalAmount = provider.maintenanceJobs.reduce((sum, job) => sum + (job.finalPrice || job.basePrice), 0);
+        const totalAmount = provider.maintenanceJobs.reduce((sum, job) => sum + (job.actualCost || 0), 0);
 
         // Verificar período de gracia
         const gracePeriodDays = 15; // Configurable desde admin
@@ -135,7 +135,7 @@ export class ProviderPayoutsService {
           jobs: provider.maintenanceJobs.map(job => ({
             id: job.id,
             type: 'maintenance',
-            amount: job.finalPrice || job.basePrice,
+            amount: job.actualCost || 0,
             date: job.completedDate!,
             clientName: job.property?.owner?.name || 'Cliente'
           }))
