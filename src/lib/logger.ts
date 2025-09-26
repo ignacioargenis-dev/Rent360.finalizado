@@ -57,19 +57,19 @@ interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
-  data?: Record<string, any>;
-  error?: string;
-  userId?: string;
-  requestId?: string;
-  correlationId?: string;
-  path?: string;
-  method?: string;
-  ip?: string;
-  userAgent?: string;
-  duration?: number;
-  statusCode?: number;
-  memoryUsage?: number;
-  tags?: string[];
+  data?: Record<string, any> | undefined;
+  error?: string | undefined;
+  userId?: string | undefined;
+  requestId?: string | undefined;
+  correlationId?: string | undefined;
+  path?: string | undefined;
+  method?: string | undefined;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
+  duration?: number | undefined;
+  statusCode?: number | undefined;
+  memoryUsage?: number | undefined;
+  tags?: string[] | undefined;
 }
 
 // Interfaces de monitoreo mejoradas
