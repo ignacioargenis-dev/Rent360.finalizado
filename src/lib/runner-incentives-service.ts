@@ -516,16 +516,16 @@ export class RunnerIncentivesService {
         const existing = runnerStats.get(runnerId);
 
         if (existing) {
-          existing.incentives.push(incentive.incentiveRule.name);
+          existing.incentives.push((incentive.incentiveRule as IncentiveRule).name);
           existing.totalRewards += (incentive.rewardsGranted as any)?.bonusAmount || 0;
-          existing.score += this.calculateIncentiveScore(incentive.incentiveRule);
+          existing.score += this.calculateIncentiveScore(incentive.incentiveRule as IncentiveRule);
         } else {
           runnerStats.set(runnerId, {
             runnerId,
             runnerName: incentive.runner?.name || 'Runner',
-            incentives: [incentive.incentiveRule.name],
+            incentives: [(incentive.incentiveRule as IncentiveRule).name],
             totalRewards: (incentive.rewardsGranted as any)?.bonusAmount || 0,
-            score: this.calculateIncentiveScore(incentive.incentiveRule)
+            score: this.calculateIncentiveScore(incentive.incentiveRule as IncentiveRule)
           });
         }
       }
@@ -787,7 +787,7 @@ export class RunnerIncentivesService {
             category,
             runnerId: incentive.runnerId,
             runnerName: incentive.runner?.name || 'Runner',
-            achievement: incentive.incentiveRule.name,
+            achievement: (incentive.incentiveRule as IncentiveRule).name,
             reward: this.formatRewardDescription(incentive.rewardsGranted as any)
           });
         }
