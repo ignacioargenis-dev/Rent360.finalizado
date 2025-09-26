@@ -69,7 +69,7 @@ export class ProviderPayoutsService {
           maintenanceJobs: {
             where: {
               status: 'COMPLETED',
-              completedAt: {
+              completedDate: {
                 gte: start,
                 lte: end
               }
@@ -136,7 +136,7 @@ export class ProviderPayoutsService {
             id: job.id,
             type: 'maintenance',
             amount: job.amount,
-            date: job.completedAt!,
+            date: job.completedDate!,
             clientName: job.property?.owner?.name || 'Cliente'
           }))
         });
@@ -185,7 +185,7 @@ export class ProviderPayoutsService {
           serviceJobs: {
             where: {
               status: 'COMPLETED',
-              completedAt: {
+              completedDate: {
                 gte: start,
                 lte: end
               }
@@ -247,7 +247,7 @@ export class ProviderPayoutsService {
             id: job.id,
             type: 'service',
             amount: job.amount,
-            date: job.completedAt!,
+            date: job.completedDate!,
             clientName: job.tenant?.name || 'Cliente'
           }))
         });
@@ -528,7 +528,7 @@ export class ProviderPayoutsService {
           where: {
             maintenanceProviderId: transaction.maintenanceProviderId,
             status: 'COMPLETED',
-            completedAt: {
+            completedDate: {
               gte: new Date(periodStart),
               lte: new Date(periodEnd)
             }
@@ -539,7 +539,7 @@ export class ProviderPayoutsService {
           where: {
             serviceProviderId: transaction.serviceProviderId,
             status: 'COMPLETED',
-            completedAt: {
+            completedDate: {
               gte: new Date(periodStart),
               lte: new Date(periodEnd)
             }
