@@ -6,24 +6,31 @@ import { cacheManager, CacheKeys, MARKET_STATS_TTL, withCache } from '../cache';
 interface PropertyData {
   id: string;
   price: number;
+  deposit: number;
   area: number;
   bedrooms: number;
   bathrooms: number;
   city: string;
   commune: string;
+  region: string;
   type: string;
-  furnished: boolean;
-  petsAllowed: boolean;
-  yearBuilt?: number | undefined;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  } | undefined;
   views: number;
-  favorites: number;
+  inquiries: number;
+  age: number; // Edad en días
+  pricePerSqm: number; // Precio por metro cuadrado
+  depositRatio: number; // Relación depósito/precio
+  hasParking: boolean;
+  hasGarden: boolean;
+  hasPool: boolean;
+  isFurnished: boolean; // Extraído de features JSON
+  petsAllowed: boolean; // Extraído de features JSON
+  yearBuilt: number; // Estimado basado en edad
+  contractCount: number;
+  reviewCount: number;
+  favoriteCount: number;
+  visitCount: number;
+  maintenanceCount: number;
   createdAt: Date;
-  rentedAt?: Date | undefined;
-  rentalPeriod?: number | undefined; // días
 }
 
 // Modelo de ML avanzado con múltiples características
@@ -94,30 +101,32 @@ class PricePredictionModel {
       // Query para obtener datos históricos de propiedades
       const properties = await db.property.findMany({
         where: {
-          status: 'ACTIVE',
-          price: { not: { equals: null } },
-          area: { not: { equals: null } }
+          status: 'ACTIVE'
         },
         select: {
           id: true,
           price: true,
+          deposit: true,
           area: true,
           bedrooms: true,
           bathrooms: true,
           city: true,
           commune: true,
+          region: true,
           type: true,
-          furnished: true,
-          petsAllowed: true,
-          yearBuilt: true,
-          coordinates: true,
+          images: true,
+          features: true,
           views: true,
-          favorites: true,
+          inquiries: true,
           createdAt: true,
-          rentedAt: true,
+          updatedAt: true,
           _count: {
             select: {
-              contracts: true
+              contracts: true,
+              reviews: true,
+              propertyFavorites: true,
+              visits: true,
+              maintenance: true
             }
           }
         },
@@ -125,25 +134,64 @@ class PricePredictionModel {
       });
 
       // Transformar datos para el modelo
-      this.model.trainingData = properties.map(prop => ({
-        id: prop.id,
-        price: prop.price,
-        area: prop.area,
-        bedrooms: prop.bedrooms || 0,
-        bathrooms: prop.bathrooms || 0,
-        city: prop.city,
-        commune: prop.commune,
-        type: prop.type,
-        furnished: prop.furnished,
-        petsAllowed: prop.petsAllowed,
-        yearBuilt: prop.yearBuilt || undefined,
-        coordinates: prop.coordinates || undefined,
-        views: prop.views || 0,
-        favorites: prop.favorites || 0,
-        createdAt: prop.createdAt,
-        rentedAt: prop.rentedAt || undefined,
-        rentalPeriod: prop.rentedAt ? Math.floor((prop.rentedAt.getTime() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)) : undefined
-      }));
+      this.model.trainingData = properties.map(prop => {
+        const age = Math.floor((Date.now() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)); // Edad en días
+        const pricePerSqm = prop.area > 0 ? prop.price / prop.area : 0;
+        const depositRatio = prop.deposit > 0 ? prop.deposit / prop.price : 0;
+
+        // Extraer características del campo features (JSON)
+        let hasParking = false;
+        let hasGarden = false;
+        let hasPool = false;
+        let isFurnished = false;
+        let petsAllowed = false;
+
+        try {
+          if (prop.features) {
+            const features = JSON.parse(prop.features);
+            hasParking = features.includes('parking') || features.includes('estacionamiento');
+            hasGarden = features.includes('garden') || features.includes('jardín');
+            hasPool = features.includes('pool') || features.includes('piscina');
+            isFurnished = features.includes('furnished') || features.includes('amoblado');
+            petsAllowed = features.includes('pets') || features.includes('mascotas');
+          }
+        } catch (e) {
+          // Ignorar errores de parsing
+        }
+
+        // Calcular antigüedad aproximada basada en createdAt (simplificación)
+        const yearBuilt = 2020 - Math.floor(age / 365); // Estimación simple
+
+        return {
+          id: prop.id,
+          price: prop.price,
+          deposit: prop.deposit,
+          area: prop.area,
+          bedrooms: prop.bedrooms || 0,
+          bathrooms: prop.bathrooms || 0,
+          city: prop.city,
+          commune: prop.commune,
+          region: prop.region,
+          type: prop.type,
+          views: prop.views || 0,
+          inquiries: prop.inquiries || 0,
+          age: age,
+          pricePerSqm: pricePerSqm,
+          depositRatio: depositRatio,
+          hasParking: hasParking,
+          hasGarden: hasGarden,
+          hasPool: hasPool,
+          isFurnished: isFurnished,
+          petsAllowed: petsAllowed,
+          yearBuilt: yearBuilt,
+          contractCount: prop._count.contracts || 0,
+          reviewCount: prop._count.reviews || 0,
+          favoriteCount: prop._count.propertyFavorites || 0,
+          visitCount: prop._count.visits || 0,
+          maintenanceCount: prop._count.maintenance || 0,
+          createdAt: prop.createdAt
+        };
+      });
 
       logger.info(`Datos de entrenamiento cargados: ${this.model.trainingData.length} propiedades`);
     } catch (error) {
@@ -159,38 +207,89 @@ class PricePredictionModel {
       {
         id: 'sample-1',
         price: 500000,
+        deposit: 500000,
         area: 80,
         bedrooms: 2,
         bathrooms: 1,
         city: 'Santiago',
         commune: 'Providencia',
+        region: 'Metropolitana',
         type: 'APARTMENT',
-        furnished: false,
-        petsAllowed: true,
-        yearBuilt: 2010,
-        coordinates: { latitude: -33.4489, longitude: -70.6693 },
         views: 150,
-        favorites: 25,
-        createdAt: new Date('2024-01-01'),
-        rentalPeriod: 365
+        inquiries: 12,
+        age: 90,
+        pricePerSqm: 6250,
+        depositRatio: 1.0,
+        hasParking: true,
+        hasGarden: false,
+        hasPool: false,
+        isFurnished: false,
+        petsAllowed: true,
+        yearBuilt: 2023,
+        contractCount: 2,
+        reviewCount: 8,
+        favoriteCount: 25,
+        visitCount: 35,
+        maintenanceCount: 1,
+        createdAt: new Date('2024-01-01')
       },
       {
         id: 'sample-2',
         price: 750000,
+        deposit: 750000,
         area: 120,
         bedrooms: 3,
         bathrooms: 2,
         city: 'Santiago',
         commune: 'Las Condes',
+        region: 'Metropolitana',
         type: 'HOUSE',
-        furnished: true,
-        petsAllowed: false,
-        yearBuilt: 2015,
-        coordinates: { latitude: -33.4155, longitude: -70.5831 },
         views: 200,
-        favorites: 45,
-        createdAt: new Date('2024-01-15'),
-        rentalPeriod: 730
+        inquiries: 18,
+        age: 75,
+        pricePerSqm: 6250,
+        depositRatio: 1.0,
+        hasParking: true,
+        hasGarden: true,
+        hasPool: true,
+        isFurnished: true,
+        petsAllowed: false,
+        yearBuilt: 2023,
+        contractCount: 1,
+        reviewCount: 12,
+        favoriteCount: 45,
+        visitCount: 50,
+        maintenanceCount: 0,
+        createdAt: new Date('2024-01-15')
+      },
+      {
+        id: 'sample-3',
+        price: 350000,
+        deposit: 350000,
+        area: 60,
+        bedrooms: 1,
+        bathrooms: 1,
+        city: 'Santiago',
+        commune: 'Ñuñoa',
+        region: 'Metropolitana',
+        type: 'APARTMENT',
+        views: 80,
+        inquiries: 6,
+        age: 120,
+        pricePerSqm: 5833,
+        depositRatio: 1.0,
+        hasParking: false,
+        hasGarden: false,
+        hasPool: false,
+        isFurnished: true,
+        petsAllowed: true,
+        yearBuilt: 2023,
+        contractCount: 3,
+        reviewCount: 5,
+        favoriteCount: 15,
+        visitCount: 20,
+        maintenanceCount: 2,
+        createdAt: new Date('2023-12-15')
       }
     ];
   }
@@ -210,8 +309,10 @@ class PricePredictionModel {
 
     // Características ampliadas para mejor precisión
     const features = [
-      'area', 'bedrooms', 'bathrooms', 'views', 'favorites',
-      'furnished', 'petsAllowed', 'yearBuilt', 'hasCoordinates'
+      'area', 'bedrooms', 'bathrooms', 'views', 'inquiries',
+      'age', 'pricePerSqm', 'depositRatio', 'hasParking', 'hasGarden',
+      'hasPool', 'isFurnished', 'petsAllowed', 'yearBuilt',
+      'contractCount', 'reviewCount', 'visitCount'
     ];
 
     const n = this.model.trainingData.length;
@@ -313,11 +414,19 @@ class PricePredictionModel {
       bedrooms: propertyData.bedrooms || 0,
       bathrooms: propertyData.bathrooms || 0,
       views: propertyData.views || 0,
-      favorites: propertyData.favorites || 0,
-      furnished: propertyData.furnished ? 1 : 0,
+      inquiries: propertyData.inquiries || 0,
+      age: propertyData.age || 0,
+      pricePerSqm: propertyData.pricePerSqm || 0,
+      depositRatio: propertyData.depositRatio || 0,
+      hasParking: propertyData.hasParking ? 1 : 0,
+      hasGarden: propertyData.hasGarden ? 1 : 0,
+      hasPool: propertyData.hasPool ? 1 : 0,
+      isFurnished: propertyData.isFurnished ? 1 : 0,
       petsAllowed: propertyData.petsAllowed ? 1 : 0,
-      yearBuilt: propertyData.yearBuilt ? (new Date().getFullYear() - propertyData.yearBuilt) : 0,
-      hasCoordinates: propertyData.coordinates ? 1 : 0
+      yearBuilt: propertyData.yearBuilt || 2020,
+      contractCount: propertyData.contractCount || 0,
+      reviewCount: propertyData.reviewCount || 0,
+      visitCount: propertyData.visitCount || 0
     };
 
     let prediction = this.model.bias;
@@ -340,11 +449,19 @@ class PricePredictionModel {
       bedrooms: propertyData.bedrooms || 0,
       bathrooms: propertyData.bathrooms || 0,
       views: propertyData.views || 0,
-      favorites: propertyData.favorites || 0,
-      furnished: propertyData.furnished ? 1 : 0,
+      inquiries: propertyData.inquiries || 0,
+      age: propertyData.age || 0,
+      pricePerSqm: propertyData.pricePerSqm || 0,
+      depositRatio: propertyData.depositRatio || 0,
+      hasParking: propertyData.hasParking ? 1 : 0,
+      hasGarden: propertyData.hasGarden ? 1 : 0,
+      hasPool: propertyData.hasPool ? 1 : 0,
+      isFurnished: propertyData.isFurnished ? 1 : 0,
       petsAllowed: propertyData.petsAllowed ? 1 : 0,
-      yearBuilt: propertyData.yearBuilt ? (new Date().getFullYear() - propertyData.yearBuilt) : 0,
-      hasCoordinates: propertyData.coordinates ? 1 : 0
+      yearBuilt: propertyData.yearBuilt || 2020,
+      contractCount: propertyData.contractCount || 0,
+      reviewCount: propertyData.reviewCount || 0,
+      visitCount: propertyData.visitCount || 0
     };
 
     let prediction = this.model.bias;
@@ -393,10 +510,14 @@ class PricePredictionModel {
     if (propertyData.commune) confidence += 0.1;
 
     // Evaluar características adicionales
-    if (propertyData.furnished !== undefined) confidence += 0.05;
-    if (propertyData.petsAllowed !== undefined) confidence += 0.05;
-    if (propertyData.yearBuilt) confidence += 0.05;
-    if (propertyData.coordinates) confidence += 0.05;
+    if (propertyData.inquiries !== undefined) confidence += 0.03;
+    if (propertyData.age !== undefined) confidence += 0.03;
+    if (propertyData.pricePerSqm !== undefined) confidence += 0.03;
+    if (propertyData.contractCount !== undefined) confidence += 0.03;
+    if (propertyData.hasParking !== undefined) confidence += 0.02;
+    if (propertyData.hasGarden !== undefined) confidence += 0.02;
+    if (propertyData.isFurnished !== undefined) confidence += 0.02;
+    if (propertyData.petsAllowed !== undefined) confidence += 0.02;
 
     // Evaluar métricas del modelo
     if (this.model.modelMetrics.r2 > 0.7) confidence += 0.1;
