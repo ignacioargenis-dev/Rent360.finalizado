@@ -517,14 +517,14 @@ export class RunnerIncentivesService {
 
         if (existing) {
           existing.incentives.push(incentive.incentiveRule.name);
-          existing.totalRewards += incentive.rewardsGranted.bonusAmount || 0;
+          existing.totalRewards += (incentive.rewardsGranted as any)?.bonusAmount || 0;
           existing.score += this.calculateIncentiveScore(incentive.incentiveRule);
         } else {
           runnerStats.set(runnerId, {
             runnerId,
             runnerName: incentive.runner?.name || 'Runner',
             incentives: [incentive.incentiveRule.name],
-            totalRewards: incentive.rewardsGranted.bonusAmount || 0,
+            totalRewards: (incentive.rewardsGranted as any)?.bonusAmount || 0,
             score: this.calculateIncentiveScore(incentive.incentiveRule)
           });
         }
@@ -686,8 +686,8 @@ export class RunnerIncentivesService {
         runnerId: incentive.runnerId,
         incentiveName: rule.name,
         incentiveLevel: rule.category,
-        rewardDescription: this.formatRewardDescription(incentive.rewardsGranted),
-        visitCount: incentive.achievementData.visitsCompleted || 0,
+        rewardDescription: this.formatRewardDescription(incentive.rewardsGranted as any),
+        visitCount: (incentive.achievementData as any)?.visitsCompleted || 0,
         averageRating: 4.5 // Placeholder
       });
 
@@ -721,22 +721,22 @@ export class RunnerIncentivesService {
   private static async applyIncentiveRewards(incentive: RunnerIncentive): Promise<void> {
     try {
       // Aplicar bono si existe
-      if (incentive.rewardsGranted.bonusAmount) {
+      if ((incentive.rewardsGranted as any)?.bonusAmount) {
         // Aquí iría la lógica para aplicar el bono al payout del runner
         logger.info('Bono aplicado por incentivo reclamado', {
           runnerId: incentive.runnerId,
-          amount: incentive.rewardsGranted.bonusAmount,
+          amount: (incentive.rewardsGranted as any).bonusAmount,
           incentiveId: incentive.id
         });
       }
 
       // Actualizar perfil del runner con badges/títulos
-      if (incentive.rewardsGranted.badge || incentive.rewardsGranted.title) {
+      if ((incentive.rewardsGranted as any)?.badge || (incentive.rewardsGranted as any)?.title) {
         // Aquí iría la lógica para actualizar el perfil del runner
         logger.info('Badge/título aplicado al perfil', {
           runnerId: incentive.runnerId,
-          badge: incentive.rewardsGranted.badge,
-          title: incentive.rewardsGranted.title
+          badge: (incentive.rewardsGranted as any)?.badge,
+          title: (incentive.rewardsGranted as any)?.title
         });
       }
 
@@ -788,7 +788,7 @@ export class RunnerIncentivesService {
             runnerId: incentive.runnerId,
             runnerName: incentive.runner?.name || 'Runner',
             achievement: incentive.incentiveRule.name,
-            reward: this.formatRewardDescription(incentive.rewardsGranted)
+            reward: this.formatRewardDescription(incentive.rewardsGranted as any)
           });
         }
       }
