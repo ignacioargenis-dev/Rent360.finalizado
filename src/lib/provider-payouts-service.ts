@@ -351,8 +351,7 @@ export class ProviderPayoutsService {
           status: 'PENDING',
           paymentMethod: 'BANK_TRANSFER',
           processedAt: null,
-          approvedBy: adminUserId,
-          notes: `Pago automático - ${payout.jobs.length} trabajos completados`
+          notes: `Pago automático - ${payout.jobs.length} trabajos completados - Aprobado por: ${adminUserId}`
         }
       });
 
@@ -421,7 +420,7 @@ export class ProviderPayoutsService {
           data: {
             status: 'COMPLETED',
             processedAt: new Date(),
-            paymentReference: paymentResult.transactionId
+            reference: paymentResult.transactionId
           }
         });
 
