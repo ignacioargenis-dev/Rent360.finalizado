@@ -1344,6 +1344,7 @@ export class RunnerPayoutService {
           status: this.config.requireManualApproval ? 'PENDING' : 'PROCESSING',
           paymentMethod: 'bank_transfer', // Por defecto banco
           processedAt: null,
+          approvedBy: adminUserId, // Para pagos automáticos de runners
           reference: `RUNNER_PAYOUT_${payout.recipientId}_${Date.now()}`
         }
       });
@@ -1414,6 +1415,7 @@ export class RunnerPayoutService {
           data: {
             status: 'COMPLETED',
             processedAt: new Date(),
+            approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
             ...(paymentResult.transactionId && { reference: paymentResult.transactionId })
           }
         });
