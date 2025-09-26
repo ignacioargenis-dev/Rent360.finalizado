@@ -148,9 +148,8 @@ export async function GET(request: NextRequest) {
       
       // Tiempo promedio de procesamiento (simplificado)
       db.depositRefund.aggregate({
-        where: { 
-          status: 'PROCESSED',
-          processedAt: { not: undefined }
+        where: {
+          status: 'PROCESSED'
         },
         _avg: {
           originalDeposit: true
