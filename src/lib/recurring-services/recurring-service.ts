@@ -242,7 +242,9 @@ export class RecurringServicesService {
     instances.forEach(instance => {
       if (instance.status === ServiceInstanceStatus.SCHEDULED) {
         instance.status = ServiceInstanceStatus.CANCELLED;
-        instance.notes = reason;
+        if (reason) {
+          instance.notes = reason;
+        }
         instance.updatedAt = new Date();
       }
     });
