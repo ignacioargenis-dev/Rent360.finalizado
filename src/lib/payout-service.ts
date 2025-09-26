@@ -639,15 +639,15 @@ export class PayoutService {
       // 7. Registrar payout en base de datos
       await this.recordPayout(payout, batchId, {
         success: transferResult.success,
-        transactionId: transferResult.transactionId,
-        error: transferResult.errorMessage
+        ...(transferResult.transactionId && { transactionId: transferResult.transactionId }),
+        ...(transferResult.errorMessage && { error: transferResult.errorMessage })
       });
 
       // 8. Enviar notificación
       await this.notifyPayoutProcessed(payout, {
         success: transferResult.success,
-        transactionId: transferResult.transactionId,
-        error: transferResult.errorMessage
+        ...(transferResult.transactionId && { transactionId: transferResult.transactionId }),
+        ...(transferResult.errorMessage && { error: transferResult.errorMessage })
       });
 
       logger.info('Payout procesado exitosamente', {
@@ -1038,7 +1038,7 @@ export class PayoutService {
         amount: payout.amount,
         metadata: {
           payoutType: payout.recipientType,
-          transactionId: paymentResult.transactionId,
+          ...(paymentResult.transactionId && { transactionId: paymentResult.transactionId }),
           netAmount: payout.amount,
           period: payout.period
         }
