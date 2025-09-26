@@ -226,7 +226,7 @@ export class RunnerRatingService {
           improvementAreas: ratingData.improvementAreas || [],
           propertyAddress: visit.property?.address || '',
           visitDate: visit.createdAt,
-          visitDuration: visit.actualDuration || visit.estimatedDuration || 0,
+          visitDuration: visit.duration,
           propertyType: visit.property?.type || 'unknown',
           isAnonymous: ratingData.isAnonymous || false,
           isVerified: true, // Asumimos verificado por ahora
