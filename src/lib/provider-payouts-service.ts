@@ -95,7 +95,7 @@ export class ProviderPayoutsService {
       for (const provider of maintenanceProviders) {
         if (provider.maintenanceJobs.length === 0) continue;
 
-        const totalAmount = provider.maintenanceJobs.reduce((sum, job) => sum + job.amount, 0);
+        const totalAmount = provider.maintenanceJobs.reduce((sum, job) => sum + (job.finalPrice || job.basePrice), 0);
 
         // Verificar período de gracia
         const gracePeriodDays = 15; // Configurable desde admin
@@ -135,7 +135,7 @@ export class ProviderPayoutsService {
           jobs: provider.maintenanceJobs.map(job => ({
             id: job.id,
             type: 'maintenance',
-            amount: job.amount,
+            amount: job.finalPrice || job.basePrice,
             date: job.completedDate!,
             clientName: job.property?.owner?.name || 'Cliente'
           }))
@@ -206,7 +206,7 @@ export class ProviderPayoutsService {
       for (const provider of serviceProviders) {
         if (provider.serviceJobs.length === 0) continue;
 
-        const totalAmount = provider.serviceJobs.reduce((sum, job) => sum + job.amount, 0);
+        const totalAmount = provider.serviceJobs.reduce((sum, job) => sum + (job.finalPrice || job.basePrice), 0);
 
         // Verificar período de gracia
         const gracePeriodDays = 7; // Configurable desde admin
@@ -246,7 +246,7 @@ export class ProviderPayoutsService {
           jobs: provider.serviceJobs.map(job => ({
             id: job.id,
             type: 'service',
-            amount: job.amount,
+            amount: job.finalPrice || job.basePrice,
             date: job.completedDate!,
             clientName: job.tenant?.name || 'Cliente'
           }))
