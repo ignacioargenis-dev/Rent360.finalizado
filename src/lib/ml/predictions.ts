@@ -319,14 +319,14 @@ class PricePredictionModel {
     const target = 'price';
 
     // Implementación de regresión lineal múltiple
+    const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
+
     features.forEach(feature => {
       const sumX = this.model.trainingData.reduce((sum, item) => {
         let value = (item as any)[feature];
         // Las propiedades booleanas ya están correctamente tipadas como 0/1
         return sum + (value || 0);
       }, 0);
-
-      const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
       const sumXY = this.model.trainingData.reduce((sum, item) => {
         let value = (item as any)[feature];
         // Las propiedades booleanas ya están correctamente tipadas como 0/1
