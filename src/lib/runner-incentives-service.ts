@@ -615,7 +615,7 @@ export class RunnerIncentivesService {
           incentiveRuleId: rule.id,
           status: rule.autoGrant ? RunnerIncentiveStatus.GRANTED : RunnerIncentiveStatus.EARNED,
           earnedAt: new Date(),
-          grantedAt: rule.autoGrant ? new Date() : undefined,
+          grantedAt: rule.autoGrant ? new Date() : null,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para reclamar
           achievementData: {
             visitsCompleted: performance.totalVisits,
