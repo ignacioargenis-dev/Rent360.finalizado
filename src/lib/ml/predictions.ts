@@ -322,29 +322,20 @@ class PricePredictionModel {
     features.forEach(feature => {
       const sumX = this.model.trainingData.reduce((sum, item) => {
         let value = (item as any)[feature];
-        if (feature === 'furnished') value = value ? 1 : 0;
-        if (feature === 'petsAllowed') value = value ? 1 : 0;
-        if (feature === 'hasCoordinates') value = item.coordinates ? 1 : 0;
-        if (feature === 'yearBuilt') value = value ? (new Date().getFullYear() - value) : 0;
+        // Las propiedades booleanas ya están correctamente tipadas como 0/1
         return sum + (value || 0);
       }, 0);
 
       const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
       const sumXY = this.model.trainingData.reduce((sum, item) => {
         let value = (item as any)[feature];
-        if (feature === 'furnished') value = value ? 1 : 0;
-        if (feature === 'petsAllowed') value = value ? 1 : 0;
-        if (feature === 'hasCoordinates') value = item.coordinates ? 1 : 0;
-        if (feature === 'yearBuilt') value = value ? (new Date().getFullYear() - value) : 0;
+        // Las propiedades booleanas ya están correctamente tipadas como 0/1
         return sum + (value || 0) * item.price;
       }, 0);
 
       const sumX2 = this.model.trainingData.reduce((sum, item) => {
         let value = (item as any)[feature];
-        if (feature === 'furnished') value = value ? 1 : 0;
-        if (feature === 'petsAllowed') value = value ? 1 : 0;
-        if (feature === 'hasCoordinates') value = item.coordinates ? 1 : 0;
-        if (feature === 'yearBuilt') value = value ? (new Date().getFullYear() - value) : 0;
+        // Las propiedades booleanas ya están correctamente tipadas como 0/1
         return sum + Math.pow(value || 0, 2);
       }, 0);
 
@@ -657,11 +648,8 @@ function generateSmartRecommendations(
     if (topFactors.some(([factor]) => factor === 'area')) {
       recommendations.push('El área es un factor determinante del precio');
     }
-    if (topFactors.some(([factor]) => factor === 'furnished' && prediction.factors.furnished > 0)) {
+    if (topFactors.some(([factor]) => factor === 'isFurnished' && prediction.factors.isFurnished > 0)) {
       recommendations.push('Las propiedades amobladas tienen mayor valor de mercado');
-    }
-    if (topFactors.some(([factor]) => factor === 'hasCoordinates')) {
-      recommendations.push('La ubicación precisa mejora la precisión de la estimación');
     }
   }
 
@@ -676,7 +664,7 @@ function generateSmartRecommendations(
   }
 
   // Recomendaciones basadas en datos faltantes
-  if (!propertyData.furnished) {
+  if (!propertyData.isFurnished) {
     recommendations.push('Especificar si la propiedad está amoblada mejoraría la precisión');
   }
   if (!propertyData.yearBuilt) {
