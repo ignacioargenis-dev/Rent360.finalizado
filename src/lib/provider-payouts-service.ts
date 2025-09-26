@@ -384,20 +384,20 @@ export class ProviderPayoutsService {
         include: {
           maintenanceProvider: {
             include: {
-              user: {
-                include: {
-                  bankAccounts: true
-                }
+            user: {
+              include: {
+                bankAccount: true
               }
+            }
             }
           },
           serviceProvider: {
             include: {
-              user: {
-                include: {
-                  bankAccounts: true
-                }
+            user: {
+              include: {
+                bankAccount: true
               }
+            }
             }
           }
         }
