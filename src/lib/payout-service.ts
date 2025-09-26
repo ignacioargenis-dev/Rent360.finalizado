@@ -1345,6 +1345,7 @@ export class RunnerPayoutService {
           paymentMethod: 'bank_transfer', // Por defecto banco
           processedAt: null,
           approvedBy: adminUserId, // Para pagos automáticos de runners
+          notes: `Pago automático de runner`,
           reference: `RUNNER_PAYOUT_${payout.recipientId}_${Date.now()}`
         }
       });
