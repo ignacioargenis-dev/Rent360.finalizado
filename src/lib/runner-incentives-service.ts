@@ -637,7 +637,23 @@ export class RunnerIncentivesService {
         rewards: rewardsGranted
       });
 
-      return incentive;
+      // Mapear el resultado de Prisma a la interfaz RunnerIncentive
+      return {
+        id: incentive.id,
+        runnerId: incentive.runnerId,
+        incentiveRuleId: incentive.incentiveRuleId,
+        status: incentive.status,
+        earnedAt: incentive.earnedAt,
+        grantedAt: incentive.grantedAt ?? undefined,
+        claimedAt: incentive.claimedAt ?? undefined,
+        expiresAt: incentive.expiresAt ?? undefined,
+        achievementData: incentive.achievementData as unknown as RunnerIncentive['achievementData'],
+        rewardsGranted: incentive.rewardsGranted as unknown as RunnerIncentive['rewardsGranted'],
+        notificationSent: incentive.notificationSent,
+        adminApprovalRequired: incentive.adminApprovalRequired,
+        approvedBy: incentive.approvedBy ?? undefined,
+        notes: incentive.notes ?? undefined
+      };
 
     } catch (error) {
       logger.error('Error otorgando incentivo:', error as Error);
