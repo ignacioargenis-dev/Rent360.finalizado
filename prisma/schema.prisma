@@ -1315,6 +1315,12 @@ model RunnerIncentive {
   // Recompensas otorgadas (JSON)
   rewardsGranted   String
 
+  // Metadata adicional
+  notificationSent       Boolean @default(false)
+  adminApprovalRequired  Boolean @default(false)
+  approvedBy            String?
+  notes                 String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
