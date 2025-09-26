@@ -818,15 +818,15 @@ class AdvancedNotificationService {
     
     // Actualizar métricas por canal
     const channelPerf = this.analytics.channelPerformance[notification.optimalChannel];
-    if (channelPerf) {
-      channelPerf[event]++;
+    if (channelPerf && event in channelPerf && typeof channelPerf[event as keyof typeof channelPerf] === 'number') {
+      (channelPerf as any)[event]++;
       channelPerf.openRate = channelPerf.read / channelPerf.sent;
     }
-    
+
     // Actualizar métricas por tipo
     const typePerf = this.analytics.typePerformance[notification.type];
-    if (typePerf) {
-      typePerf[event]++;
+    if (typePerf && event in typePerf && typeof typePerf[event as keyof typeof typePerf] === 'number') {
+      (typePerf as any)[event]++;
       typePerf.openRate = typePerf.read / typePerf.sent;
     }
     
