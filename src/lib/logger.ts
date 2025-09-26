@@ -745,7 +745,7 @@ class Logger {
         }, {} as Record<string, number>),
       },
       health: {
-        current: this.metrics[this.metrics.length - 1],
+        current: this.metrics.length > 0 ? this.metrics[this.metrics.length - 1] : null,
         history: this.metrics.slice(-10),
       },
     };
