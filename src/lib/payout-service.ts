@@ -1414,7 +1414,7 @@ export class RunnerPayoutService {
           data: {
             status: 'COMPLETED',
             processedAt: new Date(),
-            reference: paymentResult.transactionId
+            ...(paymentResult.transactionId && { reference: paymentResult.transactionId })
           }
         });
 
