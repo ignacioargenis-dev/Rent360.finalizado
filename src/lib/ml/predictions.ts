@@ -585,7 +585,7 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
 
     // Obtener estadísticas de mercado reales
     const marketStats = await getMarketStatistics(propertyData.city, propertyData.commune);
-    const marketData: MarketData = marketStats[0] || {
+    const marketData: MarketData = marketStats[0]! || {
       city: propertyData.city || 'Santiago',
       commune: propertyData.commune || 'Providencia',
       averagePrice: prediction.price,

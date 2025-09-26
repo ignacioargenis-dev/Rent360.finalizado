@@ -278,10 +278,10 @@ class FirebaseNotificationService {
       return false; // Formato inválido, permitir notificaciones
     }
 
-    const startHour = Number(startParts[0]);
-    const startMinute = Number(startParts[1]);
-    const endHour = Number(endParts[0]);
-    const endMinute = Number(endParts[1]);
+    const startHour = Number(startParts[0]!);
+    const startMinute = Number(startParts[1]!);
+    const endHour = Number(endParts[0]!);
+    const endMinute = Number(endParts[1]!);
 
     if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
       return false; // Valores inválidos, permitir notificaciones

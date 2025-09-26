@@ -351,7 +351,7 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
 
     // Validar que no haya contratos activos con precios inconsistentes
     if (property.contracts.length > 0) {
-      const activeContract = property.contracts[0];
+      const activeContract = property.contracts[0]!;
       if (activeContract && activeContract.monthlyRent !== undefined) {
         const expectedMonthlyRent = Math.round(property.price / 12); // Aproximado
 

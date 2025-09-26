@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         acc[backup.type] = (acc[backup.type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
-      lastBackup: history.length > 0 ? history[0] : null,
+      lastBackup: history.length > 0 ? history[0]! : null,
       totalSize: history.reduce((sum, backup) => sum + backup.size, 0),
     };
 

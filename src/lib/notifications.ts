@@ -389,7 +389,7 @@ class AdvancedNotificationService {
       : enabledChannels;
 
     if (availableChannels.length === 0) {
-      return enabledChannels.length > 0 ? enabledChannels[0] : 'email'; // Default fallback
+      return enabledChannels.length > 0 ? enabledChannels[0]! : 'email'; // Default fallback
     }
 
     // Algoritmo de selección basado en tipo y prioridad
@@ -436,7 +436,7 @@ class AdvancedNotificationService {
     });
 
     // Retornar canal con mayor score
-    let bestChannel = availableChannels[0];
+    let bestChannel = availableChannels[0]!;
     let bestScore = channelScores.get(bestChannel) || 0;
 
     channelScores.forEach((score, channel) => {
@@ -494,7 +494,7 @@ class AdvancedNotificationService {
     
     if (!bestHours.includes(hour)) {
       // Encontrar la próxima mejor hora
-      const nextBestHour = bestHours.find(h => h > hour) || (bestHours.length > 0 ? bestHours[0] : 9); // 9 AM default
+      const nextBestHour = bestHours.find(h => h > hour) || (bestHours.length > 0 ? bestHours[0]! : 9); // 9 AM default
       const optimalTime = new Date(now);
       
       if (nextBestHour > hour) {
