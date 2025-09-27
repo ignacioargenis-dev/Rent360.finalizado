@@ -651,6 +651,51 @@ npm update
 
 ---
 
+## 🔧 Solución de Problemas Comunes
+
+### Error con DATABASE_URL
+
+Si encuentras el error durante el build:
+```
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+```
+
+**Solución:**
+1. Ve a tu App en Digital Ocean App Platform
+2. Ve a "Settings" → "Environment Variables"
+3. Verifica que `DATABASE_URL` empiece con `postgresql://` o `postgres://`
+4. Si usas PostgreSQL managed de Digital Ocean, la URL debería verse así:
+   ```
+   postgresql://rent360_user:password@host.db.ondigitalocean.com:25060/rent360_db?sslmode=require
+   ```
+
+**Verificación:**
+```bash
+# Prueba la conexión
+psql "$DATABASE_URL"
+```
+
+### Error de Prerendering en Páginas del Cliente
+
+Si encuentras errores como:
+```
+ReferenceError: window is not defined
+```
+
+**Solución:** Las páginas que usan `'use client'` y hooks que acceden a `window` necesitan `export const dynamic = 'force-dynamic'` para evitar prerendering estático.
+
+Ejemplo:
+```typescript
+'use client';
+
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
+import { usePWA } from '@/lib/pwa';
+```
+
+---
+
 **🚀 Tu aplicación Rent360 está lista para producción en DigitalOcean**
 
 Para soporte adicional, contacta a:

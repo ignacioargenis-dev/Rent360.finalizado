@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+
+// Forzar renderizado dinámico para evitar errores de prerendering con hooks del cliente
+export const dynamic = 'force-dynamic';
+
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
