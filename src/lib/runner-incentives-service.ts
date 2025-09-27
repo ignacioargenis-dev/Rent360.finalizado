@@ -829,7 +829,7 @@ export class RunnerIncentivesService {
       // Obtener todos los runners activos
       const activeRunners = await db.user.findMany({
         where: {
-          role: 'runner',
+          role: 'RUNNER',
           isActive: true
         },
         select: {

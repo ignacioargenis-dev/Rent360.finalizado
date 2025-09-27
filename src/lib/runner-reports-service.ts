@@ -189,7 +189,7 @@ export class RunnerReportsService {
       // Calcular métricas de tiempo
       const completedVisitsData = visits.filter(v => v.status === 'completed');
       const averageVisitDuration = completedVisitsData.length > 0
-        ? completedVisitsData.reduce((sum, v) => sum + (v.actualDuration || v.estimatedDuration || 0), 0) / completedVisitsData.length
+        ? completedVisitsData.reduce((sum, v) => sum + (v.duration || 0), 0) / completedVisitsData.length
         : 0;
 
       // Calcular rating promedio (placeholder - implementar sistema de ratings)
@@ -369,7 +369,7 @@ export class RunnerReportsService {
         const dayEarnings = dayVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
         const dayRating = 4.5; // Placeholder
         const dayDuration = dayVisits.length > 0
-          ? dayVisits.reduce((sum, v) => sum + (v.actualDuration || v.estimatedDuration || 0), 0) / dayVisits.length
+          ? dayVisits.reduce((sum, v) => sum + (v.duration || 0), 0) / dayVisits.length
           : 0;
 
         dailyPerformance.push({
@@ -505,7 +505,7 @@ export class RunnerReportsService {
       // Obtener todos los runners activos
       const activeRunners = await db.user.findMany({
         where: {
-          role: 'runner',
+          role: 'RUNNER',
           isActive: true
         },
         select: {

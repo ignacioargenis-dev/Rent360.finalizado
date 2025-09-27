@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'runner') {
+    if (user.role !== 'RUNNER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Solo para runners.' },
         { status: 403 }

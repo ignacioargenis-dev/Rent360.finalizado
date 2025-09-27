@@ -141,7 +141,7 @@ export const registerSchema = z.object({
   password: z.string().min(8, 'Contraseña debe tener al menos 8 caracteres'),
   confirmPassword: z.string(),
   name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
-  role: z.enum(['owner', 'tenant', 'broker', 'runner']),
+  role: z.enum(['OWNER', 'TENANT', 'BROKER', 'RUNNER']),
   // Campos obligatorios en Chile
   rut: z.string().min(1, 'RUT es obligatorio'),
   // Campos opcionales
