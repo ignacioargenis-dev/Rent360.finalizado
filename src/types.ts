@@ -27,7 +27,7 @@ export type {
 } from '@prisma/client';
 
 // Import explícito para resolver referencias circulares
-import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser, Payment as PrismaPayment, Ticket as PrismaTicket, Maintenance as PrismaMaintenance } from '@prisma/client';
+import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser, Payment as PrismaPayment, Ticket as PrismaTicket, Maintenance as PrismaMaintenance, TicketComment as PrismaTicketComment } from '@prisma/client';
 
 // Definir enums locales ya que no están disponibles en @prisma/client
 export enum PropertyStatus {
@@ -232,7 +232,7 @@ export interface PaymentWithDetails extends PrismaPayment {
 export interface TicketWithDetails extends PrismaTicket {
   user: PrismaUser;
   assignee?: PrismaUser;
-  comments: TicketComment[];
+  comments: PrismaTicketComment[];
 }
 
 export interface MaintenanceWithDetails extends PrismaMaintenance {
