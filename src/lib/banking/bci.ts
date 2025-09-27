@@ -208,11 +208,10 @@ export class BCIIntegration extends BaseBankIntegration {
 
       const validationResult = await response.json();
 
-      const result: {
-        isValid: boolean;
-        accountHolder?: string;
-        errorMessage?: string;
-      } = {
+      const result: BankAccountValidation = {
+        accountNumber: validation.accountNumber,
+        rut: validation.rut,
+        bankCode: validation.bankCode,
         isValid: validationResult.valida,
         accountHolder: validationResult.titular?.nombre
       };

@@ -170,11 +170,10 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
 
       const validationResult = await response.json();
 
-      const result: {
-        isValid: boolean;
-        accountHolder?: string;
-        errorMessage?: string;
-      } = {
+      const result: BankAccountValidation = {
+        accountNumber: validation.accountNumber,
+        rut: validation.rut,
+        bankCode: validation.bankCode,
         isValid: validationResult.esValida,
         accountHolder: validationResult.nombreTitular
       };
