@@ -1,20 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-
-// Forzar renderizado dinámico para evitar errores de prerendering con hooks del cliente
-export const dynamic = 'force-dynamic';
-
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Bot, 
-  Smartphone, 
-  Target, 
-  TrendingUp, 
+import {
+  Bot,
+  Smartphone,
+  Target,
+  TrendingUp,
   Bell,
   Sparkles,
   CheckCircle,
@@ -36,6 +32,9 @@ import { usePWA } from '@/lib/pwa';
 import { useRecommendations } from '@/lib/recommendations';
 import { useNotifications } from '@/lib/notifications';
 import dynamic from 'next/dynamic';
+
+// Forzar renderizado dinámico para evitar errores de prerendering con hooks del cliente
+export const dynamic = 'force-dynamic';
 
 // Dynamic imports para componentes que acceden a window APIs
 const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), { ssr: false });
