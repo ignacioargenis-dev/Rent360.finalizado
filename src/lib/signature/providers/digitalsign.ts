@@ -71,14 +71,14 @@ export class DigitalSignProvider extends SignatureProvider {
         throw new Error('Solicitud de firma inválida');
       }
 
-      // Validar que todos los firmantes tengan RUT
-      const invalidSigners = request.signers.filter(signer => !signer.rut);
-      if (invalidSigners.length > 0) {
+      // Validar que todos los firmantes tengan RUT y formato válido
+      const signersWithRut = request.signers.filter(signer => signer.rut);
+      if (signersWithRut.length !== request.signers.length) {
         throw new Error('Todos los firmantes deben tener RUT válido');
       }
 
       // Validar formato de RUT chileno
-      const invalidRutFormat = request.signers.filter(signer => !this.validateRutFormat(signer.rut));
+      const invalidRutFormat = signersWithRut.filter(signer => !this.validateRutFormat(signer.rut!));
       if (invalidRutFormat.length > 0) {
         throw new Error('Formato de RUT inválido para uno o más firmantes');
       }
