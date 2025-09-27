@@ -175,7 +175,6 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
         accountHolder?: string;
         errorMessage?: string;
       } = {
-        ...validation,
         isValid: validationResult.esValida,
         accountHolder: validationResult.nombreTitular
       };

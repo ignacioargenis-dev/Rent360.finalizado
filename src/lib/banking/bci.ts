@@ -213,7 +213,6 @@ export class BCIIntegration extends BaseBankIntegration {
         accountHolder?: string;
         errorMessage?: string;
       } = {
-        ...validation,
         isValid: validationResult.valida,
         accountHolder: validationResult.titular?.nombre
       };
