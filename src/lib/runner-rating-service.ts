@@ -80,6 +80,35 @@ export interface RatingCriteria {
  * Servicio de calificaciones para runners basado en desempeño
  */
 export class RunnerRatingService {
+  /**
+   * Convierte un objeto RunnerRating de Prisma a la interfaz RunnerRating
+   */
+  private static convertPrismaRatingToRunnerRating(rating: any): RunnerRating {
+    return {
+      id: rating.id,
+      visitId: rating.visitId,
+      runnerId: rating.runnerId,
+      clientId: rating.clientId,
+      clientName: rating.clientName,
+      clientEmail: rating.clientEmail,
+      overallRating: rating.overallRating,
+      punctualityRating: rating.punctualityRating,
+      professionalismRating: rating.professionalismRating,
+      communicationRating: rating.communicationRating,
+      propertyKnowledgeRating: rating.propertyKnowledgeRating,
+      comment: rating.comment || '',
+      positiveFeedback: rating.positiveFeedback,
+      improvementAreas: rating.improvementAreas,
+      propertyAddress: rating.propertyAddress,
+      visitDate: rating.visitDate,
+      visitDuration: rating.visitDuration,
+      propertyType: rating.propertyType,
+      isAnonymous: rating.isAnonymous,
+      isVerified: rating.isVerified,
+      createdAt: rating.createdAt,
+      updatedAt: rating.updatedAt
+    };
+  }
   private static readonly RATING_CRITERIA: RatingCriteria[] = [
     {
       name: 'overall',
@@ -243,30 +272,7 @@ export class RunnerRatingService {
       });
 
       // Enviar notificación al runner sobre la nueva calificación
-      const ratingForNotification: RunnerRating = {
-        id: rating.id,
-        visitId: rating.visitId,
-        runnerId: rating.runnerId,
-        clientId: rating.clientId,
-        clientName: rating.clientName,
-        clientEmail: rating.clientEmail,
-        overallRating: rating.overallRating,
-        punctualityRating: rating.punctualityRating,
-        professionalismRating: rating.professionalismRating,
-        communicationRating: rating.communicationRating,
-        propertyKnowledgeRating: rating.propertyKnowledgeRating,
-        comment: rating.comment || '',
-        positiveFeedback: rating.positiveFeedback,
-        improvementAreas: rating.improvementAreas,
-        propertyAddress: rating.propertyAddress,
-        visitDate: rating.visitDate,
-        visitDuration: rating.visitDuration,
-        propertyType: rating.propertyType,
-        isAnonymous: rating.isAnonymous,
-        isVerified: rating.isVerified,
-        createdAt: rating.createdAt,
-        updatedAt: rating.updatedAt
-      };
+      const ratingForNotification = this.convertPrismaRatingToRunnerRating(rating);
       await this.notifyRunnerOfRating(ratingForNotification);
 
       // Verificar si se alcanzan incentivos por rating
@@ -466,30 +472,7 @@ export class RunnerRatingService {
       });
 
       // Convertir objetos de Prisma a RunnerRating
-      return ratings.map(rating => ({
-        id: rating.id,
-        visitId: rating.visitId,
-        runnerId: rating.runnerId,
-        clientId: rating.clientId,
-        clientName: rating.clientName,
-        clientEmail: rating.clientEmail,
-        overallRating: rating.overallRating,
-        punctualityRating: rating.punctualityRating,
-        professionalismRating: rating.professionalismRating,
-        communicationRating: rating.communicationRating,
-        propertyKnowledgeRating: rating.propertyKnowledgeRating,
-        comment: rating.comment || '',
-        positiveFeedback: rating.positiveFeedback,
-        improvementAreas: rating.improvementAreas,
-        propertyAddress: rating.propertyAddress,
-        visitDate: rating.visitDate,
-        visitDuration: rating.visitDuration,
-        propertyType: rating.propertyType,
-        isAnonymous: rating.isAnonymous,
-        isVerified: rating.isVerified,
-        createdAt: rating.createdAt,
-        updatedAt: rating.updatedAt
-      }));
+      return ratings.map(rating => this.convertPrismaRatingToRunnerRating(rating));
     } catch (error) {
       logger.error('Error obteniendo calificaciones de runner:', error as Error);
       throw error;
