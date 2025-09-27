@@ -26,6 +26,9 @@ export type {
   ContractSignature,
 } from '@prisma/client';
 
+// Import explícito para resolver referencias circulares
+import type { Contract as PrismaContract } from '@prisma/client';
+
 // Definir enums locales ya que no están disponibles en @prisma/client
 export enum PropertyStatus {
   AVAILABLE = 'AVAILABLE',
@@ -209,7 +212,7 @@ export interface DashboardStats {
   activities: RecentActivity[];
 }
 
-export interface ContractWithDetails extends Contract {
+export interface ContractWithDetails extends PrismaContract {
   property: Property;
   tenant: User;
   owner: User;
