@@ -32,10 +32,10 @@ import {
   Wifi,
   Star
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { usePWA } from '@/lib/pwa';
 import { useRecommendations } from '@/lib/recommendations';
 import { useNotifications } from '@/lib/notifications';
+import dynamic from 'next/dynamic';
 
 // Dynamic imports para componentes que acceden a window APIs
 const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), { ssr: false });
