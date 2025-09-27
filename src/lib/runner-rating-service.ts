@@ -465,7 +465,31 @@ export class RunnerRatingService {
         skip: offset
       });
 
-      return ratings;
+      // Convertir objetos de Prisma a RunnerRating
+      return ratings.map(rating => ({
+        id: rating.id,
+        visitId: rating.visitId,
+        runnerId: rating.runnerId,
+        clientId: rating.clientId,
+        clientName: rating.clientName,
+        clientEmail: rating.clientEmail,
+        overallRating: rating.overallRating,
+        punctualityRating: rating.punctualityRating,
+        professionalismRating: rating.professionalismRating,
+        communicationRating: rating.communicationRating,
+        propertyKnowledgeRating: rating.propertyKnowledgeRating,
+        comment: rating.comment || '',
+        positiveFeedback: rating.positiveFeedback,
+        improvementAreas: rating.improvementAreas,
+        propertyAddress: rating.propertyAddress,
+        visitDate: rating.visitDate,
+        visitDuration: rating.visitDuration,
+        propertyType: rating.propertyType,
+        isAnonymous: rating.isAnonymous,
+        isVerified: rating.isVerified,
+        createdAt: rating.createdAt,
+        updatedAt: rating.updatedAt
+      }));
     } catch (error) {
       logger.error('Error obteniendo calificaciones de runner:', error as Error);
       throw error;
