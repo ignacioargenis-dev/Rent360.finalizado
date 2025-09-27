@@ -19,7 +19,7 @@ class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private eventListeners: Map<string, Function[]> = new Map();
-  private isConnected = false;
+  private _isConnected = false;
 
   connect(token?: string): void {
     if (this.socket?.connected) return;
@@ -43,7 +43,7 @@ class WebSocketClient {
 
     this.socket.on('connect', () => {
       logger.info('WebSocket connected');
-      this.isConnected = true;
+      this._isConnected = true;
       this.reconnectAttempts = 0;
 
       // Emitir evento de conexión
@@ -52,7 +52,7 @@ class WebSocketClient {
 
     this.socket.on('disconnect', (reason) => {
       logger.warn('WebSocket disconnected', { reason });
-      this.isConnected = false;
+      this._isConnected = false;
 
       // Intentar reconexión automática
       if (reason === 'io server disconnect' || reason === 'io client disconnect') {
@@ -192,7 +192,7 @@ class WebSocketClient {
 
   // Estado de conexión
   get isConnected(): boolean {
-    return this.isConnected && this.socket?.connected === true;
+    return this._isConnected && this.socket?.connected === true;
   }
 
   get socketId(): string | undefined {
@@ -204,7 +204,7 @@ class WebSocketClient {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
-      this.isConnected = false;
+      this._isConnected = false;
       this.eventListeners.clear();
       logger.info('WebSocket client disconnected');
     }
