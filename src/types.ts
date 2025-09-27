@@ -27,7 +27,7 @@ export type {
 } from '@prisma/client';
 
 // Import explícito para resolver referencias circulares
-import type { Contract as PrismaContract, Property as PrismaProperty } from '@prisma/client';
+import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser } from '@prisma/client';
 
 // Definir enums locales ya que no están disponibles en @prisma/client
 export enum PropertyStatus {
@@ -214,30 +214,30 @@ export interface DashboardStats {
 
 export interface ContractWithDetails extends PrismaContract {
   property: PrismaProperty;
-  tenant: User;
-  owner: User;
-  broker?: User;
+  tenant: PrismaUser;
+  owner: PrismaUser;
+  broker?: PrismaUser;
 }
 
 export interface PropertyWithDetails extends PrismaProperty {
-  owner: User;
+  owner: PrismaUser;
   contracts: PrismaContract[];
 }
 
 export interface PaymentWithDetails extends Payment {
   contract: PrismaContract;
-  payer: User;
+  payer: PrismaUser;
 }
 
 export interface TicketWithDetails extends Ticket {
-  user: User;
-  assignee?: User;
+  user: PrismaUser;
+  assignee?: PrismaUser;
   comments: TicketComment[];
 }
 
 export interface MaintenanceWithDetails extends Maintenance {
   property: PrismaProperty;
-  assignee?: User;
+  assignee?: PrismaUser;
   provider?: MaintenanceProvider;
 }
 
