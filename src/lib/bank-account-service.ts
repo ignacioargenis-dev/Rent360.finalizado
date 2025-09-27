@@ -179,7 +179,7 @@ export class BankAccountService {
       }
 
       // Crear registro de cuenta bancaria
-      const bankAccount = await db.$transaction(async (tx) => {
+      const bankAccount = await db.$transaction(async (tx: any) => {
         // Aquí iría la creación del registro en una tabla bank_accounts
         // Por ahora, simulamos con un objeto
 
@@ -218,9 +218,9 @@ export class BankAccountService {
       });
 
       // Iniciar proceso de verificación automática
-      setImmediate(() => {
+      setTimeout(() => {
         this.initiateVerification(bankAccount.id);
-      });
+      }, 0);
 
       return bankAccount;
 
