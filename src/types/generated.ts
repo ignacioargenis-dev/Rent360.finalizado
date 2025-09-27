@@ -49,4 +49,4 @@ export {
   TransactionStatus,
   SignatureStatus,
   RefundStatus,
-} from './types';
+} from '../types';
