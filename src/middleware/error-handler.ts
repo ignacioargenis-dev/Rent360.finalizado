@@ -1,6 +1,6 @@
 // Error classes for API handling
 export class ValidationError extends Error {
-  public field?: string;
+  public field?: string | undefined;
   public statusCode: number = 400;
 
   constructor(message: string, field?: string) {
@@ -68,7 +68,7 @@ export class ServerError extends Error {
 export function handleError(error: unknown): {
   message: string;
   statusCode: number;
-  field?: string;
+  field?: string | undefined;
 } {
   if (error instanceof ValidationError) {
     return {
