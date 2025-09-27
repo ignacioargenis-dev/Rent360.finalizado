@@ -157,12 +157,6 @@ export enum TransactionStatus {
   CANCELLED = 'CANCELLED',
 }
 
-export enum SignatureStatus {
-  PENDING = 'PENDING',
-  SIGNED = 'SIGNED',
-  REJECTED = 'REJECTED',
-  EXPIRED = 'EXPIRED',
-}
 
 export enum RefundStatus {
   PENDING = 'PENDING',

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { db } from '@/lib/db';
-import { SignatureStatus } from '@/types';
+import { SignatureStatus } from '@/lib/signature/types';
 
 /**
  * Callback endpoint para TrustFactory

@@ -4,7 +4,7 @@ import { signatureService } from '@/lib/signature';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { SignatureType } from '@/lib/signature/types';
-import { SignatureStatus } from '@/types';
+import { SignatureStatus } from '@/lib/signature/types';
 import { db } from '@/lib/db';
 
 // Schema para crear firma
