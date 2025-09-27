@@ -314,7 +314,7 @@ export class TrustFactoryProvider extends SignatureProvider {
       const response = await fetch(url, {
         method,
         headers,
-        body: data ? JSON.stringify(data) : undefined,
+        ...(data && { body: JSON.stringify(data) }),
         // Timeout de 30 segundos
         signal: AbortSignal.timeout(30000)
       });

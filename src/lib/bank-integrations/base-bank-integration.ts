@@ -165,7 +165,7 @@ export abstract class BaseBankIntegration {
       const requestConfig = {
         method,
         headers: requestHeaders,
-        body: data ? JSON.stringify(data) : undefined,
+        ...(data && { body: JSON.stringify(data) }),
         timeout: this.config.config.timeout || 30000
       };
 
