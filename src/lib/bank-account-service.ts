@@ -92,10 +92,14 @@ export class BankAccountService {
 
     // Validar dígito verificador
     const rutParts = rut.split('-');
+    if (rutParts.length !== 2) {
+      return false;
+    }
     const rutNumber = rutParts[0];
     const dv = rutParts[1];
 
-    if (!rutNumber || !dv) {
+    // Validar que ambas partes existan y no estén vacías
+    if (!rutNumber || rutNumber.length === 0 || !dv || dv.length === 0) {
       return false;
     }
 

@@ -245,6 +245,11 @@ Validación: RUT${this.bankIntegration ? ' + Banco' : ''}
     const rutNumber = rutParts[0];
     const dv = rutParts[1];
 
+    // Validar que ambas partes existan y no estén vacías
+    if (!rutNumber || rutNumber.length === 0 || !dv || dv.length === 0) {
+      return false;
+    }
+
     let sum = 0;
     let multiplier = 2;
 
