@@ -31,20 +31,12 @@ class WebSocketServer {
         credentials: true
       },
       transports: ['websocket', 'polling'],
-      // Configuración de reconexión
+      // Configuración del servidor
       pingTimeout: 60000, // 60 segundos
       pingInterval: 25000, // 25 segundos
       upgradeTimeout: 10000,
       maxHttpBufferSize: 1e8,
-      allowEIO3: true,
-      // Configuración de reconexión del cliente
-      connectTimeout: 20000,
-      forceNew: false,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5
+      allowEIO3: true
     });
 
     this.setupMiddleware();
