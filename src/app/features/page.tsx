@@ -5,7 +5,6 @@ import React from 'react';
 // Forzar renderizado dinámico para evitar errores de prerendering
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +22,8 @@ import {
 } from 'lucide-react';
 
 export default function FeaturesPage() {
-  const t = useTranslations();
+  // Evitar problemas de SSR con traducciones - usar función simple
+  const t = (key: string) => key;
 
   const features = [
     {

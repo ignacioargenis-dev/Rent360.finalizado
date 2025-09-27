@@ -19,15 +19,22 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
 
 export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [pendingActions, setPendingActions] = useState<string[]>([]);
-  const { t } = useTranslation('common');
+  const [isClient, setIsClient] = useState(false);
+
+  // Evitar problemas de SSR con traducciones
+  const t = (key: string) => key;
 
   useEffect(() => {
+    setIsClient(true);
+
+    // Solo ejecutar en cliente
+    if (typeof window === 'undefined') return;
+
     // Verificar estado de conexión
     const checkOnlineStatus = () => {
       setIsOnline(navigator.onLine);
@@ -47,6 +54,8 @@ export default function OfflinePage() {
   }, []);
 
   const loadOfflineData = async () => {
+    if (typeof window === 'undefined') return;
+
     try {
       // Intentar cargar datos desde cache/localStorage
       const cachedLastSync = localStorage.getItem('rent360_lastSync');
@@ -64,15 +73,17 @@ export default function OfflinePage() {
   };
 
   const handleRetry = () => {
+    if (typeof window === 'undefined') return;
     window.location.reload();
   };
 
   const handleGoHome = () => {
+    if (typeof window === 'undefined') return;
     window.location.href = '/';
   };
 
   const syncPendingActions = async () => {
-    if (!navigator.onLine) return;
+    if (typeof window === 'undefined' || !navigator.onLine) return;
 
     try {
       // Aquí iría la lógica para sincronizar acciones pendientes
