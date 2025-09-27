@@ -388,15 +388,6 @@ export enum SignatureStatus {
   CANCELLED = 'CANCELLED'
 }
 
-// Tipos para reembolsos
-export enum RefundStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  PROCESSING = 'PROCESSING',
-  COMPLETED = 'COMPLETED',
-  REJECTED = 'REJECTED',
-  CANCELLED = 'CANCELLED'
-}
 
 // Tipos para búsqueda
 export interface SearchFilters {
