@@ -657,7 +657,12 @@ export class RunnerRatingService {
 
       // No debe existir ya una calificación
       const existingRating = await db.runnerRating.findUnique({
-        where: { visitId }
+        where: {
+          visitId_clientId: {
+            visitId: visitId,
+            clientId: clientId
+          }
+        }
       });
 
       return !existingRating;
