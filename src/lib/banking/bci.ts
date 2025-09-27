@@ -208,12 +208,21 @@ export class BCIIntegration extends BaseBankIntegration {
 
       const validationResult = await response.json();
 
-      return {
+      const result: {
+        isValid: boolean;
+        accountHolder?: string;
+        errorMessage?: string;
+      } = {
         ...validation,
         isValid: validationResult.valida,
-        accountHolder: validationResult.titular?.nombre,
-        errorMessage: validationResult.valida ? undefined : validationResult.motivo_rechazo
+        accountHolder: validationResult.titular?.nombre
       };
+
+      if (!validationResult.valida) {
+        result.errorMessage = validationResult.motivo_rechazo;
+      }
+
+      return result;
 
     } catch (error) {
       logger.error('Error validando cuenta BCI', { error: error instanceof Error ? error.message : String(error) });

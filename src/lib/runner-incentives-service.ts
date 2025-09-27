@@ -378,15 +378,15 @@ export class RunnerIncentivesService {
         incentiveRuleId: incentive.incentiveRuleId,
         status: incentive.status,
         earnedAt: incentive.earnedAt,
-        grantedAt: incentive.grantedAt ?? undefined,
-        claimedAt: incentive.claimedAt ?? undefined,
-        expiresAt: incentive.expiresAt ?? undefined,
+        ...(incentive.grantedAt && { grantedAt: incentive.grantedAt }),
+        ...(incentive.claimedAt && { claimedAt: incentive.claimedAt }),
+        ...(incentive.expiresAt && { expiresAt: incentive.expiresAt }),
         achievementData: incentive.achievementData as unknown as RunnerIncentive['achievementData'],
         rewardsGranted: incentive.rewardsGranted as unknown as RunnerIncentive['rewardsGranted'],
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
-        approvedBy: incentive.approvedBy ?? undefined,
-        notes: incentive.notes ?? undefined
+        ...(incentive.approvedBy && { approvedBy: incentive.approvedBy }),
+        ...(incentive.notes && { notes: incentive.notes })
       }));
 
     } catch (error) {
@@ -644,15 +644,15 @@ export class RunnerIncentivesService {
         incentiveRuleId: incentive.incentiveRuleId,
         status: incentive.status,
         earnedAt: incentive.earnedAt,
-        grantedAt: incentive.grantedAt ?? undefined,
-        claimedAt: incentive.claimedAt ?? undefined,
-        expiresAt: incentive.expiresAt ?? undefined,
+        ...(incentive.grantedAt && { grantedAt: incentive.grantedAt }),
+        ...(incentive.claimedAt && { claimedAt: incentive.claimedAt }),
+        ...(incentive.expiresAt && { expiresAt: incentive.expiresAt }),
         achievementData: incentive.achievementData as unknown as RunnerIncentive['achievementData'],
         rewardsGranted: incentive.rewardsGranted as unknown as RunnerIncentive['rewardsGranted'],
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
-        approvedBy: incentive.approvedBy ?? undefined,
-        notes: incentive.notes ?? undefined
+        ...(incentive.approvedBy && { approvedBy: incentive.approvedBy }),
+        ...(incentive.notes && { notes: incentive.notes })
       };
 
     } catch (error) {

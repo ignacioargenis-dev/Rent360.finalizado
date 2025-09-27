@@ -170,12 +170,21 @@ export class BancoEstadoIntegration extends BaseBankIntegration {
 
       const validationResult = await response.json();
 
-      return {
+      const result: {
+        isValid: boolean;
+        accountHolder?: string;
+        errorMessage?: string;
+      } = {
         ...validation,
         isValid: validationResult.esValida,
-        accountHolder: validationResult.nombreTitular,
-        errorMessage: validationResult.esValida ? undefined : validationResult.mensajeError || 'Cuenta no válida'
+        accountHolder: validationResult.nombreTitular
       };
+
+      if (!validationResult.esValida) {
+        result.errorMessage = validationResult.mensajeError || 'Cuenta no válida';
+      }
+
+      return result;
 
     } catch (error) {
       logger.error('Error validando cuenta Banco Estado', { error: error instanceof Error ? error.message : String(error) });

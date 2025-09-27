@@ -210,23 +210,36 @@ export function validateRutRealtime(rut: string): {
       suggestion?: string;
     } = {
       isValid: result.isValid,
-      isComplete: true,
-      suggestion: result.isValid ? formatRut(clean) : undefined
+      isComplete: true
     };
 
     if (result.error) {
       response.error = result.error;
     }
 
+    if (result.isValid) {
+      response.suggestion = formatRut(clean);
+    }
+
     return response;
   }
 
   // RUT en proceso de escritura
-  return {
+  const response: {
+    isValid: boolean;
+    isComplete: boolean;
+    error?: string;
+    suggestion?: string;
+  } = {
     isValid: false,
-    isComplete: false,
-    suggestion: clean.length > 1 ? formatRut(clean + '0') : undefined // Sugerencia temporal
+    isComplete: false
   };
+
+  if (clean.length > 1) {
+    response.suggestion = formatRut(clean + '0'); // Sugerencia temporal
+  }
+
+  return response;
 }
 
 /**

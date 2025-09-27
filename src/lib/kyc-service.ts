@@ -412,17 +412,21 @@ export class KYCService {
       const result = {
         approved,
         confidence,
-        extractedData: approved ? {
-          documentNumber: '12.345.678-9',
-          firstName: 'Juan',
-          lastName: 'Pérez',
-          dateOfBirth: '1990-01-01',
-          expiryDate: '2030-01-01'
-        } : undefined,
-        issues: approved ? undefined : [
-          'Documento borroso',
-          'Información no legible'
-        ]
+        ...(approved ? {
+          extractedData: {
+            documentNumber: '12.345.678-9',
+            firstName: 'Juan',
+            lastName: 'Pérez',
+            dateOfBirth: '1990-01-01',
+            expiryDate: '2030-01-01'
+          },
+          issues: undefined
+        } : {
+          issues: [
+            'Documento borroso',
+            'Información no legible'
+          ]
+        })
       };
 
       logger.info('Documento verificado', {
@@ -464,14 +468,21 @@ export class KYCService {
       const verified = Math.random() > 0.15; // 85% verificación exitosa
       const confidence = verified ? 0.8 + Math.random() * 0.15 : 0.4 + Math.random() * 0.3;
 
-      const result = {
+      const result: {
+        verified: boolean;
+        confidence: number;
+        suggestions?: string[];
+      } = {
         verified,
-        confidence,
-        suggestions: verified ? undefined : [
+        confidence
+      };
+
+      if (!verified) {
+        result.suggestions = [
           'Verificar código postal',
           'Confirmar nombre de calle'
-        ]
-      };
+        ];
+      }
 
       logger.info('Dirección verificada', {
         userId,
