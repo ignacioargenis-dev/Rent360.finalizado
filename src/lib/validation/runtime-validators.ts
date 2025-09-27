@@ -350,7 +350,7 @@ export function validateData<T>(
 
     logger.info('Data validation successful', {
       context: `${context}.success`,
-      dataType: schema._def.typeName,
+      schemaType: schema.constructor.name,
     });
 
     return result;
