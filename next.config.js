@@ -19,6 +19,10 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
   },
+  // Forzar renderizado dinámico para páginas que usan APIs del cliente
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
   // Optimizaciones de build
   output: 'standalone',
   poweredByHeader: false,

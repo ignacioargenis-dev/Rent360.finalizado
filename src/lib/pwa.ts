@@ -55,42 +55,60 @@ class PWAService {
   }
 
   private checkInstallation() {
-    // Verificar si la app está en modo standalone (instalada)
-    this.isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                      (window.navigator as any).standalone === true;
-    
-    // Verificar si está en la pantalla de inicio
-    if ('getInstalledRelatedApps' in navigator) {
-      (navigator as any).getInstalledRelatedApps().then((apps: any[]) => {
-        this.isInstalled = apps.length > 0;
-      });
+    if (typeof window === 'undefined') return;
+
+    try {
+      // Verificar si la app está en modo standalone (instalada)
+      this.isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                        (window.navigator as any).standalone === true;
+
+      // Verificar si está en la pantalla de inicio
+      if ('getInstalledRelatedApps' in navigator) {
+        (navigator as any).getInstalledRelatedApps().then((apps: any[]) => {
+          this.isInstalled = apps.length > 0;
+        });
+      }
+    } catch (error) {
+      this.isInstalled = false;
     }
   }
 
   private listenForInstallPrompt() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e as any;
-      this.dispatchEvent('pwa-install-available');
-    });
+    if (typeof window === 'undefined') return;
 
-    window.addEventListener('appinstalled', () => {
-      this.isInstalled = true;
-      this.deferredPrompt = null;
-      this.dispatchEvent('pwa-installed');
-    });
+    try {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferredPrompt = e as any;
+        this.dispatchEvent('pwa-install-available');
+      });
+
+      window.addEventListener('appinstalled', () => {
+        this.isInstalled = true;
+        this.deferredPrompt = null;
+        this.dispatchEvent('pwa-installed');
+      });
+    } catch (error) {
+      // Ignore errors in SSR
+    }
   }
 
   private listenForConnectivityChanges() {
-    window.addEventListener('online', () => {
-      this.isOnline = true;
-      this.dispatchEvent('pwa-online');
-    });
+    if (typeof window === 'undefined') return;
 
-    window.addEventListener('offline', () => {
-      this.isOnline = false;
-      this.dispatchEvent('pwa-offline');
-    });
+    try {
+      window.addEventListener('online', () => {
+        this.isOnline = true;
+        this.dispatchEvent('pwa-online');
+      });
+
+      window.addEventListener('offline', () => {
+        this.isOnline = false;
+        this.dispatchEvent('pwa-offline');
+      });
+    } catch (error) {
+      // Ignore errors in SSR
+    }
   }
 
   private async registerServiceWorker() {
@@ -199,16 +217,34 @@ class PWAService {
 
   // Eventos personalizados
   private dispatchEvent(eventName: string, detail?: any) {
-    const event = new CustomEvent(eventName, { detail });
-    window.dispatchEvent(event);
+    if (typeof window === 'undefined') return;
+
+    try {
+      const event = new CustomEvent(eventName, { detail });
+      window.dispatchEvent(event);
+    } catch (error) {
+      // Ignore errors in SSR
+    }
   }
 
   public on(eventName: string, callback: (event: CustomEvent) => void) {
-    window.addEventListener(eventName, callback as EventListener);
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.addEventListener(eventName, callback as EventListener);
+    } catch (error) {
+      // Ignore errors in SSR
+    }
   }
 
   public off(eventName: string, callback: (event: CustomEvent) => void) {
-    window.removeEventListener(eventName, callback as EventListener);
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.removeEventListener(eventName, callback as EventListener);
+    } catch (error) {
+      // Ignore errors in SSR
+    }
   }
 
   // Métodos de utilidad

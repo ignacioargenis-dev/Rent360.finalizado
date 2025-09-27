@@ -32,11 +32,14 @@ import {
   Wifi,
   Star
 } from 'lucide-react';
-import Chatbot from '@/components/ai/Chatbot';
-import PredictiveAnalytics from '@/components/analytics/PredictiveAnalytics';
+import dynamic from 'next/dynamic';
 import { usePWA } from '@/lib/pwa';
 import { useRecommendations } from '@/lib/recommendations';
 import { useNotifications } from '@/lib/notifications';
+
+// Dynamic imports para componentes que acceden a window APIs
+const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), { ssr: false });
+const PredictiveAnalytics = dynamic(() => import('@/components/analytics/PredictiveAnalytics'), { ssr: false });
 
 export default function DemoFase1Page() {
   const [activeTab, setActiveTab] = useState('overview');
