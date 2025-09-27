@@ -41,8 +41,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "services/**/*.ts",
-    "tests/**/*.ts"
+    "services/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -52,7 +51,8 @@
     "coverage",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "services/"
+    "services/",
+    "tests/"
   ],
   "ts-node": {
     "esm": true,
