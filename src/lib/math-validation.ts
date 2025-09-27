@@ -25,7 +25,7 @@ export interface ValidationResult {
   actual: number;
   difference: number;
   tolerance: number;
-  error?: string | undefined;
+  error?: string;
 }
 
 /**

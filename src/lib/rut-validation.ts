@@ -203,12 +203,22 @@ export function validateRutRealtime(rut: string): {
   // Si tiene dígito verificador, validar completo
   if (clean.length >= 2) {
     const result = validateRut(clean);
-    return {
+    const response: {
+      isValid: boolean;
+      isComplete: boolean;
+      error?: string;
+      suggestion?: string;
+    } = {
       isValid: result.isValid,
       isComplete: true,
-      error: result.error,
       suggestion: result.isValid ? formatRut(clean) : undefined
     };
+
+    if (result.error) {
+      response.error = result.error;
+    }
+
+    return response;
   }
 
   // RUT en proceso de escritura

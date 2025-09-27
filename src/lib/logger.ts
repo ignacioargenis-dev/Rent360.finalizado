@@ -58,7 +58,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   data?: Record<string, any> | undefined;
-  error?: string | undefined;
+  error?: string;
   userId?: string | undefined;
   requestId?: string | undefined;
   correlationId?: string | undefined;

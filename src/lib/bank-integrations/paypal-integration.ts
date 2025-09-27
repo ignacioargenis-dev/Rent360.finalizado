@@ -374,7 +374,7 @@ export class PayPalIntegration extends BaseBankIntegration {
     success: boolean;
     orderId?: string | undefined;
     approvalUrl?: string | undefined;
-    error?: string | undefined;
+    error?: string;
   }> {
     try {
       await this.initialize();
@@ -427,9 +427,9 @@ export class PayPalIntegration extends BaseBankIntegration {
    */
   async capturePayPalOrder(orderId: string): Promise<{
     success: boolean;
-    transactionId?: string | undefined;
+    transactionId?: string;
     amount?: number;
-    error?: string | undefined;
+    error?: string;
   }> {
     try {
       await this.initialize();
@@ -495,7 +495,7 @@ export class PayPalIntegration extends BaseBankIntegration {
     success: boolean;
     batchId?: string | undefined;
     approvalUrl?: string | undefined;
-    error?: string | undefined;
+    error?: string;
   }> {
     try {
       await this.initialize();

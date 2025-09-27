@@ -47,7 +47,7 @@ export enum PaymentStatus {
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: string | undefined;
+  error?: string;
   message?: string | undefined;
   pagination?: {
     page: number;
@@ -127,7 +127,7 @@ export interface Payment {
   paidDate?: Date;
   status: PaymentStatus;
   method?: string | undefined;
-  transactionId?: string | undefined;
+  transactionId?: string;
   notes?: string | undefined;
   createdAt: Date;
   updatedAt: Date;
@@ -137,7 +137,7 @@ export interface Payment {
 export interface ServiceResult<T = any> {
   success: boolean;
   data?: T;
-  error?: string | undefined;
+  error?: string;
   message?: string | undefined;
 }
 
@@ -151,7 +151,7 @@ export interface FileUploadResult {
   success: boolean;
     fileId?: string | undefined;
   url?: string | undefined;
-  error?: string | undefined;
+  error?: string;
 }
 
 // Tipos para notificaciones

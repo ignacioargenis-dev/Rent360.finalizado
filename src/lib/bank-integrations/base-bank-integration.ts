@@ -8,7 +8,7 @@ import { DatabaseError, BusinessLogicError } from '../errors';
  */
 export interface BankTransactionResult {
   success: boolean;
-  transactionId?: string | undefined;
+  transactionId?: string;
   externalReference?: string | undefined;
   amount: number;
   currency: string;
@@ -233,7 +233,7 @@ export abstract class BaseBankIntegration {
     success: boolean;
     status: number;
     data?: any;
-    error?: string | undefined;
+    error?: string;
   }> {
     // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));

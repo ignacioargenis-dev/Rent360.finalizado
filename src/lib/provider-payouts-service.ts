@@ -303,7 +303,7 @@ export class ProviderPayoutsService {
   static async processProviderPayout(
     payout: ProviderPayoutCalculation,
     adminUserId: string
-  ): Promise<{ success: boolean; error?: string | undefined }> {
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // Verificar cuenta bancaria del proveedor
       let bankAccount;
@@ -377,7 +377,7 @@ export class ProviderPayoutsService {
   static async approveProviderPayout(
     transactionId: string,
     adminUserId: string
-  ): Promise<{ success: boolean; error?: string | undefined }> {
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const transaction = await db.providerTransaction.findUnique({
         where: { id: transactionId },
@@ -465,8 +465,8 @@ export class ProviderPayoutsService {
 
   private static async simulatePaymentProcessing(transaction: any): Promise<{
     success: boolean;
-    transactionId?: string | undefined;
-    error?: string | undefined;
+    transactionId?: string;
+    error?: string;
   }> {
     try {
       // Simulación de procesamiento bancario

@@ -16,7 +16,7 @@ export interface BankTransferRequest {
 
 export interface BankTransferResponse {
   success: boolean;
-  transactionId?: string | undefined;
+  transactionId?: string;
   status?: 'PENDING' | 'COMPLETED' | 'FAILED' | undefined;
   errorMessage?: string | undefined;
   trackingCode?: string | undefined;

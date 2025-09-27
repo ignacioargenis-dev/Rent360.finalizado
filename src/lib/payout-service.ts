@@ -909,7 +909,7 @@ export class PayoutService {
   private static async processPayment(
     payout: PayoutCalculation,
     paymentMethod: PaymentMethod
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     try {
       // Aquí iría la integración real con proveedores de pago
       switch (paymentMethod.type) {
@@ -936,7 +936,7 @@ export class PayoutService {
   private static async processBankTransfer(
     payout: PayoutCalculation,
     paymentMethod: PaymentMethod
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     // Simulación de procesamiento bancario
     logger.info('Procesando transferencia bancaria', {
       recipientId: payout.recipientId,
@@ -969,7 +969,7 @@ export class PayoutService {
   private static async processPayPalTransfer(
     payout: PayoutCalculation,
     paymentMethod: PaymentMethod
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     // Simulación de procesamiento PayPal
     logger.info('Procesando pago PayPal', {
       recipientId: payout.recipientId,
@@ -991,7 +991,7 @@ export class PayoutService {
   private static async processStripeTransfer(
     payout: PayoutCalculation,
     paymentMethod: PaymentMethod
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     // Simulación de procesamiento Stripe
     logger.info('Procesando pago Stripe', {
       recipientId: payout.recipientId,
@@ -1298,7 +1298,7 @@ export class RunnerPayoutService {
   static async processRunnerPayout(
     payout: PayoutCalculation,
     adminUserId: string
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     try {
       // Validar que el runner tenga cuenta bancaria verificada
       if (this.config.requireBankVerification) {
@@ -1379,7 +1379,7 @@ export class RunnerPayoutService {
   static async approveRunnerPayout(
     transactionId: string,
     adminUserId: string
-  ): Promise<{ success: boolean; error?: string | undefined }> {
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const transaction = await db.providerTransaction.findUnique({
         where: { id: transactionId },
@@ -1465,7 +1465,7 @@ export class RunnerPayoutService {
    */
   private static async processPayment(
     transaction: any
-  ): Promise<{ success: boolean; transactionId?: string | undefined; error?: string | undefined }> {
+  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
     // Simular procesamiento de pago
     await new Promise(resolve => setTimeout(resolve, 1000));
 

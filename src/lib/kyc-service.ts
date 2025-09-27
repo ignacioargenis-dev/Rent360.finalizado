@@ -120,7 +120,7 @@ export class KYCService {
     level: KYCLevel = KYCLevel.BASIC
   ): Promise<{
     success: boolean;
-    error?: string | undefined;
+    error?: string;
     sessionId?: string | undefined;
     requirements?: string[] | undefined;
     expiresAt?: Date | undefined;
