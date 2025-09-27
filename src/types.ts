@@ -27,7 +27,7 @@ export type {
 } from '@prisma/client';
 
 // Import explícito para resolver referencias circulares
-import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser, Payment as PrismaPayment, Ticket as PrismaTicket, Maintenance as PrismaMaintenance, TicketComment as PrismaTicketComment } from '@prisma/client';
+import type { Contract as PrismaContract, Property as PrismaProperty, User as PrismaUser, Payment as PrismaPayment, Ticket as PrismaTicket, Maintenance as PrismaMaintenance, TicketComment as PrismaTicketComment, MaintenanceProvider as PrismaMaintenanceProvider } from '@prisma/client';
 
 // Definir enums locales ya que no están disponibles en @prisma/client
 export enum PropertyStatus {
@@ -238,7 +238,7 @@ export interface TicketWithDetails extends PrismaTicket {
 export interface MaintenanceWithDetails extends PrismaMaintenance {
   property: PrismaProperty;
   assignee?: PrismaUser;
-  provider?: MaintenanceProvider;
+  provider?: PrismaMaintenanceProvider;
 }
 
 // Tipos para formularios
