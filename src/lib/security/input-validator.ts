@@ -227,8 +227,21 @@ export function validateEmailSecurity(email: string): { isValid: boolean; error?
     }
   }
 
-  // Verificar longitud de partes
-  const [localPart, domainPart] = sanitizedEmail.split('@');
+  // Verificar que tenga exactamente una @ y dividir en partes
+  const parts = sanitizedEmail.split('@');
+  if (parts.length !== 2) {
+    return { isValid: false, error: 'Email must contain exactly one @ character' };
+  }
+
+  const [localPart, domainPart] = parts;
+
+  if (!localPart || localPart.length === 0) {
+    return { isValid: false, error: 'Local part of email cannot be empty' };
+  }
+
+  if (!domainPart || domainPart.length === 0) {
+    return { isValid: false, error: 'Domain part of email cannot be empty' };
+  }
 
   if (localPart.length > 64) { // RFC 5321
     return { isValid: false, error: 'Local part of email is too long' };
