@@ -116,7 +116,7 @@ export async function middleware(request: NextRequest) {
     // Content Security Policy (CSP) restrictivo
     const csp = [
       "default-src 'self'",
-      "script-src 'self' https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com",
+      "script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.googleusercontent.com https://*.stripe.com https://ui-avatars.com",
