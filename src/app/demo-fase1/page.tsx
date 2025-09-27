@@ -31,14 +31,14 @@ import {
 import { usePWA } from '@/lib/pwa';
 import { useRecommendations } from '@/lib/recommendations';
 import { useNotifications } from '@/lib/notifications';
-import dynamic from 'next/dynamic';
+import { default as DynamicImport } from 'next/dynamic';
 
 // Forzar renderizado dinámico para evitar errores de prerendering con hooks del cliente
 export const dynamic = 'force-dynamic';
 
 // Dynamic imports para componentes que acceden a window APIs
-const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), { ssr: false });
-const PredictiveAnalytics = dynamic(() => import('@/components/analytics/PredictiveAnalytics'), { ssr: false });
+const Chatbot = DynamicImport(() => import('@/components/ai/Chatbot'), { ssr: false });
+const PredictiveAnalytics = DynamicImport(() => import('@/components/analytics/PredictiveAnalytics'), { ssr: false });
 
 export default function DemoFase1Page() {
   const [activeTab, setActiveTab] = useState('overview');
