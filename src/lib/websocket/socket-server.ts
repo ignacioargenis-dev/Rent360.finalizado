@@ -1,5 +1,5 @@
 import { Server as HTTPServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import { logger } from '../logger';
 import jwt from 'jsonwebtoken';
 
