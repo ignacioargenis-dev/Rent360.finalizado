@@ -4,40 +4,36 @@ import * as bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
 // JWT Secrets - Obligatorios en producción
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'development-jwt-secret-key-minimum-32-chars-for-testing-only';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'development-jwt-refresh-secret-key-minimum-32-chars-for-testing-only';
 
-// Validar que los secrets existen
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET es obligatorio. Configure la variable de entorno JWT_SECRET.');
-}
+// Validar que los secrets existen (solo en producción)
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET es obligatorio en producción. Configure la variable de entorno JWT_SECRET.');
+  }
 
-if (!JWT_REFRESH_SECRET) {
-  throw new Error('JWT_REFRESH_SECRET es obligatorio. Configure la variable de entorno JWT_REFRESH_SECRET.');
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET es obligatorio en producción. Configure la variable de entorno JWT_REFRESH_SECRET.');
+  }
 }
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
-// Validar configuración de JWT
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET es obligatorio. Configure la variable de entorno JWT_SECRET.');
-}
+// Validar configuración de JWT (solo en producción)
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET debe tener al menos 32 caracteres por seguridad en producción');
+  }
 
-if (!JWT_REFRESH_SECRET) {
-  throw new Error('JWT_REFRESH_SECRET es obligatorio. Configure la variable de entorno JWT_REFRESH_SECRET.');
-}
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
+    throw new Error('JWT_REFRESH_SECRET debe tener al menos 32 caracteres por seguridad en producción');
+  }
 
-if (JWT_SECRET.length < 32) {
-  throw new Error('JWT_SECRET debe tener al menos 32 caracteres por seguridad');
-}
-
-if (JWT_REFRESH_SECRET.length < 32) {
-  throw new Error('JWT_REFRESH_SECRET debe tener al menos 32 caracteres por seguridad');
-}
-
-// Validar que los secretos no sean idénticos
-if (JWT_SECRET === JWT_REFRESH_SECRET) {
-  throw new Error('JWT_SECRET y JWT_REFRESH_SECRET no pueden ser idénticos');
+  // Validar que los secretos no sean idénticos
+  if (process.env.JWT_SECRET === process.env.JWT_REFRESH_SECRET) {
+    throw new Error('JWT_SECRET y JWT_REFRESH_SECRET no pueden ser idénticos');
+  }
 }
 
 export async function hashPassword(password: string): Promise<string> {

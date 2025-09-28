@@ -152,11 +152,5 @@
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
-  "handle_links": "preferred",
-  "protocol_handlers": [
-    {
-      "protocol": "web+rent360",
-      "url": "/?property=%s"
-    }
-  ]
+  "handle_links": "preferred"
 }
