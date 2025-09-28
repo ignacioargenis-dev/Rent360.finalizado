@@ -28,7 +28,15 @@ const propertySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Intentar obtener usuario autenticado, pero permitir búsquedas públicas
+    let user = null;
+    try {
+      user = await requireAuth(request);
+    } catch (error) {
+      // Usuario no autenticado - permitir solo búsqueda de propiedades disponibles
+      user = null;
+    }
+
     const startTime = Date.now();
     
     // Obtener parámetros de consulta
@@ -102,8 +110,11 @@ export async function GET(request: NextRequest) {
       ];
     }
     
-    // Si no es admin, aplicar filtros según el rol
-    if (user.role !== UserRole.ADMIN) {
+    // Aplicar filtros según autenticación y rol
+    if (!user) {
+      // Usuario no autenticado - solo propiedades disponibles
+      where.status = PropertyStatus.AVAILABLE;
+    } else if (user.role !== UserRole.ADMIN) {
       switch (user.role) {
         case UserRole.OWNER:
           where.ownerId = user.id;
@@ -167,14 +178,15 @@ export async function GET(request: NextRequest) {
       take: limit,
       cache: true,
       cacheTTL: 300, // 5 minutos
-      cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: user.id, role: user.role })}`,
+      cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: user?.id || 'anonymous', role: user?.role || 'anonymous' })}`,
     });
     
     const duration = Date.now() - startTime;
     
     logger.info('Consulta de propiedades optimizada', {
-      userId: user.id,
-      role: user.role,
+      userId: user?.id || 'anonymous',
+      role: user?.role || 'anonymous',
+      authenticated: !!user,
       duration,
       filters: { status, type, city, commune, search },
       resultCount: Array.isArray(result) ? result.length : 0,

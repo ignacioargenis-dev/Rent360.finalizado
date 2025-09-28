@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Building, EyeOff, Eye, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
@@ -72,15 +73,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-600">
-            <Building className="h-8 w-8 text-white" />
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary">
+            <Building className="h-8 w-8 text-primary-foreground" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Iniciar Sesión
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             ¿No tienes una cuenta?{' '}
-            <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/auth/register" className="font-medium text-primary hover:text-primary/80">
               Regístrate aquí
             </Link>
           </p>
@@ -92,7 +93,7 @@ export default function LoginPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -100,17 +101,16 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="tu@email.com"
               />
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Contraseña
               </label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
@@ -118,8 +118,8 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="••••••••"
+                  className="pr-10"
                 />
                 <button
                   type="button"
