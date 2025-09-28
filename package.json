@@ -22,6 +22,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx scripts/seed-users.ts",
+    "db:init": "node init-db.js",
     "backup": "tsx scripts/backup.js",
     "code-analysis": "node scripts/code-analysis.js",
     "init-notifications": "node scripts/init-notifications.js",

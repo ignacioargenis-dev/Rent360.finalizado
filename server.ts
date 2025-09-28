@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import next from 'next';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { logger } from '@/lib/logger';
 
 const dev = process.env.NODE_ENV !== 'production';
 const currentPort = process.env.PORT ? parseInt(process.env.PORT) : 3000;
@@ -73,6 +74,7 @@ async function createCustomServer() {
             res.end(file);
             return;
           } catch (error) {
+            logger?.error('Error serving static file:', { url, error: error instanceof Error ? error.message : String(error) });
             // File not found, let Next.js handle it
           }
         }
