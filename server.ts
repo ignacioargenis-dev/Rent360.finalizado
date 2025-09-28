@@ -1,4 +1,4 @@
-// server.ts - Next.js Standalone + Socket.IO
+// server.ts - Next.js Custom Server with Socket.IO
 import { websocketServer } from '@/lib/websocket/socket-server';
 import { createServer } from 'http';
 import { Server } from 'socket.io';

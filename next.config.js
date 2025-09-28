@@ -23,8 +23,8 @@ const nextConfig = {
   generateBuildId: async () => {
     return 'build-' + Date.now()
   },
-  // Optimizaciones de build
-  output: 'standalone',
+  // Optimizaciones de build - Usar servidor personalizado
+  // output: 'standalone', // Deshabilitado para usar servidor personalizado con Socket.IO
   poweredByHeader: false,
   webpack: (config, { isServer }) => {
     // Fix for node modules in client-side code
