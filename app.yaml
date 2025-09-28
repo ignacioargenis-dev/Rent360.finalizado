@@ -16,6 +16,17 @@ services:
     value: production
   - key: NEXT_TELEMETRY_DISABLED
     value: "1"
+  # Variables de entorno críticas para la aplicación
+  - key: DATABASE_URL
+    value: "${rent360-db.DATABASE_URL}"
+  - key: JWT_SECRET
+    value: "your-production-jwt-secret-key-minimum-32-chars-change-this-in-production"
+  - key: JWT_REFRESH_SECRET
+    value: "your-production-jwt-refresh-secret-key-minimum-32-chars-change-this-in-production"
+  - key: NEXTAUTH_SECRET
+    value: "your-production-nextauth-secret-key-change-this-in-production"
+  - key: PORT
+    value: "3000"
   health_check:
     http_path: /api/health
   internal_ports:

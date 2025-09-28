@@ -21,10 +21,8 @@ const STATIC_ASSETS = [
 // APIs que deben cachearse para funcionamiento offline
 const API_CACHE_PATTERNS = [
   '/api/health',
-  // Removidas APIs que requieren autenticación para evitar errores 401/500
-  // '/api/auth/me',
-  // '/api/properties',
-  // '/api/user/profile',
+  // APIs públicas que no requieren autenticación
+  '/api/properties?status=AVAILABLE', // Solo propiedades disponibles
 ];
 
 // Recursos que no deben cachearse
@@ -41,9 +39,7 @@ const CACHE_CONFIG = {
   maxEntries: 100,
   strategies: {
     networkFirst: ['/api/health'],
-    // Removidas estrategias para APIs que requieren autenticación
-    // networkFirst: ['/api/health', '/api/auth/me'],
-    // cacheFirst: ['/api/properties', '/static/'],
+    cacheFirst: ['/api/properties?status=AVAILABLE'],
     staleWhileRevalidate: ['/_next/static/'],
   },
 };

@@ -315,9 +315,53 @@ export function useServiceWorker() {
   }, []);
 
   const registerServiceWorker = async () => {
-    // Temporalmente deshabilitado para evitar errores con APIs que requieren autenticación
-    logger.info('Service Worker registration disabled to prevent API errors');
-    setIsSupported(false); // Indicar que no está soportado para evitar confusiones
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+
+      logger.info('Service Worker registrado:', { scope: registration.scope });
+
+      setIsRegistered(true);
+
+      // Verificar si hay actualización disponible
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              setUpdateAvailable(true);
+            }
+          });
+        }
+      });
+
+      // Verificar estado del service worker
+      if (navigator.serviceWorker.controller) {
+        setIsActive(true);
+      } else {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          setIsActive(true);
+        });
+      }
+
+      // Escuchar mensajes del service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        const { type, data } = event.data;
+
+        switch (type) {
+          case 'SYNC_COMPLETED':
+            logger.info('Sincronización completada:', { data });
+            break;
+          case 'SYNC_FAILED':
+            logger.error('Sincronización fallida:', { data });
+            break;
+          default:
+            logger.debug('Mensaje del Service Worker:', { type, data });
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error registrando Service Worker:', { error: error instanceof Error ? error.message : String(error) });
+    }
   };
 
   const updateServiceWorker = () => {

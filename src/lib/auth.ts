@@ -4,18 +4,16 @@ import * as bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
 // JWT Secrets - Obligatorios en producción
-const JWT_SECRET = process.env.JWT_SECRET || 'development-jwt-secret-key-minimum-32-chars-for-testing-only';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'development-jwt-refresh-secret-key-minimum-32-chars-for-testing-only';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
-// Validar que los secrets existen (solo en producción)
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET es obligatorio en producción. Configure la variable de entorno JWT_SECRET.');
-  }
+// Validar que los secrets existen
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET es obligatorio. Configure la variable de entorno JWT_SECRET.');
+}
 
-  if (!process.env.JWT_REFRESH_SECRET) {
-    throw new Error('JWT_REFRESH_SECRET es obligatorio en producción. Configure la variable de entorno JWT_REFRESH_SECRET.');
-  }
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET es obligatorio. Configure la variable de entorno JWT_REFRESH_SECRET.');
 }
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
