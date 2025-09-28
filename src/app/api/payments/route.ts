@@ -29,7 +29,22 @@ const updatePaymentSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Intentar obtener usuario autenticado
+    let user = null;
+    try {
+      user = await requireAuth(request);
+    } catch (error) {
+      // Usuario no autenticado - devolver respuesta vacía
+      return NextResponse.json({
+        payments: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+        message: 'Usuario no autenticado'
+      });
+    }
+
     const startTime = Date.now();
     
     // Obtener parámetros de consulta
