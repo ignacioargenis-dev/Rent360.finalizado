@@ -3,13 +3,34 @@ import { logger } from '@/lib/logger';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
+  // API públicas
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/verify-email',
   '/api/health',
-  '/api/monitoring/health'
+  '/api/monitoring/health',
+
+  // Páginas públicas de marketing
+  '/',
+  '/about',
+  '/contact',
+  '/features',
+  '/demo-fase1',
+  '/offline',
+
+  // Páginas públicas de propiedades
+  '/properties/search',
+
+  // Rutas de internacionalización
+  '/[locale]',
+  '/[locale]/about',
+  '/[locale]/contact',
+  '/[locale]/features',
+  '/[locale]/demo-fase1',
+  '/[locale]/offline',
+  '/[locale]/properties/search'
 ];
 
 // Rutas que requieren roles específicos
