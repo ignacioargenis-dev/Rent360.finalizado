@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:all": "npm run build && npm run build:services",
-    "start": "NODE_ENV=production node server.js",
+    "start": "NODE_ENV=production npx tsx server.ts",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -135,6 +135,7 @@
     "vaul": "^1.1.2",
     "winston": "^3.17.0",
     "zod": "^3.25.76",
+    "tsx": "^4.6.2",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.4.31",
     "eslint": "^8.57.0",
@@ -164,7 +165,6 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "supertest": "^7.1.4",
-    "ts-jest": "^29.1.1",
-    "tsx": "^4.6.2"
+    "ts-jest": "^29.1.1"
   }
 }

@@ -52,14 +52,15 @@ RUN adduser --system --uid 1001 nextjs
 # Copiar archivos necesarios
 COPY --from=builder /app/public ./public
 
-# Copiar build optimizado
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copiar build optimizado (sin standalone)
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
-# Copiar archivos de configuración
+# Copiar archivos de configuración y servidor personalizado
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/server.js ./
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/scripts ./scripts/
+COPY --from=builder /app/src ./src/
 
 # Configurar permisos
 RUN chown -R nextjs:nodejs /app
