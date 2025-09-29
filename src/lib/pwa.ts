@@ -20,11 +20,13 @@ export interface PWAConfig {
 class PWAService {
   private deferredPrompt: PWAInstallPrompt | null = null;
   private isInstalled = false;
-  private isOnline = navigator.onLine;
+  private isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  private isInitialized = false;
   private config: PWAConfig = {
     name: 'Rent360 - Plataforma de Arrendamiento Inteligente',
     shortName: 'Rent360',
-    description: 'Plataforma completa de arrendamiento con gestión de propiedades, contratos, pagos y servicios de mantenimiento.',
+    description:
+      'Plataforma completa de arrendamiento con gestión de propiedades, contratos, pagos y servicios de mantenimiento.',
     themeColor: '#059669',
     backgroundColor: '#ffffff',
     display: 'standalone',
@@ -34,33 +36,37 @@ class PWAService {
   };
 
   constructor() {
-    this.initializePWA();
+    // No inicializar automáticamente para evitar problemas de SSR
+    // La inicialización se hará de forma lazy cuando se necesite
   }
 
   private initializePWA() {
     // Detectar si la PWA ya está instalada
     this.checkInstallation();
-    
+
     // Escuchar eventos de instalación
     this.listenForInstallPrompt();
-    
+
     // Escuchar cambios de conectividad
     this.listenForConnectivityChanges();
-    
+
     // Registrar service worker
     this.registerServiceWorker();
-    
+
     // Configurar cache offline
     this.setupOfflineCache();
   }
 
   private checkInstallation() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       // Verificar si la app está en modo standalone (instalada)
-      this.isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as any).standalone === true;
+      this.isInstalled =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true;
 
       // Verificar si está en la pantalla de inicio
       if ('getInstalledRelatedApps' in navigator) {
@@ -74,10 +80,12 @@ class PWAService {
   }
 
   private listenForInstallPrompt() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
-      window.addEventListener('beforeinstallprompt', (e) => {
+      window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         this.deferredPrompt = e as any;
         this.dispatchEvent('pwa-install-available');
@@ -94,7 +102,9 @@ class PWAService {
   }
 
   private listenForConnectivityChanges() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       window.addEventListener('online', () => {
@@ -112,14 +122,14 @@ class PWAService {
   }
 
   private async registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
         });
-        
+
         logger.info('Service Worker registrado:', { scope: registration.scope });
-        
+
         // Escuchar actualizaciones del service worker
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
@@ -131,14 +141,20 @@ class PWAService {
             });
           }
         });
-        
       } catch (error) {
-        logger.error('Error al registrar Service Worker:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error al registrar Service Worker:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   }
 
   private async setupOfflineCache() {
+    // Solo ejecutar en el navegador, no durante SSR
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Configurar cache para recursos críticos
     const criticalResources = [
       '/',
@@ -154,13 +170,23 @@ class PWAService {
         const cache = await caches.open('rent360-critical-v1');
         await cache.addAll(criticalResources);
       } catch (error) {
-        logger.error('Error al configurar cache offline:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error al configurar cache offline:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
+    }
+  }
+
+  private ensureInitialized() {
+    if (!this.isInitialized && typeof window !== 'undefined') {
+      this.isInitialized = true;
+      this.initializePWA();
     }
   }
 
   // Métodos públicos
   public async showInstallPrompt(): Promise<boolean> {
+    this.ensureInitialized();
     if (!this.deferredPrompt) {
       return false;
     }
@@ -169,28 +195,34 @@ class PWAService {
       this.deferredPrompt.prompt();
       const { outcome } = await this.deferredPrompt.userChoice;
       this.deferredPrompt = null;
-      
+
       return outcome === 'accepted';
     } catch (error) {
-      logger.error('Error al mostrar prompt de instalación:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error al mostrar prompt de instalación:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   }
 
   public canInstall(): boolean {
+    this.ensureInitialized();
     return this.deferredPrompt !== null && !this.isInstalled;
   }
 
   public isPWAInstalled(): boolean {
+    this.ensureInitialized();
     return this.isInstalled;
   }
 
   public isOnlineMode(): boolean {
+    this.ensureInitialized();
     return this.isOnline;
   }
 
   public async updateApp(): Promise<void> {
-    if ('serviceWorker' in navigator) {
+    this.ensureInitialized();
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration && registration.waiting) {
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -199,11 +231,10 @@ class PWAService {
   }
 
   public async clearCache(): Promise<void> {
-    if ('caches' in window) {
+    this.ensureInitialized();
+    if (typeof window !== 'undefined' && 'caches' in window) {
       const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames.map(cacheName => caches.delete(cacheName))
-      );
+      await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
     }
   }
 
@@ -217,7 +248,9 @@ class PWAService {
 
   // Eventos personalizados
   private dispatchEvent(eventName: string, detail?: any) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       const event = new CustomEvent(eventName, { detail });
@@ -228,7 +261,9 @@ class PWAService {
   }
 
   public on(eventName: string, callback: (event: CustomEvent) => void) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       window.addEventListener(eventName, callback as EventListener);
@@ -238,7 +273,9 @@ class PWAService {
   }
 
   public off(eventName: string, callback: (event: CustomEvent) => void) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       window.removeEventListener(eventName, callback as EventListener);
@@ -249,12 +286,15 @@ class PWAService {
 
   // Métodos de utilidad
   public async shareData(data: ShareData): Promise<boolean> {
-    if ('share' in navigator) {
+    this.ensureInitialized();
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share(data);
         return true;
       } catch (error) {
-        logger.error('Error al compartir:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error al compartir:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return false;
       }
     }
@@ -266,7 +306,9 @@ class PWAService {
       try {
         return await (navigator as any).getBattery();
       } catch (error) {
-        logger.error('Error al obtener información de batería:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error al obtener información de batería:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return null;
       }
     }
@@ -296,12 +338,19 @@ class PWAService {
   }
 
   public async sendNotification(title: string, options?: NotificationOptions): Promise<boolean> {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    this.ensureInitialized();
+    if (
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      Notification.permission === 'granted'
+    ) {
       try {
         new Notification(title, options);
         return true;
       } catch (error) {
-        logger.error('Error al enviar notificación:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error al enviar notificación:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         return false;
       }
     }
