@@ -61,18 +61,18 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 
 ### 4. Reemplazar Secrets en app.yaml
 
-**ANTES del deploy final**, edita `app.yaml` y reemplaza estos valores de ejemplo con tus propios secrets:
+**ANTES del deploy final**, edita `app.yaml` y reemplaza estos valores placeholder con tus propios secrets:
 
 ```yaml
 - key: JWT_SECRET
-  value: "a8f5c2e4b7d9e1f3c6a5b8d2e7f9c4a1b3e6d8f2c5a7e9b4d1f3c6a8e2b5d7"
+  value: "REPLACE_WITH_YOUR_OWN_JWT_SECRET_MIN_32_CHARS"
 - key: JWT_REFRESH_SECRET
-  value: "f2c8e5a1d4b7f9c3e6a2d5b8f1c4e7a9d2b5c8f3e1a4d7b9c2e5f8a3d6b1c4"
+  value: "REPLACE_WITH_YOUR_OWN_JWT_REFRESH_SECRET_MIN_32_CHARS"
 - key: NEXTAUTH_SECRET
-  value: "b9e3f7c2a5d8b1e4c7f2a9d5b8e1c4f7a2d5b8e3f6c1a4d7b2e5c8f3a6d9b4"
+  value: "REPLACE_WITH_YOUR_OWN_NEXTAUTH_SECRET_MIN_32_CHARS"
 ```
 
-**Reemplázalos con valores únicos que generes tú mismo.**
+**⚠️ CRÍTICO:** Genera valores únicos y seguros para cada secret (mínimo 32 caracteres hexadecimales).**
 
 ### 5. Configurar Base de Datos
 La base de datos PostgreSQL ya está configurada en tu App. Usa la variable:
@@ -80,7 +80,85 @@ La base de datos PostgreSQL ya está configurada en tu App. Usa la variable:
 DATABASE_URL="${rent360-db.DATABASE_URL}"
 ```
 
-### 5. Redeploy
+### 6. Solución de Problemas Comunes
+
+#### Error: "URL must start with postgresql://"
+**Problema:** La variable `DATABASE_URL` no se está configurando correctamente.
+
+**Solución paso a paso:**
+
+1. **Verificar Base de Datos:**
+   - Ve a https://cloud.digitalocean.com/
+   - Selecciona tu App de Rent360
+   - Ve a la sección "Databases"
+   - Verifica que tengas una base de datos PostgreSQL llamada "rent360-db"
+
+2. **Verificar Variables de Entorno:**
+   - En tu App, ve a "Environment Variables"
+   - Busca la variable `DATABASE_URL`
+   - Debería mostrar: `${rent360-db.DATABASE_URL}`
+
+3. **Obtener Información de la Base de Datos:**
+   - Ve a https://cloud.digitalocean.com/
+   - Selecciona "Databases" en el menú lateral
+   - Selecciona tu base de datos "rent360-db"
+   - Ve a la pestaña "Connection Details"
+   - Copia la información:
+     - Host/Endpoint
+     - Port (generalmente 25060 para DigitalOcean)
+     - Database name
+     - Username
+     - Password
+
+4. **Configurar Manualmente:**
+   Si la variable automática no funciona:
+   ```bash
+   DATABASE_URL="postgresql://username:password@host:port/database_name"
+   ```
+   Ejemplo real:
+   ```bash
+   DATABASE_URL="postgresql://rent360_user:secure_password@db-postgresql-nyc1-12345-do-user-123456-0.db.ondigitalocean.com:25060/rent360_prod"
+   ```
+
+#### Warnings de Metadata
+**Problema:** Warnings sobre `themeColor` y `viewport` en archivos que no deberían tenerlos.
+
+**Solución:** Estos warnings son normales y no afectan el funcionamiento. Puedes ignorarlos o:
+
+1. En DigitalOcean, ve a App Settings → Advanced → Build Settings
+2. Agrega esta variable de entorno:
+   ```
+   NEXT_DISABLE_METADATA_DEFAULTS=1
+   ```
+
+#### Error 500 en APIs
+**Problema:** APIs devolviendo error 500.
+
+**Solución:**
+1. Verifica que todas las variables de entorno estén configuradas
+2. Asegúrate de que la base de datos esté accesible
+3. Revisa los logs en DigitalOcean para errores específicos
+4. El endpoint `/api/health` debería funcionar correctamente
+
+### 7. Inicializar Base de Datos (Opcional)
+Si necesitas datos de prueba en producción:
+
+1. **Conecta a tu contenedor:**
+   ```bash
+   doctl compute ssh <droplet-id> --ssh-key-path ~/.ssh/id_rsa
+   ```
+
+2. **Ejecuta el script de inicialización:**
+   ```bash
+   cd /workspace
+   node init-production-db.js
+   ```
+
+3. **Verifica que se crearon los datos:**
+   - Ve a tu aplicación
+   - Intenta hacer login con: admin@rent360.cl / admin123456
+
+### 8. Redeploy
 Después de configurar las variables:
 1. Guarda los cambios
 2. DigitalOcean automáticamente hará un redeploy
