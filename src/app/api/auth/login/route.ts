@@ -2,22 +2,53 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validations';
 import { generateTokens, setAuthCookies, verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
+
+// Importar servicios con manejo de errores
+let auditService: any = null;
+let notificationService: any = null;
+
+try {
+  const { auditService: audit } = await import('@/lib/audit');
+  auditService = audit;
+  logger.info('Audit service loaded successfully');
+} catch (error) {
+  logger.warn('Audit service not available, continuing without audit logging', { error });
+}
+
+try {
+  const { notificationService: notifications } = await import('@/lib/notifications');
+  notificationService = notifications;
+  logger.info('Notification service loaded successfully');
+} catch (error) {
+  logger.warn('Notification service not available, continuing without notifications', { error });
+}
+
+// Importar apiWrapper para usar el wrapper robusto
+let apiWrapper: any = null;
+try {
+  const { apiWrapper: wrapper } = await import('@/lib/api-wrapper');
+  apiWrapper = wrapper;
+} catch (error) {
+  logger.warn('API wrapper not available, using direct handler', { error });
+}
 
 async function loginHandler(request: NextRequest) {
   let data: any;
   try {
-    console.log('🔐 Iniciando proceso de login');
+    const startTime = Date.now();
+    logger.info('Iniciando proceso de login', { timestamp: new Date().toISOString() });
 
     data = await request.json();
-    console.log('📧 Datos de login recibidos', { email: data.email });
+    logger.debug('Datos de login recibidos', { email: data.email });
 
     // Validar los datos de entrada
     const validatedData = loginSchema.parse(data);
-    console.log('✅ Datos de login validados exitosamente');
+    logger.debug('Datos de login validados exitosamente');
 
     const { email, password } = validatedData;
 
-    console.log('🔍 Buscando usuario en base de datos');
+    logger.debug('Buscando usuario en base de datos');
     
     // Usar Prisma para buscar usuario
     const user = await db.user.findUnique({
@@ -34,7 +65,18 @@ async function loginHandler(request: NextRequest) {
     });
     
     if (!user) {
-      console.warn('⚠️ Intento de login con usuario inexistente', { email });
+      logger.warn('Intento de login con usuario inexistente', { email });
+
+      // Registrar intento de login con usuario inexistente (si el servicio está disponible)
+      if (auditService) {
+        try {
+          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const userAgent = request.headers.get('user-agent') || 'unknown';
+          await auditService.logUnauthorizedAccess(null, 'login_user_not_found', 'user', clientIP, userAgent);
+        } catch (auditError) {
+          logger.warn('Error registrando auditoría de login fallido', { auditError });
+        }
+      }
 
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -44,7 +86,18 @@ async function loginHandler(request: NextRequest) {
 
     // Verificar si el usuario está activo
     if (!user.isActive) {
-      console.warn('⚠️ Intento de login con cuenta inactiva', { userId: user.id, email });
+      logger.warn('Intento de login con cuenta inactiva', { userId: user.id, email });
+
+      // Registrar intento de login con cuenta inactiva (si el servicio está disponible)
+      if (auditService) {
+        try {
+          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const userAgent = request.headers.get('user-agent') || 'unknown';
+          await auditService.logUnauthorizedAccess(user.id, 'login_account_inactive', 'user', clientIP, userAgent);
+        } catch (auditError) {
+          logger.warn('Error registrando auditoría de cuenta inactiva', { auditError });
+        }
+      }
 
       return NextResponse.json(
         { error: 'Tu cuenta ha sido desactivada' },
@@ -56,7 +109,18 @@ async function loginHandler(request: NextRequest) {
     const isPasswordValid = await verifyPassword(password, user.password);
 
     if (!isPasswordValid) {
-      console.warn('⚠️ Intento de login con contraseña incorrecta', { email });
+      logger.warn('Intento de login con contraseña incorrecta', { email });
+
+      // Registrar intento de login fallido (si el servicio está disponible)
+      if (auditService) {
+        try {
+          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const userAgent = request.headers.get('user-agent') || 'unknown';
+          await auditService.logUnauthorizedAccess(user.id, 'login_failed', 'user', clientIP, userAgent);
+        } catch (auditError) {
+          logger.warn('Error registrando auditoría de login fallido', { auditError });
+        }
+      }
 
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -68,7 +132,7 @@ async function loginHandler(request: NextRequest) {
     const role = user.role.toLowerCase();
 
     // Generar tokens
-    console.log('🔑 Generando tokens para usuario', { email });
+    logger.debug('Generando tokens para usuario', { email });
     const { accessToken, refreshToken } = generateTokens(
       user.id,
       user.email,
@@ -77,7 +141,6 @@ async function loginHandler(request: NextRequest) {
     );
 
     // Crear respuesta con cookies
-    console.log('✅ Login exitoso, creando respuesta');
     const response = NextResponse.json({
       message: 'Login exitoso',
       user: {
@@ -92,26 +155,74 @@ async function loginHandler(request: NextRequest) {
     // Establecer cookies HTTP-only
     setAuthCookies(response, accessToken, refreshToken);
 
-    console.log('🎉 Login completado exitosamente');
+    // Registrar evento de auditoría (si el servicio está disponible)
+    if (auditService) {
+      try {
+        const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+        const userAgent = request.headers.get('user-agent') || 'unknown';
+        await auditService.logLogin(user.id, clientIP, userAgent);
+      } catch (auditError) {
+        logger.warn('Error registrando auditoría de login exitoso', { auditError });
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    logger.info(
+      'Login exitoso',
+      {
+        userId: user.id,
+        userRole: role,
+        duration,
+      },
+    );
+
+    // Crear notificación de bienvenida (si el servicio está disponible)
+    if (notificationService) {
+      try {
+        await notificationService.createSmartNotification(
+          user.id,
+          'system_alert' as any,
+          {},
+          {
+            priority: 'high' as any,
+            personalization: {
+              action: 'login_success',
+              timestamp: new Date().toISOString(),
+            },
+          }
+        );
+      } catch (error) {
+        logger.warn('Error creando notificación de bienvenida', { error, userId: user.id });
+      }
+    }
 
     return response;
   } catch (error) {
-    console.error('❌ Error en login:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    // Re-throw para que el wrapper maneje los errores
+    throw error;
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    return await loginHandler(request);
-  } catch (error) {
-    console.error('❌ Error crítico en API de login:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+// Exportar con o sin apiWrapper según disponibilidad
+if (apiWrapper) {
+  export const POST = apiWrapper(
+    { POST: loginHandler },
+    {
+      enableAudit: true,
+      auditAction: 'user_login',
+      timeout: 30000 // 30 segundos timeout
+    }
+  );
+} else {
+  export async function POST(request: NextRequest) {
+    try {
+      return await loginHandler(request);
+    } catch (error) {
+      logger.error('Error crítico en API de login:', { error: error instanceof Error ? error.message : String(error) });
+      return NextResponse.json(
+        { error: 'Error interno del servidor' },
+        { status: 500 }
+      );
+    }
   }
 }
