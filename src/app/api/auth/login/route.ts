@@ -25,13 +25,7 @@ try {
 }
 
 // Importar apiWrapper para usar el wrapper robusto
-let apiWrapper: any = null;
-try {
-  const { apiWrapper: wrapper } = await import('@/lib/api-wrapper');
-  apiWrapper = wrapper;
-} catch (error) {
-  logger.warn('API wrapper not available, using direct handler', { error });
-}
+import { apiWrapper } from '@/lib/api-wrapper';
 
 async function loginHandler(request: NextRequest) {
   let data: any;
@@ -203,26 +197,11 @@ async function loginHandler(request: NextRequest) {
   }
 }
 
-// Exportar con o sin apiWrapper según disponibilidad
-if (apiWrapper) {
-  export const POST = apiWrapper(
-    { POST: loginHandler },
-    {
-      enableAudit: true,
-      auditAction: 'user_login',
-      timeout: 30000 // 30 segundos timeout
-    }
-  );
-} else {
-  export async function POST(request: NextRequest) {
-    try {
-      return await loginHandler(request);
-    } catch (error) {
-      logger.error('Error crítico en API de login:', { error: error instanceof Error ? error.message : String(error) });
-      return NextResponse.json(
-        { error: 'Error interno del servidor' },
-        { status: 500 }
-      );
-    }
+export const POST = apiWrapper(
+  { POST: loginHandler },
+  {
+    enableAudit: true,
+    auditAction: 'user_login',
+    timeout: 30000 // 30 segundos timeout
   }
-}
+);
