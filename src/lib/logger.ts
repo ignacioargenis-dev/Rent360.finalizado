@@ -493,7 +493,7 @@ class Logger {
 
   // Obtener métricas del sistema
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const memoryUsage = process.memoryUsage();
+    const memoryUsage = typeof process !== 'undefined' && process.memoryUsage ? process.memoryUsage() : { heapUsed: 0, heapTotal: 0, external: 0, rss: 0, arrayBuffers: 0 };
     const cacheMgr = await getCacheManager();
     const rateLimiterInstance = await getRateLimiter();
     const cacheStats = await cacheMgr.cacheManager.getStats();
@@ -558,7 +558,7 @@ class Logger {
       };
 
       const status = this.determineHealthStatus(checks);
-      const uptime = process.uptime();
+      const uptime = typeof process !== 'undefined' && process.uptime ? process.uptime() : 0;
 
       return { status, checks, uptime };
     } catch (error) {
@@ -592,7 +592,7 @@ class Logger {
 
   private async checkMemory(): Promise<boolean> {
     try {
-      const memoryUsage = process.memoryUsage();
+      const memoryUsage = typeof process !== 'undefined' && process.memoryUsage ? process.memoryUsage() : { heapUsed: 0, heapTotal: 1 };
       const usagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
       return usagePercent < 80;
     } catch (error) {

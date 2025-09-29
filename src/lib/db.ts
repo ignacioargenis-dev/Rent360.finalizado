@@ -30,22 +30,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // Crear instancia de Prisma con configuración optimizada
 const createPrismaClient = () => {
-  const client = new PrismaClient(prismaConfig);
-
-  // En producción, agregar listeners para reconexión automática
-  if (process.env.NODE_ENV === 'production') {
-    client.$on('beforeExit', async () => {
-      console.log('🔄 Prisma client disconnecting...');
-      await client.$disconnect();
-    });
-
-    // Manejar errores de conexión
-    client.$on('error', (e) => {
-      console.error('❌ Prisma client error:', e);
-    });
-  }
-
-  return client;
+  return new PrismaClient(prismaConfig);
 };
 
 export const db =
@@ -90,4 +75,11 @@ export async function checkDatabaseHealth(): Promise<{ status: string; responseT
 
 if (process.env.NODE_ENV !== 'production') {
 globalForPrisma.prisma = db;
+}
+
+if (process.env.NODE_ENV === 'production') {
+  process.on('beforeExit', async () => {
+    console.log('🔄 Prisma client disconnecting...');
+    await db.$disconnect();
+  });
 }
