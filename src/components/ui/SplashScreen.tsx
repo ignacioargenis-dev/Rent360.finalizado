@@ -38,19 +38,27 @@ export function SplashScreen({ logoUrl, visible, onHidden, durationMs = 1200 }: 
       }}
     >
       <div className="text-center">
-        {/* Logo principal */}
-        <div className="text-6xl font-bold text-white animate-pulse mb-4 drop-shadow-lg">
-          Rent360
-        </div>
+        <img
+          src={logoUrl}
+          alt="Rent360 - Logo Oficial"
+          className="w-[280px] h-auto animate-pulse mb-4"
+          style={{
+            filter: 'drop-shadow(0 8px 32px rgba(255,255,255,0.3)) brightness(1.1)',
+            maxWidth: '80vw'
+          }}
+          onError={(e) => {
+            // Fallback si la imagen no carga
+            e.currentTarget.style.display = 'none';
+            const fallback = document.createElement('div');
+            fallback.className = 'text-5xl font-bold text-white animate-pulse drop-shadow-lg';
+            fallback.textContent = 'Rent360';
+            e.currentTarget.parentNode?.appendChild(fallback);
+          }}
+        />
 
-        {/* Subtítulo */}
-        <div className="text-white/80 text-lg font-medium animate-pulse">
-          Plataforma Inmobiliaria
-        </div>
-
-        {/* Barra de carga */}
-        <div className="mt-6 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full bg-white rounded-full animate-pulse"></div>
+        {/* Barra de carga sutil */}
+        <div className="mt-4 w-24 h-0.5 bg-white/30 rounded-full overflow-hidden mx-auto">
+          <div className="h-full bg-white rounded-full animate-pulse" style={{width: '60%'}}></div>
         </div>
       </div>
     </div>

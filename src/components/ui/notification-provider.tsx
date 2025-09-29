@@ -155,7 +155,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   return (
     <NotificationContext.Provider value={value}>
       <SplashScreen
-        logoUrl={"/logo.svg"}
+        logoUrl={"https://drive.google.com/uc?export=view&id=10rtMEqpt555yXDfKyOsIObrAltnCh3I"}
         visible={showSplash}
         onHidden={() => setShowSplash(false)}
       />
