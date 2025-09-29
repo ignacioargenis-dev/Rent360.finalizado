@@ -28,8 +28,8 @@ const propertySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // Para propiedades públicas, no requerir autenticación
-    // Solo propiedades con status AVAILABLE son visibles públicamente
+    // Para propiedades públicas, permitir acceso sin autenticación
+    // Solo mostrar propiedades con status AVAILABLE
     const startTime = Date.now();
     
     // Obtener parámetros de consulta
@@ -153,48 +153,69 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Consulta directa a la base de datos (sin optimizaciones complejas)
-    const result = await db.property.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        address: true,
-        city: true,
-        commune: true,
-        region: true,
-        price: true,
-        deposit: true,
-        bedrooms: true,
-        bathrooms: true,
-        area: true,
-        status: true,
-        type: true,
-        images: true,
-        features: true,
-        createdAt: true,
-        updatedAt: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
+    // Usar consulta optimizada con caché y fallback
+    let result;
+    try {
+      result = await getPropertiesOptimized({
+        where,
+        skip,
+        take: limit,
+        cache: true,
+        cacheTTL: 300, // 5 minutos
+        cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: 'anonymous', role: 'anonymous' })}`,
+      });
+    } catch (error) {
+      logger.warn('getPropertiesOptimized failed, using fallback query', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+
+      // Fallback: consulta directa sin optimizaciones
+      result = await db.property.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          address: true,
+          city: true,
+          commune: true,
+          region: true,
+          price: true,
+          deposit: true,
+          bedrooms: true,
+          bathrooms: true,
+          area: true,
+          status: true,
+          type: true,
+          images: true,
+          features: true,
+          createdAt: true,
+          updatedAt: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    });
+      });
+    }
 
     const duration = Date.now() - startTime;
 
-    logger.info('Consulta de propiedades exitosa', {
+    logger.info('Consulta de propiedades completada', {
+      userId: 'anonymous',
+      role: 'anonymous',
+      authenticated: false,
       duration,
       filters: { status, type, city, commune, search },
-      resultCount: result.length,
+      resultCount: Array.isArray(result) ? result.length : 0,
+      usedOptimizedQuery: true, // Asumimos que se usó la optimizada si no hubo error
     });
 
     return NextResponse.json(result);

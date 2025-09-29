@@ -123,48 +123,21 @@ async function healthHandler(request: NextRequest) {
   }
 }
 
-// Endpoint de debug para verificar archivos estáticos
+// Endpoint de debug para verificar archivos estáticos (simplificado para Edge Runtime)
 async function debugHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
 
   if (type === 'static') {
-    try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
+    // Información básica sobre el entorno
+    const debugInfo = {
+      nodeEnv: process.env.NODE_ENV,
+      cwd: process.cwd(),
+      timestamp: new Date().toISOString(),
+      error: null
+    };
 
-      const nextStaticDir = path.join(process.cwd(), '.next', 'static');
-      const cssDir = path.join(nextStaticDir, 'css');
-
-      let debugInfo = {
-        nextStaticExists: false,
-        cssDirExists: false,
-        cssFiles: [],
-        error: null
-      };
-
-      try {
-        debugInfo.nextStaticExists = fs.statSync(nextStaticDir).isDirectory();
-      } catch (error) {
-        debugInfo.error = 'nextStaticDir not found';
-      }
-
-      if (debugInfo.nextStaticExists) {
-        try {
-          debugInfo.cssDirExists = fs.statSync(cssDir).isDirectory();
-          if (debugInfo.cssDirExists) {
-            const files = await fs.readdir(cssDir);
-            debugInfo.cssFiles = files.filter(file => file.endsWith('.css'));
-          }
-        } catch (error) {
-          debugInfo.error = 'cssDir not found';
-        }
-      }
-
-      return NextResponse.json(debugInfo);
-    } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
+    return NextResponse.json(debugInfo);
   }
 
   return healthHandler(request);
