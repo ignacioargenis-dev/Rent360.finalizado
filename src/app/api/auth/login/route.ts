@@ -2,24 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validations';
 import { generateTokens, setAuthCookies, verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 async function loginHandler(request: NextRequest) {
   let data: any;
   try {
-    const startTime = Date.now();
-    logger.info( 'Iniciando proceso de login', { request });
-    
+    console.log('🔐 Iniciando proceso de login');
+
     data = await request.json();
-    logger.debug('Datos de login recibidos', { email: data.email });
+    console.log('📧 Datos de login recibidos', { email: data.email });
 
     // Validar los datos de entrada
     const validatedData = loginSchema.parse(data);
-    logger.debug('Datos de login validados exitosamente');
+    console.log('✅ Datos de login validados exitosamente');
 
     const { email, password } = validatedData;
 
-    logger.debug('Buscando usuario en base de datos');
+    console.log('🔍 Buscando usuario en base de datos');
     
     // Usar Prisma para buscar usuario
     const user = await db.user.findUnique({
@@ -36,7 +34,7 @@ async function loginHandler(request: NextRequest) {
     });
     
     if (!user) {
-      logger.warn('Intento de login con usuario inexistente', { email });
+      console.warn('⚠️ Intento de login con usuario inexistente', { email });
 
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -46,7 +44,7 @@ async function loginHandler(request: NextRequest) {
 
     // Verificar si el usuario está activo
     if (!user.isActive) {
-      logger.warn('Intento de login con cuenta inactiva', { userId: user.id, email });
+      console.warn('⚠️ Intento de login con cuenta inactiva', { userId: user.id, email });
 
       return NextResponse.json(
         { error: 'Tu cuenta ha sido desactivada' },
@@ -56,9 +54,9 @@ async function loginHandler(request: NextRequest) {
 
     // Verificar contraseña
     const isPasswordValid = await verifyPassword(password, user.password);
-    
+
     if (!isPasswordValid) {
-      logger.warn('Intento de login con contraseña incorrecta', { email });
+      console.warn('⚠️ Intento de login con contraseña incorrecta', { email });
 
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -70,6 +68,7 @@ async function loginHandler(request: NextRequest) {
     const role = user.role.toLowerCase();
 
     // Generar tokens
+    console.log('🔑 Generando tokens para usuario', { email });
     const { accessToken, refreshToken } = generateTokens(
       user.id,
       user.email,
@@ -78,6 +77,7 @@ async function loginHandler(request: NextRequest) {
     );
 
     // Crear respuesta con cookies
+    console.log('✅ Login exitoso, creando respuesta');
     const response = NextResponse.json({
       message: 'Login exitoso',
       user: {
@@ -92,20 +92,15 @@ async function loginHandler(request: NextRequest) {
     // Establecer cookies HTTP-only
     setAuthCookies(response, accessToken, refreshToken);
 
-    const duration = Date.now() - startTime;
-    logger.info(
-      'Login exitoso',
-      {
-        userId: user.id,
-        userRole: role,
-        duration,
-      },
-    );
+    console.log('🎉 Login completado exitosamente');
 
     return response;
   } catch (error) {
-    // Re-throw para que el wrapper maneje los errores
-    throw error;
+    console.error('❌ Error en login:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 }
 
@@ -113,7 +108,7 @@ export async function POST(request: NextRequest) {
   try {
     return await loginHandler(request);
   } catch (error) {
-    logger.error('Error en API de login:', { error: error instanceof Error ? error.message : String(error) });
+    console.error('❌ Error crítico en API de login:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
