@@ -43,17 +43,38 @@ Agrega las siguientes variables de entorno:
 | `NEXT_TELEMETRY_DISABLED` | `1` | Deshabilitar telemetría |
 
 ### 3. Generar Secrets Seguros
-Para generar secrets seguros, usa el siguiente comando:
+
+**⚠️ IMPORTANTE:** Los secrets en `app.yaml` son solo para testing inicial. Para producción, genera tus propios secrets únicos.
+
+Para generar secrets seguros:
 
 ```bash
-# Generar JWT Secret (mínimo 32 caracteres)
+# Opción 1: OpenSSL (Linux/Mac)
 openssl rand -hex 32
 
-# O usar Node.js
+# Opción 2: Node.js
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Opción 3: Python
+python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 4. Configurar Base de Datos
+### 4. Reemplazar Secrets en app.yaml
+
+**ANTES del deploy final**, edita `app.yaml` y reemplaza estos valores de ejemplo con tus propios secrets:
+
+```yaml
+- key: JWT_SECRET
+  value: "a8f5c2e4b7d9e1f3c6a5b8d2e7f9c4a1b3e6d8f2c5a7e9b4d1f3c6a8e2b5d7"
+- key: JWT_REFRESH_SECRET
+  value: "f2c8e5a1d4b7f9c3e6a2d5b8f1c4e7a9d2b5c8f3e1a4d7b9c2e5f8a3d6b1c4"
+- key: NEXTAUTH_SECRET
+  value: "b9e3f7c2a5d8b1e4c7f2a9d5b8e1c4f7a2d5b8e3f6c1a4d7b2e5c8f3a6d9b4"
+```
+
+**Reemplázalos con valores únicos que generes tú mismo.**
+
+### 5. Configurar Base de Datos
 La base de datos PostgreSQL ya está configurada en tu App. Usa la variable:
 ```
 DATABASE_URL="${rent360-db.DATABASE_URL}"
