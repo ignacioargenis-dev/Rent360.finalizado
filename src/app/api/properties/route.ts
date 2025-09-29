@@ -160,15 +160,15 @@ export async function GET(request: NextRequest) {
       take: limit,
       cache: true,
       cacheTTL: 300, // 5 minutos
-      cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: user?.id || 'anonymous', role: user?.role || 'anonymous' })}`,
+      cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: 'anonymous', role: 'anonymous' })}`,
     });
     
     const duration = Date.now() - startTime;
     
     logger.info('Consulta de propiedades optimizada', {
-      userId: user?.id || 'anonymous',
-      role: user?.role || 'anonymous',
-      authenticated: !!user,
+      userId: 'anonymous',
+      role: 'anonymous',
+      authenticated: false,
       duration,
       filters: { status, type, city, commune, search },
       resultCount: Array.isArray(result) ? result.length : 0,
