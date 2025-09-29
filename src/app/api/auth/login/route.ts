@@ -3,10 +3,6 @@ import { loginSchema } from '@/lib/validations';
 import { generateTokens, setAuthCookies, verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { notificationService } from '@/lib/notifications';
-import { auditService } from '@/lib/audit';
-import { apiWrapper, createSuccessResponse, createErrorResponse } from '@/lib/api-wrapper';
-import { AuthenticationError, ValidationError } from '@/middleware/error-handler';
 
 async function loginHandler(request: NextRequest) {
   let data: any;
@@ -42,11 +38,6 @@ async function loginHandler(request: NextRequest) {
     if (!user) {
       logger.warn('Intento de login con usuario inexistente', { email });
 
-      // Registrar intento de login con usuario inexistente
-      const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-      const userAgent = request.headers.get('user-agent') || 'unknown';
-      await auditService.logUnauthorizedAccess(null, 'login_user_not_found', 'user', clientIP, userAgent);
-
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
         { status: 401 },
@@ -56,11 +47,6 @@ async function loginHandler(request: NextRequest) {
     // Verificar si el usuario está activo
     if (!user.isActive) {
       logger.warn('Intento de login con cuenta inactiva', { userId: user.id, email });
-
-      // Registrar intento de login con cuenta inactiva
-      const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-      const userAgent = request.headers.get('user-agent') || 'unknown';
-      await auditService.logUnauthorizedAccess(user.id, 'login_account_inactive', 'user', clientIP, userAgent);
 
       return NextResponse.json(
         { error: 'Tu cuenta ha sido desactivada' },
@@ -73,11 +59,6 @@ async function loginHandler(request: NextRequest) {
     
     if (!isPasswordValid) {
       logger.warn('Intento de login con contraseña incorrecta', { email });
-
-      // Registrar intento de login fallido
-      const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-      const userAgent = request.headers.get('user-agent') || 'unknown';
-      await auditService.logUnauthorizedAccess(user.id, 'login_failed', 'user', clientIP, userAgent);
 
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -111,12 +92,6 @@ async function loginHandler(request: NextRequest) {
     // Establecer cookies HTTP-only
     setAuthCookies(response, accessToken, refreshToken);
 
-    // Registrar evento de auditoría
-    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-
-    await auditService.logLogin(user.id, clientIP, userAgent);
-
     const duration = Date.now() - startTime;
     logger.info(
       'Login exitoso',
@@ -127,24 +102,6 @@ async function loginHandler(request: NextRequest) {
       },
     );
 
-    // Crear notificación de bienvenida usando template
-    try {
-      await notificationService.createSmartNotification(
-        user.id,
-        'system_alert' as any,
-        {},
-        {
-          priority: 'high' as any,
-          personalization: {
-            action: 'login_success',
-            timestamp: new Date().toISOString(),
-          },
-        }
-      );
-    } catch (error) {
-      logger.warn('Error creando notificación de bienvenida', { error, userId: user.id });
-    }
-
     return response;
   } catch (error) {
     // Re-throw para que el wrapper maneje los errores
@@ -152,11 +109,14 @@ async function loginHandler(request: NextRequest) {
   }
 }
 
-export const POST = apiWrapper(
-  { POST: loginHandler },
-  {
-    enableAudit: true,
-    auditAction: 'user_login',
-    timeout: 30000 // 30 segundos timeout
+export async function POST(request: NextRequest) {
+  try {
+    return await loginHandler(request);
+  } catch (error) {
+    logger.error('Error en API de login:', { error: error instanceof Error ? error.message : String(error) });
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
-);
+}
