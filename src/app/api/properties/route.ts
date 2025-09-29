@@ -153,27 +153,50 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Usar consulta optimizada con caché
-    const result = await getPropertiesOptimized({
+    // Consulta directa a la base de datos (sin optimizaciones complejas)
+    const result = await db.property.findMany({
       where,
       skip,
       take: limit,
-      cache: true,
-      cacheTTL: 300, // 5 minutos
-      cacheKey: `properties:${JSON.stringify({ where, skip, take: limit, userId: 'anonymous', role: 'anonymous' })}`,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        address: true,
+        city: true,
+        commune: true,
+        region: true,
+        price: true,
+        deposit: true,
+        bedrooms: true,
+        bathrooms: true,
+        area: true,
+        status: true,
+        type: true,
+        images: true,
+        features: true,
+        createdAt: true,
+        updatedAt: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
     });
-    
+
     const duration = Date.now() - startTime;
-    
-    logger.info('Consulta de propiedades optimizada', {
-      userId: 'anonymous',
-      role: 'anonymous',
-      authenticated: false,
+
+    logger.info('Consulta de propiedades exitosa', {
       duration,
       filters: { status, type, city, commune, search },
-      resultCount: Array.isArray(result) ? result.length : 0,
+      resultCount: result.length,
     });
-    
+
     return NextResponse.json(result);
   } catch (error) {
     logger.error('Error en consulta optimizada de propiedades', { error: error instanceof Error ? error.message : String(error) });

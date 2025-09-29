@@ -123,10 +123,57 @@ async function healthHandler(request: NextRequest) {
   }
 }
 
+// Endpoint de debug para verificar archivos estáticos
+async function debugHandler(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
+
+  if (type === 'static') {
+    try {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+
+      const nextStaticDir = path.join(process.cwd(), '.next', 'static');
+      const cssDir = path.join(nextStaticDir, 'css');
+
+      let debugInfo = {
+        nextStaticExists: false,
+        cssDirExists: false,
+        cssFiles: [],
+        error: null
+      };
+
+      try {
+        debugInfo.nextStaticExists = fs.statSync(nextStaticDir).isDirectory();
+      } catch (error) {
+        debugInfo.error = 'nextStaticDir not found';
+      }
+
+      if (debugInfo.nextStaticExists) {
+        try {
+          debugInfo.cssDirExists = fs.statSync(cssDir).isDirectory();
+          if (debugInfo.cssDirExists) {
+            const files = await fs.readdir(cssDir);
+            debugInfo.cssFiles = files.filter(file => file.endsWith('.css'));
+          }
+        } catch (error) {
+          debugInfo.error = 'cssDir not found';
+        }
+      }
+
+      return NextResponse.json(debugInfo);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  }
+
+  return healthHandler(request);
+}
+
 export const GET = apiWrapper(
-  { GET: healthHandler },
+  { GET: debugHandler },
   {
-    timeout: 10000, // 10 segundos timeout para health checks
-    enableAudit: false // No auditar health checks
+    timeout: 10000,
+    enableAudit: false
   }
 );
