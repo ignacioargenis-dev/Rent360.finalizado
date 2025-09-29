@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { db, checkDatabaseHealth } from '@/lib/db';
 import { cacheManager } from '@/lib/cache-manager';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { apiWrapper, getApiStats } from '@/lib/api-wrapper';
@@ -9,18 +8,10 @@ async function healthHandler(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    // Verificar conexión a base de datos
-    let dbStatus = 'healthy';
-    let dbResponseTime = 0;
-    
-    try {
-      const dbStart = Date.now();
-      await db.$queryRaw`SELECT 1`;
-      dbResponseTime = Date.now() - dbStart;
-    } catch (error) {
-      dbStatus = 'unhealthy';
-      logger.error('Database health check failed', { error: error instanceof Error ? error.message : 'Unknown error' });
-    }
+    // Verificar conexión a base de datos usando la función optimizada
+    const dbHealth = await checkDatabaseHealth();
+    const dbStatus = dbHealth.status;
+    const dbResponseTime = dbHealth.responseTime;
 
     // Verificar estado del cache
     const cacheStats = await cacheManager.getStats();

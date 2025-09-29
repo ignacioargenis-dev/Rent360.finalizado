@@ -9,17 +9,84 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL es obligatorio. Configure la variable de entorno DATABASE_URL.');
 }
 
+// Configuración optimizada para producción
+const prismaConfig: any = {
+  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  errorFormat: 'pretty',
+};
+
+// Configuración específica para producción
+if (process.env.NODE_ENV === 'production') {
+  prismaConfig.transactionOptions = {
+    maxWait: 20000, // 20 segundos
+    timeout: 15000, // 15 segundos
+  };
+}
+
+// Crear instancia de Prisma con configuración optimizada
+const createPrismaClient = () => {
+  const client = new PrismaClient(prismaConfig);
+
+  // En producción, agregar listeners para reconexión automática
+  if (process.env.NODE_ENV === 'production') {
+    client.$on('beforeExit', async () => {
+      console.log('🔄 Prisma client disconnecting...');
+      await client.$disconnect();
+    });
+
+    // Manejar errores de conexión
+    client.$on('error', (e) => {
+      console.error('❌ Prisma client error:', e);
+    });
+  }
+
+  return client;
+};
+
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-    errorFormat: 'pretty',
-  });
+  createPrismaClient();
+
+// Función para verificar y reconectar la base de datos
+export async function ensureDatabaseConnection(): Promise<boolean> {
+  try {
+    await db.$connect();
+    console.log('✅ Database connection verified');
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    try {
+      console.log('🔄 Attempting to reconnect...');
+      await db.$disconnect();
+      await db.$connect();
+      console.log('✅ Database reconnected successfully');
+      return true;
+    } catch (reconnectError) {
+      console.error('❌ Database reconnection failed:', reconnectError);
+      return false;
+    }
+  }
+}
+
+// Función para verificar el estado de la conexión
+export async function checkDatabaseHealth(): Promise<{ status: string; responseTime: number }> {
+  const startTime = Date.now();
+
+  try {
+    await db.$queryRaw`SELECT 1`;
+    const responseTime = Date.now() - startTime;
+    return { status: 'healthy', responseTime };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    console.error('❌ Database health check failed:', error);
+    return { status: 'unhealthy', responseTime };
+  }
+}
 
 if (process.env.NODE_ENV !== 'production') {
 globalForPrisma.prisma = db;

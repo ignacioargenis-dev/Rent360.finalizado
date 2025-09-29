@@ -75,10 +75,27 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 **⚠️ CRÍTICO:** Genera valores únicos y seguros para cada secret (mínimo 32 caracteres hexadecimales).**
 
 ### 5. Configurar Base de Datos
-La base de datos PostgreSQL ya está configurada en tu App. Usa la variable:
-```
-DATABASE_URL="${rent360-db.DATABASE_URL}"
-```
+
+**⚠️ IMPORTANTE:** La configuración automática de `${rent360-db.DATABASE_URL}` puede no funcionar. **Configura manualmente** con los datos reales de tu base de datos.
+
+**Para obtener la información correcta:**
+
+1. **Ve a DigitalOcean Dashboard:**
+   - https://cloud.digitalocean.com/
+   - Ve a "Databases" en el menú lateral
+   - Selecciona tu base de datos "rent360-db"
+
+2. **Obtén los "Connection Details":**
+   - **Host/Endpoint:** `db-postgresql-nyc1-12345-do-user-123456-0.db.ondigitalocean.com`
+   - **Port:** `25060` (generalmente para DigitalOcean)
+   - **Database:** `rent360_prod`
+   - **Username:** `rent360_user`
+   - **Password:** Tu contraseña real
+
+3. **Configura la URL completa:**
+   ```bash
+   DATABASE_URL="postgresql://rent360_user:tu_password_real@db-postgresql-nyc1-12345-do-user-123456-0.db.ondigitalocean.com:25060/rent360_prod"
+   ```
 
 ### 6. Solución de Problemas Comunes
 

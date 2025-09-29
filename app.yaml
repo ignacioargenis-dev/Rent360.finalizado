@@ -17,8 +17,9 @@ services:
   - key: NEXT_TELEMETRY_DISABLED
     value: "1"
   # Variables de entorno críticas para la aplicación
+  # ⚠️ REEMPLAZA con tu URL real de PostgreSQL
   - key: DATABASE_URL
-    value: "${rent360-db.DATABASE_URL}"
+    value: "postgresql://rent360_user:REPLACE_WITH_YOUR_DB_PASSWORD@REPLACE_WITH_YOUR_DB_HOST:25060/rent360_prod"
   - key: JWT_SECRET
     value: "REPLACE_WITH_YOUR_OWN_JWT_SECRET_MIN_32_CHARS"
   - key: JWT_REFRESH_SECRET
