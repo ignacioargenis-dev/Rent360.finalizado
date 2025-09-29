@@ -21,7 +21,7 @@ CREATE TABLE "system_logs" (
     "method" TEXT,
     "duration" INTEGER,
     "error" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- RedefineTables
@@ -36,15 +36,15 @@ CREATE TABLE "new_contract_signatures" (
     "signatureType" TEXT NOT NULL,
     "signatureHash" TEXT NOT NULL,
     "certificateData" TEXT,
-    "signedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "signedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "signatureProvider" TEXT NOT NULL,
     "signatureData" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
+    "expiresAt" TIMESTAMPTZ NOT NULL,
     "signers" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'pending',
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL,
     CONSTRAINT "contract_signatures_contractId_fkey" FOREIGN KEY ("contractId") REFERENCES "contracts" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "contract_signatures_signerId_fkey" FOREIGN KEY ("signerId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );

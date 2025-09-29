@@ -13,9 +13,9 @@ CREATE TABLE "deposit_refunds" (
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "tenantApproved" BOOLEAN NOT NULL DEFAULT false,
     "ownerApproved" BOOLEAN NOT NULL DEFAULT false,
-    "processedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "processedAt" TIMESTAMPTZ,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL,
     CONSTRAINT "deposit_refunds_contractId_fkey" FOREIGN KEY ("contractId") REFERENCES "contracts" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "deposit_refunds_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "deposit_refunds_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -33,7 +33,7 @@ CREATE TABLE "refund_documents" (
     "mimeType" TEXT NOT NULL,
     "description" TEXT,
     "amount" REAL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "refund_documents_refundId_fkey" FOREIGN KEY ("refundId") REFERENCES "deposit_refunds" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "refund_documents_uploadedBy_fkey" FOREIGN KEY ("uploadedBy") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -49,9 +49,9 @@ CREATE TABLE "refund_disputes" (
     "status" TEXT NOT NULL DEFAULT 'OPEN',
     "resolvedBy" TEXT,
     "resolution" TEXT,
-    "resolvedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "resolvedAt" TIMESTAMPTZ,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL,
     CONSTRAINT "refund_disputes_refundId_fkey" FOREIGN KEY ("refundId") REFERENCES "deposit_refunds" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "refund_disputes_initiatedBy_fkey" FOREIGN KEY ("initiatedBy") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "refund_disputes_resolvedBy_fkey" FOREIGN KEY ("resolvedBy") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
@@ -65,7 +65,7 @@ CREATE TABLE "refund_approvals" (
     "approvalType" TEXT NOT NULL,
     "approved" BOOLEAN NOT NULL,
     "comments" TEXT,
-    "approvedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "approvedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "refund_approvals_refundId_fkey" FOREIGN KEY ("refundId") REFERENCES "deposit_refunds" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "refund_approvals_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -79,7 +79,7 @@ CREATE TABLE "refund_audit_logs" (
     "details" TEXT NOT NULL,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "refund_audit_logs_refundId_fkey" FOREIGN KEY ("refundId") REFERENCES "deposit_refunds" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "refund_audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
