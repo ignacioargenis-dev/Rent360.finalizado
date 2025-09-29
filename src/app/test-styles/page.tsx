@@ -1,6 +1,24 @@
+import { SplashScreen } from '@/components/ui/SplashScreen';
+import { useState, useEffect } from 'react';
+
 export default function TestStylesPage() {
+  const [showSplashTest, setShowSplashTest] = useState(false);
+
+  useEffect(() => {
+    // Mostrar splash screen por 3 segundos para probar
+    setShowSplashTest(true);
+    const timer = setTimeout(() => setShowSplashTest(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background p-8">
+    <>
+      <SplashScreen
+        logoUrl="/logo.svg"
+        visible={showSplashTest}
+        durationMs={3000}
+      />
+      <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-4xl font-bold text-foreground">Prueba de Estilos Tailwind</h1>
 
@@ -16,9 +34,9 @@ export default function TestStylesPage() {
             <p>Texto sobre fondo secondary</p>
           </div>
 
-          <div className="bg-accent text-accent-foreground p-4 rounded-lg">
-            <h3 className="font-semibold">Accent</h3>
-            <p>Texto sobre fondo accent</p>
+          <div className="bg-accent text-accent-foreground p-4 rounded-lg border-2 border-accent-foreground/20">
+            <h3 className="font-semibold">Accent (Mejorado)</h3>
+            <p>Texto blanco sobre fondo verde más visible</p>
           </div>
 
           {/* Estados */}
@@ -32,9 +50,9 @@ export default function TestStylesPage() {
             <p>Texto muted sobre fondo muted</p>
           </div>
 
-          <div className="bg-card text-card-foreground p-4 rounded-lg border">
-            <h3 className="font-semibold">Card</h3>
-            <p>Texto sobre fondo card</p>
+          <div className="bg-card text-card-foreground p-4 rounded-lg border border-border">
+            <h3 className="font-semibold">Card con Border</h3>
+            <p>Texto sobre fondo card con borde visible</p>
           </div>
 
           {/* Botones */}
@@ -80,5 +98,6 @@ export default function TestStylesPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
