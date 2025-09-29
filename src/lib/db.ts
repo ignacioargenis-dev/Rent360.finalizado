@@ -77,9 +77,5 @@ if (process.env.NODE_ENV !== 'production') {
 globalForPrisma.prisma = db;
 }
 
-if (process.env.NODE_ENV === 'production') {
-  process.on('beforeExit', async () => {
-    console.log('🔄 Prisma client disconnecting...');
-    await db.$disconnect();
-  });
-}
+// Note: process.on is not available in Edge Runtime, so we skip this in production builds
+// The Prisma client will be disconnected automatically when the process ends
