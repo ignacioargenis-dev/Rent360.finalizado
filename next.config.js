@@ -2,11 +2,11 @@
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
-    tsconfigPath: './tsconfig.json'
+    tsconfigPath: './tsconfig.json',
   },
   reactStrictMode: true,
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   // Optimizaciones de performance
   swcMinify: true,
@@ -16,12 +16,12 @@ const nextConfig = {
   // Configuración experimental
   experimental: {
     serverComponentsExternalPackages: ['sharp'],
-    optimizeCss: true,
+    optimizeCss: false, // Deshabilitado para evitar problemas con Tailwind
     scrollRestoration: true,
   },
   // Forzar renderizado dinámico para páginas que usan APIs del cliente
   generateBuildId: async () => {
-    return 'build-' + Date.now()
+    return 'build-' + Date.now();
   },
   // Optimizaciones de build - Usar servidor personalizado
   // output: 'standalone', // Deshabilitado para usar servidor personalizado con Socket.IO
@@ -50,9 +50,9 @@ const nextConfig = {
     config.externals = config.externals || [];
     if (!isServer) {
       config.externals.push({
-        'redis': 'commonjs redis',
+        redis: 'commonjs redis',
         '@redis/client': 'commonjs @redis/client',
-        'sqlite3': 'commonjs sqlite3',
+        sqlite3: 'commonjs sqlite3',
         '@aws-sdk/client-s3': 'commonjs @aws-sdk/client-s3',
         '@google-cloud/storage': 'commonjs @google-cloud/storage',
       });
@@ -62,7 +62,14 @@ const nextConfig = {
   },
   // Configuración optimizada de imágenes
   images: {
-    domains: ['ui-avatars.com', 'localhost', 'rent360.cl', 's3.amazonaws.com', 'drive.google.com', 'lh3.googleusercontent.com'],
+    domains: [
+      'ui-avatars.com',
+      'localhost',
+      'rent360.cl',
+      's3.amazonaws.com',
+      'drive.google.com',
+      'lh3.googleusercontent.com',
+    ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: false,
