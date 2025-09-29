@@ -14,7 +14,7 @@ const config: Config = {
     hoverOnlyWhenSupported: true,
   },
   experimental: {
-    optimizeUniversalDefaults: true,
+    optimizeUniversalDefaults: false,
   },
   theme: {
     extend: {
