@@ -28,15 +28,8 @@ const propertySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // Intentar obtener usuario autenticado, pero permitir búsquedas públicas
-    let user = null;
-    try {
-      user = await requireAuth(request);
-    } catch (error) {
-      // Usuario no autenticado - permitir solo búsqueda de propiedades disponibles
-      user = null;
-    }
-
+    // Para propiedades públicas, no requerir autenticación
+    // Solo propiedades con status AVAILABLE son visibles públicamente
     const startTime = Date.now();
     
     // Obtener parámetros de consulta
@@ -110,20 +103,9 @@ export async function GET(request: NextRequest) {
       ];
     }
     
-    // Aplicar filtros según autenticación y rol
-    if (!user) {
-      // Usuario no autenticado - solo propiedades disponibles
-      where.status = PropertyStatus.AVAILABLE;
-    } else if (user.role !== UserRole.ADMIN) {
-      switch (user.role) {
-        case UserRole.OWNER:
-          where.ownerId = user.id;
-          break;
-        case UserRole.TENANT:
-          where.status = PropertyStatus.AVAILABLE;
-          break;
-      }
-    }
+    // Para propiedades públicas, solo mostrar propiedades disponibles
+    // Si no hay autenticación, forzar filtro de propiedades disponibles
+    where.status = PropertyStatus.AVAILABLE;
     
     // Validar y sanitizar parámetros de entrada
     if (minPrice) {
