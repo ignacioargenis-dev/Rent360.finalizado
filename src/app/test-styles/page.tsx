@@ -1,3 +1,5 @@
+'use client';
+
 import { SplashScreen } from '@/components/ui/SplashScreen';
 import { useState, useEffect } from 'react';
 
@@ -35,8 +37,8 @@ export default function TestStylesPage() {
           </div>
 
           <div className="bg-accent text-accent-foreground p-4 rounded-lg border-2 border-accent-foreground/20">
-            <h3 className="font-semibold">Accent (Mejorado)</h3>
-            <p>Texto blanco sobre fondo verde más visible</p>
+            <h3 className="font-semibold">Accent (Verde Pastel)</h3>
+            <p>Verde suave esmeralda con texto oscuro para buen contraste</p>
           </div>
 
           {/* Estados */}

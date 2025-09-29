@@ -42,8 +42,8 @@ const config: Config = {
           foreground: '#6b7280',
         },
         accent: {
-          DEFAULT: '#10b981',
-          foreground: '#ffffff',
+          DEFAULT: '#a7f3d0',
+          foreground: '#065f46',
         },
         destructive: {
           DEFAULT: '#ef4444',
