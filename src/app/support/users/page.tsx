@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
   RefreshCw,
   AlertTriangle,
   Users,
@@ -17,53 +20,244 @@ import {
   Search,
   Filter,
   Download,
-  Shield
+  Shield,
+  Eye,
+  Edit,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  Building,
+  Tag,
+  ChevronRight
 } from 'lucide-react';
+import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'TENANT' | 'OWNER' | 'BROKER' | 'RUNNER' | 'SUPPORT' | 'PROVIDER' | 'MAINTENANCE';
+  status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED';
+  phone?: string;
+  createdAt: string;
+  lastLogin?: string;
+  city?: string;
+  verified: boolean;
+  ticketsCount?: number;
+  propertiesCount?: number;
+}
+
+interface UserStats {
+  total: number;
+  active: number;
+  pending: number;
+  suspended: number;
+  verified: number;
+  unverified: number;
+}
+
 export default function SupportUsersPage() {
-
   const [loading, setLoading] = useState(true);
-
-
-
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [stats, setStats] = useState<UserStats>({
+    total: 0,
+    active: 0,
+    pending: 0,
+    suspended: 0,
+    verified: 0,
+    unverified: 0
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadPageData();
-  }, []);
+    loadUsers();
+  }, [roleFilter, statusFilter]);
 
-  const loadPageData = async () => {
+  const loadUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch('/api/support/users');
-      // const result = await response.json();
-      // setData(result);
-      
+
+      // Mock data for demo - in production this would come from API
+      const mockUsers: User[] = [
+        {
+          id: '1',
+          name: 'Carlos Ramírez',
+          email: 'carlos.ramirez@email.com',
+          role: 'TENANT',
+          status: 'ACTIVE',
+          phone: '+56 9 1234 5678',
+          createdAt: '2024-01-15T10:30:00Z',
+          lastLogin: '2024-03-15T14:20:00Z',
+          city: 'Santiago',
+          verified: true,
+          ticketsCount: 3,
+          propertiesCount: 1
+        },
+        {
+          id: '2',
+          name: 'Ana Martínez',
+          email: 'ana.martinez@email.com',
+          role: 'OWNER',
+          status: 'ACTIVE',
+          phone: '+56 9 8765 4321',
+          createdAt: '2024-02-10T09:15:00Z',
+          lastLogin: '2024-03-14T16:45:00Z',
+          city: 'Providencia',
+          verified: true,
+          ticketsCount: 1,
+          propertiesCount: 5
+        },
+        {
+          id: '3',
+          name: 'Pedro Silva',
+          email: 'pedro.silva@email.com',
+          role: 'BROKER',
+          status: 'PENDING',
+          phone: '+56 9 5555 1234',
+          createdAt: '2024-03-01T11:20:00Z',
+          city: 'Las Condes',
+          verified: false,
+          ticketsCount: 0,
+          propertiesCount: 0
+        },
+        {
+          id: '4',
+          name: 'María González',
+          email: 'maria.gonzalez@email.com',
+          role: 'SUPPORT',
+          status: 'ACTIVE',
+          phone: '+56 9 7777 8888',
+          createdAt: '2024-01-01T08:00:00Z',
+          lastLogin: '2024-03-15T09:30:00Z',
+          city: 'Santiago',
+          verified: true,
+          ticketsCount: 0,
+          propertiesCount: 0
+        },
+        {
+          id: '5',
+          name: 'Roberto Díaz',
+          email: 'roberto.diaz@email.com',
+          role: 'TENANT',
+          status: 'SUSPENDED',
+          phone: '+56 9 9999 0000',
+          createdAt: '2024-02-20T13:45:00Z',
+          lastLogin: '2024-03-10T11:15:00Z',
+          city: 'Ñuñoa',
+          verified: true,
+          ticketsCount: 2,
+          propertiesCount: 1
+        }
+      ];
+
+      // Filter users based on search and filters
+      let filteredUsers = mockUsers;
+
+      if (searchTerm) {
+        filteredUsers = filteredUsers.filter(user =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.city?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      if (roleFilter !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.role === roleFilter);
+      }
+
+      if (statusFilter !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.status === statusFilter);
+      }
+
+      setUsers(filteredUsers);
+
+      // Calculate stats
+      const newStats: UserStats = {
+        total: mockUsers.length,
+        active: mockUsers.filter(u => u.status === 'ACTIVE').length,
+        pending: mockUsers.filter(u => u.status === 'PENDING').length,
+        suspended: mockUsers.filter(u => u.status === 'SUSPENDED').length,
+        verified: mockUsers.filter(u => u.verified).length,
+        unverified: mockUsers.filter(u => !u.verified).length,
+      };
+
+      setStats(newStats);
+
       // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise(resolve => setTimeout(resolve, 500));
+
     } catch (error) {
-      logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los datos");
+      logger.error('Error loading users:', { error: error instanceof Error ? error.message : String(error) });
+      setError("Error al cargar los usuarios");
     } finally {
       setLoading(false);
     }
   };
 
+  const getRoleBadge = (role: string) => {
+    const roleColors: Record<string, string> = {
+      'ADMIN': 'bg-red-100 text-red-800',
+      'TENANT': 'bg-blue-100 text-blue-800',
+      'OWNER': 'bg-green-100 text-green-800',
+      'BROKER': 'bg-purple-100 text-purple-800',
+      'RUNNER': 'bg-orange-100 text-orange-800',
+      'SUPPORT': 'bg-indigo-100 text-indigo-800',
+      'PROVIDER': 'bg-cyan-100 text-cyan-800',
+      'MAINTENANCE': 'bg-yellow-100 text-yellow-800'
+    };
+    return roleColors[role] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      'ACTIVE': 'bg-green-100 text-green-800',
+      'INACTIVE': 'bg-gray-100 text-gray-800',
+      'PENDING': 'bg-yellow-100 text-yellow-800',
+      'SUSPENDED': 'bg-red-100 text-red-800'
+    };
+    return statusColors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+  };
+
   if (loading) {
     return (
-      <DashboardLayout 
+      <DashboardLayout
         title="Gestión de Usuarios"
         subtitle="Cargando información..."
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando...</p>
+            <p className="mt-4 text-gray-600">Cargando usuarios...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -72,7 +266,7 @@ export default function SupportUsersPage() {
 
   if (error) {
     return (
-      <DashboardLayout 
+      <DashboardLayout
         title="Gestión de Usuarios"
         subtitle="Error al cargar la página"
       >
@@ -82,7 +276,7 @@ export default function SupportUsersPage() {
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
+              <Button onClick={loadUsers}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -94,131 +288,351 @@ export default function SupportUsersPage() {
   }
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       title="Gestión de Usuarios"
       subtitle="Administra y gestiona todos los usuarios del sistema"
     >
       <div className="space-y-6">
-        {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">
-                +12% desde el mes pasado
+                Usuarios registrados
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuarios Activos</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Activos</CardTitle>
+              <UserCheck className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,156</div>
+              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
               <p className="text-xs text-muted-foreground">
-                +8% desde el mes pasado
+                Usuarios activos
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuarios Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">45</div>
+              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
               <p className="text-xs text-muted-foreground">
-                -5% desde el mes pasado
+                Esperando verificación
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuarios Suspendidos</CardTitle>
-              <UserX className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Suspendidos</CardTitle>
+              <UserX className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">33</div>
+              <div className="text-2xl font-bold text-red-600">{stats.suspended}</div>
               <p className="text-xs text-muted-foreground">
-                +2% desde el mes pasado
+                Usuarios suspendidos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Verificados</CardTitle>
+              <Shield className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{stats.verified}</div>
+              <p className="text-xs text-muted-foreground">
+                Usuarios verificados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">No Verificados</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{stats.unverified}</div>
+              <p className="text-xs text-muted-foreground">
+                Requieren verificación
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Filtros y búsqueda */}
         <Card>
           <CardHeader>
-            <CardTitle>Gestión de Usuarios</CardTitle>
+            <CardTitle>Filtros y Búsqueda</CardTitle>
             <CardDescription>
-              Administra y gestiona todos los usuarios del sistema Rent360.
+              Filtra los usuarios por diferentes criterios
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades de gestión de usuarios.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Usuario
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-2">
+                <Input
+                  placeholder="Buscar por nombre, email o ciudad..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">Todos los roles</option>
+                <option value="TENANT">Inquilino</option>
+                <option value="OWNER">Propietario</option>
+                <option value="BROKER">Corredor</option>
+                <option value="RUNNER">Runner</option>
+                <option value="SUPPORT">Soporte</option>
+                <option value="PROVIDER">Proveedor</option>
+                <option value="MAINTENANCE">Mantenimiento</option>
+                <option value="ADMIN">Administrador</option>
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+                <option value="PENDING">Pendiente</option>
+                <option value="SUSPENDED">Suspendido</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <Button onClick={loadUsers} variant="outline">
+                <Search className="w-4 h-4 mr-2" />
+                Buscar
+              </Button>
+              <Button onClick={clearFilters} variant="outline">
+                <Filter className="w-4 h-4 mr-2" />
+                Limpiar Filtros
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Acciones rápidas */}
+        {/* Lista de usuarios */}
         <Card>
           <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
-              Accede rápidamente a las funciones más utilizadas
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Usuarios ({users.length})</CardTitle>
+                <CardDescription>
+                  Lista de usuarios filtrados según tus criterios
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+                <Button size="sm">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Nuevo Usuario
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <UserPlus className="w-6 h-6 mb-2" />
-                <span>Agregar Usuario</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Search className="w-6 h-6 mb-2" />
-                <span>Buscar Usuario</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
-                <span>Filtrar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
-                <span>Exportar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Shield className="w-6 h-6 mb-2" />
-                <span>Permisos</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
-                <span>Actualizar</span>
-              </Button>
-            </div>
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-4">
+                {users.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron usuarios</h3>
+                    <p className="text-gray-600 mb-4">
+                      No hay usuarios que coincidan con los criterios de búsqueda.
+                    </p>
+                    <Button onClick={clearFilters}>
+                      Limpiar Filtros
+                    </Button>
+                  </div>
+                ) : (
+                  users.map((user) => (
+                    <div key={user.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-bold text-lg text-gray-800">{user.name}</h3>
+                            <Badge className={getRoleBadge(user.role)}>
+                              {user.role === 'TENANT' ? 'Inquilino' :
+                               user.role === 'OWNER' ? 'Propietario' :
+                               user.role === 'BROKER' ? 'Corredor' :
+                               user.role === 'RUNNER' ? 'Runner' :
+                               user.role === 'SUPPORT' ? 'Soporte' :
+                               user.role === 'PROVIDER' ? 'Proveedor' :
+                               user.role === 'MAINTENANCE' ? 'Mantenimiento' : user.role}
+                            </Badge>
+                            <Badge className={getStatusBadge(user.status)}>
+                              {user.status === 'ACTIVE' ? 'Activo' :
+                               user.status === 'INACTIVE' ? 'Inactivo' :
+                               user.status === 'PENDING' ? 'Pendiente' :
+                               user.status === 'SUSPENDED' ? 'Suspendido' : user.status}
+                            </Badge>
+                            {user.verified && (
+                              <Badge className="bg-blue-100 text-blue-800">
+                                <Shield className="w-3 h-3 mr-1" />
+                                Verificado
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <Mail className="w-4 h-4" />
+                              <span>{user.email}</span>
+                            </div>
+
+                            {user.phone && (
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Phone className="w-4 h-4" />
+                                <span>{user.phone}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <Calendar className="w-4 h-4" />
+                              <span>Registrado: {formatDate(user.createdAt)}</span>
+                            </div>
+
+                            {user.lastLogin && (
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Clock className="w-4 h-4" />
+                                <span>Último acceso: {formatDateTime(user.lastLogin)}</span>
+                              </div>
+                            )}
+
+                            {user.city && (
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <MapPin className="w-4 h-4" />
+                                <span>{user.city}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {user.ticketsCount !== undefined && (
+                                <div className="flex items-center gap-1">
+                                  <Tag className="w-4 h-4" />
+                                  <span>{user.ticketsCount} tickets</span>
+                                </div>
+                              )}
+                              {user.propertiesCount !== undefined && (
+                                <div className="flex items-center gap-1">
+                                  <Building className="w-4 h-4" />
+                                  <span>{user.propertiesCount} propiedades</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 ml-4">
+                          <Button size="sm" variant="outline">
+                            <Eye className="w-4 h-4 mr-1" />
+                            Ver
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
+
+        {/* Acciones rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <UserPlus className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Nuevo Usuario</h3>
+                <p className="text-sm text-gray-600 mb-4">Crear un usuario manualmente</p>
+                <Button className="w-full">
+                  Crear Usuario
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Download className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Exportar Datos</h3>
+                <p className="text-sm text-gray-600 mb-4">Descargar lista de usuarios</p>
+                <Button variant="outline" className="w-full">
+                  Exportar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Verificación</h3>
+                <p className="text-sm text-gray-600 mb-4">Gestionar verificación de usuarios</p>
+                <Button variant="outline" className="w-full">
+                  Gestionar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="bg-orange-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Reportes</h3>
+                <p className="text-sm text-gray-600 mb-4">Ver estadísticas de usuarios</p>
+                <Link href="/support/reports">
+                  <Button variant="outline" className="w-full">
+                    Ver Reportes
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );

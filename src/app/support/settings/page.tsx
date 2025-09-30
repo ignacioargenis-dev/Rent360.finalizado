@@ -161,15 +161,28 @@ export default function SupportSettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
+              <Settings className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Configuración del Sistema de Soporte</h3>
               <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las opciones de configuración del sistema de soporte.
+                Administra configuraciones del sistema de tickets, notificaciones y automatizaciones.
               </p>
-              <Button>
-                <Save className="w-4 h-4 mr-2" />
-                Guardar Configuración
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <Mail className="w-8 h-8 text-green-500 mb-2" />
+                  <span className="font-medium">Notificaciones</span>
+                  <span className="text-sm text-gray-500">Configurar emails</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <Settings className="w-8 h-8 text-blue-500 mb-2" />
+                  <span className="font-medium">Automatizaciones</span>
+                  <span className="text-sm text-gray-500">Reglas y flujos</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <Shield className="w-8 h-8 text-purple-500 mb-2" />
+                  <span className="font-medium">Permisos</span>
+                  <span className="text-sm text-gray-500">Roles y accesos</span>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

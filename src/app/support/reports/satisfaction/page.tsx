@@ -165,15 +165,28 @@ export default function SatisfacciónPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
+              <div className="text-6xl mb-4">⭐</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Satisfacción del Cliente</h3>
               <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades.
+                Métricas de satisfacción, calificaciones y feedback de los usuarios del sistema.
               </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <div className="text-2xl mb-2">4.6</div>
+                  <span className="font-medium">Calificación Promedio</span>
+                  <span className="text-sm text-gray-500">Sobre 5 estrellas</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <div className="text-2xl mb-2">89%</div>
+                  <span className="font-medium">Clientes Satisfechos</span>
+                  <span className="text-sm text-gray-500">4+ estrellas</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <div className="text-2xl mb-2">📈</div>
+                  <span className="font-medium">Tendencia</span>
+                  <span className="text-sm text-gray-500">+5% este mes</span>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

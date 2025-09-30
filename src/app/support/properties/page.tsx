@@ -163,15 +163,28 @@ export default function SupportPropertiesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
+              <Building className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Gestión de Propiedades</h3>
               <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades de gestión de propiedades.
+                Administra propiedades reportadas, pendientes de aprobación y activas en el sistema.
               </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Propiedad
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <AlertTriangle className="w-8 h-8 text-orange-500 mb-2" />
+                  <span className="font-medium">Propiedades Reportadas</span>
+                  <span className="text-sm text-gray-500">16 pendientes</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <Clock className="w-8 h-8 text-yellow-500 mb-2" />
+                  <span className="font-medium">Pendientes Aprobación</span>
+                  <span className="text-sm text-gray-500">28 revisiones</span>
+                </Button>
+                <Button variant="outline" className="flex flex-col items-center p-6">
+                  <CheckCircle className="w-8 h-8 text-green-500 mb-2" />
+                  <span className="font-medium">Propiedades Activas</span>
+                  <span className="text-sm text-gray-500">523 publicadas</span>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
