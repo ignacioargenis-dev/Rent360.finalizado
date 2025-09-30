@@ -138,12 +138,17 @@ const LegalCasesSupportDashboard: React.FC = () => {
       if (searchTerm) params.append('search', searchTerm);
 
       const response = await fetch(`/api/support/legal-cases?${params}`);
-      
+
       if (!response.ok) {
         throw new Error('Error al obtener casos legales');
       }
 
-      const data: LegalCasesResponse = await response.json();
+      const responseData = await response.json();
+      if (!responseData.success || !responseData.data) {
+        throw new Error('Formato de respuesta inválido');
+      }
+
+      const data: LegalCasesResponse = responseData.data;
       setLegalCases(data.cases);
       setTotalPages(data.pagination.pages);
       
