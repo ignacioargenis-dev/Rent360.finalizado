@@ -47,6 +47,18 @@ async function main() {
       password: hashedPassword,
       role: 'SUPPORT',
     },
+    {
+      email: 'proveedor@rent360.cl',
+      name: 'Proveedor de Servicios',
+      password: hashedPassword,
+      role: 'PROVIDER',
+    },
+    {
+      email: 'mantenimiento@rent360.cl',
+      name: 'Servicio de Mantenimiento',
+      password: hashedPassword,
+      role: 'MAINTENANCE',
+    },
   ];
 
   for (const user of users) {

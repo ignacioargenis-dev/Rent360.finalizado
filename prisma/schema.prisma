@@ -19,6 +19,7 @@ enum UserRole {
   RUNNER
   SUPPORT
   PROVIDER
+  MAINTENANCE
 }
 
 // User model

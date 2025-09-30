@@ -178,13 +178,15 @@ export default function RegisterPage() {
   };
 
   const getDashboardUrl = (role: string) => {
-    switch (role) {
+    switch (role.toLowerCase()) {
       case 'admin': return '/admin/dashboard';
       case 'tenant': return '/tenant/dashboard';
       case 'owner': return '/owner/dashboard';
       case 'broker': return '/broker/dashboard';
       case 'runner': return '/runner/dashboard';
       case 'support': return '/support/dashboard';
+      case 'provider': return '/provider';
+      case 'maintenance': return '/maintenance';
       default: return '/';
     }
   };
