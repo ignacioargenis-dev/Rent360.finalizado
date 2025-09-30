@@ -56,7 +56,7 @@ interface PropertySummary {
 }
 
 export default function OwnerDashboard() {
-  const { user } = useUserState();
+  const { user, loading: userLoading } = useUserState();
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     activeContracts: 0,
@@ -70,74 +70,113 @@ export default function OwnerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      setStats({
-        totalProperties: 3,
-        activeContracts: 2,
-        monthlyRevenue: 900000,
-        pendingPayments: 1,
-        averageRating: 4.7,
-        totalTenants: 2,
-      });
+    if (user) {
+      loadDashboardData();
+    } else if (!userLoading) {
+      // Usuario no autenticado, mostrar datos vacíos
+      setLoading(false);
+    }
+  }, [user, userLoading]);
 
-      setRecentProperties([
-        {
-          id: '1',
-          title: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          status: 'RENTED',
-          monthlyRent: 550000,
-          tenant: 'Carlos Ramírez',
-          contractEnd: '2024-12-31',
-        },
-        {
-          id: '2',
-          title: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          status: 'RENTED',
-          monthlyRent: 350000,
-          tenant: 'Empresa Soluciones Ltda.',
-          contractEnd: '2025-02-14',
-        },
-        {
-          id: '3',
-          title: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          status: 'AVAILABLE',
-          monthlyRent: 1200000,
-        },
-      ]);
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
 
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'payment',
-          title: 'Pago recibido',
-          description: 'Carlos Ramírez pagó arriendo de marzo',
-          date: '2024-03-15',
-          status: 'COMPLETED',
-        },
-        {
-          id: '2',
-          type: 'contract',
-          title: 'Nuevo contrato',
-          description: 'Contrato firmado con Empresa Soluciones Ltda.',
-          date: '2024-03-10',
-          status: 'ACTIVE',
-        },
-        {
-          id: '3',
-          type: 'rating',
-          title: 'Nueva calificación',
-          description: 'Carlos Ramírez te calificó con 5 estrellas',
-          date: '2024-03-08',
-        },
-      ]);
+      // Intentar cargar datos reales del usuario
+      // Por ahora, si es un usuario nuevo, mostrar datos vacíos
+      const isNewUser = !user?.createdAt || (new Date() - new Date(user.createdAt)) < 60000; // Menos de 1 minuto desde creación
+
+      if (isNewUser) {
+        // Usuario nuevo - mostrar dashboard vacío con bienvenida
+        setStats({
+          totalProperties: 0,
+          activeContracts: 0,
+          monthlyRevenue: 0,
+          pendingPayments: 0,
+          averageRating: 0,
+          totalTenants: 0,
+        });
+        setRecentProperties([]);
+        setRecentActivity([{
+          id: 'welcome',
+          type: 'message',
+          title: '¡Bienvenido a Rent360!',
+          description: 'Tu cuenta ha sido creada exitosamente. Comienza agregando tu primera propiedad.',
+          date: new Date().toISOString().split('T')[0],
+          status: 'INFO'
+        }]);
+      } else {
+        // Usuario existente - mostrar datos de ejemplo (temporal hasta implementar API real)
+        setStats({
+          totalProperties: 3,
+          activeContracts: 2,
+          monthlyRevenue: 900000,
+          pendingPayments: 1,
+          averageRating: 4.7,
+          totalTenants: 2,
+        });
+
+        setRecentProperties([
+          {
+            id: '1',
+            title: 'Departamento Las Condes',
+            address: 'Av. Apoquindo 3400, Las Condes',
+            status: 'RENTED',
+            monthlyRent: 550000,
+            tenant: 'Carlos Ramírez',
+            contractEnd: '2024-12-31',
+          },
+          {
+            id: '2',
+            title: 'Oficina Providencia',
+            address: 'Av. Providencia 1245, Providencia',
+            status: 'RENTED',
+            monthlyRent: 350000,
+            tenant: 'Empresa Soluciones Ltda.',
+            contractEnd: '2025-02-14',
+          },
+          {
+            id: '3',
+            title: 'Casa Vitacura',
+            address: 'Av. Vitacura 8900, Vitacura',
+            status: 'AVAILABLE',
+            monthlyRent: 1200000,
+          },
+        ]);
+
+        setRecentActivity([
+          {
+            id: '1',
+            type: 'payment',
+            title: 'Pago recibido',
+            description: 'Carlos Ramírez pagó arriendo de marzo',
+            date: '2024-03-15',
+            status: 'COMPLETED',
+          },
+          {
+            id: '2',
+            type: 'contract',
+            title: 'Nuevo contrato',
+            description: 'Contrato firmado con Empresa Soluciones Ltda.',
+            date: '2024-03-10',
+            status: 'ACTIVE',
+          },
+          {
+            id: '3',
+            type: 'rating',
+            title: 'Nueva calificación',
+            description: 'Carlos Ramírez te calificó con 5 estrellas',
+            date: '2024-03-08',
+          },
+        ]);
+      }
 
       setLoading(false);
-    }, 1000);
-  }, []);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -200,12 +239,24 @@ export default function OwnerDashboard() {
     ACTIVE: <Badge className="bg-blue-100 text-blue-800">Activo</Badge>,
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-red-600">Usuario no autenticado</p>
+          <p className="text-gray-600 mt-2">Por favor, inicia sesión nuevamente</p>
         </div>
       </div>
     );

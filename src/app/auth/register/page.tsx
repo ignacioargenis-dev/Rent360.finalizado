@@ -160,10 +160,32 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Redirigir al dashboard correspondiente
-        const dashboardUrl = getDashboardUrl(data.user.role);
-        router.push(dashboardUrl);
-        router.refresh();
+        // Hacer login automático después del registro exitoso
+        try {
+          const loginResponse = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
+            }),
+          });
+
+          if (loginResponse.ok) {
+            // Login exitoso, redirigir al dashboard
+            const dashboardUrl = getDashboardUrl(data.user.role);
+            router.push(dashboardUrl);
+            router.refresh();
+          } else {
+            // Si falla el login automático, redirigir al login manual
+            router.push('/auth/login?message=Registro exitoso, por favor inicia sesión');
+          }
+        } catch (loginError) {
+          logger.error('Error en login automático después del registro:', { error: loginError });
+          router.push('/auth/login?message=Registro exitoso, por favor inicia sesión');
+        }
       } else {
         // Si ya hay un error específico de validación, no lo sobrescribir
         if (!error) {
