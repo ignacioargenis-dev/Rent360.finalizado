@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
-import { Building, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface FooterProps {
@@ -53,9 +53,11 @@ export function Footer({ className }: FooterProps) {
           {/* Logo y descripción */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Building className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <img
+                src="/logo-rent360-small.png"
+                alt="Rent360 Logo"
+                className="h-8 w-auto"
+              />
               <span className="text-xl font-bold text-foreground">Rent360</span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
