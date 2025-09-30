@@ -185,7 +185,7 @@ export default function RegisterPage() {
       case 'broker': return '/broker/dashboard';
       case 'runner': return '/runner/dashboard';
       case 'support': return '/support/dashboard';
-      case 'provider': return '/provider';
+      case 'provider': return '/provider/dashboard';
       case 'maintenance': return '/maintenance';
       default: return '/';
     }

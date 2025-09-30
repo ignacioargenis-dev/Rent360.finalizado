@@ -462,7 +462,7 @@ const menuItems: RoleMenuItems = {
   provider: [
     {
       title: 'Panel Principal',
-      url: '/provider',
+      url: '/provider/dashboard',
       icon: Home,
     },
     {

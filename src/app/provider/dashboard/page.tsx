@@ -1,220 +1,327 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { logger } from '@/lib/logger';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  AlertTriangle,
-  RefreshCw,
-  Building,
+import {
+  Wrench,
+  Users,
+  DollarSign,
+  Calendar,
   CheckCircle,
   Clock,
-  DollarSign,
-  Info,
-  Plus,
-  Filter,
-  Download,
-  BarChart3,
-  Settings
+  AlertTriangle,
+  TrendingUp,
+  MessageSquare
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useState, useEffect } from 'react';
 
-export default function PanelPrincipalPage() {
+export default function ProviderDashboard() {
+  const [jobs, setJobs] = useState([]);
+  const [serviceRequests, setServiceRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Cargar datos de la página
-    loadPageData();
+    loadJobs();
+    loadServiceRequests();
   }, []);
 
-  const loadPageData = async () => {
+  const loadJobs = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/provider/dashboard`);
-      // const result = await response.json();
-      // setData(result);
-      
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const response = await fetch('/api/provider/jobs');
+      if (response.ok) {
+        const data = await response.json();
+        setJobs(data.jobs || []);
+      }
     } catch (error) {
-      logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los datos");
+      console.error('Error cargando trabajos:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout 
-        title="Panel Principal"
-        subtitle="Cargando información..."
-      >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando...</p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const loadServiceRequests = async () => {
+    try {
+      const response = await fetch('/api/services/request');
+      if (response.ok) {
+        const data = await response.json();
+        setServiceRequests(data.requests || []);
+      }
+    } catch (error) {
+      console.error('Error cargando solicitudes de servicio:', error);
+    }
+  };
 
-  if (error) {
-    return (
-      <DashboardLayout 
-        title="Panel Principal"
-        subtitle="Error al cargar la página"
-      >
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reintentar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </DashboardLayout>
-    );
-  }
+  const sendQuote = async (requestId: string, price: number) => {
+    try {
+      const response = await fetch('/api/services/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId,
+          price,
+          estimatedTime: '2-4 horas',
+          availabilityDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          notes: 'Cotización generada automáticamente desde el dashboard'
+        })
+      });
+
+      if (response.ok) {
+        alert('Cotización enviada exitosamente');
+        loadServiceRequests(); // Recargar solicitudes
+      } else {
+        alert('Error al enviar cotización');
+      }
+    } catch (error) {
+      console.error('Error enviando cotización:', error);
+      alert('Error al enviar cotización');
+    }
+  };
 
   return (
-    <DashboardLayout 
-      title="Panel Principal"
-      subtitle="Gestiona y visualiza la información de panel principal"
-    >
+    <DashboardLayout>
       <div className="space-y-6">
-        {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Proveedor</h1>
+          <p className="text-muted-foreground">
+            Gestiona tus servicios y clientes
+          </p>
+        </div>
+
+        {/* Estadísticas principales */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Trabajos Activos</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{jobs.length}</div>
               <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
+                Servicios en curso
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">24</div>
               <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
+                +3 nuevos esta semana
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
+              <CardTitle className="text-sm font-medium">Ingresos del Mes</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0</div>
+              <div className="text-2xl font-bold">$2.4M</div>
               <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
+                +12% vs mes anterior
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Calificación</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">4.8</div>
+              <p className="text-xs text-muted-foreground">
+                ★★★★★ Excelente
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Panel Principal</CardTitle>
-            <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con panel principal.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Solicitudes de servicio disponibles */}
+        {serviceRequests.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Solicitudes de Servicio Disponibles
+              </CardTitle>
+              <CardDescription>
+                Clientes buscando proveedores para sus necesidades
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {serviceRequests.map((request) => (
+                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <h4 className="font-medium">{request.serviceType} - {request.requesterName}</h4>
+                      <p className="text-sm text-muted-foreground">{request.description}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          request.urgency === 'Alta' ? 'destructive' :
+                          request.urgency === 'Media' ? 'default' : 'secondary'
+                        }>
+                          {request.urgency}
+                        </Badge>
+                        <Badge variant="outline">
+                          {request.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {new Date(request.createdAt).toLocaleDateString('es-CL')}
+                      </p>
+                      <Button
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => sendQuote(request.id, 50000)}
+                      >
+                        Enviar Cotización
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Acciones rápidas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
-              Accede rápidamente a las funciones más utilizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Plus className="w-6 h-6 mb-2" />
-                <span>Agregar Nuevo</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
-                <span>Filtrar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
-                <span>Exportar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <BarChart3 className="w-6 h-6 mb-2" />
-                <span>Reportes</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Settings className="w-6 h-6 mb-2" />
-                <span>Configuración</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
-                <span>Actualizar</span>
-              </Button>
+        {/* Contenido principal */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Trabajos activos */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Trabajos Activos
+              </CardTitle>
+              <CardDescription>
+                Servicios en curso y próximos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-4">Cargando trabajos...</div>
+              ) : (
+                <div className="space-y-4">
+                  {jobs.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No hay trabajos activos
+                    </div>
+                  ) : (
+                    jobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <h4 className="font-medium">{job.title}</h4>
+                      <p className="text-sm text-muted-foreground">{job.client}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          job.status === 'En progreso' ? 'default' :
+                          job.status === 'Programado' ? 'secondary' : 'outline'
+                        }>
+                          {job.status}
+                        </Badge>
+                        <Badge variant={
+                          job.priority === 'Alta' ? 'destructive' :
+                          job.priority === 'Media' ? 'default' : 'secondary'
+                        }>
+                          {job.priority}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {new Date(job.dueDate).toLocaleDateString('es-CL')}
+                      </p>
+                      <Button size="sm" variant="outline" className="mt-2">
+                        Ver detalles
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          </CardContent>
-        </Card>
+          )}
+            </CardContent>
+          </Card>
+
+          {/* Acciones rápidas y notificaciones */}
+          <div className="space-y-6">
+            {/* Acciones rápidas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5" />
+                  Acciones Rápidas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start" variant="outline">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Nuevo Trabajo
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Users className="mr-2 h-4 w-4" />
+                  Agregar Cliente
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Generar Cotización
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Contactar Soporte
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Notificaciones */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Notificaciones
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Trabajo completado</p>
+                      <p className="text-xs text-muted-foreground">Reparación baño finalizada</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Clock className="h-4 w-4 text-orange-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Recordatorio</p>
+                      <p className="text-xs text-muted-foreground">Cita mañana a las 9:00 AM</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <MessageSquare className="h-4 w-4 text-blue-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Nuevo mensaje</p>
+                      <p className="text-xs text-muted-foreground">Cliente solicita presupuesto</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
