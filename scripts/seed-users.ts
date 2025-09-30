@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Iniciando siembra de usuarios...');
 
-  // Hash de contraseñas
-  const hashedPassword = await bcrypt.hash('123456', 12);
+  // Hash de contraseñas (mínimo 8 caracteres para validación)
+  const hashedPassword = await bcrypt.hash('12345678', 12);
 
   // Crear usuarios de prueba
   const users = [

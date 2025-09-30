@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    if (!user) {
+    if (!userProfile) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }

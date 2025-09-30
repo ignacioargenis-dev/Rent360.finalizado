@@ -1,7 +1,7 @@
 # 🔐 Credenciales de Usuarios - Rent360
 
 ## Información General
-- **Contraseña común para todos los usuarios**: `123456`
+- **Contraseña común para todos los usuarios**: `12345678`
 - **Todos los usuarios están creados automáticamente** al ejecutar `npm run db:seed`
 - **Los usuarios tienen diferentes roles** con permisos específicos
 
@@ -9,14 +9,14 @@
 
 | Rol | Email | Nombre | Dashboard |
 |-----|-------|--------|-----------|
-| 👑 **ADMIN** | `admin@rent360.cl` | Administrador | `/admin/dashboard` |
-| 🏠 **OWNER** | `propietario@rent360.cl` | Propietario | `/owner/dashboard` |
-| 🏢 **TENANT** | `inquilino@rent360.cl` | Inquilino | `/tenant/dashboard` |
-| 💼 **BROKER** | `corredor@rent360.cl` | Corredor | `/broker/dashboard` |
-| 🏃 **RUNNER** | `runner@rent360.cl` | Runner | `/runner/dashboard` |
-| 🎧 **SUPPORT** | `soporte@rent360.cl` | Soporte | `/support/dashboard` |
-| 🔧 **PROVIDER** | `proveedor@rent360.cl` | Proveedor de Servicios | `/provider/dashboard` |
-| 🛠️ **MAINTENANCE** | `mantenimiento@rent360.cl` | Servicio de Mantenimiento | `/maintenance` |
+| 👑 **ADMIN** | `admin@rent360.cl` | `12345678` | `/admin/dashboard` |
+| 🏠 **OWNER** | `propietario@rent360.cl` | `12345678` | `/owner/dashboard` |
+| 🏢 **TENANT** | `inquilino@rent360.cl` | `12345678` | `/tenant/dashboard` |
+| 💼 **BROKER** | `corredor@rent360.cl` | `12345678` | `/broker/dashboard` |
+| 🏃 **RUNNER** | `runner@rent360.cl` | `12345678` | `/runner/dashboard` |
+| 🎧 **SUPPORT** | `soporte@rent360.cl` | `12345678` | `/support/dashboard` |
+| 🔧 **PROVIDER** | `proveedor@rent360.cl` | `12345678` | `/provider/dashboard` |
+| 🛠️ **MAINTENANCE** | `mantenimiento@rent360.cl` | `12345678` | `/maintenance` |
 
 ## 🚀 Inicio de Sesión Rápido
 
@@ -26,17 +26,17 @@ Para probar diferentes roles, puedes usar estas credenciales en la página de lo
 
 1. **Acceder como Administrador:**
    - Email: `admin@rent360.cl`
-   - Password: `123456`
+   - Password: `12345678`
    - Redirige a: `/admin/dashboard`
 
 2. **Acceder como Propietario:**
    - Email: `propietario@rent360.cl`
-   - Password: `123456`
+   - Password: `12345678`
    - Redirige a: `/owner/dashboard`
 
 3. **Acceder como Proveedor:**
    - Email: `proveedor@rent360.cl`
-   - Password: `123456`
+   - Password: `12345678`
    - Redirige a: `/provider/dashboard`
 
 ## 📝 Notas Importantes
