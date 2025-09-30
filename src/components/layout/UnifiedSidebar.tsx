@@ -596,7 +596,22 @@ export default function UnifiedSidebar({
   };
 
   // Determinar rol del usuario de forma más robusta
-  const userRole = user?.role?.toLowerCase() || 'tenant';
+  let userRole: string;
+  if (!user) {
+    // Si no hay usuario aún (cargando), intentar determinar desde URL
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (pathname.startsWith('/admin/')) userRole = 'admin';
+    else if (pathname.startsWith('/owner/')) userRole = 'owner';
+    else if (pathname.startsWith('/tenant/')) userRole = 'tenant';
+    else if (pathname.startsWith('/broker/')) userRole = 'broker';
+    else if (pathname.startsWith('/provider/')) userRole = 'provider';
+    else if (pathname.startsWith('/maintenance/')) userRole = 'maintenance';
+    else if (pathname.startsWith('/runner/')) userRole = 'runner';
+    else if (pathname.startsWith('/support/')) userRole = 'support';
+    else userRole = 'tenant'; // fallback por defecto
+  } else {
+    userRole = user.role.toLowerCase();
+  }
 
   // Si el rol no existe en menuItems, intentar determinarlo desde la URL actual
   let finalUserRole = userRole;
@@ -641,7 +656,8 @@ export default function UnifiedSidebar({
       selectedMenu: finalUserRole in menuItems ? finalUserRole : 'tenant (fallback)',
       timestamp: new Date().toISOString(),
       userObject: user, // Agregar el objeto completo del usuario
-      menuItemsAvailable: Object.keys(menuItems)
+      menuItemsAvailable: Object.keys(menuItems),
+      userLoaded: !!user // Indicar si el usuario ya se cargó
     });
   }
 
