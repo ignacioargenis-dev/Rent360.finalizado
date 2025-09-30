@@ -49,6 +49,7 @@ export default function DashboardLayout({
       
       if (response.ok) {
         const data = await response.json();
+        console.log('DashboardLayout - User data received:', data);
         setUser(data.user);
       } else if (response.status === 401) {
         // User not authenticated, redirect to login

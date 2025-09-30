@@ -613,6 +613,19 @@ export default function UnifiedSidebar({
     else if (pathname.startsWith('/support/')) finalUserRole = 'support';
   }
 
+  // Verificación adicional: si estamos en una URL que no corresponde al rol del usuario,
+  // forzar el rol basado en la URL actual
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    const urlRole = pathname.split('/')[1]; // Obtener primera parte de la URL
+
+    // Si la URL indica un rol diferente al del usuario, usar el rol de la URL
+    if (urlRole && ['admin', 'owner', 'tenant', 'broker', 'provider', 'maintenance', 'runner', 'support'].includes(urlRole) && urlRole !== finalUserRole) {
+      console.warn(`URL role (${urlRole}) differs from user role (${finalUserRole}). Using URL role.`);
+      finalUserRole = urlRole;
+    }
+  }
+
   const items = menuItems[finalUserRole] || menuItems[userRole] || menuItems.tenant || [];
 
   // Debug: Log del rol del usuario (temporal para diagnóstico)
@@ -626,7 +639,9 @@ export default function UnifiedSidebar({
       currentPath: pathname,
       availableMenuKeys: Object.keys(menuItems),
       selectedMenu: finalUserRole in menuItems ? finalUserRole : 'tenant (fallback)',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      userObject: user, // Agregar el objeto completo del usuario
+      menuItemsAvailable: Object.keys(menuItems)
     });
   }
 
