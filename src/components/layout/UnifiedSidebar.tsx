@@ -527,6 +527,16 @@ const menuItems: RoleMenuItems = {
       icon: BarChart3,
     },
     {
+      title: 'Ganancias',
+      url: '/maintenance/earnings',
+      icon: DollarSign,
+    },
+    {
+      title: 'Calificaciones',
+      url: '/maintenance/ratings',
+      icon: Star,
+    },
+    {
       title: 'Firmas Electrónicas',
       url: '/signatures',
       icon: Shield,
