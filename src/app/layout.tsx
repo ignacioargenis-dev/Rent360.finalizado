@@ -7,7 +7,6 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
-import { Footer } from '@/components/ui/Footer';
 import dynamic from 'next/dynamic';
 
 // Lazy loading de componentes pesados
@@ -17,6 +16,12 @@ const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), {
 });
 
 const PWAInstallPrompt = dynamic(() => import('@/components/pwa/PWAInstallPrompt'), {
+  loading: () => null,
+  ssr: false,
+});
+
+// Componente cliente para footer condicional
+const ConditionalFooter = dynamic(() => import('@/components/ui/ConditionalFooter'), {
   loading: () => null,
   ssr: false,
 });
@@ -112,8 +117,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </ThemeProvider>
         </ErrorBoundary>
 
-        {/* Footer global */}
-        <Footer />
+        {/* Footer solo en homepage */}
+        <ConditionalFooter />
       </body>
     </html>
   );
