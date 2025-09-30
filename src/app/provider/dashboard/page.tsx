@@ -1,6 +1,6 @@
 'use client';
 
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,11 +82,15 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <EnhancedDashboardLayout
-      title="Dashboard Proveedor"
-      subtitle="Gestiona tus servicios y clientes"
-    >
+    <DashboardLayout>
       <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Proveedor</h1>
+          <p className="text-muted-foreground">
+            Gestiona tus servicios y clientes
+          </p>
+        </div>
 
         {/* Estadísticas principales */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -319,6 +323,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }
