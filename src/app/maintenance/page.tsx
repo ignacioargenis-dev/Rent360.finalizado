@@ -1,3 +1,5 @@
+'use client';
+
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +18,6 @@ import {
   Settings
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
-'use client';
 
 export default function MaintenanceDashboard() {
   const [jobs, setJobs] = useState([]);
