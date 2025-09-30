@@ -1,10 +1,5 @@
-[33mc170fcd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m fix: Corregir tipos en funcion handleCreateProperty
-[33md81d6b7[m fix: Corregir tipos en funcion handleCreateProperty
-[33mb94bfc9[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Corregir property.owner -> property.ownerId en filtros de busqueda
-[33mf04aa26[m fix: Usar conversion segura de tipos 'as unknown as Property[]'
-[33m7e71c6e[m fix: Resolver problema de inferencia de tipos en mockProperties
-[33m0c78887[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m fix: corregir tipo de propiedad opcional en ValidationError
-[33mb423ead[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: corregir configuración del servidor Socket.IO
-[33me3e9d52[m fix: agregar importación faltante de Socket en socket-server.ts
-[33mdf503e5[m fix: resolver conflicto de identificadores en WebSocket client
-[33m67adc75[m fix: corregir acceso a propiedad typeName en validadores Zod
+[33m63cb4dc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Move 'use client' directive to top of maintenance page.tsx
+[33mb4b2f93[m fix: Remove duplicate provider dashboard and correct navigation routing
+[33m8ddb890[m fix: Add MAINTENANCE role navigation and correct PROVIDER routing
+[33md294717[m feat: Add PROVIDER and MAINTENANCE user roles with full interaction capabilities
+[33m647d054[m feat: Replace generic building icon with custom Rent360 small logo in footer
