@@ -462,7 +462,7 @@ const menuItems: RoleMenuItems = {
   provider: [
     {
       title: 'Panel Principal',
-      url: '/provider/dashboard',
+      url: '/provider',
       icon: Home,
     },
     {
@@ -495,6 +495,47 @@ const menuItems: RoleMenuItems = {
     {
       title: 'Configuración',
       url: '/provider/settings',
+      icon: Settings,
+    },
+  ],
+  maintenance: [
+    {
+      title: 'Panel Principal',
+      url: '/maintenance',
+      icon: Home,
+    },
+    {
+      title: 'Trabajos Activos',
+      url: '/maintenance/jobs',
+      icon: Wrench,
+      badge: '8',
+      badgeVariant: 'secondary',
+    },
+    {
+      title: 'Propiedades',
+      url: '/maintenance/properties',
+      icon: Building,
+    },
+    {
+      title: 'Calendario',
+      url: '/maintenance/calendar',
+      icon: Calendar,
+    },
+    {
+      title: 'Reportes',
+      url: '/maintenance/reports',
+      icon: BarChart3,
+    },
+    {
+      title: 'Firmas Electrónicas',
+      url: '/signatures',
+      icon: Shield,
+      badge: 'SII',
+      badgeVariant: 'default',
+    },
+    {
+      title: 'Configuración',
+      url: '/maintenance/settings',
       icon: Settings,
     },
   ],

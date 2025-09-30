@@ -1,4 +1,4 @@
-import { EnhancedDashboardLayout } from '@/components/layout/EnhancedDashboardLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,7 +82,7 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <EnhancedDashboardLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -321,6 +321,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }
