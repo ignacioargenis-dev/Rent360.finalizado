@@ -44,7 +44,7 @@ export default function RequestServicePage() {
         alert(error.error || 'Error al enviar la solicitud');
       }
     } catch (error) {
-      logger.error('Error enviando solicitud de servicio:', error);
+      logger.error('Error enviando solicitud de servicio:', { error: error instanceof Error ? error.message : String(error) });
       alert('Error al conectar con el servidor');
     } finally {
       setIsSubmitting(false);
