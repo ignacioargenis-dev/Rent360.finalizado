@@ -48,8 +48,15 @@ class RateLimiter {
 
     this.setConfig('auth', {
       windowMs: 15 * 60 * 1000, // 15 minutos
-      maxRequests: 5,
+      maxRequests: 30,
       message: 'Demasiados intentos de autenticación',
+      statusCode: 429
+    });
+
+    this.setConfig('auth-me', {
+      windowMs: 5 * 60 * 1000, // 5 minutos - más permisivo para verificar sesión
+      maxRequests: 50,
+      message: 'Demasiadas verificaciones de sesión',
       statusCode: 429
     });
 

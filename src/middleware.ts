@@ -9,6 +9,7 @@ import { authMiddleware } from '@/middleware/auth';
 const rateLimitConfigs = {
   '/api/auth/login': 'auth-strict',
   '/api/auth/register': 'auth-strict',
+  '/api/auth/me': 'auth-me', // Configuración específica para verificar sesión
   '/api/auth': 'auth',
   '/api/admin': 'admin',
   '/api/support': 'support',
