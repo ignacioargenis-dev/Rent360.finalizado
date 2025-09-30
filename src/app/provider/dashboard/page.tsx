@@ -1,6 +1,6 @@
 'use client';
 
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,13 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useUserState } from '@/hooks/useUserState';
 
 export default function ProviderDashboard() {
   const [jobs, setJobs] = useState([]);
   const [serviceRequests, setServiceRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useUserState();
 
   useEffect(() => {
     loadJobs();
@@ -82,15 +84,12 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      user={user}
+      title="Dashboard Proveedor"
+      subtitle="Gestiona tus servicios y clientes"
+    >
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard Proveedor</h1>
-          <p className="text-muted-foreground">
-            Gestiona tus servicios y clientes
-          </p>
-        </div>
 
         {/* Estadísticas principales */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
