@@ -137,7 +137,23 @@ export default function MaintenanceRatingsPage() {
       const averageRating = mockRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
 
       const ratingCounts = mockRatings.reduce((acc, rating) => {
-        acc[`${rating.rating}StarRatings`]++;
+        switch (rating.rating) {
+          case 5:
+            acc.fiveStarRatings++;
+            break;
+          case 4:
+            acc.fourStarRatings++;
+            break;
+          case 3:
+            acc.threeStarRatings++;
+            break;
+          case 2:
+            acc.twoStarRatings++;
+            break;
+          case 1:
+            acc.oneStarRatings++;
+            break;
+        }
         return acc;
       }, {
         fiveStarRatings: 0,
