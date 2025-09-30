@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Roles permitidos para registro público
-    const allowedPublicRoles = ['tenant', 'owner', 'broker', 'runner'];
-    
+    const allowedPublicRoles = ['TENANT', 'OWNER', 'BROKER', 'RUNNER'];
+
     // Evitar que los usuarios se registren con roles no permitidos
     if (!allowedPublicRoles.includes(role)) {
       return NextResponse.json(
