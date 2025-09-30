@@ -70,9 +70,8 @@ async function main() {
     }
   ];
 
-  // TODO: Implementar creación de servicios una vez definidos los modelos en el esquema
-  // Por ahora, solo creamos algunos proveedores de prueba
-  console.log('Nota: Los servicios se crearán una vez que se defina el modelo Service en el esquema de Prisma');
+  // Implementación básica de servicios para proveedores
+  console.log('Creando servicios básicos para proveedores...');
 
   try {
     // Verificar si existen los usuarios de prueba
@@ -86,13 +85,86 @@ async function main() {
 
     if (providerUser) {
       console.log(`Usuario proveedor encontrado: ${providerUser.name}`);
+
+      // Crear un ServiceProvider básico si no existe
+      const existingProvider = await prisma.serviceProvider.findUnique({
+        where: { userId: providerUser.id }
+      });
+
+      if (!existingProvider) {
+        await prisma.serviceProvider.create({
+          data: {
+            userId: providerUser.id,
+            businessName: 'Proveedor de Servicios Rent360',
+            rut: '12.345.678-9',
+            serviceType: 'MULTIPLE',
+            serviceTypes: JSON.stringify(['PLOMERIA', 'ELECTRICIDAD', 'PINTURA', 'JARDINERIA']),
+            basePrice: 25000,
+            rating: 4.5,
+            totalRatings: 25,
+            completedJobs: 15,
+            totalEarnings: 500000,
+            status: 'VERIFIED',
+            isVerified: true,
+            responseTime: 2.5,
+            address: 'Santiago, Chile',
+            description: 'Proveedor integral de servicios para propiedades',
+            availability: JSON.stringify({
+              monday: '08:00-18:00',
+              tuesday: '08:00-18:00',
+              wednesday: '08:00-18:00',
+              thursday: '08:00-18:00',
+              friday: '08:00-18:00',
+              saturday: '09:00-14:00'
+            })
+          }
+        });
+        console.log('ServiceProvider creado para el proveedor');
+      }
     }
 
     if (maintenanceUser) {
       console.log(`Usuario mantenimiento encontrado: ${maintenanceUser.name}`);
+
+      // Crear un ServiceProvider básico para mantenimiento si no existe
+      const existingMaintenance = await prisma.serviceProvider.findUnique({
+        where: { userId: maintenanceUser.id }
+      });
+
+      if (!existingMaintenance) {
+        await prisma.serviceProvider.create({
+          data: {
+            userId: maintenanceUser.id,
+            businessName: 'Servicio de Mantenimiento Rent360',
+            rut: '98.765.432-1',
+            serviceType: 'MAINTENANCE',
+            serviceTypes: JSON.stringify(['MANTENIMIENTO_PREVENTIVO', 'MANTENIMIENTO_CORRECTIVO']),
+            basePrice: 35000,
+            rating: 4.8,
+            totalRatings: 40,
+            completedJobs: 28,
+            totalEarnings: 1200000,
+            status: 'VERIFIED',
+            isVerified: true,
+            responseTime: 1.8,
+            address: 'Santiago, Región Metropolitana',
+            description: 'Servicio especializado en mantenimiento preventivo y correctivo',
+            availability: JSON.stringify({
+              monday: '07:00-19:00',
+              tuesday: '07:00-19:00',
+              wednesday: '07:00-19:00',
+              thursday: '07:00-19:00',
+              friday: '07:00-19:00',
+              saturday: '08:00-16:00',
+              sunday: 'emergencias'
+            })
+          }
+        });
+        console.log('ServiceProvider creado para el servicio de mantenimiento');
+      }
     }
   } catch (error) {
-    console.error('Error al verificar usuarios:', error);
+    console.error('Error al crear proveedores de servicios:', error);
   }
 
   console.log('Siembra de servicios completada.');

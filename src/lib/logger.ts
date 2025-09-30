@@ -1,3 +1,5 @@
+'use server';
+
 // Configuración de logging
 const LOG_LEVELS = {
   ERROR: 0,

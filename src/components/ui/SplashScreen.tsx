@@ -41,7 +41,7 @@ export function SplashScreen({ logoUrl, visible, onHidden, durationMs = 1200 }: 
         <img
           src={logoUrl}
           alt="Rent360 - Logo Oficial"
-          className="w-[280px] h-auto animate-pulse mb-4"
+          className="w-[400px] h-auto animate-pulse mb-4"
           style={{
             filter: 'drop-shadow(0 8px 32px rgba(255,255,255,0.3)) brightness(1.1)',
             maxWidth: '80vw'
