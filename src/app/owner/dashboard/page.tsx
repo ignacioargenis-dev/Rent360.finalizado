@@ -102,7 +102,7 @@ export default function OwnerDashboard() {
           type: 'message',
           title: '¡Bienvenido a Rent360!',
           description: 'Tu cuenta ha sido creada exitosamente. Comienza agregando tu primera propiedad.',
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split('T')[0]!,
           status: 'INFO'
         }]);
       } else {
