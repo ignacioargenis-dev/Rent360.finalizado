@@ -15,8 +15,27 @@ export async function POST(request: NextRequest) {
       validatedData = registerSchema.parse(rawData);
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
+        // Crear mensajes de error más específicos
+        const errorMessages = validationError.issues.map(issue => {
+          const field = issue.path.join('.');
+          switch (field) {
+            case 'name':
+              return 'El nombre es obligatorio y debe tener al menos 2 caracteres';
+            case 'email':
+              return 'El email debe tener un formato válido';
+            case 'password':
+              return 'La contraseña debe tener al menos 8 caracteres';
+            case 'rut':
+              return 'El RUT debe tener un formato válido (ej: 12.345.678-9)';
+            case 'phone':
+              return 'El teléfono debe tener formato chileno válido';
+            default:
+              return `${field}: ${issue.message}`;
+          }
+        });
+
         return NextResponse.json(
-          { error: 'Datos inválidos', details: validationError.issues },
+          { error: errorMessages.join('. ') },
           { status: 400 }
         );
       }

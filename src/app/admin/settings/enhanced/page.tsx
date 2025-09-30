@@ -539,6 +539,7 @@ export default function EnhancedAdminSettingsPage() {
     { id: 'email', label: 'Email', icon: Mail },
     { id: 'payments', label: 'Pagos', icon: CreditCard },
     { id: 'integrations', label: 'Integraciones', icon: Link },
+    { id: 'footer', label: 'Footer', icon: FileText },
     { id: 'advanced', label: 'Avanzado', icon: Zap },
     { id: 'ui', label: 'UI/UX', icon: Palette },
     { id: 'performance', label: 'Rendimiento', icon: BarChart3 },
@@ -3116,6 +3117,144 @@ export default function EnhancedAdminSettingsPage() {
     </div>
   );
 
+  const renderFooterSettings = () => (
+    <div className="grid lg:grid-cols-2 gap-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Contenido del Footer
+          </CardTitle>
+          <CardDescription>
+            Personaliza los textos y enlaces del footer
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descripción de la Empresa
+            </label>
+            <Textarea
+              value={settings.footerDescription || "Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario."}
+              onChange={(e) => setSettings({...settings, footerDescription: e.target.value})}
+              rows={3}
+              placeholder="Descripción de Rent360..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email de Contacto
+              </label>
+              <Input
+                type="email"
+                value={settings.footerEmail || "contacto@rent360.cl"}
+                onChange={(e) => setSettings({...settings, footerEmail: e.target.value})}
+                placeholder="contacto@rent360.cl"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Teléfono de Contacto
+              </label>
+              <Input
+                type="tel"
+                value={settings.footerPhone || "+56 9 1234 5678"}
+                onChange={(e) => setSettings({...settings, footerPhone: e.target.value})}
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Dirección
+            </label>
+            <Input
+              value={settings.footerAddress || "Santiago, Chile"}
+              onChange={(e) => setSettings({...settings, footerAddress: e.target.value})}
+              placeholder="Santiago, Chile"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Texto de Copyright
+            </label>
+            <Input
+              value={settings.footerCopyright || "Desarrollado con ❤️ para el sector inmobiliario chileno"}
+              onChange={(e) => setSettings({...settings, footerCopyright: e.target.value})}
+              placeholder="Texto de copyright..."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Páginas Legales
+          </CardTitle>
+          <CardDescription>
+            Configura las páginas de términos, privacidad y cookies
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL de Términos y Condiciones
+              </label>
+              <Input
+                value={settings.termsUrl || "/terms"}
+                onChange={(e) => setSettings({...settings, termsUrl: e.target.value})}
+                placeholder="/terms"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL de Política de Privacidad
+              </label>
+              <Input
+                value={settings.privacyUrl || "/privacy"}
+                onChange={(e) => setSettings({...settings, privacyUrl: e.target.value})}
+                placeholder="/privacy"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL de Política de Cookies
+              </label>
+              <Input
+                value={settings.cookiesUrl || "/cookies"}
+                onChange={(e) => setSettings({...settings, cookiesUrl: e.target.value})}
+                placeholder="/cookies"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <div className="font-medium">Footer Habilitado</div>
+              <div className="text-sm text-gray-600">
+                Mostrar footer en todas las páginas
+              </div>
+            </div>
+            <Switch
+              checked={settings.footerEnabled !== false}
+              onCheckedChange={(checked) => setSettings({...settings, footerEnabled: checked})}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderLegalSettings = () => (
     <div className="grid lg:grid-cols-2 gap-8">
       <Card>
@@ -3307,6 +3446,7 @@ export default function EnhancedAdminSettingsPage() {
           {activeTab === 'advanced' && renderAdvancedSettings()}
           {activeTab === 'ui' && renderUISettings()}
           {activeTab === 'performance' && renderPerformanceSettings()}
+          {activeTab === 'footer' && renderFooterSettings()}
           {activeTab === 'legal' && renderLegalSettings()}
         </div>
       </div>

@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
+import { Footer } from '@/components/ui/Footer';
 import dynamic from 'next/dynamic';
 
 // Lazy loading de componentes pesados
@@ -105,11 +106,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
 
-                <Toaster />
-              </AuthProvider>
+              <Toaster />
+            </AuthProvider>
             </NotificationProvider>
           </ThemeProvider>
         </ErrorBoundary>
+
+        {/* Footer global */}
+        <Footer />
       </body>
     </html>
   );

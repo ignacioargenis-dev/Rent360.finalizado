@@ -164,7 +164,10 @@ export default function RegisterPage() {
         router.push(dashboardUrl);
         router.refresh();
       } else {
-        setError(data.error || 'Error al registrarse');
+        // Si ya hay un error específico de validación, no lo sobrescribir
+        if (!error) {
+          setError(data.error || 'Error al registrarse. Por favor verifica tus datos.');
+        }
       }
     } catch (error) {
       logger.error('Error en registro:', { error: error instanceof Error ? error.message : String(error) });
