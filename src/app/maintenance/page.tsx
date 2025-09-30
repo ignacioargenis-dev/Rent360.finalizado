@@ -73,12 +73,12 @@ export default function MaintenanceDashboard() {
     // Mock data for demo
     setTimeout(() => {
       setStats({
-        totalProperties: 3,
-        activeContracts: 2,
-        monthlyRevenue: 900000,
-        pendingPayments: 1,
-        averageRating: 4.7,
-        totalTenants: 2,
+        activeJobs: 8,
+        totalProperties: 156,
+        monthlyRevenue: 3100000,
+        completedJobs: 47,
+        averageRating: 4.9,
+        pendingJobs: 5,
       });
 
       setRecentProperties([
