@@ -347,9 +347,10 @@ export default function Chatbot({
         {!isMinimized && (
           <>
             <CardContent className="p-0 flex flex-col h-[400px]">
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
+              <ScrollArea className="flex-1 h-full">
+                <div className="p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
                     <div
                       key={message.id}
                       className={cn(
@@ -413,6 +414,7 @@ export default function Chatbot({
                   )}
                   
                   <div ref={messagesEndRef} />
+                  </div>
                 </div>
               </ScrollArea>
               
