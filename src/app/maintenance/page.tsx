@@ -1,6 +1,6 @@
 'use client';
 
-import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export default function MaintenanceDashboard() {
   };
 
   return (
-    <DashboardLayout
+    <EnhancedDashboardLayout
       user={user}
       title="Dashboard Mantenimiento"
       subtitle="Gestiona mantenimientos preventivos y correctivos"
@@ -267,6 +267,6 @@ export default function MaintenanceDashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }
