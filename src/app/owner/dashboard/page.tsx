@@ -264,7 +264,6 @@ export default function OwnerDashboard() {
 
   return (
     <DashboardLayout
-      user={user}
       title="Panel de Control de Propietario"
       subtitle="Gestiona tus propiedades e ingresos"
       showNotifications={true}
