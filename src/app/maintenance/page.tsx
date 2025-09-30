@@ -18,7 +18,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useUserState } from '@/hooks/useUserState';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
 export default function MaintenanceDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -44,7 +44,7 @@ export default function MaintenanceDashboard() {
   };
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Dashboard Mantenimiento"
       subtitle="Gestiona mantenimientos preventivos y correctivos"
@@ -267,6 +267,6 @@ export default function MaintenanceDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

@@ -16,7 +16,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useUserState } from '@/hooks/useUserState';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
 export default function ProviderDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -84,7 +84,7 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Dashboard Proveedor"
       subtitle="Gestiona tus servicios y clientes"
@@ -322,6 +322,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }
