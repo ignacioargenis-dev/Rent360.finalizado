@@ -18,9 +18,28 @@ import {
 import { useUserState } from '@/hooks/useUserState';
 import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
+interface ServiceRequest {
+  id: string;
+  serviceType: string;
+  requesterName: string;
+  description: string;
+  urgency: string;
+  status: string;
+  createdAt: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+  client: string;
+  status: string;
+  priority: string;
+  dueDate: string;
+}
+
 export default function ProviderDashboard() {
-  const [jobs, setJobs] = useState([]);
-  const [serviceRequests, setServiceRequests] = useState([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useUserState();
 
