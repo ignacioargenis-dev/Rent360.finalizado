@@ -27,7 +27,7 @@ import { Plus,
   CheckCircle,
   AlertCircle, Info } from 'lucide-react';
 import { Property } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -794,3 +794,5 @@ return;
     </DashboardLayout>
   );
 }
+
+

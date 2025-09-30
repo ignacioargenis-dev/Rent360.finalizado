@@ -22,7 +22,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { Payment, Property, Contract } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -636,3 +636,5 @@ export default function OwnerPaymentsPage() {
     </DashboardLayout>
   );
 }
+
+

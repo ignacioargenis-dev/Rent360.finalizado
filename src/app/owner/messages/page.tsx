@@ -26,7 +26,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { User } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Message {
   id: string;
@@ -234,3 +234,4 @@ export default function MessagesPage() {
     </DashboardLayout>
   );
 }
+

@@ -20,7 +20,7 @@ import { BarChart3,
   Mail,
   Eye,
   Activity } from 'lucide-react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 import { User } from '@/types';
@@ -566,3 +566,5 @@ return 'text-yellow-600 bg-yellow-100';
     </DashboardLayout>
   );
 }
+
+

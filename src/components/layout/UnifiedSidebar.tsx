@@ -585,17 +585,37 @@ export default function UnifiedSidebar({
     }));
   };
 
+  // Determinar rol del usuario de forma más robusta
   const userRole = user?.role?.toLowerCase() || 'tenant';
-  const items = menuItems[userRole] || menuItems.tenant || [];
+
+  // Si el rol no existe en menuItems, intentar determinarlo desde la URL actual
+  let finalUserRole = userRole;
+  if (!(userRole in menuItems)) {
+    // Intentar determinar el rol desde la URL actual
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (pathname.startsWith('/admin/')) finalUserRole = 'admin';
+    else if (pathname.startsWith('/owner/')) finalUserRole = 'owner';
+    else if (pathname.startsWith('/tenant/')) finalUserRole = 'tenant';
+    else if (pathname.startsWith('/broker/')) finalUserRole = 'broker';
+    else if (pathname.startsWith('/provider/')) finalUserRole = 'provider';
+    else if (pathname.startsWith('/maintenance/')) finalUserRole = 'maintenance';
+    else if (pathname.startsWith('/runner/')) finalUserRole = 'runner';
+    else if (pathname.startsWith('/support/')) finalUserRole = 'support';
+  }
+
+  const items = menuItems[finalUserRole] || menuItems[userRole] || menuItems.tenant || [];
 
   // Debug: Log del rol del usuario (temporal para diagnóstico)
   if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
     console.log('UnifiedSidebar Debug:', {
       userRole,
+      finalUserRole,
       userRoleRaw: user?.role,
       userId: user?.id,
+      currentPath: pathname,
       availableMenuKeys: Object.keys(menuItems),
-      selectedMenu: userRole in menuItems ? userRole : 'tenant (fallback)',
+      selectedMenu: finalUserRole in menuItems ? finalUserRole : 'tenant (fallback)',
       timestamp: new Date().toISOString()
     });
   }

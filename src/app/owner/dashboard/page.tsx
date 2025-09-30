@@ -24,7 +24,7 @@ import { Home, Building, FileText,
 import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
-import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface DashboardStats {
@@ -563,3 +563,4 @@ export default function OwnerDashboard() {
     </DashboardLayout>
   );
 }
+
