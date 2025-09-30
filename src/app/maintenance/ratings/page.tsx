@@ -220,7 +220,6 @@ export default function MaintenanceRatingsPage() {
 
   return (
     <DashboardLayout
-      user={null}
       title="Calificaciones"
       subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
     >

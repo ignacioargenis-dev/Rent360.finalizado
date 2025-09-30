@@ -214,7 +214,6 @@ export default function MaintenanceEarningsPage() {
 
   return (
     <DashboardLayout
-      user={null}
       title="Ganancias"
       subtitle="Gestión financiera de tus servicios de mantenimiento"
     >
