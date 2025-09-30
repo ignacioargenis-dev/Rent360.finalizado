@@ -1,6 +1,6 @@
 'use client';
 
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,8 @@ import {
   TrendingUp,
   MessageSquare
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import { useUserState } from '@/hooks/useUserState';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
 export default function ProviderDashboard() {
   const [jobs, setJobs] = useState([]);
