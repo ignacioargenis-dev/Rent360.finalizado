@@ -276,6 +276,17 @@ interface SystemSettings {
 
   // Configuración de Seguridad para Runners
   runnerFraudDetectionEnabled: boolean;
+
+  // Configuración del Footer
+  footerDescription: string;
+  footerEmail: string;
+  footerPhone: string;
+  footerAddress: string;
+  footerCopyright: string;
+  termsUrl: string;
+  privacyUrl: string;
+  cookiesUrl: string;
+  footerEnabled: boolean;
 }
 
 export default function EnhancedAdminSettingsPage() {
@@ -468,6 +479,17 @@ export default function EnhancedAdminSettingsPage() {
     dataRetentionDays: 365,
     autoDeleteInactiveUsers: false,
     inactiveUserDays: 180,
+
+    // Configuración del Footer
+    footerDescription: "Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.",
+    footerEmail: "contacto@rent360.cl",
+    footerPhone: "+56 9 1234 5678",
+    footerAddress: "Santiago, Chile",
+    footerCopyright: "Desarrollado con ❤️ para el sector inmobiliario chileno",
+    termsUrl: "/terms",
+    privacyUrl: "/privacy",
+    cookiesUrl: "/cookies",
+    footerEnabled: true,
   });
   
 
