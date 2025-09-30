@@ -16,7 +16,7 @@ export default function TestStylesPage() {
   return (
     <>
       <SplashScreen
-        logoUrl="/logo.svg"
+        logoUrl="/logo-rent360.png"
         visible={showSplashTest}
         durationMs={3000}
       />
