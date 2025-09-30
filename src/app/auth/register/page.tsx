@@ -176,6 +176,9 @@ export default function RegisterPage() {
           if (loginResponse.ok) {
             // Login exitoso, redirigir al dashboard
             const dashboardUrl = getDashboardUrl(data.user.role);
+            try {
+              sessionStorage.setItem('r360_splash_after_login', '1');
+            } catch {}
             router.push(dashboardUrl);
             router.refresh();
           } else {
