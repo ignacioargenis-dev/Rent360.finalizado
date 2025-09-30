@@ -9,7 +9,7 @@ type SplashScreenProps = {
   durationMs?: number;
 };
 
-export function SplashScreen({ logoUrl, visible, onHidden, durationMs = 1200 }: SplashScreenProps) {
+export function SplashScreen({ logoUrl, visible, onHidden, durationMs = 3000 }: SplashScreenProps) {
   const [show, setShow] = React.useState(visible);
 
   React.useEffect(() => {
