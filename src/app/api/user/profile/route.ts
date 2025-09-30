@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { requireAuth } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     // Obtener el perfil del usuario desde la base de datos
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const userProfile = await db.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         name: true,
@@ -73,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      user
+      user: userProfile
     });
 
   } catch (error) {
@@ -88,21 +80,14 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const body = await request.json();
     const { name, phone, avatar } = body;
 
     // Actualizar el perfil del usuario
-    const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
+    const updatedUser = await db.user.update({
+      where: { id: user.id },
       data: {
         ...(name && { name }),
         ...(phone && { phone }),
@@ -119,7 +104,7 @@ export async function PUT(request: NextRequest) {
       }
     });
 
-    logger.info('Perfil de usuario actualizado:', { userId: session.user.id });
+    logger.info('Perfil de usuario actualizado:', { userId: user.id });
 
     return NextResponse.json({
       success: true,
