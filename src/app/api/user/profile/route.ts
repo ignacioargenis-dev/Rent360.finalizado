@@ -7,6 +7,25 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
+    if (!user?.id) {
+      logger.error('Usuario no encontrado en requireAuth');
+      return NextResponse.json(
+        { error: 'Usuario no autenticado' },
+        { status: 401 }
+      );
+    }
+
+    // Verificar conexión a la base de datos
+    try {
+      await db.$connect();
+    } catch (dbError) {
+      logger.error('Error conectando a la base de datos:', { error: dbError });
+      return NextResponse.json(
+        { error: 'Error de conexión a la base de datos' },
+        { status: 500 }
+      );
+    }
+
     // Obtener el perfil del usuario desde la base de datos
     const userProfile = await db.user.findUnique({
       where: { id: user.id },

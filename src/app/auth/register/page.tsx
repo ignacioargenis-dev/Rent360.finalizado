@@ -116,7 +116,14 @@ export default function RegisterPage() {
 
     // Validación de teléfono si está presente
     if (formData.phone && !/^\+?56\d{8,9}$/.test(formData.phone.replace(/\s+/g, ''))) {
-      setError('Formato de teléfono inválido. Use formato chileno (+56XXXXXXXXX)');
+      setError('El teléfono debe tener formato chileno válido (ej: +56 9 1234 5678)');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validación de campos obligatorios adicionales
+    if (!formData.name || formData.name.trim().length < 2) {
+      setError('El nombre es obligatorio y debe tener al menos 2 caracteres');
       setIsLoading(false);
       return;
     }
@@ -232,21 +239,20 @@ export default function RegisterPage() {
 
             {/* Campo RUT obligatorio */}
             <div>
-              <label htmlFor="rut" className="block text-sm font-medium text-gray-700">
-                RUT <span className="text-red-500">*</span>
-              </label>
+              <Label htmlFor="rut">
+                RUT <span className="text-destructive">*</span>
+              </Label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="rut"
                   name="rut"
                   type="text"
                   required
                   value={formData.rut}
                   onChange={handleChange}
-                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:z-10 sm:text-sm ${
-                    rutError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    rutValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    'border-gray-300 focus:border-blue-500'
+                  className={`pr-10 ${
+                    rutError ? 'border-destructive focus:border-destructive' :
+                    rutValid ? 'border-green-500 focus:border-green-500' : ''
                   }`}
                   placeholder="12.345.678-9"
                   maxLength={12}
@@ -255,12 +261,12 @@ export default function RegisterPage() {
                   {rutValid ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : rutError ? (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    <AlertCircle className="h-5 w-5 text-destructive" />
                   ) : null}
                 </div>
               </div>
               {rutError && (
-                <p className="mt-1 text-sm text-red-600">{rutError}</p>
+                <p className="mt-1 text-sm text-destructive">{rutError}</p>
               )}
               {rutValid && (
                 <p className="mt-1 text-sm text-green-600">RUT válido ✓</p>
@@ -269,16 +275,15 @@ export default function RegisterPage() {
 
             {/* Campo teléfono opcional */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="phone">
                 Teléfono
-              </label>
-              <input
+              </Label>
+              <Input
                 id="phone"
                 name="phone"
                 type="tel"
                 value={formData.phone}
                 onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="+56 9 1234 5678"
               />
             </div>
@@ -286,65 +291,60 @@ export default function RegisterPage() {
             {/* Campos opcionales de perfil */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+                <Label htmlFor="dateOfBirth">
                   Fecha de Nacimiento
-                </label>
-                <input
+                </Label>
+                <Input
                   id="dateOfBirth"
                   name="dateOfBirth"
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 />
               </div>
 
               <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
+                <Label htmlFor="gender">
                   Género
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                  <option value="OTHER">Otro</option>
-                  <option value="PREF_NOT_SAY">Prefiero no decir</option>
-                </select>
+                </Label>
+                <Select value={formData.gender} onValueChange={(value) => setFormData({...formData, gender: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Masculino</SelectItem>
+                    <SelectItem value="F">Femenino</SelectItem>
+                    <SelectItem value="OTHER">Otro</SelectItem>
+                    <SelectItem value="PREF_NOT_SAY">Prefiero no decir</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="role">
                 Tipo de Usuario
-              </label>
-              <select
-                id="role"
-                name="role"
-                required
-                value={formData.role}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              >
-                {roles.map((role) => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
+              </Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo de usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="password">
                 Contraseña
-              </label>
+              </Label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
@@ -352,8 +352,8 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="••••••••"
+                  className="pr-10"
                 />
                 <button
                   type="button"
@@ -361,20 +361,20 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-muted-foreground" />
                   )}
                 </button>
               </div>
             </div>
             
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="confirmPassword">
                 Confirmar Contraseña
-              </label>
+              </Label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -382,8 +382,8 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="••••••••"
+                  className="pr-10"
                 />
                 <button
                   type="button"
@@ -391,9 +391,9 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-muted-foreground" />
                   )}
                 </button>
               </div>
