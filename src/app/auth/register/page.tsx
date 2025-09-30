@@ -20,7 +20,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'tenant',
+    role: 'TENANT',
     // Campos obligatorios en Chile
     rut: '',
     // Campos opcionales de perfil
@@ -49,12 +49,12 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const roles = [
-    { value: 'tenant', label: 'Inquilino' },
-    { value: 'owner', label: 'Propietario' },
-    { value: 'broker', label: 'Corredor' },
-    { value: 'provider', label: 'Proveedor de Servicios' },
-    { value: 'maintenance', label: 'Servicio de Mantenimiento' },
-    { value: 'runner', label: 'Runner360' },
+    { value: 'TENANT', label: 'Inquilino' },
+    { value: 'OWNER', label: 'Propietario' },
+    { value: 'BROKER', label: 'Corredor' },
+    { value: 'PROVIDER', label: 'Proveedor de Servicios' },
+    { value: 'MAINTENANCE', label: 'Servicio de Mantenimiento' },
+    { value: 'RUNNER', label: 'Runner360' },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -138,21 +138,22 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          confirmPassword: formData.confirmPassword,
           role: formData.role,
           // Campos obligatorios
           rut: rutValidation.cleanRut,
           // Campos opcionales
-          phone: formData.phone || null,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
-          gender: formData.gender || null,
-          address: formData.address || null,
-          city: formData.city || null,
-          commune: formData.commune || null,
-          region: formData.region || null,
+          phone: formData.phone || undefined,
+          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined,
+          gender: formData.gender || undefined,
+          address: formData.address || undefined,
+          city: formData.city || undefined,
+          commune: formData.commune || undefined,
+          region: formData.region || undefined,
           // Campos adicionales
-          phoneSecondary: formData.phoneSecondary || null,
-          emergencyContact: formData.emergencyContact || null,
-          emergencyPhone: formData.emergencyPhone || null,
+          phoneSecondary: formData.phoneSecondary || undefined,
+          emergencyContact: formData.emergencyContact || undefined,
+          emergencyPhone: formData.emergencyPhone || undefined,
         }),
       });
 
