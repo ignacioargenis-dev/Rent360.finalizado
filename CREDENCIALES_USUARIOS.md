@@ -1,0 +1,69 @@
+# 🔐 Credenciales de Usuarios - Rent360
+
+## Información General
+- **Contraseña común para todos los usuarios**: `123456`
+- **Todos los usuarios están creados automáticamente** al ejecutar `npm run db:seed`
+- **Los usuarios tienen diferentes roles** con permisos específicos
+
+## 👥 Lista de Usuarios Disponibles
+
+| Rol | Email | Nombre | Dashboard |
+|-----|-------|--------|-----------|
+| 👑 **ADMIN** | `admin@rent360.cl` | Administrador | `/admin/dashboard` |
+| 🏠 **OWNER** | `propietario@rent360.cl` | Propietario | `/owner/dashboard` |
+| 🏢 **TENANT** | `inquilino@rent360.cl` | Inquilino | `/tenant/dashboard` |
+| 💼 **BROKER** | `corredor@rent360.cl` | Corredor | `/broker/dashboard` |
+| 🏃 **RUNNER** | `runner@rent360.cl` | Runner | `/runner/dashboard` |
+| 🎧 **SUPPORT** | `soporte@rent360.cl` | Soporte | `/support/dashboard` |
+| 🔧 **PROVIDER** | `proveedor@rent360.cl` | Proveedor de Servicios | `/provider/dashboard` |
+| 🛠️ **MAINTENANCE** | `mantenimiento@rent360.cl` | Servicio de Mantenimiento | `/maintenance` |
+
+## 🚀 Inicio de Sesión Rápido
+
+Para probar diferentes roles, puedes usar estas credenciales en la página de login: `http://localhost:3000/auth/login` o en producción.
+
+### Ejemplos de Uso:
+
+1. **Acceder como Administrador:**
+   - Email: `admin@rent360.cl`
+   - Password: `123456`
+   - Redirige a: `/admin/dashboard`
+
+2. **Acceder como Propietario:**
+   - Email: `propietario@rent360.cl`
+   - Password: `123456`
+   - Redirige a: `/owner/dashboard`
+
+3. **Acceder como Proveedor:**
+   - Email: `proveedor@rent360.cl`
+   - Password: `123456`
+   - Redirige a: `/provider/dashboard`
+
+## 📝 Notas Importantes
+
+- **Los usuarios se crean automáticamente** cuando ejecutas el comando de seed
+- **Las contraseñas están hasheadas** con bcrypt en la base de datos
+- **Todos los usuarios tienen RUT chilenos válidos** para testing
+- **Los proveedores y servicios de mantenimiento** tienen perfiles completos creados automáticamente
+
+## 🔧 Comandos para Crear Usuarios
+
+```bash
+# Ejecutar seed para crear todos los usuarios
+npm run db:seed
+
+# O ejecutar solo seed de usuarios
+npm run db:seed:users
+```
+
+## 📍 Ubicación del Código
+
+Las credenciales están definidas en el archivo:
+- **Archivo**: `scripts/seed-users.ts`
+- **Línea**: ~13-61 (definición de usuarios)
+- **Contraseña**: Línea 10 (`const hashedPassword = await bcrypt.hash('123456', 12);`)
+
+---
+
+**¡Listo para testing!** 🎯</contents>
+</xai:function_call">CREDENCIALES_USUARIOS.md
