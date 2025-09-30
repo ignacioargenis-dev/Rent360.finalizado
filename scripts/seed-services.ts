@@ -70,46 +70,29 @@ async function main() {
     }
   ];
 
-  // Crear servicios para proveedores
-  for (const service of services) {
-    try {
-      const existingService = await prisma.service.findFirst({
-        where: { name: service.name }
-      });
+  // TODO: Implementar creación de servicios una vez definidos los modelos en el esquema
+  // Por ahora, solo creamos algunos proveedores de prueba
+  console.log('Nota: Los servicios se crearán una vez que se defina el modelo Service en el esquema de Prisma');
 
-      if (!existingService) {
-        await prisma.service.create({
-          data: {
-            ...service,
-            providerId: 'proveedor@rent360.cl' // Asignar al proveedor de prueba
-          }
-        });
-        console.log(`Servicio creado: ${service.name}`);
-      }
-    } catch (error) {
-      console.error(`Error al crear servicio ${service.name}:`, error);
+  try {
+    // Verificar si existen los usuarios de prueba
+    const providerUser = await prisma.user.findUnique({
+      where: { email: 'proveedor@rent360.cl' }
+    });
+
+    const maintenanceUser = await prisma.user.findUnique({
+      where: { email: 'mantenimiento@rent360.cl' }
+    });
+
+    if (providerUser) {
+      console.log(`Usuario proveedor encontrado: ${providerUser.name}`);
     }
-  }
 
-  // Crear servicios de mantenimiento
-  for (const maintenance of maintenanceServices) {
-    try {
-      const existingMaintenance = await prisma.maintenanceService.findFirst({
-        where: { name: maintenance.name }
-      });
-
-      if (!existingMaintenance) {
-        await prisma.maintenanceService.create({
-          data: {
-            ...maintenance,
-            maintenanceProviderId: 'mantenimiento@rent360.cl' // Asignar al servicio de mantenimiento
-          }
-        });
-        console.log(`Servicio de mantenimiento creado: ${maintenance.name}`);
-      }
-    } catch (error) {
-      console.error(`Error al crear servicio de mantenimiento ${maintenance.name}:`, error);
+    if (maintenanceUser) {
+      console.log(`Usuario mantenimiento encontrado: ${maintenanceUser.name}`);
     }
+  } catch (error) {
+    console.error('Error al verificar usuarios:', error);
   }
 
   console.log('Siembra de servicios completada.');
