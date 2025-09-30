@@ -17,42 +17,23 @@ export async function GET(request: NextRequest) {
         phone: true,
         role: true,
         avatar: true,
+        rut: true,
+        rutVerified: true,
+        dateOfBirth: true,
+        gender: true,
+        address: true,
+        city: true,
+        commune: true,
+        region: true,
+        phoneSecondary: true,
+        emergencyContact: true,
+        emergencyPhone: true,
+        isActive: true,
+        emailVerified: true,
+        phoneVerified: true,
+        lastLogin: true,
         createdAt: true,
         updatedAt: true,
-        // Información adicional según el rol
-        tenant: {
-          select: {
-            id: true,
-            documentNumber: true,
-            documentType: true,
-          }
-        },
-        owner: {
-          select: {
-            id: true,
-            businessName: true,
-          }
-        },
-        broker: {
-          select: {
-            id: true,
-            licenseNumber: true,
-          }
-        },
-        provider: {
-          select: {
-            id: true,
-            serviceType: true,
-            licenseNumber: true,
-          }
-        },
-        runner: {
-          select: {
-            id: true,
-            vehicleType: true,
-            licensePlate: true,
-          }
-        }
       }
     });
 
@@ -83,7 +64,7 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth(request);
 
     const body = await request.json();
-    const { name, phone, avatar } = body;
+    const { name, phone, avatar, address, city, commune, region, phoneSecondary, emergencyContact, emergencyPhone } = body;
 
     // Actualizar el perfil del usuario
     const updatedUser = await db.user.update({
@@ -92,6 +73,13 @@ export async function PUT(request: NextRequest) {
         ...(name && { name }),
         ...(phone && { phone }),
         ...(avatar && { avatar }),
+        ...(address !== undefined && { address }),
+        ...(city !== undefined && { city }),
+        ...(commune !== undefined && { commune }),
+        ...(region !== undefined && { region }),
+        ...(phoneSecondary !== undefined && { phoneSecondary }),
+        ...(emergencyContact !== undefined && { emergencyContact }),
+        ...(emergencyPhone !== undefined && { emergencyPhone }),
         updatedAt: new Date()
       },
       select: {
@@ -100,6 +88,13 @@ export async function PUT(request: NextRequest) {
         email: true,
         phone: true,
         avatar: true,
+        address: true,
+        city: true,
+        commune: true,
+        region: true,
+        phoneSecondary: true,
+        emergencyContact: true,
+        emergencyPhone: true,
         updatedAt: true
       }
     });
