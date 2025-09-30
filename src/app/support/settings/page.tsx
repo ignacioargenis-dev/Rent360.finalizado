@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   RefreshCw,
   AlertTriangle,
   Settings,
@@ -13,6 +13,7 @@ import {
   Zap,
   Info,
   Save,
+  Mail,
   Database,
   Lock
 } from 'lucide-react';
