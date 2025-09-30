@@ -588,14 +588,17 @@ export default function UnifiedSidebar({
   const userRole = user?.role?.toLowerCase() || 'tenant';
   const items = menuItems[userRole] || menuItems.tenant || [];
 
-  // Debug: Log del rol del usuario
-  console.log('UnifiedSidebar Debug:', {
-    userRole,
-    userRoleRaw: user?.role,
-    userId: user?.id,
-    availableMenuKeys: Object.keys(menuItems),
-    selectedMenu: userRole in menuItems ? userRole : 'tenant (fallback)'
-  });
+  // Debug: Log del rol del usuario (temporal para diagnóstico)
+  if (typeof window !== 'undefined') {
+    console.log('UnifiedSidebar Debug:', {
+      userRole,
+      userRoleRaw: user?.role,
+      userId: user?.id,
+      availableMenuKeys: Object.keys(menuItems),
+      selectedMenu: userRole in menuItems ? userRole : 'tenant (fallback)',
+      timestamp: new Date().toISOString()
+    });
+  }
 
   const isActiveRoute = (url: string) => {
     return pathname === url || pathname.startsWith(url + '/');
