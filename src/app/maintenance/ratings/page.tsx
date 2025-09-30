@@ -185,7 +185,6 @@ export default function MaintenanceRatingsPage() {
   if (loading) {
     return (
       <DashboardLayout
-        user={null}
         title="Calificaciones"
         subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
       >
@@ -202,7 +201,6 @@ export default function MaintenanceRatingsPage() {
   if (error) {
     return (
       <DashboardLayout
-        user={null}
         title="Calificaciones"
         subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
       >

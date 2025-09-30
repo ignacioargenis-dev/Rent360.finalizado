@@ -179,7 +179,6 @@ export default function MaintenanceEarningsPage() {
   if (loading) {
     return (
       <DashboardLayout
-        user={null}
         title="Ganancias"
         subtitle="Gestión financiera de tus servicios de mantenimiento"
       >
@@ -196,7 +195,6 @@ export default function MaintenanceEarningsPage() {
   if (error) {
     return (
       <DashboardLayout
-        user={null}
         title="Ganancias"
         subtitle="Gestión financiera de tus servicios de mantenimiento"
       >
