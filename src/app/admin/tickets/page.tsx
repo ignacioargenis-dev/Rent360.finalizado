@@ -442,7 +442,7 @@ return `Hace ${diffDays} días`;
                     <SelectValue placeholder="Estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los estados</SelectItem>
+                    <SelectItem value="all">Todos los estados</SelectItem>
                     <SelectItem value="open">Abierto</SelectItem>
                     <SelectItem value="in_progress">En Progreso</SelectItem>
                     <SelectItem value="resolved">Resuelto</SelectItem>
@@ -455,7 +455,7 @@ return `Hace ${diffDays} días`;
                     <SelectValue placeholder="Prioridad" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas las prioridades</SelectItem>
+                    <SelectItem value="all">Todas las prioridades</SelectItem>
                     <SelectItem value="low">Baja</SelectItem>
                     <SelectItem value="medium">Media</SelectItem>
                     <SelectItem value="high">Alta</SelectItem>
@@ -468,7 +468,7 @@ return `Hace ${diffDays} días`;
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas las categorías</SelectItem>
+                    <SelectItem value="all">Todas las categorías</SelectItem>
                     <SelectItem value="Pagos">Pagos</SelectItem>
                     <SelectItem value="Propiedades">Propiedades</SelectItem>
                     <SelectItem value="Cuenta">Cuenta</SelectItem>

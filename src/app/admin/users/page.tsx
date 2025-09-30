@@ -311,7 +311,7 @@ export default function AdminUsersPage() {
                   <SelectValue placeholder="Rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los roles</SelectItem>
+                  <SelectItem value="all">Todos los roles</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="tenant">Inquilino</SelectItem>
                   <SelectItem value="owner">Propietario</SelectItem>
@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Activos</SelectItem>
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
