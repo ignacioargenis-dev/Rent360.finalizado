@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Home, Building, FileText, 
   CreditCard, 
-  Star, 
-  MessageCircle, 
+  Star,
+  MessageCircle,
+  Settings,
   Users,
   TrendingUp,
   DollarSign,
