@@ -194,8 +194,8 @@ params.append('verified', verifiedFilter);
 
   const handleUpdateContractor = async () => {
     if (!selectedContractor) {
-return;
-}
+      return;
+    }
 
     try {
       const response = await fetch(`/api/contractors/${selectedContractor.id}`, {
@@ -219,8 +219,8 @@ return;
 
   const handleDeleteContractor = async (id: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este prestador de servicios?')) {
-return;
-}
+      return;
+    }
 
     try {
       const response = await fetch(`/api/contractors/${id}`, {

@@ -367,15 +367,15 @@ return '0 B';
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
