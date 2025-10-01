@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +100,42 @@ export default function BrokerReportsPage() {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<string>('last30days');
+
+  // Funciones para acciones de reportes
+  const handleRefreshData = () => {
+    logger.info('Refrescando datos de reportes del corredor');
+    setLoading(true);
+    setTimeout(() => setLoading(false), 1000);
+  };
+
+  const handleExportPDF = () => {
+    logger.info('Exportando reporte en PDF');
+    alert('Exportando reporte en PDF - próximamente');
+    // TODO: Implementar exportación PDF
+  };
+
+  const handlePrintReport = () => {
+    logger.info('Imprimiendo reporte');
+    window.print();
+  };
+
+  const handleViewAllPerformers = () => {
+    logger.info('Viendo todos los mejores performers');
+    alert('Vista completa de mejores performers - próximamente');
+    // TODO: Implementar vista completa
+  };
+
+  const handleCustomReport = () => {
+    logger.info('Creando reporte personalizado');
+    alert('Funcionalidad de reportes personalizados - próximamente');
+    // TODO: Implementar reportes personalizados
+  };
+
+  const handleSendByEmail = () => {
+    logger.info('Enviando reporte por email');
+    alert('Enviando reporte por email - próximamente');
+    // TODO: Implementar envío por email
+  };
 
   useEffect(() => {
     // Mock data for demo
@@ -299,15 +336,15 @@ export default function BrokerReportsPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleRefreshData}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualizar
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleExportPDF}>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar PDF
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handlePrintReport}>
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
                 </Button>
@@ -470,7 +507,7 @@ export default function BrokerReportsPage() {
                   Propiedades y clientes con mejor rendimiento
                 </CardDescription>
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleViewAllPerformers}>
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Todos
               </Button>
@@ -591,11 +628,11 @@ export default function BrokerReportsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleCustomReport}>
                   <FileText className="w-4 h-4 mr-2" />
                   Reporte Personalizado
                 </Button>
-                <Button>
+                <Button onClick={handleSendByEmail}>
                   <Mail className="w-4 h-4 mr-2" />
                   Enviar por Email
                 </Button>
