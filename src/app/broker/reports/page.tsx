@@ -35,7 +35,7 @@ import { BarChart3,
   Briefcase
 } from 'lucide-react';
 import { User } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -263,7 +263,11 @@ export default function BrokerReportsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <EnhancedDashboardLayout
+      user={user}
+      title="Reportes"
+      subtitle="Analiza tu rendimiento y métricas"
+    >
       <DashboardHeader 
         user={user}
         title="Reportes y Análisis"
@@ -600,6 +604,6 @@ export default function BrokerReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }

@@ -43,10 +43,11 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
 
 export default function MantenimientoPage() {
-
+  const { user } = useUserState();
   const [loading, setLoading] = useState(true);
 
   const [data, setData] = useState(null);
@@ -81,7 +82,8 @@ export default function MantenimientoPage() {
 
   if (loading) {
     return (
-      <DashboardLayout 
+      <EnhancedDashboardLayout
+        user={user}
         title="Mantenimiento"
         subtitle="Cargando información..."
       >
@@ -91,13 +93,14 @@ export default function MantenimientoPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
+      <EnhancedDashboardLayout
+        user={user}
         title="Mantenimiento"
         subtitle="Error al cargar la página"
       >
@@ -114,12 +117,13 @@ export default function MantenimientoPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout 
+    <EnhancedDashboardLayout
+      user={user}
       title="Mantenimiento"
       subtitle="Gestiona y visualiza la información de mantenimiento"
     >

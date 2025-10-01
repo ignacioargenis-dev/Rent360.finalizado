@@ -29,7 +29,7 @@ import { FileText,
   Award
 } from 'lucide-react';
 import { User, Contract, Property } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -369,7 +369,11 @@ export default function BrokerContractsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <EnhancedDashboardLayout
+      user={user}
+      title="Contratos"
+      subtitle="Gestiona tus contratos como corredor"
+    >
       <DashboardHeader 
         user={user}
         title="Contratos de Corredor"
@@ -692,6 +696,6 @@ export default function BrokerContractsPage() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }

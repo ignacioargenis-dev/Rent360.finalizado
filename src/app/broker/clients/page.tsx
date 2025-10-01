@@ -19,7 +19,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { User as UserType } from '@/types';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 import { DataTable } from '@/components/ui/data-table';
@@ -466,7 +466,11 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <DashboardLayout>
+    <EnhancedDashboardLayout
+      user={user}
+      title="Clientes"
+      subtitle="Gestiona tus clientes y oportunidades"
+    >
       <DashboardHeader 
         user={user}
         title="Gestión de Clientes"
@@ -609,6 +613,6 @@ return `Hace ${diffDays} días`;
           loadingMessage="Cargando clientes..."
         />
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }

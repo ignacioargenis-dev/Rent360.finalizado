@@ -43,7 +43,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
 
 export default function ClientesActivosPage() {
 
@@ -81,23 +81,25 @@ export default function ClientesActivosPage() {
 
   if (loading) {
     return (
-      <DashboardLayout 
-        title="Clientes Activos"
-        subtitle="Cargando información..."
-      >
+    <EnhancedDashboardLayout
+      user={user}
+      title="Clientes Activos"
+      subtitle="Cargando información..."
+    >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
+      <EnhancedDashboardLayout
+        user={user}
         title="Clientes Activos"
         subtitle="Error al cargar la página"
       >
@@ -114,12 +116,13 @@ export default function ClientesActivosPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout 
+    <EnhancedDashboardLayout
+      user={user}
       title="Clientes Activos"
       subtitle="Gestiona y visualiza la información de clientes activos"
     >
