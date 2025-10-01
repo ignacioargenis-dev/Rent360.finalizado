@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
@@ -21,3 +21,4 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+

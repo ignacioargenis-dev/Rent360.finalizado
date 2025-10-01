@@ -508,3 +508,4 @@ return `Hace ${diffDays} días`;
     </div>
   );
 }
+
