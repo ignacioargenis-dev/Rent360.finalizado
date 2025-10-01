@@ -412,7 +412,7 @@ export default function AdminDashboard() {
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="flex">
         <div className="w-64 bg-white shadow-lg">
           <div className="p-4">
