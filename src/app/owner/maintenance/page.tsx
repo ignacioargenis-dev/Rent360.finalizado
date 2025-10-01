@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserState } from '@/hooks/useUserState';
-import { 
-  Building, 
-  Users, 
-  FileText, 
-  CreditCard, 
-  Star, 
-  Settings, 
+import {
+  Building,
+  Users,
+  FileText,
+  CreditCard,
+  Star,
+  Settings,
   Bell,
   TrendingUp,
   DollarSign,
@@ -46,7 +46,8 @@ import {
   Filter,
   Download,
   Upload,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
