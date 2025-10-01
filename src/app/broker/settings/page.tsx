@@ -34,8 +34,13 @@ import { Settings,
   BarChart3,
   Star, 
   Info, 
-  Eye
-} from 'lucide-react';
+    Eye,
+    Upload,
+    Download,
+    CheckCircle,
+    XCircle,
+    AlertCircle
+    } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
@@ -93,6 +98,14 @@ interface BrokerSettings {
     commissionTarget: number;
     notificationsEnabled: boolean;
   };
+  documents: {
+    idCard: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
+    criminalRecord: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
+    professionalTitle: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
+    brokerRegistration: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
+    courseCertificates: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; }[];
+    companyDocuments: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; }[];
+  };
 }
 
 export default function BrokerSettings() {
@@ -149,6 +162,14 @@ export default function BrokerSettings() {
       yearlyClients: 96,
       commissionTarget: 500000,
       notificationsEnabled: true,
+    },
+    documents: {
+      idCard: { name: '', url: '', status: 'pending' },
+      criminalRecord: { name: '', url: '', status: 'pending' },
+      professionalTitle: { name: '', url: '', status: 'pending' },
+      brokerRegistration: { name: '', url: '', status: 'pending' },
+      courseCertificates: [],
+      companyDocuments: [],
     },
   });
   const [loading, setLoading] = useState(true);
@@ -227,6 +248,100 @@ export default function BrokerSettings() {
       ...prev,
       goals: { ...prev.goals, [field]: value },
     }));
+  };
+
+  const handleFileUpload = async (documentType: string, file: File) => {
+    try {
+      logger.info('Subiendo documento:', { documentType, fileName: file.name });
+
+      // TODO: Implementar subida real de archivo
+      // const formData = new FormData();
+      // formData.append('file', file);
+      // const response = await fetch('/api/upload', { method: 'POST', body: formData });
+      // const result = await response.json();
+
+      // Simular subida exitosa
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const uploadedAt = new Date().toISOString();
+
+      setSettings(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [documentType]: {
+            name: file.name,
+            url: `/uploads/${file.name}`, // URL simulada
+            status: 'uploaded' as const,
+            uploadedAt
+          }
+        }
+      }));
+
+      logger.info('Documento subido exitosamente:', { documentType, fileName: file.name });
+      alert(`Documento "${file.name}" subido exitosamente`);
+    } catch (error) {
+      logger.error('Error subiendo documento:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al subir el documento');
+    }
+  };
+
+  const handleAddCertificate = async (file: File) => {
+    try {
+      logger.info('Agregando certificado de curso:', { fileName: file.name });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const newCert = {
+        name: file.name,
+        url: `/uploads/${file.name}`,
+        status: 'uploaded' as const,
+        uploadedAt: new Date().toISOString()
+      };
+
+      setSettings(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          courseCertificates: [...prev.documents.courseCertificates, newCert]
+        }
+      }));
+
+      logger.info('Certificado agregado exitosamente');
+      alert('Certificado agregado exitosamente');
+    } catch (error) {
+      logger.error('Error agregando certificado:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al agregar el certificado');
+    }
+  };
+
+  const handleAddCompanyDocument = async (file: File) => {
+    try {
+      logger.info('Agregando documento de empresa:', { fileName: file.name });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const newDoc = {
+        name: file.name,
+        url: `/uploads/${file.name}`,
+        status: 'uploaded' as const,
+        uploadedAt: new Date().toISOString()
+      };
+
+      setSettings(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          companyDocuments: [...prev.documents.companyDocuments, newDoc]
+        }
+      }));
+
+      logger.info('Documento de empresa agregado exitosamente');
+      alert('Documento de empresa agregado exitosamente');
+    } catch (error) {
+      logger.error('Error agregando documento de empresa:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al agregar el documento de empresa');
+    }
   };
 
   if (loading) {
@@ -320,6 +435,15 @@ export default function BrokerSettings() {
           >
             <Target className="w-4 h-4" />
             Metas
+          </Button>
+          <Button
+            variant={activeTab === 'documents' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('documents')}
+            className="flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Documentos
           </Button>
         </div>
 
@@ -1033,6 +1157,423 @@ export default function BrokerSettings() {
                         <div className="text-gray-600">Comisión</div>
                         <div className="font-semibold text-purple-600">
                           ${(settings.goals.commissionTarget / 1000).toFixed(0)}K/mes
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'documents' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Documentos Requeridos</CardTitle>
+                  <CardDescription>
+                    Sube y gestiona los documentos necesarios para tu aprobación como corredor de propiedades
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Documentos Personales Obligatorios */}
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-emerald-700">Documentos Personales Obligatorios</h4>
+                    <div className="space-y-4">
+                      {/* Cédula de Identidad */}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${settings.documents.idCard.status === 'approved' ? 'bg-green-100' : settings.documents.idCard.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                            {settings.documents.idCard.status === 'approved' ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : settings.documents.idCard.status === 'uploaded' ? (
+                              <Upload className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-gray-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h5 className="font-medium">Cédula de Identidad</h5>
+                            <p className="text-sm text-gray-600">
+                              {settings.documents.idCard.name || 'Documento requerido para verificación de identidad'}
+                            </p>
+                            {settings.documents.idCard.uploadedAt && (
+                              <p className="text-xs text-gray-500">
+                                Subido: {new Date(settings.documents.idCard.uploadedAt).toLocaleDateString('es-ES')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {settings.documents.idCard.status === 'pending' ? (
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload('idCard', e.target.files[0])}
+                                className="hidden"
+                              />
+                              <Button size="sm" variant="outline">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Subir
+                              </Button>
+                            </label>
+                          ) : (
+                            <div className="flex gap-2">
+                              {settings.documents.idCard.url && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.idCard.url, '_blank')}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              )}
+                              <Badge variant={
+                                settings.documents.idCard.status === 'approved' ? 'default' :
+                                settings.documents.idCard.status === 'uploaded' ? 'secondary' :
+                                'outline'
+                              }>
+                                {settings.documents.idCard.status === 'approved' ? 'Aprobado' :
+                                 settings.documents.idCard.status === 'uploaded' ? 'Pendiente de revisión' :
+                                 'Pendiente'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Certificado de Antecedentes */}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${settings.documents.criminalRecord.status === 'approved' ? 'bg-green-100' : settings.documents.criminalRecord.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                            {settings.documents.criminalRecord.status === 'approved' ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : settings.documents.criminalRecord.status === 'uploaded' ? (
+                              <Upload className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-gray-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h5 className="font-medium">Certificado de Antecedentes</h5>
+                            <p className="text-sm text-gray-600">
+                              {settings.documents.criminalRecord.name || 'Certificado de antecedentes penales (vigencia máxima 3 meses)'}
+                            </p>
+                            {settings.documents.criminalRecord.uploadedAt && (
+                              <p className="text-xs text-gray-500">
+                                Subido: {new Date(settings.documents.criminalRecord.uploadedAt).toLocaleDateString('es-ES')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {settings.documents.criminalRecord.status === 'pending' ? (
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload('criminalRecord', e.target.files[0])}
+                                className="hidden"
+                              />
+                              <Button size="sm" variant="outline">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Subir
+                              </Button>
+                            </label>
+                          ) : (
+                            <div className="flex gap-2">
+                              {settings.documents.criminalRecord.url && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.criminalRecord.url, '_blank')}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              )}
+                              <Badge variant={
+                                settings.documents.criminalRecord.status === 'approved' ? 'default' :
+                                settings.documents.criminalRecord.status === 'uploaded' ? 'secondary' :
+                                'outline'
+                              }>
+                                {settings.documents.criminalRecord.status === 'approved' ? 'Aprobado' :
+                                 settings.documents.criminalRecord.status === 'uploaded' ? 'Pendiente de revisión' :
+                                 'Pendiente'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Título Profesional */}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${settings.documents.professionalTitle.status === 'approved' ? 'bg-green-100' : settings.documents.professionalTitle.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                            {settings.documents.professionalTitle.status === 'approved' ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : settings.documents.professionalTitle.status === 'uploaded' ? (
+                              <Upload className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-gray-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h5 className="font-medium">Título Profesional</h5>
+                            <p className="text-sm text-gray-600">
+                              {settings.documents.professionalTitle.name || 'Fotocopia legalizada del título universitario'}
+                            </p>
+                            {settings.documents.professionalTitle.uploadedAt && (
+                              <p className="text-xs text-gray-500">
+                                Subido: {new Date(settings.documents.professionalTitle.uploadedAt).toLocaleDateString('es-ES')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {settings.documents.professionalTitle.status === 'pending' ? (
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload('professionalTitle', e.target.files[0])}
+                                className="hidden"
+                              />
+                              <Button size="sm" variant="outline">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Subir
+                              </Button>
+                            </label>
+                          ) : (
+                            <div className="flex gap-2">
+                              {settings.documents.professionalTitle.url && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.professionalTitle.url, '_blank')}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              )}
+                              <Badge variant={
+                                settings.documents.professionalTitle.status === 'approved' ? 'default' :
+                                settings.documents.professionalTitle.status === 'uploaded' ? 'secondary' :
+                                'outline'
+                              }>
+                                {settings.documents.professionalTitle.status === 'approved' ? 'Aprobado' :
+                                 settings.documents.professionalTitle.status === 'uploaded' ? 'Pendiente de revisión' :
+                                 'Pendiente'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Registro de Corredor */}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${settings.documents.brokerRegistration.status === 'approved' ? 'bg-green-100' : settings.documents.brokerRegistration.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                            {settings.documents.brokerRegistration.status === 'approved' ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : settings.documents.brokerRegistration.status === 'uploaded' ? (
+                              <Upload className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-gray-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h5 className="font-medium">Registro de Corredor</h5>
+                            <p className="text-sm text-gray-600">
+                              {settings.documents.brokerRegistration.name || 'Registro oficial como corredor de propiedades'}
+                            </p>
+                            {settings.documents.brokerRegistration.uploadedAt && (
+                              <p className="text-xs text-gray-500">
+                                Subido: {new Date(settings.documents.brokerRegistration.uploadedAt).toLocaleDateString('es-ES')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {settings.documents.brokerRegistration.status === 'pending' ? (
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload('brokerRegistration', e.target.files[0])}
+                                className="hidden"
+                              />
+                              <Button size="sm" variant="outline">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Subir
+                              </Button>
+                            </label>
+                          ) : (
+                            <div className="flex gap-2">
+                              {settings.documents.brokerRegistration.url && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.brokerRegistration.url, '_blank')}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver
+                                </Button>
+                              )}
+                              <Badge variant={
+                                settings.documents.brokerRegistration.status === 'approved' ? 'default' :
+                                settings.documents.brokerRegistration.status === 'uploaded' ? 'secondary' :
+                                'outline'
+                              }>
+                                {settings.documents.brokerRegistration.status === 'approved' ? 'Aprobado' :
+                                 settings.documents.brokerRegistration.status === 'uploaded' ? 'Pendiente de revisión' :
+                                 'Pendiente'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Certificados de Cursos */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-blue-700">Certificados de Cursos</h4>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              Array.from(e.target.files).forEach(file => handleAddCertificate(file));
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <Button size="sm" variant="outline">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Agregar Certificado
+                        </Button>
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      {settings.documents.courseCertificates.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                          <p>No hay certificados de cursos subidos</p>
+                          <p className="text-sm">Agrega certificados de cursos relacionados con bienes raíces</p>
+                        </div>
+                      ) : (
+                        settings.documents.courseCertificates.map((cert, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${cert.status === 'approved' ? 'bg-green-100' : cert.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                {cert.status === 'approved' ? (
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Upload className="w-4 h-4 text-blue-600" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{cert.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  Subido: {new Date(cert.uploadedAt!).toLocaleDateString('es-ES')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" onClick={() => window.open(cert.url, '_blank')}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Badge variant={cert.status === 'approved' ? 'default' : 'secondary'}>
+                                {cert.status === 'approved' ? 'Aprobado' : 'Pendiente'}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Documentos de Empresa */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-purple-700">Documentos de Empresa</h4>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              Array.from(e.target.files).forEach(file => handleAddCompanyDocument(file));
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <Button size="sm" variant="outline">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Agregar Documento
+                        </Button>
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      {settings.documents.companyDocuments.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Building className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                          <p>No hay documentos de empresa subidos</p>
+                          <p className="text-sm">Agrega documentos como RUT de empresa, registro comercial, etc.</p>
+                        </div>
+                      ) : (
+                        settings.documents.companyDocuments.map((doc, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${doc.status === 'approved' ? 'bg-green-100' : doc.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                {doc.status === 'approved' ? (
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Upload className="w-4 h-4 text-blue-600" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{doc.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  Subido: {new Date(doc.uploadedAt!).toLocaleDateString('es-ES')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" onClick={() => window.open(doc.url, '_blank')}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Badge variant={doc.status === 'approved' ? 'default' : 'secondary'}>
+                                {doc.status === 'approved' ? 'Aprobado' : 'Pendiente'}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Estado General */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-3 text-gray-800">Estado de Documentación</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-600">Documentos Obligatorios</div>
+                        <div className="font-semibold">
+                          {[
+                            settings.documents.idCard.status !== 'pending' ? 1 : 0,
+                            settings.documents.criminalRecord.status !== 'pending' ? 1 : 0,
+                            settings.documents.professionalTitle.status !== 'pending' ? 1 : 0,
+                            settings.documents.brokerRegistration.status !== 'pending' ? 1 : 0,
+                          ].reduce((a, b) => a + b, 0)}/4
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Certificados</div>
+                        <div className="font-semibold">{settings.documents.courseCertificates.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Docs Empresa</div>
+                        <div className="font-semibold">{settings.documents.companyDocuments.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Estado General</div>
+                        <div className="font-semibold text-emerald-600">
+                          {[
+                            settings.documents.idCard.status === 'approved' ? 1 : 0,
+                            settings.documents.criminalRecord.status === 'approved' ? 1 : 0,
+                            settings.documents.professionalTitle.status === 'approved' ? 1 : 0,
+                            settings.documents.brokerRegistration.status === 'approved' ? 1 : 0,
+                          ].reduce((a, b) => a + b, 0) === 4 ? 'Completo' : 'Pendiente'}
                         </div>
                       </div>
                     </div>
