@@ -208,7 +208,7 @@ export default function MantenimientoPage() {
       logger.info('Exportando datos de mantenimiento');
       alert('Datos exportados exitosamente');
     } catch (error) {
-      logger.error('Error exportando datos:', error);
+      logger.error('Error exportando datos:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -235,7 +235,7 @@ export default function MantenimientoPage() {
       );
       logger.info('Solicitud de mantenimiento aprobada:', { requestId });
     } catch (error) {
-      logger.error('Error aprobando solicitud:', error);
+      logger.error('Error aprobando solicitud:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -247,7 +247,7 @@ export default function MantenimientoPage() {
       );
       logger.info('Solicitud de mantenimiento rechazada:', { requestId });
     } catch (error) {
-      logger.error('Error rechazando solicitud:', error);
+      logger.error('Error rechazando solicitud:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 

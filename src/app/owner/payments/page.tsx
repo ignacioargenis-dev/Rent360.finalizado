@@ -70,7 +70,7 @@ export default function OwnerPaymentsPage() {
       logger.info('Exportando datos de pagos');
       alert('Datos de pagos exportados exitosamente');
     } catch (error) {
-      logger.error('Error exportando pagos:', error);
+      logger.error('Error exportando pagos:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -85,7 +85,7 @@ export default function OwnerPaymentsPage() {
       alert('Recordatorio enviado exitosamente');
       // TODO: Implement API call to send reminder
     } catch (error) {
-      logger.error('Error enviando recordatorio:', error);
+      logger.error('Error enviando recordatorio:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -95,7 +95,7 @@ export default function OwnerPaymentsPage() {
       alert('Pago marcado como realizado');
       // TODO: Implement API call to mark payment as paid
     } catch (error) {
-      logger.error('Error marcando pago:', error);
+      logger.error('Error marcando pago:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
