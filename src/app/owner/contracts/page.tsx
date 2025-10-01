@@ -5,16 +5,17 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, 
-  Download, 
-  Eye, 
-  Calendar, 
-  DollarSign, 
+import { FileText,
+  Download,
+  Eye,
+  Calendar,
+  DollarSign,
   Home,
   User as UserIcon,
   Clock,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   Plus,
   Filter,
   Search,
