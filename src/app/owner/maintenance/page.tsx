@@ -355,7 +355,6 @@ export default function MantenimientoPage() {
 
   return (
     <DashboardLayout
-      user={user}
       title="Mantenimiento"
       subtitle="Gestiona solicitudes y trabajos de mantenimiento"
     >
