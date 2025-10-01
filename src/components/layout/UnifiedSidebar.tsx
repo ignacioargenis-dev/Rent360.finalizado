@@ -676,7 +676,7 @@ export default function UnifiedSidebar({
           <>
             <button
               onClick={() => toggleSubmenu(item.title)}
-              className={`w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActive ? 'bg-blue-50 text-blue-700' : ''}`}
+              className={`w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActive ? 'bg-emerald-50 text-emerald-700' : ''}`}
             >
               <div className="flex items-center gap-2">
                 <item.icon className="w-4 h-4" />
@@ -700,7 +700,7 @@ export default function UnifiedSidebar({
                   <div key={subItem.title}>
                     <Link
                       href={subItem.url}
-                      className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActiveRoute(subItem.url) ? 'bg-blue-50 text-blue-700' : ''}`}
+                      className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActiveRoute(subItem.url) ? 'bg-emerald-50 text-emerald-700' : ''}`}
                     >
                       <subItem.icon className="w-4 h-4" />
                       <span>{subItem.title}</span>
@@ -718,7 +718,7 @@ export default function UnifiedSidebar({
         ) : (
           <Link
             href={item.url}
-            className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActive ? 'bg-blue-50 text-blue-700' : ''}`}
+            className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors ${isActive ? 'bg-emerald-50 text-emerald-700' : ''}`}
           >
             <item.icon className="w-4 h-4" />
             <span>{item.title}</span>
@@ -747,7 +747,7 @@ export default function UnifiedSidebar({
       <div className={`fixed lg:relative z-50 w-64 bg-white border-r border-gray-200 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
               <Building className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -815,7 +815,7 @@ export default function UnifiedSidebar({
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+              <div className="w-6 h-6 bg-emerald-600 rounded flex items-center justify-center">
                 <Building className="w-4 h-4 text-white" />
               </div>
               <span className="font-semibold">Rent360</span>

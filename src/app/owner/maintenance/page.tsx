@@ -5,6 +5,11 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserState } from '@/hooks/useUserState';
 import { 
   Building, 
   Users, 
@@ -45,10 +50,49 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
+interface MaintenanceRequest {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  tenantName: string;
+  type: 'REPAIR' | 'MAINTENANCE' | 'EMERGENCY' | 'INSPECTION';
+  description: string;
+  urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'PENDING' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';
+  estimatedCost: number;
+  createdAt: string;
+  scheduledDate?: string;
+  completedDate?: string;
+  provider?: string;
+}
+
+interface MaintenanceStats {
+  totalRequests: number;
+  pendingRequests: number;
+  activeRequests: number;
+  completedRequests: number;
+  totalCost: number;
+  monthlyCost: number;
+}
+
 export default function MantenimientoPage() {
+  const { user } = useUserState();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
+  const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [stats, setStats] = useState<MaintenanceStats>({
+    totalRequests: 0,
+    pendingRequests: 0,
+    activeRequests: 0,
+    completedRequests: 0,
+    totalCost: 0,
+    monthlyCost: 0
+  });
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
 
   useEffect(() => {
     // Cargar datos de la página
@@ -59,20 +103,151 @@ export default function MantenimientoPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/owner/maintenance`);
-      // const result = await response.json();
-      // setData(result);
-      
+
+      // Mock data for demo - in production this would come from API
+      const mockRequests: MaintenanceRequest[] = [
+        {
+          id: '1',
+          propertyId: 'prop-001',
+          propertyTitle: 'Departamento Las Condes',
+          tenantName: 'Carlos Ramírez',
+          type: 'REPAIR',
+          description: 'Reparación de grifería en baño principal',
+          urgency: 'MEDIUM',
+          status: 'PENDING',
+          estimatedCost: 85000,
+          createdAt: '2024-01-15T10:30:00Z'
+        },
+        {
+          id: '2',
+          propertyId: 'prop-002',
+          propertyTitle: 'Casa Providencia',
+          tenantName: 'Ana Martínez',
+          type: 'MAINTENANCE',
+          description: 'Mantenimiento preventivo de caldera',
+          urgency: 'LOW',
+          status: 'APPROVED',
+          estimatedCost: 120000,
+          createdAt: '2024-01-10T14:20:00Z',
+          scheduledDate: '2024-01-25T09:00:00Z'
+        },
+        {
+          id: '3',
+          propertyId: 'prop-003',
+          propertyTitle: 'Oficina Santiago Centro',
+          tenantName: 'Pedro Silva',
+          type: 'EMERGENCY',
+          description: 'Fuga de agua en piso superior',
+          urgency: 'CRITICAL',
+          status: 'IN_PROGRESS',
+          estimatedCost: 150000,
+          createdAt: '2024-01-12T16:45:00Z',
+          provider: 'Servicio Rápido SpA'
+        },
+        {
+          id: '4',
+          propertyId: 'prop-001',
+          propertyTitle: 'Departamento Las Condes',
+          tenantName: 'Carlos Ramírez',
+          type: 'INSPECTION',
+          description: 'Inspección anual de instalaciones eléctricas',
+          urgency: 'LOW',
+          status: 'COMPLETED',
+          estimatedCost: 60000,
+          createdAt: '2024-01-05T11:15:00Z',
+          completedDate: '2024-01-08T13:30:00Z',
+          provider: 'Electricistas Profesionales'
+        }
+      ];
+
+      setMaintenanceRequests(mockRequests);
+
+      // Calculate stats
+      const totalRequests = mockRequests.length;
+      const pendingRequests = mockRequests.filter(r => r.status === 'PENDING').length;
+      const activeRequests = mockRequests.filter(r => ['APPROVED', 'IN_PROGRESS'].includes(r.status)).length;
+      const completedRequests = mockRequests.filter(r => r.status === 'COMPLETED').length;
+      const totalCost = mockRequests.reduce((sum, r) => sum + r.estimatedCost, 0);
+      const monthlyCost = mockRequests
+        .filter(r => new Date(r.createdAt).getMonth() === new Date().getMonth())
+        .reduce((sum, r) => sum + r.estimatedCost, 0);
+
+      setStats({
+        totalRequests,
+        pendingRequests,
+        activeRequests,
+        completedRequests,
+        totalCost,
+        monthlyCost
+      });
+
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
     } catch (error) {
       logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
       setError("Error al cargar los datos");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Funciones para acciones rápidas
+  const handleNewRequest = () => {
+    logger.info('Abriendo creación de nueva solicitud de mantenimiento');
+    // TODO: Implementar modal o navegación para nueva solicitud
+  };
+
+  const handleFilterRequests = () => {
+    logger.info('Alternando filtros de solicitudes');
+    // TODO: Implementar filtros avanzados
+  };
+
+  const handleExportData = async () => {
+    try {
+      logger.info('Exportando datos de mantenimiento');
+      alert('Datos exportados exitosamente');
+    } catch (error) {
+      logger.error('Error exportando datos:', error);
+    }
+  };
+
+  const handleViewReports = () => {
+    logger.info('Mostrando reportes de mantenimiento');
+    // TODO: Implementar vista de reportes
+  };
+
+  const handleSettings = () => {
+    logger.info('Abriendo configuración de mantenimiento');
+    // TODO: Implementar configuración
+  };
+
+  const handleRefresh = async () => {
+    logger.info('Refrescando datos de mantenimiento');
+    await loadPageData();
+  };
+
+  const handleApproveRequest = async (requestId: string) => {
+    try {
+      // TODO: Implement API call to approve request
+      setMaintenanceRequests(prev =>
+        prev.map(r => r.id === requestId ? {...r, status: 'APPROVED' as const} : r)
+      );
+      logger.info('Solicitud de mantenimiento aprobada:', { requestId });
+    } catch (error) {
+      logger.error('Error aprobando solicitud:', error);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      // TODO: Implement API call to reject request
+      setMaintenanceRequests(prev =>
+        prev.map(r => r.id === requestId ? {...r, status: 'REJECTED' as const} : r)
+      );
+      logger.info('Solicitud de mantenimiento rechazada:', { requestId });
+    } catch (error) {
+      logger.error('Error rechazando solicitud:', error);
     }
   };
 
@@ -84,7 +259,7 @@ export default function MantenimientoPage() {
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
@@ -115,86 +290,279 @@ export default function MantenimientoPage() {
     );
   }
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+      case 'APPROVED':
+        return <Badge className="bg-blue-100 text-blue-800">Aprobada</Badge>;
+      case 'IN_PROGRESS':
+        return <Badge className="bg-emerald-100 text-emerald-800">En Progreso</Badge>;
+      case 'COMPLETED':
+        return <Badge className="bg-green-100 text-green-800">Completada</Badge>;
+      case 'REJECTED':
+        return <Badge className="bg-red-100 text-red-800">Rechazada</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getUrgencyBadge = (urgency: string) => {
+    switch (urgency) {
+      case 'CRITICAL':
+        return <Badge className="bg-red-100 text-red-800 border-red-300">Crítica</Badge>;
+      case 'HIGH':
+        return <Badge className="bg-orange-100 text-orange-800 border-orange-300">Alta</Badge>;
+      case 'MEDIUM':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Media</Badge>;
+      case 'LOW':
+        return <Badge className="bg-green-100 text-green-800 border-green-300">Baja</Badge>;
+      default:
+        return <Badge variant="outline">{urgency}</Badge>;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'REPAIR':
+        return 'Reparación';
+      case 'MAINTENANCE':
+        return 'Mantenimiento';
+      case 'EMERGENCY':
+        return 'Emergencia';
+      case 'INSPECTION':
+        return 'Inspección';
+      default:
+        return type;
+    }
+  };
+
+  const filteredRequests = maintenanceRequests.filter(request => {
+    const matchesSearch = request.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         request.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         request.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <DashboardLayout 
+    <DashboardLayout
+      user={user}
       title="Mantenimiento"
-      subtitle="Gestiona y visualiza la información de mantenimiento"
+      subtitle="Gestiona solicitudes y trabajos de mantenimiento"
     >
       <div className="space-y-6">
-        {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+        {/* Estadísticas principales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-emerald-700">Total Solicitudes</p>
+                  <p className="text-2xl font-bold text-emerald-900">
+                    {stats.totalRequests}
+                  </p>
+                  <p className="text-xs text-emerald-600 mt-1">
+                    Este mes
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-200 rounded-lg flex items-center justify-center">
+                  <Building className="w-6 h-6 text-emerald-700" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-700">Pendientes</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {stats.pendingRequests}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Requieren atención
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-700" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-700">En Progreso</p>
+                  <p className="text-2xl font-bold text-yellow-900">
+                    {stats.activeRequests}
+                  </p>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Activos actualmente
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-200 rounded-lg flex items-center justify-center">
+                  <Wrench className="w-6 h-6 text-yellow-700" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-700">Costo Total</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {formatPrice(stats.totalCost)}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    {formatPrice(stats.monthlyCost)} este mes
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-green-700" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Filtros y búsqueda */}
         <Card>
           <CardHeader>
-            <CardTitle>Mantenimiento</CardTitle>
+            <CardTitle>Solicitudes de Mantenimiento</CardTitle>
             <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con mantenimiento.
+              Gestiona todas las solicitudes de mantenimiento de tus propiedades
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar por propiedad, inquilino o descripción..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="APPROVED">Aprobadas</SelectItem>
+                  <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                  <SelectItem value="COMPLETED">Completadas</SelectItem>
+                  <SelectItem value="REJECTED">Rechazadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lista de solicitudes */}
+            <div className="space-y-4">
+              {filteredRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron solicitudes</h3>
+                  <p className="text-gray-600">
+                    No hay solicitudes de mantenimiento que coincidan con los criterios de búsqueda.
+                  </p>
+                </div>
+              ) : (
+                filteredRequests.map((request) => (
+                  <div key={request.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{request.propertyTitle}</h3>
+                          {getStatusBadge(request.status)}
+                          {getUrgencyBadge(request.urgency)}
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4 mb-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Users className="w-4 h-4" />
+                              <span>Inquilino: {request.tenantName}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Settings className="w-4 h-4" />
+                              <span>Tipo: {getTypeLabel(request.type)}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>Creado: {new Date(request.createdAt).toLocaleDateString('es-ES')}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <DollarSign className="w-4 h-4" />
+                              <span>Costo estimado: {formatPrice(request.estimatedCost)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-gray-700 mb-3">{request.description}</p>
+                        {request.provider && (
+                          <p className="text-sm text-emerald-700">
+                            <strong>Proveedor asignado:</strong> {request.provider}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowDetailsDialog(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver Detalles
+                        </Button>
+                        {request.status === 'PENDING' && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => handleApproveRequest(request.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Aprobar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => handleRejectRequest(request.id)}
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              Rechazar
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -209,39 +577,117 @@ export default function MantenimientoPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Plus className="w-6 h-6 mb-2" />
-                <span>Agregar Nuevo</span>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-emerald-50 border-emerald-200"
+                onClick={handleNewRequest}
+              >
+                <Plus className="w-6 h-6 mb-2 text-emerald-600" />
+                <span>Programar Mantenimiento</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
-                <span>Filtrar</span>
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-blue-50 border-blue-200"
+                onClick={handleFilterRequests}
+              >
+                <Filter className="w-6 h-6 mb-2 text-blue-600" />
+                <span>Filtrar Solicitudes</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
-                <span>Exportar</span>
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-orange-50 border-orange-200"
+                onClick={handleExportData}
+              >
+                <Download className="w-6 h-6 mb-2 text-orange-600" />
+                <span>Exportar Datos</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <BarChart3 className="w-6 h-6 mb-2" />
-                <span>Reportes</span>
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-purple-50 border-purple-200"
+                onClick={handleViewReports}
+              >
+                <BarChart3 className="w-6 h-6 mb-2 text-purple-600" />
+                <span>Ver Reportes</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Settings className="w-6 h-6 mb-2" />
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-gray-50 border-gray-200"
+                onClick={handleSettings}
+              >
+                <Settings className="w-6 h-6 mb-2 text-gray-600" />
                 <span>Configuración</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
-                <span>Actualizar</span>
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-green-50 border-green-200"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className="w-6 h-6 mb-2 text-green-600" />
+                <span>Actualizar Datos</span>
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de detalles */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles de Solicitud de Mantenimiento</DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Información de la Propiedad</h4>
+                  <p><strong>Propiedad:</strong> {selectedRequest.propertyTitle}</p>
+                  <p><strong>ID:</strong> {selectedRequest.propertyId}</p>
+                  <p><strong>Inquilino:</strong> {selectedRequest.tenantName}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Detalles del Trabajo</h4>
+                  <p><strong>Tipo:</strong> {getTypeLabel(selectedRequest.type)}</p>
+                  <p><strong>Urgencia:</strong> {getUrgencyBadge(selectedRequest.urgency)}</p>
+                  <p><strong>Estado:</strong> {getStatusBadge(selectedRequest.status)}</p>
+                  <p><strong>Costo Estimado:</strong> {formatPrice(selectedRequest.estimatedCost)}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Descripción</h4>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded">{selectedRequest.description}</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Fechas</h4>
+                  <p><strong>Creado:</strong> {new Date(selectedRequest.createdAt).toLocaleString('es-ES')}</p>
+                  {selectedRequest.scheduledDate && (
+                    <p><strong>Programado:</strong> {new Date(selectedRequest.scheduledDate).toLocaleString('es-ES')}</p>
+                  )}
+                  {selectedRequest.completedDate && (
+                    <p><strong>Completado:</strong> {new Date(selectedRequest.completedDate).toLocaleString('es-ES')}</p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Proveedor</h4>
+                  {selectedRequest.provider ? (
+                    <p className="text-emerald-700">{selectedRequest.provider}</p>
+                  ) : (
+                    <p className="text-gray-500">No asignado</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

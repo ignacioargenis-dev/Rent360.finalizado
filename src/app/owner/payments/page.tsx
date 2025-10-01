@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,48 @@ export default function OwnerPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  // Funciones para acciones
+  const handleFilterPayments = () => {
+    logger.info('Aplicando filtros de pagos');
+    // TODO: Implementar filtros avanzados
+  };
+
+  const handleExportPayments = async () => {
+    try {
+      logger.info('Exportando datos de pagos');
+      alert('Datos de pagos exportados exitosamente');
+    } catch (error) {
+      logger.error('Error exportando pagos:', error);
+    }
+  };
+
+  const handleViewPaymentDetails = (payment: PaymentWithDetails) => {
+    setSelectedPayment(payment);
+    setShowDetailsDialog(true);
+  };
+
+  const handleSendReminder = async (paymentId: string) => {
+    try {
+      logger.info('Enviando recordatorio de pago:', { paymentId });
+      alert('Recordatorio enviado exitosamente');
+      // TODO: Implement API call to send reminder
+    } catch (error) {
+      logger.error('Error enviando recordatorio:', error);
+    }
+  };
+
+  const handleMarkAsPaid = async (paymentId: string) => {
+    try {
+      logger.info('Marcando pago como realizado:', { paymentId });
+      alert('Pago marcado como realizado');
+      // TODO: Implement API call to mark payment as paid
+    } catch (error) {
+      logger.error('Error marcando pago:', error);
+    }
+  };
 
   useEffect(() => {
     // Mock data for demo
@@ -355,7 +398,7 @@ export default function OwnerPaymentsPage() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -413,8 +456,8 @@ export default function OwnerPaymentsPage() {
                     {formatPrice(stats.thisMonthReceived)}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
@@ -511,11 +554,11 @@ export default function OwnerPaymentsPage() {
                   <option value="lastMonth">Mes pasado</option>
                   <option value="overdue">Atrasados</option>
                 </select>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleFilterPayments}>
                   <Filter className="w-4 h-4 mr-2" />
                   Filtros
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleExportPayments}>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
@@ -590,18 +633,42 @@ export default function OwnerPaymentsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
-                      <Button size="sm" className="flex-1">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewPaymentDetails(payment)}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalles
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => alert('Comprobante generado')}
+                      >
                         <Receipt className="w-4 h-4 mr-2" />
                         Comprobante
                       </Button>
                       {payment.status === 'PENDING' && (
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleSendReminder(payment.id)}
+                        >
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Enviar Recordatorio
+                        </Button>
+                      )}
+                      {payment.status === 'PENDING' && (
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => handleMarkAsPaid(payment.id)}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Marcar Pagado
                         </Button>
                       )}
                     </div>

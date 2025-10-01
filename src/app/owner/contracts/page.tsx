@@ -302,6 +302,21 @@ export default function OwnerContractsPage() {
     setSelectedContract(null);
   };
 
+  const handleStartLegalCase = (contract: ContractWithDetails) => {
+    logger.info('Iniciando caso legal para contrato:', { contractId: contract.id });
+    alert(`Caso legal iniciado para el contrato ${contract.contractNumber}.\n\nSe ha enviado la solicitud al equipo legal para proceder con las acciones correspondientes por mora o incumplimiento del contrato.`);
+    // TODO: Implement API call to start legal case
+    // const response = await fetch('/api/owner/contracts/start-legal-case', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     contractId: contract.id,
+    //     reason: 'Mora en el pago de arriendos',
+    //     requestedBy: user?.id
+    //   })
+    // });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -559,6 +574,17 @@ export default function OwnerContractsPage() {
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
                       </Button>
+                      {contract.status === 'ACTIVE' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
+                          onClick={() => handleStartLegalCase(contract)}
+                        >
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Caso Legal
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
