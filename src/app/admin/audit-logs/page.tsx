@@ -298,204 +298,213 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
-      
-      title="Registros de Auditoría"
-      subtitle="Monitorea todas las actividades del sistema"
-    >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header with stats */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6">
             <h1 className="text-2xl font-bold text-gray-900">Registros de Auditoría</h1>
-            <p className="text-gray-600">Monitorea y analiza todas las actividades del sistema</p>
-          </div>
-          <div className="flex gap-2">
-            <select 
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="24h">Últimas 24 horas</option>
-              <option value="7d">Últimos 7 días</option>
-              <option value="30d">Últimos 30 días</option>
-              <option value="90d">Últimos 90 días</option>
-            </select>
-            <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtros
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-        </div>
+            <p className="text-gray-600 mt-1">Monitorea todas las actividades del sistema</p>
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with stats */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Registros de Auditoría</h1>
+                  <p className="text-gray-600">Monitorea y analiza todas las actividades del sistema</p>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="24h">Últimas 24 horas</option>
+                    <option value="7d">Últimos 7 días</option>
+                    <option value="30d">Últimos 30 días</option>
+                    <option value="90d">Últimos 90 días</option>
+                  </select>
+                  <Button variant="outline" size="sm">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filtros
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar
+                  </Button>
+                </div>
+              </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.totalLogs}</p>
-                <p className="text-xs text-gray-600">Total Registros</p>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalLogs}</p>
+                      <p className="text-xs text-gray-600">Total Registros</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">{stats.todayLogs}</p>
+                      <p className="text-xs text-gray-600">Hoy</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-600">{stats.failedAttempts}</p>
+                      <p className="text-xs text-gray-600">Intentos Fallidos</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-orange-600">{stats.securityEvents}</p>
+                      <p className="text-xs text-gray-600">Eventos Seguridad</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{stats.userActions}</p>
+                      <p className="text-xs text-gray-600">Acciones Usuario</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-purple-600">{stats.systemActions}</p>
+                      <p className="text-xs text-gray-600">Acciones Sistema</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.todayLogs}</p>
-                <p className="text-xs text-gray-600">Hoy</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{stats.failedAttempts}</p>
-                <p className="text-xs text-gray-600">Intentos Fallidos</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">{stats.securityEvents}</p>
-                <p className="text-xs text-gray-600">Eventos Seguridad</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{stats.userActions}</p>
-                <p className="text-xs text-gray-600">Acciones Usuario</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.systemActions}</p>
-                <p className="text-xs text-gray-600">Acciones Sistema</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Buscar registros..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              {/* Filters and Search */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Buscar registros..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="all">Todas las categorías</option>
+                    <option value="user">Usuario</option>
+                    <option value="property">Propiedad</option>
+                    <option value="contract">Contrato</option>
+                    <option value="payment">Pago</option>
+                    <option value="system">Sistema</option>
+                    <option value="security">Seguridad</option>
+                  </select>
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="all">Todas las severidades</option>
+                    <option value="critical">Crítico</option>
+                    <option value="error">Error</option>
+                    <option value="warning">Advertencia</option>
+                    <option value="info">Info</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Audit Logs List */}
+              <div className="space-y-4">
+                {filteredAuditLogs.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center py-8">
+                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No se encontraron registros de auditoría</p>
+                        <p className="text-sm text-gray-400">Intenta ajustar tus filtros de búsqueda</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  filteredAuditLogs.map((log) => (
+                    <Card
+                      key={log.id}
+                      className={`border-l-4 ${getSeverityColor(log.severity)}`}
+                    >
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className={`p-2 rounded-lg ${getSeverityColor(log.severity)}`}>
+                              {getCategoryIcon(log.category)}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-gray-900">{log.action}</h3>
+                                {getStatusBadge(log.status)}
+                                {getSeverityBadge(log.severity)}
+                              </div>
+                              <p className="text-gray-600 text-sm mb-2">{log.description}</p>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <UserIcon className="w-3 h-3" />
+                                  <span>{log.userName} ({log.userRole})</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{formatRelativeTime(log.timestamp)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{log.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Smartphone className="w-3 h-3" />
+                                  <span>{log.device}</span>
+                                </div>
+                              </div>
+
+                              <div className="mt-2 text-xs text-gray-400">
+                                <span>IP: {log.ipAddress}</span>
+                                <span className="mx-2">•</span>
+                                <span>{formatDateTime(log.timestamp)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <select 
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="all">Todas las categorías</option>
-              <option value="user">Usuario</option>
-              <option value="property">Propiedad</option>
-              <option value="contract">Contrato</option>
-              <option value="payment">Pago</option>
-              <option value="system">Sistema</option>
-              <option value="security">Seguridad</option>
-            </select>
-            <select 
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="all">Todas las severidades</option>
-              <option value="critical">Crítico</option>
-              <option value="error">Error</option>
-              <option value="warning">Advertencia</option>
-              <option value="info">Info</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Audit Logs List */}
-        <div className="space-y-4">
-          {filteredAuditLogs.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No se encontraron registros de auditoría</p>
-                  <p className="text-sm text-gray-400">Intenta ajustar tus filtros de búsqueda</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredAuditLogs.map((log) => (
-              <Card 
-                key={log.id} 
-                className={`border-l-4 ${getSeverityColor(log.severity)}`}
-              >
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className={`p-2 rounded-lg ${getSeverityColor(log.severity)}`}>
-                        {getCategoryIcon(log.category)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900">{log.action}</h3>
-                          {getStatusBadge(log.status)}
-                          {getSeverityBadge(log.severity)}
-                        </div>
-                        <p className="text-gray-600 text-sm mb-2">{log.description}</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <UserIcon className="w-3 h-3" />
-                            <span>{log.userName} ({log.userRole})</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{formatRelativeTime(log.timestamp)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{log.location}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Smartphone className="w-3 h-3" />
-                            <span>{log.device}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-2 text-xs text-gray-400">
-                          <span>IP: {log.ipAddress}</span>
-                          <span className="mx-2">•</span>
-                          <span>{formatDateTime(log.timestamp)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
         </div>
       </div>
-    </DashboardLayout
+    </div>
   );
 }

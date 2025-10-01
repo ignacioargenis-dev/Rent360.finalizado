@@ -285,40 +285,21 @@ return;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
-      user={{
-        id: 'admin',
-        email: 'admin@rent360.cl',
-        name: 'Administrador',
-        password: '',
-        phone: null,
-        rut: null,
-        rutVerified: false,
-        dateOfBirth: null,
-        gender: null,
-        nationality: 'CHILE',
-        address: null,
-        city: null,
-        commune: null,
-        region: null,
-        phoneSecondary: null,
-        emergencyContact: null,
-        emergencyPhone: null,
-        role: 'ADMIN' as any,
-        avatar: null,
-        isActive: true,
-        emailVerified: true,
-        phoneVerified: false,
-        lastLogin: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }}
-      title="Gestión de Prestadores de Servicios"
-      subtitle="Administra los prestadores de servicios de mantenimiento"
-    >
-      <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Contratistas</h1>
+            <p className="text-gray-600 mt-1">Administra todos los contratistas del sistema</p>
+            <div className="container mx-auto px-4 py-6">
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Prestadores</CardTitle>

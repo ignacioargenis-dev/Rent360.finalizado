@@ -391,94 +391,100 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
-      
-      title="Sistema de Backup"
-      subtitle="Gestiona y monitorea todas las copias de seguridad"
-    >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6">
             <h1 className="text-2xl font-bold text-gray-900">Sistema de Backup</h1>
-            <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={() => createBackup('full')}>
-              <Play className="w-4 h-4 mr-2" />
-              Backup Completo
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Backup Incremental
-            </Button>
-            <Button size="sm" variant="outline">
-              <Settings className="w-4 h-4 mr-2" />
-              Configuración
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
+            <p className="text-gray-600 mt-1">Gestiona y monitorea todas las copias de seguridad</p>
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Backups</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Sistema de Backup</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Archive className="w-6 h-6 text-blue-600" />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <HardDrive className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-orange-600" />
-                </div>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Backup List */}
@@ -652,8 +658,10 @@ return `Hace ${diffDays} días`;
               </CardContent>
             </Card>
           </div>
+            </div>
+          </div>
         </div>
       </div>
-    </DashboardLayout
+    </div>
   );
 }
