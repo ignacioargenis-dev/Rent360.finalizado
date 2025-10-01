@@ -44,8 +44,10 @@ import {
   RefreshCw
 } from 'lucide-react';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
 
 export default function ClientesActivosPage() {
+  const { user } = useUserState();
 
   const [loading, setLoading] = useState(true);
 
