@@ -83,6 +83,16 @@ interface BrokerSettings {
     dateFormat: 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy-mm-dd';
     timezone: string;
   };
+  goals: {
+    monthlyProperties: number;
+    monthlyRevenue: number;
+    monthlyClients: number;
+    yearlyProperties: number;
+    yearlyRevenue: number;
+    yearlyClients: number;
+    commissionTarget: number;
+    notificationsEnabled: boolean;
+  };
 }
 
 export default function BrokerSettings() {
@@ -129,6 +139,16 @@ export default function BrokerSettings() {
       language: 'es',
       dateFormat: 'dd/mm/yyyy',
       timezone: 'America/Santiago',
+    },
+    goals: {
+      monthlyProperties: 5,
+      monthlyRevenue: 15000000,
+      monthlyClients: 8,
+      yearlyProperties: 60,
+      yearlyRevenue: 180000000,
+      yearlyClients: 96,
+      commissionTarget: 500000,
+      notificationsEnabled: true,
     },
   });
   const [loading, setLoading] = useState(true);
@@ -199,6 +219,13 @@ export default function BrokerSettings() {
     setSettings(prev => ({
       ...prev,
       appearance: { ...prev.appearance, [field]: value },
+    }));
+  };
+
+  const updateGoals = (field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      goals: { ...prev.goals, [field]: value },
     }));
   };
 
@@ -284,6 +311,15 @@ export default function BrokerSettings() {
           >
             <Monitor className="w-4 h-4" />
             Apariencia
+          </Button>
+          <Button
+            variant={activeTab === 'goals' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('goals')}
+            className="flex items-center gap-2"
+          >
+            <Target className="w-4 h-4" />
+            Metas
           </Button>
         </div>
 
@@ -815,6 +851,190 @@ export default function BrokerSettings() {
                         <option value="America/New_York">New York (GMT-5)</option>
                         <option value="Europe/Madrid">Madrid (GMT+1)</option>
                       </select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'goals' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Metas y Objetivos</CardTitle>
+                  <CardDescription>Establece tus metas mensuales y anuales para mejorar tu rendimiento</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Metas Mensuales */}
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-emerald-700">Metas Mensuales</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Propiedades por Mes
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.monthlyProperties}
+                          onChange={(e) => updateGoals('monthlyProperties', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ingresos Mensuales ($)
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.monthlyRevenue}
+                          onChange={(e) => updateGoals('monthlyRevenue', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          min="0"
+                          step="100000"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Clientes por Mes
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.monthlyClients}
+                          onChange={(e) => updateGoals('monthlyClients', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metas Anuales */}
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-blue-700">Metas Anuales</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Propiedades por Año
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.yearlyProperties}
+                          onChange={(e) => updateGoals('yearlyProperties', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ingresos Anuales ($)
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.yearlyRevenue}
+                          onChange={(e) => updateGoals('yearlyRevenue', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="0"
+                          step="1000000"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Clientes por Año
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.goals.yearlyClients}
+                          onChange={(e) => updateGoals('yearlyClients', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meta de Comisión */}
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-purple-700">Meta de Comisión</h4>
+                    <div className="max-w-md">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Comisión Mensual Objetivo ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={settings.goals.commissionTarget}
+                        onChange={(e) => updateGoals('commissionTarget', parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        min="0"
+                        step="10000"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Monto objetivo de comisión que deseas alcanzar mensualmente
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notificaciones */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">Notificaciones de Metas</h4>
+                      <p className="text-sm text-gray-600">
+                        Recibe notificaciones cuando alcances o te acerques a tus metas
+                      </p>
+                    </div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.goals.notificationsEnabled}
+                        onChange={(e) => updateGoals('notificationsEnabled', e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`relative inline-block w-10 h-6 rounded-full transition-colors ${
+                        settings.goals.notificationsEnabled ? 'bg-emerald-500' : 'bg-gray-300'
+                      }`}>
+                        <span className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          settings.goals.notificationsEnabled ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Resumen de Metas */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-3 text-gray-800">Resumen de Metas</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-600">Propiedades</div>
+                        <div className="font-semibold text-emerald-600">
+                          {settings.goals.monthlyProperties}/mes
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {settings.goals.yearlyProperties}/año
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Ingresos</div>
+                        <div className="font-semibold text-emerald-600">
+                          ${(settings.goals.monthlyRevenue / 1000000).toFixed(1)}M/mes
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ${(settings.goals.yearlyRevenue / 1000000).toFixed(0)}M/año
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Clientes</div>
+                        <div className="font-semibold text-emerald-600">
+                          {settings.goals.monthlyClients}/mes
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {settings.goals.yearlyClients}/año
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Comisión</div>
+                        <div className="font-semibold text-purple-600">
+                          ${(settings.goals.commissionTarget / 1000).toFixed(0)}K/mes
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
