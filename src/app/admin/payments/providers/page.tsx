@@ -24,7 +24,7 @@ import {
   Filter,
   Eye
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
 interface ProviderPayout {
@@ -233,9 +233,9 @@ export default function AdminProviderPayoutsPage() {
   }
 
   return (
-    <DashboardLayout title="Payouts de Proveedores" subtitle="Gestión de pagos automáticos a proveedores">
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
       <DashboardHeader
-        user={user}
+        
         title="Payouts de Proveedores"
         subtitle="Administra los pagos automáticos a proveedores de mantenimiento y servicios"
       />

@@ -43,7 +43,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 
 export default function IntegracionesPage() {
 
@@ -81,7 +81,7 @@ export default function IntegracionesPage() {
 
   if (loading) {
     return (
-      <DashboardLayout 
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
         title="Integraciones"
         subtitle="Cargando información..."
       >
@@ -91,13 +91,13 @@ export default function IntegracionesPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </div></div></div></div>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
         title="Integraciones"
         subtitle="Error al cargar la página"
       >
@@ -114,12 +114,12 @@ export default function IntegracionesPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </div></div></div></div>
     );
   }
 
   return (
-    <DashboardLayout 
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
       title="Integraciones"
       subtitle="Gestiona y visualiza la información de integraciones"
     >
@@ -245,6 +245,6 @@ export default function IntegracionesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </div></div></div></div>
   );
 }

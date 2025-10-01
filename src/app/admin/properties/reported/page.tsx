@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -169,7 +169,7 @@ export default function AdminReportedPropertiesPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Propiedades Reportadas" subtitle="Gestiona reportes de propiedades">
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
@@ -178,7 +178,7 @@ export default function AdminReportedPropertiesPage() {
   }
 
   return (
-    <DashboardLayout title="Propiedades Reportadas" subtitle="Gestiona reportes de propiedades">
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>

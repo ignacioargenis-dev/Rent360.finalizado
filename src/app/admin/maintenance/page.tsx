@@ -42,7 +42,7 @@ import {
   Download,
   Upload,
   RefreshCw } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 
 export default function MantenimientoPage() {
 
@@ -80,7 +80,7 @@ export default function MantenimientoPage() {
 
   if (loading) {
     return (
-      <DashboardLayout 
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
         title="Mantenimiento"
         subtitle="Cargando información..."
       >
@@ -90,13 +90,13 @@ export default function MantenimientoPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </div></div></div></div>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
         title="Mantenimiento"
         subtitle="Error al cargar la página"
       >
@@ -113,12 +113,12 @@ export default function MantenimientoPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </div></div></div></div>
     );
   }
 
   return (
-    <DashboardLayout 
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
       title="Mantenimiento"
       subtitle="Gestiona y visualiza la información de mantenimiento"
     >
@@ -244,6 +244,6 @@ export default function MantenimientoPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </div></div></div></div>
   );
 }

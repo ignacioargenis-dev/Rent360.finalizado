@@ -27,7 +27,7 @@ import { Heart,
   TrendingDown, Info } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 
 interface SystemComponent {
   name: string;
@@ -368,8 +368,8 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <DashboardLayout
-      user={user}
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
+      
       title="Salud del Sistema"
       subtitle="Monitorea el estado y rendimiento de todos los componentes"
     >

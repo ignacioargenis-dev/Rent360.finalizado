@@ -22,7 +22,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 import { useUserState } from '@/hooks/useUserState';
 
 interface PaymentProvider {
@@ -294,8 +294,8 @@ export default function PaymentsAdminPage() {
 
   if (loading) {
     return (
-      <DashboardLayout
-        user={user}
+      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
+        
         title="Configuración de Pagos"
         subtitle="Administra proveedores de pago y configuraciones"
       >
@@ -307,8 +307,8 @@ export default function PaymentsAdminPage() {
   }
 
   return (
-    <DashboardLayout
-      user={user}
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
+      
       title="Configuración de Pagos"
       subtitle="Administra proveedores de pago y configuraciones"
     >

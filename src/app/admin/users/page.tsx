@@ -23,7 +23,7 @@ import { Search, UserPlus, Edit,
   X
 } from 'lucide-react';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+
 import { useUserState } from '@/hooks/useUserState';
 
 export default function AdminUsersPage() {
@@ -221,8 +221,8 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <DashboardLayout
-      user={user}
+    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6">
+      
       title="Gestión de Usuarios"
       subtitle="Administra todos los usuarios del sistema"
     >
