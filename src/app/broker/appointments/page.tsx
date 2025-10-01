@@ -345,6 +345,27 @@ export default function BrokerAppointments() {
     setSelectedDate(new Date());
     setSelectedTime('');
     setShowAppointmentForm(true);
+    logger.info('Creando nueva cita');
+  };
+
+  const handleApplyFilters = () => {
+    logger.info('Aplicando filtros de citas');
+    alert('Funcionalidad de filtros avanzados - próximamente');
+    // TODO: Implementar filtros avanzados
+  };
+
+  const handleViewAppointmentDetails = (appointment: Appointment) => {
+    logger.info('Viendo detalles de cita:', { appointmentId: appointment.id });
+    alert(`Detalles de la cita: ${appointment.title}\nCliente: ${appointment.clientName}\nFecha: ${appointment.date} ${appointment.time}`);
+    // TODO: Implementar modal de detalles
+  };
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setSelectedDate(new Date(appointment.date));
+    setSelectedTime(appointment.time);
+    setShowAppointmentForm(true);
+    logger.info('Editando cita:', { appointmentId: appointment.id });
   };
 
   const getTypeIcon = (type: string) => {
@@ -590,7 +611,7 @@ return `Hace ${diffDays} días`;
                   <option value="call">Llamadas</option>
                   <option value="video">Video</option>
                 </select>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleApplyFilters}>
                   <Filter className="w-4 h-4 mr-2" />
                   Filtros
                 </Button>
@@ -681,10 +702,10 @@ return `Hace ${diffDays} días`;
                               </Button>
                             </>
                           )}
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewAppointmentDetails(appointment)}>
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleEditAppointment(appointment)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
@@ -809,10 +830,10 @@ return `Hace ${diffDays} días`;
                               </Button>
                             </>
                           )}
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleViewAppointmentDetails(appointment)}>
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" onClick={() => handleEditAppointment(appointment)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 

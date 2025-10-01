@@ -70,6 +70,8 @@ export default function BrokerClientsPage() {
   const { user, loading: userLoading } = useUserState();
 
   const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const [stats, setStats] = useState<ClientStats>({
     totalClients: 0,
@@ -367,6 +369,37 @@ return `Hace ${diffDays} días`;
     }
   };
 
+  // Funciones para acciones de clientes
+  const handleViewClientDetails = (client: Client) => {
+    setSelectedClient(client);
+    setShowDetailsDialog(true);
+    logger.info('Viendo detalles del cliente:', { clientId: client.id });
+  };
+
+  const handleEditClient = (client: Client) => {
+    logger.info('Editando cliente:', { clientId: client.id });
+    alert(`Editar cliente: ${client.name}`);
+    // TODO: Implementar navegación a página de edición
+  };
+
+  const handleContactClient = (client: Client) => {
+    logger.info('Contactando cliente:', { clientId: client.id });
+    alert(`Contactar cliente: ${client.name} - ${client.email}`);
+    // TODO: Implementar funcionalidad de contacto
+  };
+
+  const handleCreateContract = (client: Client) => {
+    logger.info('Creando contrato para cliente:', { clientId: client.id });
+    alert(`Crear contrato para: ${client.name}`);
+    // TODO: Implementar navegación a creación de contrato
+  };
+
+  const handleViewProperties = (client: Client) => {
+    logger.info('Viendo propiedades del cliente:', { clientId: client.id });
+    alert(`Propiedades de ${client.name}: ${client.totalProperties} propiedades`);
+    // TODO: Implementar vista de propiedades
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -439,6 +472,50 @@ return `Hace ${diffDays} días`;
         <span className="text-gray-600">
           {new Date(value).toLocaleDateString('es-CL')}
         </span>
+      ),
+    },
+    {
+      key: 'actions' as keyof Client,
+      label: 'Acciones',
+      render: (value: any, client: Client) => (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewClientDetails(client)}
+            className="text-xs"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Ver
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleEditClient(client)}
+            className="text-xs"
+          >
+            <Edit className="w-3 h-3 mr-1" />
+            Editar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleContactClient(client)}
+            className="text-xs"
+          >
+            <Mail className="w-3 h-3 mr-1" />
+            Contactar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleCreateContract(client)}
+            className="text-xs bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+          >
+            <FileText className="w-3 h-3 mr-1" />
+            Contrato
+          </Button>
+        </div>
       ),
     },
   ];
@@ -613,6 +690,160 @@ return `Hace ${diffDays} días`;
           loadingMessage="Cargando clientes..."
         />
       </div>
+
+      {/* Client Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles del Cliente</DialogTitle>
+            <DialogDescription>
+              Información completa del cliente y sus preferencias
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedClient && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Información Personal</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Nombre:</span>
+                      <span className="font-medium">{selectedClient.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Email:</span>
+                      <span className="font-medium">{selectedClient.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Teléfono:</span>
+                      <span className="font-medium">{selectedClient.phone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tipo:</span>
+                      {getTypeBadge(selectedClient.type)}
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Estado:</span>
+                      {getStatusBadge(selectedClient.status)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Estadísticas</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Propiedades:</span>
+                      <span className="font-medium">{selectedClient.totalProperties}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Contratos Activos:</span>
+                      <span className="font-medium">{selectedClient.activeContracts}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Ingresos Totales:</span>
+                      <span className="font-medium">{formatPrice(selectedClient.totalRevenue)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Calificación:</span>
+                      <span className="font-medium">{selectedClient.averageRating}/5</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Último Contacto:</span>
+                      <span className="font-medium">{formatDate(selectedClient.lastContact)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preferencias */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Preferencias</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-600">Método de Contacto:</span>
+                    <div className="font-medium capitalize">{selectedClient.preferences.contactMethod}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Tipos de Propiedad:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedClient.preferences.propertyTypes.map(type => (
+                        <Badge key={type} variant="outline" className="text-xs">
+                          {type === 'apartment' ? 'Departamento' : type === 'house' ? 'Casa' : type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Rango de Presupuesto:</span>
+                    <div className="font-medium">
+                      {formatPrice(selectedClient.preferences.budgetRange.min)} - {formatPrice(selectedClient.preferences.budgetRange.max)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ubicaciones Preferidas:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedClient.preferences.locations.map(location => (
+                        <Badge key={location} variant="outline" className="text-xs">
+                          {location}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Propiedades */}
+              {selectedClient.properties.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Propiedades</h3>
+                  <div className="space-y-2">
+                    {selectedClient.properties.map(property => (
+                      <div key={property.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{property.title}</div>
+                          <div className="text-sm text-gray-600">{property.address}</div>
+                        </div>
+                        <Badge variant={property.status === 'AVAILABLE' ? 'default' : 'secondary'}>
+                          {property.status === 'AVAILABLE' ? 'Disponible' : 'Ocupada'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notas */}
+              {selectedClient.notes && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Notas</h3>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-gray-700">{selectedClient.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Acciones */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => handleViewProperties(selectedClient)}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver Propiedades
+                </Button>
+                <Button variant="outline" onClick={() => handleContactClient(selectedClient)}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Contactar
+                </Button>
+                <Button onClick={() => handleCreateContract(selectedClient)} className="bg-emerald-600 hover:bg-emerald-700">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Crear Contrato
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </EnhancedDashboardLayout>
   );
 }

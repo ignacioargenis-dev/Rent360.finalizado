@@ -126,7 +126,18 @@ export default function BrokerProspectsPage() {
 
   const handleContactClient = async (clientId: string) => {
     try {
-      alert('Sistema de contacto iniciado');
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        const contactMethod = client.contactMethod || 'email';
+        if (contactMethod === 'email') {
+          window.open(`mailto:${client.email}?subject=Contacto%20desde%20Rent360`, '_blank');
+        } else if (contactMethod === 'phone') {
+          window.open(`tel:${client.phone}`, '_blank');
+        } else {
+          window.open(`https://wa.me/${client.phone?.replace(/\D/g, '')}`, '_blank');
+        }
+        logger.info('Cliente contactado:', { clientId, method: contactMethod });
+      }
     } catch (error) {
       logger.error('Error contacting client:', { error: error instanceof Error ? error.message : String(error) });
     }
@@ -138,13 +149,26 @@ export default function BrokerProspectsPage() {
 
   const handleConvertToActive = async (clientId: string) => {
     try {
-      setClients(clients.map(client => 
+      setClients(clients.map(client =>
         client.id === clientId ? { ...client, status: 'active' as const } : client,
       ));
       alert('Cliente convertido a activo exitosamente');
+      logger.info('Cliente convertido a activo:', { clientId });
     } catch (error) {
       logger.error('Error converting client:', { error: error instanceof Error ? error.message : String(error) });
     }
+  };
+
+  const handleAddNewClient = () => {
+    logger.info('Agregando nuevo cliente potencial');
+    alert('Funcionalidad para agregar nuevo cliente - próximamente');
+    // TODO: Implementar modal o navegación para agregar cliente
+  };
+
+  const handleEditClient = (clientId: string) => {
+    logger.info('Editando cliente potencial:', { clientId });
+    alert(`Editando cliente ${clientId} - próximamente`);
+    // TODO: Implementar navegación o modal de edición
   };
 
   const getStatusBadge = (status: string) => {
@@ -245,7 +269,7 @@ return 'Ayer';
                   <SelectItem value="inactive">Inactivo</SelectItem>
                 </SelectContent>
               </Select>
-              <Button>
+              <Button onClick={() => handleAddNewClient()}>
                 <UserPlus className="w-4 h-4 mr-2" />
                 Nuevo Cliente
               </Button>
@@ -383,7 +407,7 @@ return 'Ayer';
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(`/broker/clients/${client.id}/edit`, '_blank')}
+                          onClick={() => handleEditClient(client.id)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
