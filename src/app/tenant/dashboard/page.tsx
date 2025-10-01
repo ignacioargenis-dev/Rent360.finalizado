@@ -12,7 +12,7 @@ import {
   Plus,
   AlertTriangle
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 
@@ -124,8 +124,7 @@ export default function TenantDashboard() {
   }
 
   return (
-    <EnhancedDashboardLayout
-      user={user}
+    <DashboardLayout
       title="Dashboard Inquilino"
       subtitle="Gestiona tus contratos y pagos"
     >
@@ -244,6 +243,6 @@ export default function TenantDashboard() {
             </CardContent>
           </Card>
         </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

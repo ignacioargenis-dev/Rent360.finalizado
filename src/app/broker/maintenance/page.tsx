@@ -43,7 +43,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 export default function MantenimientoPage() {
@@ -122,8 +122,7 @@ export default function MantenimientoPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
-      user={user}
+    <DashboardLayout
       title="Mantenimiento"
       subtitle="Gestiona y visualiza la información de mantenimiento"
     >

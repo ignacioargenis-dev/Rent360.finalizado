@@ -24,7 +24,7 @@ import { Home, Building, FileText,
 import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface DashboardStats {
@@ -263,12 +263,9 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <EnhancedDashboardLayout
-      user={user}
+    <DashboardLayout
       title="Panel de Control de Propietario"
       subtitle="Gestiona tus propiedades e ingresos"
-      showNotifications={true}
-      notificationCount={3}
     >
 
       <div className="container mx-auto px-4 py-6">

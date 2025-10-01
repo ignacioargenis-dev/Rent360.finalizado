@@ -43,7 +43,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 export default function ClientesActivosPage() {
@@ -123,8 +123,7 @@ export default function ClientesActivosPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
-      user={user}
+    <DashboardLayout
       title="Clientes Activos"
       subtitle="Gestiona y visualiza la información de clientes activos"
     >
