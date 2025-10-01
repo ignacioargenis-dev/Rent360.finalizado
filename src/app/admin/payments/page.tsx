@@ -22,7 +22,8 @@ import {
   Zap
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
 
 interface PaymentProvider {
   name: string;
@@ -48,6 +49,7 @@ interface PaymentProvider {
 }
 
 export default function PaymentsAdminPage() {
+  const { user } = useUserState();
   const [providers, setProviders] = useState<PaymentProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -292,17 +294,25 @@ export default function PaymentsAdminPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <EnhancedDashboardLayout
+        user={user}
+        title="Configuración de Pagos"
+        subtitle="Administra proveedores de pago y configuraciones"
+      >
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      </EnhancedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Configuración de Pagos"
+      subtitle="Administra proveedores de pago y configuraciones"
+    >
+      <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Configuración de Pagos</h1>
@@ -465,6 +475,6 @@ export default function PaymentsAdminPage() {
           ))}
         </div>
       </div>
-    </DashboardLayout>
+    </EnhancedDashboardLayout>
   );
 }

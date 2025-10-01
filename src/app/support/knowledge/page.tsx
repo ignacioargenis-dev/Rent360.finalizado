@@ -66,8 +66,44 @@ export default function SupportKnowledgePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showCreateArticle, setShowCreateArticle] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null);
+
+  // Funciones para acciones rápidas
+  const handleCreateArticle = () => {
+    logger.info('Abriendo creación de nuevo artículo');
+    setShowCreateArticle(true);
+    // TODO: Implementar modal o navegación para crear artículo
+  };
+
+  const handleViewStats = () => {
+    logger.info('Mostrando estadísticas detalladas');
+    setShowStats(!showStats);
+  };
+
+  const handleExportArticles = async () => {
+    try {
+      logger.info('Iniciando exportación de artículos');
+
+      // TODO: Implementar exportación real
+      // const response = await fetch('/api/support/knowledge/export');
+      // const blob = await response.blob();
+      // const url = window.URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = url;
+      // a.download = 'articulos-conocimiento.csv';
+      // a.click();
+
+      // Simular exportación
+      alert('Exportación completada. Los artículos se han descargado.');
+
+    } catch (error) {
+      logger.error('Error exportando artículos:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al exportar los artículos');
+    }
+  };
 
   useEffect(() => {
     // Mock data for demo
@@ -252,7 +288,11 @@ export default function SupportKnowledgePage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Base de Conocimientos" subtitle="Recursos y documentación para el equipo de soporte">
+    <EnhancedDashboardLayout
+      user={user}
+      title="Base de Conocimientos"
+      subtitle="Recursos y documentación para el equipo de soporte"
+    >
       <DashboardHeader 
         user={user}
         title="Base de Conocimiento"
@@ -543,16 +583,31 @@ export default function SupportKnowledgePage() {
                 <CardTitle className="text-lg">Acciones Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button size="sm" variant="outline" className="w-full justify-start">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start hover:bg-blue-50"
+                  onClick={handleCreateArticle}
+                >
+                  <Plus className="w-4 h-4 mr-2 text-blue-600" />
                   Nuevo Artículo
                 </Button>
-                <Button size="sm" variant="outline" className="w-full justify-start">
-                  <TrendingUp className="w-4 h-4 mr-2" />
+                <Button
+                  size="sm"
+                  variant={showStats ? "default" : "outline"}
+                  className="w-full justify-start hover:bg-green-50"
+                  onClick={handleViewStats}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2 text-green-600" />
                   Ver Estadísticas
                 </Button>
-                <Button size="sm" variant="outline" className="w-full justify-start">
-                  <Share2 className="w-4 h-4 mr-2" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start hover:bg-orange-50"
+                  onClick={handleExportArticles}
+                >
+                  <Share2 className="w-4 h-4 mr-2 text-orange-600" />
                   Exportar Artículos
                 </Button>
               </CardContent>

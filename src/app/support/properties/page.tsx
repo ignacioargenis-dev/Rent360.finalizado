@@ -27,6 +27,8 @@ export default function SupportPropertiesPage() {
   const [data, setData] = useState(null);
 
   const [error, setError] = useState<string | null>(null);
+  const [showAddProperty, setShowAddProperty] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadPageData();
@@ -36,21 +38,70 @@ export default function SupportPropertiesPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // TODO: Implementar carga de datos específicos de la página
       // const response = await fetch('/api/support/properties');
       // const result = await response.json();
       // setData(result);
-      
+
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
     } catch (error) {
       logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
       setError("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Funciones para acciones rápidas
+  const handleAddProperty = () => {
+    logger.info('Abriendo modal para agregar propiedad');
+    setShowAddProperty(true);
+    // TODO: Implementar modal o navegación para agregar propiedad
+  };
+
+  const handleSearchProperty = () => {
+    logger.info('Iniciando búsqueda de propiedades');
+    // TODO: Implementar búsqueda avanzada o navegación a página de búsqueda
+  };
+
+  const handleToggleFilters = () => {
+    logger.info('Alternando visibilidad de filtros');
+    setShowFilters(!showFilters);
+  };
+
+  const handleExportData = async () => {
+    try {
+      logger.info('Iniciando exportación de datos de propiedades');
+
+      // TODO: Implementar exportación real
+      // const response = await fetch('/api/support/properties/export');
+      // const blob = await response.blob();
+      // const url = window.URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = url;
+      // a.download = 'propiedades-soporte.csv';
+      // a.click();
+
+      // Simular exportación
+      alert('Exportación completada. Los datos se han descargado.');
+
+    } catch (error) {
+      logger.error('Error exportando datos:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al exportar los datos');
+    }
+  };
+
+  const handleReviewProperties = () => {
+    logger.info('Abriendo vista de revisión de propiedades');
+    // TODO: Implementar vista de revisión o navegación
+  };
+
+  const handleRefreshData = async () => {
+    logger.info('Refrescando datos de propiedades');
+    await loadPageData();
   };
 
   if (loading) {
@@ -199,33 +250,57 @@ export default function SupportPropertiesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Plus className="w-6 h-6 mb-2" />
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-blue-50"
+                onClick={handleAddProperty}
+              >
+                <Plus className="w-6 h-6 mb-2 text-blue-600" />
                 <span>Agregar Propiedad</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Search className="w-6 h-6 mb-2" />
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-green-50"
+                onClick={handleSearchProperty}
+              >
+                <Search className="w-6 h-6 mb-2 text-green-600" />
                 <span>Buscar Propiedad</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
+
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                className="h-20 flex flex-col items-center justify-center hover:bg-purple-50"
+                onClick={handleToggleFilters}
+              >
+                <Filter className="w-6 h-6 mb-2 text-purple-600" />
                 <span>Filtrar</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-orange-50"
+                onClick={handleExportData}
+              >
+                <Download className="w-6 h-6 mb-2 text-orange-600" />
                 <span>Exportar</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Eye className="w-6 h-6 mb-2" />
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-indigo-50"
+                onClick={handleReviewProperties}
+              >
+                <Eye className="w-6 h-6 mb-2 text-indigo-600" />
                 <span>Revisar</span>
               </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
+
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center hover:bg-gray-50"
+                onClick={handleRefreshData}
+              >
+                <RefreshCw className="w-6 h-6 mb-2 text-gray-600" />
                 <span>Actualizar</span>
               </Button>
             </div>

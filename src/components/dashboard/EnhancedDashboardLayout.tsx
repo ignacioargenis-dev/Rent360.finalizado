@@ -121,10 +121,12 @@ const menuItems: RoleMenuItems = {
       ],
     },
     {
-      title: 'Configuración',
-      url: '/admin/settings',
-      icon: Settings,
+      title: 'Sistema',
+      url: '/admin/system-metrics',
+      icon: Database,
       submenu: [
+        { title: 'Métricas del Sistema', url: '/admin/system-metrics', icon: Database },
+        { title: 'Firmas Electrónicas', url: '/admin/signatures', icon: Shield },
         { title: 'Configuración Básica', url: '/admin/settings', icon: Settings },
         { title: 'Configuración Avanzada', url: '/admin/settings/enhanced', icon: Zap },
       ],
@@ -569,12 +571,12 @@ export default function EnhancedDashboardLayout({
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b bg-white">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between px-4 py-2">
             <div className="flex items-center gap-2">
               <Sidebar />
               <div>
-                <h1 className="text-xl font-semibold">{title}</h1>
-                <p className="text-sm text-gray-600">{subtitle}</p>
+                <h1 className="text-lg font-semibold">{title}</h1>
+                <p className="text-xs text-gray-600">{subtitle}</p>
               </div>
             </div>
             

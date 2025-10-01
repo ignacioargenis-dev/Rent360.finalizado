@@ -68,7 +68,78 @@ export default function AdminContractsPage() {
     monthlyRent: '',
     deposit: '',
     status: 'DRAFT',
-    terms: '',
+    terms: `CONTRATO DE ARRIENDO
+
+En [Ciudad], a [Día] de [Mes] de [Año], entre:
+
+ARRendADOR: [Nombre Completo del Arrendador], [RUT del Arrendador], domiciliado en [Dirección del Arrendador], [Comuna], [Región], en adelante "el Arrendador".
+
+ARRENDATARIO: [Nombre Completo del Arrendatario], [RUT del Arrendatario], domiciliado en [Dirección del Arrendatario], [Comuna], [Región], en adelante "el Arrendatario".
+
+Se ha convenido el siguiente CONTRATO DE ARRIENDO, conforme a las disposiciones de la Ley N° 18.101 y demás normas legales vigentes.
+
+PRIMERO: OBJETO DEL CONTRATO
+
+El Arrendador da en arriendo al Arrendatario y este acepta, la propiedad ubicada en [Dirección Completa de la Propiedad], [Comuna], [Región], consistente en [Descripción detallada de la propiedad: tipo, número de habitaciones, baños, etc.], con una superficie aproximada de [Superficie] m².
+
+SEGUNDO: PLAZO DEL ARRIENDO
+
+El presente contrato tendrá una duración de [Número de meses/años], contado desde el [Fecha de inicio] hasta el [Fecha de término], prorrogándose automáticamente por períodos iguales, salvo aviso de no renovación dado por escrito por cualquiera de las partes con [Número] meses de anticipación.
+
+TERCERO: PRECIO Y FORMA DE PAGO
+
+El precio del arriendo mensual será de $[Monto en letras] pesos ($[Monto en números]), pagaderos por mensualidades anticipadas, los primeros 5 días de cada mes.
+
+El Arrendatario deberá pagar además los siguientes gastos comunes: [Especificar qué gastos paga el arrendatario].
+
+CUARTO: DEPÓSITO
+
+El Arrendatario entrega en este acto un depósito de garantía por la suma de $[Monto depósito en letras] pesos ($[Monto depósito en números]), el cual será restituido al término del contrato, previa verificación del estado de la propiedad y cumplimiento de todas las obligaciones contractuales.
+
+QUINTO: OBLIGACIONES DEL ARRENDATARIO
+
+El Arrendatario se obliga a:
+1. Pagar puntualmente el precio del arriendo y gastos comunes.
+2. Destinar la propiedad exclusivamente a habitación familiar, no pudiendo subarrendar total o parcialmente.
+3. Conservar la propiedad en buen estado, realizando las reparaciones locativas menores.
+4. Permitir el ingreso del Arrendador para inspeccionar la propiedad con aviso previo.
+5. Comunicar inmediatamente cualquier desperfecto o daño que ocurra en la propiedad.
+6. No realizar modificaciones sin autorización previa y escrita del Arrendador.
+7. Mantener la propiedad en condiciones de higiene y salubridad.
+
+SEXTO: OBLIGACIONES DEL ARRENDADOR
+
+El Arrendador se obliga a:
+1. Entregar la propiedad en perfectas condiciones de habitabilidad.
+2. Realizar las reparaciones mayores y mantener la propiedad en condiciones adecuadas.
+3. Respetar el uso pacífico de la propiedad por parte del Arrendatario.
+4. Emitir comprobante de pago mensual.
+
+SÉPTIMO: TERMINACIÓN DEL CONTRATO
+
+El contrato terminará por:
+1. Vencimiento del plazo pactado.
+2. Mutuo acuerdo de las partes.
+3. Resolución anticipada por falta de pago por más de 3 meses.
+4. Por cualquier causa legal que lo justifique.
+
+OCTAVO: LEGISLACIÓN APLICABLE
+
+Este contrato se rige por las disposiciones de la Ley N° 18.101 sobre Arrendamiento de Bienes Raíces Urbanos y demás normas legales vigentes en la República de Chile.
+
+NOVENO: DOMICILIO Y NOTIFICACIONES
+
+Para todos los efectos legales derivados de este contrato, las partes fijan domicilio en las direcciones indicadas al inicio. Las notificaciones se efectuarán válidamente en dichos domicilios.
+
+DÉCIMO: CLÁUSULA COMPROMISORIA
+
+Cualquier controversia que surja de la interpretación o cumplimiento del presente contrato será sometida al conocimiento de los tribunales ordinarios de justicia de [Ciudad donde se someterán las controversias].
+
+Se firman dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+
+[Espacio para firmas]
+
+Arrendador: ___________________________                Arrendatario: ___________________________`,
   });
 
   useEffect(() => {
@@ -639,14 +710,196 @@ export default function AdminContractsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Términos y Condiciones
+                  Plantillas de Contrato
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewContract({...newContract, terms: `CONTRATO DE ARRIENDO
+
+En [Ciudad], a [Día] de [Mes] de [Año], entre:
+
+ARRendADOR: [Nombre Completo del Arrendador], [RUT del Arrendador], domiciliado en [Dirección del Arrendador], [Comuna], [Región], en adelante "el Arrendador".
+
+ARRENDATARIO: [Nombre Completo del Arrendatario], [RUT del Arrendatario], domiciliado en [Dirección del Arrendatario], [Comuna], [Región], en adelante "el Arrendatario".
+
+Se ha convenido el siguiente CONTRATO DE ARRIENDO, conforme a las disposiciones de la Ley N° 18.101 y demás normas legales vigentes.
+
+PRIMERO: OBJETO DEL CONTRATO
+
+El Arrendador da en arriendo al Arrendatario y este acepta, la propiedad ubicada en [Dirección Completa de la Propiedad], [Comuna], [Región], consistente en [Descripción detallada de la propiedad: tipo, número de habitaciones, baños, etc.], con una superficie aproximada de [Superficie] m².
+
+SEGUNDO: PLAZO DEL ARRIENDO
+
+El presente contrato tendrá una duración de [Número de meses/años], contado desde el [Fecha de inicio] hasta el [Fecha de término], prorrogándose automáticamente por períodos iguales, salvo aviso de no renovación dado por escrito por cualquiera de las partes con [Número] meses de anticipación.
+
+TERCERO: PRECIO Y FORMA DE PAGO
+
+El precio del arriendo mensual será de $[Monto en letras] pesos ($[Monto en números]), pagaderos por mensualidades anticipadas, los primeros 5 días de cada mes.
+
+El Arrendatario deberá pagar además los siguientes gastos comunes: [Especificar qué gastos paga el arrendatario].
+
+CUARTO: DEPÓSITO
+
+El Arrendatario entrega en este acto un depósito de garantía por la suma de $[Monto depósito en letras] pesos ($[Monto depósito en números]), el cual será restituido al término del contrato, previa verificación del estado de la propiedad y cumplimiento de todas las obligaciones contractuales.
+
+QUINTO: OBLIGACIONES DEL ARRENDATARIO
+
+El Arrendatario se obliga a:
+1. Pagar puntualmente el precio del arriendo y gastos comunes.
+2. Destinar la propiedad exclusivamente a habitación familiar, no pudiendo subarrendar total o parcialmente.
+3. Conservar la propiedad en buen estado, realizando las reparaciones locativas menores.
+4. Permitir el ingreso del Arrendador para inspeccionar la propiedad con aviso previo.
+5. Comunicar inmediatamente cualquier desperfecto o daño que ocurra en la propiedad.
+6. No realizar modificaciones sin autorización previa y escrita del Arrendador.
+7. Mantener la propiedad en condiciones de higiene y salubridad.
+
+SEXTO: OBLIGACIONES DEL ARRENDADOR
+
+El Arrendador se obliga a:
+1. Entregar la propiedad en perfectas condiciones de habitabilidad.
+2. Realizar las reparaciones mayores y mantener la propiedad en condiciones adecuadas.
+3. Respetar el uso pacífico de la propiedad por parte del Arrendatario.
+4. Emitir comprobante de pago mensual.
+
+SÉPTIMO: TERMINACIÓN DEL CONTRATO
+
+El contrato terminará por:
+1. Vencimiento del plazo pactado.
+2. Mutuo acuerdo de las partes.
+3. Resolución anticipada por falta de pago por más de 3 meses.
+4. Por cualquier causa legal que lo justifique.
+
+OCTAVO: LEGISLACIÓN APLICABLE
+
+Este contrato se rige por las disposiciones de la Ley N° 18.101 sobre Arrendamiento de Bienes Raíces Urbanos y demás normas legales vigentes en la República de Chile.
+
+NOVENO: DOMICILIO Y NOTIFICACIONES
+
+Para todos los efectos legales derivados de este contrato, las partes fijan domicilio en las direcciones indicadas al inicio. Las notificaciones se efectuarán válidamente en dichos domicilios.
+
+DÉCIMO: CLÁUSULA COMPROMISORIA
+
+Cualquier controversia que surja de la interpretación o cumplimiento del presente contrato será sometida al conocimiento de los tribunales ordinarios de justicia de [Ciudad donde se someterán las controversias].
+
+Se firman dos ejemplares del mismo tenor, quedando uno en poder de cada parte.
+
+[Espacio para firmas]
+
+Arrendador: ___________________________                Arrendatario: ___________________________`})}
+                  >
+                    Residencial
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewContract({...newContract, terms: `CONTRATO DE ARRIENDO COMERCIAL
+
+En [Ciudad], a [Día] de [Mes] de [Año], entre:
+
+ARRendADOR: [Nombre Completo del Arrendador], [RUT del Arrendador], domiciliado en [Dirección del Arrendador], [Comuna], [Región], en adelante "el Arrendador".
+
+ARRENDATARIO: [Nombre Completo del Arrendatario], [RUT del Arrendatario], domiciliado en [Dirección del Arrendatario], [Comuna], [Región], en adelante "el Arrendatario".
+
+Se ha convenido el siguiente CONTRATO DE ARRIENDO COMERCIAL, conforme a las disposiciones de la Ley N° 18.101 y demás normas legales vigentes.
+
+PRIMERO: OBJETO DEL CONTRATO
+
+El Arrendador da en arriendo al Arrendatario y este acepta, el local comercial ubicado en [Dirección Completa del Local], [Comuna], [Región], consistente en [Descripción detallada del local: tipo de comercio, superficie, etc.], con una superficie aproximada de [Superficie] m², destinado exclusivamente a [Actividad comercial específica].
+
+SEGUNDO: PLAZO DEL ARRIENDO
+
+El presente contrato tendrá una duración de [Número de meses/años], contado desde el [Fecha de inicio] hasta el [Fecha de término].
+
+TERCERO: PRECIO Y FORMA DE PAGO
+
+El precio del arriendo mensual será de $[Monto en letras] pesos ($[Monto en números]), pagaderos por mensualidades anticipadas, los primeros 5 días de cada mes.
+
+CUARTO: DEPÓSITO
+
+El Arrendatario entrega en este acto un depósito de garantía por la suma de $[Monto depósito en letras] pesos ($[Monto depósito en números]), equivalente a [Número] meses de arriendo.
+
+QUINTO: OBLIGACIONES DEL ARRENDATARIO
+
+El Arrendatario se obliga a:
+1. Pagar puntualmente el precio del arriendo.
+2. Destinar el local exclusivamente a [Actividad comercial específica].
+3. Mantener el local en buen estado de conservación.
+4. No realizar modificaciones estructurales sin autorización.
+5. Cumplir con todas las normativas municipales y sanitarias.
+6. Permitir inspecciones con aviso previo.
+
+SEXTO: OBLIGACIONES DEL ARRENDADOR
+
+El Arrendador se obliga a:
+1. Entregar el local en condiciones adecuadas para su destino.
+2. Mantener las instalaciones comunes en buen estado.
+3. Proporcionar servicios básicos acordados.
+
+SÉPTIMO: CLAUSULAS ESPECIALES
+
+1. Horario de funcionamiento: [Especificar horario].
+2. Renovación automática: [Condiciones de renovación].
+3. Prohibición de competencia: [Cláusula de no competencia si aplica].
+
+OCTAVO: LEGISLACIÓN APLICABLE
+
+Este contrato se rige por las disposiciones de la Ley N° 18.101 y el Código de Comercio.
+
+Se firman dos ejemplares del mismo tenor.
+
+Arrendador: ___________________________                Arrendatario: ___________________________`})}
+                  >
+                    Comercial
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewContract({...newContract, terms: `CONTRATO DE ARRIENDO TEMPORADO
+
+En [Ciudad], a [Día] de [Mes] de [Año], entre:
+
+PROPIETARIO: [Nombre Completo del Propietario], [RUT del Propietario], en adelante "el Propietario".
+
+ARRENDATARIO: [Nombre Completo del Arrendatario], [RUT del Arrendatario], en adelante "el Arrendatario".
+
+Se ha convenido el siguiente CONTRATO DE ARRIENDO TEMPORADO para fines turísticos/transitorios.
+
+PRIMERO: OBJETO
+
+Se arrienda la propiedad ubicada en [Dirección completa], por un período máximo de [Número] días, desde [Fecha inicio] hasta [Fecha término].
+
+SEGUNDO: PRECIO
+
+El precio total del arriendo es de $[Monto total en letras] pesos ($[Monto total en números]), pagaderos [Forma de pago: al contado/anticipado/etc.].
+
+TERCERO: CONDICIONES
+
+1. El arriendo es por temporada/cort plazo, no pudiendo exceder [Número máximo] días continuos.
+2. No se permite subarriendo ni cesión de derechos.
+3. El Arrendatario debe respetar normas de convivencia y horarios.
+4. Depósito de garantía: $[Monto depósito].
+
+Se firman dos ejemplares.
+
+Propietario: ___________________________                Arrendatario: ___________________________`})}
+                  >
+                    Temporada
+                  </Button>
+                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Términos y Condiciones (Editable)
                 </label>
                 <textarea
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
+                  rows={15}
                   value={newContract.terms}
                   onChange={(e) => setNewContract({...newContract, terms: e.target.value})}
-                  placeholder="Ingrese los términos y condiciones del contrato..."
+                  placeholder="Seleccione una plantilla arriba o escriba los términos personalizados..."
                 />
               </div>
             </div>

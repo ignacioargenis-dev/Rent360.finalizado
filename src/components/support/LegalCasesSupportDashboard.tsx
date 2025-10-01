@@ -148,12 +148,12 @@ const LegalCasesSupportDashboard: React.FC = () => {
         throw new Error('Formato de respuesta inválido');
       }
 
-      const data: LegalCasesResponse = responseData.data;
-      setLegalCases(data.cases);
-      setTotalPages(data.pagination.pages);
-      
+      const data: LegalCasesResponse = responseData.data || { cases: [], pagination: { page: 1, limit: 10, total: 0, pages: 1 } };
+      setLegalCases(data.cases || []);
+      setTotalPages(data.pagination?.pages || 1);
+
       // Calcular estadísticas
-      calculateStats(data.cases);
+      calculateStats(data.cases || []);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');

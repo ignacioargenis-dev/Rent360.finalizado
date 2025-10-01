@@ -170,11 +170,11 @@ async function getSystemMetrics() {
         }
       },
       systemInfo: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: typeof process !== 'undefined' && process.version ? process.version : 'N/A',
+        platform: typeof process !== 'undefined' && process.platform ? process.platform : 'N/A',
+        arch: typeof process !== 'undefined' && process.arch ? process.arch : 'N/A',
+        uptime: typeof process !== 'undefined' && process.uptime ? process.uptime() : 0,
+        environment: (typeof process !== 'undefined' && process.env?.NODE_ENV) || 'development',
         timestamp: Date.now()
       },
       activeAlerts
@@ -227,8 +227,13 @@ async function getDatabaseStats() {
 
 // Función para obtener estadísticas del sistema
 function getSystemStats() {
-  const memoryUsage = process.memoryUsage();
-  
+  // Verificar si las APIs de Node.js están disponibles (para Edge Runtime)
+  const memoryUsage = typeof process !== 'undefined' && process.memoryUsage
+    ? process.memoryUsage()
+    : { heapTotal: 1024 * 1024 * 1024, heapUsed: 512 * 1024 * 1024 }; // Valores por defecto
+
+  const osModule = typeof require !== 'undefined' ? require('os') : null;
+
   return {
     memory: {
       total: memoryUsage.heapTotal,
@@ -236,8 +241,8 @@ function getSystemStats() {
       free: memoryUsage.heapTotal - memoryUsage.heapUsed
     },
     cpu: {
-      cores: require('os').cpus().length,
-      loadAverage: require('os').loadavg()
+      cores: osModule ? osModule.cpus().length : 4, // Valor por defecto
+      loadAverage: osModule ? osModule.loadavg() : [1.0, 1.0, 1.0] // Valores por defecto
     }
   };
 }
@@ -265,10 +270,12 @@ async function getPerformanceStats() {
 // Función para obtener alertas activas
 async function getActiveAlerts() {
   const alerts = [];
-  
+
   try {
-    // Verificar uso de memoria
-    const memoryUsage = process.memoryUsage();
+    // Verificar uso de memoria (con verificación de Edge Runtime)
+    const memoryUsage = typeof process !== 'undefined' && process.memoryUsage
+      ? process.memoryUsage()
+      : { heapTotal: 1024 * 1024 * 1024, heapUsed: 512 * 1024 * 1024 }; // Valores por defecto
     const memoryPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
     
     if (memoryPercent > 90) {

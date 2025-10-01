@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   RefreshCw,
@@ -29,7 +30,9 @@ import {
   MapPin,
   Building,
   Tag,
-  ChevronRight
+  ChevronRight,
+  X,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -73,10 +76,62 @@ export default function SupportUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'TENANT' as User['role'],
+    city: ''
+  });
 
   useEffect(() => {
     loadUsers();
   }, [roleFilter, statusFilter]);
+
+  const createUser = async () => {
+    if (!newUser.name || !newUser.email) {
+      alert('Nombre y email son requeridos');
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      // TODO: Implementar API call real
+      // const response = await fetch('/api/support/users', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(newUser)
+      // });
+
+      // Simular creación
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      logger.info('Usuario creado desde soporte:', { name: newUser.name, role: newUser.role });
+
+      // Reset form
+      setNewUser({
+        name: '',
+        email: '',
+        phone: '',
+        role: 'TENANT',
+        city: ''
+      });
+      setShowCreateModal(false);
+
+      // Recargar lista de usuarios
+      loadUsers();
+
+      alert('Usuario creado exitosamente');
+    } catch (error) {
+      logger.error('Error creando usuario:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al crear usuario');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -450,7 +505,7 @@ export default function SupportUsersPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
-                <Button size="sm">
+                <Button size="sm" onClick={() => setShowCreateModal(true)}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Nuevo Usuario
                 </Button>
@@ -634,6 +689,116 @@ export default function SupportUsersPage() {
           </Card>
         </div>
       </div>
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Crear Nuevo Usuario</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowCreateModal(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre Completo
+                </label>
+                <Input
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                  placeholder="Juan Pérez"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  placeholder="usuario@email.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono
+                </label>
+                <Input
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Usuario
+                </label>
+                <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as User['role']})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TENANT">Inquilino</SelectItem>
+                    <SelectItem value="OWNER">Propietario</SelectItem>
+                    <SelectItem value="BROKER">Corredor</SelectItem>
+                    <SelectItem value="RUNNER">Runner</SelectItem>
+                    <SelectItem value="PROVIDER">Proveedor de Servicios</SelectItem>
+                    <SelectItem value="MAINTENANCE">Servicio de Mantenimiento</SelectItem>
+                    {/* Nota: Soporte NO puede crear administradores por seguridad */}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Nota: Los usuarios administradores deben ser creados por el administrador principal.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ciudad
+                </label>
+                <Input
+                  value={newUser.city}
+                  onChange={(e) => setNewUser({...newUser, city: e.target.value})}
+                  placeholder="Santiago"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+                disabled={creatingUser}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={createUser}
+                disabled={creatingUser}
+              >
+                {creatingUser ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Crear Usuario
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
