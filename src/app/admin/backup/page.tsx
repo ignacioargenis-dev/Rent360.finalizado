@@ -486,30 +486,30 @@ return `Hace ${diffDays} días`;
                 </Card>
               </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Backup List */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Historial de Backups</CardTitle>
-                <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {backups.map((backup) => (
-                    <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
-                              {getTypeIcon(backup.type)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-gray-900">{backup.name}</h3>
-                                {getStatusBadge(backup.status)}
-                                {backup.encrypted && (
-                                  <Badge className="bg-blue-100 text-blue-800">
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
                                     <Shield className="w-3 h-3 mr-1" />
                                     Encriptado
                                   </Badge>

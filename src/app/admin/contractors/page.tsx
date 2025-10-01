@@ -300,63 +300,63 @@ return;
               <div className="space-y-6">
                 {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Prestadores</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                Prestadores registrados
-              </p>
-            </CardContent>
-          </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Prestadores</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.total}</div>
+                      <p className="text-xs text-muted-foreground">
+                        Prestadores registrados
+                      </p>
+                    </CardContent>
+                  </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Calificación Promedio</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground">
-                De 5.0 estrellas
-              </p>
-            </CardContent>
-          </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Calificación Promedio</CardTitle>
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</div>
+                      <p className="text-xs text-muted-foreground">
+                        De 5.0 estrellas
+                      </p>
+                    </CardContent>
+                  </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Trabajos Completados</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCompletedJobs}</div>
-              <p className="text-xs text-muted-foreground">
-                Total de trabajos
-              </p>
-            </CardContent>
-          </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Trabajos Completados</CardTitle>
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.totalCompletedJobs}</div>
+                      <p className="text-xs text-muted-foreground">
+                        Total de trabajos
+                      </p>
+                    </CardContent>
+                  </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ganancias Totales</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${stats.totalEarnings.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                En ganancias
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Ganancias Totales</CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">${stats.totalEarnings.toLocaleString()}</div>
+                      <p className="text-xs text-muted-foreground">
+                        En ganancias
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
 
-        {/* Filters and Actions */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                {/* Filters and Actions */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <CardTitle>Prestadores de Servicios</CardTitle>
                 <CardDescription>
