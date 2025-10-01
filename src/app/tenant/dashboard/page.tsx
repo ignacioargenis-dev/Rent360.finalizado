@@ -12,7 +12,7 @@ import {
   Plus,
   AlertTriangle
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+// import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 
@@ -124,12 +124,15 @@ export default function TenantDashboard() {
   }
 
   return (
-    <DashboardLayout
-      title="Dashboard Inquilino"
-      subtitle="Gestiona tus contratos y pagos"
-    >
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard Inquilino</h1>
+          <p className="text-gray-600">Gestiona tus contratos y pagos</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Propiedades</CardTitle>
@@ -243,6 +246,7 @@ export default function TenantDashboard() {
             </CardContent>
           </Card>
         </div>
-    </DashboardLayout>
+      </div>
+    </div>
   );
 }
