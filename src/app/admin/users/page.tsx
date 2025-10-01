@@ -23,7 +23,7 @@ import { Search, UserPlus, Edit,
   X
 } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 export default function AdminUsersPage() {
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Gestión de Usuarios"
       subtitle="Administra todos los usuarios del sistema"
@@ -580,6 +580,6 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

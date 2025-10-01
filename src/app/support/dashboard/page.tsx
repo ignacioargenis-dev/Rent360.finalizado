@@ -25,7 +25,7 @@ import { Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useUserState } from '@/hooks/useUserState';
-import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface DashboardStats {
   totalTickets: number;

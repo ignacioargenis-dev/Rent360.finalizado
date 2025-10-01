@@ -28,7 +28,7 @@ import {
   Shield,
   Zap
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { logger } from '@/lib/logger';
 
@@ -301,7 +301,7 @@ export default function PaymentProcessorPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Procesador de Pagos" subtitle="Gestión y procesamiento de pagos">
+    <DashboardLayout title="Procesador de Pagos" subtitle="Gestión y procesamiento de pagos">
       <DashboardHeader
         user={user}
         title="💳 Procesador de Pagos"
@@ -660,6 +660,6 @@ export default function PaymentProcessorPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -41,7 +41,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface PredictionModel {
   id: string;
@@ -277,7 +277,7 @@ export default function AdminPredictiveAnalytics() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Analíticas Predictivas"
       subtitle="Herramientas avanzadas de IA para predecir tendencias y comportamientos"
@@ -639,6 +639,6 @@ export default function AdminPredictiveAnalytics() {
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

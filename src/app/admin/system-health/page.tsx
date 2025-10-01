@@ -27,7 +27,7 @@ import { Heart,
   TrendingDown, Info } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface SystemComponent {
   name: string;
@@ -368,7 +368,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Salud del Sistema"
       subtitle="Monitorea el estado y rendimiento de todos los componentes"
@@ -586,6 +586,6 @@ return `Hace ${diffDays} días`;
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

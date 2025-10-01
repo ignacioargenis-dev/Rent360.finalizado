@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface DashboardMetrics {
   // Métricas Generales
@@ -186,19 +186,19 @@ export default function ExecutiveDashboard() {
 
   if (loading || !metrics) {
     return (
-      <EnhancedDashboardLayout title="Dashboard Ejecutivo" subtitle="Vista general del sistema">
+      <DashboardLayout title="Dashboard Ejecutivo" subtitle="Vista general del sistema">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
             <p>Cargando dashboard ejecutivo...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout title="Dashboard Ejecutivo" subtitle="Vista general del sistema">
+    <DashboardLayout title="Dashboard Ejecutivo" subtitle="Vista general del sistema">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -867,6 +867,6 @@ export default function ExecutiveDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

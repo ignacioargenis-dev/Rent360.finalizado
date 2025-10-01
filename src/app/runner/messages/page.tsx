@@ -25,7 +25,7 @@ import { MessageSquare,
   Image,
   FileText } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Message {
   id: string;
@@ -281,7 +281,7 @@ return;
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Mensajes"
         subtitle="Gestión de mensajes con clientes"
@@ -292,12 +292,12 @@ return;
             <p className="text-gray-600">Cargando mensajes...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Mensajes"
       subtitle="Gestión de mensajes con clientes"
@@ -592,6 +592,6 @@ return;
           </Card>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

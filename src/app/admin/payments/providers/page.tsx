@@ -24,7 +24,7 @@ import {
   Filter,
   Eye
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
 interface ProviderPayout {
@@ -233,7 +233,7 @@ export default function AdminProviderPayoutsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Payouts de Proveedores" subtitle="Gestión de pagos automáticos a proveedores">
+    <DashboardLayout title="Payouts de Proveedores" subtitle="Gestión de pagos automáticos a proveedores">
       <DashboardHeader
         user={user}
         title="Payouts de Proveedores"
@@ -586,6 +586,6 @@ export default function AdminProviderPayoutsPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

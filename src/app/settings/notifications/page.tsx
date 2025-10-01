@@ -25,7 +25,7 @@ import {
   Save,
   TestTube
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { firebaseNotificationService, type NotificationSettings } from '@/lib/notifications/firebase-service';
 import { logger } from '@/lib/logger';
@@ -250,7 +250,7 @@ export default function NotificationSettingsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Configuración de Notificaciones"
       subtitle="Gestiona tus preferencias de notificaciones"
@@ -482,6 +482,6 @@ export default function NotificationSettingsPage() {
           </Button>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

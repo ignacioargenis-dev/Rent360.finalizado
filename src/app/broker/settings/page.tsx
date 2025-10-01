@@ -40,7 +40,7 @@ import { Settings,
   } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface BrokerSettings {
   profile: {
@@ -353,7 +353,7 @@ export default function BrokerSettings() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Configuración"
       subtitle="Personaliza tu cuenta y preferencias"
@@ -1676,6 +1676,6 @@ export default function BrokerSettings() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

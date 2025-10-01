@@ -86,7 +86,7 @@ import { Settings,
   Truck,
   Wrench } from 'lucide-react';
 import { User as UserType } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface SystemSettings {
   // Configuración General
@@ -3408,7 +3408,7 @@ export default function EnhancedAdminSettingsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Configuración Avanzada del Sistema"
       subtitle="Administra todas las opciones de configuración de Rent360"
@@ -3472,6 +3472,6 @@ export default function EnhancedAdminSettingsPage() {
           {activeTab === 'legal' && renderLegalSettings()}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

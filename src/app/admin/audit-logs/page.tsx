@@ -25,7 +25,7 @@ import { FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface AuditLog {
   id: string;
@@ -298,7 +298,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Registros de Auditoría"
       subtitle="Monitorea todas las actividades del sistema"
@@ -496,6 +496,6 @@ return `Hace ${diffDays} días`;
           )}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

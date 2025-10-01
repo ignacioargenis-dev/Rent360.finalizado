@@ -23,7 +23,7 @@ import {
   Grid,
   List } from 'lucide-react';
 import { User, Property } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import RecordModal from '@/components/forms/RecordModal';
 
 
@@ -410,7 +410,7 @@ export default function AdminPropertiesPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Gestión de Propiedades"
       subtitle="Administra todas las propiedades del sistema"
@@ -598,6 +598,6 @@ export default function AdminPropertiesPage() {
           mode="create"
         />
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

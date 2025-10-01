@@ -17,7 +17,7 @@ import { DollarSign,
   BarChart3,
   Target } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -224,7 +224,7 @@ export default function RunnerEarningsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Ganancias" subtitle="Seguimiento de ingresos y comisiones">
+    <DashboardLayout title="Ganancias" subtitle="Seguimiento de ingresos y comisiones">
       <DashboardHeader 
         user={user}
         title="Mis Ganancias"
@@ -458,6 +458,6 @@ export default function RunnerEarningsPage() {
           </Card>
         )}
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

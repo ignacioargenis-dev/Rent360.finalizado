@@ -44,7 +44,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface AnalyticsData {
   totalProperties: number;
@@ -199,7 +199,7 @@ export default function BrokerAnalytics() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Analíticas"
       subtitle="Estadísticas y rendimiento de tu actividad"
@@ -472,6 +472,6 @@ export default function BrokerAnalytics() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

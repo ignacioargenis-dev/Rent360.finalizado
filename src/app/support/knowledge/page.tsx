@@ -21,7 +21,7 @@ import { BookOpen,
   Share2,
   UserIcon
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -289,7 +289,7 @@ export default function SupportKnowledgePage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Base de Conocimientos"
       subtitle="Recursos y documentación para el equipo de soporte"
@@ -616,6 +616,6 @@ export default function SupportKnowledgePage() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

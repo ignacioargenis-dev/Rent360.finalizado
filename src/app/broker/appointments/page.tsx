@@ -28,7 +28,7 @@ import { Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import AppointmentCalendar from '@/components/calendar/AppointmentCalendar';
 import AppointmentForm from '@/components/calendar/AppointmentForm';
 
@@ -490,7 +490,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Citas y Visitas"
       subtitle="Gestiona todas tus citas y visitas programadas"
@@ -869,6 +869,6 @@ return `Hace ${diffDays} días`;
         clients={clients}
         editingAppointment={editingAppointment}
       />
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

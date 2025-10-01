@@ -26,7 +26,7 @@ import {
   Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { User, Property } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface PropertyStats {
   totalProperties: number;
@@ -258,19 +258,19 @@ export default function OwnerProperties() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
+      <DashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando propiedades...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
+    <DashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -458,6 +458,6 @@ export default function OwnerProperties() {
           </Card>
         )}
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

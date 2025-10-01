@@ -3,7 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -201,11 +201,11 @@ export default function OwnerPendingPaymentsPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout title="Pagos Pendientes" subtitle="Gestiona los pagos pendientes de tus propiedades">
+      <DashboardLayout title="Pagos Pendientes" subtitle="Gestiona los pagos pendientes de tus propiedades">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
@@ -215,7 +215,7 @@ export default function OwnerPendingPaymentsPage() {
   const uniqueProperties = [...new Set(filteredPayments.map(p => p.propertyName))];
 
   return (
-    <EnhancedDashboardLayout title="Pagos Pendientes" subtitle="Gestiona los pagos pendientes de tus propiedades">
+    <DashboardLayout title="Pagos Pendientes" subtitle="Gestiona los pagos pendientes de tus propiedades">
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -451,6 +451,6 @@ export default function OwnerPendingPaymentsPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

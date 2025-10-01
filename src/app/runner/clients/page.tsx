@@ -20,7 +20,7 @@ import { Users,
   UserPlus,
   TrendingUp } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface ClientSummary {
   id: string;
@@ -218,7 +218,7 @@ return 'No programada';
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Clientes"
         subtitle="Gestión de clientes y visitas programadas"
@@ -229,12 +229,12 @@ return 'No programada';
             <p className="text-gray-600">Cargando clientes...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Clientes"
       subtitle="Gestión de clientes y visitas programadas"
@@ -476,6 +476,6 @@ return 'No programada';
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

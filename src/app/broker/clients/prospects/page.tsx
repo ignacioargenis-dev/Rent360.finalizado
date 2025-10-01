@@ -3,7 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -213,11 +213,11 @@ return 'Ayer';
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout title="Clientes Potenciales" subtitle="Gestiona tus clientes potenciales y oportunidades">
+      <DashboardLayout title="Clientes Potenciales" subtitle="Gestiona tus clientes potenciales y oportunidades">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
@@ -226,7 +226,7 @@ return 'Ayer';
   const avgConversionRate = clients.length > 0 ? clients.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / clients.length : 0;
 
   return (
-    <EnhancedDashboardLayout title="Clientes Potenciales" subtitle="Gestiona tus clientes potenciales y oportunidades">
+    <DashboardLayout title="Clientes Potenciales" subtitle="Gestiona tus clientes potenciales y oportunidades">
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -504,6 +504,6 @@ return 'Ayer';
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

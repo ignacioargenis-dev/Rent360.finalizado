@@ -34,7 +34,7 @@ import {
   AlertCircle,
   Circle
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { chatService, MessageType, ChatStatus, ChatConversation as ServiceChatConversation, ChatParticipant, ChatParticipantType, ChatMessage } from '@/lib/chat/chat-service';
 import { logger } from '@/lib/logger';
@@ -223,7 +223,7 @@ export default function ChatPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Mensajes"
       subtitle="Gestiona tus conversaciones y mensajes"
@@ -541,6 +541,6 @@ export default function ChatPage() {
           </Card>
         </div>
       )}
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

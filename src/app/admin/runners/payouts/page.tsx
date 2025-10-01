@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, DollarSign, Users, TrendingUp, CheckCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
 interface RunnerPayout {
@@ -169,7 +169,7 @@ export default function RunnerPayoutsAdminPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Pagos de Runners" subtitle="Gestión de pagos a runners">
+    <DashboardLayout title="Pagos de Runners" subtitle="Gestión de pagos a runners">
       <DashboardHeader
         user={user}
         title="Pagos de Runners"
@@ -394,6 +394,6 @@ export default function RunnerPayoutsAdminPage() {
           )}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

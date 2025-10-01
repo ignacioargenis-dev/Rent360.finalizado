@@ -3,7 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -162,16 +162,16 @@ return;
 
   if (loading || !profile) {
     return (
-      <EnhancedDashboardLayout title="Configuración" subtitle="Gestiona tu perfil y preferencias de propietario">
+      <DashboardLayout title="Configuración" subtitle="Gestiona tu perfil y preferencias de propietario">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout title="Configuración" subtitle="Gestiona tu perfil y preferencias de propietario">
+    <DashboardLayout title="Configuración" subtitle="Gestiona tu perfil y preferencias de propietario">
       <div className="space-y-6">
         {/* Información de Verificación */}
         {!profile.emailVerified && (
@@ -778,6 +778,6 @@ return;
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

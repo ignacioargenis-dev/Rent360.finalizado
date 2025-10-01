@@ -32,7 +32,7 @@ import { Plus,
   Mail,
   MessageCircle } from 'lucide-react';
 import { User, Property } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -354,7 +354,7 @@ return;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Nueva Propiedad"
       subtitle="Registra una nueva propiedad"
@@ -925,6 +925,6 @@ return;
           </Card>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

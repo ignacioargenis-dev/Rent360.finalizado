@@ -30,7 +30,7 @@ import { User,
   AlertCircle,
   Star, Info } from 'lucide-react';
 import { User as UserType } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface RunnerProfile {
   id: string;
@@ -175,7 +175,7 @@ return;
 
   if (loading || !profile) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Configuración"
         subtitle="Gestión de perfil y preferencias"
@@ -186,7 +186,7 @@ return;
             <p className="text-gray-600">Cargando configuración...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
@@ -200,7 +200,7 @@ return;
   ];
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Configuración"
       subtitle="Gestión de perfil y preferencias"
@@ -600,6 +600,6 @@ return;
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

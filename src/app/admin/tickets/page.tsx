@@ -27,7 +27,7 @@ import { Search,
   User
 } from 'lucide-react';
 import { User as UserType } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Ticket {
   id: string;
@@ -336,7 +336,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Gestión de Tickets"
       subtitle="Administra todos los tickets de soporte del sistema"
@@ -637,6 +637,6 @@ return `Hace ${diffDays} días`;
           </Card>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Star, CheckCircle, AlertCircle, ThumbsUp, MessageSquare } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType, type ProviderRating } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
@@ -219,7 +219,7 @@ export default function RateProviderPage() {
 
   if (submitted) {
     return (
-      <EnhancedDashboardLayout title="Calificación Enviada" subtitle="Gracias por tu evaluación">
+      <DashboardLayout title="Calificación Enviada" subtitle="Gracias por tu evaluación">
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Card className="max-w-md w-full">
             <CardContent className="pt-6">
@@ -243,12 +243,12 @@ export default function RateProviderPage() {
             </CardContent>
           </Card>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <EnhancedDashboardLayout title="Calificar Proveedor" subtitle="Ayuda a otros usuarios evaluando la calidad del servicio">
+    <DashboardLayout title="Calificar Proveedor" subtitle="Ayuda a otros usuarios evaluando la calidad del servicio">
       <DashboardHeader
         user={user}
         title="Calificar Proveedor"
@@ -404,6 +404,6 @@ export default function RateProviderPage() {
           </ul>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

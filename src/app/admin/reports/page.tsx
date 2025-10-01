@@ -22,7 +22,7 @@ import { BarChart3,
   Eye
 } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface ReportData {
   totalUsers: number;
@@ -234,7 +234,7 @@ export default function AdminReportsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Reportes Generales"
       subtitle="Análisis completo del sistema Rent360"
@@ -467,6 +467,6 @@ export default function AdminReportsPage() {
           </Card>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

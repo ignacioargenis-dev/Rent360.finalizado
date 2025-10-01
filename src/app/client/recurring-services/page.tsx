@@ -26,7 +26,7 @@ import {
   Trash2,
   Eye
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { logger } from '@/lib/logger';
 
@@ -224,7 +224,7 @@ export default function RecurringServicesPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Servicios Recurrentes"
       subtitle="Gestiona tus servicios de mantenimiento programados"
@@ -603,6 +603,6 @@ export default function RecurringServicesPage() {
           Nuevo Servicio Recurrente
         </Button>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -31,7 +31,7 @@ import {
 import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { useUserState } from '@/hooks/useUserState';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface DashboardStats {
   totalProperties: number;
@@ -293,7 +293,7 @@ export default function BrokerDashboard() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Panel de Corredor"
       subtitle="Gestiona tu negocio inmobiliario"
@@ -587,6 +587,6 @@ export default function BrokerDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -22,7 +22,7 @@ import { MapPin,
   Home,
   Award,
   Navigation } from 'lucide-react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 

@@ -44,7 +44,7 @@ import {
   RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Notification {
   id: string;
@@ -519,7 +519,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Notificaciones Avanzadas"
       subtitle="Sistema de notificaciones en tiempo real con IA"
@@ -945,6 +945,6 @@ return `Hace ${diffDays} días`;
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

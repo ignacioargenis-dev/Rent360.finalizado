@@ -22,7 +22,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface PaymentProvider {
@@ -294,7 +294,7 @@ export default function PaymentsAdminPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Configuración de Pagos"
         subtitle="Administra proveedores de pago y configuraciones"
@@ -302,12 +302,12 @@ export default function PaymentsAdminPage() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Configuración de Pagos"
       subtitle="Administra proveedores de pago y configuraciones"
@@ -475,6 +475,6 @@ export default function PaymentsAdminPage() {
           ))}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

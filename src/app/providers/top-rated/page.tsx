@@ -18,7 +18,7 @@ import {
   MapPin,
   ExternalLink
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, type ProviderRatingSummary } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
@@ -176,7 +176,7 @@ export default function TopRatedProvidersPage() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Proveedores Mejor Calificados"
       subtitle="Descubre los proveedores más confiables y mejor evaluados"
@@ -469,6 +469,6 @@ export default function TopRatedProvidersPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

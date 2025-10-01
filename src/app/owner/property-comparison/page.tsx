@@ -24,7 +24,7 @@ import {
   Briefcase,
   Info,
   X } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { User, Property } from '@/types';
 
 interface ComparisonMetrics {
@@ -523,7 +523,7 @@ export default function OwnerPropertyComparison() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Comparación de Propiedades"
       subtitle="Herramienta avanzada para analizar y comparar tus propiedades"
@@ -843,6 +843,6 @@ export default function OwnerPropertyComparison() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -42,7 +42,7 @@ import {
   Bell,
   Plus
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
 // INTERFACES PARA DASHBOARD DE GANANCIAS
@@ -437,7 +437,7 @@ export default function ProviderEarningsPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Mis Ganancias"
         subtitle="Cargando información..."
@@ -448,13 +448,13 @@ export default function ProviderEarningsPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   if (error) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Mis Ganancias"
         subtitle="Error al cargar la página"
@@ -472,12 +472,12 @@ export default function ProviderEarningsPage() {
             </div>
           </CardContent>
         </Card>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Mis Ganancias"
       subtitle="Dashboard completo de gestión financiera"
@@ -1045,6 +1045,6 @@ export default function ProviderEarningsPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

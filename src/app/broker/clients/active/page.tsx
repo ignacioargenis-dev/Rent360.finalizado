@@ -43,7 +43,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-// import DashboardLayout from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 export default function ClientesActivosPage() {
@@ -83,7 +83,7 @@ export default function ClientesActivosPage() {
 
   if (loading) {
     return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Clientes Activos"
       subtitle="Cargando información..."
@@ -94,13 +94,13 @@ export default function ClientesActivosPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   if (error) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Clientes Activos"
         subtitle="Error al cargar la página"
@@ -118,12 +118,17 @@ export default function ClientesActivosPage() {
             </div>
           </CardContent>
         </Card>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout
+      user={user}
+      title="Clientes Activos"
+      subtitle="Gestiona y visualiza la información de clientes activos"
+    >
+      <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Clientes Activos</h1>
@@ -252,6 +257,6 @@ export default function ClientesActivosPage() {
         </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

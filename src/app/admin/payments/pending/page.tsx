@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -136,11 +136,11 @@ export default function AdminPendingPaymentsPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout title="Pagos Pendientes" subtitle="Gestiona pagos pendientes y vencidos">
+      <DashboardLayout title="Pagos Pendientes" subtitle="Gestiona pagos pendientes y vencidos">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
@@ -149,7 +149,7 @@ export default function AdminPendingPaymentsPage() {
   const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <EnhancedDashboardLayout title="Pagos Pendientes" subtitle="Gestiona pagos pendientes y vencidos">
+    <DashboardLayout title="Pagos Pendientes" subtitle="Gestiona pagos pendientes y vencidos">
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -359,6 +359,6 @@ export default function AdminPendingPaymentsPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

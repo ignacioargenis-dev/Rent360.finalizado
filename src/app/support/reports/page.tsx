@@ -24,7 +24,7 @@ import { BarChart3,
   Share2,
   Plus
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -278,7 +278,7 @@ export default function SupportReportsPage() {
   }
 
   return (
-    <EnhancedDashboardLayout title="Reportes de Soporte" subtitle="Análisis y estadísticas del equipo de soporte">
+    <DashboardLayout title="Reportes de Soporte" subtitle="Análisis y estadísticas del equipo de soporte">
       <DashboardHeader 
         user={user}
         title="Reportes y Análisis"
@@ -591,6 +591,6 @@ export default function SupportReportsPage() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

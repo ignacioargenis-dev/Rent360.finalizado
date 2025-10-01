@@ -36,7 +36,7 @@ import { Building,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User, Property } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 
 interface PropertyStats {
@@ -423,7 +423,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Propiedades"
       subtitle="Gestiona todas las propiedades a tu cargo"
@@ -716,6 +716,6 @@ return `Hace ${diffDays} días`;
           )}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

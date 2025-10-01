@@ -26,7 +26,7 @@ import {
   MapPinned,
   Phone } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface PropertySummary {
   id: string;
@@ -262,7 +262,7 @@ return 'No programada';
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Propiedades Asignadas"
         subtitle="Gestión de propiedades asignadas para visitas"
@@ -273,12 +273,12 @@ return 'No programada';
             <p className="text-gray-600">Cargando propiedades asignadas...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Propiedades Asignadas"
       subtitle="Gestión de propiedades asignadas para visitas"
@@ -534,6 +534,6 @@ return 'No programada';
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

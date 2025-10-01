@@ -34,7 +34,7 @@ import { FileText,
 } from 'lucide-react';
 import DocumentUpload from '@/components/documents/DocumentUpload';
 import DigitalSignature from '@/components/documents/DigitalSignature';
-import DashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 

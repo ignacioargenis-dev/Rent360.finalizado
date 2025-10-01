@@ -3,7 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -183,16 +183,16 @@ return 'Amex';
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout title="Métodos de Pago" subtitle="Gestiona tus métodos de pago">
+      <DashboardLayout title="Métodos de Pago" subtitle="Gestiona tus métodos de pago">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout title="Métodos de Pago" subtitle="Gestiona tus métodos de pago">
+    <DashboardLayout title="Métodos de Pago" subtitle="Gestiona tus métodos de pago">
       <div className="space-y-6">
         {/* Información de Seguridad */}
         <Alert>
@@ -510,6 +510,6 @@ return 'Amex';
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

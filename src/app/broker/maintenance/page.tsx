@@ -82,7 +82,7 @@ export default function MantenimientoPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Mantenimiento"
         subtitle="Cargando información..."
@@ -93,13 +93,13 @@ export default function MantenimientoPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   if (error) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Mantenimiento"
         subtitle="Error al cargar la página"
@@ -117,7 +117,7 @@ export default function MantenimientoPage() {
             </div>
           </CardContent>
         </Card>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 

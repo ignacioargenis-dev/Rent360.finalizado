@@ -12,7 +12,7 @@ import {
   Plus,
   AlertTriangle
 } from 'lucide-react';
-// import DashboardLayout from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 
@@ -124,7 +124,12 @@ export default function TenantDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout
+      user={user}
+      title="Dashboard Inquilino"
+      subtitle="Gestiona tus contratos y pagos"
+    >
+      <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Inquilino</h1>
@@ -247,6 +252,6 @@ export default function TenantDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

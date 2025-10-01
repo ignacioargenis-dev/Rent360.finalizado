@@ -40,7 +40,7 @@ import { Wrench,
   Briefcase,
   Award
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Contractor {
   id: string
@@ -285,7 +285,7 @@ return;
   };
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={{
         id: 'admin',
         email: 'admin@rent360.cl',
@@ -821,6 +821,6 @@ return;
           </DialogContent>
         </Dialog>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -27,7 +27,7 @@ import { Database,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Backup {
   id: string;
@@ -391,7 +391,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Sistema de Backup"
       subtitle="Gestiona y monitorea todas las copias de seguridad"
@@ -654,6 +654,6 @@ return `Hace ${diffDays} días`;
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

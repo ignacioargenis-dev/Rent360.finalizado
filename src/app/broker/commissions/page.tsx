@@ -26,7 +26,7 @@ import { DollarSign,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import CommissionCalculator from '@/components/commissions/CommissionCalculator';
 
 interface Commission {
@@ -395,7 +395,7 @@ export default function BrokerCommissions() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Comisiones"
       subtitle="Gestiona y monitorea todas tus comisiones"
@@ -723,6 +723,6 @@ export default function BrokerCommissions() {
           )}
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

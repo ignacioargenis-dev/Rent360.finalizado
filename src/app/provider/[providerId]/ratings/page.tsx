@@ -23,7 +23,7 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType, type ProviderRatingSummary, type ProviderRating } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
@@ -176,7 +176,7 @@ export default function ProviderRatingsPage() {
 
   if (!provider || !summary) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Proveedor no encontrado"
         subtitle="El proveedor solicitado no existe"
@@ -199,12 +199,12 @@ export default function ProviderRatingsPage() {
             </CardContent>
           </Card>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title={`Perfil de ${provider.businessName}`}
       subtitle="Perfil y calificaciones del proveedor"
@@ -554,6 +554,6 @@ export default function ProviderRatingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

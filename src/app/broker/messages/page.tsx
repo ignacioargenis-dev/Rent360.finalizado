@@ -34,7 +34,7 @@ import { MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Message {
   id: string;
@@ -513,7 +513,7 @@ return '0 B';
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Mensajes"
       subtitle="Gestiona todas tus comunicaciones"
@@ -840,6 +840,6 @@ return '0 B';
           </div>
         )}
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

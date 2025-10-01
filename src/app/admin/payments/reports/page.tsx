@@ -3,7 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -195,16 +195,16 @@ export default function AdminPaymentReportsPage() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout title="Reporte de Ingresos" subtitle="Análisis financiero de pagos">
+      <DashboardLayout title="Reporte de Ingresos" subtitle="Análisis financiero de pagos">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout title="Reporte de Ingresos" subtitle="Análisis financiero de pagos">
+    <DashboardLayout title="Reporte de Ingresos" subtitle="Análisis financiero de pagos">
       <div className="space-y-6">
         {/* Controles */}
         <Card>
@@ -423,6 +423,6 @@ export default function AdminPaymentReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

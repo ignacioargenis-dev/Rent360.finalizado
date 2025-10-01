@@ -69,7 +69,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { User, Property, Payment } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { useRouter } from 'next/navigation';
 
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Panel de Administración"
       subtitle="Gestiona todo el sistema Rent360"
@@ -664,6 +664,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

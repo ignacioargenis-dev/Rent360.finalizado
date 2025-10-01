@@ -25,7 +25,7 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
@@ -263,7 +263,7 @@ export default function RateServicePage() {
 
   if (!job || !user) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Servicio no encontrado"
         subtitle="No se pudo encontrar la información del servicio solicitado"
@@ -285,13 +285,13 @@ export default function RateServicePage() {
             </CardContent>
           </Card>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout>
     );
   }
 
   if (existingRating) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Reseña ya enviada"
         subtitle="Ya has calificado este servicio anteriormente"
@@ -325,13 +325,13 @@ export default function RateServicePage() {
             </CardContent>
           </Card>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout>
     );
   }
 
   if (submitted) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Reseña enviada"
         subtitle="Gracias por tu evaluación del servicio"
@@ -361,12 +361,12 @@ export default function RateServicePage() {
             </CardContent>
           </Card>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Calificar Servicio"
       subtitle={`Deja tu opinión sobre el servicio de ${job.providerName}`}
@@ -609,6 +609,6 @@ export default function RateServicePage() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout>
   );
 }

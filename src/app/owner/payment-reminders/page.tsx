@@ -73,7 +73,7 @@ import { Bell,
   Pause } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Reminder {
   id: string;
@@ -555,7 +555,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Recordatorios de Pago Inteligentes"
       subtitle="Sistema automatizado con IA para gestionar recordatorios y notificaciones"
@@ -970,6 +970,6 @@ return `Hace ${diffDays} días`;
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

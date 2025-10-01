@@ -30,7 +30,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface AnalyticsData {
   totalUsers: number;
@@ -216,7 +216,7 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Analíticas"
       subtitle="Estadísticas y métricas del sistema"
@@ -454,6 +454,6 @@ export default function AdminAnalytics() {
           </Card>
         </div>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -27,7 +27,7 @@ import { FileText,
   Loader2
 } from 'lucide-react';
 import { User, Contract } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function AdminContractsPage() {
 
@@ -385,7 +385,7 @@ Arrendador: ___________________________                Arrendatario: ___________
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Gestión de Contratos"
       subtitle="Administra todos los contratos del sistema"
@@ -932,6 +932,6 @@ Propietario: ___________________________                Arrendatario: __________
           </div>
         </div>
       )}
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

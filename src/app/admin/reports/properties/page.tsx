@@ -29,7 +29,7 @@ import {
   Clock
 } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface PropertySummary {
   id: string;
@@ -263,7 +263,7 @@ export default function AdminPropertiesReports() {
 
   if (loading) {
     return (
-      <EnhancedDashboardLayout
+      <DashboardLayout
         user={user}
         title="Reporte de Propiedades"
         subtitle="Análisis detallado de propiedades del sistema"
@@ -274,12 +274,12 @@ export default function AdminPropertiesReports() {
             <p className="text-gray-600">Cargando reporte de propiedades...</p>
           </div>
         </div>
-      </EnhancedDashboardLayout>
+      </DashboardLayout
     );
   }
 
   return (
-    <EnhancedDashboardLayout
+    <DashboardLayout
       user={user}
       title="Reporte de Propiedades"
       subtitle="Análisis detallado de propiedades del sistema"
@@ -547,6 +547,6 @@ export default function AdminPropertiesReports() {
           </CardContent>
         </Card>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Star, Award, Gift, TrendingUp, Calendar, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { User } from '@/types';
-import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 
 interface RunnerIncentive {
@@ -199,7 +199,7 @@ export default function RunnerIncentivesPage() {
   const expiredIncentives = incentives.filter(i => i.status === 'expired');
 
   return (
-    <EnhancedDashboardLayout title="Mis Incentivos" subtitle="Logros y recompensas por tu rendimiento">
+    <DashboardLayout title="Mis Incentivos" subtitle="Logros y recompensas por tu rendimiento">
       <DashboardHeader
         user={user}
         title="Mis Incentivos"
@@ -586,6 +586,6 @@ export default function RunnerIncentivesPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </EnhancedDashboardLayout>
+    </DashboardLayout
   );
 }
