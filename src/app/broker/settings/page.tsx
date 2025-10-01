@@ -6,10 +6,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, 
-  User, 
-  Bell, 
-  Shield, 
+import { Settings,
+  User,
+  Bell,
+  Shield,
   CreditCard,
   Mail,
   Phone,
@@ -21,7 +21,7 @@ import { Settings,
   Upload,
   Download,
   Save,
-  RefreshCw, 
+  RefreshCw,
   EyeOff,
   Lock,
   Unlock,
@@ -32,15 +32,12 @@ import { Settings,
   Image,
   Video,
   BarChart3,
-  Star, 
-  Info, 
-    Eye,
-    Upload,
-    Download,
-    CheckCircle,
-    XCircle,
-    AlertCircle
-    } from 'lucide-react';
+  Star,
+  Info,
+  Eye,
+  XCircle,
+  AlertCircle
+  } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
 import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
