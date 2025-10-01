@@ -81,7 +81,15 @@ export default function EstadísticasdeBasedeDatosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
+          <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
         title="Estadísticas de Base de Datos"
         subtitle="Cargando información..."
       >
@@ -97,7 +105,15 @@ export default function EstadísticasdeBasedeDatosPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
+          <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
         title="Estadísticas de Base de Datos"
         subtitle="Error al cargar la página"
       >
@@ -119,7 +135,15 @@ export default function EstadísticasdeBasedeDatosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
+        <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
       title="Estadísticas de Base de Datos"
       subtitle="Gestiona y visualiza la información de estadísticas de base de datos"
     >
@@ -248,3 +272,4 @@ export default function EstadísticasdeBasedeDatosPage() {
     </div></div></div></div>
   );
 }
+

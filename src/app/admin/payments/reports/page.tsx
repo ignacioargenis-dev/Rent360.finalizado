@@ -195,7 +195,15 @@ export default function AdminPaymentReportsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
+          <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
@@ -204,7 +212,15 @@ export default function AdminPaymentReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50"><div className="flex"><div className="w-64 bg-white shadow-lg"><div className="p-4"><h2 className="text-lg font-semibold">Rent360 Admin</h2></div></div><div className="flex-1"><div className="p-6"> 
+        <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
       <div className="space-y-6">
         {/* Controles */}
         <Card>
@@ -426,3 +442,4 @@ export default function AdminPaymentReportsPage() {
     </DashboardLayout
   );
 }
+
