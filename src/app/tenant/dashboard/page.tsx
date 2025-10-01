@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   Building,
   FileText,
   CreditCard,
@@ -12,6 +12,8 @@ import {
   Plus,
   AlertTriangle
 } from 'lucide-react';
+import EnhancedDashboardLayout from '@/components/dashboard/EnhancedDashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
 
 
 interface DashboardStats {
@@ -36,6 +38,7 @@ interface RecentActivity {
 }
 
 export default function TenantDashboard() {
+  const { user } = useUserState();
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     activeContracts: 0,
@@ -121,12 +124,11 @@ export default function TenantDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Bienvenido a tu panel de control</p>
-      </div>
-
+    <EnhancedDashboardLayout
+      user={user}
+      title="Dashboard Inquilino"
+      subtitle="Gestiona tus contratos y pagos"
+    >
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -242,7 +244,6 @@ export default function TenantDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+    </EnhancedDashboardLayout>
   );
 }
