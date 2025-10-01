@@ -49,6 +49,31 @@ export default function TenantDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Funciones para acciones rápidas
+  const handleNewProperty = () => {
+    console.log('Navegando a nueva propiedad');
+    alert('Funcionalidad para agregar nueva propiedad - próximamente');
+    // TODO: Implementar navegación o modal
+  };
+
+  const handleCreateContract = () => {
+    console.log('Creando nuevo contrato');
+    alert('Funcionalidad para crear contrato - próximamente');
+    // TODO: Implementar navegación o modal
+  };
+
+  const handleRegisterPayment = () => {
+    console.log('Registrando pago');
+    alert('Funcionalidad para registrar pago - próximamente');
+    // TODO: Implementar navegación o modal
+  };
+
+  const handleRequestMaintenance = () => {
+    console.log('Solicitando mantenimiento');
+    alert('Funcionalidad para solicitar mantenimiento - próximamente');
+    // TODO: Implementar navegación o modal
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -197,19 +222,19 @@ export default function TenantDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={handleNewProperty}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Propiedad
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={handleCreateContract}>
                   <FileText className="w-4 h-4 mr-2" />
                   Crear Contrato
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={handleRegisterPayment}>
                   <CreditCard className="w-4 h-4 mr-2" />
                   Registrar Pago
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={handleRequestMaintenance}>
                   <Wrench className="w-4 h-4 mr-2" />
                   Solicitar Mantenimiento
                 </Button>
