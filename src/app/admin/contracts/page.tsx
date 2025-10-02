@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { FileText,
-  Search,
-  Filter,
+import { FileText, 
+  Search, 
+  Filter, 
   Eye, 
   Edit, 
   Download, 
@@ -26,6 +25,7 @@ import { FileText,
   X,
   Loader2
 } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { User, Contract } from '@/types';
 
 
@@ -375,18 +375,22 @@ Arrendador: ___________________________                Arrendatario: ___________
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600">Cargando contratos...</p>
-      </div>
+      <UnifiedDashboardLayout title="Gestión de Contratos" subtitle="Cargando contratos...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando contratos...</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
     <UnifiedDashboardLayout title="Gestión de Contratos" subtitle="Administra todos los contratos del sistema">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Header Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
