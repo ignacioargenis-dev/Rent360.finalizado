@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -617,7 +617,7 @@ return `Hace ${diffDays} días`;
           </Card>
         </div>
       </div>
-    </UnifiedDashboardLayout>
+    </UnifiedDashboardLayout
   );
 }
 

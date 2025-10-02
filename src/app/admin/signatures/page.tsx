@@ -1,8 +1,6 @@
-﻿'use client';
+'use client';
 
-
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +22,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 
 interface SignatureProvider {
@@ -240,36 +239,20 @@ export default function SignaturesAdminPage() {
 
   if (loading) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+      <UnifiedDashboardLayout title="Firmas Digitales" subtitle="Cargando configuración de firmas...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando configuración de firmas...</p>
           </div>
         </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </div></div></div></div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      title="Firmas Electrónicas Autorizadas"
-      subtitle="Configura proveedores certificados por SII para contratos de arriendo"
-    >
-      <div className="space-y-6">
+    <UnifiedDashboardLayout title="Firmas Digitales" subtitle="Configura proveedores de firmas digitales">
+      <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Alerta de cumplimiento legal */}
         <Alert>
           <Shield className="h-4 w-4" />

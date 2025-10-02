@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Settings,
   Save,
   RefreshCw,
@@ -90,7 +89,7 @@ import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 
 interface SystemSettings {
-  // ConfiguraciÛn General
+  // Configuraci√≥n General
   siteName: string;
   siteUrl: string;
   adminEmail: string;
@@ -104,7 +103,7 @@ interface SystemSettings {
   timezone: string;
   language: string;
   
-  // ConfiguraciÛn de Propiedades
+  // Configuraci√≥n de Propiedades
   defaultPropertyStatus: string;
   autoApproveProperties: boolean;
   propertyExpiryDays: number;
@@ -114,7 +113,7 @@ interface SystemSettings {
   virtualTourEnabled: boolean;
   propertyMapEnabled: boolean;
   
-  // ConfiguraciÛn de Usuarios
+  // Configuraci√≥n de Usuarios
   defaultUserRole: string;
   userApprovalRequired: boolean;
   maxLoginAttempts: number;
@@ -124,14 +123,14 @@ interface SystemSettings {
   allowSocialLogin: boolean;
   socialProviders: string[];
   
-  // ConfiguraciÛn de Comisiones
+  // Configuraci√≥n de Comisiones
   defaultCommissionRate: number;
   commissionStructure: 'fixed' | 'percentage' | 'tiered';
   minimumCommissionAmount: number;
   commissionPaymentMethod: string;
   commissionSchedule: 'immediate' | 'weekly' | 'monthly';
   
-  // ConfiguraciÛn de Notificaciones
+  // Configuraci√≥n de Notificaciones
   emailNotifications: boolean;
   smsNotifications: boolean;
   pushNotifications: boolean;
@@ -142,7 +141,7 @@ interface SystemSettings {
   supportAlerts: boolean;
   commissionAlerts: boolean;
   
-  // ConfiguraciÛn de Seguridad
+  // Configuraci√≥n de Seguridad
   twoFactorAuth: boolean;
   passwordMinLength: number;
   passwordRequireUppercase: boolean;
@@ -154,7 +153,7 @@ interface SystemSettings {
   ipRestrictionEnabled: boolean;
   allowedIPs: string[];
   
-  // ConfiguraciÛn de Email
+  // Configuraci√≥n de Email
   smtpHost: string;
   smtpPort: number;
   smtpUsername: string;
@@ -164,7 +163,7 @@ interface SystemSettings {
   encryption: 'none' | 'ssl' | 'tls';
   emailTemplatesEnabled: boolean;
   
-  // ConfiguraciÛn de Pagos
+  // Configuraci√≥n de Pagos
   paymentsEnabled: boolean;
   paymentProviders: string[];
   defaultPaymentMethod: string;
@@ -173,14 +172,14 @@ interface SystemSettings {
   latePaymentFee: number;
   latePaymentGracePeriod: number;
   
-  // ConfiguraciÛn de Khipu
+  // Configuraci√≥n de Khipu
   khipuEnabled: boolean;
   khipuReceiverId: string;
   khipuSecretKey: string;
   khipuNotificationToken: string;
   khipuEnvironment: 'production' | 'test';
 
-  // ConfiguraciÛn especÌfica para Runners
+  // Configuraci√≥n espec√≠fica para Runners
   runnerPayoutsEnabled: boolean;
   runnerBaseRatePerMinute: number;
   runnerPremiumPropertyBonus: number;
@@ -201,7 +200,7 @@ interface SystemSettings {
   runnerRequireKYC: boolean;
   runnerPlatformFeePercentage: number;
 
-  // ConfiguraciÛn especÌfica para Proveedores de Mantenimiento
+  // Configuraci√≥n espec√≠fica para Proveedores de Mantenimiento
   maintenanceProviderPayoutsEnabled: boolean;
   maintenanceProviderCommissionPercentage: number;
   maintenanceProviderGracePeriodDays: number;
@@ -213,7 +212,7 @@ interface SystemSettings {
   maintenanceProviderSupportedPaymentMethods: string[];
   maintenanceProviderRequireBankVerification: boolean;
 
-  // ConfiguraciÛn especÌfica para Proveedores de Servicios
+  // Configuraci√≥n espec√≠fica para Proveedores de Servicios
   serviceProviderPayoutsEnabled: boolean;
   serviceProviderCommissionPercentage: number;
   serviceProviderGracePeriodDays: number;
@@ -225,7 +224,7 @@ interface SystemSettings {
   serviceProviderSupportedPaymentMethods: string[];
   serviceProviderRequireBankVerification: boolean;
   
-  // ConfiguraciÛn de Integraciones
+  // Configuraci√≥n de Integraciones
   googleMapsEnabled: boolean;
   googleAnalyticsEnabled: boolean;
   facebookPixelEnabled: boolean;
@@ -236,7 +235,7 @@ interface SystemSettings {
   crmIntegration: boolean;
   crmProvider: string;
   
-  // ConfiguraciÛn Avanzada
+  // Configuraci√≥n Avanzada
   debugMode: boolean;
   logLevel: 'error' | 'warn' | 'info' | 'debug';
   cacheEnabled: boolean;
@@ -247,7 +246,7 @@ interface SystemSettings {
   theme: 'light' | 'dark' | 'auto';
   customCSS: string;
   
-  // ConfiguraciÛn de UI/UX
+  // Configuraci√≥n de UI/UX
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -257,7 +256,7 @@ interface SystemSettings {
   darkModeEnabled: boolean;
   mobileResponsive: boolean;
   
-  // ConfiguraciÛn de Rendimiento
+  // Configuraci√≥n de Rendimiento
   imageCompressionEnabled: boolean;
   imageQuality: number;
   lazyLoadingEnabled: boolean;
@@ -266,7 +265,7 @@ interface SystemSettings {
   cdnEnabled: boolean;
   cdnUrl: string;
   
-  // ConfiguraciÛn Legal
+  // Configuraci√≥n Legal
   termsOfServiceRequired: boolean;
   privacyPolicyRequired: boolean;
   cookieConsentEnabled: boolean;
@@ -275,10 +274,10 @@ interface SystemSettings {
   autoDeleteInactiveUsers: boolean;
   inactiveUserDays: number;
 
-  // ConfiguraciÛn de Seguridad para Runners
+  // Configuraci√≥n de Seguridad para Runners
   runnerFraudDetectionEnabled: boolean;
 
-  // ConfiguraciÛn del Footer
+  // Configuraci√≥n del Footer
   footerDescription: string;
   footerEmail: string;
   footerPhone: string;
@@ -295,7 +294,7 @@ export default function EnhancedAdminSettingsPage() {
   const [user, setUser] = useState<UserType | null>(null);
 
   const [settings, setSettings] = useState<SystemSettings>({
-    // ConfiguraciÛn General
+    // Configuraci√≥n General
     siteName: 'Rent360',
     siteUrl: 'https://rent360.cl',
     adminEmail: 'admin@rent360.cl',
@@ -309,7 +308,7 @@ export default function EnhancedAdminSettingsPage() {
     timezone: 'America/Santiago',
     language: 'es',
     
-    // ConfiguraciÛn de Propiedades
+    // Configuraci√≥n de Propiedades
     defaultPropertyStatus: 'AVAILABLE',
     autoApproveProperties: false,
     propertyExpiryDays: 30,
@@ -319,7 +318,7 @@ export default function EnhancedAdminSettingsPage() {
     virtualTourEnabled: true,
     propertyMapEnabled: true,
     
-    // ConfiguraciÛn de Usuarios
+    // Configuraci√≥n de Usuarios
     defaultUserRole: 'tenant',
     userApprovalRequired: false,
     maxLoginAttempts: 5,
@@ -329,14 +328,14 @@ export default function EnhancedAdminSettingsPage() {
     allowSocialLogin: false,
     socialProviders: [],
     
-    // ConfiguraciÛn de Comisiones
+    // Configuraci√≥n de Comisiones
     defaultCommissionRate: 5.0,
     commissionStructure: 'percentage',
     minimumCommissionAmount: 10000,
     commissionPaymentMethod: 'bank_transfer',
     commissionSchedule: 'monthly',
     
-    // ConfiguraciÛn de Notificaciones
+    // Configuraci√≥n de Notificaciones
     emailNotifications: true,
     smsNotifications: false,
     pushNotifications: true,
@@ -347,7 +346,7 @@ export default function EnhancedAdminSettingsPage() {
     supportAlerts: true,
     commissionAlerts: true,
     
-    // ConfiguraciÛn de Seguridad
+    // Configuraci√≥n de Seguridad
     twoFactorAuth: false,
     passwordMinLength: 8,
     passwordRequireUppercase: true,
@@ -359,7 +358,7 @@ export default function EnhancedAdminSettingsPage() {
     ipRestrictionEnabled: false,
     allowedIPs: [],
     
-    // ConfiguraciÛn de Email
+    // Configuraci√≥n de Email
     smtpHost: 'smtp.gmail.com',
     smtpPort: 587,
     smtpUsername: '',
@@ -369,7 +368,7 @@ export default function EnhancedAdminSettingsPage() {
     encryption: 'tls',
     emailTemplatesEnabled: true,
     
-    // ConfiguraciÛn de Pagos
+    // Configuraci√≥n de Pagos
     paymentsEnabled: false,
     paymentProviders: [],
     defaultPaymentMethod: 'bank_transfer',
@@ -378,14 +377,14 @@ export default function EnhancedAdminSettingsPage() {
     latePaymentFee: 5000,
     latePaymentGracePeriod: 5,
     
-    // ConfiguraciÛn de Khipu
+    // Configuraci√≥n de Khipu
     khipuEnabled: false,
     khipuReceiverId: '',
     khipuSecretKey: '',
     khipuNotificationToken: '',
     khipuEnvironment: 'test',
 
-    // ConfiguraciÛn especÌfica para Runners
+    // Configuraci√≥n espec√≠fica para Runners
     runnerPayoutsEnabled: true,
     runnerBaseRatePerMinute: 500,
     runnerPremiumPropertyBonus: 200,
@@ -407,7 +406,7 @@ export default function EnhancedAdminSettingsPage() {
     runnerRequireKYC: false,
     runnerPlatformFeePercentage: 5,
 
-    // ConfiguraciÛn especÌfica para Proveedores de Mantenimiento
+    // Configuraci√≥n espec√≠fica para Proveedores de Mantenimiento
     maintenanceProviderPayoutsEnabled: true,
     maintenanceProviderCommissionPercentage: 10,
     maintenanceProviderGracePeriodDays: 15,
@@ -419,7 +418,7 @@ export default function EnhancedAdminSettingsPage() {
     maintenanceProviderSupportedPaymentMethods: ['bank_transfer'],
     maintenanceProviderRequireBankVerification: true,
 
-    // ConfiguraciÛn especÌfica para Proveedores de Servicios
+    // Configuraci√≥n espec√≠fica para Proveedores de Servicios
     serviceProviderPayoutsEnabled: true,
     serviceProviderCommissionPercentage: 8,
     serviceProviderGracePeriodDays: 7,
@@ -431,7 +430,7 @@ export default function EnhancedAdminSettingsPage() {
     serviceProviderSupportedPaymentMethods: ['bank_transfer', 'cash'],
     serviceProviderRequireBankVerification: true,
     
-    // ConfiguraciÛn de Integraciones
+    // Configuraci√≥n de Integraciones
     googleMapsEnabled: true,
     googleAnalyticsEnabled: false,
     facebookPixelEnabled: false,
@@ -442,7 +441,7 @@ export default function EnhancedAdminSettingsPage() {
     crmIntegration: false,
     crmProvider: '',
     
-    // ConfiguraciÛn Avanzada
+    // Configuraci√≥n Avanzada
     debugMode: false,
     logLevel: 'error',
     cacheEnabled: true,
@@ -453,7 +452,7 @@ export default function EnhancedAdminSettingsPage() {
     theme: 'light',
     customCSS: '',
     
-    // ConfiguraciÛn de UI/UX
+    // Configuraci√≥n de UI/UX
     primaryColor: '#3B82F6',
     secondaryColor: '#6B7280',
     accentColor: '#10B981',
@@ -463,7 +462,7 @@ export default function EnhancedAdminSettingsPage() {
     darkModeEnabled: false,
     mobileResponsive: true,
     
-    // ConfiguraciÛn de Rendimiento
+    // Configuraci√≥n de Rendimiento
     imageCompressionEnabled: true,
     imageQuality: 80,
     lazyLoadingEnabled: true,
@@ -472,7 +471,7 @@ export default function EnhancedAdminSettingsPage() {
     cdnEnabled: false,
     cdnUrl: '',
     
-    // ConfiguraciÛn Legal
+    // Configuraci√≥n Legal
     termsOfServiceRequired: true,
     privacyPolicyRequired: true,
     cookieConsentEnabled: true,
@@ -481,12 +480,12 @@ export default function EnhancedAdminSettingsPage() {
     autoDeleteInactiveUsers: false,
     inactiveUserDays: 180,
 
-    // ConfiguraciÛn del Footer
-    footerDescription: "Plataforma integral de gestiÛn inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.",
+    // Configuraci√≥n del Footer
+    footerDescription: "Plataforma integral de gesti√≥n inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.",
     footerEmail: "contacto@rent360.cl",
     footerPhone: "+56 9 1234 5678",
     footerAddress: "Santiago, Chile",
-    footerCopyright: "Desarrollado con ?? para el sector inmobiliario chileno",
+    footerCopyright: "Desarrollado con ‚ù§Ô∏è para el sector inmobiliario chileno",
     termsUrl: "/terms",
     privacyUrl: "/privacy",
     cookiesUrl: "/cookies",
@@ -538,13 +537,13 @@ export default function EnhancedAdminSettingsPage() {
       });
 
       if (response.ok) {
-        alert('ConfiguraciÛn guardada exitosamente');
+        alert('Configuraci√≥n guardada exitosamente');
       } else {
-        alert('Error al guardar la configuraciÛn');
+        alert('Error al guardar la configuraci√≥n');
       }
     } catch (error) {
       logger.error('Error saving settings:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al guardar la configuraciÛn');
+      alert('Error al guardar la configuraci√≥n');
     } finally {
       setSaving(false);
     }
@@ -575,10 +574,10 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="w-5 h-5" />
-            InformaciÛn del Sitio
+            Informaci√≥n del Sitio
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn b·sica del sitio
+            Configuraci√≥n b√°sica del sitio
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -604,7 +603,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email de AdministraciÛn
+              Email de Administraci√≥n
             </label>
             <Input
               type="email"
@@ -630,7 +629,7 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            ConfiguraciÛn del Sistema
+            Configuraci√≥n del Sistema
           </CardTitle>
           <CardDescription>
             Opciones de funcionamiento del sistema
@@ -665,7 +664,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">VerificaciÛn de Email Requerida</div>
+              <div className="font-medium">Verificaci√≥n de Email Requerida</div>
               <div className="text-sm text-gray-600">
                 Los usuarios deben verificar su email
               </div>
@@ -678,7 +677,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              M·ximo de Im·genes por Propiedad
+              M√°ximo de Im√°genes por Propiedad
             </label>
             <Input
               type="number"
@@ -689,7 +688,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              TamaÒo M·ximo de Archivo (MB)
+              Tama√±o M√°ximo de Archivo (MB)
             </label>
             <Input
               type="number"
@@ -704,7 +703,7 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="w-5 h-5" />
-            ConfiguraciÛn Regional
+            Configuraci√≥n Regional
           </CardTitle>
           <CardDescription>
             Preferencias de idioma y moneda
@@ -721,7 +720,7 @@ export default function EnhancedAdminSettingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CLP">Peso Chileno (CLP)</SelectItem>
-                <SelectItem value="USD">DÛlar Americano (USD)</SelectItem>
+                <SelectItem value="USD">D√≥lar Americano (USD)</SelectItem>
                 <SelectItem value="EUR">Euro (EUR)</SelectItem>
               </SelectContent>
             </Select>
@@ -738,7 +737,7 @@ export default function EnhancedAdminSettingsPage() {
               <SelectContent>
                 <SelectItem value="America/Santiago">Santiago</SelectItem>
                 <SelectItem value="America/Lima">Lima</SelectItem>
-                <SelectItem value="America/Mexico_City">Ciudad de MÈxico</SelectItem>
+                <SelectItem value="America/Mexico_City">Ciudad de M√©xico</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -752,7 +751,7 @@ export default function EnhancedAdminSettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="es">EspaÒol</SelectItem>
+                <SelectItem value="es">Espa√±ol</SelectItem>
                 <SelectItem value="en">English</SelectItem>
               </SelectContent>
             </Select>
@@ -768,7 +767,7 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="w-5 h-5" />
-            ConfiguraciÛn de Propiedades
+            Configuraci√≥n de Propiedades
           </CardTitle>
           <CardDescription>
             Opciones para el manejo de propiedades
@@ -793,9 +792,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">Aprobar Propiedades Autom·ticamente</div>
+              <div className="font-medium">Aprobar Propiedades Autom√°ticamente</div>
               <div className="text-sm text-gray-600">
-                Las propiedades se publican sin revisiÛn
+                Las propiedades se publican sin revisi√≥n
               </div>
             </div>
             <Switch
@@ -806,7 +805,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              DÌas de ExpiraciÛn de Propiedades
+              D√≠as de Expiraci√≥n de Propiedades
             </label>
             <Input
               type="number"
@@ -817,7 +816,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              LÌmite de Propiedades Destacadas
+              L√≠mite de Propiedades Destacadas
             </label>
             <Input
               type="number"
@@ -835,7 +834,7 @@ export default function EnhancedAdminSettingsPage() {
             Medios y Tours Virtuales
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de im·genes, videos y tours virtuales
+            Configuraci√≥n de im√°genes, videos y tours virtuales
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -854,7 +853,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              M·ximo de Videos por Propiedad
+              M√°ximo de Videos por Propiedad
             </label>
             <Input
               type="number"
@@ -867,7 +866,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Tours Virtuales Habilitados</div>
               <div className="text-sm text-gray-600">
-                Permitir tours virtuales 360∞
+                Permitir tours virtuales 360¬∞
               </div>
             </div>
             <Switch
@@ -899,7 +898,7 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            ConfiguraciÛn de Usuarios
+            Configuraci√≥n de Usuarios
           </CardTitle>
           <CardDescription>
             Opciones para el manejo de usuarios
@@ -925,9 +924,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">AprobaciÛn de Usuarios Requerida</div>
+              <div className="font-medium">Aprobaci√≥n de Usuarios Requerida</div>
               <div className="text-sm text-gray-600">
-                Los usuarios requieren aprobaciÛn manual
+                Los usuarios requieren aprobaci√≥n manual
               </div>
             </div>
             <Switch
@@ -938,7 +937,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              M·ximo de Intentos de Login
+              M√°ximo de Intentos de Login
             </label>
             <Input
               type="number"
@@ -949,7 +948,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              DuraciÛn de Bloqueo (minutos)
+              Duraci√≥n de Bloqueo (minutos)
             </label>
             <Input
               type="number"
@@ -964,16 +963,16 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="w-5 h-5" />
-            ContraseÒas y Sesiones
+            Contrase√±as y Sesiones
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de seguridad de contraseÒas y sesiones
+            Configuraci√≥n de seguridad de contrase√±as y sesiones
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              ExpiraciÛn de ContraseÒa (dÌas)
+              Expiraci√≥n de Contrase√±a (d√≠as)
             </label>
             <Input
               type="number"
@@ -984,7 +983,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tiempo de SesiÛn (minutos)
+              Tiempo de Sesi√≥n (minutos)
             </label>
             <Input
               type="number"
@@ -1016,16 +1015,16 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
-            ConfiguraciÛn de Comisiones
+            Configuraci√≥n de Comisiones
           </CardTitle>
           <CardDescription>
-            Opciones para el c·lculo de comisiones
+            Opciones para el c√°lculo de comisiones
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tasa de ComisiÛn Predeterminada (%)
+              Tasa de Comisi√≥n Predeterminada (%)
             </label>
             <Input
               type="number"
@@ -1037,7 +1036,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Estructura de ComisiÛn
+              Estructura de Comisi√≥n
             </label>
             <Select value={settings.commissionStructure} onValueChange={(value: any) => setSettings({...settings, commissionStructure: value})}>
               <SelectTrigger>
@@ -1053,7 +1052,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Monto MÌnimo de ComisiÛn
+              Monto M√≠nimo de Comisi√≥n
             </label>
             <Input
               type="number"
@@ -1071,13 +1070,13 @@ export default function EnhancedAdminSettingsPage() {
             Pagos de Comisiones
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de pagos a corredores
+            Configuraci√≥n de pagos a corredores
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              MÈtodo de Pago
+              M√©todo de Pago
             </label>
             <Select value={settings.commissionPaymentMethod} onValueChange={(value) => setSettings({...settings, commissionPaymentMethod: value})}>
               <SelectTrigger>
@@ -1117,10 +1116,10 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="w-5 h-5" />
-            Canales de NotificaciÛn
+            Canales de Notificaci√≥n
           </CardTitle>
           <CardDescription>
-            Configura los mÈtodos de notificaciÛn
+            Configura los m√©todos de notificaci√≥n
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -1130,7 +1129,7 @@ export default function EnhancedAdminSettingsPage() {
               <div>
                 <div className="font-medium">Notificaciones por Email</div>
                 <div className="text-sm text-gray-600">
-                  Enviar notificaciones al correo electrÛnico
+                  Enviar notificaciones al correo electr√≥nico
                 </div>
               </div>
             </div>
@@ -1197,7 +1196,7 @@ export default function EnhancedAdminSettingsPage() {
             Tipos de Notificaciones
           </CardTitle>
           <CardDescription>
-            Selecciona quÈ eventos generan notificaciones
+            Selecciona qu√© eventos generan notificaciones
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -1288,15 +1287,15 @@ export default function EnhancedAdminSettingsPage() {
   const renderRunnerSettings = () => (
     <div className="space-y-8">
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ConfiguraciÛn General de Runners */}
+        {/* Configuraci√≥n General de Runners */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
-              ConfiguraciÛn General de Runners
+              Configuraci√≥n General de Runners
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn b·sica del sistema de pagos para runners
+              Configuraci√≥n b√°sica del sistema de pagos para runners
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1354,7 +1353,7 @@ export default function EnhancedAdminSettingsPage() {
                 placeholder="1000000"
               />
               <p className="text-sm text-gray-500 mt-1">
-                Valor mÌnimo para considerar propiedad premium
+                Valor m√≠nimo para considerar propiedad premium
               </p>
             </div>
           </CardContent>
@@ -1368,7 +1367,7 @@ export default function EnhancedAdminSettingsPage() {
               Multiplicadores por Tipo de Visita
             </CardTitle>
             <CardDescription>
-              Factores de multiplicaciÛn seg˙n el tipo de visita
+              Factores de multiplicaci√≥n seg√∫n el tipo de visita
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1433,21 +1432,21 @@ export default function EnhancedAdminSettingsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* LÌmites y Validaciones */}
+        {/* L√≠mites y Validaciones */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              LÌmites y Validaciones
+              L√≠mites y Validaciones
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn de lÌmites de pago y validaciones
+              Configuraci√≥n de l√≠mites de pago y validaciones
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago MÌnimo ($)
+                Pago M√≠nimo ($)
               </label>
               <Input
                 type="number"
@@ -1459,7 +1458,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago M·ximo Diario ($)
+                Pago M√°ximo Diario ($)
               </label>
               <Input
                 type="number"
@@ -1471,7 +1470,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Umbral de AprobaciÛn Manual ($)
+                Umbral de Aprobaci√≥n Manual ($)
               </label>
               <Input
                 type="number"
@@ -1480,15 +1479,15 @@ export default function EnhancedAdminSettingsPage() {
                 placeholder="50000"
               />
               <p className="text-sm text-gray-500 mt-1">
-                Pagos sobre este monto requieren aprobaciÛn manual
+                Pagos sobre este monto requieren aprobaci√≥n manual
               </p>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">AprobaciÛn Manual Requerida</div>
+                <div className="font-medium">Aprobaci√≥n Manual Requerida</div>
                 <div className="text-sm text-gray-600">
-                  Todos los pagos requieren aprobaciÛn manual del administrador
+                  Todos los pagos requieren aprobaci√≥n manual del administrador
                 </div>
               </div>
               <Switch
@@ -1499,15 +1498,15 @@ export default function EnhancedAdminSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* ProgramaciÛn y MÈtodos de Pago */}
+        {/* Programaci√≥n y M√©todos de Pago */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              ProgramaciÛn y MÈtodos de Pago
+              Programaci√≥n y M√©todos de Pago
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn del calendario de pagos y mÈtodos soportados
+              Configuraci√≥n del calendario de pagos y m√©todos soportados
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1533,7 +1532,7 @@ export default function EnhancedAdminSettingsPage() {
             {settings.runnerPayoutSchedule === 'monthly' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  DÌa de Corte del Mes
+                  D√≠a de Corte del Mes
                 </label>
                 <Input
                   type="number"
@@ -1548,7 +1547,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                MÈtodos de Pago Soportados
+                M√©todos de Pago Soportados
               </label>
               <div className="space-y-2">
                 {[
@@ -1579,12 +1578,12 @@ export default function EnhancedAdminSettingsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ConfiguraciÛn de Seguridad */}
+        {/* Configuraci√≥n de Seguridad */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              ConfiguraciÛn de Seguridad
+              Configuraci√≥n de Seguridad
             </CardTitle>
             <CardDescription>
               Requisitos de seguridad para procesar pagos de runners
@@ -1593,7 +1592,7 @@ export default function EnhancedAdminSettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">VerificaciÛn Bancaria Requerida</div>
+                <div className="font-medium">Verificaci√≥n Bancaria Requerida</div>
                 <div className="text-sm text-gray-600">
                   Requiere cuenta bancaria verificada para procesar pagos
                 </div>
@@ -1608,7 +1607,7 @@ export default function EnhancedAdminSettingsPage() {
               <div>
                 <div className="font-medium">KYC Requerido</div>
                 <div className="text-sm text-gray-600">
-                  Requiere verificaciÛn de identidad (Know Your Customer)
+                  Requiere verificaci√≥n de identidad (Know Your Customer)
                 </div>
               </div>
               <Switch
@@ -1619,9 +1618,9 @@ export default function EnhancedAdminSettingsPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">DetecciÛn de Fraude Habilitada</div>
+                <div className="font-medium">Detecci√≥n de Fraude Habilitada</div>
                 <div className="text-sm text-gray-600">
-                  Activar an·lisis de fraude en transacciones
+                  Activar an√°lisis de fraude en transacciones
                 </div>
               </div>
               <Switch
@@ -1632,21 +1631,21 @@ export default function EnhancedAdminSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* ComisiÛn de Plataforma */}
+        {/* Comisi√≥n de Plataforma */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
-              ComisiÛn de Plataforma
+              Comisi√≥n de Plataforma
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn de la comisiÛn retenida por la plataforma
+              Configuraci√≥n de la comisi√≥n retenida por la plataforma
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Porcentaje de ComisiÛn (%)
+                Porcentaje de Comisi√≥n (%)
               </label>
               <Input
                 type="number"
@@ -1663,10 +1662,10 @@ export default function EnhancedAdminSettingsPage() {
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Ejemplo de C·lculo</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Ejemplo de C√°lculo</h4>
               <div className="text-sm text-gray-600 space-y-1">
                 <div>Ganancia Bruta: $15.000</div>
-                <div>ComisiÛn ({settings.runnerPlatformFeePercentage}%): ${(15000 * settings.runnerPlatformFeePercentage / 100).toLocaleString()}</div>
+                <div>Comisi√≥n ({settings.runnerPlatformFeePercentage}%): ${(15000 * settings.runnerPlatformFeePercentage / 100).toLocaleString()}</div>
                 <div><strong>Pago Neto: ${(15000 * (1 - settings.runnerPlatformFeePercentage / 100)).toLocaleString()}</strong></div>
               </div>
             </div>
@@ -1679,7 +1678,7 @@ export default function EnhancedAdminSettingsPage() {
   const renderProvidersSettings = () => (
     <div className="space-y-8">
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ConfiguraciÛn de Proveedores de Mantenimiento */}
+        {/* Configuraci√≥n de Proveedores de Mantenimiento */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1687,15 +1686,15 @@ export default function EnhancedAdminSettingsPage() {
               Proveedores de Mantenimiento
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn de pagos y comisiones para proveedores de mantenimiento
+              Configuraci√≥n de pagos y comisiones para proveedores de mantenimiento
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Pagos Autom·ticos Habilitados</div>
+                <div className="font-medium">Pagos Autom√°ticos Habilitados</div>
                 <div className="text-sm text-gray-600">
-                  Procesar pagos autom·ticamente a proveedores de mantenimiento
+                  Procesar pagos autom√°ticamente a proveedores de mantenimiento
                 </div>
               </div>
               <Switch
@@ -1706,7 +1705,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ComisiÛn de Plataforma (%)
+                Comisi√≥n de Plataforma (%)
               </label>
               <Input
                 type="number"
@@ -1724,7 +1723,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PerÌodo de Gracia (dÌas)
+                Per√≠odo de Gracia (d√≠as)
               </label>
               <Input
                 type="number"
@@ -1735,13 +1734,13 @@ export default function EnhancedAdminSettingsPage() {
                 placeholder="15"
               />
               <p className="text-sm text-gray-500 mt-1">
-                DÌas sin cobrar comisiÛn despuÈs del registro
+                D√≠as sin cobrar comisi√≥n despu√©s del registro
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago MÌnimo ($)
+                Pago M√≠nimo ($)
               </label>
               <Input
                 type="number"
@@ -1753,7 +1752,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago M·ximo Diario ($)
+                Pago M√°ximo Diario ($)
               </label>
               <Input
                 type="number"
@@ -1765,9 +1764,9 @@ export default function EnhancedAdminSettingsPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">AprobaciÛn Manual Requerida</div>
+                <div className="font-medium">Aprobaci√≥n Manual Requerida</div>
                 <div className="text-sm text-gray-600">
-                  Todos los pagos requieren aprobaciÛn manual
+                  Todos los pagos requieren aprobaci√≥n manual
                 </div>
               </div>
               <Switch
@@ -1778,7 +1777,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Umbral de AprobaciÛn Manual ($)
+                Umbral de Aprobaci√≥n Manual ($)
               </label>
               <Input
                 type="number"
@@ -1790,7 +1789,7 @@ export default function EnhancedAdminSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* ConfiguraciÛn de Proveedores de Servicios */}
+        {/* Configuraci√≥n de Proveedores de Servicios */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1798,15 +1797,15 @@ export default function EnhancedAdminSettingsPage() {
               Proveedores de Servicios
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn de pagos y comisiones para proveedores de servicios
+              Configuraci√≥n de pagos y comisiones para proveedores de servicios
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Pagos Autom·ticos Habilitados</div>
+                <div className="font-medium">Pagos Autom√°ticos Habilitados</div>
                 <div className="text-sm text-gray-600">
-                  Procesar pagos autom·ticamente a proveedores de servicios
+                  Procesar pagos autom√°ticamente a proveedores de servicios
                 </div>
               </div>
               <Switch
@@ -1817,7 +1816,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ComisiÛn de Plataforma (%)
+                Comisi√≥n de Plataforma (%)
               </label>
               <Input
                 type="number"
@@ -1835,7 +1834,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PerÌodo de Gracia (dÌas)
+                Per√≠odo de Gracia (d√≠as)
               </label>
               <Input
                 type="number"
@@ -1846,13 +1845,13 @@ export default function EnhancedAdminSettingsPage() {
                 placeholder="7"
               />
               <p className="text-sm text-gray-500 mt-1">
-                DÌas sin cobrar comisiÛn despuÈs del registro
+                D√≠as sin cobrar comisi√≥n despu√©s del registro
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago MÌnimo ($)
+                Pago M√≠nimo ($)
               </label>
               <Input
                 type="number"
@@ -1864,7 +1863,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pago M·ximo Diario ($)
+                Pago M√°ximo Diario ($)
               </label>
               <Input
                 type="number"
@@ -1876,9 +1875,9 @@ export default function EnhancedAdminSettingsPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">AprobaciÛn Manual Requerida</div>
+                <div className="font-medium">Aprobaci√≥n Manual Requerida</div>
                 <div className="text-sm text-gray-600">
-                  Todos los pagos requieren aprobaciÛn manual
+                  Todos los pagos requieren aprobaci√≥n manual
                 </div>
               </div>
               <Switch
@@ -1889,7 +1888,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Umbral de AprobaciÛn Manual ($)
+                Umbral de Aprobaci√≥n Manual ($)
               </label>
               <Input
                 type="number"
@@ -1903,15 +1902,15 @@ export default function EnhancedAdminSettingsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ProgramaciÛn de Pagos */}
+        {/* Programaci√≥n de Pagos */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              ProgramaciÛn de Pagos
+              Programaci√≥n de Pagos
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn del calendario de pagos para proveedores
+              Configuraci√≥n del calendario de pagos para proveedores
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1939,7 +1938,7 @@ export default function EnhancedAdminSettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MÈtodos de Pago Soportados
+                    M√©todos de Pago Soportados
                   </label>
                   <div className="space-y-2">
                     {[
@@ -1993,7 +1992,7 @@ export default function EnhancedAdminSettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MÈtodos de Pago Soportados
+                    M√©todos de Pago Soportados
                   </label>
                   <div className="space-y-2">
                     {[
@@ -2025,12 +2024,12 @@ export default function EnhancedAdminSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* ConfiguraciÛn de Seguridad */}
+        {/* Configuraci√≥n de Seguridad */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              ConfiguraciÛn de Seguridad
+              Configuraci√≥n de Seguridad
             </CardTitle>
             <CardDescription>
               Requisitos de seguridad para procesar pagos a proveedores
@@ -2039,7 +2038,7 @@ export default function EnhancedAdminSettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">VerificaciÛn Bancaria (Mantenimiento)</div>
+                <div className="font-medium">Verificaci√≥n Bancaria (Mantenimiento)</div>
                 <div className="text-sm text-gray-600">
                   Requiere cuenta bancaria verificada
                 </div>
@@ -2052,7 +2051,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">VerificaciÛn Bancaria (Servicios)</div>
+                <div className="font-medium">Verificaci√≥n Bancaria (Servicios)</div>
                 <div className="text-sm text-gray-600">
                   Requiere cuenta bancaria verificada
                 </div>
@@ -2064,11 +2063,11 @@ export default function EnhancedAdminSettingsPage() {
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">InformaciÛn Importante</h4>
+              <h4 className="font-medium text-blue-900 mb-2">Informaci√≥n Importante</h4>
               <div className="text-sm text-blue-800 space-y-2">
-                <p>ï Los proveedores ya incluyen configuraciÛn bancaria en el registro</p>
-                <p>ï La verificaciÛn bancaria es opcional para proveedores de servicios</p>
-                <p>ï Los proveedores de mantenimiento requieren verificaciÛn obligatoria</p>
+                <p>‚Ä¢ Los proveedores ya incluyen configuraci√≥n bancaria en el registro</p>
+                <p>‚Ä¢ La verificaci√≥n bancaria es opcional para proveedores de servicios</p>
+                <p>‚Ä¢ Los proveedores de mantenimiento requieren verificaci√≥n obligatoria</p>
               </div>
             </div>
           </CardContent>
@@ -2083,16 +2082,16 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            ConfiguraciÛn de Seguridad
+            Configuraci√≥n de Seguridad
           </CardTitle>
           <CardDescription>
-            Opciones de seguridad y protecciÛn
+            Opciones de seguridad y protecci√≥n
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">AutenticaciÛn de Dos Factores</div>
+              <div className="font-medium">Autenticaci√≥n de Dos Factores</div>
               <div className="text-sm text-gray-600">
                 Requerir 2FA para todos los usuarios
               </div>
@@ -2105,7 +2104,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Longitud MÌnima de ContraseÒa
+              Longitud M√≠nima de Contrase√±a
             </label>
             <Input
               type="number"
@@ -2116,9 +2115,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">Requerir May˙sculas</div>
+              <div className="font-medium">Requerir May√∫sculas</div>
               <div className="text-sm text-gray-600">
-                Las contraseÒas deben tener may˙sculas
+                Las contrase√±as deben tener may√∫sculas
               </div>
             </div>
             <Switch
@@ -2129,9 +2128,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">Requerir N˙meros</div>
+              <div className="font-medium">Requerir N√∫meros</div>
               <div className="text-sm text-gray-600">
-                Las contraseÒas deben tener n˙meros
+                Las contrase√±as deben tener n√∫meros
               </div>
             </div>
             <Switch
@@ -2144,7 +2143,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Requerir Caracteres Especiales</div>
               <div className="text-sm text-gray-600">
-                Las contraseÒas deben tener caracteres especiales
+                Las contrase√±as deben tener caracteres especiales
               </div>
             </div>
             <Switch
@@ -2162,13 +2161,13 @@ export default function EnhancedAdminSettingsPage() {
             Sesiones y Acceso
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de sesiones y control de acceso
+            Configuraci√≥n de sesiones y control de acceso
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Historial de ContraseÒas
+              Historial de Contrase√±as
             </label>
             <Input
               type="number"
@@ -2179,7 +2178,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tiempo de SesiÛn (minutos)
+              Tiempo de Sesi√≥n (minutos)
             </label>
             <Input
               type="number"
@@ -2192,7 +2191,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Notificaciones de Login</div>
               <div className="text-sm text-gray-600">
-                Notificar sobre inicios de sesiÛn
+                Notificar sobre inicios de sesi√≥n
               </div>
             </div>
             <Switch
@@ -2203,7 +2202,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">RestricciÛn por IP</div>
+              <div className="font-medium">Restricci√≥n por IP</div>
               <div className="text-sm text-gray-600">
                 Limitar acceso por direcciones IP
               </div>
@@ -2224,10 +2223,10 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5" />
-            ConfiguraciÛn SMTP
+            Configuraci√≥n SMTP
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn del servidor de correo
+            Configuraci√≥n del servidor de correo
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2264,7 +2263,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              ContraseÒa SMTP
+              Contrase√±a SMTP
             </label>
             <Input
               type="password"
@@ -2279,10 +2278,10 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5" />
-            ConfiguraciÛn de EnvÌo
+            Configuraci√≥n de Env√≠o
           </CardTitle>
           <CardDescription>
-            Opciones de envÌo de correos
+            Opciones de env√≠o de correos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2308,14 +2307,14 @@ export default function EnhancedAdminSettingsPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              EncriptaciÛn
+              Encriptaci√≥n
             </label>
             <Select value={settings.encryption} onValueChange={(value: any) => setSettings({...settings, encryption: value})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sin EncriptaciÛn</SelectItem>
+                <SelectItem value="none">Sin Encriptaci√≥n</SelectItem>
                 <SelectItem value="ssl">SSL</SelectItem>
                 <SelectItem value="tls">TLS</SelectItem>
               </SelectContent>
@@ -2346,7 +2345,7 @@ export default function EnhancedAdminSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
-              ConfiguraciÛn de Pagos
+              Configuraci√≥n de Pagos
             </CardTitle>
             <CardDescription>
               Opciones generales de pagos
@@ -2368,7 +2367,7 @@ export default function EnhancedAdminSettingsPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                MÈtodo de Pago Predeterminado
+                M√©todo de Pago Predeterminado
               </label>
               <Select value={settings.defaultPaymentMethod} onValueChange={(value) => setSettings({...settings, defaultPaymentMethod: value})}>
                 <SelectTrigger>
@@ -2377,8 +2376,8 @@ export default function EnhancedAdminSettingsPage() {
                 <SelectContent>
                   <SelectItem value="bank_transfer">Transferencia Bancaria</SelectItem>
                   <SelectItem value="khipu">Khipu</SelectItem>
-                  <SelectItem value="credit_card">Tarjeta de CrÈdito</SelectItem>
-                  <SelectItem value="debit_card">Tarjeta de DÈbito</SelectItem>
+                  <SelectItem value="credit_card">Tarjeta de Cr√©dito</SelectItem>
+                  <SelectItem value="debit_card">Tarjeta de D√©bito</SelectItem>
                   <SelectItem value="cash">Efectivo</SelectItem>
                 </SelectContent>
               </Select>
@@ -2386,9 +2385,9 @@ export default function EnhancedAdminSettingsPage() {
             
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Procesamiento Autom·tico</div>
+                <div className="font-medium">Procesamiento Autom√°tico</div>
                 <div className="text-sm text-gray-600">
-                  Procesar pagos autom·ticamente
+                  Procesar pagos autom√°ticamente
                 </div>
               </div>
               <Switch
@@ -2414,16 +2413,16 @@ export default function EnhancedAdminSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Pagos TardÌos
+              Pagos Tard√≠os
             </CardTitle>
             <CardDescription>
-              ConfiguraciÛn de penalizaciones por pagos tardÌos
+              Configuraci√≥n de penalizaciones por pagos tard√≠os
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tarifa por Pago TardÌo
+                Tarifa por Pago Tard√≠o
               </label>
               <Input
                 type="number"
@@ -2434,7 +2433,7 @@ export default function EnhancedAdminSettingsPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PerÌodo de Gracia (dÌas)
+                Per√≠odo de Gracia (d√≠as)
               </label>
               <Input
                 type="number"
@@ -2446,15 +2445,15 @@ export default function EnhancedAdminSettingsPage() {
         </Card>
       </div>
 
-      {/* ConfiguraciÛn de Khipu */}
+      {/* Configuraci√≥n de Khipu */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            IntegraciÛn con Khipu
+            Integraci√≥n con Khipu
           </CardTitle>
           <CardDescription>
-            Configura las credenciales de Khipu para procesar pagos en lÌnea
+            Configura las credenciales de Khipu para procesar pagos en l√≠nea
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -2462,7 +2461,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Habilitar Khipu</div>
               <div className="text-sm text-gray-600">
-                Activar pagos a travÈs de Khipu
+                Activar pagos a trav√©s de Khipu
               </div>
             </div>
             <Switch
@@ -2483,13 +2482,13 @@ export default function EnhancedAdminSettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="test">Pruebas (Sandbox)</SelectItem>
-                    <SelectItem value="production">ProducciÛn</SelectItem>
+                    <SelectItem value="production">Producci√≥n</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
                   {settings.khipuEnvironment === 'test' 
                     ? 'Usa el entorno de pruebas para desarrollo' 
-                    : 'Usa el entorno de producciÛn para pagos reales'
+                    : 'Usa el entorno de producci√≥n para pagos reales'
                   }
                 </p>
               </div>
@@ -2519,13 +2518,13 @@ export default function EnhancedAdminSettingsPage() {
                   placeholder="Ingresa tu llave secreta"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  MantÈn esta informaciÛn segura
+                  Mant√©n esta informaci√≥n segura
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Token de NotificaciÛn
+                  Token de Notificaci√≥n
                 </label>
                 <Input
                   type="password"
@@ -2545,12 +2544,12 @@ export default function EnhancedAdminSettingsPage() {
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-800 mb-1">InformaciÛn Importante</h4>
+                  <h4 className="font-medium text-blue-800 mb-1">Informaci√≥n Importante</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
-                    <li>ï Las credenciales se guardan de forma segura en el sistema</li>
-                    <li>ï Usa el entorno de pruebas para desarrollo y pruebas</li>
-                    <li>ï Configura las URLs de webhook en tu cuenta de Khipu</li>
-                    <li>ï La URL de notificaciÛn es: <code className="bg-blue-100 px-1 rounded">/api/payments/khipu/notify</code></li>
+                    <li>‚Ä¢ Las credenciales se guardan de forma segura en el sistema</li>
+                    <li>‚Ä¢ Usa el entorno de pruebas para desarrollo y pruebas</li>
+                    <li>‚Ä¢ Configura las URLs de webhook en tu cuenta de Khipu</li>
+                    <li>‚Ä¢ La URL de notificaci√≥n es: <code className="bg-blue-100 px-1 rounded">/api/payments/khipu/notify</code></li>
                   </ul>
                 </div>
               </div>
@@ -2562,9 +2561,9 @@ export default function EnhancedAdminSettingsPage() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-orange-800 mb-1">Modo ProducciÛn</h4>
+                  <h4 className="font-medium text-orange-800 mb-1">Modo Producci√≥n</h4>
                   <p className="text-sm text-orange-700">
-                    Est·s utilizando el entorno de producciÛn. Todos los pagos procesados ser·n reales y se cobrar·n seg˙n las tarifas de Khipu.
+                    Est√°s utilizando el entorno de producci√≥n. Todos los pagos procesados ser√°n reales y se cobrar√°n seg√∫n las tarifas de Khipu.
                   </p>
                 </div>
               </div>
@@ -2605,7 +2604,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Google Analytics Habilitado</div>
               <div className="text-sm text-gray-600">
-                Seguimiento de analÌticas
+                Seguimiento de anal√≠ticas
               </div>
             </div>
             <Switch
@@ -2629,7 +2628,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">IntegraciÛn CRM</div>
+              <div className="font-medium">Integraci√≥n CRM</div>
               <div className="text-sm text-gray-600">
                 Conectar con sistema CRM
               </div>
@@ -2661,7 +2660,7 @@ export default function EnhancedAdminSettingsPage() {
             API y Webhooks
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de API y webhooks
+            Configuraci√≥n de API y webhooks
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2725,7 +2724,7 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            ConfiguraciÛn Avanzada
+            Configuraci√≥n Avanzada
           </CardTitle>
           <CardDescription>
             Opciones avanzadas del sistema
@@ -2734,9 +2733,9 @@ export default function EnhancedAdminSettingsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">Modo DepuraciÛn</div>
+              <div className="font-medium">Modo Depuraci√≥n</div>
               <div className="text-sm text-gray-600">
-                Habilitar mensajes de depuraciÛn
+                Habilitar mensajes de depuraci√≥n
               </div>
             </div>
             <Switch
@@ -2756,17 +2755,17 @@ export default function EnhancedAdminSettingsPage() {
               <SelectContent>
                 <SelectItem value="error">Error</SelectItem>
                 <SelectItem value="warn">Advertencia</SelectItem>
-                <SelectItem value="info">InformaciÛn</SelectItem>
-                <SelectItem value="debug">DepuraciÛn</SelectItem>
+                <SelectItem value="info">Informaci√≥n</SelectItem>
+                <SelectItem value="debug">Depuraci√≥n</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">CachÈ Habilitado</div>
+              <div className="font-medium">Cach√© Habilitado</div>
               <div className="text-sm text-gray-600">
-                Habilitar cachÈ del sistema
+                Habilitar cach√© del sistema
               </div>
             </div>
             <Switch
@@ -2778,7 +2777,7 @@ export default function EnhancedAdminSettingsPage() {
           {settings.cacheEnabled && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tiempo de CachÈ (segundos)
+                Tiempo de Cach√© (segundos)
               </label>
               <Input
                 type="number"
@@ -2797,7 +2796,7 @@ export default function EnhancedAdminSettingsPage() {
             Respaldo y Mantenimiento
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de respaldos autom·ticos
+            Configuraci√≥n de respaldos autom√°ticos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2805,7 +2804,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Respaldo Habilitado</div>
               <div className="text-sm text-gray-600">
-                Realizar respaldos autom·ticos
+                Realizar respaldos autom√°ticos
               </div>
             </div>
             <Switch
@@ -2834,7 +2833,7 @@ export default function EnhancedAdminSettingsPage() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  RetenciÛn de Respaldos (dÌas)
+                  Retenci√≥n de Respaldos (d√≠as)
                 </label>
                 <Input
                   type="number"
@@ -2856,7 +2855,7 @@ export default function EnhancedAdminSettingsPage() {
               <SelectContent>
                 <SelectItem value="light">Claro</SelectItem>
                 <SelectItem value="dark">Oscuro</SelectItem>
-                <SelectItem value="auto">Autom·tico</SelectItem>
+                <SelectItem value="auto">Autom√°tico</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -2874,7 +2873,7 @@ export default function EnhancedAdminSettingsPage() {
             Colores y Estilos
           </CardTitle>
           <CardDescription>
-            PersonalizaciÛn de la interfaz
+            Personalizaci√≥n de la interfaz
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2955,20 +2954,20 @@ export default function EnhancedAdminSettingsPage() {
             Comportamiento de la Interfaz
           </CardTitle>
           <CardDescription>
-            Opciones de comportamiento y diseÒo
+            Opciones de comportamiento y dise√±o
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              TamaÒo de Fuente
+              Tama√±o de Fuente
             </label>
             <Select value={settings.fontSize} onValueChange={(value: any) => setSettings({...settings, fontSize: value})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="small">PequeÒo</SelectItem>
+                <SelectItem value="small">Peque√±o</SelectItem>
                 <SelectItem value="medium">Mediano</SelectItem>
                 <SelectItem value="large">Grande</SelectItem>
               </SelectContent>
@@ -3003,9 +3002,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">DiseÒo Responsivo</div>
+              <div className="font-medium">Dise√±o Responsivo</div>
               <div className="text-sm text-gray-600">
-                Optimizado para mÛviles
+                Optimizado para m√≥viles
               </div>
             </div>
             <Switch
@@ -3024,18 +3023,18 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            OptimizaciÛn de Im·genes
+            Optimizaci√≥n de Im√°genes
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de compresiÛn y manejo de im·genes
+            Configuraci√≥n de compresi√≥n y manejo de im√°genes
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">CompresiÛn de Im·genes Habilitada</div>
+              <div className="font-medium">Compresi√≥n de Im√°genes Habilitada</div>
               <div className="text-sm text-gray-600">
-                Comprimir im·genes autom·ticamente
+                Comprimir im√°genes autom√°ticamente
               </div>
             </div>
             <Switch
@@ -3063,7 +3062,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Carga Perezosa Habilitada</div>
               <div className="text-sm text-gray-600">
-                Cargar im·genes bajo demanda
+                Cargar im√°genes bajo demanda
               </div>
             </div>
             <Switch
@@ -3078,18 +3077,18 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Server className="w-5 h-5" />
-            CachÈ y OptimizaciÛn
+            Cach√© y Optimizaci√≥n
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de rendimiento del servidor
+            Configuraci√≥n de rendimiento del servidor
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">CachÈ Habilitado</div>
+              <div className="font-medium">Cach√© Habilitado</div>
               <div className="text-sm text-gray-600">
-                Habilitar cachÈ del navegador
+                Habilitar cach√© del navegador
               </div>
             </div>
             <Switch
@@ -3100,7 +3099,7 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">MinificaciÛn Habilitada</div>
+              <div className="font-medium">Minificaci√≥n Habilitada</div>
               <div className="text-sm text-gray-600">
                 Minificar CSS y JavaScript
               </div>
@@ -3155,13 +3154,13 @@ export default function EnhancedAdminSettingsPage() {
         <CardContent className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              DescripciÛn de la Empresa
+              Descripci√≥n de la Empresa
             </label>
             <Textarea
-              value={settings.footerDescription || "Plataforma integral de gestiÛn inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario."}
+              value={settings.footerDescription || "Plataforma integral de gesti√≥n inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario."}
               onChange={(e) => setSettings({...settings, footerDescription: e.target.value})}
               rows={3}
-              placeholder="DescripciÛn de Rent360..."
+              placeholder="Descripci√≥n de Rent360..."
             />
           </div>
 
@@ -3180,7 +3179,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                TelÈfono de Contacto
+                Tel√©fono de Contacto
               </label>
               <Input
                 type="tel"
@@ -3193,7 +3192,7 @@ export default function EnhancedAdminSettingsPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              DirecciÛn
+              Direcci√≥n
             </label>
             <Input
               value={settings.footerAddress || "Santiago, Chile"}
@@ -3207,7 +3206,7 @@ export default function EnhancedAdminSettingsPage() {
               Texto de Copyright
             </label>
             <Input
-              value={settings.footerCopyright || "Desarrollado con ?? para el sector inmobiliario chileno"}
+              value={settings.footerCopyright || "Desarrollado con ‚ù§Ô∏è para el sector inmobiliario chileno"}
               onChange={(e) => setSettings({...settings, footerCopyright: e.target.value})}
               placeholder="Texto de copyright..."
             />
@@ -3219,17 +3218,17 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            P·ginas Legales
+            P√°ginas Legales
           </CardTitle>
           <CardDescription>
-            Configura las p·ginas de tÈrminos, privacidad y cookies
+            Configura las p√°ginas de t√©rminos, privacidad y cookies
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL de TÈrminos y Condiciones
+                URL de T√©rminos y Condiciones
               </label>
               <Input
                 value={settings.termsUrl || "/terms"}
@@ -3240,7 +3239,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL de PolÌtica de Privacidad
+                URL de Pol√≠tica de Privacidad
               </label>
               <Input
                 value={settings.privacyUrl || "/privacy"}
@@ -3251,7 +3250,7 @@ export default function EnhancedAdminSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL de PolÌtica de Cookies
+                URL de Pol√≠tica de Cookies
               </label>
               <Input
                 value={settings.cookiesUrl || "/cookies"}
@@ -3265,7 +3264,7 @@ export default function EnhancedAdminSettingsPage() {
             <div>
               <div className="font-medium">Footer Habilitado</div>
               <div className="text-sm text-gray-600">
-                Mostrar footer en todas las p·ginas
+                Mostrar footer en todas las p√°ginas
               </div>
             </div>
             <Switch
@@ -3287,15 +3286,15 @@ export default function EnhancedAdminSettingsPage() {
             Documentos Legales
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de documentos legales requeridos
+            Configuraci√≥n de documentos legales requeridos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">TÈrminos de Servicio Requeridos</div>
+              <div className="font-medium">T√©rminos de Servicio Requeridos</div>
               <div className="text-sm text-gray-600">
-                Los usuarios deben aceptar los tÈrminos
+                Los usuarios deben aceptar los t√©rminos
               </div>
             </div>
             <Switch
@@ -3306,9 +3305,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">PolÌtica de Privacidad Requerida</div>
+              <div className="font-medium">Pol√≠tica de Privacidad Requerida</div>
               <div className="text-sm text-gray-600">
-                Los usuarios deben aceptar la polÌtica
+                Los usuarios deben aceptar la pol√≠tica
               </div>
             </div>
             <Switch
@@ -3349,16 +3348,16 @@ export default function EnhancedAdminSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trash2 className="w-5 h-5" />
-            RetenciÛn y Limpieza de Datos
+            Retenci√≥n y Limpieza de Datos
           </CardTitle>
           <CardDescription>
-            ConfiguraciÛn de gestiÛn de datos
+            Configuraci√≥n de gesti√≥n de datos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              RetenciÛn de Datos (dÌas)
+              Retenci√≥n de Datos (d√≠as)
             </label>
             <Input
               type="number"
@@ -3369,9 +3368,9 @@ export default function EnhancedAdminSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium">EliminaciÛn Autom·tica de Usuarios Inactivos</div>
+              <div className="font-medium">Eliminaci√≥n Autom√°tica de Usuarios Inactivos</div>
               <div className="text-sm text-gray-600">
-                Eliminar cuentas inactivas autom·ticamente
+                Eliminar cuentas inactivas autom√°ticamente
               </div>
             </div>
             <Switch
@@ -3383,7 +3382,7 @@ export default function EnhancedAdminSettingsPage() {
           {settings.autoDeleteInactiveUsers && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                DÌas para Considerar Usuario Inactivo
+                D√≠as para Considerar Usuario Inactivo
               </label>
               <Input
                 type="number"
@@ -3399,11 +3398,11 @@ export default function EnhancedAdminSettingsPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="ConfiguraciÛn Avanzada" subtitle="Cargando configuraciÛn...">
+      <UnifiedDashboardLayout title="Configuraci√≥n Avanzada" subtitle="Cargando configuraci√≥n...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando configuraciÛn...</p>
+            <p className="mt-4 text-gray-600">Cargando configuraci√≥n...</p>
           </div>
         </div>
       </UnifiedDashboardLayout>
@@ -3411,12 +3410,12 @@ export default function EnhancedAdminSettingsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="ConfiguraciÛn Avanzada" subtitle="Gestiona toda la configuraciÛn del sistema Rent360">
+    <UnifiedDashboardLayout title="Configuraci√≥n Avanzada" subtitle="Gestiona toda la configuraci√≥n del sistema Rent360">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">ConfiguraciÛn Avanzada</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Configuraci√≥n Avanzada</h1>
             <p className="text-gray-600 mt-2">Gestiona todas las preferencias y opciones del sistema</p>
           </div>
           <div className="flex items-center gap-4">
@@ -3474,7 +3473,6 @@ export default function EnhancedAdminSettingsPage() {
     </UnifiedDashboardLayout
   );
 }
-
 
 
 

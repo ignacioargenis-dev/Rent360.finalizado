@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, 
-  Search, 
-  Filter, 
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { FileText,
+  Search,
+  Filter,
   Eye, 
   Edit, 
   Download, 
@@ -25,7 +26,6 @@ import { FileText,
   X,
   Loader2
 } from 'lucide-react';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { User, Contract } from '@/types';
 
 
@@ -391,19 +391,19 @@ Arrendador: ___________________________                Arrendatario: ___________
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Contratos</p>
-                        <p className="text-2xl font-bold text-gray-900">{contracts.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Contratos</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardContent className="pt-6">
@@ -926,6 +926,8 @@ Propietario: ___________________________                Arrendatario: __________
                   </>
                 )}
               </Button>
+            </div>
+          </div>
             </div>
           </div>
         </div>
