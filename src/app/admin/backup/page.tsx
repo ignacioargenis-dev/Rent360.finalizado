@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -357,7 +357,7 @@ return '0 B';
     });
   };
 
-  const formatRelativeTime = function(dateString: string) {
+  const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();

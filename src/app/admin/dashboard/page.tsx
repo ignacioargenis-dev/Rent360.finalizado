@@ -2,7 +2,7 @@
 
 import { logger } from '@/lib/logger';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -387,7 +387,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const getHealthBadge = function(health: string) {
+  const getHealthBadge = (health: string) => {
     switch (health) {
       case 'good':
         return <Badge className="bg-green-100 text-green-800">Bueno</Badge>;

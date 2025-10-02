@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -279,7 +279,7 @@ params.append('verified', verifiedFilter);
     }
   };
 
-  const formatDate = function(dateString: string) {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CL');
   };
 

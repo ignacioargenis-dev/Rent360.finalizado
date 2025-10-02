@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -171,11 +171,11 @@ export default function ExecutiveDashboard() {
     }).format(amount);
   };
 
-  const formatPercentage = function(value: number) {
+  const formatPercentage = (value: number) => {
     return `${value.toFixed(1)}%`;
   };
 
-  const getGrowthIndicator = function(current: number, previous: number) {
+  const getGrowthIndicator = (current: number, previous: number) => {
     const growth = ((current - previous) / previous) * 100;
     return {
       value: Math.abs(growth),
