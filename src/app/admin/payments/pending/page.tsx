@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -136,19 +137,9 @@ export default function AdminPendingPaymentsPage() {
 
   if (loading) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
@@ -157,15 +148,7 @@ export default function AdminPendingPaymentsPage() {
   const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
+    <UnifiedDashboardLayout title="Pagos Pendientes" subtitle="Gestión de pagos pendientes y morosos">
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -375,7 +358,7 @@ export default function AdminPendingPaymentsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
 

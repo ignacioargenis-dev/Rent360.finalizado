@@ -386,7 +386,7 @@ Arrendador: ___________________________                Arrendatario: ___________
 
   return (
     <UnifiedDashboardLayout title="Gestión de Contratos" subtitle="Administra todos los contratos del sistema">
-            <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
               {/* Header Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <Card>
@@ -928,6 +928,7 @@ Propietario: ___________________________                Arrendatario: __________
           </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </UnifiedDashboardLayout>

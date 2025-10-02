@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   Bell,
   Eye,
@@ -519,20 +520,7 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Notificaciones Avanzadas"
-      subtitle="Sistema de notificaciones en tiempo real con IA"
-      notificationCount={stats.unread}
-    >
+    <UnifiedDashboardLayout title="Notificaciones Avanzadas" subtitle="Sistema de notificaciones inteligente">
       <div className="container mx-auto px-4 py-6">
         {/* Header with real-time status */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -953,7 +941,8 @@ return `Hace ${diffDays} días`;
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout
+      </div>
+    </UnifiedDashboardLayout>
   );
 }
 

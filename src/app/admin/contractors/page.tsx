@@ -286,7 +286,7 @@ params.append('verified', verifiedFilter);
 
   return (
     <UnifiedDashboardLayout title="Gestión de Contratistas" subtitle="Administra todos los contratistas del sistema">
-            <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
               <div className="space-y-6">
                 {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -791,6 +791,7 @@ params.append('verified', verifiedFilter);
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </UnifiedDashboardLayout>
   );
