@@ -1,5 +1,7 @@
 'use client';
 
+
+import React from 'react';
 import { logger } from '@/lib/logger';
 import { 
   Filter, 
@@ -382,5 +384,6 @@ export default function AdminReportedPropertiesPage() {
     </DashboardLayout
   );
 }
+
 
 

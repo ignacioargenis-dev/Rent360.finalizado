@@ -1,14 +1,8 @@
 'use client';
 
+import React from 'react';
 import { logger } from '@/lib/logger';
-import { 
-  Filter, 
-  Search, 
-  Download, 
-  CreditCard, 
-  AlertTriangle, 
-  Eye 
-} from 'lucide-react';
+import { Filter, Search, Download, CreditCard, AlertTriangle, Eye } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 
@@ -17,12 +11,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Payment } from '@/types';
 
 export default function AdminPendingPaymentsPage() {
-
   const [payments, setPayments] = useState<Payment[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -45,17 +51,21 @@ export default function AdminPendingPaymentsPage() {
         setPayments(data.payments || []);
       }
     } catch (error) {
-      logger.error('Error fetching payments:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching payments:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = searchTerm === '' || 
-                         (payment.paymentNumber && payment.paymentNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch =
+      searchTerm === '' ||
+      (payment.paymentNumber &&
+        payment.paymentNumber.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    
+
     let matchesDays = true;
     if (daysFilter !== 'all') {
       const days = parseInt(daysFilter);
@@ -63,14 +73,14 @@ export default function AdminPendingPaymentsPage() {
       const today = new Date();
       const diffTime = dueDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (daysFilter === 'overdue') {
         matchesDays = diffDays < 0;
       } else {
         matchesDays = diffDays <= days && diffDays >= 0;
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesDays;
   });
 
@@ -84,7 +94,7 @@ export default function AdminPendingPaymentsPage() {
 
   const getPaymentStatusBadge = (payment: Payment) => {
     const daysUntilDue = getDaysUntilDue(payment.dueDate);
-    
+
     if (payment.status === 'COMPLETED') {
       return <Badge variant="secondary">Pagado</Badge>;
     } else if (daysUntilDue < 0) {
@@ -103,23 +113,35 @@ export default function AdminPendingPaymentsPage() {
       // Simular envío de recordatorio
       alert('Recordatorio enviado exitosamente');
     } catch (error) {
-      logger.error('Error sending reminder:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending reminder:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Propiedad', 'Inquilino', 'Monto', 'Fecha Vencimiento', 'Estado', 'Días Restantes'];
+    const headers = [
+      'ID',
+      'Propiedad',
+      'Inquilino',
+      'Monto',
+      'Fecha Vencimiento',
+      'Estado',
+      'Días Restantes',
+    ];
     const csvContent = [
       headers.join(','),
-      ...filteredPayments.map(payment => [
-        payment.paymentNumber,
-        payment.paymentNumber || '',
-        payment.paymentNumber || '',
-        payment.amount,
-        new Date(payment.dueDate).toLocaleDateString(),
-        payment.status,
-        getDaysUntilDue(payment.dueDate),
-      ].join(',')),
+      ...filteredPayments.map(payment =>
+        [
+          payment.paymentNumber,
+          payment.paymentNumber || '',
+          payment.paymentNumber || '',
+          payment.amount,
+          new Date(payment.dueDate).toLocaleDateString(),
+          payment.status,
+          getDaysUntilDue(payment.dueDate),
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -143,12 +165,18 @@ export default function AdminPendingPaymentsPage() {
     );
   }
 
-  const totalPending = filteredPayments.reduce((sum, p) => p.status === 'PENDING' ? sum + p.amount : sum, 0);
+  const totalPending = filteredPayments.reduce(
+    (sum, p) => (p.status === 'PENDING' ? sum + p.amount : sum),
+    0
+  );
   const overduePayments = filteredPayments.filter(p => getDaysUntilDue(p.dueDate) < 0);
   const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <UnifiedDashboardLayout title="Pagos Pendientes" subtitle="Gestión de pagos pendientes y morosos">
+    <UnifiedDashboardLayout
+      title="Pagos Pendientes"
+      subtitle="Gestión de pagos pendientes y morosos"
+    >
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -165,7 +193,7 @@ export default function AdminPendingPaymentsPage() {
                 <Input
                   placeholder="Buscar por propiedad o inquilino..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -220,7 +248,9 @@ export default function AdminPendingPaymentsPage() {
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">${totalOverdue.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-red-600">
+                ${totalOverdue.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {overduePayments.length} pagos vencidos
               </p>
@@ -232,10 +262,14 @@ export default function AdminPendingPaymentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                ${filteredPayments.filter(p => {
-                  const days = getDaysUntilDue(p.dueDate);
-                  return days >= 0 && days <= 7 && p.status === 'PENDING';
-                }).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                $
+                {filteredPayments
+                  .filter(p => {
+                    const days = getDaysUntilDue(p.dueDate);
+                    return days >= 0 && days <= 7 && p.status === 'PENDING';
+                  })
+                  .reduce((sum, p) => sum + p.amount, 0)
+                  .toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">Por vencer esta semana</p>
             </CardContent>
@@ -246,9 +280,13 @@ export default function AdminPendingPaymentsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {payments.length > 0 
-                  ? Math.round((payments.filter(p => p.status === 'COMPLETED').length / payments.length) * 100)
-                  : 0}%
+                {payments.length > 0
+                  ? Math.round(
+                      (payments.filter(p => p.status === 'COMPLETED').length / payments.length) *
+                        100
+                    )
+                  : 0}
+                %
               </div>
               <p className="text-xs text-muted-foreground">Pagos completados</p>
             </CardContent>
@@ -259,9 +297,7 @@ export default function AdminPendingPaymentsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Pagos Pendientes</CardTitle>
-            <CardDescription>
-              Lista de pagos pendientes de cobro
-            </CardDescription>
+            <CardDescription>Lista de pagos pendientes de cobro</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -278,13 +314,11 @@ export default function AdminPendingPaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map((payment) => {
+                {filteredPayments.map(payment => {
                   const daysUntilDue = getDaysUntilDue(payment.dueDate);
                   return (
                     <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-sm">
-                        {payment.paymentNumber}
-                      </TableCell>
+                      <TableCell className="font-mono text-sm">{payment.paymentNumber}</TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">Propiedad #{payment.contractId}</div>
@@ -304,22 +338,20 @@ export default function AdminPendingPaymentsPage() {
                       <TableCell className="font-medium">
                         ${payment.amount.toLocaleString()}
                       </TableCell>
+                      <TableCell>{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{getPaymentStatusBadge(payment)}</TableCell>
                       <TableCell>
-                        {new Date(payment.dueDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {getPaymentStatusBadge(payment)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`font-medium ${
-                          daysUntilDue < 0 
-                            ? 'text-red-600' 
-                            : daysUntilDue <= 3 
-                              ? 'text-yellow-600' 
-                              : 'text-green-600'
-                        }`}>
-                          {daysUntilDue < 0 
-                            ? `${Math.abs(daysUntilDue)} días vencido` 
+                        <span
+                          className={`font-medium ${
+                            daysUntilDue < 0
+                              ? 'text-red-600'
+                              : daysUntilDue <= 3
+                                ? 'text-yellow-600'
+                                : 'text-green-600'
+                          }`}
+                        >
+                          {daysUntilDue < 0
+                            ? `${Math.abs(daysUntilDue)} días vencido`
                             : `${daysUntilDue} días`}
                         </span>
                       </TableCell>
@@ -349,7 +381,7 @@ export default function AdminPendingPaymentsPage() {
                 })}
               </TableBody>
             </Table>
-            
+
             {filteredPayments.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No se encontraron pagos pendientes
@@ -361,5 +393,3 @@ export default function AdminPendingPaymentsPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-

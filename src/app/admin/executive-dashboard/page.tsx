@@ -185,15 +185,7 @@ export default function ExecutiveDashboard() {
   };
 
   if (loading || !metrics) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>Cargando dashboard ejecutivo...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return React.createElement('div', { className: 'text-center p-4' }, 'Cargando...');
   }
 
   return (
@@ -869,5 +861,6 @@ export default function ExecutiveDashboard() {
     </UnifiedDashboardLayout>
   );
 }
+
 
 

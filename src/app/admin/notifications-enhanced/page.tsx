@@ -941,8 +941,8 @@ return `Hace ${diffDays} días`;
           </TabsContent>
         </Tabs>
       </div>
-      </div>
     </UnifiedDashboardLayout>
   );
 }
+
 

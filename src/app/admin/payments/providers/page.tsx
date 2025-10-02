@@ -1,5 +1,7 @@
 'use client';
 
+
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   Truck,
   Wrench,
@@ -223,25 +226,16 @@ export default function AdminProviderPayoutsPage() {
 
   if (loading && !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Cargando...</p>
       </div>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
+    <UnifiedDashboardLayout title="Proveedores de Servicios" subtitle="Gestiona proveedores externos y pagos">
+      <div className="container mx-auto px-4 py-6"> 
       <DashboardHeader
         
         title="Payouts de Proveedores"
@@ -594,8 +588,10 @@ export default function AdminProviderPayoutsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout
+      </div>
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
