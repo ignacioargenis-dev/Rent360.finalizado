@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -284,17 +285,7 @@ params.append('verified', verifiedFilter);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Contratistas</h1>
-            <p className="text-gray-600 mt-1">Administra todos los contratistas del sistema</p>
+    <UnifiedDashboardLayout title="Gestión de Contratistas" subtitle="Administra todos los contratistas del sistema">
             <div className="container mx-auto px-4 py-6">
               <div className="space-y-6">
                 {/* Stats Cards */}
@@ -801,7 +792,7 @@ params.append('verified', verifiedFilter);
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
 

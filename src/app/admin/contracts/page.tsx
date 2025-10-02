@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, 
-  Search, 
-  Filter, 
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { FileText,
+  Search,
+  Filter,
   Eye, 
   Edit, 
   Download, 
@@ -384,17 +385,7 @@ Arrendador: ___________________________                Arrendatario: ___________
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Contratos</h1>
-            <p className="text-gray-600 mt-1">Administra todos los contratos del sistema</p>
+    <UnifiedDashboardLayout title="Gestión de Contratos" subtitle="Administra todos los contratos del sistema">
             <div className="container mx-auto px-4 py-6">
               {/* Header Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -939,7 +930,7 @@ Propietario: ___________________________                Arrendatario: __________
           </div>
         </div>
       </div>
-    </div>
+    </UnifiedDashboardLayout>
   );
 }
 

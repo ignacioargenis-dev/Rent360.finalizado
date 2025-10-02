@@ -650,8 +650,6 @@ return '0 B';
               </CardContent>
             </Card>
           </div>
-            </div>
-          </div>
         </div>
       </div>
     </UnifiedDashboardLayout>
