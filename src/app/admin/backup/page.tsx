@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -379,15 +379,18 @@ return '0 B';
   };
 
   if (loading) {
-    return React.createElement('div', { className: 'min-h-screen bg-gray-50 flex items-center justify-center' },
-      React.createElement('div', { className: 'text-center' },
-        React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4' }),
-        React.createElement('p', { className: 'text-gray-600' }, 'Cargando sistema de backups...')
-      )
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
+        </div>
+      </div>
     );
   }
 
-  return React.createElement('div', { className: 'min-h-screen bg-gray-50' }
+  return (
+    <div className="min-h-screen bg-gray-50">
       <div className="flex">
         <div className="w-64 bg-white shadow-lg">
           <div className="p-4">
