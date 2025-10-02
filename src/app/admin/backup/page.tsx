@@ -7,10 +7,11 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Database, 
-  Download, 
-  Upload, 
-  RefreshCw, 
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
   Calendar,
   Clock,
   HardDrive,
@@ -392,17 +393,7 @@ return '0 B';
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Sistema de Backup</h1>
-            <p className="text-gray-600 mt-1">Gestiona y monitorea todas las copias de seguridad</p>
+    <UnifiedDashboardLayout title="Sistema de Backup" subtitle="Gestiona y monitorea todas las copias de seguridad">
             <div className="container mx-auto px-4 py-6">
               {/* Header with actions */}
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -663,7 +654,7 @@ return '0 B';
           </div>
         </div>
       </div>
-    </div>
+    </UnifiedDashboardLayout>
   );
 }
 
