@@ -171,11 +171,11 @@ export default function ExecutiveDashboard() {
     }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = function(value: number) {
     return `${value.toFixed(1)}%`;
   };
 
-  const getGrowthIndicator = (current: number, previous: number) => {
+  const getGrowthIndicator = function(current: number, previous: number) {
     const growth = ((current - previous) / previous) * 100;
     return {
       value: Math.abs(growth),

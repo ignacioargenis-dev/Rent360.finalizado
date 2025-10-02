@@ -387,7 +387,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const getHealthBadge = (health: string) => {
+  const getHealthBadge = function(health: string) {
     switch (health) {
       case 'good':
         return <Badge className="bg-green-100 text-green-800">Bueno</Badge>;

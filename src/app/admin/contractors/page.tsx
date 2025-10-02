@@ -279,7 +279,7 @@ params.append('verified', verifiedFilter);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = function(dateString: string) {
     return new Date(dateString).toLocaleDateString('es-CL');
   };
 
