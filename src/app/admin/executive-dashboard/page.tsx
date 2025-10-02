@@ -189,19 +189,22 @@ export default function ExecutiveDashboard() {
       <div className="min-h-screen bg-gray-50">
         <div className="flex">
           <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+            <div className="p-4">
+              <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="p-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+                  <p>Cargando dashboard ejecutivo...</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>Cargando dashboard ejecutivo...</p>
-          </div>
-        </div>
-      </DashboardLayout
+      </div>
     );
   }
 
