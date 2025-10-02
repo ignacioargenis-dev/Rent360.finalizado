@@ -1,15 +1,19 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   CreditCard,
@@ -29,7 +33,7 @@ import {
   Users,
   Calendar,
   Shield,
-  Zap
+  Zap,
 } from 'lucide-react';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -120,9 +124,10 @@ export default function PaymentProcessorPage() {
         const banksData = await banksResponse.json();
         setBankIntegrations(banksData.integrations);
       }
-
     } catch (error) {
-      logger.error('Error cargando datos de pagos:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error cargando datos de pagos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
@@ -138,7 +143,7 @@ export default function PaymentProcessorPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bankCode: selectedBank
+          bankCode: selectedBank,
         }),
       });
 
@@ -150,9 +155,10 @@ export default function PaymentProcessorPage() {
         const error = await response.json();
         alert(`Error al procesar pago: ${error.message}`);
       }
-
     } catch (error) {
-      logger.error('Error procesando pago:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error procesando pago:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al procesar el pago');
     } finally {
       setProcessing(false);
@@ -169,7 +175,7 @@ export default function PaymentProcessorPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bankCode: selectedBank
+          bankCode: selectedBank,
         }),
       });
 
@@ -180,9 +186,10 @@ export default function PaymentProcessorPage() {
         const error = await response.json();
         alert(`Error al procesar lote: ${error.message}`);
       }
-
     } catch (error) {
-      logger.error('Error procesando lote:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error procesando lote:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al procesar el lote');
     } finally {
       setProcessing(false);
@@ -198,7 +205,7 @@ export default function PaymentProcessorPage() {
         },
         body: JSON.stringify({
           type,
-          bankCode: selectedBank
+          bankCode: selectedBank,
         }),
       });
 
@@ -209,9 +216,10 @@ export default function PaymentProcessorPage() {
         const error = await response.json();
         alert(`Error al crear lote: ${error.message}`);
       }
-
     } catch (error) {
-      logger.error('Error creando lote:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creando lote:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al crear el lote');
     }
   };
@@ -222,15 +230,11 @@ export default function PaymentProcessorPage() {
       processing: { label: 'Procesando', className: 'bg-blue-100 text-blue-800' },
       completed: { label: 'Completado', className: 'bg-green-100 text-green-800' },
       failed: { label: 'Fallido', className: 'bg-red-100 text-red-800' },
-      cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-800' }
+      cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-800' },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const getPriorityIcon = (priority: string) => {
@@ -268,7 +272,7 @@ export default function PaymentProcessorPage() {
       runner_payout: 'Pago a Runner',
       provider_payout: 'Pago a Proveedor',
       service_payment: 'Pago de Servicio',
-      commission: 'Comisión'
+      commission: 'Comisión',
     };
     return typeMap[type as keyof typeof typeMap] || type;
   };
@@ -302,9 +306,10 @@ export default function PaymentProcessorPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Procesador de Pagos" subtitle="Gestiona pagos automáticos y transferencias bancarias">
-      <DashboardHeader
-
+    <UnifiedDashboardLayout
+      title="Procesador de Pagos"
+      subtitle="Gestiona pagos automáticos y transferencias bancarias"
+    >
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Estadísticas Generales */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -317,7 +322,10 @@ export default function PaymentProcessorPage() {
                     {transactions.filter(t => t.status === 'pending').length}
                   </p>
                   <p className="text-xs text-yellow-600 mt-1">
-                    ${getTotalAmount(transactions.filter(t => t.status === 'pending')).toLocaleString('es-CL')}
+                    $
+                    {getTotalAmount(
+                      transactions.filter(t => t.status === 'pending')
+                    ).toLocaleString('es-CL')}
                   </p>
                 </div>
                 <Clock className="w-8 h-8 text-yellow-600" />
@@ -334,7 +342,10 @@ export default function PaymentProcessorPage() {
                     {transactions.filter(t => t.status === 'processing').length}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
-                    ${getTotalAmount(transactions.filter(t => t.status === 'processing')).toLocaleString('es-CL')}
+                    $
+                    {getTotalAmount(
+                      transactions.filter(t => t.status === 'processing')
+                    ).toLocaleString('es-CL')}
                   </p>
                 </div>
                 <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
@@ -348,16 +359,23 @@ export default function PaymentProcessorPage() {
                 <div>
                   <p className="text-sm font-medium text-green-700">Completados Hoy</p>
                   <p className="text-2xl font-bold text-green-900">
-                    {transactions.filter(t =>
-                      t.status === 'completed' &&
-                      new Date(t.processedAt || '').toDateString() === new Date().toDateString()
-                    ).length}
+                    {
+                      transactions.filter(
+                        t =>
+                          t.status === 'completed' &&
+                          new Date(t.processedAt || '').toDateString() === new Date().toDateString()
+                      ).length
+                    }
                   </p>
                   <p className="text-xs text-green-600 mt-1">
-                    ${getTotalAmount(transactions.filter(t =>
-                      t.status === 'completed' &&
-                      new Date(t.processedAt || '').toDateString() === new Date().toDateString()
-                    )).toLocaleString('es-CL')}
+                    $
+                    {getTotalAmount(
+                      transactions.filter(
+                        t =>
+                          t.status === 'completed' &&
+                          new Date(t.processedAt || '').toDateString() === new Date().toDateString()
+                      )
+                    ).toLocaleString('es-CL')}
                   </p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
@@ -374,7 +392,10 @@ export default function PaymentProcessorPage() {
                     {transactions.filter(t => t.status === 'failed').length}
                   </p>
                   <p className="text-xs text-red-600 mt-1">
-                    ${getTotalAmount(transactions.filter(t => t.status === 'failed')).toLocaleString('es-CL')}
+                    $
+                    {getTotalAmount(transactions.filter(t => t.status === 'failed')).toLocaleString(
+                      'es-CL'
+                    )}
                   </p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-red-600" />
@@ -405,7 +426,7 @@ export default function PaymentProcessorPage() {
                   <SelectContent>
                     {bankIntegrations
                       .filter(bank => bank.supported)
-                      .map((bank) => (
+                      .map(bank => (
                         <SelectItem key={bank.code} value={bank.code}>
                           {bank.name}
                         </SelectItem>
@@ -416,7 +437,7 @@ export default function PaymentProcessorPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bankIntegrations.map((bank) => (
+              {bankIntegrations.map(bank => (
                 <div
                   key={bank.code}
                   className={`p-4 border rounded-lg ${
@@ -427,13 +448,18 @@ export default function PaymentProcessorPage() {
                     <h4 className="font-medium">{bank.name}</h4>
                     <Badge
                       className={
-                        bank.status === 'active' ? 'bg-green-100 text-green-800' :
-                        bank.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                        'bg-red-100 text-red-800'
+                        bank.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : bank.status === 'inactive'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-red-100 text-red-800'
                       }
                     >
-                      {bank.status === 'active' ? 'Activo' :
-                       bank.status === 'inactive' ? 'Inactivo' : 'Error'}
+                      {bank.status === 'active'
+                        ? 'Activo'
+                        : bank.status === 'inactive'
+                          ? 'Inactivo'
+                          : 'Error'}
                     </Badge>
                   </div>
 
@@ -461,9 +487,7 @@ export default function PaymentProcessorPage() {
               <Banknote className="w-5 h-5" />
               Lotes de Pago
             </CardTitle>
-            <CardDescription>
-              Crea y gestiona lotes de pagos masivos
-            </CardDescription>
+            <CardDescription>Crea y gestiona lotes de pagos masivos</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-6">
@@ -488,8 +512,11 @@ export default function PaymentProcessorPage() {
                   <p className="text-gray-600">No hay lotes de pago creados</p>
                 </div>
               ) : (
-                batches.map((batch) => (
-                  <div key={batch.id} className="flex items-center justify-between p-4 border rounded-lg">
+                batches.map(batch => (
+                  <div
+                    key={batch.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                         <Banknote className="w-6 h-6 text-blue-600" />
@@ -543,9 +570,7 @@ export default function PaymentProcessorPage() {
             <TabsTrigger value="failed">
               Fallidos ({transactions.filter(t => t.status === 'failed').length})
             </TabsTrigger>
-            <TabsTrigger value="all">
-              Todas ({transactions.length})
-            </TabsTrigger>
+            <TabsTrigger value="all">Todas ({transactions.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-4">
@@ -564,7 +589,7 @@ export default function PaymentProcessorPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredTransactions.map((transaction) => (
+              filteredTransactions.map(transaction => (
                 <Card key={transaction.id}>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -587,7 +612,9 @@ export default function PaymentProcessorPage() {
                             <span>•</span>
                             <span>{transaction.description}</span>
                             <span>•</span>
-                            <span>{new Date(transaction.createdAt).toLocaleDateString('es-CL')}</span>
+                            <span>
+                              {new Date(transaction.createdAt).toLocaleDateString('es-CL')}
+                            </span>
                           </div>
 
                           {transaction.failureReason && (
@@ -603,9 +630,7 @@ export default function PaymentProcessorPage() {
                           <div className="text-2xl font-bold text-gray-900">
                             ${transaction.amount.toLocaleString('es-CL')}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {transaction.currency}
-                          </div>
+                          <div className="text-sm text-gray-600">{transaction.currency}</div>
                         </div>
 
                         {transaction.status === 'pending' && (
@@ -643,14 +668,21 @@ export default function PaymentProcessorPage() {
             <div className="flex items-start gap-4">
               <Settings className="w-6 h-6 text-gray-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">
-                  Configuración del Procesador
-                </h4>
+                <h4 className="font-medium text-gray-900 mb-2">Configuración del Procesador</h4>
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p>• Procesamiento automático: Los pagos se procesan según la prioridad y disponibilidad bancaria</p>
-                  <p>• Límite diario: Se respeta el límite de transacciones por día de cada banco</p>
-                  <p>• Reintentos: Los pagos fallidos se reintentan automáticamente hasta 3 veces</p>
-                  <p>• Notificaciones: Se envían notificaciones push y email en cada cambio de estado</p>
+                  <p>
+                    • Procesamiento automático: Los pagos se procesan según la prioridad y
+                    disponibilidad bancaria
+                  </p>
+                  <p>
+                    • Límite diario: Se respeta el límite de transacciones por día de cada banco
+                  </p>
+                  <p>
+                    • Reintentos: Los pagos fallidos se reintentan automáticamente hasta 3 veces
+                  </p>
+                  <p>
+                    • Notificaciones: Se envían notificaciones push y email en cada cambio de estado
+                  </p>
                 </div>
               </div>
             </div>
@@ -660,6 +692,3 @@ export default function PaymentProcessorPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-

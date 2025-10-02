@@ -1,14 +1,12 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { TrendingUp, 
   TrendingDown, 
   Brain, 
@@ -279,19 +277,7 @@ export default function AdminPredictiveAnalytics() {
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Analíticas Predictivas"
-      subtitle="Herramientas avanzadas de IA para predecir tendencias y comportamientos"
-    >
+    <UnifiedDashboardLayout title="Analíticas Predictivas" subtitle="Herramientas avanzadas de IA para predecir tendencias y comportamientos">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -649,9 +635,10 @@ export default function AdminPredictiveAnalytics() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
 

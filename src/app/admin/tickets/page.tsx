@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 
 import React from 'react';
@@ -650,6 +650,7 @@ return `Hace ${diffDays} días`;
     </DashboardLayout
   );
 }
+
 
 
 

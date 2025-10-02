@@ -1,8 +1,6 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +22,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface NotificationProvider {
   name: string;
@@ -274,32 +272,16 @@ export default function NotificationsAdminPage() {
 
   if (loading) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">>
+      <UnifiedDashboardLayout title="Notificaciones" subtitle="Cargando configuración...">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </div></div></div></div>
+    </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">>
+    <UnifiedDashboardLayout title="Notificaciones" subtitle="Configura los proveedores y plantillas de notificación">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -465,9 +447,10 @@ export default function NotificationsAdminPage() {
           ))}
         </div>
       </div>
-    </div></div></div></div>
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
 

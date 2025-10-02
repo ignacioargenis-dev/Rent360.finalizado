@@ -1,13 +1,11 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { BarChart3, 
   TrendingUp, 
   Users, Building, DollarSign, 
@@ -207,27 +205,15 @@ export default function AdminAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando analíticas...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p className="text-gray-600">Cargando analíticas...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Analíticas</h1>
-            <p className="text-gray-600 mt-1">Estadísticas y métricas del sistema</p>
+    <UnifiedDashboardLayout title="Analíticas del Sistema" subtitle="Estadísticas y métricas del sistema">
             <div className="container mx-auto px-4 py-6">
               {/* Header with controls */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -461,11 +447,9 @@ export default function AdminAnalytics() {
                 </Card>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </UnifiedDashboardLayout>
   );
 }
+
 
 

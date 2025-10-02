@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
@@ -10,4 +10,5 @@ export default function PerformancePage() {
     </div>
   );
 }
+
 

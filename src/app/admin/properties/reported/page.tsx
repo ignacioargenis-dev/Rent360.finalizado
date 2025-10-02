@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 
 import React from 'react';
@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Property } from '@/types';
 
 interface Report {
@@ -171,32 +172,15 @@ export default function AdminReportedPropertiesPage() {
 
   if (loading) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p className="text-gray-600">Cargando propiedades reportadas...</p>
+      </div>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
+    <UnifiedDashboardLayout title="Propiedades Reportadas" subtitle="Gestiona las propiedades reportadas por usuarios">
       <div className="space-y-6">
         {/* Filtros y Búsqueda */}
         <Card>
@@ -381,9 +365,10 @@ export default function AdminReportedPropertiesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,5 +21,6 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
 
 

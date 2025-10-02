@@ -1,8 +1,6 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, DollarSign, Users, TrendingUp, CheckCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { User } from '@/types';
-
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface RunnerPayout {
   recipientId: string;
@@ -171,21 +168,7 @@ export default function RunnerPayoutsAdminPage() {
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-      <DashboardHeader
-        
-        title="Pagos de Runners"
-        subtitle="Gestiona y aprueba pagos a runners"
-      />
-
+    <UnifiedDashboardLayout title="Pagos de Runners" subtitle="Gestión de pagos y comisiones para runners">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -404,9 +387,10 @@ export default function RunnerPayoutsAdminPage() {
           )}
         </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
 

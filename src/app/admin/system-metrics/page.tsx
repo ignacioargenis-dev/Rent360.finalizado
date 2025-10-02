@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import SystemMetricsDashboard from '@/components/admin/SystemMetricsDashboard';
 
 export const metadata: Metadata = {
@@ -9,4 +9,5 @@ export const metadata: Metadata = {
 export default function SystemMetricsPage() {
   return <SystemMetricsDashboard />;
 }
+
 

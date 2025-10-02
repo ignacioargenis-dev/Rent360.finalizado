@@ -1,16 +1,14 @@
-'use client';
+﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import {
   Building, 
   Search, 
   Filter, 
@@ -412,19 +410,7 @@ export default function AdminPropertiesPage() {
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Gestión de Propiedades"
-      subtitle="Administra todas las propiedades del sistema"
-    >
+    <UnifiedDashboardLayout title="Gestión de Propiedades" subtitle="Administra todas las propiedades del sistema">
       <div className="container mx-auto px-4 py-6">
         {/* Header Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -608,9 +594,10 @@ export default function AdminPropertiesPage() {
           mode="create"
         />
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
 
 
 

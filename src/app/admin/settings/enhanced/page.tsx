@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 
 import React from 'react';
@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Settings,
   Save,
   RefreshCw,
@@ -3485,6 +3486,7 @@ export default function EnhancedAdminSettingsPage() {
     </DashboardLayout
   );
 }
+
 
 
 
