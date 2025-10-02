@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,8 +85,8 @@ import { Settings,
   User,
   Truck,
   Wrench } from 'lucide-react';
-import { User as UserType } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { User as UserType } from '@/types';
 
 
 interface SystemSettings {
@@ -3398,20 +3399,18 @@ export default function EnhancedAdminSettingsPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Configuración Avanzada" subtitle="Cargando configuración...">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando configuración...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando configuración...</p>
         </div>
-      </UnifiedDashboardLayout>
+      </div>
     );
   }
 
   return (
     <UnifiedDashboardLayout title="Configuración Avanzada" subtitle="Gestiona toda la configuración del sistema Rent360">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -3470,10 +3469,8 @@ export default function EnhancedAdminSettingsPage() {
           {activeTab === 'legal' && renderLegalSettings()}
         </div>
       </div>
-    </UnifiedDashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
-
-
 
 

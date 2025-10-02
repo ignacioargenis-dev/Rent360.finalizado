@@ -1,90 +1,93 @@
 'use client';
 
+// Build fix - force update
+
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Mail, 
-  Phone, 
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  MessageSquare,
-  Filter,
-  MoreHorizontal, 
-  Eye, 
-  Reply,
-  ArrowRight, 
-  User
-} from 'lucide-react';
-import { User as UserType } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
+  Clock,
+  HardDrive,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
+} from 'lucide-react';
+import Link from 'next/link';
+import { User } from '@/types';
 
 
-interface Ticket {
+interface Backup {
   id: string;
-  title: string;
-  description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  category: string;
-  createdBy: string;
-  assignedTo?: string;
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
   createdAt: string;
-  updatedAt: string;
-  lastReply?: string;
-  attachments: number;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-interface TicketStats {
-  total: number;
-  open: number;
-  inProgress: number;
-  resolved: number;
-  closed: number;
-  critical: number;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
 }
 
 export default function AdminTicketsPage() {
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [backups, setBackups] = useState<Backup[]>([]);
 
-  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
+  });
 
   const [loading, setLoading] = useState(true);
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const [statusFilter, setStatusFilter] = useState<string>('');
-
-  const [priorityFilter, setPriorityFilter] = useState<string>('');
-
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [ticketsPerPage] = useState(10);
-
-  const [stats, setStats] = useState<TicketStats>({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-    closed: 0,
-    critical: 0,
-  });
-
   useEffect(() => {
-    // Load user data
     const loadUserData = async () => {
       try {
         const response = await fetch('/api/auth/me');
@@ -97,174 +100,263 @@ export default function AdminTicketsPage() {
       }
     };
 
+    const loadBackupData = async () => {
+      try {
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
+
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        setLoading(false);
+      }
+    };
+
     loadUserData();
-    fetchTickets();
+    loadBackupData();
   }, []);
 
-  useEffect(() => {
-    filterTickets();
-  }, [tickets, searchQuery, statusFilter, priorityFilter, categoryFilter]);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
 
-  const fetchTickets = async () => {
-    try {
-      setLoading(true);
-      
-      // Mock tickets data for demonstration
-      const mockTickets: Ticket[] = [
-        {
-          id: '1',
-          title: 'Problema con pago de arriendo',
-          description: 'El sistema no está procesando los pagos de arriendo correctamente',
-          status: 'open',
-          priority: 'high',
-          category: 'Pagos',
-          createdBy: 'Juan Pérez',
-          assignedTo: 'Soporte Técnico',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-          lastReply: '2024-01-15T11:15:00Z',
-          attachments: 2,
-        },
-        {
-          id: '2',
-          title: 'No puedo subir fotos de propiedad',
-          description: 'Al intentar subir fotos de mi propiedad, el sistema muestra un error',
-          status: 'in_progress',
-          priority: 'medium',
-          category: 'Propiedades',
-          createdBy: 'María González',
-          assignedTo: 'Equipo de Desarrollo',
-          createdAt: '2024-01-14T15:45:00Z',
-          updatedAt: '2024-01-15T09:20:00Z',
-          lastReply: '2024-01-15T09:20:00Z',
-          attachments: 1,
-        },
-        {
-          id: '3',
-          title: 'Solicitud de verificación de cuenta',
-          description: 'Necesito que verifiquen mi cuenta de propietario',
-          status: 'resolved',
-          priority: 'low',
-          category: 'Cuenta',
-          createdBy: 'Carlos Rodríguez',
-          assignedTo: 'Administración',
-          createdAt: '2024-01-13T08:20:00Z',
-          updatedAt: '2024-01-14T16:30:00Z',
-          lastReply: '2024-01-14T16:30:00Z',
-          attachments: 0,
-        },
-        {
-          id: '4',
-          title: 'Error crítico en el sistema',
-          description: 'El sistema se cae cuando intento generar un contrato',
-          status: 'open',
-          priority: 'critical',
-          category: 'Sistema',
-          createdBy: 'Ana Martínez',
-          assignedTo: 'Soporte Crítico',
-          createdAt: '2024-01-15T14:10:00Z',
-          updatedAt: '2024-01-15T14:10:00Z',
-          attachments: 3,
-        },
-        {
-          id: '5',
-          title: 'Consulta sobre comisiones',
-          description: 'Tengo una duda sobre cómo se calculan las comisiones',
-          status: 'closed',
-          priority: 'low',
-          category: 'Facturación',
-          createdBy: 'Luis Silva',
-          assignedTo: 'Ventas',
-          createdAt: '2024-01-12T11:30:00Z',
-          updatedAt: '2024-01-13T10:15:00Z',
-          lastReply: '2024-01-13T10:15:00Z',
-          attachments: 0,
-        },
-      ];
-
-      setTickets(mockTickets);
-      
-      // Calculate stats
-      const ticketStats: TicketStats = {
-        total: mockTickets.length,
-        open: mockTickets.filter(t => t.status === 'open').length,
-        inProgress: mockTickets.filter(t => t.status === 'in_progress').length,
-        resolved: mockTickets.filter(t => t.status === 'resolved').length,
-        closed: mockTickets.filter(t => t.status === 'closed').length,
-        critical: mockTickets.filter(t => t.priority === 'critical').length,
-      };
-      
-      setStats(ticketStats);
-    } catch (error) {
-      logger.error('Error fetching tickets:', { error: error instanceof Error ? error.message : String(error) });
-    } finally {
-      setLoading(false);
-    }
+    setBackups(prev => [newBackup, ...prev]);
   };
 
-  const filterTickets = () => {
-    let filtered = [...tickets];
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(ticket =>
-        ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.createdBy.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
-
-    // Apply status filter
-    if (statusFilter) {
-      filtered = filtered.filter(ticket => ticket.status === statusFilter);
-    }
-
-    // Apply priority filter
-    if (priorityFilter) {
-      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
-    }
-
-    // Apply category filter
-    if (categoryFilter) {
-      filtered = filtered.filter(ticket => ticket.category === categoryFilter);
-    }
-
-    setFilteredTickets(filtered);
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      open: { label: 'Abierto', className: 'bg-red-100 text-red-800' },
-      in_progress: { label: 'En Progreso', className: 'bg-yellow-100 text-yellow-800' },
-      resolved: { label: 'Resuelto', className: 'bg-blue-100 text-blue-800' },
-      closed: { label: 'Cerrado', className: 'bg-green-100 text-green-800' },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || 
-      { label: status, className: 'bg-gray-100 text-gray-800' };
-
-    return <Badge className={config.className}>{config.label}</Badge>;
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
+      default:
+        return <Badge>Desconocido</Badge>;
+    }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    const priorityConfig = {
-      low: { label: 'Baja', className: 'bg-gray-100 text-gray-800' },
-      medium: { label: 'Media', className: 'bg-blue-100 text-blue-800' },
-      high: { label: 'Alta', className: 'bg-orange-100 text-orange-800' },
-      critical: { label: 'Crítica', className: 'bg-red-100 text-red-800' },
-    };
-
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || 
-      { label: priority, className: 'bg-gray-100 text-gray-800' };
-
-    return <Badge className={config.className}>{config.label}</Badge>;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -277,361 +369,287 @@ export default function AdminTicketsPage() {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
-  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setTickets(tickets.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: newStatus as any, updatedAt: new Date().toISOString() }
-          : ticket,
-      ));
-    } catch (error) {
-      logger.error('Error updating ticket status:', { error: error instanceof Error ? error.message : String(error) });
-    }
-  };
-
-  const deleteTicket = async (ticketId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setTickets(tickets.filter(ticket => ticket.id !== ticketId));
-    } catch (error) {
-      logger.error('Error deleting ticket:', { error: error instanceof Error ? error.message : String(error) });
-    }
-  };
-
-  // Pagination
-  const indexOfLastTicket = currentPage * ticketsPerPage;
-  const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-  const currentTickets = filteredTickets.slice(indexOfFirstTicket, indexOfLastTicket);
-  const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
-
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Cargando tickets...">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando tickets...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
-      </UnifiedDashboardLayout>
+      </div>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Administra y responde a los tickets de soporte" notificationCount={stats.open}>
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Gestión de Tickets</h1>
-                <p className="text-gray-600">Administra todos los tickets de soporte de la plataforma</p>
+    <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Administra todos los tickets de soporte del sistema">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Sistema de Backup</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
+                </div>
               </div>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Ticket
-              </Button>
-            </div>
-          </div>
-        </div>
 
-        <div className="container mx-auto px-4 py-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Tickets</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                  </div>
-                  <MessageSquare className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Abiertos</p>
-                    <p className="text-2xl font-bold text-red-600">{stats.open}</p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">En Progreso</p>
-                    <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
-                  </div>
-                  <Clock className="w-8 h-8 text-yellow-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Resueltos</p>
-                    <p className="text-2xl font-bold text-blue-600">{stats.resolved}</p>
-                  </div>
-                  <CheckCircle className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Críticos</p>
-                    <p className="text-2xl font-bold text-red-800">{stats.critical}</p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 text-red-800" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Buscar tickets..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="open">Abierto</SelectItem>
-                    <SelectItem value="in_progress">En Progreso</SelectItem>
-                    <SelectItem value="resolved">Resuelto</SelectItem>
-                    <SelectItem value="closed">Cerrado</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Prioridad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las prioridades</SelectItem>
-                    <SelectItem value="low">Baja</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
-                    <SelectItem value="Pagos">Pagos</SelectItem>
-                    <SelectItem value="Propiedades">Propiedades</SelectItem>
-                    <SelectItem value="Cuenta">Cuenta</SelectItem>
-                    <SelectItem value="Sistema">Sistema</SelectItem>
-                    <SelectItem value="Facturación">Facturación</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSearchQuery('');
-                    setStatusFilter('');
-                    setPriorityFilter('');
-                    setCategoryFilter('');
-                  }}
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Limpiar
-                </Button>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Tickets Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Lista de Tickets</span>
-                <span className="text-sm text-gray-500">
-                  Mostrando {currentTickets.length} de {filteredTickets.length} tickets
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Ticket</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Creador</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Categoría</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Prioridad</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Última Actividad</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentTickets.map((ticket) => (
-                      <tr key={ticket.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div>
-                            <div className="font-medium">{ticket.title}</div>
-                            <div className="text-sm text-gray-500 truncate max-w-xs">
-                              {ticket.description}
-                            </div>
-                            {ticket.attachments > 0 && (
-                              <div className="text-xs text-gray-400 mt-1">
-                                {ticket.attachments} archivo(s) adjunto(s)
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
                               </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
                             )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                              <span className="text-white font-medium text-xs">
-                                {ticket.createdBy.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">{ticket.createdBy}</div>
-                              <div className="text-xs text-gray-500">
-                                {formatDate(ticket.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge variant="outline">{ticket.category}</Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          {getPriorityBadge(ticket.priority)}
-                        </td>
-                        <td className="py-3 px-4">
-                          {getStatusBadge(ticket.status)}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm">
-                            {ticket.lastReply ? formatRelativeTime(ticket.lastReply) : formatRelativeTime(ticket.createdAt)}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button size="sm" variant="outline">
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <Reply className="w-4 h-4" />
-                            </Button>
-                            <Select onValueChange={(value) => updateTicketStatus(ticket.id, value)}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Estado" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="open">Abierto</SelectItem>
-                                <SelectItem value="in_progress">En Progreso</SelectItem>
-                                <SelectItem value="resolved">Resuelto</SelectItem>
-                                <SelectItem value="closed">Cerrado</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Button
+                            <Button 
+                              size="sm" 
                               variant="outline"
-                              size="sm"
-                              onClick={() => deleteTicket(ticket.id)}
-                              className="text-red-600 hover:text-red-700"
+                              onClick={() => deleteBackup(backup.id)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredTickets.length === 0 && (
-                <div className="text-center py-8">
-                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No se encontraron tickets</h3>
-                  <p className="text-gray-600">
-                    No hay tickets que coincidan con tus criterios de búsqueda
-                  </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-6 border-t">
-                  <div className="text-sm text-gray-700">
-                    Mostrando página {currentPage} de {totalPages}
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Siguiente
-                    </Button>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </UnifiedDashboardLayout>

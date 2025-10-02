@@ -1,5 +1,7 @@
 'use client';
 
+// Build fix - force update
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,8 +23,8 @@ import {
   Banknote,
   Zap
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface SignatureProvider {
@@ -503,10 +505,8 @@ export default function SignaturesAdminPage() {
           </AlertDescription>
         </Alert>
       </div>
-    </div></div></div></div>
+    </UnifiedDashboardLayout>
   );
 }
-
-
 
 
