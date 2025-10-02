@@ -1,10 +1,7 @@
 ﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +26,7 @@ import { Search,
   User
 } from 'lucide-react';
 import { User as UserType } from '@/types';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 
 interface Ticket {
@@ -328,48 +326,20 @@ return `Hace ${diffDays} días`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando tickets...</p>
+      <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Cargando tickets...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando tickets...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Gestión de Tickets"
-      subtitle="Administra todos los tickets de soporte del sistema"
-      notificationCount={stats.open}
-    >
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Gestión de Tickets</h1>
-                <p className="text-gray-600">Administra todos los tickets de soporte de la plataforma</p>
-              </div>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Ticket
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 py-6">
+    <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Administra y responde a los tickets de soporte" notificationCount={stats.open}>
+      <div className="container mx-auto px-4 py-6 space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <Card>
@@ -647,7 +617,7 @@ return `Hace ${diffDays} días`;
           </Card>
         </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
 

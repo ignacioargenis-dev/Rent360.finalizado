@@ -1,10 +1,7 @@
 ﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +22,7 @@ import { Search, UserPlus, Edit,
   X
 } from 'lucide-react';
 import { User } from '@/types';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 import { useUserState } from '@/hooks/useUserState';
 
@@ -213,29 +211,19 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando usuarios...</p>
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Cargando usuarios...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Cargando usuarios...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Gestión de Usuarios"
-      subtitle="Administra todos los usuarios del sistema"
-    >
+    <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Administra todos los usuarios del sistema">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -590,7 +578,7 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
 

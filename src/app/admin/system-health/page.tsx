@@ -1,10 +1,7 @@
 ﻿'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +26,7 @@ import { Heart,
   TrendingDown, Info } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 
 interface SystemComponent {
@@ -360,29 +358,19 @@ return `Hace ${diffDays} días`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando estado del sistema...</p>
+      <UnifiedDashboardLayout title="Salud del Sistema" subtitle="Cargando estado del sistema...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando estado del sistema...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6">
-      
-      title="Salud del Sistema"
-      subtitle="Monitorea el estado y rendimiento de todos los componentes"
-    >
+    <UnifiedDashboardLayout title="Salud del Sistema" subtitle="Monitorea el estado de todos los componentes del sistema">
       <div className="container mx-auto px-4 py-6">
         {/* Header with overall status */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -596,7 +584,7 @@ return `Hace ${diffDays} días`;
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
 
