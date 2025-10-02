@@ -340,6 +340,23 @@ return `Hace ${diffDays} días`;
   return (
     <UnifiedDashboardLayout title="Gestión de Tickets" subtitle="Administra y responde a los tickets de soporte" notificationCount={stats.open}>
       <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Header */}
+        <div className="bg-white border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Gestión de Tickets</h1>
+                <p className="text-gray-600">Administra todos los tickets de soporte de la plataforma</p>
+              </div>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Ticket
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <Card>
@@ -617,10 +634,8 @@ return `Hace ${diffDays} días`;
           </Card>
         </div>
       </div>
-    </UnifiedDashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
-
-
 
 
