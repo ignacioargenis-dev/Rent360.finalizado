@@ -4,24 +4,26 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Download, 
-  DollarSign, 
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Download,
+  DollarSign,
   Home,
   Users,
   FileText,
   RefreshCw,
   Star,
   AlertTriangle,
-  CheckCircle, Settings,
+  CheckCircle,
+  Settings,
   Printer,
   Mail,
   Eye,
-  Activity } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+  Activity,
+} from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 import { User } from '@/types';
 
@@ -220,11 +222,11 @@ export default function OwnerReportsPage() {
 
   const getOccupancyColor = (rate: number) => {
     if (rate >= 90) {
-return 'text-green-600 bg-green-100';
-}
+      return 'text-green-600 bg-green-100';
+    }
     if (rate >= 75) {
-return 'text-yellow-600 bg-yellow-100';
-}
+      return 'text-yellow-600 bg-yellow-100';
+    }
     return 'text-red-600 bg-red-100';
   };
 
@@ -240,13 +242,10 @@ return 'text-yellow-600 bg-yellow-100';
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
-        user={user}
-        title="Reportes y Análisis"
-        subtitle="Analiza el rendimiento de tus propiedades"
-      />
-
+    <UnifiedDashboardLayout
+      title="Reportes y Análisis"
+      subtitle="Analiza el rendimiento de tus propiedades"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Header Controls */}
         <Card className="mb-6">
@@ -255,7 +254,7 @@ return 'text-yellow-600 bg-yellow-100';
               <div>
                 <h2 className="text-xl font-semibold mb-2">Período de Reporte</h2>
                 <div className="flex gap-2">
-                  {['last7days', 'last30days', 'last90days', 'thisYear', 'lastYear'].map((range) => (
+                  {['last7days', 'last30days', 'last90days', 'thisYear', 'lastYear'].map(range => (
                     <Button
                       key={range}
                       variant={dateRange === range ? 'default' : 'outline'}
@@ -295,7 +294,9 @@ return 'text-yellow-600 bg-yellow-100';
             <Card key={index}>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center ${metric.color}`}>
+                  <div
+                    className={`w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center ${metric.color}`}
+                  >
                     <metric.icon className="w-6 h-6" />
                   </div>
                   <div className={`flex items-center gap-1 ${getTrendColor(metric.trend)}`}>
@@ -320,9 +321,7 @@ return 'text-yellow-600 bg-yellow-100';
                 <DollarSign className="w-5 h-5" />
                 Resumen Financiero
               </CardTitle>
-              <CardDescription>
-                Desglose de ingresos y gastos
-              </CardDescription>
+              <CardDescription>Desglose de ingresos y gastos</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -340,7 +339,7 @@ return 'text-yellow-600 bg-yellow-100';
                     <div className="text-sm text-red-700">Gastos Totales</div>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -383,9 +382,7 @@ return 'text-yellow-600 bg-yellow-100';
                 <Users className="w-5 h-5" />
                 Análisis de Inquilinos
               </CardTitle>
-              <CardDescription>
-                Métricas de rendimiento y satisfacción
-              </CardDescription>
+              <CardDescription>Métricas de rendimiento y satisfacción</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -434,7 +431,7 @@ return 'text-yellow-600 bg-yellow-100';
                       ))}
                     </div>
                   </div>
-                  
+
                   {tenantAnalysis.atRiskTenants.length > 0 && (
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Inquilinos en Riesgo</p>
@@ -475,8 +472,11 @@ return 'text-yellow-600 bg-yellow-100';
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {propertyPerformance.map((property) => (
-                <div key={property.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              {propertyPerformance.map(property => (
+                <div
+                  key={property.id}
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
@@ -563,8 +563,6 @@ return 'text-yellow-600 bg-yellow-100';
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
-
-
