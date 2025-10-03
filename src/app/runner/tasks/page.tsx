@@ -257,7 +257,7 @@ export default function TareasPage() {
                 icon={RefreshCw}
                 label="Actualizar"
                 description="Recargar tareas"
-                onClick={() => loadPageData()}
+                onClick={() => alert('Funcionalidad: Recargar lista de tareas')}
               />
             </div>
           </CardContent>
