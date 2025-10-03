@@ -58,51 +58,6 @@ interface TicketStats {
   escalated: number;
 }
 
-// Funciones handle para los botones
-const handleNewTicket = () => {
-  // Navigate to new ticket creation page
-  window.open('/support/tickets/new', '_blank');
-};
-
-const handleViewTicket = (ticketId: string) => {
-  // Navigate to ticket detail view
-  window.open(`/support/tickets/${ticketId}`, '_blank');
-};
-
-const handleUpdateStatus = (ticketId: string, newStatus: string) => {
-  // Update ticket status
-  alert(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
-};
-
-const handleAssignTicket = (ticketId: string) => {
-  // Assign ticket to support agent
-  const agent = prompt('Asignar ticket a:', 'soporte@rent360.cl');
-  if (agent) {
-    alert(`Ticket asignado exitosamente a: ${agent}`);
-  }
-};
-
-const handleExportTickets = () => {
-  // Export tickets data to CSV
-  const csvContent =
-    'data:text/csv;charset=utf-8,' +
-    'ID,Título,Cliente,Email,Categoría,Prioridad,Estado,Asignado,Creado,Actualizado\n' +
-    tickets
-      .map(
-        ticket =>
-          `${ticket.id},"${ticket.title}","${ticket.clientName}","${ticket.clientEmail}","${ticket.category}","${ticket.priority}","${ticket.status}","${ticket.assignedTo || 'Sin asignar'}","${ticket.createdAt}","${ticket.updatedAt}"`
-      )
-      .join('\n');
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `tickets_soporte_${new Date().toISOString().split('T')[0]}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,6 +201,56 @@ export default function TicketsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Funciones handle para los botones
+  const handleNewTicket = () => {
+    // Navigate to new ticket creation page
+    window.open('/support/tickets/new', '_blank');
+  };
+
+  const handleViewTicket = (ticketId: string) => {
+    // Navigate to ticket detail view
+    window.open(`/support/tickets/${ticketId}`, '_blank');
+  };
+
+  const handleUpdateStatus = (ticketId: string, newStatus: string) => {
+    // Update ticket status
+    alert(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
+  };
+
+  const handleAssignTicket = (ticketId: string) => {
+    // Assign ticket to support agent
+    const agent = prompt('Asignar ticket a:', 'soporte@rent360.cl');
+    if (agent) {
+      alert(`Ticket asignado exitosamente a: ${agent}`);
+    }
+  };
+
+  const handleExportTickets = () => {
+    // Export tickets data to CSV
+    if (tickets.length === 0) {
+      alert('No hay tickets para exportar');
+      return;
+    }
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'ID,Título,Cliente,Email,Categoría,Prioridad,Estado,Asignado,Creado,Actualizado\n' +
+      tickets
+        .map(
+          ticket =>
+            `${ticket.id},"${ticket.title}","${ticket.clientName}","${ticket.clientEmail}","${ticket.category}","${ticket.priority}","${ticket.status}","${ticket.assignedTo || 'Sin asignar'}","${ticket.createdAt}","${ticket.updatedAt}"`
+        )
+        .join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `tickets_soporte_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusBadge = (status: string) => {
@@ -574,6 +579,14 @@ export default function TicketsPage() {
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Ver
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            Responder
                           </Button>
                           <Button
                             size="sm"
