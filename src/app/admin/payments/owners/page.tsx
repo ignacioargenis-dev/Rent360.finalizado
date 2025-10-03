@@ -714,7 +714,7 @@ export default function AdminPaymentsOwnersPage() {
                     icon={Download}
                     label="Exportar"
                     description="Descargar datos"
-                    onClick={() => handleExportPayouts()}
+                    onClick={() => handleExportPayments()}
                   />
 
                   <QuickActionButton

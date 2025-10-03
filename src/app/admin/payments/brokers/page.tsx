@@ -724,7 +724,7 @@ export default function AdminPaymentsBrokersPage() {
                     icon={Download}
                     label="Exportar"
                     description="Descargar datos"
-                    onClick={() => handleExportPayouts()}
+                    onClick={() => handleExportPayments()}
                   />
 
                   <QuickActionButton
