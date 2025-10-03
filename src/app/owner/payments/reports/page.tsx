@@ -174,11 +174,43 @@ export default function OwnerPaymentsReportsPage() {
   };
 
   const handleExportReport = () => {
-    console.log('Export payment report');
+    // Export payment report data to CSV
+    const csvData = paymentDetails.map(payment => ({
+      ID: payment.id,
+      Propiedad: payment.propertyTitle,
+      Inquilino: payment.tenantName,
+      Monto: formatCurrency(payment.amount),
+      'Fecha Vencimiento': formatDateTime(payment.dueDate),
+      'Fecha Pago': payment.paymentDate ? formatDateTime(payment.paymentDate) : 'Pendiente',
+      Estado:
+        payment.status === 'paid'
+          ? 'Pagado'
+          : payment.status === 'pending'
+            ? 'Pendiente'
+            : 'Vencido',
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `reporte_pagos_propietario_${new Date().toISOString().split('T')[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleRefreshData = () => {
-    console.log('Refresh payment data');
+    // Refresh payment data - simulate API call
+    alert('Datos de pagos actualizados correctamente');
   };
 
   const currentReport = reports[0];

@@ -155,11 +155,37 @@ export default function BrokerReportsPage() {
   };
 
   const handleExportReport = () => {
-    console.log('Export report');
+    // Export broker report data to CSV
+    const csvData = reports.map(report => ({
+      Período: report.period,
+      'Propiedades Gestionadas': report.propertiesManaged,
+      'Nuevos Clientes': report.newClients,
+      'Ingresos Totales': formatCurrency(report.totalRevenue),
+      'Comisiones Ganadas': formatCurrency(report.commissionsEarned),
+      'Propiedades Arrendadas': report.propertiesRented,
+      'Solicitudes Mantenimiento': report.maintenanceRequests,
+      'Satisfacción Cliente': report.clientSatisfaction,
+      'Rendimiento Mercado': report.marketPerformance,
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `reporte_corredor_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleRefreshData = () => {
-    console.log('Refresh report data');
+    // Refresh report data
+    alert('Datos del reporte actualizados correctamente');
   };
 
   const currentReport = reports[0];

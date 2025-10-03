@@ -285,15 +285,44 @@ export default function AdminUsersReportsPage() {
   };
 
   const handleExportUsers = () => {
-    console.log('Export users report');
+    // Export users data to CSV
+    const csvData = filteredUsers.map(user => ({
+      ID: user.id,
+      Nombre: user.name,
+      Email: user.email,
+      Rol: user.role,
+      Estado: user.status,
+      'Fecha Creación': formatDateTime(user.createdAt),
+      'Último Login': formatDateTime(user.lastLogin),
+      Propiedades: user.propertiesCount || 0,
+      Contratos: user.contractsCount || 0,
+      'Ingresos Totales': user.totalRevenue ? formatCurrency(user.totalRevenue) : '$0',
+      'Puntuación Actividad': user.activityScore,
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `reporte_usuarios_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewUser = (userId: string) => {
-    console.log('View user:', userId);
+    // Navigate to user detail view
+    window.open(`/admin/users/${userId}`, '_blank');
   };
 
   const handleEditUser = (userId: string) => {
-    console.log('Edit user:', userId);
+    // Navigate to user edit page
+    window.open(`/admin/users/${userId}/edit`, '_blank');
   };
 
   const filteredUsers = userReports.filter(user => {

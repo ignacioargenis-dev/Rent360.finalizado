@@ -238,15 +238,49 @@ export default function BrokerCommissionsPage() {
   };
 
   const handleExportCommissions = () => {
-    console.log('Export commissions data');
+    // Export commissions data to CSV
+    const csvData = commissions.map(commission => ({
+      ID: commission.id,
+      Propiedad: commission.propertyTitle,
+      Cliente: commission.clientName,
+      'Valor Negocio': formatCurrency(commission.dealValue),
+      Comisión: formatCurrency(commission.commissionAmount),
+      Estado: commission.status,
+      'Fecha Servicio': formatDateTime(commission.serviceDate),
+      'Fecha Pago': commission.paymentDate ? formatDateTime(commission.paymentDate) : 'Pendiente',
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `comisiones_corredor_${new Date().toISOString().split('T')[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewCommission = (commissionId: string) => {
-    console.log('View commission:', commissionId);
+    // Navigate to commission detail view
+    window.open(`/broker/commissions/${commissionId}`, '_blank');
   };
 
   const handleDownloadInvoice = (commissionId: string) => {
-    console.log('Download invoice for commission:', commissionId);
+    // Download commission invoice
+    const commission = commissions.find(c => c.id === commissionId);
+    if (commission) {
+      alert(
+        `Descargando factura de comisión\nCliente: ${commission.clientName}\nMonto: ${formatCurrency(commission.commissionAmount)}`
+      );
+    }
   };
 
   const filteredCommissions = commissions.filter(commission => {

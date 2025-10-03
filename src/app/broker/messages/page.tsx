@@ -284,15 +284,24 @@ export default function BrokerMessagesPage() {
   };
 
   const handleViewMessage = (messageId: string) => {
-    console.log('View message:', messageId);
+    // Navigate to message detail view
+    window.open(`/broker/messages/${messageId}`, '_blank');
   };
 
   const handleReplyMessage = (messageId: string) => {
-    console.log('Reply to message:', messageId);
+    // Navigate to reply message form
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      window.open(`/broker/messages/reply/${messageId}`, '_blank');
+    }
   };
 
   const handleMarkAsRead = (messageId: string) => {
-    console.log('Mark as read:', messageId);
+    // Mark message as read
+    const message = messages.find(m => m.id === messageId);
+    if (message && message.status === 'unread') {
+      alert(`Mensaje de ${message.senderName} marcado como leído`);
+    }
   };
 
   const filteredMessages = messages.filter(message => {

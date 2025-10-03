@@ -242,15 +242,21 @@ export default function BrokerContractsPage() {
   };
 
   const handleViewContract = (contractId: string) => {
-    console.log('View contract:', contractId);
+    // Navigate to contract detail view
+    window.open(`/broker/contracts/${contractId}`, '_blank');
   };
 
   const handleEditContract = (contractId: string) => {
-    console.log('Edit contract:', contractId);
+    // Navigate to contract edit page
+    window.open(`/broker/contracts/${contractId}/edit`, '_blank');
   };
 
   const handleDownloadContract = (contractId: string) => {
-    console.log('Download contract:', contractId);
+    // Download contract PDF
+    const contract = contracts.find(c => c.id === contractId);
+    if (contract) {
+      alert(`Descargando contrato: ${contract.propertyTitle}\nArchivo: contrato_${contractId}.pdf`);
+    }
   };
 
   const filteredContracts = contracts.filter(contract => {

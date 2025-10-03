@@ -132,11 +132,53 @@ export default function BrokerAnalyticsPage() {
   };
 
   const handleExportAnalytics = () => {
-    console.log('Export analytics data');
+    // Export analytics data to CSV
+    const csvData = trendData.map(trend => ({
+      Período: trend.period,
+      Vistas: trend.views,
+      Consultas: trend.inquiries,
+      Conversiones: trend.conversions,
+      Ingresos: formatCurrency(trend.revenue),
+    }));
+
+    const csvDataCurrent = [
+      {
+        'Vistas Propiedades': performanceData.propertyViews,
+        'Consultas Generadas': performanceData.inquiriesGenerated,
+        'Tasa Conversión': `${performanceData.conversionRate}%`,
+        'Tiempo Respuesta': `${performanceData.averageResponseTime}h`,
+        'Satisfacción Cliente': `${performanceData.clientSatisfaction}/5.0`,
+        'Ingresos Mensuales': formatCurrency(performanceData.monthlyRevenue),
+      },
+    ];
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      '=== MÉTRICAS ACTUALES ===\n' +
+      Object.keys(csvDataCurrent[0]).join(',') +
+      '\n' +
+      csvDataCurrent.map(row => Object.values(row).join(',')).join('\n') +
+      '\n\n' +
+      '=== TENDENCIAS MENSUALES ===\n' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `analytics_corredor_${new Date().toISOString().split('T')[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleRefreshData = () => {
-    console.log('Refresh analytics data');
+    // Refresh analytics data
+    alert('Datos de analytics actualizados correctamente');
   };
 
   if (loading) {

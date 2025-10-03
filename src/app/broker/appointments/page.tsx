@@ -248,15 +248,18 @@ export default function BrokerAppointmentsPage() {
   };
 
   const handleNewAppointment = () => {
-    console.log('Navigate to new appointment form');
+    // Navigate to new appointment creation page
+    window.open('/broker/appointments/new', '_blank');
   };
 
   const handleViewAppointment = (appointmentId: string) => {
-    console.log('View appointment:', appointmentId);
+    // Navigate to appointment detail view
+    window.open(`/broker/appointments/${appointmentId}`, '_blank');
   };
 
   const handleEditAppointment = (appointmentId: string) => {
-    console.log('Edit appointment:', appointmentId);
+    // Navigate to appointment edit page
+    window.open(`/broker/appointments/${appointmentId}/edit`, '_blank');
   };
 
   const filteredAppointments = appointments.filter(appointment => {
