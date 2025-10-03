@@ -35,9 +35,9 @@ import { User as UserType } from '@/types';
 interface Message {
   id: string;
   senderName: string;
-  senderType: 'owner' | 'tenant' | 'prospect' | 'provider';
+  senderType: 'owner' | 'tenant' | 'prospect' | 'provider' | 'broker';
   recipientName: string;
-  recipientType: 'owner' | 'tenant' | 'prospect' | 'provider';
+  recipientType: 'owner' | 'tenant' | 'prospect' | 'provider' | 'broker';
   subject: string;
   content: string;
   propertyTitle?: string;
@@ -481,7 +481,9 @@ export default function BrokerMessagesPage() {
                                   ? 'Inquilino'
                                   : message.senderType === 'prospect'
                                     ? 'Prospecto'
-                                    : 'Proveedor'}
+                                    : message.senderType === 'broker'
+                                      ? 'Corredor'
+                                      : 'Proveedor'}
                               )
                             </span>
                           </div>
