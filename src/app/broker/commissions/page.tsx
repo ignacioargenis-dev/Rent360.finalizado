@@ -239,6 +239,11 @@ export default function BrokerCommissionsPage() {
 
   const handleExportCommissions = () => {
     // Export commissions data to CSV
+    if (commissions.length === 0) {
+      alert('No hay comisiones para exportar');
+      return;
+    }
+
     const csvData = commissions.map(commission => ({
       ID: commission.id,
       Propiedad: commission.propertyTitle,
@@ -252,7 +257,7 @@ export default function BrokerCommissionsPage() {
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]).join(',') +
+      Object.keys(csvData[0]!).join(',') +
       '\n' +
       csvData.map(row => Object.values(row).join(',')).join('\n');
 

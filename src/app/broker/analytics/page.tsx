@@ -155,12 +155,12 @@ export default function BrokerAnalyticsPage() {
     const csvContent =
       'data:text/csv;charset=utf-8,' +
       '=== MÉTRICAS ACTUALES ===\n' +
-      Object.keys(csvDataCurrent[0]).join(',') +
+      Object.keys(csvDataCurrent[0]!).join(',') +
       '\n' +
       csvDataCurrent.map(row => Object.values(row).join(',')).join('\n') +
       '\n\n' +
       '=== TENDENCIAS MENSUALES ===\n' +
-      Object.keys(csvData[0]).join(',') +
+      Object.keys(csvData[0]!).join(',') +
       '\n' +
       csvData.map(row => Object.values(row).join(',')).join('\n');
 

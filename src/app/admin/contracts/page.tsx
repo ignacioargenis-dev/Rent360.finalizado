@@ -301,6 +301,11 @@ export default function AdminContractsPage() {
 
   const handleExportContracts = () => {
     // Export contracts data to CSV/Excel
+    if (contracts.length === 0) {
+      alert('No hay contratos para exportar');
+      return;
+    }
+
     const csvData = contracts.map(contract => ({
       ID: contract.id,
       Título: contract.title,
@@ -315,7 +320,7 @@ export default function AdminContractsPage() {
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]).join(',') +
+      Object.keys(csvData[0]!).join(',') +
       '\n' +
       csvData.map(row => Object.values(row).join(',')).join('\n');
 

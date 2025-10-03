@@ -286,7 +286,7 @@ export default function AdminPaymentsOwnersPage() {
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]).join(',') +
+      Object.keys(csvData[0]!).join(',') +
       '\n' +
       csvData.map(row => Object.values(row).join(',')).join('\n');
 
