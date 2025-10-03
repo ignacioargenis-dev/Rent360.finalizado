@@ -26,26 +26,28 @@ import {
   UserCheck,
   CreditCard,
   Wallet,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { User } from '@/types';
+import { User as UserType } from '@/types';
 
-interface ProviderPayout {
+interface BrokerPayout {
   id: string;
-  providerName: string;
-  providerType: 'maintenance' | 'cleaning' | 'plumbing' | 'electrician' | 'other';
-  amount: number;
+  brokerName: string;
+  propertyAddress: string;
+  ownerName: string;
+  tenantName: string;
+  commission: number;
   currency: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  serviceDate: string;
+  period: string; // "2024-03"
   paymentDate?: string;
   description: string;
-  propertyAddress: string;
-  clientName: string;
-  paymentMethod: 'bank_transfer' | 'cash' | 'check' | 'digital_wallet';
+  dealValue: number;
+  commissionRate: number; // porcentaje
+  netAmount: number;
+  paymentMethod: 'bank_transfer' | 'check' | 'digital_wallet';
   invoiceNumber?: string;
-  taxAmount: number;
-  totalAmount: number;
 }
 
 interface PayoutStats {
@@ -57,9 +59,9 @@ interface PayoutStats {
   successRate: number;
 }
 
-export default function AdminPaymentsProvidersPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [payouts, setPayouts] = useState<ProviderPayout[]>([]);
+export default function AdminPaymentsBrokersPage() {
+  const [user, setUser] = useState<UserType | null>(null);
+  const [payouts, setPayouts] = useState<BrokerPayout[]>([]);
   const [stats, setStats] = useState<PayoutStats>({
     totalPayouts: 0,
     totalAmount: 0,
@@ -87,89 +89,94 @@ export default function AdminPaymentsProvidersPage() {
 
     const loadPayoutData = async () => {
       try {
-        // Mock provider payouts data
-        const mockPayouts: ProviderPayout[] = [
+        // Mock broker payouts data
+        const mockPayouts: BrokerPayout[] = [
           {
             id: '1',
-            providerName: 'Mantención Total SpA',
-            providerType: 'maintenance',
-            amount: 150000,
+            brokerName: 'Ana Martínez',
+            propertyAddress: 'Av. Providencia 123, Providencia, Santiago',
+            ownerName: 'María González',
+            tenantName: 'Carlos Ramírez',
+            commission: 22500,
             currency: 'CLP',
             status: 'completed',
-            serviceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            description: 'Reparación de grifería en propiedad de Providencia',
-            propertyAddress: 'Av. Providencia 123, Providencia, Santiago',
-            clientName: 'Carlos Ramírez',
+            period: '2024-03',
+            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+            description: 'Comisión por arriendo marzo 2024',
+            dealValue: 450000,
+            commissionRate: 5,
+            netAmount: 22500,
             paymentMethod: 'bank_transfer',
-            invoiceNumber: 'INV-2024-001',
-            taxAmount: 28500,
-            totalAmount: 178500,
+            invoiceNumber: 'PB-2024-001',
           },
           {
             id: '2',
-            providerName: 'Limpieza Express Ltda',
-            providerType: 'cleaning',
-            amount: 80000,
+            brokerName: 'Diego López',
+            propertyAddress: 'Calle Ñuñoa 456, Ñuñoa, Santiago',
+            ownerName: 'Roberto Díaz',
+            tenantName: 'Pedro Sánchez',
+            commission: 19000,
             currency: 'CLP',
             status: 'pending',
-            serviceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            description: 'Servicio de limpieza profunda mensual',
-            propertyAddress: 'Calle Ñuñoa 456, Ñuñoa, Santiago',
-            clientName: 'Pedro Sánchez',
+            period: '2024-03',
+            description: 'Comisión por arriendo marzo 2024',
+            dealValue: 380000,
+            commissionRate: 5,
+            netAmount: 19000,
             paymentMethod: 'bank_transfer',
-            invoiceNumber: 'INV-2024-002',
-            taxAmount: 15200,
-            totalAmount: 95200,
+            invoiceNumber: 'PB-2024-002',
           },
           {
             id: '3',
-            providerName: 'Electricidad Plus',
-            providerType: 'electrician',
-            amount: 120000,
+            brokerName: 'Patricia Soto',
+            propertyAddress: 'Calle Vitacura 321, Vitacura, Santiago',
+            ownerName: 'Carlos Mendoza',
+            tenantName: 'María Rodríguez',
+            commission: 24000,
             currency: 'CLP',
             status: 'processing',
-            serviceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            description: 'Instalación de tomacorrientes adicionales',
-            propertyAddress: 'Av. Las Condes 789, Las Condes, Santiago',
-            clientName: 'Ana López',
-            paymentMethod: 'cash',
-            invoiceNumber: 'INV-2024-003',
-            taxAmount: 22800,
-            totalAmount: 142800,
+            period: '2024-02',
+            description: 'Comisión por arriendo febrero 2024',
+            dealValue: 480000,
+            commissionRate: 5,
+            netAmount: 24000,
+            paymentMethod: 'digital_wallet',
+            invoiceNumber: 'PB-2024-003',
           },
           {
             id: '4',
-            providerName: 'Plomería Rápida',
-            providerType: 'plumbing',
-            amount: 95000,
+            brokerName: 'Ana Martínez',
+            propertyAddress: 'Av. Las Condes 789, Las Condes, Santiago',
+            ownerName: 'Juan Silva',
+            tenantName: 'Ana López',
+            commission: 26000,
             currency: 'CLP',
             status: 'completed',
-            serviceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-            description: 'Reparación de tubería con fuga',
-            propertyAddress: 'Calle Vitacura 321, Vitacura, Santiago',
-            clientName: 'María Rodríguez',
-            paymentMethod: 'digital_wallet',
-            invoiceNumber: 'INV-2024-004',
-            taxAmount: 18050,
-            totalAmount: 113050,
+            period: '2024-03',
+            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+            description: 'Comisión por arriendo marzo 2024',
+            dealValue: 520000,
+            commissionRate: 5,
+            netAmount: 26000,
+            paymentMethod: 'check',
+            invoiceNumber: 'PB-2024-004',
           },
           {
             id: '5',
-            providerName: 'ServicioExpress Ltda',
-            providerType: 'other',
-            amount: 200000,
+            brokerName: 'Diego López',
+            propertyAddress: 'Av. La Florida 654, La Florida, Santiago',
+            ownerName: 'Carmen Torres',
+            tenantName: 'Roberto Vega',
+            commission: 17500,
             currency: 'CLP',
             status: 'failed',
-            serviceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-            description: 'Mantenimiento general y reparaciones menores',
-            propertyAddress: 'Av. La Florida 654, La Florida, Santiago',
-            clientName: 'Roberto Vega',
+            period: '2024-03',
+            description: 'Comisión por arriendo marzo 2024 - Pago rechazado',
+            dealValue: 350000,
+            commissionRate: 5,
+            netAmount: 17500,
             paymentMethod: 'bank_transfer',
-            invoiceNumber: 'INV-2024-005',
-            taxAmount: 38000,
-            totalAmount: 238000,
+            invoiceNumber: 'PB-2024-005',
           },
         ];
 
@@ -178,13 +185,13 @@ export default function AdminPaymentsProvidersPage() {
         // Calculate stats
         const completedPayouts = mockPayouts.filter(p => p.status === 'completed');
         const pendingPayouts = mockPayouts.filter(p => p.status === 'pending').length;
-        const totalAmount = completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0);
+        const totalAmount = completedPayouts.reduce((sum, payout) => sum + payout.netAmount, 0);
         const thisMonthPayouts = completedPayouts.filter(
           p => new Date(p.paymentDate!).getMonth() === new Date().getMonth()
         ).length;
         const averageAmount =
           completedPayouts.length > 0
-            ? completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0) /
+            ? completedPayouts.reduce((sum, payout) => sum + payout.netAmount, 0) /
               completedPayouts.length
             : 0;
         const successRate = (completedPayouts.length / mockPayouts.length) * 100;
@@ -246,43 +253,6 @@ export default function AdminPaymentsProvidersPage() {
     }
   };
 
-  const getProviderTypeBadge = (type: string) => {
-    switch (type) {
-      case 'maintenance':
-        return (
-          <Badge variant="outline" className="text-blue-600 border-blue-300">
-            Mantención
-          </Badge>
-        );
-      case 'cleaning':
-        return (
-          <Badge variant="outline" className="text-green-600 border-green-300">
-            Limpieza
-          </Badge>
-        );
-      case 'plumbing':
-        return (
-          <Badge variant="outline" className="text-cyan-600 border-cyan-300">
-            Plomería
-          </Badge>
-        );
-      case 'electrician':
-        return (
-          <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-            Electricidad
-          </Badge>
-        );
-      case 'other':
-        return (
-          <Badge variant="outline" className="text-gray-600 border-gray-300">
-            Otro
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
-  };
-
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -326,8 +296,6 @@ export default function AdminPaymentsProvidersPage() {
     switch (method) {
       case 'bank_transfer':
         return 'Transferencia Bancaria';
-      case 'cash':
-        return 'Efectivo';
       case 'check':
         return 'Cheque';
       case 'digital_wallet':
@@ -342,7 +310,7 @@ export default function AdminPaymentsProvidersPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando pagos a proveedores...</p>
+          <p className="text-gray-600">Cargando pagos a corredores...</p>
         </div>
       </div>
     );
@@ -350,16 +318,16 @@ export default function AdminPaymentsProvidersPage() {
 
   return (
     <UnifiedDashboardLayout
-      title="Pagos a Proveedores"
-      subtitle="Gestión de pagos y comisiones a proveedores de servicios"
+      title="Pagos a Corredores"
+      subtitle="Gestión de comisiones y pagos a corredores"
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Centro de Pagos a Proveedores</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Pagos a Corredores</h1>
             <p className="text-gray-600">
-              Administra pagos y comisiones a proveedores de servicios
+              Administra comisiones y pagos a corredores inmobiliarios
             </p>
           </div>
           <div className="flex gap-2">
@@ -398,7 +366,7 @@ export default function AdminPaymentsProvidersPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Pagado</p>
+                  <p className="text-sm font-medium text-gray-600">Total Comisiones</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {formatCurrency(stats.totalAmount, 'CLP')}
                   </p>
@@ -447,7 +415,7 @@ export default function AdminPaymentsProvidersPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Pagos Recientes</CardTitle>
-                <CardDescription>Todos los pagos realizados a proveedores</CardDescription>
+                <CardDescription>Todas las comisiones pagadas a corredores</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -457,15 +425,15 @@ export default function AdminPaymentsProvidersPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3 flex-1">
                             <div className={`p-2 rounded-lg ${getStatusColor(payout.status)}`}>
-                              <DollarSign className="w-5 h-5 text-current" />
+                              <User className="w-5 h-5 text-current" />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-gray-900">
-                                  {payout.providerName}
-                                </h3>
+                                <h3 className="font-semibold text-gray-900">{payout.brokerName}</h3>
                                 {getStatusBadge(payout.status)}
-                                {getProviderTypeBadge(payout.providerType)}
+                                <Badge variant="outline" className="text-blue-600 border-blue-300">
+                                  {payout.period}
+                                </Badge>
                               </div>
                               <p className="text-sm text-gray-600 mb-2">{payout.description}</p>
 
@@ -476,12 +444,12 @@ export default function AdminPaymentsProvidersPage() {
                                     <span className="font-medium">{payout.propertyAddress}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                                    <Users className="w-4 h-4" />
-                                    <span>Cliente: {payout.clientName}</span>
+                                    <UserCheck className="w-4 h-4" />
+                                    <span>Propietario: {payout.ownerName}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Wallet className="w-4 h-4" />
-                                    <span>{getPaymentMethodText(payout.paymentMethod)}</span>
+                                    <Users className="w-4 h-4" />
+                                    <span>Inquilino: {payout.tenantName}</span>
                                   </div>
                                 </div>
 
@@ -489,17 +457,27 @@ export default function AdminPaymentsProvidersPage() {
                                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                                     <DollarSign className="w-4 h-4" />
                                     <span>
-                                      Monto: {formatCurrency(payout.totalAmount, payout.currency)}
+                                      Valor Negocio:{' '}
+                                      {formatCurrency(payout.dealValue, payout.currency)}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>Servicio: {formatDateTime(payout.serviceDate)}</span>
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>
+                                      Comisión: {payout.commissionRate}% (
+                                      {formatCurrency(payout.commission, payout.currency)})
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm font-medium text-green-600 mb-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>
+                                      Neto: {formatCurrency(payout.netAmount, payout.currency)}
+                                    </span>
                                   </div>
                                   {payout.paymentDate && (
                                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                                      <CheckCircle className="w-4 h-4" />
-                                      <span>Pago: {formatDateTime(payout.paymentDate)}</span>
+                                      <Calendar className="w-4 h-4" />
+                                      <span>Pagado: {formatDateTime(payout.paymentDate)}</span>
                                     </div>
                                   )}
                                 </div>
@@ -532,27 +510,27 @@ export default function AdminPaymentsProvidersPage() {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Análisis de Pagos</CardTitle>
-                <CardDescription>Métricas y estadísticas de pagos</CardDescription>
+                <CardTitle>Análisis de Comisiones</CardTitle>
+                <CardDescription>Métricas y estadísticas de pagos a corredores</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium text-green-800">Pagos Este Mes</p>
-                      <p className="text-xs text-green-600">Completados</p>
+                      <p className="text-sm font-medium text-green-800">Comisiones Este Mes</p>
+                      <p className="text-xs text-green-600">Pagadas</p>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-green-800">
                         {stats.completedThisMonth}
                       </p>
-                      <p className="text-xs text-green-600">+15% vs mes anterior</p>
+                      <p className="text-xs text-green-600">+12% vs mes anterior</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium text-blue-800">Monto Promedio</p>
+                      <p className="text-sm font-medium text-blue-800">Comisión Promedio</p>
                       <p className="text-xs text-blue-600">Por pago</p>
                     </div>
                     <div className="text-right">
@@ -593,13 +571,13 @@ export default function AdminPaymentsProvidersPage() {
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Acciones Rápidas</CardTitle>
-                <CardDescription>Herramientas para gestión de pagos</CardDescription>
+                <CardDescription>Herramientas para gestión de comisiones</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
                   <Button size="sm" variant="outline" className="justify-start">
                     <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Proveedor
+                    Nueva Comisión
                   </Button>
                   <Button size="sm" variant="outline" className="justify-start">
                     <Search className="w-4 h-4 mr-2" />
@@ -607,7 +585,7 @@ export default function AdminPaymentsProvidersPage() {
                   </Button>
                   <Button size="sm" variant="outline" className="justify-start">
                     <AlertTriangle className="w-4 h-4 mr-2" />
-                    Pagos Vencidos
+                    Comisiones Vencidas
                   </Button>
                   <Button size="sm" variant="outline" className="justify-start">
                     <BarChart3 className="w-4 h-4 mr-2" />
@@ -619,7 +597,7 @@ export default function AdminPaymentsProvidersPage() {
                   </Button>
                   <Button size="sm" variant="outline" className="justify-start">
                     <Settings className="w-4 h-4 mr-2" />
-                    Configurar Métodos
+                    Configurar Tasas
                   </Button>
                 </div>
               </CardContent>

@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Sidebar, 
-  SidebarHeader
-} from '@/components/ui/sidebar';
-import { Home, Building, Users,
+import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
+import {
+  Home,
+  Building,
+  Users,
   FileText,
   CreditCard,
   MessageSquare,
@@ -40,7 +40,8 @@ import { Home, Building, Users,
   DollarSign,
   Camera,
   Target,
-  Activity } from 'lucide-react';
+  Activity,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -97,6 +98,8 @@ const menuItems: RoleMenuItems = {
       submenu: [
         { title: 'Todos los Pagos', url: '/admin/payments', icon: CreditCard },
         { title: 'Pagos Pendientes', url: '/admin/payments/pending', icon: Clock },
+        { title: 'Payouts de Propietarios', url: '/admin/payments/owners', icon: Building },
+        { title: 'Payouts de Corredores', url: '/admin/payments/brokers', icon: Users },
         { title: 'Payouts de Proveedores', url: '/admin/payments/providers', icon: Truck },
         { title: 'Payouts de Runners', url: '/admin/runners/payouts', icon: User },
         { title: 'Reporte de Ingresos', url: '/admin/payments/reports', icon: BarChart3 },
@@ -564,8 +567,7 @@ export default function UnifiedSidebar({
   showNotifications = true,
   notificationCount = 0,
 }: UnifiedSidebarProps) {
-
-  const [openSubmenus, setOpenSubmenus] = useState<{[key: string]: boolean}>({});
+  const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -576,7 +578,7 @@ export default function UnifiedSidebar({
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
       });
-      
+
       if (response.ok) {
         localStorage.removeItem('user');
         router.push('/');
@@ -584,7 +586,9 @@ export default function UnifiedSidebar({
         logger.error('Logout failed');
       }
     } catch (error) {
-      logger.error('Error logging out:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error logging out:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -600,15 +604,25 @@ export default function UnifiedSidebar({
   if (!user) {
     // Si no hay usuario aún (cargando), intentar determinar desde URL
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname.startsWith('/admin/')) userRole = 'admin';
-    else if (pathname.startsWith('/owner/')) userRole = 'owner';
-    else if (pathname.startsWith('/tenant/')) userRole = 'tenant';
-    else if (pathname.startsWith('/broker/')) userRole = 'broker';
-    else if (pathname.startsWith('/provider/')) userRole = 'provider';
-    else if (pathname.startsWith('/maintenance/')) userRole = 'maintenance';
-    else if (pathname.startsWith('/runner/')) userRole = 'runner';
-    else if (pathname.startsWith('/support/')) userRole = 'support';
-    else userRole = 'tenant'; // fallback por defecto
+    if (pathname.startsWith('/admin/')) {
+      userRole = 'admin';
+    } else if (pathname.startsWith('/owner/')) {
+      userRole = 'owner';
+    } else if (pathname.startsWith('/tenant/')) {
+      userRole = 'tenant';
+    } else if (pathname.startsWith('/broker/')) {
+      userRole = 'broker';
+    } else if (pathname.startsWith('/provider/')) {
+      userRole = 'provider';
+    } else if (pathname.startsWith('/maintenance/')) {
+      userRole = 'maintenance';
+    } else if (pathname.startsWith('/runner/')) {
+      userRole = 'runner';
+    } else if (pathname.startsWith('/support/')) {
+      userRole = 'support';
+    } else {
+      userRole = 'tenant';
+    } // fallback por defecto
   } else {
     userRole = user.role.toLowerCase();
   }
@@ -618,14 +632,23 @@ export default function UnifiedSidebar({
   if (!(userRole in menuItems)) {
     // Intentar determinar el rol desde la URL actual
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname.startsWith('/admin/')) finalUserRole = 'admin';
-    else if (pathname.startsWith('/owner/')) finalUserRole = 'owner';
-    else if (pathname.startsWith('/tenant/')) finalUserRole = 'tenant';
-    else if (pathname.startsWith('/broker/')) finalUserRole = 'broker';
-    else if (pathname.startsWith('/provider/')) finalUserRole = 'provider';
-    else if (pathname.startsWith('/maintenance/')) finalUserRole = 'maintenance';
-    else if (pathname.startsWith('/runner/')) finalUserRole = 'runner';
-    else if (pathname.startsWith('/support/')) finalUserRole = 'support';
+    if (pathname.startsWith('/admin/')) {
+      finalUserRole = 'admin';
+    } else if (pathname.startsWith('/owner/')) {
+      finalUserRole = 'owner';
+    } else if (pathname.startsWith('/tenant/')) {
+      finalUserRole = 'tenant';
+    } else if (pathname.startsWith('/broker/')) {
+      finalUserRole = 'broker';
+    } else if (pathname.startsWith('/provider/')) {
+      finalUserRole = 'provider';
+    } else if (pathname.startsWith('/maintenance/')) {
+      finalUserRole = 'maintenance';
+    } else if (pathname.startsWith('/runner/')) {
+      finalUserRole = 'runner';
+    } else if (pathname.startsWith('/support/')) {
+      finalUserRole = 'support';
+    }
   }
 
   // Verificación adicional: si estamos en una URL que no corresponde al rol del usuario,
@@ -635,8 +658,23 @@ export default function UnifiedSidebar({
     const urlRole = pathname.split('/')[1]; // Obtener primera parte de la URL
 
     // Si la URL indica un rol diferente al del usuario, usar el rol de la URL
-    if (urlRole && ['admin', 'owner', 'tenant', 'broker', 'provider', 'maintenance', 'runner', 'support'].includes(urlRole) && urlRole !== finalUserRole) {
-      console.warn(`URL role (${urlRole}) differs from user role (${finalUserRole}). Using URL role.`);
+    if (
+      urlRole &&
+      [
+        'admin',
+        'owner',
+        'tenant',
+        'broker',
+        'provider',
+        'maintenance',
+        'runner',
+        'support',
+      ].includes(urlRole) &&
+      urlRole !== finalUserRole
+    ) {
+      console.warn(
+        `URL role (${urlRole}) differs from user role (${finalUserRole}). Using URL role.`
+      );
       finalUserRole = urlRole;
     }
   }
@@ -657,7 +695,7 @@ export default function UnifiedSidebar({
       timestamp: new Date().toISOString(),
       userObject: user, // Agregar el objeto completo del usuario
       menuItemsAvailable: Object.keys(menuItems),
-      userLoaded: !!user // Indicar si el usuario ya se cargó
+      userLoaded: !!user, // Indicar si el usuario ya se cargó
     });
   }
 
@@ -687,16 +725,12 @@ export default function UnifiedSidebar({
                   </Badge>
                 )}
               </div>
-              {isOpen ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
+              {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
 
             {isOpen && item.submenu && (
               <div className="ml-4 mt-1 space-y-1">
-                {item.submenu.map((subItem) => (
+                {item.submenu.map(subItem => (
                   <div key={subItem.title}>
                     <Link
                       href={subItem.url}
@@ -744,7 +778,9 @@ export default function UnifiedSidebar({
       )}
 
       {/* Sidebar */}
-      <div className={`fixed lg:relative z-50 w-64 bg-white border-r border-gray-200 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <div
+        className={`fixed lg:relative z-50 w-64 bg-white border-r border-gray-200 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
@@ -768,9 +804,7 @@ export default function UnifiedSidebar({
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-600 mb-4">Menú Principal</h3>
-            <nav className="space-y-2">
-              {items.map((item) => renderMenuItem(item))}
-            </nav>
+            <nav className="space-y-2">{items.map(item => renderMenuItem(item))}</nav>
           </div>
         </div>
 
@@ -779,9 +813,7 @@ export default function UnifiedSidebar({
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={user.avatar || ''} />
-                <AvatarFallback>
-                  {user.name?.charAt(0) || 'U'}
-                </AvatarFallback>
+                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
@@ -790,12 +822,7 @@ export default function UnifiedSidebar({
             </div>
           )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={handleLogout}
-          >
+          <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar Sesión
           </Button>
@@ -807,11 +834,7 @@ export default function UnifiedSidebar({
         {/* Mobile Header */}
         <div className="lg:hidden bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(true)}>
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
@@ -837,9 +860,7 @@ export default function UnifiedSidebar({
         </div>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-gray-50">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
       </div>
     </div>
   );
