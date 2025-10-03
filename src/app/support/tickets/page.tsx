@@ -28,7 +28,7 @@ import {
   User,
   Calendar,
   Tag,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,6 +58,51 @@ interface TicketStats {
   escalated: number;
 }
 
+// Funciones handle para los botones
+const handleNewTicket = () => {
+  // Navigate to new ticket creation page
+  window.open('/support/tickets/new', '_blank');
+};
+
+const handleViewTicket = (ticketId: string) => {
+  // Navigate to ticket detail view
+  window.open(`/support/tickets/${ticketId}`, '_blank');
+};
+
+const handleUpdateStatus = (ticketId: string, newStatus: string) => {
+  // Update ticket status
+  alert(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
+};
+
+const handleAssignTicket = (ticketId: string) => {
+  // Assign ticket to support agent
+  const agent = prompt('Asignar ticket a:', 'soporte@rent360.cl');
+  if (agent) {
+    alert(`Ticket asignado exitosamente a: ${agent}`);
+  }
+};
+
+const handleExportTickets = () => {
+  // Export tickets data to CSV
+  const csvContent =
+    'data:text/csv;charset=utf-8,' +
+    'ID,Título,Cliente,Email,Categoría,Prioridad,Estado,Asignado,Creado,Actualizado\n' +
+    tickets
+      .map(
+        ticket =>
+          `${ticket.id},"${ticket.title}","${ticket.clientName}","${ticket.clientEmail}","${ticket.category}","${ticket.priority}","${ticket.status}","${ticket.assignedTo || 'Sin asignar'}","${ticket.createdAt}","${ticket.updatedAt}"`
+      )
+      .join('\n');
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `tickets_soporte_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +113,7 @@ export default function TicketsPage() {
     inProgress: 0,
     resolved: 0,
     closed: 0,
-    escalated: 0
+    escalated: 0,
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -157,10 +202,11 @@ export default function TicketsPage() {
       let filteredTickets = mockTickets;
 
       if (searchTerm) {
-        filteredTickets = filteredTickets.filter(ticket =>
-          ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          ticket.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+        filteredTickets = filteredTickets.filter(
+          ticket =>
+            ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.clientName.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
@@ -192,10 +238,11 @@ export default function TicketsPage() {
 
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 500));
-
     } catch (error) {
-      logger.error('Error loading tickets:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los tickets");
+      logger.error('Error loading tickets:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los tickets');
     } finally {
       setLoading(false);
     }
@@ -252,10 +299,7 @@ export default function TicketsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout
-        title="Tickets"
-        subtitle="Cargando información..."
-      >
+      <DashboardLayout title="Tickets" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -268,10 +312,7 @@ export default function TicketsPage() {
 
   if (error) {
     return (
-      <DashboardLayout
-        title="Tickets"
-        subtitle="Error al cargar la página"
-      >
+      <DashboardLayout title="Tickets" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -304,9 +345,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                Tickets registrados
-              </p>
+              <p className="text-xs text-muted-foreground">Tickets registrados</p>
             </CardContent>
           </Card>
 
@@ -317,9 +356,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{stats.open}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren atención
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
 
@@ -330,9 +367,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
-              <p className="text-xs text-muted-foreground">
-                Siendo atendidos
-              </p>
+              <p className="text-xs text-muted-foreground">Siendo atendidos</p>
             </CardContent>
           </Card>
 
@@ -343,9 +378,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-              <p className="text-xs text-muted-foreground">
-                Solucionados
-              </p>
+              <p className="text-xs text-muted-foreground">Solucionados</p>
             </CardContent>
           </Card>
 
@@ -356,9 +389,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{stats.escalated}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren atención especial
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren atención especial</p>
             </CardContent>
           </Card>
 
@@ -369,9 +400,7 @@ export default function TicketsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-600">{stats.closed}</div>
-              <p className="text-xs text-muted-foreground">
-                Archivados
-              </p>
+              <p className="text-xs text-muted-foreground">Archivados</p>
             </CardContent>
           </Card>
         </div>
@@ -380,9 +409,7 @@ export default function TicketsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Filtros y Búsqueda</CardTitle>
-            <CardDescription>
-              Filtra los tickets por diferentes criterios
-            </CardDescription>
+            <CardDescription>Filtra los tickets por diferentes criterios</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -390,14 +417,14 @@ export default function TicketsPage() {
                 <Input
                   placeholder="Buscar por título, descripción o cliente..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full"
                 />
               </div>
 
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={e => setStatusFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">Todos los estados</option>
@@ -410,7 +437,7 @@ export default function TicketsPage() {
 
               <select
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
+                onChange={e => setPriorityFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">Todas las prioridades</option>
@@ -422,7 +449,7 @@ export default function TicketsPage() {
 
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={e => setCategoryFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">Todas las categorías</option>
@@ -435,9 +462,17 @@ export default function TicketsPage() {
             </div>
 
             <div className="flex gap-2 mt-4">
+              <Button onClick={handleNewTicket}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Ticket
+              </Button>
               <Button onClick={loadTickets} variant="outline">
                 <Search className="w-4 h-4 mr-2" />
                 Buscar
+              </Button>
+              <Button onClick={handleExportTickets} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </Button>
               <Button onClick={clearFilters} variant="outline">
                 <Filter className="w-4 h-4 mr-2" />
@@ -453,9 +488,7 @@ export default function TicketsPage() {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>Tickets ({tickets.length})</CardTitle>
-                <CardDescription>
-                  Lista de tickets filtrados según tus criterios
-                </CardDescription>
+                <CardDescription>Lista de tickets filtrados según tus criterios</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -477,17 +510,20 @@ export default function TicketsPage() {
                 {tickets.length === 0 ? (
                   <div className="text-center py-12">
                     <Tag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron tickets</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No se encontraron tickets
+                    </h3>
                     <p className="text-gray-600 mb-4">
                       No hay tickets que coincidan con los criterios de búsqueda.
                     </p>
-                    <Button onClick={clearFilters}>
-                      Limpiar Filtros
-                    </Button>
+                    <Button onClick={clearFilters}>Limpiar Filtros</Button>
                   </div>
                 ) : (
-                  tickets.map((ticket) => (
-                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+                  tickets.map(ticket => (
+                    <div
+                      key={ticket.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -501,7 +537,9 @@ export default function TicketsPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-center gap-2 text-sm text-gray-500">
                               <User className="w-4 h-4" />
-                              <span>{ticket.clientName} ({ticket.clientEmail})</span>
+                              <span>
+                                {ticket.clientName} ({ticket.clientEmail})
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -522,23 +560,36 @@ export default function TicketsPage() {
 
                           {ticket.estimatedResolution && (
                             <div className="mt-3 p-2 bg-blue-50 rounded text-sm text-blue-700">
-                              <span className="font-medium">Resolución estimada:</span> {formatDateTime(ticket.estimatedResolution)}
+                              <span className="font-medium">Resolución estimada:</span>{' '}
+                              {formatDateTime(ticket.estimatedResolution)}
                             </div>
                           )}
                         </div>
 
                         <div className="flex flex-col gap-2 ml-4">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewTicket(ticket.id)}
+                          >
                             <Eye className="w-4 h-4 mr-1" />
                             Ver
                           </Button>
-                          <Button size="sm" variant="outline">
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAssignTicket(ticket.id)}
+                          >
+                            <User className="w-4 h-4 mr-1" />
+                            Asignar
                           </Button>
-                          <Button size="sm" variant="outline">
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Responder
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUpdateStatus(ticket.id, 'RESOLVED')}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Resolver
                           </Button>
                         </div>
                       </div>
@@ -561,9 +612,7 @@ export default function TicketsPage() {
                 <h3 className="font-semibold text-gray-800 mb-2">Nuevo Ticket</h3>
                 <p className="text-sm text-gray-600 mb-4">Crear un ticket manualmente</p>
                 <Link href="/support/tickets/new">
-                  <Button className="w-full">
-                    Crear Ticket
-                  </Button>
+                  <Button className="w-full">Crear Ticket</Button>
                 </Link>
               </div>
             </CardContent>
