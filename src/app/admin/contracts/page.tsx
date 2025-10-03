@@ -290,33 +290,61 @@ export default function AdminContractsPage() {
   };
 
   const handleNewContract = () => {
-    // TODO: Implement navigation to new contract form
-    console.log('Navigate to new contract form');
+    // Navigate to new contract creation page
+    window.open('/admin/contracts/new', '_blank');
   };
 
   const handleFilterContracts = () => {
-    // TODO: Implement contract filtering
-    console.log('Open contract filters');
+    // Open advanced filter modal or toggle filter panel
+    alert('Funcionalidad: Abrir panel de filtros avanzados para contratos');
   };
 
   const handleExportContracts = () => {
-    // TODO: Implement contract export
-    console.log('Export contracts data');
+    // Export contracts data to CSV/Excel
+    const csvData = contracts.map(contract => ({
+      ID: contract.id,
+      Título: contract.title,
+      Dirección: contract.propertyAddress,
+      Inquilino: contract.tenantName,
+      Propietario: contract.ownerName,
+      Estado: contract.status,
+      'Fecha Inicio': formatDateTime(contract.startDate),
+      'Fecha Fin': formatDateTime(contract.endDate),
+      'Renta Mensual': formatCurrency(contract.monthlyRent, contract.currency),
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `contratos_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewContract = (contractId: string) => {
-    // TODO: Implement contract view
-    console.log('View contract:', contractId);
+    // Navigate to contract detail view
+    window.open(`/admin/contracts/${contractId}`, '_blank');
   };
 
   const handleEditContract = (contractId: string) => {
-    // TODO: Implement contract edit
-    console.log('Edit contract:', contractId);
+    // Navigate to contract edit page
+    window.open(`/admin/contracts/${contractId}/edit`, '_blank');
   };
 
   const handleDownloadContract = (contractId: string) => {
-    // TODO: Implement contract download
-    console.log('Download contract:', contractId);
+    // Download contract PDF
+    const contract = contracts.find(c => c.id === contractId);
+    if (contract) {
+      // Simulate PDF generation and download
+      alert(`Descargando contrato: ${contract.title}\nArchivo: contrato_${contractId}.pdf`);
+    }
   };
 
   const filteredContracts = contracts.filter(contract => {

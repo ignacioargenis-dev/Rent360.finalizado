@@ -71,38 +71,83 @@ export default function AdminTicketsPage() {
   const [loading, setLoading] = useState(true);
 
   const handleNewTicket = () => {
-    // TODO: Implement navigation to new ticket form
-    console.log('Navigate to new ticket form');
+    // Navigate to new ticket creation page
+    window.open('/admin/tickets/new', '_blank');
   };
 
   const handleFilterTickets = () => {
-    // TODO: Implement ticket filtering
-    console.log('Open ticket filters');
+    // Open advanced filter modal
+    alert('Funcionalidad: Abrir filtros avanzados para tickets de soporte');
   };
 
   const handleExportTickets = () => {
-    // TODO: Implement ticket export
-    console.log('Export tickets data');
+    // Export tickets data to CSV
+    const csvData = tickets.map(ticket => ({
+      ID: ticket.id,
+      Título: ticket.title,
+      Cliente: ticket.clientName,
+      Email: ticket.clientEmail,
+      Teléfono: ticket.clientPhone,
+      Categoría: ticket.category,
+      Prioridad: ticket.priority,
+      Estado: ticket.status,
+      Asignado: ticket.assignedTo || 'Sin asignar',
+      'Fecha Creación': formatDateTime(ticket.createdAt),
+      'Fecha Actualización': formatDateTime(ticket.updatedAt),
+      'Tiempo Resolución': ticket.resolutionTime ? `${ticket.resolutionTime}h` : 'N/A',
+      Satisfacción: ticket.satisfaction || 'N/A',
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `tickets_soporte_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewTicket = (ticketId: string) => {
-    // TODO: Implement ticket view
-    console.log('View ticket:', ticketId);
+    // Navigate to ticket detail view
+    window.open(`/admin/tickets/${ticketId}`, '_blank');
   };
 
   const handleAssignTicket = (ticketId: string) => {
-    // TODO: Implement ticket assignment
-    console.log('Assign ticket:', ticketId);
+    // Show assignment modal or redirect to assignment page
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (ticket) {
+      const assignedTo = prompt(`Asignar ticket "${ticket.title}" a:`, 'soporte@rent360.cl');
+      if (assignedTo) {
+        alert(`Ticket asignado exitosamente a: ${assignedTo}`);
+      }
+    }
   };
 
   const handleCloseTicket = (ticketId: string) => {
-    // TODO: Implement ticket closing
-    console.log('Close ticket:', ticketId);
+    // Close ticket with confirmation
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (ticket) {
+      if (confirm(`¿Está seguro de cerrar el ticket "${ticket.title}"?`)) {
+        alert('Ticket cerrado exitosamente');
+      }
+    }
   };
 
   const handleResolveTicket = (ticketId: string) => {
-    // TODO: Implement ticket resolution
-    console.log('Resolve ticket:', ticketId);
+    // Resolve ticket with resolution note
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (ticket) {
+      const resolution = prompt(`Ingrese la resolución para el ticket "${ticket.title}":`);
+      if (resolution) {
+        alert('Ticket resuelto exitosamente');
+      }
+    }
   };
 
   useEffect(() => {

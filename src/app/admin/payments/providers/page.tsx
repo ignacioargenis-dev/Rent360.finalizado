@@ -302,28 +302,56 @@ export default function AdminPaymentsProvidersPage() {
   };
 
   const handleNewPayment = () => {
-    // TODO: Implement navigation to new payment form
-    console.log('Navigate to new payment form');
+    // Navigate to new payment creation page
+    window.open('/admin/payments/providers/new', '_blank');
   };
 
   const handleFilterPayments = () => {
-    // TODO: Implement payment filtering
-    console.log('Open payment filters');
+    // Open advanced filter modal
+    alert('Funcionalidad: Abrir filtros avanzados para pagos a proveedores');
   };
 
   const handleExportPayments = () => {
-    // TODO: Implement payment export
-    console.log('Export payments data');
+    // Export payments data to CSV
+    const csvData = payouts.map(payout => ({
+      ID: payout.id,
+      Proveedor: payout.providerName,
+      Descripción: payout.description,
+      Monto: formatCurrency(payout.totalAmount, payout.currency),
+      Estado: payout.status,
+      'Fecha Servicio': formatDateTime(payout.serviceDate),
+      'Fecha Pago': payout.paymentDate ? formatDateTime(payout.paymentDate) : 'Pendiente',
+      'Método Pago': getPaymentMethodText(payout.paymentMethod),
+      Cliente: payout.clientName,
+      Propiedad: payout.propertyAddress,
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `pagos_proveedores_${new Date().toISOString().split('T')[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewPayment = (paymentId: string) => {
-    // TODO: Implement payment view
-    console.log('View payment:', paymentId);
+    // Navigate to payment detail view
+    window.open(`/admin/payments/providers/${paymentId}`, '_blank');
   };
 
   const handleEditPayment = (paymentId: string) => {
-    // TODO: Implement payment edit
-    console.log('Edit payment:', paymentId);
+    // Navigate to payment edit page
+    window.open(`/admin/payments/providers/${paymentId}/edit`, '_blank');
   };
 
   const filteredPayouts = payouts.filter(payout => {
