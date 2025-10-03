@@ -36,7 +36,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { logger } from '@/lib/logger';
 
 interface PaymentTransaction {

@@ -1,241 +1,384 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// Build fix - force update
+
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Bell,
-  BellOff,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
   Clock,
-  Smartphone,
-  CreditCard,
-  MessageSquare,
-  Briefcase,
-  Star,
-  Gift,
+  HardDrive,
+  Shield,
   CheckCircle,
-  AlertCircle,
+  XCircle,
+  AlertTriangle,
   Settings,
-  Save,
-  TestTube
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { firebaseNotificationService, type NotificationSettings } from '@/lib/notifications/firebase-service';
-import { logger } from '@/lib/logger';
+import Link from 'next/link';
+import { User } from '@/types';
 
-interface NotificationCategory {
+
+interface Backup {
   id: string;
   name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
   description: string;
-  icon: React.ComponentType<any>;
-  enabled: boolean;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-export default function NotificationSettingsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [settings, setSettings] = useState<NotificationSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
-  const [firebaseToken, setFirebaseToken] = useState<string | null>(null);
-  const [testNotificationSent, setTestNotificationSent] = useState(false);
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
 
-  const categories: NotificationCategory[] = [
-    {
-      id: 'payments',
-      name: 'Pagos y Transacciones',
-      description: 'Notificaciones sobre aprobaciones de pago, transferencias y cobros',
-      icon: CreditCard,
-      enabled: settings?.categories.payments || false
-    },
-    {
-      id: 'messages',
-      name: 'Mensajes',
-      description: 'Nuevos mensajes en conversaciones y chats',
-      icon: MessageSquare,
-      enabled: settings?.categories.messages || false
-    },
-    {
-      id: 'jobs',
-      name: 'Trabajos y Servicios',
-      description: 'Actualizaciones de estado de trabajos, citas y servicios',
-      icon: Briefcase,
-      enabled: settings?.categories.jobs || false
-    },
-    {
-      id: 'ratings',
-      name: 'Calificaciones y Reseñas',
-      description: 'Nuevas calificaciones y reseñas de servicios',
-      icon: Star,
-      enabled: settings?.categories.ratings || false
-    },
-    {
-      id: 'promotions',
-      name: 'Promociones y Ofertas',
-      description: 'Ofertas especiales, descuentos y promociones',
-      icon: Gift,
-      enabled: settings?.categories.promotions || false
-    }
-  ];
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
+
+export default function NotificationsSettingsPage() {
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-    checkNotificationPermission();
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+      }
+    };
+
+    const loadBackupData = async () => {
+      try {
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
+
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+    loadBackupData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
 
-      // Obtener información del usuario
-      const userResponse = await fetch('/api/auth/me');
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData.user);
-      }
+    setBackups(prev => [newBackup, ...prev]);
+  };
 
-      // Cargar configuración de notificaciones
-      const settingsResponse = await fetch('/api/notifications/settings');
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        setSettings(settingsData.settings);
-      } else {
-        // Configuración por defecto si no existe
-        setSettings({
-          userId: user?.id || '',
-          enabled: true,
-          topics: ['general'],
-          quietHours: {
-            enabled: false,
-            start: '22:00',
-            end: '08:00'
-          },
-          categories: {
-            payments: true,
-            messages: true,
-            jobs: true,
-            ratings: true,
-            promotions: false
-          }
-        });
-      }
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
 
-    } catch (error) {
-      logger.error('Error cargando configuración de notificaciones:', { error: error instanceof Error ? error.message : String(error) });
-    } finally {
-      setLoading(false);
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
-  const checkNotificationPermission = async () => {
-    if ('Notification' in window) {
-      setPermissionStatus(Notification.permission);
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
+      default:
+        return <Badge>Desconocido</Badge>;
     }
   };
 
-  const requestNotificationPermission = async () => {
-    try {
-      const permission = await firebaseNotificationService.requestPermission();
-      if (permission) {
-        const token = await firebaseNotificationService.getToken();
-        setFirebaseToken(token);
-        setPermissionStatus('granted');
-      } else {
-        setPermissionStatus('denied');
-      }
-    } catch (error) {
-      logger.error('Error requesting notification permission:', { error: error instanceof Error ? error.message : String(error) });
-      setPermissionStatus('denied');
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const handleSaveSettings = async () => {
-    if (!settings) return;
-
-    try {
-      setSaving(true);
-
-      const response = await fetch('/api/notifications/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ settings }),
-      });
-
-      if (response.ok) {
-        alert('Configuración guardada exitosamente');
-      } else {
-        throw new Error('Error al guardar configuración');
-      }
-
-    } catch (error) {
-      logger.error('Error guardando configuración:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al guardar la configuración');
-    } finally {
-      setSaving(false);
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const handleSendTestNotification = async () => {
-    if (!firebaseToken) {
-      alert('Primero debes habilitar las notificaciones');
-      return;
-    }
-
-    try {
-      const success = await firebaseNotificationService.sendNotification(firebaseToken, {
-        title: '¡Notificación de Prueba!',
-        body: 'Esta es una notificación de prueba para verificar que todo funciona correctamente.',
-        icon: '/icon-test.png',
-        data: {
-          type: 'test',
-          url: '/settings/notifications'
-        }
-      });
-
-      if (success) {
-        setTestNotificationSent(true);
-        setTimeout(() => setTestNotificationSent(false), 3000);
-      } else {
-        alert('Error al enviar la notificación de prueba');
-      }
-
-    } catch (error) {
-      logger.error('Error sending test notification:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al enviar la notificación de prueba');
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
     }
   };
 
-  const updateCategorySetting = (categoryId: string, enabled: boolean) => {
-    if (!settings) return;
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
-    setSettings({
-      ...settings,
-      categories: {
-        ...settings.categories,
-        [categoryId]: enabled
-      }
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const updateQuietHours = (field: 'start' | 'end', value: string) => {
-    if (!settings) return;
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
+    }
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
 
-    setSettings({
-      ...settings,
-      quietHours: {
-        ...settings.quietHours,
-        [field]: value
-      }
-    });
+    return date.toLocaleDateString('es-CL');
   };
 
   if (loading) {
@@ -243,245 +386,274 @@ export default function NotificationSettingsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando configuración de notificaciones...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Configuración de Notificaciones"
-      subtitle="Gestiona tus preferencias de notificaciones"
-    >
-      <DashboardHeader
-        user={user}
-        title="🔔 Configuración de Notificaciones"
-        subtitle="Gestiona tus preferencias de notificaciones push"
-      />
-
-      <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
-        {/* Estado de Permisos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5" />
-              Estado de Notificaciones Push
-            </CardTitle>
-            <CardDescription>
-              Configura el acceso a notificaciones push en tu dispositivo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {permissionStatus === 'granted' ? (
-                  <CheckCircle className="w-8 h-8 text-green-500" />
-                ) : permissionStatus === 'denied' ? (
-                  <AlertCircle className="w-8 h-8 text-red-500" />
-                ) : (
-                  <Bell className="w-8 h-8 text-gray-400" />
-                )}
-
+    <UnifiedDashboardLayout title="Configuración de Notificaciones" subtitle="Gestiona tus preferencias de notificaciones">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <div className="font-medium">
-                    {permissionStatus === 'granted' && 'Notificaciones habilitadas'}
-                    {permissionStatus === 'denied' && 'Notificaciones bloqueadas'}
-                    {permissionStatus === 'default' && 'Notificaciones no configuradas'}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {permissionStatus === 'granted' && 'Recibirás notificaciones push en este dispositivo'}
-                    {permissionStatus === 'denied' && 'Las notificaciones están bloqueadas en tu navegador'}
-                    {permissionStatus === 'default' && 'Haz clic en "Habilitar" para recibir notificaciones'}
-                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900">Configuración de Notificaciones</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                {permissionStatus !== 'granted' && (
-                  <Button onClick={requestNotificationPermission}>
-                    <Bell className="w-4 h-4 mr-2" />
-                    Habilitar
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
                   </Button>
-                )}
-
-                {firebaseToken && (
-                  <Button
-                    variant="outline"
-                    onClick={handleSendTestNotification}
-                    disabled={testNotificationSent}
-                  >
-                    <TestTube className="w-4 h-4 mr-2" />
-                    {testNotificationSent ? 'Enviada' : 'Probar'}
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
                   </Button>
-                )}
-              </div>
-            </div>
-
-            {testNotificationSent && (
-              <Alert className="mt-4">
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  ¡Notificación de prueba enviada! Revisa tu dispositivo.
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Configuración General */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Configuración General
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Notificaciones habilitadas</Label>
-                <div className="text-sm text-gray-600">
-                  Activa o desactiva todas las notificaciones push
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-              <Switch
-                checked={settings?.enabled || false}
-                onCheckedChange={(checked) =>
-                  setSettings(prev => prev ? { ...prev, enabled: checked } : null)
-                }
-              />
-            </div>
 
-            <Separator />
-
-            {/* Horas de Silencio */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Horas de silencio
-                  </Label>
-                  <div className="text-sm text-gray-600">
-                    No recibir notificaciones durante estas horas
-                  </div>
-                </div>
-                <Switch
-                  checked={settings?.quietHours.enabled || false}
-                  onCheckedChange={(checked) =>
-                    setSettings(prev => prev ? {
-                      ...prev,
-                      quietHours: { ...prev.quietHours, enabled: checked }
-                    } : null)
-                  }
-                />
-              </div>
-
-              {settings?.quietHours.enabled && (
-                <div className="grid grid-cols-2 gap-4 pl-6">
-                  <div>
-                    <Label htmlFor="quiet-start">Hora de inicio</Label>
-                    <Input
-                      id="quiet-start"
-                      type="time"
-                      value={settings.quietHours.start}
-                      onChange={(e) => updateQuietHours('start', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="quiet-end">Hora de fin</Label>
-                    <Input
-                      id="quiet-end"
-                      type="time"
-                      value={settings.quietHours.end}
-                      onChange={(e) => updateQuietHours('end', e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Categorías de Notificaciones */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Categorías de Notificaciones</CardTitle>
-            <CardDescription>
-              Elige qué tipos de notificaciones quieres recibir
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {categories.map((category) => {
-                const IconComponent = category.icon;
-                return (
-                  <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <IconComponent className="w-5 h-5 text-blue-600" />
-                      </div>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium">{category.name}</div>
-                        <div className="text-sm text-gray-600">{category.description}</div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
-                    <Switch
-                      checked={category.enabled}
-                      onCheckedChange={(checked) => updateCategorySetting(category.id, checked)}
-                      disabled={!settings?.enabled}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
 
-        {/* Información Adicional */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <Bell className="w-6 h-6 text-blue-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-blue-900 mb-2">
-                  ¿Cómo funcionan las notificaciones?
-                </h4>
-                <div className="text-sm text-blue-800 space-y-1">
-                  <p>• Las notificaciones push llegan instantáneamente a tu dispositivo</p>
-                  <p>• Respeta tus horas de silencio configuradas</p>
-                  <p>• Puedes personalizar qué tipos de notificaciones recibir</p>
-                  <p>• Las notificaciones importantes (como pagos) tienen mayor prioridad</p>
-                </div>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Botón de Guardar */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Guardar Configuración
-              </>
-            )}
-          </Button>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

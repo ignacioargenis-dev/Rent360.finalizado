@@ -1,81 +1,91 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+// Build fix - force update
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, 
-  Search, 
-  Send,
-  Phone,
-  Mail,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
   Clock,
+  HardDrive,
+  Shield,
   CheckCircle,
-  AlertCircle,
-  User as UserIcon, Building, Calendar,
-  Filter,
-  Plus,
-  Reply,
-  Paperclip,
-  Image,
-  FileText } from 'lucide-react';
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
+} from 'lucide-react';
+import Link from 'next/link';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
-interface Message {
+
+interface Backup {
   id: string;
-  clientId: string;
-  clientName: string;
-  clientType: 'buyer' | 'tenant' | 'owner';
-  subject: string;
-  content: string;
-  type: 'inquiry' | 'appointment' | 'follow_up' | 'general';
-  status: 'unread' | 'read' | 'replied' | 'archived';
-  priority: 'low' | 'medium' | 'high';
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
   createdAt: string;
-  lastReply?: string;
-  hasAttachments: boolean;
-  relatedProperty?: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-interface MessageStats {
-  totalMessages: number;
-  unreadMessages: number;
-  urgentMessages: number;
-  repliedToday: number;
-  averageResponseTime: string;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
 }
 
-export default function RunnerMessages() {
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
+
+export default function RunnerMessagesPage() {
 
   const [user, setUser] = useState<User | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [backups, setBackups] = useState<Backup[]>([]);
 
-  const [stats, setStats] = useState<MessageStats>({
-    totalMessages: 0,
-    unreadMessages: 0,
-    urgentMessages: 0,
-    repliedToday: 0,
-    averageResponseTime: '2 horas',
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
 
   const [loading, setLoading] = useState(true);
-
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const [typeFilter, setTypeFilter] = useState('all');
-
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-
-  const [replyContent, setReplyContent] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -90,141 +100,254 @@ export default function RunnerMessages() {
       }
     };
 
-    loadUserData();
-  }, []);
-
-  useEffect(() => {
-    const loadMessagesData = async () => {
+    const loadBackupData = async () => {
       try {
-        // Simulate API call - in real implementation, this would fetch from /api/runner/messages
-        const mockMessages: Message[] = [
+        // Mock backups data
+        const mockBackups: Backup[] = [
           {
             id: '1',
-            clientId: '1',
-            clientName: 'Laura Silva',
-            clientType: 'tenant',
-            subject: 'Consulta sobre departamento en Las Condes',
-            content: 'Hola, estoy interesada en el departamento que visitamos ayer. Me gustaría saber si hay flexibilidad en el precio y si el arriendo incluye estacionamiento.',
-            type: 'inquiry',
-            status: 'unread',
-            priority: 'high',
-            createdAt: '2024-03-16T10:30:00',
-            hasAttachments: false,
-            relatedProperty: 'Departamento Amoblado Las Condes',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
           },
           {
             id: '2',
-            clientId: '2',
-            clientName: 'Roberto Méndez',
-            clientType: 'buyer',
-            subject: 'Confirmación visita casa en Ñuñoa',
-            content: 'Buenas tardes, confirmo que asistiré a la visita de la casa en Ñuñoa mañana a las 15:00 hrs. ¿Necesito llevar algo en particular?',
-            type: 'appointment',
-            status: 'read',
-            priority: 'medium',
-            createdAt: '2024-03-15T16:45:00',
-            lastReply: '2024-03-15T17:20:00',
-            hasAttachments: true,
-            relatedProperty: 'Casa Familiar Ñuñoa',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
           },
           {
             id: '3',
-            clientId: '3',
-            clientName: 'Carmen Soto',
-            clientType: 'owner',
-            subject: 'Solicitud de nuevas fotografías',
-            content: 'Hola, me gustaría que tomaran nuevas fotos de mi propiedad. Las actuales no muestran bien la iluminación natural de las mañanas.',
-            type: 'follow_up',
-            status: 'replied',
-            priority: 'low',
-            createdAt: '2024-03-14T09:15:00',
-            lastReply: '2024-03-14T11:30:00',
-            hasAttachments: false,
-            relatedProperty: 'Oficina Centro Santiago',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
           },
         ];
 
-        setMessages(mockMessages);
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
 
         // Calculate stats
-        const unreadMessages = mockMessages.filter(m => m.status === 'unread').length;
-        const urgentMessages = mockMessages.filter(m => m.priority === 'high').length;
-        const today = new Date().toDateString();
-        const repliedToday = mockMessages.filter(m => 
-          m.lastReply && new Date(m.lastReply).toDateString() === today,
-        ).length;
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
 
-        setStats({
-          totalMessages: mockMessages.length,
-          unreadMessages,
-          urgentMessages,
-          repliedToday,
-          averageResponseTime: '2 horas',
-        });
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
       } catch (error) {
-        logger.error('Error loading messages data:', { error: error instanceof Error ? error.message : String(error) });
-      } finally {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
         setLoading(false);
       }
     };
 
-    loadMessagesData();
+    loadUserData();
+    loadBackupData();
   }, []);
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'inquiry':
-        return <Badge className="bg-blue-100 text-blue-800">Consulta</Badge>;
-      case 'appointment':
-        return <Badge className="bg-green-100 text-green-800">Cita</Badge>;
-      case 'follow_up':
-        return <Badge className="bg-yellow-100 text-yellow-800">Seguimiento</Badge>;
-      case 'general':
-        return <Badge className="bg-gray-100 text-gray-800">General</Badge>;
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
+  };
+
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
+
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       default:
-        return <Badge>Desconocido</Badge>;
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'unread':
-        return <Badge className="bg-red-100 text-red-800">No leído</Badge>;
-      case 'read':
-        return <Badge className="bg-yellow-100 text-yellow-800">Leído</Badge>;
-      case 'replied':
-        return <Badge className="bg-green-100 text-green-800">Respondido</Badge>;
-      case 'archived':
-        return <Badge className="bg-gray-100 text-gray-800">Archivado</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800">Alta</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Media</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800">Baja</Badge>;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
       default:
-        return <Badge>Desconocido</Badge>;
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const getClientTypeBadge = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'buyer':
-        return <Badge className="bg-blue-100 text-blue-800">Comprador</Badge>;
-      case 'tenant':
-        return <Badge className="bg-green-100 text-green-800">Inquilino</Badge>;
-      case 'owner':
-        return <Badge className="bg-purple-100 text-purple-800">Propietario</Badge>;
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
       default:
-        return <Badge>Desconocido</Badge>;
+        return <Database className="w-5 h-5" />;
     }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const formatDateTime = (dateString: string) => {
@@ -237,361 +360,300 @@ export default function RunnerMessages() {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || message.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || message.status === statusFilter;
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
     
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const handleSendMessage = async () => {
-    if (!selectedMessage || !replyContent.trim()) {
-return;
-}
-
-    try {
-      // Simulate sending message
-      const updatedMessages = messages.map(msg => 
-        msg.id === selectedMessage.id 
-          ? { ...msg, status: 'replied' as const, lastReply: new Date().toISOString() }
-          : msg,
-      );
-      setMessages(updatedMessages);
-      
-      setReplyContent('');
-      setSelectedMessage(null);
-      
-      // Show success message
-      alert('Mensaje enviado correctamente');
-    } catch (error) {
-      logger.error('Error sending message:', { error: error instanceof Error ? error.message : String(error) });
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
     }
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
+
+    return date.toLocaleDateString('es-CL');
   };
 
   if (loading) {
     return (
-      <DashboardLayout
-        user={user}
-        title="Mensajes"
-        subtitle="Gestión de mensajes con clientes"
-      >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando mensajes...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
-      </DashboardLayout
+      </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Mensajes"
-      subtitle="Gestión de mensajes con clientes"
-    >
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+    <UnifiedDashboardLayout title="Mensajes" subtitle="Gestión de mensajes con clientes">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Mensajes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalMessages}</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-6 h-6 text-blue-600" />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">No Leídos</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.unreadMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Urgentes</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.urgentMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Respondidos Hoy</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.repliedToday}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tiempo Respuesta</p>
-                  <p className="text-lg font-bold text-purple-600">{stats.averageResponseTime}</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Messages List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Bandeja de Entrada</span>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Mensaje
-                </Button>
-              </CardTitle>
-              <CardDescription>
-                Mensajes recibidos de clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        placeholder="Buscar mensajes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-full md:w-40">
-                      <SelectValue placeholder="Tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="inquiry">Consulta</SelectItem>
-                      <SelectItem value="appointment">Cita</SelectItem>
-                      <SelectItem value="follow_up">Seguimiento</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-40">
-                      <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="unread">No leídos</SelectItem>
-                      <SelectItem value="read">Leídos</SelectItem>
-                      <SelectItem value="replied">Respondidos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {filteredMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
-                        selectedMessage?.id === message.id ? 'border-blue-500 bg-blue-50' : ''
-                      } ${message.status === 'unread' ? 'border-l-4 border-l-red-500' : ''}`}
-                      onClick={() => setSelectedMessage(message)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{message.clientName}</span>
-                            {getClientTypeBadge(message.clientType)}
-                            {getPriorityBadge(message.priority)}
-                          </div>
-                          <div className="text-sm text-gray-600 mb-1">{message.subject}</div>
-                          <div className="text-xs text-gray-500">
-                            {formatDateTime(message.createdAt)}
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          {getStatusBadge(message.status)}
-                          {getTypeBadge(message.type)}
-                          {message.hasAttachments && (
-                            <Paperclip className="w-4 h-4 text-gray-400" />
-                          )}
-                        </div>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
                       </div>
-                      <div className="text-sm text-gray-700 line-clamp-2">
-                        {message.content}
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
                       </div>
-                      {message.relatedProperty && (
-                        <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                          <Building className="w-3 h-3" />
-                          {message.relatedProperty}
-                        </div>
-                      )}
                     </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </div>
 
-                {filteredMessages.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No se encontraron mensajes con los filtros seleccionados
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Message Detail */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedMessage ? 'Detalles del Mensaje' : 'Selecciona un Mensaje'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {selectedMessage ? (
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
-                  <div className="border-b pb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{selectedMessage.clientName}</span>
-                        {getClientTypeBadge(selectedMessage.clientType)}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getPriorityBadge(selectedMessage.priority)}
-                        {getStatusBadge(selectedMessage.status)}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">{selectedMessage.subject}</div>
-                    <div className="text-xs text-gray-500 mb-2">
-                      {formatDateTime(selectedMessage.createdAt)}
-                    </div>
-                    {selectedMessage.relatedProperty && (
-                      <div className="text-sm text-blue-600 flex items-center gap-1">
-                        <Building className="w-4 h-4" />
-                        {selectedMessage.relatedProperty}
-                      </div>
-                    )}
-                  </div>
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
 
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium mb-2">Mensaje:</h4>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                      {selectedMessage.content}
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
                     </div>
                   </div>
-
-                  {selectedMessage.lastReply && (
-                    <div>
-                      <h4 className="font-medium mb-2">Última respuesta:</h4>
-                      <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                        {formatDateTime(selectedMessage.lastReply)}
-                      </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
                     </div>
-                  )}
-
-                  {selectedMessage.hasAttachments && (
-                    <div>
-                      <h4 className="font-medium mb-2">Archivos adjuntos:</h4>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Documento.pdf
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Image className="w-4 h-4 mr-2" />
-                          Foto.jpg
-                        </Button>
-                      </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
                     </div>
-                  )}
-
-                  <div>
-                    <h4 className="font-medium mb-2">Responder:</h4>
-                    <Textarea
-                      placeholder="Escribe tu respuesta..."
-                      value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      rows={4}
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <Button onClick={handleSendMessage} disabled={!replyContent.trim()}>
-                        <Send className="w-4 h-4 mr-2" />
-                        Enviar Respuesta
-                      </Button>
-                      <Button variant="outline">
-                        <Paperclip className="w-4 h-4 mr-2" />
-                        Adjuntar Archivo
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button size="sm" variant="outline">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Llamar
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Email
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Agendar Cita
-                    </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>Selecciona un mensaje para ver los detalles</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

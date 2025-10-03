@@ -28,6 +28,7 @@ import {
   Mail,
   MessageSquare
 } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

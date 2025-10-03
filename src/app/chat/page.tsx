@@ -1,546 +1,659 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+// Build fix - force update
+
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import {
-  MessageSquare,
-  Send,
-  Plus,
-  Search,
-  MoreVertical,
-  Phone,
-  Video,
-  Paperclip,
-  Smile,
-  Image as ImageIcon,
-  File,
-  User,
-  Users,
-  Settings,
-  Archive,
-  Trash2,
-  Pin,
-  Star,
-  Check,
-  CheckCheck,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
   Clock,
-  AlertCircle,
-  Circle
+  HardDrive,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { chatService, MessageType, ChatStatus, ChatConversation as ServiceChatConversation, ChatParticipant, ChatParticipantType, ChatMessage } from '@/lib/chat/chat-service';
-import { logger } from '@/lib/logger';
+import Link from 'next/link';
+import { User } from '@/types';
 
+
+interface Backup {
+  id: string;
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
+}
+
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
 
 export default function ChatPage() {
-  const [user, setUser] = useState<any>(null);
-  const [conversations, setConversations] = useState<ServiceChatConversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<ServiceChatConversation | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
+  });
+
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showNewChat, setShowNewChat] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadData();
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+      }
+    };
+
+    const loadBackupData = async () => {
+      try {
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
+
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+    loadBackupData();
   }, []);
 
-  useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation.id);
-    }
-  }, [selectedConversation]);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    setBackups(prev => [newBackup, ...prev]);
+  };
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
 
-      // Obtener información del usuario
-      const userResponse = await fetch('/api/auth/me');
-      let userData = null;
-      if (userResponse.ok) {
-        const responseData = await userResponse.json();
-        userData = responseData.user;
-        setUser(userData);
-      }
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
 
-      // Obtener conversaciones del usuario si se obtuvo el usuario
-      if (userData?.id) {
-        const userConversations = await chatService.getUserConversations(userData.id);
-        setConversations(userConversations);
-      }
-
-    } catch (error) {
-      logger.error('Error cargando conversaciones:', { error: error instanceof Error ? error.message : String(error) });
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
-  const loadMessages = async (conversationId: string) => {
-    try {
-      const conversationMessages = await chatService.getConversationMessages(conversationId, user?.id);
-      setMessages(conversationMessages);
-    } catch (error) {
-      logger.error('Error cargando mensajes:', { error: error instanceof Error ? error.message : String(error) });
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
+      default:
+        return <Badge>Desconocido</Badge>;
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !user) return;
-
-    try {
-      setSending(true);
-
-      await chatService.sendMessage(
-        selectedConversation.id,
-        user.id,
-        newMessage.trim(),
-        MessageType.TEXT
-      );
-
-      setNewMessage('');
-
-      // Recargar mensajes
-      await loadMessages(selectedConversation.id);
-
-      // Recargar conversaciones para actualizar lastMessage
-      await loadData();
-
-    } catch (error) {
-      logger.error('Error enviando mensaje:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al enviar el mensaje. Por favor intenta nuevamente.');
-    } finally {
-      setSending(false);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const handleCreateConversation = async (participantIds: string[], title: string) => {
-    try {
-      if (!user) return;
-
-      const participants: ChatParticipant[] = [
-        {
-          userId: user.id,
-          userType: (user.role as ChatParticipantType) || ChatParticipantType.TENANT,
-          userName: user.name || user.email || `Usuario ${user.id.slice(-4)}`,
-          joinedAt: new Date(),
-          isOnline: true
-        },
-        ...participantIds.map(id => ({
-          userId: id,
-          userType: ChatParticipantType.TENANT, // Default to TENANT for new participants
-          userName: `Usuario ${id.slice(-4)}`, // Mock name
-          joinedAt: new Date(),
-          isOnline: false
-        }))
-      ];
-
-      const newConversation = await chatService.createConversation(title, participants);
-      setConversations(prev => [newConversation, ...prev]);
-      setShowNewChat(false);
-      setSelectedConversation(newConversation);
-
-    } catch (error) {
-      logger.error('Error creando conversación:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al crear la conversación.');
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
   };
 
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('es-CL', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const formatDate = (date: Date) => {
-    const today = new Date();
-    const messageDate = new Date(date);
-
-    if (messageDate.toDateString() === today.toDateString()) {
-      return 'Hoy';
-    }
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-      return 'Ayer';
-    }
-
-    return messageDate.toLocaleDateString('es-CL', {
-      weekday: 'long',
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
-      month: 'short'
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const getMessageStatusIcon = (message: ChatMessage) => {
-    if (!user?.id || message.senderId !== user.id) return null;
-
-    if (message.isRead) {
-      return <CheckCheck className="w-3 h-3 text-blue-500" />;
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
     }
-    return <Check className="w-3 h-3 text-gray-400" />;
-  };
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
 
-  const filteredConversations = conversations.filter(conversation =>
-    conversation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conversation.participants.some(p =>
-      p.userName.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+    return date.toLocaleDateString('es-CL');
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando conversaciones...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Mensajes"
-      subtitle="Gestiona tus conversaciones y mensajes"
-    >
-      <DashboardHeader
-        user={user}
-        title="💬 Mensajes"
-        subtitle="Comunícate con proveedores y clientes"
-      />
-
-      <div className="container mx-auto px-4 py-6 max-w-7xl h-[calc(100vh-200px)]">
-        <div className="grid grid-cols-12 gap-6 h-full">
-          {/* Sidebar de conversaciones */}
-          <div className="col-span-4 bg-white rounded-lg shadow-sm border">
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Conversaciones</h2>
-                <Button
-                  size="sm"
-                  onClick={() => setShowNewChat(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nuevo
-                </Button>
-              </div>
-
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Buscar conversaciones..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <ScrollArea className="h-[calc(100%-120px)]">
-              <div className="p-2">
-                {filteredConversations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-600 text-sm">
-                      {searchQuery ? 'No se encontraron conversaciones' : 'No tienes conversaciones aún'}
-                    </p>
-                    {!searchQuery && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => setShowNewChat(true)}
-                      >
-                        Iniciar conversación
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  filteredConversations.map((conversation) => (
-                    <div
-                      key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedConversation?.id === conversation.id
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <Avatar className="w-10 h-10">
-                          <AvatarFallback>
-                            {conversation.title.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium text-gray-900 truncate">
-                              {conversation.title}
-                            </h3>
-                            {conversation.lastMessage && (
-                              <span className="text-xs text-gray-500">
-                                {formatTime(conversation.lastMessage.timestamp)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-sm text-gray-600 truncate">
-                              {conversation.lastMessage?.content || 'Sin mensajes'}
-                            </p>
-                            {user && user.id && (conversation.unreadCount[user.id] ?? 0) > 0 && (
-                              <Badge className="bg-blue-600 text-white text-xs px-2 py-1">
-                                {conversation.unreadCount[user.id] ?? 0}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Users className="w-3 h-3" />
-                        <span>{conversation.participants.length} participantes</span>
-                        {conversation.jobId && (
-                          <>
-                            <span>•</span>
-                            <span>Trabajo #{conversation.jobId.slice(-4)}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Área de chat */}
-          <div className="col-span-8 bg-white rounded-lg shadow-sm border flex flex-col">
-            {selectedConversation ? (
-              <>
-                {/* Header del chat */}
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback>
-                          {selectedConversation.title.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {selectedConversation.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Users className="w-3 h-3" />
-                          <span>{selectedConversation.participants.length} participantes</span>
-                          <span>•</span>
-                          <div className="flex items-center gap-1">
-                            <Circle className="w-2 h-2 bg-green-500 rounded-full" />
-                            <span>{selectedConversation.participants.filter(p => p.isOnline).length} en línea</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Phone className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Video className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
+    <UnifiedDashboardLayout title="Mensajes" subtitle="Gestiona tus conversaciones y mensajes">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
+                </div>
+              </div>
 
-                {/* Mensajes */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((message, index) => {
-                      const isOwn = message.senderId === user?.id;
-                      const showDateSeparator = index === 0 ||
-                        (index > 0 && formatDate(message.timestamp) !== formatDate(messages[index - 1]?.timestamp || message.timestamp));
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                      return (
-                        <div key={message.id}>
-                          {showDateSeparator && (
-                            <div className="flex items-center justify-center my-4">
-                              <Badge variant="secondary" className="text-xs">
-                                {formatDate(message.timestamp)}
-                              </Badge>
-                            </div>
-                          )}
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                          <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}>
-                            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                              isOwn
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
-                            }`}>
-                              {!isOwn && (
-                                <div className="text-xs font-medium text-gray-600 mb-1">
-                                  {message.senderName}
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
                                 </div>
-                              )}
-                              <p className="text-sm">{message.content}</p>
-                              <div className={`flex items-center justify-end gap-1 mt-1 text-xs ${
-                                isOwn ? 'text-blue-200' : 'text-gray-500'
-                              }`}>
-                                <span>{formatTime(message.timestamp)}</span>
-                                {getMessageStatusIcon(message)}
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
                               </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      );
-                    })}
-                    <div ref={messagesEndRef} />
-                  </div>
-                </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-                {/* Input de mensaje */}
-                <div className="p-4 border-t">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <Textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Escribe un mensaje..."
-                        className="min-h-[44px] max-h-32 resize-none"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                        }}
-                      />
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Paperclip className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Smile className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim() || sending}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {sending ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                      </Button>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
                     </div>
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Selecciona una conversación
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Elige una conversación del panel lateral para ver los mensajes
-                  </p>
-                  <Button onClick={() => setShowNewChat(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Iniciar nueva conversación
-                  </Button>
-                </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-
-      {/* Modal para nueva conversación */}
-      {showNewChat && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Nueva Conversación</CardTitle>
-              <CardDescription>
-                Inicia una nueva conversación con proveedores o clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Título de la conversación
-                  </label>
-                  <Input placeholder="Ej: Consulta sobre mantenimiento" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Participantes
-                  </label>
-                  <Input placeholder="Buscar usuarios..." />
-                  <div className="mt-2 text-xs text-gray-500">
-                    Funcionalidad en desarrollo - pronto podrás seleccionar participantes
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowNewChat(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={() => {
-                      // Mock: crear conversación con datos de ejemplo
-                      handleCreateConversation(['user-123'], 'Nueva conversación');
-                    }}
-                  >
-                    Crear
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

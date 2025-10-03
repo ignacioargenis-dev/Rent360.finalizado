@@ -36,7 +36,10 @@ import { Settings,
   Info,
   Eye,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Plus,
+  Building
   } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';

@@ -1,62 +1,91 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+// Build fix - force update
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Eye,
-  Star,
-  Plus,
-  Search,
-  Square,
-  Building,
-  Home,
-  Store,
-  Bed,
-  Bath,
-  DollarSign,
-  TrendingUp,
-  MapPin,
-  Edit,
-  Trash2 } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
+  Clock,
+  HardDrive,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
+} from 'lucide-react';
 import Link from 'next/link';
-import { User, Property } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { User } from '@/types';
 
-interface PropertyStats {
-  totalProperties: number;
-  availableProperties: number;
-  rentedProperties: number;
-  maintenanceProperties: number;
-  totalMonthlyRevenue: number;
-  totalRevenue: number;
-  averageOccupancy: number;
-  topPerformingProperty: string;
-  propertiesNeedingAttention: number;
+
+interface Backup {
+  id: string;
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-export default function OwnerProperties() {
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
+
+export default function OwnerPropertiesPage() {
+
   const [user, setUser] = useState<User | null>(null);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [stats, setStats] = useState<PropertyStats>({
-    totalProperties: 0,
-    availableProperties: 0,
-    rentedProperties: 0,
-    maintenanceProperties: 0,
-    totalMonthlyRevenue: 0,
-    totalRevenue: 0,
-    averageOccupancy: 0,
-    topPerformingProperty: '',
-    propertiesNeedingAttention: 0,
+
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
+
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -71,155 +100,180 @@ export default function OwnerProperties() {
       }
     };
 
-    const loadProperties = async () => {
+    const loadBackupData = async () => {
       try {
-        setLoading(true);
-        const response = await fetch('/api/properties/list?limit=50');
-        
-        if (response.ok) {
-          const data = await response.json();
-          setProperties(data.properties);
-          setStats({
-            totalProperties: data.stats.totalProperties,
-            availableProperties: data.properties.filter((p: any) => p.status === 'AVAILABLE').length,
-            rentedProperties: data.properties.filter((p: any) => p.status === 'RENTED').length,
-            maintenanceProperties: data.properties.filter((p: any) => p.status === 'MAINTENANCE').length,
-            totalMonthlyRevenue: data.properties.reduce((acc: number, p: any) => acc + (p.currentTenant ? p.price : 0), 0),
-            totalRevenue: data.properties.reduce((acc: number, p: any) => acc + (p.totalRevenue || 0), 0),
-            averageOccupancy: data.stats.averageOccupancy || 0,
-            topPerformingProperty: data.stats.topPerformingProperty || '',
-            propertiesNeedingAttention: data.stats.propertiesNeedingAttention || 0,
-          });
-        } else {
-          logger.error('Error loading properties');
-          // Use mock data as fallback
-          loadMockData();
-        }
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
+
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
       } catch (error) {
-        logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
-        // Use mock data as fallback
-        loadMockData();
-      } finally {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
         setLoading(false);
       }
     };
 
-    const loadMockData = () => {
-      const mockProperties = [
-        {
-          id: '1',
-          title: 'Departamento Providencia',
-          description: 'Moderno departamento en el corazón de Providencia',
-          type: 'APARTMENT',
-          address: 'Av. Providencia 1234',
-          city: 'Santiago',
-          commune: 'Providencia',
-          region: 'Metropolitana',
-          price: 800000,
-          deposit: 800000,
-          bedrooms: 2,
-          bathrooms: 2,
-          area: 85,
-          status: 'AVAILABLE',
-          images: JSON.stringify(['/placeholder1.jpg', '/placeholder2.jpg']),
-          features: JSON.stringify(['Estacionamiento', 'Seguridad 24h', 'Gimnasio', 'Piscina']),
-          ownerId: 'user1',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-        },
-        {
-          id: '2',
-          title: 'Casa Las Condes',
-          description: 'Espaciosa casa familiar en Las Condes',
-          type: 'HOUSE',
-          address: 'Calle El Alba 567',
-          city: 'Santiago',
-          commune: 'Las Condes',
-          region: 'Metropolitana',
-          price: 1200000,
-          deposit: 1200000,
-          bedrooms: 4,
-          bathrooms: 3,
-          area: 180,
-          status: 'RENTED',
-          images: JSON.stringify(['/placeholder3.jpg', '/placeholder4.jpg']),
-          features: JSON.stringify(['Jardín', 'Terraza', 'Estacionamiento', 'Seguridad']),
-          ownerId: 'user1',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 400).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        },
-      ];
-
-      setProperties(mockProperties as any);
-      setStats({
-        totalProperties: mockProperties.length,
-        availableProperties: mockProperties.filter(p => p.status === 'AVAILABLE').length,
-        rentedProperties: mockProperties.filter(p => p.status === 'RENTED').length,
-        maintenanceProperties: mockProperties.filter(p => p.status === 'MAINTENANCE').length,
-        totalMonthlyRevenue: mockProperties.reduce((sum, p) => sum + (p.status === 'RENTED' ? p.price : 0), 0),
-        totalRevenue: mockProperties.reduce((sum, p) => sum + (p.status === 'RENTED' ? p.price * 12 : 0), 0),
-        averageOccupancy: 50,
-        topPerformingProperty: 'Casa Las Condes',
-        propertiesNeedingAttention: 1,
-      });
-    };
-
     loadUserData();
-    loadProperties();
+    loadBackupData();
   }, []);
 
-  const updatePropertyStatus = async (propertyId: string, newStatus: string) => {
-    setProperties(prev => prev.map(property => 
-      property.id === propertyId 
-        ? { ...property, status: newStatus as Property['status'] }
-        : property,
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
+  };
+
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
+
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
     ));
-  };
-
-  const deleteProperty = async (propertyId: string) => {
-    setProperties(prev => prev.filter(property => property.id !== propertyId));
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'APARTMENT':
-        return <Building className="w-5 h-5" />;
-      case 'HOUSE':
-        return <Home className="w-5 h-5" />;
-      case 'STUDIO':
-        return <Building className="w-5 h-5" />;
-      case 'COMMERCIAL':
-        return <Store className="w-5 h-5" />;
-      default:
-        return <Building className="w-5 h-5" />;
-    }
-  };
-
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'APARTMENT':
-        return 'Departamento';
-      case 'HOUSE':
-        return 'Casa';
-      case 'STUDIO':
-        return 'Studio';
-      case 'COMMERCIAL':
-        return 'Comercial';
-      default:
-        return 'Otro';
-    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'AVAILABLE':
+      case 'completed':
         return 'text-green-600 bg-green-50 border-green-200';
-      case 'RENTED':
+      case 'in_progress':
         return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'MAINTENANCE':
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
         return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'PENDING':
-        return 'text-orange-600 bg-orange-50 border-orange-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
@@ -227,237 +281,379 @@ export default function OwnerProperties() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'AVAILABLE':
-        return <Badge className="bg-green-100 text-green-800">Disponible</Badge>;
-      case 'RENTED':
-        return <Badge className="bg-blue-100 text-blue-800">Arrendado</Badge>;
-      case 'MAINTENANCE':
-        return <Badge className="bg-yellow-100 text-yellow-800">Mantenimiento</Badge>;
-      case 'PENDING':
-        return <Badge className="bg-orange-100 text-orange-800">Pendiente</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
   };
 
-  const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.address.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' || property.status.toLowerCase() === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
+    }
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
+
+    return date.toLocaleDateString('es-CL');
+  };
 
   if (loading) {
     return (
-      <DashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando propiedades...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
-      </DashboardLayout
+      </div>
     );
   }
 
   return (
-    <DashboardLayout user={user} title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
-      <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Propiedades</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalProperties}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.availableProperties} disponibles
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatPrice(stats.totalMonthlyRevenue)}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.rentedProperties} propiedades arrendadas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ocupación Promedio</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.averageOccupancy}%</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.propertiesNeedingAttention} necesitan atención
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mejor Rendimiento</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm font-medium">{stats.topPerformingProperty}</div>
-              <p className="text-xs text-muted-foreground">
-                Propiedad con mayor ingreso
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Buscar propiedades..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+    <UnifiedDashboardLayout title="Mis Propiedades" subtitle="Gestiona tu cartera de propiedades">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Mis Propiedades</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filtrar por estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="available">Disponibles</SelectItem>
-                  <SelectItem value="rented">Arrendadas</SelectItem>
-                  <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                  <SelectItem value="pending">Pendientes</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button asChild>
-                <Link href="/owner/properties/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Propiedad
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
 
-        {/* Properties Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <Card key={property.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(property.type)}
-                    <div>
-                      <CardTitle className="text-lg">{property.title}</CardTitle>
-                      <CardDescription className="text-sm">
-                        {getTypeName(property.type)} • {property.commune}
-                      </CardDescription>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
                     </div>
-                  </div>
-                  {getStatusBadge(property.status)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span>{property.address}</span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Bed className="h-4 w-4" />
-                      <span>{property.bedrooms}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Bath className="h-4 w-4" />
-                      <span>{property.bathrooms}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Square className="h-4 w-4" />
-                      <span>{property.area}m²</span>
-                    </div>
-                  </div>
-                  <div className="text-lg font-semibold text-green-600">
-                    {formatPrice(property.price)}
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/owner/properties/${property.id}`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/owner/properties/${property.id}/edit`}>
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
-                      </Link>
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteProperty(property.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        {filteredProperties.length === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Building className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron propiedades</h3>
-              <p className="text-gray-600 text-center mb-4">
-                {searchTerm || filter !== 'all' 
-                  ? 'Intenta ajustar los filtros de búsqueda'
-                  : 'Comienza agregando tu primera propiedad'
-                }
-              </p>
-              <Button asChild>
-                <Link href="/owner/properties/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Propiedad
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

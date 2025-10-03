@@ -1,8 +1,8 @@
 ﻿'use client';
 
+// Build fix - force update
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 
 export default function ProveedoresPage() {
@@ -83,42 +84,20 @@ export default function ProveedoresPage() {
 
   if (loading) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        title="Proveedores"
-        subtitle="Cargando información..."
-      >
+      <UnifiedDashboardLayout title="Proveedores" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </div></div></div></div>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-          <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-        title="Proveedores"
-        subtitle="Error al cargar la página"
-      >
+      <UnifiedDashboardLayout title="Proveedores" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -132,23 +111,12 @@ export default function ProveedoresPage() {
             </div>
           </CardContent>
         </Card>
-      </div></div></div></div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-        <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <div className="w-64 bg-white shadow-lg">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="p-6"> 
-      title="Proveedores"
-      subtitle="Gestiona y visualiza la información de proveedores"
-    >
+    <UnifiedDashboardLayout title="Proveedores" subtitle="Gestiona y visualiza la información de proveedores">
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -271,7 +239,7 @@ export default function ProveedoresPage() {
           </CardContent>
         </Card>
       </div>
-    </div></div></div></div>
+    </UnifiedDashboardLayout>
   );
 }
 

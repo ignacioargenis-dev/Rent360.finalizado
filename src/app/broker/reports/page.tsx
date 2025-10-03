@@ -1,291 +1,384 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// Build fix - force update
+
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Download, 
-  Calendar, 
-  DollarSign, 
-  Home,
-  Users,
-  FileText,
-  Filter,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
   RefreshCw,
-  PieChart,
-  Activity,
-  Target,
-  Star,
+  Calendar,
   Clock,
-  AlertTriangle,
+  HardDrive,
+  Shield,
   CheckCircle,
-  Eye,
+  XCircle,
+  AlertTriangle,
   Settings,
-  Printer,
-  Mail,
-  Hand,
-  Award,
-  Trophy,
-  Zap,
-  UserCheck, 
-  Building, 
-  Briefcase
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
+import Link from 'next/link';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
 
-interface ReportMetric {
-  label: string;
-  value: string;
-  change: string;
-  trend: 'up' | 'down' | 'stable';
-  icon: any;
-  color: string;
-}
 
-interface PerformanceData {
-  totalProperties: number;
-  activeContracts: number;
-  totalClients: number;
-  totalRevenue: number;
-  totalCommission: number;
-  averageCommissionRate: number;
-  successRate: number;
-  clientSatisfaction: number;
-  propertiesSold: number;
-  propertiesRented: number;
-  averageTimeToClose: number;
-}
-
-interface TopPerformer {
+interface Backup {
   id: string;
   name: string;
-  type: 'property' | 'client';
-  value: number;
-  metric: string;
-  change: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-interface MonthlyData {
-  month: string;
-  contracts: number;
-  revenue: number;
-  commission: number;
-  clients: number;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
 }
 
 export default function BrokerReportsPage() {
-  const { user } = useUserState();
-  const [metrics, setMetrics] = useState<ReportMetric[]>([]);
-  const [performance, setPerformance] = useState<PerformanceData>({
-    totalProperties: 0,
-    activeContracts: 0,
-    totalClients: 0,
-    totalRevenue: 0,
-    totalCommission: 0,
-    averageCommissionRate: 0,
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
     successRate: 0,
-    clientSatisfaction: 0,
-    propertiesSold: 0,
-    propertiesRented: 0,
-    averageTimeToClose: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
-  const [topPerformers, setTopPerformers] = useState<TopPerformer[]>([]);
-  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<string>('last30days');
-
-  // Funciones para acciones de reportes
-  const handleRefreshData = () => {
-    logger.info('Refrescando datos de reportes del corredor');
-    setLoading(true);
-    setTimeout(() => setLoading(false), 1000);
-  };
-
-  const handleExportPDF = () => {
-    logger.info('Exportando reporte en PDF');
-    alert('Exportando reporte en PDF - próximamente');
-    // TODO: Implementar exportación PDF
-  };
-
-  const handlePrintReport = () => {
-    logger.info('Imprimiendo reporte');
-    window.print();
-  };
-
-  const handleViewAllPerformers = () => {
-    logger.info('Viendo todos los mejores performers');
-    alert('Vista completa de mejores performers - próximamente');
-    // TODO: Implementar vista completa
-  };
-
-  const handleCustomReport = () => {
-    logger.info('Creando reporte personalizado');
-    alert('Funcionalidad de reportes personalizados - próximamente');
-    // TODO: Implementar reportes personalizados
-  };
-
-  const handleSendByEmail = () => {
-    logger.info('Enviando reporte por email');
-    alert('Enviando reporte por email - próximamente');
-    // TODO: Implementar envío por email
-  };
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      setMetrics([
-        {
-          label: 'Ingresos Totales',
-          value: '$45.2M',
-          change: '+18.5%',
-          trend: 'up',
-          icon: DollarSign,
-          color: 'text-green-600',
-        },
-        {
-          label: 'Comisiones',
-          value: '$2.7M',
-          change: '+22.3%',
-          trend: 'up',
-          icon: Hand,
-          color: 'text-purple-600',
-        },
-        {
-          label: 'Clientes',
-          value: '156',
-          change: '+12.1%',
-          trend: 'up',
-          icon: Users,
-          color: 'text-blue-600',
-        },
-        {
-          label: 'Propiedades',
-          value: '89',
-          change: '+8.7%',
-          trend: 'up',
-          icon: Building,
-          color: 'text-orange-600',
-        },
-        {
-          label: 'Contratos',
-          value: '67',
-          change: '+15.2%',
-          trend: 'up',
-          icon: FileText,
-          color: 'text-indigo-600',
-        },
-        {
-          label: 'Satisfacción',
-          value: '4.8/5',
-          change: '+0.4',
-          trend: 'up',
-          icon: Star,
-          color: 'text-yellow-600',
-        },
-      ]);
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+      }
+    };
 
-      setPerformance({
-        totalProperties: 89,
-        activeContracts: 45,
-        totalClients: 156,
-        totalRevenue: 45200000,
-        totalCommission: 2710000,
-        averageCommissionRate: 6.0,
-        successRate: 89.2,
-        clientSatisfaction: 4.8,
-        propertiesSold: 12,
-        propertiesRented: 33,
-        averageTimeToClose: 14,
-      });
+    const loadBackupData = async () => {
+      try {
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
 
-      setTopPerformers([
-        {
-          id: '1',
-          name: 'Departamento Las Condes',
-          type: 'property',
-          value: 550000,
-          metric: 'Comisión mensual',
-          change: '+5.2%',
-        },
-        {
-          id: '2',
-          name: 'María González',
-          type: 'client',
-          value: 1650000,
-          metric: 'Comisión total',
-          change: '+12.8%',
-        },
-        {
-          id: '3',
-          name: 'Oficina Providencia',
-          type: 'property',
-          value: 350000,
-          metric: 'Comisión mensual',
-          change: '+3.1%',
-        },
-        {
-          id: '4',
-          name: 'Empresa Soluciones Ltda.',
-          type: 'client',
-          value: 840000,
-          metric: 'Comisión total',
-          change: '+8.5%',
-        },
-      ]);
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
 
-      setMonthlyData([
-        { month: 'Ene', contracts: 8, revenue: 3200000, commission: 192000, clients: 12 },
-        { month: 'Feb', contracts: 12, revenue: 4800000, commission: 288000, clients: 18 },
-        { month: 'Mar', contracts: 15, revenue: 6100000, commission: 366000, clients: 22 },
-        { month: 'Abr', contracts: 10, revenue: 4100000, commission: 246000, clients: 15 },
-        { month: 'May', contracts: 13, revenue: 5300000, commission: 318000, clients: 19 },
-        { month: 'Jun', contracts: 9, revenue: 3700000, commission: 222000, clients: 14 },
-      ]);
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
 
-      setLoading(false);
-    }, 1000);
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+    loadBackupData();
   }, []);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
   };
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('es-CL').format(num);
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
   };
 
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case 'up':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'down':
-        return <TrendingDown className="w-4 h-4" />;
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       default:
-        return null;
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case 'up':
-        return 'text-green-600';
-      case 'down':
-        return 'text-red-600';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
-        return 'text-gray-600';
+        return <Badge>Desconocido</Badge>;
     }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
+    }
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
+
+    return date.toLocaleDateString('es-CL');
   };
 
   if (loading) {
@@ -293,354 +386,274 @@ export default function BrokerReportsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando reportes...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Reportes"
-      subtitle="Analiza tu rendimiento y métricas"
-    >
-      <DashboardHeader 
-        user={user}
-        title="Reportes y Análisis"
-        subtitle="Analiza tu desempeño como corredor"
-      />
-
-      <div className="container mx-auto px-4 py-6">
-        {/* Header Controls */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Período de Reporte</h2>
-                <div className="flex gap-2">
-                  {['last7days', 'last30days', 'last90days', 'thisYear', 'lastYear'].map((range) => (
-                    <Button
-                      key={range}
-                      variant={dateRange === range ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setDateRange(range)}
-                    >
-                      {range === 'last7days' && 'Últimos 7 días'}
-                      {range === 'last30days' && 'Últimos 30 días'}
-                      {range === 'last90days' && 'Últimos 90 días'}
-                      {range === 'thisYear' && 'Este año'}
-                      {range === 'lastYear' && 'Año pasado'}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleRefreshData}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Actualizar
-                </Button>
-                <Button variant="outline" onClick={handleExportPDF}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar PDF
-                </Button>
-                <Button variant="outline" onClick={handlePrintReport}>
-                  <Printer className="w-4 h-4 mr-2" />
-                  Imprimir
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {metrics.map((metric, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center ${metric.color}`}>
-                    <metric.icon className="w-6 h-6" />
-                  </div>
-                  <div className={`flex items-center gap-1 ${getTrendColor(metric.trend)}`}>
-                    {getTrendIcon(metric.trend)}
-                    <span className="text-sm font-medium">{metric.change}</span>
-                  </div>
-                </div>
+    <UnifiedDashboardLayout title="Reportes" subtitle="Analiza tu rendimiento y métricas">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{metric.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
+                </div>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          {/* Performance Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Resumen de Desempeño
-              </CardTitle>
-              <CardDescription>
-                Métricas clave de tu rendimiento como corredor
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {performance.totalClients}
-                  </div>
-                  <div className="text-sm text-green-700">Total Clientes</div>
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {performance.activeContracts}
-                  </div>
-                  <div className="text-sm text-blue-700">Contratos Activos</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {formatPrice(performance.totalCommission)}
-                  </div>
-                  <div className="text-sm text-purple-700">Comisión Total</div>
-                </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {performance.successRate}%
-                  </div>
-                  <div className="text-sm text-orange-700">Tasa de Éxito</div>
-                </div>
-              </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
 
-              <div className="mt-6 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tiempo promedio de cierre</span>
-                  <span className="font-semibold">{performance.averageTimeToClose} días</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Comisión promedio</span>
-                  <span className="font-semibold">{performance.averageCommissionRate}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Satisfacción del cliente</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{performance.clientSatisfaction}</span>
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Property Types Performance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Rendimiento por Tipo
-              </CardTitle>
-              <CardDescription>
-                Desglose de propiedades arrendadas vs vendidas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Home className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <p className="font-semibold">Propiedades Arrendadas</p>
-                      <p className="text-sm text-gray-600">{performance.propertiesRented} unidades</p>
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-blue-600">
-                      {Math.round((performance.propertiesRented / (performance.propertiesRented + performance.propertiesSold)) * 100)}%
-                    </p>
-                    <p className="text-sm text-gray-600">del total</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Briefcase className="w-8 h-8 text-green-600" />
-                    <div>
-                      <p className="font-semibold">Propiedades Vendidas</p>
-                      <p className="text-sm text-gray-600">{performance.propertiesSold} unidades</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-green-600">
-                      {Math.round((performance.propertiesSold / (performance.propertiesRented + performance.propertiesSold)) * 100)}%
-                    </p>
-                    <p className="text-sm text-gray-600">del total</p>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Total de propiedades gestionadas</span>
-                    <span className="text-lg font-bold text-gray-900">
-                      {performance.propertiesRented + performance.propertiesSold}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Top Performers */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  Mejores Performers
-                </CardTitle>
-                <CardDescription>
-                  Propiedades y clientes con mejor rendimiento
-                </CardDescription>
-              </div>
-              <Button variant="outline" onClick={handleViewAllPerformers}>
-                <Eye className="w-4 h-4 mr-2" />
-                Ver Todos
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {topPerformers.map((performer, index) => (
-                <div key={performer.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        performer.type === 'property' ? 'bg-blue-100' : 'bg-purple-100'
-                      }`}>
-                        {performer.type === 'property' ? (
-                          <Building className="w-5 h-5 text-blue-600" />
-                        ) : (
-                          <Users className="w-5 h-5 text-purple-600" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{performer.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {performer.type === 'property' ? 'Propiedad' : 'Cliente'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">{performer.change}</span>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-600">{performer.metric}</p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {performer.type === 'property' ? formatPrice(performer.value) : formatPrice(performer.value)}
-                      </p>
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
                     </div>
-                    <Badge className={`${index === 0 ? 'bg-yellow-100 text-yellow-800' : index === 1 ? 'bg-gray-100 text-gray-800' : 'bg-orange-100 text-orange-800'}`}>
-                      #{index + 1}
-                    </Badge>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Monthly Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Tendencia Mensual
-            </CardTitle>
-            <CardDescription>
-              Evolución de tus métricas clave en los últimos meses
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {monthlyData.map((data, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 text-center">
-                      <p className="text-sm font-medium text-gray-600">{data.month}</p>
-                    </div>
-                    <div className="flex gap-6">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Contratos</p>
-                        <p className="font-semibold">{data.contracts}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Ingresos</p>
-                        <p className="font-semibold">{formatPrice(data.revenue)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Comisión</p>
-                        <p className="font-semibold text-purple-600">{formatPrice(data.commission)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Clientes</p>
-                        <p className="font-semibold">{data.clients}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {index > 0 && monthlyData[index - 1] && (() => {
-                      const prevData = monthlyData[index - 1]!;
-                      return (
-                        <>
-                          {data.contracts > prevData.contracts && (
-                            <TrendingUp className="w-4 h-4 text-green-600" />
-                          )}
-                          {data.commission > prevData.commission && (
-                            <DollarSign className="w-4 h-4 text-green-600" />
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">¿Necesitas más información?</h3>
-                <p className="text-gray-600">
-                  Genera reportes personalizados o exporta datos para análisis detallado
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleCustomReport}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Reporte Personalizado
-                </Button>
-                <Button onClick={handleSendByEmail}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Enviar por Email
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

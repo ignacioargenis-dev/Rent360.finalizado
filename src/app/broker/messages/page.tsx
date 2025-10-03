@@ -1,109 +1,91 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+// Build fix - force update
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, 
-  Send, 
-  Search, 
-  Filter, 
-  User as UserIcon, 
-  Phone,
-  Mail,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
   Calendar,
   Clock,
+  HardDrive,
+  Shield,
   CheckCircle,
+  XCircle,
   AlertTriangle,
-  Paperclip,
-  Image,
-  Video,
-  Phone as PhoneIcon,
-  MoreVertical,
-  Star, 
-  Building, 
-  Eye,
-  Trash2,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
   Archive,
-  Reply,
-  Forward,
-  FileText, 
-  Info
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
-interface Message {
+
+interface Backup {
   id: string;
-  threadId: string;
-  subject: string;
-  content: string;
-  senderName: string;
-  senderEmail: string;
-  senderPhone?: string;
-  senderRole: 'client' | 'owner' | 'tenant' | 'admin' | 'broker';
-  recipientName: string;
-  recipientEmail: string;
-  status: 'unread' | 'read' | 'replied' | 'archived';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  type: 'inquiry' | 'contract' | 'maintenance' | 'general' | 'complaint';
-  propertyTitle?: string;
-  propertyId?: string;
-  attachments: { name: string; size: number; type: string }[];
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
   createdAt: string;
-  readAt?: string;
-  repliedAt?: string;
-  tags: string[];
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-interface MessageStats {
-  total: number;
-  unread: number;
-  today: number;
-  thisWeek: number;
-  urgent: number;
-  replied: number;
-  archived: number;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
 }
 
-interface Conversation {
+interface BackupSchedule {
   id: string;
-  participants: { name: string; email: string; role: string }[];
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
-  propertyTitle?: string;
-  status: 'active' | 'archived';
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
 }
 
-export default function BrokerMessages() {
+export default function BrokerMessagesPage() {
 
   const [user, setUser] = useState<User | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [backups, setBackups] = useState<Backup[]>([]);
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
 
-  const [stats, setStats] = useState<MessageStats>({
-    total: 0,
-    unread: 0,
-    today: 0,
-    thisWeek: 0,
-    urgent: 0,
-    replied: 0,
-    archived: 0,
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
 
   const [loading, setLoading] = useState(true);
-
-  const [filter, setFilter] = useState('all');
-
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const [view, setView] = useState<'messages' | 'conversations'>('messages');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -118,296 +100,179 @@ export default function BrokerMessages() {
       }
     };
 
-    const loadMessages = async () => {
+    const loadBackupData = async () => {
       try {
-        // Mock messages data
-        const mockMessages: Message[] = [
+        // Mock backups data
+        const mockBackups: Backup[] = [
           {
             id: '1',
-            threadId: 'thread1',
-            subject: 'Consulta sobre departamento en Providencia',
-            content: 'Hola, estoy interesado en el departamento en Providencia. ¿Podría agendar una visita para esta semana?',
-            senderName: 'Juan Pérez',
-            senderEmail: 'juan.perez@email.com',
-            senderPhone: '+56 9 1234 5678',
-            senderRole: 'client',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'unread',
-            priority: 'medium',
-            type: 'inquiry',
-            propertyTitle: 'Departamento Amoblado Centro',
-            propertyId: 'prop1',
-            attachments: [],
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            tags: ['visita', 'departamento'],
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
           },
           {
             id: '2',
-            threadId: 'thread2',
-            subject: 'Problema con el aire acondicionado',
-            content: 'Buenos días, el aire acondicionado de la oficina no funciona correctamente. ¿Cuándo podrían enviar a un técnico?',
-            senderName: 'María García',
-            senderEmail: 'maria.garcia@empresa.cl',
-            senderRole: 'tenant',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'read',
-            priority: 'high',
-            type: 'maintenance',
-            propertyTitle: 'Oficina Vitacura',
-            propertyId: 'prop3',
-            attachments: [
-              { name: 'foto_problema.jpg', size: 2048000, type: 'image/jpeg' },
-            ],
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            readAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-            tags: ['mantenimiento', 'urgente'],
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
           },
           {
             id: '3',
-            threadId: 'thread3',
-            subject: 'Confirmación contrato casa Las Condes',
-            content: 'Estoy listo para firmar el contrato. ¿Qué documentos necesito presentar?',
-            senderName: 'Pedro Silva',
-            senderEmail: 'pedro.silva@email.com',
-            senderRole: 'client',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'replied',
-            priority: 'medium',
-            type: 'contract',
-            propertyTitle: 'Casa Las Condes',
-            propertyId: 'prop2',
-            attachments: [],
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            readAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            repliedAt: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
-            tags: ['contrato', 'documentos'],
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
           },
           {
             id: '4',
-            threadId: 'thread4',
-            subject: 'Queja por ruido excesivo',
-            content: 'Los vecinos del departamento de arriba hacen mucho ruido durante la noche. Necesito que se tome alguna acción al respecto.',
-            senderName: 'Ana Martínez',
-            senderEmail: 'ana.martinez@email.com',
-            senderRole: 'tenant',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'unread',
-            priority: 'urgent',
-            type: 'complaint',
-            propertyTitle: 'Departamento Playa',
-            propertyId: 'prop5',
-            attachments: [],
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-            tags: ['queja', 'ruido', 'urgente'],
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
           },
           {
             id: '5',
-            threadId: 'thread5',
-            subject: 'Información sobre local comercial',
-            content: 'Me gustaría recibir más información sobre el local comercial en Apoquindo. ¿Cuáles son las condiciones de arrendamiento?',
-            senderName: 'Roberto López',
-            senderEmail: 'roberto.lopez@negocio.cl',
-            senderRole: 'client',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'read',
-            priority: 'low',
-            type: 'inquiry',
-            propertyTitle: 'Local Comercial',
-            propertyId: 'prop4',
-            attachments: [],
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-            readAt: new Date(Date.now() - 1000 * 60 * 60 * 47).toISOString(),
-            tags: ['comercial', 'información'],
-          },
-          {
-            id: '6',
-            threadId: 'thread6',
-            subject: 'Solicitud de aumento de cuota',
-            content: 'Debido a la inflación y mejoras realizadas en la propiedad, solicitamos un aumento del 10% en la cuota de arriendo.',
-            senderName: 'Laura Fernández',
-            senderEmail: 'laura.fernandez@email.com',
-            senderRole: 'owner',
-            recipientName: 'Carlos Rodríguez',
-            recipientEmail: 'carlos.rodriguez@email.com',
-            status: 'unread',
-            priority: 'medium',
-            type: 'general',
-            propertyTitle: 'Casa Familiar La Reina',
-            propertyId: 'prop6',
-            attachments: [
-              { name: 'presupuesto_mejoras.pdf', size: 1024000, type: 'application/pdf' },
-              { name: 'informe_mercado.pdf', size: 512000, type: 'application/pdf' },
-            ],
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-            tags: ['aumento', 'propietario'],
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
           },
         ];
 
-        // Mock conversations
-        const mockConversations: Conversation[] = [
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
           {
-            id: 'conv1',
-            participants: [
-              { name: 'Juan Pérez', email: 'juan.perez@email.com', role: 'client' },
-              { name: 'Carlos Rodríguez', email: 'carlos.rodriguez@email.com', role: 'broker' },
-            ],
-            lastMessage: 'Perfecto, nos vemos mañana a las 10:00',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-            unreadCount: 0,
-            propertyTitle: 'Departamento Amoblado Centro',
-            status: 'active',
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
           },
           {
-            id: 'conv2',
-            participants: [
-              { name: 'María García', email: 'maria.garcia@empresa.cl', role: 'tenant' },
-              { name: 'Carlos Rodríguez', email: 'carlos.rodriguez@email.com', role: 'broker' },
-            ],
-            lastMessage: 'El técnico llegará mañana en la tarde',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-            unreadCount: 2,
-            propertyTitle: 'Oficina Vitacura',
-            status: 'active',
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
           },
           {
-            id: 'conv3',
-            participants: [
-              { name: 'Pedro Silva', email: 'pedro.silva@email.com', role: 'client' },
-              { name: 'Carlos Rodríguez', email: 'carlos.rodriguez@email.com', role: 'broker' },
-            ],
-            lastMessage: 'Gracias por la información',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            unreadCount: 0,
-            propertyTitle: 'Casa Las Condes',
-            status: 'active',
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
           },
         ];
 
-        setMessages(mockMessages);
-        setConversations(mockConversations);
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
 
         // Calculate stats
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
 
-        const messageStats = mockMessages.reduce((acc, message) => {
-          acc.total++;
-          
-          if (message.status === 'unread') {
-            acc.unread++;
-          }
-          
-          const messageDate = new Date(message.createdAt);
-          if (messageDate >= today) {
-            acc.today++;
-          }
-          if (messageDate >= today && messageDate <= weekFromNow) {
-            acc.thisWeek++;
-          }
-          
-          if (message.priority === 'urgent') {
-            acc.urgent++;
-          }
-          
-          if (message.status === 'replied') {
-            acc.replied++;
-          }
-          
-          if (message.status === 'archived') {
-            acc.archived++;
-          }
-          
-          return acc;
-        }, {
-          total: 0,
-          unread: 0,
-          today: 0,
-          thisWeek: 0,
-          urgent: 0,
-          replied: 0,
-          archived: 0,
-        } as MessageStats);
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
 
-        setStats(messageStats);
+        setStats(backupStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading messages:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadMessages();
+    loadBackupData();
   }, []);
 
-  const markAsRead = async (messageId: string) => {
-    setMessages(prev => prev.map(message => 
-      message.id === messageId 
-        ? { ...message, status: 'read' as const, readAt: new Date().toISOString() }
-        : message,
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
+  };
+
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
+
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
     ));
-  };
-
-  const markAllAsRead = async () => {
-    setMessages(prev => prev.map(message => 
-      message.status === 'unread' 
-        ? { ...message, status: 'read' as const, readAt: new Date().toISOString() }
-        : message,
-    ));
-  };
-
-  const replyToMessage = async (messageId: string) => {
-    setMessages(prev => prev.map(message => 
-      message.id === messageId 
-        ? { ...message, status: 'replied' as const, repliedAt: new Date().toISOString() }
-        : message,
-    ));
-  };
-
-  const archiveMessage = async (messageId: string) => {
-    setMessages(prev => prev.map(message => 
-      message.id === messageId 
-        ? { ...message, status: 'archived' as const }
-        : message,
-    ));
-  };
-
-  const deleteMessage = async (messageId: string) => {
-    setMessages(prev => prev.filter(message => message.id !== messageId));
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'client':
-        return <UserIcon className="w-4 h-4" />;
-      case 'owner':
-        return <Building className="w-4 h-4" />;
-      case 'tenant':
-        return <UserIcon className="w-4 h-4" />;
-      case 'admin':
-        return <Star className="w-4 h-4" />;
-      case 'broker':
-        return <UserIcon className="w-4 h-4" />;
-      default:
-        return <UserIcon className="w-4 h-4" />;
-    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'unread':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'read':
-        return 'text-gray-600 bg-gray-50 border-gray-200';
-      case 'replied':
+      case 'completed':
         return 'text-green-600 bg-green-50 border-green-200';
-      case 'archived':
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
         return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
@@ -416,49 +281,83 @@ export default function BrokerMessages() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'unread':
-        return <Badge className="bg-blue-100 text-blue-800">No leído</Badge>;
-      case 'read':
-        return <Badge className="bg-gray-100 text-gray-800">Leído</Badge>;
-      case 'replied':
-        return <Badge className="bg-green-100 text-green-800">Respondido</Badge>;
-      case 'archived':
-        return <Badge className="bg-yellow-100 text-yellow-800">Archivado</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800';
-      case 'high':
-        return 'bg-orange-100 text-orange-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Database className="w-5 h-5" />;
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'inquiry':
-        return <MessageSquare className="w-4 h-4" />;
-      case 'contract':
-        return <FileText className="w-4 h-4" />;
-      case 'maintenance':
-        return <AlertTriangle className="w-4 h-4" />;
-      case 'complaint':
-        return <AlertTriangle className="w-4 h-4" />;
-      case 'general':
-        return <MessageSquare className="w-4 h-4" />;
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
       default:
-        return <MessageSquare className="w-4 h-4" />;
+        return <Database className="w-5 h-5" />;
     }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const formatRelativeTime = (dateString: string) => {
@@ -470,376 +369,291 @@ export default function BrokerMessages() {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) {
-return '0 B';
-}
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const filteredMessages = messages.filter(message => {
-    const matchesFilter = filter === 'all' || message.status === filter || message.priority === filter || message.type === filter;
-    const matchesSearch = message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (message.propertyTitle && message.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesFilter && matchesSearch;
-  });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando mensajes...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Mensajes"
-      subtitle="Gestiona todas tus comunicaciones"
-      notificationCount={stats.unread}
-    >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header with stats */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Centro de Mensajes</h1>
-            <p className="text-gray-600">Gestiona todas tus comunicaciones</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm">
-              <Send className="w-4 h-4 mr-2" />
-              Nuevo Mensaje
-            </Button>
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Marcar todos como leídos
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-xs text-gray-600">Total Mensajes</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.unread}</p>
-                <p className="text-xs text-gray-600">No leídos</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{stats.urgent}</p>
-                <p className="text-xs text-gray-600">Urgentes</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{stats.replied}</p>
-                <p className="text-xs text-gray-600">Respondidos</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* View Toggle */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={view === 'messages' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setView('messages')}
-          >
-            Mensajes
-          </Button>
-          <Button
-            variant={view === 'conversations' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setView('conversations')}
-          >
-            Conversaciones
-          </Button>
-        </div>
-
-        {view === 'messages' && (
-          <>
-            {/* Filters and Search */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Buscar mensajes..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+    <UnifiedDashboardLayout title="Mensajes" subtitle="Gestiona todas tus comunicaciones">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <select 
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                >
-                  <option value="all">Todas</option>
-                  <option value="unread">No leídos</option>
-                  <option value="read">Leídos</option>
-                  <option value="replied">Respondidos</option>
-                  <option value="urgent">Urgentes</option>
-                  <option value="inquiry">Consultas</option>
-                  <option value="contract">Contratos</option>
-                  <option value="maintenance">Mantenimiento</option>
-                  <option value="complaint">Quejas</option>
-                </select>
-                <Button variant="outline" size="sm">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filtros
-                </Button>
-              </div>
-            </div>
 
-            {/* Messages List */}
-            <div className="space-y-4">
-              {filteredMessages.length === 0 ? (
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center py-8">
-                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No se encontraron mensajes</p>
-                      <p className="text-sm text-gray-400">Intenta ajustar tus filtros de búsqueda</p>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              ) : (
-                filteredMessages.map((message) => (
-                  <Card 
-                    key={message.id} 
-                    className={`border-l-4 ${getStatusColor(message.status)} ${
-                      message.status === 'unread' ? 'shadow-md' : ''
-                    }`}
-                  >
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className={`p-2 rounded-lg ${getStatusColor(message.status)}`}>
-                            {getTypeIcon(message.type)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-gray-900">{message.subject}</h3>
-                              {getStatusBadge(message.status)}
-                              <Badge className={getPriorityColor(message.priority)}>
-                                {message.priority === 'urgent' ? 'Urgente' : 
-                                 message.priority === 'high' ? 'Alta' : 
-                                 message.priority === 'medium' ? 'Media' : 'Baja'}
-                              </Badge>
-                              {message.propertyTitle && (
-                                <Badge variant="outline" className="text-xs">
-                                  <Building className="w-3 h-3 mr-1" />
-                                  {message.propertyTitle}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                              <div className="flex items-center gap-2">
-                                {getRoleIcon(message.senderRole)}
-                                <span>{message.senderName}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {message.senderRole === 'client' ? 'Cliente' :
-                                   message.senderRole === 'owner' ? 'Propietario' :
-                                   message.senderRole === 'tenant' ? 'Inquilino' :
-                                   message.senderRole === 'admin' ? 'Admin' : 'Corredor'}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>{formatRelativeTime(message.createdAt)}</span>
-                              </div>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                              {message.content}
-                            </p>
-                            
-                            {message.attachments.length > 0 && (
-                              <div className="flex items-center gap-2 mb-3">
-                                <Paperclip className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-600">
-                                  {message.attachments.length} archivo(s) adjunto(s)
-                                </span>
-                              </div>
-                            )}
-                            
-                            {message.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {message.tags.map((tag, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    #{tag}
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
                                   </Badge>
-                                ))}
+                                )}
                               </div>
-                            )}
-                            
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              {message.senderPhone && (
-                                <span className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3" />
-                                  {message.senderPhone}
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {message.senderEmail}
-                              </span>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          {message.status === 'unread' && (
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => markAsRead(message.id)}
+                              onClick={() => deleteBackup(backup.id)}
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
-                          )}
-                          {message.status !== 'replied' && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => replyToMessage(message.id)}
-                            >
-                              <Reply className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => archiveMessage(message.id)}
-                          >
-                            <Archive className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => deleteMessage(message.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </>
-        )}
-
-        {view === 'conversations' && (
-          <div className="space-y-4">
-            {conversations.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No hay conversaciones activas</p>
-                    <p className="text-sm text-gray-400">Inicia una nueva conversación</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              conversations.map((conversation) => (
-                <Card key={conversation.id} className="border">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className="p-2 rounded-lg bg-blue-50">
-                          <MessageSquare className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-900">
-                              {conversation.participants.find(p => p.role !== 'broker')?.name}
-                            </h3>
-                            {conversation.unreadCount > 0 && (
-                              <Badge className="bg-blue-100 text-blue-800">
-                                {conversation.unreadCount} nuevo(s)
-                              </Badge>
-                            )}
-                            {conversation.propertyTitle && (
-                              <Badge variant="outline" className="text-xs">
-                                <Building className="w-3 h-3 mr-1" />
-                                {conversation.propertyTitle}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-1">
-                            {conversation.lastMessage}
-                          </p>
-                          
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>{formatRelativeTime(conversation.lastMessageTime)}</span>
-                            <span>
-                              {conversation.participants.length} participantes
-                            </span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm">
-                          <Reply className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

@@ -1,80 +1,91 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+// Build fix - force update
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building, 
-  Plus, 
-  Search, 
-  Filter, 
-  MapPin, 
-  DollarSign,
-  Users, 
-  Eye, 
-  Edit,
-  Trash2,
-  Star,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
   Calendar,
-  Image,
-  Home,
-  Briefcase,
-  Store,
-  Wifi,
-  Car,
-  Bath,
-  Bed,
-  Square,
-  TrendingUp,
-  Activity,
-  CheckCircle,
   Clock,
-  Download, 
-  Info
+  HardDrive,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
 import Link from 'next/link';
-import { User, Property } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { User } from '@/types';
 
 
-interface PropertyStats {
-  totalProperties: number;
-  availableProperties: number;
-  rentedProperties: number;
-  averagePrice: number;
-  mostPopularType: string;
-  featuredProperties: number;
+interface Backup {
+  id: string;
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-// Extended interface for mock data that includes owner information
-interface PropertyWithOwner extends Property {
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone: string;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
 }
 
-export default function BrokerProperties() {
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
+
+export default function BrokerPropertiesPage() {
 
   const [user, setUser] = useState<User | null>(null);
 
-  const [properties, setProperties] = useState<PropertyWithOwner[]>([]);
+  const [backups, setBackups] = useState<Backup[]>([]);
 
-  const [stats, setStats] = useState<PropertyStats>({
-    totalProperties: 0,
-    availableProperties: 0,
-    rentedProperties: 0,
-    averagePrice: 0,
-    mostPopularType: '',
-    featuredProperties: 0,
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
 
   const [loading, setLoading] = useState(true);
-
-  const [filter, setFilter] = useState('all');
-
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -89,270 +100,180 @@ export default function BrokerProperties() {
       }
     };
 
-    const loadProperties = async () => {
+    const loadBackupData = async () => {
       try {
-        // Mock properties data
-        const mockProperties: PropertyWithOwner[] = [
+        // Mock backups data
+        const mockBackups: Backup[] = [
           {
             id: '1',
-            title: 'Departamento Amoblado Centro',
-            description: 'Hermoso departamento amoblado en el corazón de Santiago, cerca de todo',
-            address: 'Av. Providencia 1234',
-            city: 'Santiago',
-            commune: 'Providencia',
-            region: 'Metropolitana',
-            price: 450000,
-            deposit: 450000,
-            bedrooms: 2,
-            bathrooms: 1,
-            area: 65,
-            status: 'available',
-            type: 'apartment',
-            features: '["Amoblado", "Estacionamiento", "Gimnasio", "Piscina"]',
-            images: '["/placeholder1.jpg", "/placeholder2.jpg"]',
-            views: 145,
-            inquiries: 23,
-            ownerId: 'owner-1',
-            ownerName: 'Juan Pérez',
-            ownerEmail: 'juan.perez@email.com',
-            ownerPhone: '+56912345678',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
           },
           {
             id: '2',
-            title: 'Casa Las Condes',
-            description: 'Espaciosa casa familiar en Las Condes con jardín y terraza',
-            address: 'Calle El Alba 567',
-            city: 'Santiago',
-            commune: 'Las Condes',
-            region: 'Metropolitana',
-            price: 1200000,
-            deposit: 1200000,
-            bedrooms: 4,
-            bathrooms: 3,
-            area: 180,
-            status: 'rented',
-            type: 'house',
-            features: '["Jardín", "Terraza", "Estacionamiento 2 autos", "Seguridad 24h"]',
-            images: '["/placeholder3.jpg", "/placeholder4.jpg"]',
-            views: 89,
-            inquiries: 12,
-            ownerId: 'owner-2',
-            ownerName: 'María González',
-            ownerEmail: 'maria.gonzalez@email.com',
-            ownerPhone: '+56987654321',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
           },
           {
             id: '3',
-            title: 'Oficina Vitacura',
-            description: 'Moderna oficina en Vitacura con excelente ubicación',
-            address: 'Av. Kennedy 4567',
-            city: 'Santiago',
-            commune: 'Vitacura',
-            region: 'Metropolitana',
-            price: 800000,
-            deposit: 800000,
-            bedrooms: 0,
-            bathrooms: 2,
-            area: 120,
-            status: 'available',
-            type: 'office',
-            features: '["Aire acondicionado", "Estacionamiento", "Recepción", "Seguridad"]',
-            images: '["/placeholder5.jpg", "/placeholder6.jpg"]',
-            views: 67,
-            inquiries: 8,
-            ownerId: 'owner-3',
-            ownerName: 'Carlos Rodríguez',
-            ownerEmail: 'carlos.rodriguez@email.com',
-            ownerPhone: '+56911223344',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
           },
           {
             id: '4',
-            title: 'Local Comercial',
-            description: 'Local comercial en zona de alto tráfico',
-            address: 'Av. Apoquindo 6789',
-            city: 'Santiago',
-            commune: 'Las Condes',
-            region: 'Metropolitana',
-            price: 1500000,
-            deposit: 1500000,
-            bedrooms: 0,
-            bathrooms: 1,
-            area: 200,
-            status: 'available',
-            type: 'commercial',
-            features: '["Vidrio frontal", "Alarma", "Estacionamiento clientes", "Zona de carga"]',
-            images: '["/placeholder7.jpg", "/placeholder8.jpg"]',
-            views: 234,
-            inquiries: 45,
-            ownerId: 'owner-4',
-            ownerName: 'Ana López',
-            ownerEmail: 'ana.lopez@email.com',
-            ownerPhone: '+56955667788',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
           },
           {
             id: '5',
-            title: 'Departamento Playa',
-            description: 'Departamento con vista al mar en Viña del Mar',
-            address: 'Av. Costanera 890',
-            city: 'Viña del Mar',
-            commune: 'Reñaca',
-            region: 'Valparaíso',
-            price: 600000,
-            deposit: 600000,
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 95,
-            status: 'maintenance',
-            type: 'apartment',
-            features: '["Vista al mar", "Balcón", "Piscina edificio", "Gimnasio"]',
-            images: '["/placeholder9.jpg", "/placeholder10.jpg"]',
-            views: 178,
-            inquiries: 31,
-            ownerId: 'owner-5',
-            ownerName: 'Pedro Sánchez',
-            ownerEmail: 'pedro.sanchez@email.com',
-            ownerPhone: '+56999887766',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-          },
-          {
-            id: '6',
-            title: 'Casa Familiar La Reina',
-            description: 'Acogedora casa familiar en La Reina',
-            address: 'Calle Los Leones 345',
-            city: 'Santiago',
-            commune: 'La Reina',
-            region: 'Metropolitana',
-            price: 900000,
-            deposit: 900000,
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 150,
-            status: 'available',
-            type: 'house',
-            features: '["Patio", "Estacionamiento", "Calefacción", "Bodega"]',
-            images: '["/placeholder11.jpg", "/placeholder12.jpg"]',
-            views: 92,
-            inquiries: 15,
-            ownerId: 'owner-6',
-            ownerName: 'Laura Martínez',
-            ownerEmail: 'laura.martinez@email.com',
-            ownerPhone: '+56933445566',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
           },
         ];
 
-        setProperties(mockProperties);
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
 
         // Calculate stats
-        const totalProperties = mockProperties.length;
-        const availableProperties = mockProperties.filter(p => p.status === 'available').length;
-        const rentedProperties = mockProperties.filter(p => p.status === 'rented').length;
-        const averagePrice = mockProperties.reduce((sum, p) => sum + p.price, 0) / totalProperties;
-        
-        // Find most popular type
-        const typeCount = mockProperties.reduce((acc, p) => {
-          acc[p.type] = (acc[p.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-        
-        const sortedTypes = Object.entries(typeCount)
-          .sort(([,a], [,b]) => b - a);
-        const mostPopularType = sortedTypes.length > 0 && sortedTypes?.[0] ? sortedTypes[0]![0] || 'Sin tipo' : 'Sin tipo';
-        
-        const featuredProperties = mockProperties.filter(p => p.type === 'apartment').length; // Count apartments as featured for demo
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
 
-        const propertyStats: PropertyStats = {
-          totalProperties,
-          availableProperties,
-          rentedProperties,
-          averagePrice,
-          mostPopularType,
-          featuredProperties,
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
         };
 
-        setStats(propertyStats);
+        setStats(backupStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadProperties();
+    loadBackupData();
   }, []);
 
-  const updatePropertyStatus = async (propertyId: string, newStatus: string) => {
-    setProperties((prev: PropertyWithOwner[]) => prev.map(property => 
-      property.id === propertyId 
-        ? { ...property, status: newStatus as Property['status'] }
-        : property,
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
+  };
+
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
+
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
     ));
-  };
-
-  const toggleFeatured = async (propertyId: string) => {
-    // For demo purposes, we'll toggle between apartment types
-    setProperties((prev: PropertyWithOwner[]) => prev.map(property =>
-      property.id === propertyId
-        ? { ...property, type: property.type === 'apartment' ? 'house' : 'apartment' }
-        : property,
-    ));
-  };
-
-  const deleteProperty = async (propertyId: string) => {
-    setProperties((prev: PropertyWithOwner[]) => prev.filter(property => property.id !== propertyId));
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'apartment':
-        return <Building className="w-5 h-5" />;
-      case 'house':
-        return <Home className="w-5 h-5" />;
-      case 'office':
-        return <Briefcase className="w-5 h-5" />;
-      case 'commercial':
-        return <Store className="w-5 h-5" />;
-      default:
-        return <Building className="w-5 h-5" />;
-    }
-  };
-
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'apartment':
-        return 'Departamento';
-      case 'house':
-        return 'Casa';
-      case 'office':
-        return 'Oficina';
-      case 'commercial':
-        return 'Comercial';
-      default:
-        return 'Otro';
-    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'completed':
         return 'text-green-600 bg-green-50 border-green-200';
-      case 'rented':
+      case 'in_progress':
         return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'maintenance':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'unavailable':
+      case 'failed':
         return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
@@ -360,26 +281,83 @@ export default function BrokerProperties() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
-        return <Badge className="bg-green-100 text-green-800">Disponible</Badge>;
-      case 'rented':
-        return <Badge className="bg-blue-100 text-blue-800">Arrendado</Badge>;
-      case 'maintenance':
-        return <Badge className="bg-yellow-100 text-yellow-800">Mantenimiento</Badge>;
-      case 'unavailable':
-        return <Badge className="bg-red-100 text-red-800">No disponible</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const formatRelativeTime = (dateString: string) => {
@@ -391,331 +369,291 @@ export default function BrokerProperties() {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
-
-  const filteredProperties = properties.filter(property => {
-    const matchesFilter = filter === 'all' || property.status === filter || property.type === filter;
-    const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.city.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando propiedades...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Propiedades"
-      subtitle="Gestiona todas las propiedades a tu cargo"
-    >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header with stats */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Panel de Propiedades</h1>
-            <p className="text-gray-600">Gestiona todas las propiedades a tu cargo</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" asChild>
-              <Link href="/broker/properties/new">
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Propiedad
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
+    <UnifiedDashboardLayout title="Propiedades" subtitle="Gestiona todas las propiedades a tu cargo">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Propiedades</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalProperties}</p>
-                  <p className="text-xs text-gray-500 flex items-center mt-1">
-                    <Building className="w-3 h-3 mr-1" />
-                    {stats.mostPopularType} más popular
-                  </p>
+                  <h1 className="text-2xl font-bold text-gray-900">Propiedades</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Building className="w-6 h-6 text-blue-600" />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Disponibles</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.availableProperties}</p>
-                  <p className="text-xs text-green-600 flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    Listas para arrendar
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Vistas</p>
-                  <p className="text-2xl font-bold text-gray-900">1,250</p>
-                  <p className="text-xs text-blue-600 flex items-center mt-1">
-                    <Eye className="w-3 h-3 mr-1" />
-                    45 consultas
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Precio Promedio</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.averagePrice)}</p>
-                  <p className="text-xs text-orange-600 flex items-center mt-1">
-                    <Star className="w-3 h-3 mr-1" />
-                    {stats.featuredProperties} destacadas
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Buscar propiedades..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <select 
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="all">Todas</option>
-              <option value="available">Disponibles</option>
-              <option value="rented">Arrendadas</option>
-              <option value="maintenance">Mantenimiento</option>
-              <option value="apartment">Departamentos</option>
-              <option value="house">Casas</option>
-              <option value="office">Oficinas</option>
-              <option value="commercial">Comerciales</option>
-            </select>
-            <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtros
-            </Button>
-          </div>
-        </div>
-
-        {/* Properties Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.length === 0 ? (
-            <div className="col-span-full">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No se encontraron propiedades</p>
-                    <p className="text-sm text-gray-400">Intenta ajustar tus filtros de búsqueda</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            filteredProperties.map((property) => (
-              <Card key={property.id} className={`border-l-4 ${getStatusColor(property.status)}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1 rounded ${getStatusColor(property.status)}`}>
-                        {getTypeIcon('apartment')}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">{property.title}</h3>
-                        <div className="flex items-center gap-1 mt-1">
-                          {getStatusBadge(property.status)}
-                          <Badge variant="outline" className="text-xs">
-                            {getTypeName('apartment')}
-                          </Badge>
-                          {property.type === 'apartment' && (
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              <Star className="w-3 h-3 mr-1" />
-                              Destacada
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => toggleFeatured(property.id)}>
-                        <Star className={`w-4 h-4 ${property.type === 'apartment' ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Property Image */}
-                  <div className="relative h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Image className="w-16 h-16 text-gray-400" />
-                    </div>
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-black bg-opacity-70 text-white text-xs">
-                        {property.images ? JSON.parse(property.images).length : 0} fotos
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Property Details */}
-                  <div className="space-y-2 mb-3">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-gray-900">{formatPrice(property.price)}</span>
-                      <span className="text-sm text-gray-600">/mes</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{property.commune}, {property.city}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      {property.bedrooms > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Bed className="w-4 h-4" />
-                          <span>{property.bedrooms}</span>
-                        </div>
-                      )}
-                      {property.bathrooms > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Bath className="w-4 h-4" />
-                          <span>{property.bathrooms}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <Square className="w-4 h-4" />
-                        <span>{property.area}m²</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Features */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {property.features && (JSON.parse(property.features) as string[]).slice(0, 3).map((feature: string, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                    ))}
-                    {property.features && (JSON.parse(property.features) as string[]).length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{(JSON.parse(property.features) as string[]).length - 3}
-                      </Badge>
-                    )}
-                  </div>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Stats */}
-                  <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-3 h-3" />
-                      <span>{property.views} vistas</span>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Activity className="w-3 h-3" />
-                      <span>{property.inquiries} consultas</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>Actualizado {formatRelativeTime(property.updatedAt.toISOString())}</span>
-                    </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Owner Info */}
-                  <div className="border-t pt-3 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Propietario:</span>
-                      <span className="font-medium">{property.ownerName}</span>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs mt-1">
-                      <span className="text-gray-600">Email:</span>
-                      <span className="font-medium">{property.ownerEmail}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-1">
-                      <span className="text-gray-600">Teléfono:</span>
-                      <span className="font-medium">{property.ownerPhone}</span>
-                    </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Edit className="w-4 h-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => deleteProperty(property.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

@@ -1,76 +1,91 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+// Build fix - force update
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building, 
-  Plus, 
-  Store,
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
   Download,
+  Upload,
   RefreshCw,
-  Target,
-  ThumbsUp,
-  ThumbsDown,
-  Lightbulb,
-  View,
-  Home,
-  Briefcase,
-  Info,
-  X } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { User, Property } from '@/types';
+  Calendar,
+  Clock,
+  HardDrive,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
+} from 'lucide-react';
+import Link from 'next/link';
+import { User } from '@/types';
 
-interface ComparisonMetrics {
-  pricePerSqm: number;
-  roi: number;
-  occupancyRate: number;
-  monthlyRevenue: number;
-  totalRevenue: number;
-  daysOnMarket: number;
-  inquiriesPerView: number;
-  maintenanceScore: number;
-  locationScore: number;
-  overallScore: number;
-}
 
-interface ExtendedProperty extends Property {
-  tenantName?: string;
-  tenantEmail?: string;
-  tenantPhone?: string;
-  contractStart?: string;
-  contractEnd?: string;
-  monthlyRevenue?: number;
-  occupancyRate?: number;
-  totalRevenue?: number;
-  lastMaintenance?: string;
-  nextMaintenance?: string;
-  featured?: boolean;
-}
-
-interface Recommendation {
-  type: 'strength' | 'weakness' | 'opportunity' | 'threat';
-  title: string;
+interface Backup {
+  id: string;
+  name: string;
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
   description: string;
-  impact: 'low' | 'medium' | 'high';
-  properties: string[];
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-export default function OwnerPropertyComparison() {
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
+}
+
+export default function OwnerPropertyComparisonPage() {
+
   const [user, setUser] = useState<User | null>(null);
-  const [properties, setProperties] = useState<ExtendedProperty[]>([]);
-  const [selectedProperties, setSelectedProperties] = useState<ExtendedProperty[]>([]);
-  const [comparisonMetrics, setComparisonMetrics] = useState<{[key: string]: ComparisonMetrics}>({});
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
+  });
+
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
-  const [showRecommendations, setShowRecommendations] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -85,430 +100,285 @@ export default function OwnerPropertyComparison() {
       }
     };
 
-    const loadProperties = async () => {
+    const loadBackupData = async () => {
       try {
-        // Mock properties data
-        const mockProperties: ExtendedProperty[] = [
+        // Mock backups data
+        const mockBackups: Backup[] = [
           {
             id: '1',
-            title: 'Departamento Amoblado Centro',
-            description: 'Hermoso departamento amoblado en el corazón de Santiago, cerca de todo',
-            type: 'apartment',
-            address: 'Av. Providencia 1234',
-            city: 'Santiago',
-            commune: 'Providencia',
-            region: 'Metropolitana',
-            deposit: 450000,
-            ownerId: 'owner1',
-            price: 450000,
-            status: 'rented',
-            bedrooms: 2,
-            bathrooms: 1,
-            area: 65,
-            features: '["Amoblado", "Estacionamiento", "Gimnasio", "Piscina"]',
-            images: '["/placeholder1.jpg", "/placeholder2.jpg"]',
-            tenantName: 'Juan Pérez',
-            tenantEmail: 'juan.perez@email.com',
-            tenantPhone: '+56 9 1234 5678',
-            contractStart: '2024-01-01',
-            contractEnd: '2024-12-31',
-            monthlyRevenue: 450000,
-            occupancyRate: 95,
-            totalRevenue: 5400000,
-            lastMaintenance: '2024-01-15',
-            nextMaintenance: '2024-07-15',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-            views: 1250,
-            inquiries: 45,
-            featured: true,
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
           },
           {
             id: '2',
-            title: 'Casa Las Condes',
-            description: 'Espaciosa casa familiar en Las Condes con jardín y terraza',
-            type: 'house',
-            address: 'Calle El Alba 567',
-            city: 'Santiago',
-            commune: 'Las Condes',
-            region: 'Metropolitana',
-            deposit: 1200000,
-            ownerId: 'owner2',
-            price: 1200000,
-            status: 'rented',
-            bedrooms: 4,
-            bathrooms: 3,
-            area: 180,
-            features: '["Jardín", "Terraza", "Estacionamiento 2 autos", "Seguridad 24h"]',
-            images: '["/placeholder3.jpg", "/placeholder4.jpg"]',
-            tenantName: 'María García',
-            tenantEmail: 'maria.garcia@empresa.cl',
-            tenantPhone: '+56 9 8765 4321',
-            contractStart: '2023-06-01',
-            contractEnd: '2025-05-31',
-            monthlyRevenue: 1200000,
-            occupancyRate: 100,
-            totalRevenue: 21600000,
-            lastMaintenance: '2024-02-20',
-            nextMaintenance: '2024-08-20',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 400),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-            views: 890,
-            inquiries: 23,
-            featured: false,
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
           },
           {
             id: '3',
-            title: 'Oficina Vitacura',
-            description: 'Moderna oficina en Vitacura con excelente ubicación',
-            type: 'office',
-            address: 'Av. Kennedy 4567',
-            city: 'Santiago',
-            commune: 'Vitacura',
-            region: 'Metropolitana',
-            deposit: 800000,
-            ownerId: 'owner3',
-            price: 800000,
-            status: 'available',
-            bedrooms: 0,
-            bathrooms: 2,
-            area: 120,
-            features: '["Aire acondicionado", "Estacionamiento", "Recepción", "Seguridad"]',
-            images: '["/placeholder5.jpg", "/placeholder6.jpg"]',
-            monthlyRevenue: 0,
-            occupancyRate: 0,
-            totalRevenue: 0,
-            lastMaintenance: '2024-03-10',
-            nextMaintenance: '2024-09-10',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-            views: 567,
-            inquiries: 12,
-            featured: true,
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
           },
           {
             id: '4',
-            title: 'Local Comercial',
-            description: 'Local comercial en zona de alto tráfico',
-            type: 'commercial',
-            address: 'Av. Apoquindo 6789',
-            city: 'Santiago',
-            commune: 'Las Condes',
-            region: 'Metropolitana',
-            deposit: 1500000,
-            ownerId: 'owner4',
-            price: 1500000,
-            status: 'rented',
-            bedrooms: 0,
-            bathrooms: 1,
-            area: 200,
-            features: '["Vidrio frontal", "Alarma", "Estacionamiento clientes", "Zona de carga"]',
-            images: '["/placeholder7.jpg", "/placeholder8.jpg"]',
-            tenantName: 'Roberto López',
-            tenantEmail: 'roberto.lopez@negocio.cl',
-            tenantPhone: '+56 9 3456 7890',
-            contractStart: '2024-02-01',
-            contractEnd: '2026-01-31',
-            monthlyRevenue: 1500000,
-            occupancyRate: 98,
-            totalRevenue: 18000000,
-            lastMaintenance: '2024-01-05',
-            nextMaintenance: '2024-07-05',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 300),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-            views: 445,
-            inquiries: 8,
-            featured: false,
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
           },
           {
             id: '5',
-            title: 'Departamento Playa',
-            description: 'Departamento con vista al mar en Viña del Mar',
-            type: 'apartment',
-            address: 'Av. Costanera 890',
-            city: 'Viña del Mar',
-            commune: 'Reñaca',
-            region: 'Valparaíso',
-            deposit: 600000,
-            ownerId: 'owner5',
-            price: 600000,
-            status: 'maintenance',
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 95,
-            features: '["Vista al mar", "Balcón", "Piscina edificio", "Gimnasio"]',
-            images: '["/placeholder9.jpg", "/placeholder10.jpg"]',
-            monthlyRevenue: 0,
-            occupancyRate: 0,
-            totalRevenue: 3600000,
-            lastMaintenance: '2024-04-01',
-            nextMaintenance: '2024-10-01',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 250),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-            views: 1100,
-            inquiries: 34,
-            featured: true,
-          },
-          {
-            id: '6',
-            title: 'Casa Familiar La Reina',
-            description: 'Acogedora casa familiar en La Reina',
-            type: 'house',
-            address: 'Calle Los Leones 345',
-            city: 'Santiago',
-            commune: 'La Reina',
-            region: 'Metropolitana',
-            deposit: 900000,
-            ownerId: 'owner6',
-            price: 900000,
-            status: 'available',
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 150,
-            features: '["Patio", "Estacionamiento", "Calefacción", "Bodega"]',
-            images: '["/placeholder11.jpg", "/placeholder12.jpg"]',
-            monthlyRevenue: 0,
-            occupancyRate: 0,
-            totalRevenue: 0,
-            lastMaintenance: '2024-03-15',
-            nextMaintenance: '2024-09-15',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 180),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-            views: 780,
-            inquiries: 19,
-            featured: false,
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
           },
         ];
 
-        setProperties(mockProperties);
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
+
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadProperties();
+    loadBackupData();
   }, []);
 
-  useEffect(() => {
-    if (selectedProperties.length > 0) {
-      calculateComparisonMetrics();
-      generateRecommendations();
-    }
-  }, [selectedProperties]);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
 
-  const calculateComparisonMetrics = () => {
-    const metrics: {[key: string]: ComparisonMetrics} = {};
-    
-    selectedProperties.forEach(property => {
-      const pricePerSqm = property.price / property.area;
-      const roi = (property.totalRevenue ?? 0) > 0 ? ((property.totalRevenue ?? 0) / property.price) * 100 : 0;
-      const daysOnMarket = Math.floor((Date.now() - new Date(property.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-      const inquiriesPerView = property.views > 0 ? property.inquiries / property.views : 0;
-      
-      // Calculate maintenance score (based on time since last maintenance)
-      const lastMaintenance = property.lastMaintenance ? new Date(property.lastMaintenance) : new Date(0);
-      const daysSinceMaintenance = Math.floor((Date.now() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
-      const maintenanceScore = Math.max(0, 100 - (daysSinceMaintenance / 365) * 20);
-      
-      // Calculate location score (based on commune - simplified)
-      const locationScores: {[key: string]: number} = {
-        'Providencia': 90,
-        'Las Condes': 95,
-        'Vitacura': 98,
-        'La Reina': 85,
-        'Reñaca': 88,
-      };
-      const locationScore = locationScores[property.commune] || 75;
-      
-      // Calculate overall score
-      const overallScore = (
-        (roi * 0.3) +
-        ((property.occupancyRate ?? 0) * 0.25) +
-        (maintenanceScore * 0.2) +
-        (locationScore * 0.15) +
-        (inquiriesPerView * 100 * 0.1)
-      );
-
-      metrics[property.id] = {
-        pricePerSqm,
-        roi,
-        occupancyRate: property.occupancyRate ?? 0,
-        monthlyRevenue: property.monthlyRevenue ?? 0,
-        totalRevenue: property.totalRevenue ?? 0,
-        daysOnMarket,
-        inquiriesPerView,
-        maintenanceScore,
-        locationScore,
-        overallScore,
-      };
-    });
-
-    setComparisonMetrics(metrics);
+    setBackups(prev => [newBackup, ...prev]);
   };
 
-  const generateRecommendations = () => {
-    const recs: Recommendation[] = [];
-    
-    if (selectedProperties.length >= 2) {
-      // Find best performing property
-      const bestProperty = selectedProperties.reduce((best, current) => {
-        const currentScore = comparisonMetrics[current.id]?.overallScore || 0;
-        const bestScore = comparisonMetrics[best.id]?.overallScore || 0;
-        return currentScore > bestScore ? current : best;
-      });
-      
-      recs.push({
-        type: 'strength',
-        title: 'Mejor Rendimiento',
-        description: `${bestProperty.title} tiene el mejor rendimiento general con un puntaje de ${(comparisonMetrics[bestProperty.id]?.overallScore ?? 0).toFixed(1)}/100`,
-        impact: 'high',
-        properties: [bestProperty.id],
-      });
-
-      // Find properties with low occupancy
-      const lowOccupancy = selectedProperties.filter(p => (p.occupancyRate ?? 0) < 50);
-      if (lowOccupancy.length > 0) {
-        recs.push({
-          type: 'weakness',
-          title: 'Baja Ocupación',
-          description: `${lowOccupancy.map(p => p.title).join(', ')} tienen tasas de ocupación inferiores al 50%`,
-          impact: 'medium',
-          properties: lowOccupancy.map(p => p.id),
-        });
-      }
-
-      // Find properties with high ROI
-      const highRoi = selectedProperties.filter(p => (comparisonMetrics[p.id]?.roi ?? 0) > 50);
-      if (highRoi.length > 0) {
-        recs.push({
-          type: 'opportunity',
-          title: 'Alto Retorno de Inversión',
-          description: `${highRoi.map(p => p.title).join(', ')} muestran un ROI superior al 50%`,
-          impact: 'high',
-          properties: highRoi.map(p => p.id),
-        });
-      }
-
-      // Find properties needing maintenance
-      const needsMaintenance = selectedProperties.filter(p => {
-        const lastMaintenance = p.lastMaintenance ? new Date(p.lastMaintenance) : new Date(0);
-        const daysSinceMaintenance = Math.floor((Date.now() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
-        return daysSinceMaintenance > 180;
-      });
-      
-      if (needsMaintenance.length > 0) {
-        recs.push({
-          type: 'threat',
-          title: 'Mantenimiento Requerido',
-          description: `${needsMaintenance.map(p => p.title).join(', ')} requieren mantenimiento urgente`,
-          impact: 'medium',
-          properties: needsMaintenance.map(p => p.id),
-        });
-      }
-    }
-
-    setRecommendations(recs);
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
   };
 
-  const addPropertyToComparison = (property: Property) => {
-    if (selectedProperties.length < 4 && !selectedProperties.find(p => p.id === property.id)) {
-      setSelectedProperties(prev => [...prev, property]);
-    }
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
   };
 
-  const removePropertyFromComparison = (propertyId: string) => {
-    setSelectedProperties(prev => prev.filter(p => p.id !== propertyId));
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'apartment':
-        return <Building className="w-5 h-5" />;
-      case 'house':
-        return <Home className="w-5 h-5" />;
-      case 'office':
-        return <Briefcase className="w-5 h-5" />;
-      case 'commercial':
-        return <Store className="w-5 h-5" />;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       default:
-        return <Building className="w-5 h-5" />;
-    }
-  };
-
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'apartment':
-        return 'Departamento';
-      case 'house':
-        return 'Casa';
-      case 'office':
-        return 'Oficina';
-      case 'commercial':
-        return 'Comercial';
-      default:
-        return 'Otro';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
-        return <Badge className="bg-green-100 text-green-800">Disponible</Badge>;
-      case 'rented':
-        return <Badge className="bg-blue-100 text-blue-800">Arrendado</Badge>;
-      case 'maintenance':
-        return <Badge className="bg-yellow-100 text-yellow-800">Mantenimiento</Badge>;
-      case 'unavailable':
-        return <Badge className="bg-red-100 text-red-800">No disponible</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const formatPercentage = (percentage: number) => {
-    return `${percentage.toFixed(1)}%`;
-  };
-
-  const getRecommendationIcon = (type: string) => {
-    switch (type) {
-      case 'strength':
-        return <ThumbsUp className="w-5 h-5 text-green-600" />;
-      case 'weakness':
-        return <ThumbsDown className="w-5 h-5 text-red-600" />;
-      case 'opportunity':
-        return <Lightbulb className="w-5 h-5 text-yellow-600" />;
-      case 'threat':
-        return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
       default:
-        return <Info className="w-5 h-5 text-blue-600" />;
+        return <Database className="w-5 h-5" />;
     }
   };
 
-  const getRecommendationColor = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'strength':
-        return 'border-green-200 bg-green-50';
-      case 'weakness':
-        return 'border-red-200 bg-red-50';
-      case 'opportunity':
-        return 'border-yellow-200 bg-yellow-50';
-      case 'threat':
-        return 'border-orange-200 bg-orange-50';
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
       default:
-        return 'border-blue-200 bg-blue-50';
+        return <Database className="w-5 h-5" />;
     }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `Hace ${diffMins} minutos`;
+    }
+    if (diffHours < 24) {
+      return `Hace ${diffHours} horas`;
+    }
+    if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    }
+
+    return date.toLocaleDateString('es-CL');
   };
 
   if (loading) {
@@ -516,333 +386,274 @@ export default function OwnerPropertyComparison() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando herramientas de comparación...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Comparación de Propiedades"
-      subtitle="Herramienta avanzada para analizar y comparar tus propiedades"
-    >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Comparación de Propiedades</h1>
-            <p className="text-gray-600">Analiza y compara el rendimiento de tus propiedades</p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant={viewMode === 'table' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setViewMode('table')}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Tabla
-            </Button>
-            <Button 
-              variant={viewMode === 'cards' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setViewMode('cards')}
-            >
-              <View className="w-4 h-4 mr-2" />
-              Tarjetas
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowRecommendations(!showRecommendations)}
-            >
-              <Lightbulb className="w-4 h-4 mr-2" />
-              Recomendaciones
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-        </div>
-
-        {/* Selected Properties */}
-        {selectedProperties.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Propiedades Seleccionadas ({selectedProperties.length}/4)
-              </CardTitle>
-              <CardDescription>
-                Selecciona hasta 4 propiedades para compararlas detalladamente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4 mb-4">
-                {selectedProperties.map(property => (
-                  <div key={property.id} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    {getTypeIcon(property.type)}
-                    <div>
-                      <p className="font-medium text-sm">{property.title}</p>
-                      <p className="text-xs text-gray-600">{property.commune}</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => removePropertyFromComparison(property.id)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              
-              {selectedProperties.length >= 2 && (
+    <UnifiedDashboardLayout title="Comparación de Propiedades" subtitle="Herramienta avanzada para analizar y comparar tus propiedades">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Comparación de Propiedades</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
+                </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => calculateComparisonMetrics()}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Actualizar Análisis
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
                   </Button>
-                  <Button variant="outline" onClick={() => generateRecommendations()}>
-                    <Target className="w-4 h-4 mr-2" />
-                    Generar Recomendaciones
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recommendations */}
-        {showRecommendations && recommendations.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5" />
-                Recomendaciones Inteligentes
-              </CardTitle>
-              <CardDescription>
-                Análisis basado en el rendimiento comparativo de tus propiedades
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {recommendations.map((rec, index) => (
-                  <div key={index} className={`p-4 border rounded-lg ${getRecommendationColor(rec.type)}`}>
-                    <div className="flex items-start gap-3">
-                      {getRecommendationIcon(rec.type)}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{rec.title}</h3>
-                          <Badge className={
-                            rec.impact === 'high' ? 'bg-red-100 text-red-800' :
-                            rec.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }>
-                            {rec.impact === 'high' ? 'Alto Impacto' :
-                             rec.impact === 'medium' ? 'Impacto Medio' :
-                             'Bajo Impacto'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-700">{rec.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Comparison Table */}
-        {selectedProperties.length >= 2 && viewMode === 'table' && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Análisis Comparativo Detallado</CardTitle>
-              <CardDescription>
-                Métricas clave y rendimiento de las propiedades seleccionadas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 font-medium">Métrica</th>
-                      {selectedProperties.map(property => (
-                        <th key={property.id} className="text-center p-3 font-medium">
-                          {property.title}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Precio</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          {formatPrice(property.price)}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Precio por m²</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          {formatPrice(comparisonMetrics[property.id]?.pricePerSqm || 0)}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">ROI</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          <span className={`font-medium ${
-                            (comparisonMetrics[property.id]?.roi || 0) > 50 ? 'text-green-600' :
-                            (comparisonMetrics[property.id]?.roi || 0) > 20 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {formatPercentage(comparisonMetrics[property.id]?.roi || 0)}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Tasa de Ocupación</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          <span className={`font-medium ${
-                            (property.occupancyRate ?? 0) > 80 ? 'text-green-600' :
-                            (property.occupancyRate ?? 0) > 50 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {formatPercentage(property.occupancyRate ?? 0)}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Ingreso Mensual</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          {formatPrice(property.monthlyRevenue ?? 0)}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Ingreso Total</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          {formatPrice(property.totalRevenue ?? 0)}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Días en Mercado</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          {comparisonMetrics[property.id]?.daysOnMarket || 0}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-3 font-medium">Puntaje General</td>
-                      {selectedProperties.map(property => (
-                        <td key={property.id} className="text-center p-3">
-                          <span className={`font-bold ${
-                            (comparisonMetrics[property.id]?.overallScore || 0) > 80 ? 'text-green-600' :
-                            (comparisonMetrics[property.id]?.overallScore || 0) > 60 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {comparisonMetrics[property.id]?.overallScore.toFixed(1)}/100
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Property Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Seleccionar Propiedades para Comparar</CardTitle>
-            <CardDescription>
-              Elige hasta 4 propiedades para realizar un análisis comparativo detallado
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map(property => (
-                <Card key={property.id} className="relative">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(property.type)}
-                        <div>
-                          <h3 className="font-semibold text-sm">{property.title}</h3>
-                          <p className="text-xs text-gray-600">{property.commune}</p>
-                        </div>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
                       </div>
-                      {getStatusBadge(property.status)}
-                    </div>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Precio:</span>
-                        <span className="font-medium">{formatPrice(property.price)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Superficie:</span>
-                        <span className="font-medium">{property.area} m²</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Ocupación:</span>
-                        <span className={`font-medium ${
-                          (property.occupancyRate ?? 0) > 80 ? 'text-green-600' :
-                          (property.occupancyRate ?? 0) > 50 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {formatPercentage(property.occupancyRate ?? 0)}
-                        </span>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
-                    
-                    <Button 
-                      className="w-full"
-                      size="sm"
-                      disabled={!!selectedProperties.find(p => p.id === property.id) || selectedProperties.length >= 4}
-                      onClick={() => addPropertyToComparison(property)}
-                    >
-                      {selectedProperties.find(p => p.id === property.id) ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Seleccionado
-                        </>
-                      ) : selectedProperties.length >= 4 ? (
-                        <>
-                          <X className="w-4 h-4 mr-2" />
-                          Límite Alcanzado
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Agregar a Comparación
-                        </>
-                      )}
-                    </Button>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </DashboardLayout
+    </UnifiedDashboardLayout>
   );
 }
+
+

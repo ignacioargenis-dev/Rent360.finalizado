@@ -67,6 +67,7 @@ import {
   SkipBack,
   Pause
 } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import Link from 'next/link';
 import { User, Property, Payment } from '@/types';
 

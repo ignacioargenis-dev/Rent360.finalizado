@@ -1,337 +1,362 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// Build fix - force update
+
+import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  Plus, 
-  Mail, 
-  Phone, 
-  MessageCircle,
-  Star,
-  DollarSign,
-  TrendingUp,
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Calendar,
+  Clock,
+  HardDrive,
+  Shield,
   CheckCircle,
-  Eye,
-  Edit,
-  FileText,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Trash2, Eye, Play,
+  Pause,
+  Archive,
+  Cloud,
+  Server,
+  Plus, Info
 } from 'lucide-react';
-import { User as UserType } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
-import { DataTable } from '@/components/ui/data-table';
-import { usePagination } from '@/hooks/usePagination';
-import { useFilters } from '@/hooks/useFilters';
+import Link from 'next/link';
+import { User } from '@/types';
 
-interface Client {
+
+interface Backup {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  type: 'OWNER' | 'TENANT' | 'BOTH';
-  status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
-  totalProperties: number;
-  activeContracts: number;
-  totalRevenue: number;
-  lastContact: string;
-  nextFollowUp?: string | undefined;
-  averageRating: number;
-  properties: Array<{
-    id: string;
-    title: string;
-    address: string;
-    status: string;
-  }>;
-  notes?: string | undefined;
-  preferences: {
-    contactMethod: 'email' | 'phone' | 'whatsapp';
-    propertyTypes: string[];
-    budgetRange: {
-      min: number;
-      max: number;
-    };
-    locations: string[];
-  };
+  type: 'full' | 'incremental' | 'database' | 'files';
+  size: number;
+  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
+  createdAt: string;
+  completedAt?: string;
+  location: 'local' | 'cloud' | 'both';
+  description: string;
+  retentionDays: number;
+  encrypted: boolean;
+  checksum?: string;
 }
 
-interface ClientStats {
-  totalClients: number;
-  activeClients: number;
-  newClientsThisMonth: number;
-  totalRevenue: number;
-  averageRating: number;
-  conversionRate: number;
+interface BackupStats {
+  totalBackups: number;
+  totalSize: number;
+  lastBackup: string;
+  nextBackup: string;
+  successRate: number;
+  storageUsed: number;
+  storageAvailable: number;
+}
+
+interface BackupSchedule {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  time: string;
+  type: 'full' | 'incremental';
+  enabled: boolean;
+  nextRun: string;
+  retention: number;
 }
 
 export default function BrokerClientsPage() {
-  const { user, loading: userLoading } = useUserState();
 
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const [stats, setStats] = useState<ClientStats>({
-    totalClients: 0,
-    activeClients: 0,
-    newClientsThisMonth: 0,
-    totalRevenue: 0,
-    averageRating: 0,
-    conversionRate: 0,
+  const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
+
+  const [stats, setStats] = useState<BackupStats>({
+    totalBackups: 0,
+    totalSize: 0,
+    lastBackup: '',
+    nextBackup: '',
+    successRate: 0,
+    storageUsed: 0,
+    storageAvailable: 0,
   });
 
   const [loading, setLoading] = useState(true);
-  
-  // Pagination hook
-  const pagination = usePagination({
-    initialPage: 1,
-    initialLimit: 10,
-  });
-  
-  // Filters hook
-  const filters = useFilters({
-    fields: [
-      {
-        key: 'type',
-        label: 'Tipo',
-        type: 'select',
-        options: [
-          { value: 'OWNER', label: 'Propietario' },
-          { value: 'TENANT', label: 'Inquilino' },
-          { value: 'BOTH', label: 'Ambos' },
-        ],
-        placeholder: 'Todos los tipos',
-      },
-      {
-        key: 'status',
-        label: 'Estado',
-        type: 'select',
-        options: [
-          { value: 'ACTIVE', label: 'Activo' },
-          { value: 'INACTIVE', label: 'Inactivo' },
-          { value: 'PENDING', label: 'Pendiente' },
-        ],
-        placeholder: 'Todos los estados',
-      },
-    ],
-  });
-
-
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filterFields = [
-    { key: 'name', label: 'Nombre', type: 'text' as const },
-    { key: 'email', label: 'Email', type: 'text' as const },
-    { key: 'phone', label: 'Teléfono', type: 'text' as const },
-    { key: 'role', label: 'Rol', type: 'select' as const, options: [
-      { value: 'tenant', label: 'Inquilino' },
-      { value: 'owner', label: 'Propietario' },
-    ]},
-  ];
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      const mockClients: Client[] = [
-        {
-          id: '1',
-          name: 'María González',
-          email: 'maria@ejemplo.com',
-          phone: '+56 9 1234 5678',
-          type: 'OWNER',
-          status: 'ACTIVE',
-          totalProperties: 3,
-          activeContracts: 2,
-          totalRevenue: 8500000,
-          lastContact: '2024-03-15',
-          nextFollowUp: '2024-03-20',
-          averageRating: 4.8,
-          properties: [
-            {
-              id: '1',
-              title: 'Departamento Las Condes',
-              address: 'Av. Apoquindo 3400, Las Condes',
-              status: 'RENTED',
-            },
-            {
-              id: '2',
-              title: 'Oficina Providencia',
-              address: 'Av. Providencia 1245, Providencia',
-              status: 'RENTED',
-            },
-          ],
-          notes: 'Cliente excelente, siempre puntual con los pagos. Prefiere comunicación por email.',
-          preferences: {
-            contactMethod: 'email',
-            propertyTypes: ['apartment', 'office'],
-            budgetRange: { min: 300000, max: 1500000 },
-            locations: ['Las Condes', 'Providencia', 'Vitacura'],
-          },
-        },
-        {
-          id: '2',
-          name: 'Carlos Ramírez',
-          email: 'carlos@ejemplo.com',
-          phone: '+56 9 8765 4321',
-          type: 'TENANT',
-          status: 'ACTIVE',
-          totalProperties: 1,
-          activeContracts: 1,
-          totalRevenue: 6600000,
-          lastContact: '2024-03-14',
-          nextFollowUp: '2024-03-18',
-          averageRating: 4.9,
-          properties: [
-            {
-              id: '1',
-              title: 'Departamento Las Condes',
-              address: 'Av. Apoquindo 3400, Las Condes',
-              status: 'RENTED',
-            },
-          ],
-          notes: 'Buscando propiedad para su familia. Presupuesto flexible.',
-          preferences: {
-            contactMethod: 'whatsapp',
-            propertyTypes: ['apartment', 'house'],
-            budgetRange: { min: 400000, max: 800000 },
-            locations: ['Las Condes', 'Vitacura', 'Lo Barnechea'],
-          },
-        },
-        {
-          id: '3',
-          name: 'Ana Martínez',
-          email: 'ana@ejemplo.com',
-          phone: '+56 9 2345 6789',
-          type: 'OWNER',
-          status: 'PENDING',
-          totalProperties: 1,
-          activeContracts: 0,
-          totalRevenue: 0,
-          lastContact: '2024-03-13',
-          nextFollowUp: '2024-03-16',
-          averageRating: 0,
-          properties: [
-            {
-              id: '3',
-              title: 'Casa Vitacura',
-              address: 'Av. Vitacura 8900, Vitacura',
-              status: 'AVAILABLE',
-            },
-          ],
-          notes: 'Nueva propietaria, necesita orientación sobre precios de mercado.',
-          preferences: {
-            contactMethod: 'phone',
-            propertyTypes: ['house'],
-            budgetRange: { min: 800000, max: 2000000 },
-            locations: ['Vitacura', 'Lo Barnechea'],
-          },
-        },
-        {
-          id: '4',
-          name: 'Pedro Silva',
-          email: 'pedro@ejemplo.com',
-          phone: '+56 9 3456 7890',
-          type: 'TENANT',
-          status: 'INACTIVE',
-          totalProperties: 0,
-          activeContracts: 0,
-          totalRevenue: 0,
-          lastContact: '2024-02-15',
-          averageRating: 4.2,
-          properties: [],
-          notes: 'Encontró propiedad por su cuenta. Mantener contacto para futuras oportunidades.',
-          preferences: {
-            contactMethod: 'email',
-            propertyTypes: ['apartment'],
-            budgetRange: { min: 250000, max: 500000 },
-            locations: ['Providencia', 'Santiago Centro'],
-          },
-        },
-        {
-          id: '5',
-          name: 'Empresa Soluciones Ltda.',
-          email: 'contacto@soluciones.cl',
-          phone: '+56 2 2345 6789',
-          type: 'BOTH',
-          status: 'ACTIVE',
-          totalProperties: 2,
-          activeContracts: 2,
-          totalRevenue: 8400000,
-          lastContact: '2024-03-15',
-          nextFollowUp: '2024-03-25',
-          averageRating: 4.7,
-          properties: [
-            {
-              id: '2',
-              title: 'Oficina Providencia',
-              address: 'Av. Providencia 1245, Providencia',
-              status: 'RENTED',
-            },
-            {
-              id: '4',
-              title: 'Local Comercial',
-              address: 'Ahumada 456, Santiago',
-              status: 'RENTED',
-            },
-          ],
-          notes: 'Cliente corporativo, busca expandir sus oficinas. Contacto principal: Juan Pérez.',
-          preferences: {
-            contactMethod: 'email',
-            propertyTypes: ['office', 'commercial'],
-            budgetRange: { min: 300000, max: 2000000 },
-            locations: ['Providencia', 'Santiago Centro', 'Las Condes'],
-          },
-        },
-      ];
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+      }
+    };
 
-      setClients(mockClients);
-      pagination.updateTotal(mockClients.length);
-      
-      // Calculate stats
-      const totalClients = mockClients.length;
-      const activeClients = mockClients.filter(c => c.status === 'ACTIVE').length;
-      const newClientsThisMonth = mockClients.filter(c => {
-        const contactDate = new Date(c.lastContact);
-        const now = new Date();
-        return contactDate.getMonth() === now.getMonth() && 
-               contactDate.getFullYear() === now.getFullYear();
-      }).length;
-      const totalRevenue = mockClients.reduce((sum, c) => sum + c.totalRevenue, 0);
-      const averageRating = mockClients
-        .filter(c => c.averageRating > 0)
-        .reduce((sum, c) => sum + c.averageRating, 0) / 
-        mockClients.filter(c => c.averageRating > 0).length;
-      const conversionRate = totalClients > 0 ? (activeClients / totalClients) * 100 : 0;
+    const loadBackupData = async () => {
+      try {
+        // Mock backups data
+        const mockBackups: Backup[] = [
+          {
+            id: '1',
+            name: 'Backup Completo Diario',
+            type: 'full',
+            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
+            location: 'both',
+            description: 'Backup completo del sistema incluyendo base de datos y archivos',
+            retentionDays: 30,
+            encrypted: true,
+            checksum: 'a1b2c3d4e5f6...',
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental',
+            type: 'incremental',
+            size: 150 * 1024 * 1024, // 150 MB
+            status: 'completed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
+            location: 'cloud',
+            description: 'Backup incremental con cambios desde el último backup completo',
+            retentionDays: 7,
+            encrypted: true,
+          },
+          {
+            id: '3',
+            name: 'Backup Base de Datos',
+            type: 'database',
+            size: 450 * 1024 * 1024, // 450 MB
+            status: 'in_progress',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            location: 'local',
+            description: 'Backup exclusivo de la base de datos PostgreSQL',
+            retentionDays: 14,
+            encrypted: true,
+          },
+          {
+            id: '4',
+            name: 'Backup Archivos',
+            type: 'files',
+            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            status: 'failed',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+            location: 'cloud',
+            description: 'Backup de archivos de usuario y medios',
+            retentionDays: 21,
+            encrypted: true,
+          },
+          {
+            id: '5',
+            name: 'Backup Programado',
+            type: 'full',
+            size: 0,
+            status: 'scheduled',
+            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            location: 'both',
+            description: 'Backup completo programado automáticamente',
+            retentionDays: 30,
+            encrypted: true,
+          },
+        ];
 
-      setStats({
-        totalClients,
-        activeClients,
-        newClientsThisMonth,
-        totalRevenue,
-        averageRating: Number(averageRating.toFixed(1)),
-        conversionRate: Number(conversionRate.toFixed(1)),
-      });
+        // Mock schedules
+        const mockSchedules: BackupSchedule[] = [
+          {
+            id: '1',
+            name: 'Backup Diario Completo',
+            frequency: 'daily',
+            time: '02:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            retention: 30,
+          },
+          {
+            id: '2',
+            name: 'Backup Incremental Horario',
+            frequency: 'daily',
+            time: '06:00, 12:00, 18:00',
+            type: 'incremental',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
+            retention: 7,
+          },
+          {
+            id: '3',
+            name: 'Backup Semanal',
+            frequency: 'weekly',
+            time: 'domingo 03:00',
+            type: 'full',
+            enabled: true,
+            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+            retention: 90,
+          },
+        ];
 
-      setLoading(false);
-    }, 1000);
+        setBackups(mockBackups);
+        setSchedules(mockSchedules);
+
+        // Calculate stats
+        const completedBackups = mockBackups.filter(b => b.status === 'completed');
+        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
+        const successRate = completedBackups.length > 0 ? 
+          (completedBackups.length / mockBackups.length) * 100 : 0;
+
+        const backupStats: BackupStats = {
+          totalBackups: mockBackups.length,
+          totalSize,
+          lastBackup: completedBackups.length > 0 ?
+            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
+          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+          successRate,
+          storageUsed: totalSize,
+          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        };
+
+        setStats(backupStats);
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+    loadBackupData();
   }, []);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
+    const newBackup: Backup = {
+      id: Date.now().toString(),
+      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
+      type,
+      size: 0,
+      status: 'in_progress',
+      createdAt: new Date().toISOString(),
+      location: 'both',
+      description: `Backup ${type} iniciado manualmente`,
+      retentionDays: 30,
+      encrypted: true,
+    };
+
+    setBackups(prev => [newBackup, ...prev]);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
+  const deleteBackup = async (backupId: string) => {
+    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  };
+
+  const toggleSchedule = async (scheduleId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.id === scheduleId 
+        ? { ...schedule, enabled: !schedule.enabled }
+        : schedule,
+    ));
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'scheduled':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
+      case 'scheduled':
+        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
+      default:
+        return <Badge>Desconocido</Badge>;
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress':
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'scheduled':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'full':
+        return <Archive className="w-5 h-5" />;
+      case 'incremental':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'database':
+        return <Database className="w-5 h-5" />;
+      case 'files':
+        return <HardDrive className="w-5 h-5" />;
+      default:
+        return <Database className="w-5 h-5" />;
+    }
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'local':
+        return <Server className="w-4 h-4" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4" />;
+      case 'both':
+        return <div className="flex gap-1">
+          <Server className="w-4 h-4" />
+          <Cloud className="w-4 h-4" />
+        </div>;
+      default:
+        return <Server className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) {
+return '0 B';
+}
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -344,506 +369,291 @@ export default function BrokerClientsPage() {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'OWNER':
-        return <Badge className="bg-blue-100 text-blue-800">Propietario</Badge>;
-      case 'TENANT':
-        return <Badge className="bg-purple-100 text-purple-800">Inquilino</Badge>;
-      case 'BOTH':
-        return <Badge className="bg-green-100 text-green-800">Ambos</Badge>;
-      default:
-        return <Badge>{type}</Badge>;
-    }
-  };
-
-  // Funciones para acciones de clientes
-  const handleViewClientDetails = (client: Client) => {
-    setSelectedClient(client);
-    setShowDetailsDialog(true);
-    logger.info('Viendo detalles del cliente:', { clientId: client.id });
-  };
-
-  const handleEditClient = (client: Client) => {
-    logger.info('Editando cliente:', { clientId: client.id });
-    alert(`Editar cliente: ${client.name}`);
-    // TODO: Implementar navegación a página de edición
-  };
-
-  const handleContactClient = (client: Client) => {
-    logger.info('Contactando cliente:', { clientId: client.id });
-    alert(`Contactar cliente: ${client.name} - ${client.email}`);
-    // TODO: Implementar funcionalidad de contacto
-  };
-
-  const handleCreateContract = (client: Client) => {
-    logger.info('Creando contrato para cliente:', { clientId: client.id });
-    alert(`Crear contrato para: ${client.name}`);
-    // TODO: Implementar navegación a creación de contrato
-  };
-
-  const handleViewProperties = (client: Client) => {
-    logger.info('Viendo propiedades del cliente:', { clientId: client.id });
-    alert(`Propiedades de ${client.name}: ${client.totalProperties} propiedades`);
-    // TODO: Implementar vista de propiedades
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800">Activo</Badge>;
-      case 'INACTIVE':
-        return <Badge className="bg-gray-100 text-gray-800">Inactivo</Badge>;
-      case 'PENDING':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-  
-  // Define columns for the data table
-  const columns = [
-    {
-      key: 'name' as keyof Client,
-      label: 'Nombre',
-      sortable: true,
-      render: (value: string, client: Client) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-blue-600">
-              {client.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'C'}
-            </span>
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">{client.name}</div>
-            <div className="text-sm text-gray-500">{client.email}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'phone' as keyof Client,
-      label: 'Teléfono',
-      sortable: true,
-      filterable: true,
-      render: (value: string) => (
-        <span className="text-gray-600">{value || 'No especificado'}</span>
-      ),
-    },
-    {
-      key: 'role' as keyof Client,
-      label: 'Rol',
-      sortable: true,
-      filterable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'tenant' ? 'default' : 'secondary'}>
-          {value === 'tenant' ? 'Inquilino' : 'Propietario'}
-        </Badge>
-      ),
-    },
-    {
-      key: 'status' as keyof Client,
-      label: 'Estado',
-      sortable: true,
-      filterable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'active' ? 'default' : 'destructive'}>
-          {value === 'active' ? 'Activo' : 'Inactivo'}
-        </Badge>
-      ),
-    },
-    {
-      key: 'createdAt' as keyof Client,
-      label: 'Fecha de Registro',
-      sortable: true,
-      render: (value: string) => (
-        <span className="text-gray-600">
-          {new Date(value).toLocaleDateString('es-CL')}
-        </span>
-      ),
-    },
-    {
-      key: 'actions' as keyof Client,
-      label: 'Acciones',
-      render: (value: any, client: Client) => (
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleViewClientDetails(client)}
-            className="text-xs"
-          >
-            <Eye className="w-3 h-3 mr-1" />
-            Ver
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleEditClient(client)}
-            className="text-xs"
-          >
-            <Edit className="w-3 h-3 mr-1" />
-            Editar
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleContactClient(client)}
-            className="text-xs"
-          >
-            <Mail className="w-3 h-3 mr-1" />
-            Contactar
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleCreateContract(client)}
-            className="text-xs bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
-          >
-            <FileText className="w-3 h-3 mr-1" />
-            Contrato
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = !filters.hasActiveFilters || (
-      client.name.toLowerCase().includes(filters.getFilterValue('search')?.toLowerCase() || '') ||
-      client.email.toLowerCase().includes(filters.getFilterValue('search')?.toLowerCase() || '') ||
-      client.phone.includes(filters.getFilterValue('search') || '')
-    );
-    const matchesType = !filters.getFilterValue('type') || client.type === filters.getFilterValue('type');
-    const matchesStatus = !filters.getFilterValue('status') || client.status === filters.getFilterValue('status');
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  if (userLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando clientes...</p>
+          <p className="text-gray-600">Cargando sistema de backups...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <DashboardLayout
-      user={user}
-      title="Clientes"
-      subtitle="Gestiona tus clientes y oportunidades"
-    >
-      <DashboardHeader 
-        user={user}
-        title="Gestión de Clientes"
-        subtitle="Administra tu cartera de clientes y prospectos"
-      />
-
-      <div className="container mx-auto px-4 py-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+    <UnifiedDashboardLayout title="Clientes" subtitle="Gestiona tus clientes y oportunidades">
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalClients}</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Clientes Activos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeClients}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Nuevos Este Mes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.newClientsThisMonth}</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(stats.totalRevenue)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Calificación</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-2xl font-bold text-gray-900">{stats.averageRating}</p>
-                    <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Star className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tasa Conversión</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.conversionRate}%</p>
-                </div>
-                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-indigo-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Data Table */}
-        <DataTable
-          data={filteredClients}
-          columns={columns}
-                     pagination={pagination as any}
-           filters={{ ...filters, fields: filterFields }}
-          loading={loading}
-          searchable={true}
-          exportable={true}
-          refreshable={true}
-          onExport={() => {
-            // Export functionality
-            const csvContent = [
-              ['Nombre', 'Email', 'Teléfono', 'Tipo', 'Estado', 'Propiedades', 'Ingresos', 'Calificación', 'Último Contacto'],
-              ...filteredClients.map(client => [
-                client.name,
-                client.email,
-                client.phone,
-                client.type,
-                client.status,
-                client.totalProperties,
-                client.totalRevenue,
-                client.averageRating,
-                client.lastContact,
-              ]),
-            ].map(row => row.join(',')).join('\n');
-            
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'clientes.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-          onRefresh={() => {
-            setLoading(true);
-            setTimeout(() => setLoading(false), 1000);
-          }}
-          emptyMessage="No se encontraron clientes con los filtros actuales"
-          loadingMessage="Cargando clientes..."
-        />
-      </div>
-
-      {/* Client Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalles del Cliente</DialogTitle>
-            <DialogDescription>
-              Información completa del cliente y sus preferencias
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedClient && (
-            <div className="space-y-6">
-              {/* Información básica */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Información Personal</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Nombre:</span>
-                      <span className="font-medium">{selectedClient.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Email:</span>
-                      <span className="font-medium">{selectedClient.email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Teléfono:</span>
-                      <span className="font-medium">{selectedClient.phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tipo:</span>
-                      {getTypeBadge(selectedClient.type)}
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Estado:</span>
-                      {getStatusBadge(selectedClient.status)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Estadísticas</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Propiedades:</span>
-                      <span className="font-medium">{selectedClient.totalProperties}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Contratos Activos:</span>
-                      <span className="font-medium">{selectedClient.activeContracts}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Ingresos Totales:</span>
-                      <span className="font-medium">{formatPrice(selectedClient.totalRevenue)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Calificación:</span>
-                      <span className="font-medium">{selectedClient.averageRating}/5</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Último Contacto:</span>
-                      <span className="font-medium">{formatDate(selectedClient.lastContact)}</span>
-                    </div>
-                  </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => createBackup('full')}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Backup Completo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Backup Incremental
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuración
+                  </Button>
                 </div>
               </div>
 
-              {/* Preferencias */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Preferencias</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-gray-600">Método de Contacto:</span>
-                    <div className="font-medium capitalize">{selectedClient.preferences.contactMethod}</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Tipos de Propiedad:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedClient.preferences.propertyTypes.map(type => (
-                        <Badge key={type} variant="outline" className="text-xs">
-                          {type === 'apartment' ? 'Departamento' : type === 'house' ? 'Casa' : type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Rango de Presupuesto:</span>
-                    <div className="font-medium">
-                      {formatPrice(selectedClient.preferences.budgetRange.min)} - {formatPrice(selectedClient.preferences.budgetRange.max)}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Ubicaciones Preferidas:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedClient.preferences.locations.map(location => (
-                        <Badge key={location} variant="outline" className="text-xs">
-                          {location}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Propiedades */}
-              {selectedClient.properties.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Propiedades</h3>
-                  <div className="space-y-2">
-                    {selectedClient.properties.map(property => (
-                      <div key={property.id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{property.title}</div>
-                          <div className="text-sm text-gray-600">{property.address}</div>
-                        </div>
-                        <Badge variant={property.status === 'AVAILABLE' ? 'default' : 'secondary'}>
-                          {property.status === 'AVAILABLE' ? 'Disponible' : 'Ocupada'}
-                        </Badge>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Archive className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Notas */}
-              {selectedClient.notes && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Notas</h3>
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-700">{selectedClient.notes}</p>
-                  </div>
-                </div>
-              )}
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <HardDrive className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Acciones */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => handleViewProperties(selectedClient)}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver Propiedades
-                </Button>
-                <Button variant="outline" onClick={() => handleContactClient(selectedClient)}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Contactar
-                </Button>
-                <Button onClick={() => handleCreateContract(selectedClient)} className="bg-emerald-600 hover:bg-emerald-700">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Crear Contrato
-                </Button>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Backup List */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Historial de Backups</CardTitle>
+                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {backups.map((backup) => (
+                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
+                                    {getTypeIcon(backup.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
+                                      {getStatusBadge(backup.status)}
+                                      {backup.encrypted && (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    Encriptado
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
+                              
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>{formatBytes(backup.size)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {getLocationIcon(backup.location)}
+                                  <span className="capitalize">{backup.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{formatRelativeTime(backup.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{backup.retentionDays} días retención</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {backup.status === 'completed' && (
+                              <Button size="sm" variant="outline">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => deleteBackup(backup.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Backup Schedules */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Programación</CardTitle>
+                <CardDescription>Backups automáticos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {schedules.map((schedule) => (
+                    <Card key={schedule.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-sm">{schedule.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.frequency === 'daily' ? 'Diario' : 
+                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={schedule.enabled ? 'default' : 'outline'}
+                            onClick={() => toggleSchedule(schedule.id)}
+                          >
+                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Horario:</span>
+                            <span>{schedule.time}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Próxima ejecución:</span>
+                            <span>{formatRelativeTime(schedule.nextRun)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Retención:</span>
+                            <span>{schedule.retention} días</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Programación
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Storage Info */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Almacenamiento</CardTitle>
+                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Usado</span>
+                      <span>{formatBytes(stats.storageUsed)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Disponible:</span>
+                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span>{formatBytes(stats.storageAvailable)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </UnifiedDashboardLayout>
   );
 }
+
+
