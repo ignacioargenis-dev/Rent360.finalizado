@@ -251,7 +251,7 @@ export default function BrokerCommissionsPage() {
       'Valor Negocio': formatCurrency(commission.dealValue),
       Comisión: formatCurrency(commission.commissionAmount),
       Estado: commission.status,
-      'Fecha Servicio': formatDateTime(commission.serviceDate),
+      'Fecha Creación': formatDateTime(commission.createdAt),
       'Fecha Pago': commission.paymentDate ? formatDateTime(commission.paymentDate) : 'Pendiente',
     }));
 

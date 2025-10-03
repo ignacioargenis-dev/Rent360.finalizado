@@ -287,12 +287,12 @@ export default function AdminPaymentsBrokersPage() {
       ID: payout.id,
       Corredor: payout.brokerName,
       Descripción: payout.description,
-      Monto: formatCurrency(payout.totalAmount, payout.currency),
+      Monto: formatCurrency(payout.commission, payout.currency),
       Estado: payout.status,
-      'Fecha Servicio': formatDateTime(payout.serviceDate),
+      Período: payout.period,
       'Fecha Pago': payout.paymentDate ? formatDateTime(payout.paymentDate) : 'Pendiente',
       'Método Pago': getPaymentMethodText(payout.paymentMethod),
-      Cliente: payout.clientName,
+      'Valor Negocio': formatCurrency(payout.dealValue, payout.currency),
       Propiedad: payout.propertyAddress,
     }));
 

@@ -275,12 +275,12 @@ export default function AdminPaymentsOwnersPage() {
       ID: payout.id,
       Propietario: payout.ownerName,
       Descripción: payout.description,
-      Monto: formatCurrency(payout.totalAmount, payout.currency),
+      Monto: formatCurrency(payout.amount, payout.currency),
       Estado: payout.status,
-      'Fecha Servicio': formatDateTime(payout.serviceDate),
+      Período: payout.period,
       'Fecha Pago': payout.paymentDate ? formatDateTime(payout.paymentDate) : 'Pendiente',
       'Método Pago': getPaymentMethodText(payout.paymentMethod),
-      Cliente: payout.clientName,
+      Inquilino: payout.tenantName,
       Propiedad: payout.propertyAddress,
     }));
 

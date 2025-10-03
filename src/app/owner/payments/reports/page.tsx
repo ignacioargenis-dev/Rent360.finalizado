@@ -161,6 +161,16 @@ export default function OwnerPaymentsReportsPage() {
     }).format(amount);
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       paid: { label: 'Pagado', color: 'bg-green-100 text-green-800' },
