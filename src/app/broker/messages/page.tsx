@@ -446,7 +446,7 @@ export default function BrokerMessagesPage() {
           {filteredMessages.map(message => (
             <Card
               key={message.id}
-              className={`border-l-4 ${message.status === 'unread' ? 'border-l-blue-500' : message.status === 'urgent' ? 'border-l-red-500' : 'border-l-gray-400'}`}
+              className={`border-l-4 ${message.status === 'unread' ? 'border-l-blue-500' : message.priority === 'urgent' ? 'border-l-red-500' : 'border-l-gray-400'}`}
             >
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between">
