@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -66,6 +68,7 @@ interface PayoutStats {
 }
 
 export default function AdminPaymentsOwnersPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [payouts, setPayouts] = useState<OwnerPayout[]>([]);
   const [stats, setStats] = useState<PayoutStats>({
