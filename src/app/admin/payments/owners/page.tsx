@@ -681,31 +681,48 @@ export default function AdminPaymentsOwnersPage() {
                 <CardDescription>Herramientas para gestión de pagos a propietarios</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Procesar Pagos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Pagos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Pagos Vencidos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Reportes
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Datos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configurar Comisiones
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Procesar Pago"
+                    description="Nuevo pago"
+                    onClick={() => alert('Funcionalidad: Procesar nuevo pago')}
+                  />
+
+                  <QuickActionButton
+                    icon={Search}
+                    label="Buscar"
+                    description="Buscar pagos"
+                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                  />
+
+                  <QuickActionButton
+                    icon={AlertTriangle}
+                    label="Vencidos"
+                    description="Pagos pendientes"
+                    onClick={() => alert('Funcionalidad: Ver pagos vencidos')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas"
+                    onClick={() => router.push('/admin/reports/payments')}
+                  />
+
+                  <QuickActionButton
+                    icon={Download}
+                    label="Exportar"
+                    description="Descargar datos"
+                    onClick={() => handleExportPayouts()}
+                  />
+
+                  <QuickActionButton
+                    icon={Settings}
+                    label="Comisiones"
+                    description="Configurar"
+                    onClick={() => router.push('/admin/settings')}
+                  />
                 </div>
               </CardContent>
             </Card>

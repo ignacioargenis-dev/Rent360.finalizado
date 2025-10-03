@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   Wrench,
   Users,
@@ -13,7 +15,7 @@ import {
   Clock,
   AlertTriangle,
   TrendingUp,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react';
 import { useUserState } from '@/hooks/useUserState';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -38,6 +40,7 @@ interface Job {
 }
 
 export default function ProviderDashboard() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,8 +89,8 @@ export default function ProviderDashboard() {
           price,
           estimatedTime: '2-4 horas',
           availabilityDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          notes: 'Cotización generada automáticamente desde el dashboard'
-        })
+          notes: 'Cotización generada automáticamente desde el dashboard',
+        }),
       });
 
       if (response.ok) {
@@ -109,7 +112,6 @@ export default function ProviderDashboard() {
       subtitle="Gestiona tus servicios y clientes"
     >
       <div className="space-y-6">
-
         {/* Estadísticas principales */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -119,9 +121,7 @@ export default function ProviderDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{jobs.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Servicios en curso
-              </p>
+              <p className="text-xs text-muted-foreground">Servicios en curso</p>
             </CardContent>
           </Card>
 
@@ -132,9 +132,7 @@ export default function ProviderDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">
-                +3 nuevos esta semana
-              </p>
+              <p className="text-xs text-muted-foreground">+3 nuevos esta semana</p>
             </CardContent>
           </Card>
 
@@ -145,9 +143,7 @@ export default function ProviderDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">$2.4M</div>
-              <p className="text-xs text-muted-foreground">
-                +12% vs mes anterior
-              </p>
+              <p className="text-xs text-muted-foreground">+12% vs mes anterior</p>
             </CardContent>
           </Card>
 
@@ -158,9 +154,7 @@ export default function ProviderDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">4.8</div>
-              <p className="text-xs text-muted-foreground">
-                ★★★★★ Excelente
-              </p>
+              <p className="text-xs text-muted-foreground">★★★★★ Excelente</p>
             </CardContent>
           </Card>
         </div>
@@ -173,27 +167,33 @@ export default function ProviderDashboard() {
                 <MessageSquare className="h-5 w-5" />
                 Solicitudes de Servicio Disponibles
               </CardTitle>
-              <CardDescription>
-                Clientes buscando proveedores para sus necesidades
-              </CardDescription>
+              <CardDescription>Clientes buscando proveedores para sus necesidades</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {serviceRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {serviceRequests.map(request => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="space-y-1">
-                      <h4 className="font-medium">{request.serviceType} - {request.requesterName}</h4>
+                      <h4 className="font-medium">
+                        {request.serviceType} - {request.requesterName}
+                      </h4>
                       <p className="text-sm text-muted-foreground">{request.description}</p>
                       <div className="flex items-center gap-2">
-                        <Badge variant={
-                          request.urgency === 'Alta' ? 'destructive' :
-                          request.urgency === 'Media' ? 'default' : 'secondary'
-                        }>
+                        <Badge
+                          variant={
+                            request.urgency === 'Alta'
+                              ? 'destructive'
+                              : request.urgency === 'Media'
+                                ? 'default'
+                                : 'secondary'
+                          }
+                        >
                           {request.urgency}
                         </Badge>
-                        <Badge variant="outline">
-                          {request.status}
-                        </Badge>
+                        <Badge variant="outline">{request.status}</Badge>
                       </div>
                     </div>
                     <div className="text-right">
@@ -224,9 +224,7 @@ export default function ProviderDashboard() {
                 <Clock className="h-5 w-5" />
                 Trabajos Activos
               </CardTitle>
-              <CardDescription>
-                Servicios en curso y próximos
-              </CardDescription>
+              <CardDescription>Servicios en curso y próximos</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -238,39 +236,52 @@ export default function ProviderDashboard() {
                       No hay trabajos activos
                     </div>
                   ) : (
-                    jobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-1">
-                      <h4 className="font-medium">{job.title}</h4>
-                      <p className="text-sm text-muted-foreground">{job.client}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          job.status === 'En progreso' ? 'default' :
-                          job.status === 'Programado' ? 'secondary' : 'outline'
-                        }>
-                          {job.status}
-                        </Badge>
-                        <Badge variant={
-                          job.priority === 'Alta' ? 'destructive' :
-                          job.priority === 'Media' ? 'default' : 'secondary'
-                        }>
-                          {job.priority}
-                        </Badge>
+                    jobs.map(job => (
+                      <div
+                        key={job.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="space-y-1">
+                          <h4 className="font-medium">{job.title}</h4>
+                          <p className="text-sm text-muted-foreground">{job.client}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                job.status === 'En progreso'
+                                  ? 'default'
+                                  : job.status === 'Programado'
+                                    ? 'secondary'
+                                    : 'outline'
+                              }
+                            >
+                              {job.status}
+                            </Badge>
+                            <Badge
+                              variant={
+                                job.priority === 'Alta'
+                                  ? 'destructive'
+                                  : job.priority === 'Media'
+                                    ? 'default'
+                                    : 'secondary'
+                              }
+                            >
+                              {job.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">
+                            {new Date(job.dueDate).toLocaleDateString('es-CL')}
+                          </p>
+                          <Button size="sm" variant="outline" className="mt-2">
+                            Ver detalles
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {new Date(job.dueDate).toLocaleDateString('es-CL')}
-                      </p>
-                      <Button size="sm" variant="outline" className="mt-2">
-                        Ver detalles
-                      </Button>
-                    </div>
-                  </div>
-                ))
+                    ))
+                  )}
+                </div>
               )}
-            </div>
-          )}
             </CardContent>
           </Card>
 
@@ -284,23 +295,36 @@ export default function ProviderDashboard() {
                   Acciones Rápidas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full justify-start" variant="outline">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Nuevo Trabajo
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="mr-2 h-4 w-4" />
-                  Agregar Cliente
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Generar Cotización
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Contactar Soporte
-                </Button>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Calendar}
+                    label="Nuevo Trabajo"
+                    description="Agendar servicio"
+                    onClick={() => alert('Funcionalidad: Crear nuevo trabajo')}
+                  />
+
+                  <QuickActionButton
+                    icon={Users}
+                    label="Gestionar Clientes"
+                    description="Base de clientes"
+                    onClick={() => alert('Funcionalidad: Ver lista de clientes')}
+                  />
+
+                  <QuickActionButton
+                    icon={DollarSign}
+                    label="Cotizaciones"
+                    description="Generar presupuesto"
+                    onClick={() => alert('Funcionalidad: Crear nueva cotización')}
+                  />
+
+                  <QuickActionButton
+                    icon={MessageSquare}
+                    label="Soporte"
+                    description="Centro de ayuda"
+                    onClick={() => alert('Funcionalidad: Contactar soporte técnico')}
+                  />
+                </div>
               </CardContent>
             </Card>
 

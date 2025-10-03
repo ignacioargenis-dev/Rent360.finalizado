@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, 
-  Send, 
-  Search, 
+import {
+  MessageCircle,
+  Send,
+  Search,
   Plus,
   User as UserIcon,
   Clock,
@@ -16,7 +19,10 @@ import { MessageCircle,
   MoreHorizontal,
   Star,
   Phone,
-  Mail, Building, Info } from 'lucide-react';
+  Mail,
+  Building,
+  Info,
+} from 'lucide-react';
 import { User } from '@/types';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -61,6 +67,7 @@ interface Conversation {
 }
 
 export default function TenantMessagesPage() {
+  const router = useRouter();
   const { user, loading: userLoading } = useUserState();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -115,7 +122,8 @@ export default function TenantMessagesPage() {
             role: 'support',
           },
           lastMessage: {
-            content: 'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
+            content:
+              'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
             timestamp: '2024-03-13 10:20',
             isOwn: false,
           },
@@ -155,7 +163,8 @@ export default function TenantMessagesPage() {
         {
           id: '3',
           subject: 'Problema de pago resuelto',
-          content: 'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
+          content:
+            'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
           senderId: '4',
           senderName: 'Soporte Rent360',
           senderRole: 'support',
@@ -188,17 +197,17 @@ export default function TenantMessagesPage() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    
+
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} días`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
@@ -245,20 +254,27 @@ return `Hace ${diffDays} días`;
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'owner': return 'Propietario';
-      case 'broker': return 'Corredor';
-      case 'support': return 'Soporte';
-      case 'tenant': return 'Inquilino';
-      default: return role;
+      case 'owner':
+        return 'Propietario';
+      case 'broker':
+        return 'Corredor';
+      case 'support':
+        return 'Soporte';
+      case 'tenant':
+        return 'Inquilino';
+      default:
+        return role;
     }
   };
 
   const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (conv.property?.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesFilter = filter === 'all' || 
-                         (filter === 'unread' && conv.unreadCount > 0) ||
-                         (filter === 'archived' && conv.status === 'archived');
+    const matchesSearch =
+      conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.property?.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'unread' && conv.unreadCount > 0) ||
+      (filter === 'archived' && conv.status === 'archived');
     return matchesSearch && matchesFilter;
   });
 
@@ -275,7 +291,7 @@ return `Hace ${diffDays} días`;
 
   return (
     <DashboardLayout>
-      <DashboardHeader 
+      <DashboardHeader
         user={user}
         title="Mensajes"
         subtitle="Comunícate con propietarios y corredores"
@@ -355,9 +371,7 @@ return `Hace ${diffDays} días`;
                     Nuevo
                   </Button>
                 </div>
-                <CardDescription>
-                  Tus conversaciones recientes
-                </CardDescription>
+                <CardDescription>Tus conversaciones recientes</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Search and Filter */}
@@ -369,13 +383,13 @@ return `Hace ${diffDays} días`;
                       placeholder="Buscar conversaciones..."
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={e => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={e => setFilter(e.target.value)}
                   >
                     <option value="all">Todas las conversaciones</option>
                     <option value="unread">No leídas</option>
@@ -385,7 +399,7 @@ return `Hace ${diffDays} días`;
 
                 {/* Conversations List */}
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredConversations.map((conversation) => (
+                  {filteredConversations.map(conversation => (
                     <div
                       key={conversation.id}
                       className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -411,14 +425,14 @@ return `Hace ${diffDays} días`;
                           </Badge>
                         )}
                       </div>
-                      
+
                       {conversation.property && (
                         <p className="text-xs text-gray-600 mb-2 flex items-center gap-1">
                           <Building className="w-3 h-3" />
                           {conversation.property.title}
                         </p>
                       )}
-                      
+
                       <p className="text-sm text-gray-700 truncate mb-1">
                         {conversation.lastMessage.content}
                       </p>
@@ -445,10 +459,16 @@ return `Hace ${diffDays} días`;
                         </div>
                         <div>
                           <CardTitle className="text-lg">
-                            {conversations.find(c => c.id === selectedConversation)?.participant.name}
+                            {
+                              conversations.find(c => c.id === selectedConversation)?.participant
+                                .name
+                            }
                           </CardTitle>
                           <CardDescription>
-                            {getRoleDisplayName(conversations.find(c => c.id === selectedConversation)?.participant.role || '')}
+                            {getRoleDisplayName(
+                              conversations.find(c => c.id === selectedConversation)?.participant
+                                .role || ''
+                            )}
                           </CardDescription>
                         </div>
                       </div>
@@ -470,9 +490,7 @@ return `Hace ${diffDays} días`;
                 ) : (
                   <>
                     <CardTitle>Selecciona una conversación</CardTitle>
-                    <CardDescription>
-                      Elige una conversación para ver los mensajes
-                    </CardDescription>
+                    <CardDescription>Elige una conversación para ver los mensajes</CardDescription>
                   </>
                 )}
               </CardHeader>
@@ -484,9 +502,13 @@ return `Hace ${diffDays} días`;
                       {messages
                         .filter(m => {
                           const conv = conversations.find(c => c.id === selectedConversation);
-                          return conv && (m.senderName === conv.participant.name || m.receiverName === conv.participant.name);
+                          return (
+                            conv &&
+                            (m.senderName === conv.participant.name ||
+                              m.receiverName === conv.participant.name)
+                          );
                         })
-                        .map((message) => (
+                        .map(message => (
                           <div
                             key={message.id}
                             className={`flex ${message.senderName === user?.name ? 'justify-end' : 'justify-start'}`}
@@ -509,7 +531,11 @@ return `Hace ${diffDays} días`;
                               </div>
                               {message.attachments && message.attachments.length > 0 && (
                                 <div className="mt-2">
-                                  <Button size="sm" variant="ghost" className="p-0 h-auto text-xs opacity-70 hover:opacity-100">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="p-0 h-auto text-xs opacity-70 hover:opacity-100"
+                                  >
                                     <Paperclip className="w-3 h-3 mr-1" />
                                     {message.attachments.length} archivo(s)
                                   </Button>

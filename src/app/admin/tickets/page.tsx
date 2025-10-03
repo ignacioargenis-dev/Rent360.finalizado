@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
@@ -57,6 +59,7 @@ interface TicketStats {
 }
 
 export default function AdminTicketsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [stats, setStats] = useState<TicketStats>({
@@ -676,31 +679,48 @@ export default function AdminTicketsPage() {
                 <CardDescription>Herramientas para gestión de soporte</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Headphones className="w-4 h-4 mr-2" />
-                    Centro de Llamadas
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Bandeja de Email
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Chat en Vivo
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Reportes Avanzados
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Users className="w-4 h-4 mr-2" />
-                    Gestión de Agentes
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Automatizaciones
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Headphones}
+                    label="Centro de Llamadas"
+                    description="Atención telefónica"
+                    onClick={() => alert('Funcionalidad: Abrir centro de llamadas')}
+                  />
+
+                  <QuickActionButton
+                    icon={Mail}
+                    label="Bandeja Email"
+                    description="Gestión de correos"
+                    onClick={() => alert('Funcionalidad: Abrir bandeja de email')}
+                  />
+
+                  <QuickActionButton
+                    icon={MessageSquare}
+                    label="Chat en Vivo"
+                    description="Atención en tiempo real"
+                    onClick={() => alert('Funcionalidad: Iniciar chat en vivo')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas avanzadas"
+                    onClick={() => router.push('/admin/reports/tickets')}
+                  />
+
+                  <QuickActionButton
+                    icon={Users}
+                    label="Agentes"
+                    description="Gestión de personal"
+                    onClick={() => router.push('/admin/users')}
+                  />
+
+                  <QuickActionButton
+                    icon={Zap}
+                    label="Automatizaciones"
+                    description="Flujos automáticos"
+                    onClick={() => router.push('/admin/settings')}
+                  />
                 </div>
               </CardContent>
             </Card>

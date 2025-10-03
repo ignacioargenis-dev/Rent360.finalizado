@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
@@ -70,6 +72,7 @@ interface RecentActivity {
 }
 
 export default function BrokerDashboardPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -367,43 +370,48 @@ export default function BrokerDashboardPage() {
                 <CardDescription>Herramientas para gestionar tu negocio</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Link href="/broker/properties/new">
-                    <Button className="w-full justify-start">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Nueva Propiedad
-                    </Button>
-                  </Link>
-                  <Link href="/broker/clients">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Users className="w-4 h-4 mr-2" />
-                      Ver Clientes
-                    </Button>
-                  </Link>
-                  <Link href="/broker/appointments">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Citas
-                    </Button>
-                  </Link>
-                  <Link href="/broker/commissions">
-                    <Button variant="outline" className="w-full justify-start">
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Comisiones
-                    </Button>
-                  </Link>
-                  <Link href="/broker/properties">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Search className="w-4 h-4 mr-2" />
-                      Buscar Propiedades
-                    </Button>
-                  </Link>
-                  <Link href="/broker/reports">
-                    <Button variant="outline" className="w-full justify-start">
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Reportes
-                    </Button>
-                  </Link>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Nueva Propiedad"
+                    description="Publicar inmueble"
+                    onClick={() => router.push('/broker/properties/new')}
+                  />
+
+                  <QuickActionButton
+                    icon={Users}
+                    label="Clientes"
+                    description="Gestionar contactos"
+                    onClick={() => router.push('/broker/clients')}
+                  />
+
+                  <QuickActionButton
+                    icon={Calendar}
+                    label="Citas"
+                    description="Agenda y visitas"
+                    onClick={() => router.push('/broker/appointments')}
+                  />
+
+                  <QuickActionButton
+                    icon={DollarSign}
+                    label="Comisiones"
+                    description="Seguimiento de pagos"
+                    onClick={() => router.push('/broker/commissions')}
+                  />
+
+                  <QuickActionButton
+                    icon={Search}
+                    label="Buscar"
+                    description="Propiedades disponibles"
+                    onClick={() => router.push('/broker/properties')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas y análisis"
+                    onClick={() => router.push('/broker/reports')}
+                  />
                 </div>
               </CardContent>
             </Card>

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -66,6 +68,7 @@ interface ContractStats {
 }
 
 export default function AdminContractsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [stats, setStats] = useState<ContractStats>({
@@ -335,12 +338,12 @@ export default function AdminContractsPage() {
 
   const handleViewContract = (contractId: string) => {
     // Navigate to contract detail view
-    window.open(`/admin/contracts/${contractId}`, '_blank');
+    alert(`Funcionalidad: Ver detalles del contrato ${contractId}`);
   };
 
   const handleEditContract = (contractId: string) => {
     // Navigate to contract edit page
-    window.open(`/admin/contracts/${contractId}/edit`, '_blank');
+    alert(`Funcionalidad: Editar contrato ${contractId}`);
   };
 
   const handleDownloadContract = (contractId: string) => {
@@ -668,31 +671,48 @@ export default function AdminContractsPage() {
                 <CardDescription>Herramientas para gestión de contratos</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Contrato
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Contratos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Contratos Próximos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Reportes
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Datos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configurar Alertas
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Nuevo Contrato"
+                    description="Crear contrato"
+                    onClick={() => alert('Funcionalidad: Crear nuevo contrato')}
+                  />
+
+                  <QuickActionButton
+                    icon={Search}
+                    label="Buscar"
+                    description="Buscar contratos"
+                    onClick={() => alert('Funcionalidad: Abrir búsqueda avanzada')}
+                  />
+
+                  <QuickActionButton
+                    icon={AlertTriangle}
+                    label="Vencimientos"
+                    description="Próximos vencimientos"
+                    onClick={() => alert('Funcionalidad: Ver contratos próximos a vencer')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas"
+                    onClick={() => router.push('/admin/reports/contracts')}
+                  />
+
+                  <QuickActionButton
+                    icon={Download}
+                    label="Exportar"
+                    description="Descargar datos"
+                    onClick={() => handleExportContracts()}
+                  />
+
+                  <QuickActionButton
+                    icon={Settings}
+                    label="Configuración"
+                    description="Ajustes del sistema"
+                    onClick={() => router.push('/admin/settings')}
+                  />
                 </div>
               </CardContent>
             </Card>

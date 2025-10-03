@@ -3,13 +3,16 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, 
-  Send, 
-  AlertCircle, 
+import {
+  ArrowLeft,
+  Send,
+  AlertCircle,
   Loader2,
   Ticket,
   User,
@@ -17,9 +20,9 @@ import { ArrowLeft,
   Paperclip,
   Edit,
   RefreshCw,
-  Trash2 } from 'lucide-react';
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { Ticket as TicketType, TicketComment } from '@/types';
 
 interface TicketDetailsResponse {
@@ -28,10 +31,11 @@ interface TicketDetailsResponse {
 }
 
 export default function TicketDetailsPage() {
+  const router = useRouter();
   const params = useParams();
 
   const ticketId = params.id as string;
-  
+
   const [ticket, setTicket] = useState<TicketType | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +60,9 @@ export default function TicketDetailsPage() {
       setComments(data.comments);
       setError(null);
     } catch (err) {
-      logger.error('Error fetching ticket details:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error fetching ticket details:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError('Error al cargar los detalles del ticket. Por favor intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -71,7 +77,7 @@ export default function TicketDetailsPage() {
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newComment.trim()) {
       return;
     }
@@ -98,12 +104,13 @@ export default function TicketDetailsPage() {
       const data = await response.json();
       setComments(prev => [...prev, data.comment]);
       setNewComment('');
-      
+
       // Refresh ticket details to update status
       await fetchTicketDetails();
-
     } catch (err) {
-      logger.error('Error submitting comment:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error submitting comment:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError('Error al enviar el comentario. Por favor intenta nuevamente.');
     } finally {
       setSubmittingComment(false);
@@ -196,12 +203,7 @@ export default function TicketDetailsPage() {
                 <p className="text-gray-600">Seguimiento y gestión del ticket</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
@@ -234,7 +236,7 @@ export default function TicketDetailsPage() {
                     <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
                     <p className="text-gray-700 leading-relaxed">{ticket?.description}</p>
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">Categoría:</span>
@@ -242,12 +244,16 @@ export default function TicketDetailsPage() {
                     </div>
                     <div>
                       <span className="text-gray-600">Creado:</span>
-                      <span className="ml-2 font-medium">{ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}</span>
+                      <span className="ml-2 font-medium">
+                        {ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}
+                      </span>
                     </div>
                     {ticket?.resolvedAt && (
                       <div>
                         <span className="text-gray-600">Resuelto:</span>
-                        <span className="ml-2 font-medium">{formatDate(ticket.resolvedAt.toISOString())}</span>
+                        <span className="ml-2 font-medium">
+                          {formatDate(ticket.resolvedAt.toISOString())}
+                        </span>
                       </div>
                     )}
                     {ticket?.assignedTo && (
@@ -277,17 +283,21 @@ export default function TicketDetailsPage() {
                       <p>No hay comentarios aún</p>
                     </div>
                   ) : (
-                    comments.map((comment) => (
+                    comments.map(comment => (
                       <div key={comment.id} className="border-l-4 border-blue-200 pl-4 py-2">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-400" />
                             <span className="font-medium text-sm">Usuario #{comment.userId}</span>
                             {comment.isInternal && (
-                              <Badge variant="outline" className="text-xs">Interno</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Interno
+                              </Badge>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(comment.createdAt.toISOString())}</span>
+                          <span className="text-xs text-gray-500">
+                            {formatDate(comment.createdAt.toISOString())}
+                          </span>
                         </div>
                         <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                       </div>
@@ -305,18 +315,18 @@ export default function TicketDetailsPage() {
                       <Textarea
                         placeholder="Escribe tu comentario aquí..."
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        onChange={e => setNewComment(e.target.value)}
                         rows={3}
                       />
                     </div>
-                    
+
                     {error && (
                       <div className="flex items-center gap-2 text-red-600 text-sm">
                         <AlertCircle className="w-4 h-4" />
                         <span>{error}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-end">
                       <Button type="submit" disabled={submittingComment || !newComment.trim()}>
                         {submittingComment ? (
@@ -371,11 +381,13 @@ export default function TicketDetailsPage() {
                   <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                   <div>
                     <p className="text-sm font-medium">Ticket creado</p>
-                    <p className="text-xs text-gray-500">{ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}</p>
+                    <p className="text-xs text-gray-500">
+                      {ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}
+                    </p>
                   </div>
                 </div>
-                
-                                 {ticket?.status === 'IN_PROGRESS' as any && (
+
+                {ticket?.status === ('IN_PROGRESS' as any) && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-yellow-600 rounded-full mt-2"></div>
                     <div>
@@ -384,13 +396,15 @@ export default function TicketDetailsPage() {
                     </div>
                   </div>
                 )}
-                
-                {ticket?.status === 'RESOLVED' as any && ticket?.resolvedAt && (
+
+                {ticket?.status === ('RESOLVED' as any) && ticket?.resolvedAt && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
                     <div>
                       <p className="text-sm font-medium">Resuelto</p>
-                                             <p className="text-xs text-gray-500">{formatDate(ticket?.resolvedAt.toISOString())}</p>
+                      <p className="text-xs text-gray-500">
+                        {formatDate(ticket?.resolvedAt.toISOString())}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -402,19 +416,29 @@ export default function TicketDetailsPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Acciones</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar Ticket
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Paperclip className="w-4 h-4 mr-2" />
-                  Adjuntar Archivo
-                </Button>
-                <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar Ticket
-                </Button>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4">
+                  <QuickActionButton
+                    icon={Edit}
+                    label="Editar Ticket"
+                    description="Modificar información"
+                    onClick={() => alert('Funcionalidad: Editar ticket')}
+                  />
+
+                  <QuickActionButton
+                    icon={Paperclip}
+                    label="Adjuntar Archivo"
+                    description="Agregar documentos"
+                    onClick={() => alert('Funcionalidad: Adjuntar archivo al ticket')}
+                  />
+
+                  <QuickActionButton
+                    icon={Trash2}
+                    label="Eliminar Ticket"
+                    description="Borrar permanentemente"
+                    onClick={() => alert('Funcionalidad: Eliminar ticket (con confirmación)')}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

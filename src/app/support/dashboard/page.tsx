@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, 
-  Users, 
-  Phone, 
-  Mail, 
+import {
+  Ticket,
+  Users,
+  Phone,
+  Mail,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -21,7 +24,7 @@ import { Ticket,
   Activity,
   ChevronRight,
   Eye,
-  Bell
+  Bell,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useUserState } from '@/hooks/useUserState';
@@ -77,6 +80,7 @@ interface TeamMember {
 }
 
 export default function SupportDashboard() {
+  const router = useRouter();
   const { user, loading: userLoading } = useUserState();
 
   const [stats, setStats] = useState<DashboardStats>({
@@ -370,7 +374,6 @@ export default function SupportDashboard() {
       showNotifications={true}
       notificationCount={stats.openTickets}
     >
-
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -385,10 +388,13 @@ export default function SupportDashboard() {
             <p className="text-2xl font-bold">{stats.totalTickets}</p>
             <p className="text-xs text-blue-100 mt-1">{stats.resolvedTickets} resueltos</p>
             <div className="mt-2 h-1 bg-blue-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.resolvedTickets / stats.totalTickets) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.resolvedTickets / stats.totalTickets) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <AlertCircle className="w-8 h-8 text-yellow-100" />
@@ -400,10 +406,13 @@ export default function SupportDashboard() {
             <p className="text-2xl font-bold">{stats.openTickets}</p>
             <p className="text-xs text-yellow-100 mt-1">{stats.escalatedTickets} escalados</p>
             <div className="mt-2 h-1 bg-yellow-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.openTickets / 50) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.openTickets / 50) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <Clock className="w-8 h-8 text-green-100" />
@@ -415,10 +424,13 @@ export default function SupportDashboard() {
             <p className="text-2xl font-bold">{stats.averageResponseTime}h</p>
             <p className="text-xs text-green-100 mt-1">Promedio</p>
             <div className="mt-2 h-1 bg-green-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${((5 - stats.averageResponseTime) / 5) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${((5 - stats.averageResponseTime) / 5) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <ThumbsUp className="w-8 h-8 text-amber-100" />
@@ -432,7 +444,10 @@ export default function SupportDashboard() {
               <Star className="w-5 h-5 text-yellow-300 fill-current" />
             </div>
             <div className="mt-2 h-1 bg-amber-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.customerSatisfaction / 5) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.customerSatisfaction / 5) * 100}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -450,12 +465,15 @@ export default function SupportDashboard() {
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Nuevo Ticket</h3>
               <p className="text-sm text-gray-600 mb-4">Crear un nuevo ticket de soporte</p>
-              <Link href="/support/tickets/new" className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center">
+              <Link
+                href="/support/tickets/new"
+                className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
+              >
                 Crear ticket
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 group">
               <div className="bg-gradient-to-br from-green-500 to-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Search className="w-6 h-6 text-white" />
@@ -463,35 +481,46 @@ export default function SupportDashboard() {
               <h3 className="font-semibold text-gray-800 mb-2">Buscar Tickets</h3>
               <p className="text-sm text-gray-600 mb-4">Buscar y gestionar tickets existentes</p>
               <div className="flex items-center justify-between">
-                <Link href="/support/tickets" className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center">
+                <Link
+                  href="/support/tickets"
+                  className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center"
+                >
                   Ver tickets
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
                 {stats.openTickets > 0 && (
-                  <Badge className="bg-red-100 text-red-800 text-xs">{stats.openTickets} abiertos</Badge>
+                  <Badge className="bg-red-100 text-red-800 text-xs">
+                    {stats.openTickets} abiertos
+                  </Badge>
                 )}
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 group">
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Base de Conocimiento</h3>
               <p className="text-sm text-gray-600 mb-4">Artículos y guías de ayuda</p>
-              <Link href="/support/knowledge" className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center">
+              <Link
+                href="/support/knowledge"
+                className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center"
+              >
                 Explorar
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200 group">
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Reportes</h3>
               <p className="text-sm text-gray-600 mb-4">Analizar métricas de soporte</p>
-              <Link href="/support/reports" className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center">
+              <Link
+                href="/support/reports"
+                className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center"
+              >
                 Ver reportes
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
@@ -523,8 +552,11 @@ export default function SupportDashboard() {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {recentTickets.map((ticket) => (
-                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+                  {recentTickets.map(ticket => (
+                    <div
+                      key={ticket.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
+                    >
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h3 className="font-bold text-lg text-gray-800">{ticket.title}</h3>
@@ -540,27 +572,37 @@ export default function SupportDashboard() {
                           {getStatusBadge(ticket.status)}
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="bg-blue-50 rounded-lg p-3">
                           <p className="text-xs text-blue-600 font-medium">Asignado a</p>
-                          <p className="font-bold text-blue-800">{ticket.assignedTo || 'Sin asignar'}</p>
+                          <p className="font-bold text-blue-800">
+                            {ticket.assignedTo || 'Sin asignar'}
+                          </p>
                         </div>
                         <div className="bg-green-50 rounded-lg p-3">
                           <p className="text-xs text-green-600 font-medium">Creado</p>
-                          <p className="font-bold text-green-800">{formatDateTime(ticket.createdAt)}</p>
+                          <p className="font-bold text-green-800">
+                            {formatDateTime(ticket.createdAt)}
+                          </p>
                         </div>
                       </div>
 
                       {ticket.estimatedResolution && (
                         <div className="bg-yellow-50 rounded-lg p-3 mb-4">
                           <p className="text-xs text-yellow-600 font-medium">Resolución estimada</p>
-                          <p className="font-bold text-yellow-800">{formatDateTime(ticket.estimatedResolution)}</p>
+                          <p className="font-bold text-yellow-800">
+                            {formatDateTime(ticket.estimatedResolution)}
+                          </p>
                         </div>
                       )}
 
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="border-gray-300 hover:border-blue-500 hover:text-blue-600">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                        >
                           <Eye className="w-4 h-4 mr-1" />
                           Ver detalles
                         </Button>
@@ -593,9 +635,14 @@ export default function SupportDashboard() {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}>
+                  {recentActivity.map(activity => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}
+                      >
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1">
@@ -619,12 +666,17 @@ export default function SupportDashboard() {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {teamMembers.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300">
+                  {teamMembers.map(member => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300"
+                    >
                       <div>
                         <h4 className="font-semibold text-gray-800">{member.name}</h4>
                         <p className="text-sm text-gray-600">{member.role}</p>
-                        <p className="text-xs text-gray-500">{member.activeTickets} tickets activos</p>
+                        <p className="text-xs text-gray-500">
+                          {member.activeTickets} tickets activos
+                        </p>
                       </div>
                       {getTeamStatusBadge(member.status)}
                     </div>
@@ -643,7 +695,10 @@ export default function SupportDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   {performanceMetrics.map((metric, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
                       <div>
                         <p className="text-sm font-medium text-gray-700">{metric.label}</p>
                         <p className="text-xs text-gray-500">Objetivo: {metric.target}</p>
@@ -664,23 +719,34 @@ export default function SupportDashboard() {
                 <h2 className="text-xl font-bold text-white">Acciones Rápidas</h2>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button size="sm" variant="outline" className="w-full justify-start border-gray-300 hover:border-blue-500 hover:text-blue-600">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Reporte
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start border-gray-300 hover:border-green-500 hover:text-green-600">
-                    <Headphones className="w-4 h-4 mr-2" />
-                    Llamadas
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start border-gray-300 hover:border-purple-500 hover:text-purple-600">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Emails
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start border-gray-300 hover:border-orange-500 hover:text-orange-600">
-                    <HelpCircle className="w-4 h-4 mr-2" />
-                    FAQ
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Download}
+                    label="Exportar Reporte"
+                    description="Descargar estadísticas"
+                    onClick={() => alert('Funcionalidad: Exportar reporte de soporte')}
+                  />
+
+                  <QuickActionButton
+                    icon={Headphones}
+                    label="Centro de Llamadas"
+                    description="Atención telefónica"
+                    onClick={() => alert('Funcionalidad: Abrir centro de llamadas')}
+                  />
+
+                  <QuickActionButton
+                    icon={Mail}
+                    label="Gestión de Emails"
+                    description="Bandeja de correos"
+                    onClick={() => alert('Funcionalidad: Abrir bandeja de emails')}
+                  />
+
+                  <QuickActionButton
+                    icon={HelpCircle}
+                    label="Base de Conocimiento"
+                    description="Preguntas frecuentes"
+                    onClick={() => router.push('/support/knowledge')}
+                  />
                 </div>
               </div>
             </div>

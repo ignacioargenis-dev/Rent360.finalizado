@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -68,6 +70,7 @@ interface PayoutStats {
 }
 
 export default function AdminPaymentsBrokersPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserType | null>(null);
   const [payouts, setPayouts] = useState<BrokerPayout[]>([]);
   const [stats, setStats] = useState<PayoutStats>({
@@ -688,31 +691,48 @@ export default function AdminPaymentsBrokersPage() {
                 <CardDescription>Herramientas para gestión de comisiones</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nueva Comisión
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Pagos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Comisiones Vencidas
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Reportes
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Datos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configurar Tasas
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Nueva Comisión"
+                    description="Procesar comisión"
+                    onClick={() => alert('Funcionalidad: Procesar nueva comisión')}
+                  />
+
+                  <QuickActionButton
+                    icon={Search}
+                    label="Buscar"
+                    description="Buscar pagos"
+                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                  />
+
+                  <QuickActionButton
+                    icon={AlertTriangle}
+                    label="Vencidas"
+                    description="Comisiones pendientes"
+                    onClick={() => alert('Funcionalidad: Ver comisiones vencidas')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas"
+                    onClick={() => router.push('/admin/reports/payments')}
+                  />
+
+                  <QuickActionButton
+                    icon={Download}
+                    label="Exportar"
+                    description="Descargar datos"
+                    onClick={() => handleExportPayouts()}
+                  />
+
+                  <QuickActionButton
+                    icon={Settings}
+                    label="Configurar"
+                    description="Tasas y comisiones"
+                    onClick={() => router.push('/admin/settings')}
+                  />
                 </div>
               </CardContent>
             </Card>

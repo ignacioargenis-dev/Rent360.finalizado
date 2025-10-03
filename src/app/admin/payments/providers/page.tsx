@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -66,6 +68,7 @@ interface PayoutStats {
 }
 
 export default function AdminPaymentsProvidersPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [payouts, setPayouts] = useState<ProviderPayout[]>([]);
   const [stats, setStats] = useState<PayoutStats>({
@@ -714,31 +717,48 @@ export default function AdminPaymentsProvidersPage() {
                 <CardDescription>Herramientas para gestión de pagos</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Proveedor
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Pagos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Pagos Vencidos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Reportes
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Datos
-                  </Button>
-                  <Button size="sm" variant="outline" className="justify-start">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configurar Métodos
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Nuevo Proveedor"
+                    description="Registrar proveedor"
+                    onClick={() => alert('Funcionalidad: Registrar nuevo proveedor')}
+                  />
+
+                  <QuickActionButton
+                    icon={Search}
+                    label="Buscar"
+                    description="Buscar pagos"
+                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                  />
+
+                  <QuickActionButton
+                    icon={AlertTriangle}
+                    label="Vencidos"
+                    description="Pagos pendientes"
+                    onClick={() => alert('Funcionalidad: Ver pagos vencidos')}
+                  />
+
+                  <QuickActionButton
+                    icon={BarChart3}
+                    label="Reportes"
+                    description="Estadísticas"
+                    onClick={() => router.push('/admin/reports/payments')}
+                  />
+
+                  <QuickActionButton
+                    icon={Download}
+                    label="Exportar"
+                    description="Descargar datos"
+                    onClick={() => handleExportPayments()}
+                  />
+
+                  <QuickActionButton
+                    icon={Settings}
+                    label="Configurar"
+                    description="Métodos de pago"
+                    onClick={() => router.push('/admin/settings')}
+                  />
                 </div>
               </CardContent>
             </Card>
