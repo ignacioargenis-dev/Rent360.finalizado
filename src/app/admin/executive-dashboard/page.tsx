@@ -28,7 +28,6 @@ import {
   Mail,
   MessageSquare
 } from 'lucide-react';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -186,11 +185,39 @@ export default function ExecutiveDashboard() {
   };
 
   if (loading || !metrics) {
-    return React.createElement('div', { className: 'text-center p-4' }, 'Cargando...');
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex">
+          <div className="w-64 bg-white shadow-lg">
+            <div className="p-4">
+              <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="p-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+                  <p>Cargando dashboard ejecutivo...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <UnifiedDashboardLayout title="Dashboard Ejecutivo" subtitle="Métricas y análisis avanzados del sistema">
+        <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Rent360 Admin</h2>
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="p-6"> 
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -859,9 +886,8 @@ export default function ExecutiveDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </UnifiedDashboardLayout>
+    </DashboardLayout
   );
 }
-
 
 
