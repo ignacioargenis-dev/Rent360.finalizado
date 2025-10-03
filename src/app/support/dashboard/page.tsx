@@ -724,21 +724,65 @@ export default function SupportDashboard() {
                     icon={Download}
                     label="Exportar Reporte"
                     description="Descargar estadísticas"
-                    onClick={() => alert('Funcionalidad: Exportar reporte de soporte')}
+                    onClick={() => {
+                      const csvData = [
+                        {
+                          Métrica: 'Tickets Totales',
+                          Valor: stats.totalTickets,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Tickets Abiertos',
+                          Valor: stats.openTickets,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Tiempo de Respuesta',
+                          Valor: `${stats.averageResponseTime}h`,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Satisfacción',
+                          Valor: `${stats.customerSatisfaction}/5`,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                      ];
+
+                      const csvContent =
+                        'data:text/csv;charset=utf-8,' +
+                        Object.keys(csvData[0]).join(',') +
+                        '\n' +
+                        csvData.map(row => Object.values(row).join(',')).join('\n');
+
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement('a');
+                      link.setAttribute('href', encodedUri);
+                      link.setAttribute(
+                        'download',
+                        `reporte_soporte_${new Date().toISOString().split('T')[0]}.csv`
+                      );
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
                   />
 
                   <QuickActionButton
                     icon={Headphones}
                     label="Centro de Llamadas"
                     description="Atención telefónica"
-                    onClick={() => alert('Funcionalidad: Abrir centro de llamadas')}
+                    onClick={() => {
+                      alert('Funcionalidad: Abrir aplicación de VoIP para atención telefónica');
+                    }}
                   />
 
                   <QuickActionButton
                     icon={Mail}
                     label="Gestión de Emails"
                     description="Bandeja de correos"
-                    onClick={() => alert('Funcionalidad: Abrir bandeja de emails')}
+                    onClick={() => {
+                      alert('Funcionalidad: Abrir cliente de email integrado para soporte');
+                    }}
                   />
 
                   <QuickActionButton

@@ -56,27 +56,28 @@ export default function TareasPage() {
 
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        // Simulated API call
-        const response = await fetch('/api/tasks');
-        if (!response.ok) {
-          throw new Error('Error al cargar los datos');
-        }
-        const data = await response.json();
-        setData(data);
-      } catch (error) {
-        setError('Error al cargar los datos');
-        logger.error('Error fetching tasks:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      } finally {
-        setLoading(false);
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      // Simulated API call
+      const response = await fetch('/api/tasks');
+      if (!response.ok) {
+        throw new Error('Error al cargar los datos');
       }
-    };
+      const data = await response.json();
+      setData(data);
+      setError(null);
+    } catch (error) {
+      setError('Error al cargar los datos');
+      logger.error('Error fetching tasks:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTasks();
   }, []);
 
@@ -222,21 +223,61 @@ export default function TareasPage() {
                 icon={Plus}
                 label="Nueva Tarea"
                 description="Crear tarea"
-                onClick={() => alert('Funcionalidad: Crear nueva tarea')}
+                onClick={() => alert('Funcionalidad: Abrir formulario para crear nueva tarea')}
               />
 
               <QuickActionButton
                 icon={Filter}
                 label="Filtrar"
                 description="Buscar tareas"
-                onClick={() => alert('Funcionalidad: Abrir filtros de tareas')}
+                onClick={() => {
+                  // Focus on search input
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar tareas"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Descargar tareas"
-                onClick={() => alert('Funcionalidad: Exportar lista de tareas')}
+                onClick={() => {
+                  if (tasks.length === 0) {
+                    alert('No hay tareas para exportar');
+                    return;
+                  }
+
+                  const csvData = tasks.map(task => ({
+                    ID: task.id,
+                    Título: task.title,
+                    Descripción: task.description,
+                    Estado: task.status,
+                    Prioridad: task.priority,
+                    'Fecha Límite': task.dueDate,
+                  }));
+
+                  const csvContent =
+                    'data:text/csv;charset=utf-8,' +
+                    Object.keys(csvData[0]!).join(',') +
+                    '\n' +
+                    csvData.map(row => Object.values(row).join(',')).join('\n');
+
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodedUri);
+                  link.setAttribute(
+                    'download',
+                    `tareas_${new Date().toISOString().split('T')[0]}.csv`
+                  );
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
               />
 
               <QuickActionButton
@@ -257,7 +298,7 @@ export default function TareasPage() {
                 icon={RefreshCw}
                 label="Actualizar"
                 description="Recargar tareas"
-                onClick={() => alert('Funcionalidad: Recargar lista de tareas')}
+                onClick={() => fetchTasks()}
               />
             </div>
           </CardContent>

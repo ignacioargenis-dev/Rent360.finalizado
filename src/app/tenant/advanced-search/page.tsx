@@ -189,21 +189,41 @@ export default function BúsquedaAvanzadaPage() {
                 icon={Plus}
                 label="Nueva Búsqueda"
                 description="Buscar propiedad"
-                onClick={() => alert('Funcionalidad: Nueva búsqueda avanzada')}
+                onClick={() => {
+                  // Reset search and scroll to top
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar propiedades"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Filter}
                 label="Filtros"
                 description="Aplicar filtros"
-                onClick={() => alert('Funcionalidad: Abrir filtros avanzados')}
+                onClick={() => {
+                  // Scroll to filter section
+                  const filterSection = document.querySelector('[data-filters]');
+                  if (filterSection) {
+                    filterSection.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    alert('Funcionalidad: Abrir panel de filtros avanzados');
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Guardar búsqueda"
-                onClick={() => alert('Funcionalidad: Exportar resultados de búsqueda')}
+                onClick={() => {
+                  alert('Funcionalidad: Guardar criterios de búsqueda para uso futuro');
+                }}
               />
 
               <QuickActionButton

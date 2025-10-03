@@ -177,21 +177,34 @@ export default function MantenimientoPage() {
                 icon={Plus}
                 label="Nueva Solicitud"
                 description="Reportar problema"
-                onClick={() => alert('Funcionalidad: Crear nueva solicitud de mantenimiento')}
+                onClick={() =>
+                  alert('Funcionalidad: Abrir formulario para nueva solicitud de mantenimiento')
+                }
               />
 
               <QuickActionButton
                 icon={Filter}
                 label="Filtrar"
                 description="Buscar solicitudes"
-                onClick={() => alert('Funcionalidad: Abrir filtros de solicitudes')}
+                onClick={() => {
+                  // Focus on search input
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar solicitudes"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Descargar reportes"
-                onClick={() => alert('Funcionalidad: Exportar solicitudes de mantenimiento')}
+                onClick={() => {
+                  alert('Funcionalidad: Exportar historial de solicitudes en formato PDF');
+                }}
               />
 
               <QuickActionButton

@@ -209,14 +209,25 @@ export default function HorarioPage() {
                 icon={Filter}
                 label="Filtrar"
                 description="Buscar visitas"
-                onClick={() => alert('Funcionalidad: Abrir filtros de horario')}
+                onClick={() => {
+                  // Focus on search input
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar visitas"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Descargar agenda"
-                onClick={() => alert('Funcionalidad: Exportar horario del runner')}
+                onClick={() => {
+                  alert('Funcionalidad: Exportar agenda en formato PDF/calendario');
+                }}
               />
 
               <QuickActionButton

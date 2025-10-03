@@ -422,21 +422,49 @@ export default function TicketDetailsPage() {
                     icon={Edit}
                     label="Editar Ticket"
                     description="Modificar información"
-                    onClick={() => alert('Funcionalidad: Editar ticket')}
+                    onClick={() => {
+                      const editUrl = window.location.pathname.replace(
+                        '/support/tickets/',
+                        '/support/tickets/edit/'
+                      );
+                      router.push(editUrl);
+                    }}
                   />
 
                   <QuickActionButton
                     icon={Paperclip}
                     label="Adjuntar Archivo"
                     description="Agregar documentos"
-                    onClick={() => alert('Funcionalidad: Adjuntar archivo al ticket')}
+                    onClick={() => {
+                      // Trigger file input
+                      const fileInput = document.createElement('input');
+                      fileInput.type = 'file';
+                      fileInput.multiple = true;
+                      fileInput.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+                      fileInput.onchange = e => {
+                        const files = (e.target as HTMLInputElement).files;
+                        if (files && files.length > 0) {
+                          alert(`Funcionalidad: Subir ${files.length} archivo(s) al ticket`);
+                        }
+                      };
+                      fileInput.click();
+                    }}
                   />
 
                   <QuickActionButton
                     icon={Trash2}
                     label="Eliminar Ticket"
                     description="Borrar permanentemente"
-                    onClick={() => alert('Funcionalidad: Eliminar ticket (con confirmación)')}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          '¿Está seguro de que desea eliminar este ticket? Esta acción no se puede deshacer.'
+                        )
+                      ) {
+                        alert('Funcionalidad: Ticket eliminado exitosamente');
+                        router.push('/support/tickets');
+                      }
+                    }}
                   />
                 </div>
               </CardContent>

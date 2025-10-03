@@ -301,28 +301,36 @@ export default function ProviderDashboard() {
                     icon={Calendar}
                     label="Nuevo Trabajo"
                     description="Agendar servicio"
-                    onClick={() => alert('Funcionalidad: Crear nuevo trabajo')}
+                    onClick={() =>
+                      alert('Funcionalidad: Abrir calendario para agendar nuevo trabajo')
+                    }
                   />
 
                   <QuickActionButton
                     icon={Users}
                     label="Gestionar Clientes"
                     description="Base de clientes"
-                    onClick={() => alert('Funcionalidad: Ver lista de clientes')}
+                    onClick={() => alert('Funcionalidad: Abrir lista completa de clientes')}
                   />
 
                   <QuickActionButton
                     icon={DollarSign}
                     label="Cotizaciones"
                     description="Generar presupuesto"
-                    onClick={() => alert('Funcionalidad: Crear nueva cotización')}
+                    onClick={() => {
+                      // Abrir modal de cotización o navegar a página
+                      alert('Funcionalidad: Abrir herramienta de creación de cotizaciones');
+                    }}
                   />
 
                   <QuickActionButton
                     icon={MessageSquare}
                     label="Soporte"
                     description="Centro de ayuda"
-                    onClick={() => alert('Funcionalidad: Contactar soporte técnico')}
+                    onClick={() => {
+                      // Abrir chat de soporte o página de soporte
+                      alert('Funcionalidad: Iniciar conversación con soporte técnico');
+                    }}
                   />
                 </div>
               </CardContent>

@@ -177,21 +177,32 @@ export default function CalificacionesPage() {
                 icon={Plus}
                 label="Nueva Calificación"
                 description="Calificar servicio"
-                onClick={() => alert('Funcionalidad: Crear nueva calificación')}
+                onClick={() => alert('Funcionalidad: Abrir formulario para calificar un servicio')}
               />
 
               <QuickActionButton
                 icon={Filter}
                 label="Filtrar"
                 description="Buscar calificaciones"
-                onClick={() => alert('Funcionalidad: Abrir filtros de calificaciones')}
+                onClick={() => {
+                  // Focus on search input
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar calificaciones"]'
+                  ) as HTMLInputElement;
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Descargar reviews"
-                onClick={() => alert('Funcionalidad: Exportar calificaciones del tenant')}
+                onClick={() => {
+                  alert('Funcionalidad: Exportar calificaciones en formato CSV');
+                }}
               />
 
               <QuickActionButton
