@@ -247,12 +247,32 @@ export default function TareasPage() {
                 label="Exportar"
                 description="Descargar tareas"
                 onClick={() => {
-                  if (tasks.length === 0) {
+                  // Mock data for export
+                  const mockTasks = [
+                    {
+                      id: '1',
+                      title: 'Visita inicial',
+                      description: 'Primera visita al cliente',
+                      status: 'Completada',
+                      priority: 'Alta',
+                      dueDate: '2024-01-15',
+                    },
+                    {
+                      id: '2',
+                      title: 'Mantenimiento',
+                      description: 'Mantenimiento preventivo',
+                      status: 'Pendiente',
+                      priority: 'Media',
+                      dueDate: '2024-01-20',
+                    },
+                  ];
+
+                  if (mockTasks.length === 0) {
                     alert('No hay tareas para exportar');
                     return;
                   }
 
-                  const csvData = tasks.map(task => ({
+                  const csvData = mockTasks.map(task => ({
                     ID: task.id,
                     Título: task.title,
                     Descripción: task.description,
