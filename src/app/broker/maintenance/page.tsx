@@ -1,91 +1,84 @@
 'use client';
 
-// Build fix - force update
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { Database,
-  Download,
-  Upload,
-  RefreshCw,
+import {
+  Wrench,
+  Building,
+  Users,
   Calendar,
   Clock,
-  HardDrive,
-  Shield,
   CheckCircle,
-  XCircle,
   AlertTriangle,
-  Settings,
-  Trash2, Eye, Play,
-  Pause,
-  Archive,
-  Cloud,
-  Server,
-  Plus, Info
+  Search,
+  Filter,
+  Eye,
+  Phone,
+  MessageSquare,
+  DollarSign,
 } from 'lucide-react';
 import Link from 'next/link';
-import { User } from '@/types';
+import { User as UserType } from '@/types';
 
-
-interface Backup {
+interface MaintenanceRequest {
   id: string;
-  name: string;
-  type: 'full' | 'incremental' | 'database' | 'files';
-  size: number;
-  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
-  createdAt: string;
-  completedAt?: string;
-  location: 'local' | 'cloud' | 'both';
+  propertyTitle: string;
+  propertyAddress: string;
+  ownerName: string;
+  tenantName: string;
+  issueType: 'plumbing' | 'electrical' | 'structural' | 'painting' | 'cleaning' | 'other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
   description: string;
-  retentionDays: number;
-  encrypted: boolean;
-  checksum?: string;
+  estimatedCost?: number;
+  actualCost?: number;
+  providerName?: string;
+  createdAt: string;
+  scheduledDate?: string;
+  completedDate?: string;
+  urgency: 'routine' | 'urgent' | 'emergency';
 }
 
-interface BackupStats {
-  totalBackups: number;
-  totalSize: number;
-  lastBackup: string;
-  nextBackup: string;
-  successRate: number;
-  storageUsed: number;
-  storageAvailable: number;
-}
-
-interface BackupSchedule {
-  id: string;
-  name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  time: string;
-  type: 'full' | 'incremental';
-  enabled: boolean;
-  nextRun: string;
-  retention: number;
+interface MaintenanceStats {
+  totalRequests: number;
+  pendingRequests: number;
+  inProgressRequests: number;
+  completedRequests: number;
+  urgentRequests: number;
+  totalEstimatedCost: number;
+  totalActualCost: number;
+  averageResolutionTime: number;
 }
 
 export default function BrokerMaintenancePage() {
-
-  const [user, setUser] = useState<User | null>(null);
-
-  const [backups, setBackups] = useState<Backup[]>([]);
-
-  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
-
-  const [stats, setStats] = useState<BackupStats>({
-    totalBackups: 0,
-    totalSize: 0,
-    lastBackup: '',
-    nextBackup: '',
-    successRate: 0,
-    storageUsed: 0,
-    storageAvailable: 0,
+  const [user, setUser] = useState<UserType | null>(null);
+  const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [stats, setStats] = useState<MaintenanceStats>({
+    totalRequests: 0,
+    pendingRequests: 0,
+    inProgressRequests: 0,
+    completedRequests: 0,
+    urgentRequests: 0,
+    totalEstimatedCost: 0,
+    totalActualCost: 0,
+    averageResolutionTime: 0,
   });
-
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -96,258 +89,176 @@ export default function BrokerMaintenancePage() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
-    const loadBackupData = async () => {
+    const loadMaintenanceData = async () => {
       try {
-        // Mock backups data
-        const mockBackups: Backup[] = [
+        // Mock maintenance data
+        const mockRequests: MaintenanceRequest[] = [
           {
             id: '1',
-            name: 'Backup Completo Diario',
-            type: 'full',
-            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            location: 'both',
-            description: 'Backup completo del sistema incluyendo base de datos y archivos',
-            retentionDays: 30,
-            encrypted: true,
-            checksum: 'a1b2c3d4e5f6...',
+            propertyTitle: 'Departamento Moderno Providencia',
+            propertyAddress: 'Av. Providencia 123, Providencia',
+            ownerName: 'María González',
+            tenantName: 'Carlos Ramírez',
+            issueType: 'plumbing',
+            priority: 'high',
+            status: 'in_progress',
+            description: 'Fuga en grifería de cocina, agua saliendo constantemente',
+            estimatedCost: 45000,
+            providerName: 'Plomería Rápida',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(),
+            urgency: 'urgent',
           },
           {
             id: '2',
-            name: 'Backup Incremental',
-            type: 'incremental',
-            size: 150 * 1024 * 1024, // 150 MB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
-            location: 'cloud',
-            description: 'Backup incremental con cambios desde el último backup completo',
-            retentionDays: 7,
-            encrypted: true,
+            propertyTitle: 'Casa Familiar Las Condes',
+            propertyAddress: 'Calle Las Condes 456, Las Condes',
+            ownerName: 'Roberto Díaz',
+            tenantName: 'Ana López',
+            issueType: 'electrical',
+            priority: 'medium',
+            status: 'pending',
+            description: 'Cambiar tomacorrientes en sala de estar, están sueltos',
+            estimatedCost: 35000,
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+            urgency: 'routine',
           },
           {
             id: '3',
-            name: 'Backup Base de Datos',
-            type: 'database',
-            size: 450 * 1024 * 1024, // 450 MB
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            location: 'local',
-            description: 'Backup exclusivo de la base de datos PostgreSQL',
-            retentionDays: 14,
-            encrypted: true,
+            propertyTitle: 'Oficina Corporativa Centro',
+            propertyAddress: 'Av. Libertador 789, Santiago Centro',
+            ownerName: 'Empresa ABC Ltda',
+            tenantName: 'Tech Solutions SpA',
+            issueType: 'cleaning',
+            priority: 'low',
+            status: 'completed',
+            description: 'Limpieza general de oficinas y baños',
+            estimatedCost: 80000,
+            actualCost: 75000,
+            providerName: 'Limpieza Express',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+            completedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
+            urgency: 'routine',
           },
           {
             id: '4',
-            name: 'Backup Archivos',
-            type: 'files',
-            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
-            status: 'failed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-            location: 'cloud',
-            description: 'Backup de archivos de usuario y medios',
-            retentionDays: 21,
-            encrypted: true,
-          },
-          {
-            id: '5',
-            name: 'Backup Programado',
-            type: 'full',
-            size: 0,
-            status: 'scheduled',
-            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            location: 'both',
-            description: 'Backup completo programado automáticamente',
-            retentionDays: 30,
-            encrypted: true,
+            propertyTitle: 'Local Comercial Ñuñoa',
+            propertyAddress: 'Irarrázaval 321, Ñuñoa',
+            ownerName: 'Patricia Soto',
+            tenantName: 'Café Paradiso',
+            issueType: 'structural',
+            priority: 'urgent',
+            status: 'assigned',
+            description: 'Puerta de entrada no cierra correctamente, bisagra dañada',
+            estimatedCost: 65000,
+            providerName: 'Cerrajería 24/7',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+            scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+            urgency: 'urgent',
           },
         ];
 
-        // Mock schedules
-        const mockSchedules: BackupSchedule[] = [
-          {
-            id: '1',
-            name: 'Backup Diario Completo',
-            frequency: 'daily',
-            time: '02:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            retention: 30,
-          },
-          {
-            id: '2',
-            name: 'Backup Incremental Horario',
-            frequency: 'daily',
-            time: '06:00, 12:00, 18:00',
-            type: 'incremental',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
-            retention: 7,
-          },
-          {
-            id: '3',
-            name: 'Backup Semanal',
-            frequency: 'weekly',
-            time: 'domingo 03:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-            retention: 90,
-          },
-        ];
-
-        setBackups(mockBackups);
-        setSchedules(mockSchedules);
+        setMaintenanceRequests(mockRequests);
 
         // Calculate stats
-        const completedBackups = mockBackups.filter(b => b.status === 'completed');
-        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
-        const successRate = completedBackups.length > 0 ? 
-          (completedBackups.length / mockBackups.length) * 100 : 0;
+        const pendingRequests = mockRequests.filter(r => r.status === 'pending').length;
+        const inProgressRequests = mockRequests.filter(
+          r => r.status === 'in_progress' || r.status === 'assigned'
+        ).length;
+        const completedRequests = mockRequests.filter(r => r.status === 'completed').length;
+        const urgentRequests = mockRequests.filter(r => r.urgency === 'urgent').length;
+        const totalEstimatedCost = mockRequests.reduce((sum, r) => sum + (r.estimatedCost || 0), 0);
+        const totalActualCost = mockRequests
+          .filter(r => r.status === 'completed')
+          .reduce((sum, r) => sum + (r.actualCost || 0), 0);
 
-        const backupStats: BackupStats = {
-          totalBackups: mockBackups.length,
-          totalSize,
-          lastBackup: completedBackups.length > 0 ?
-            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
-          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
-          successRate,
-          storageUsed: totalSize,
-          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        const maintenanceStats: MaintenanceStats = {
+          totalRequests: mockRequests.length,
+          pendingRequests,
+          inProgressRequests,
+          completedRequests,
+          urgentRequests,
+          totalEstimatedCost,
+          totalActualCost,
+          averageResolutionTime: 3.2, // días promedio
         };
 
-        setStats(backupStats);
+        setStats(maintenanceStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading maintenance data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadBackupData();
+    loadMaintenanceData();
   }, []);
 
-  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
-    const newBackup: Backup = {
-      id: Date.now().toString(),
-      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
-      type,
-      size: 0,
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-      location: 'both',
-      description: `Backup ${type} iniciado manualmente`,
-      retentionDays: 30,
-      encrypted: true,
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+      assigned: { label: 'Asignado', color: 'bg-blue-100 text-blue-800' },
+      in_progress: { label: 'En Progreso', color: 'bg-purple-100 text-purple-800' },
+      completed: { label: 'Completado', color: 'bg-green-100 text-green-800' },
+      cancelled: { label: 'Cancelado', color: 'bg-gray-100 text-gray-800' },
     };
 
-    setBackups(prev => [newBackup, ...prev]);
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+
+    return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  const deleteBackup = async (backupId: string) => {
-    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      low: { label: 'Baja', color: 'bg-gray-100 text-gray-800' },
+      medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800' },
+      high: { label: 'Alta', color: 'bg-orange-100 text-orange-800' },
+      urgent: { label: 'Urgente', color: 'bg-red-100 text-red-800' },
+    };
+
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
+
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
+      </Badge>
+    );
   };
 
-  const toggleSchedule = async (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { ...schedule, enabled: !schedule.enabled }
-        : schedule,
-    ));
+  const getIssueTypeBadge = (type: string) => {
+    const typeConfig = {
+      plumbing: { label: 'Plomería', color: 'bg-blue-100 text-blue-800' },
+      electrical: { label: 'Eléctrica', color: 'bg-yellow-100 text-yellow-800' },
+      structural: { label: 'Estructural', color: 'bg-red-100 text-red-800' },
+      painting: { label: 'Pintura', color: 'bg-green-100 text-green-800' },
+      cleaning: { label: 'Limpieza', color: 'bg-purple-100 text-purple-800' },
+      other: { label: 'Otro', color: 'bg-gray-100 text-gray-800' },
+    };
+
+    const config = typeConfig[type as keyof typeof typeConfig] || typeConfig.other;
+
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
+      </Badge>
+    );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'in_progress':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'failed':
-        return 'text-red-600 bg-red-50 border-red-200';
-      case 'scheduled':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
-      default:
-        return <Badge>Desconocido</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'in_progress':
-        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      case 'scheduled':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'full':
-        return <Archive className="w-5 h-5" />;
-      case 'incremental':
-        return <RefreshCw className="w-5 h-5" />;
-      case 'database':
-        return <Database className="w-5 h-5" />;
-      case 'files':
-        return <HardDrive className="w-5 h-5" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
-  };
-
-  const getLocationIcon = (location: string) => {
-    switch (location) {
-      case 'local':
-        return <Server className="w-4 h-4" />;
-      case 'cloud':
-        return <Cloud className="w-4 h-4" />;
-      case 'both':
-        return <div className="flex gap-1">
-          <Server className="w-4 h-4" />
-          <Cloud className="w-4 h-4" />
-        </div>;
-      default:
-        return <Server className="w-4 h-4" />;
-    }
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) {
-return '0 B';
-}
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   const formatDateTime = (dateString: string) => {
@@ -364,296 +275,301 @@ return '0 B';
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
-    }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
-    }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    }
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    return date.toLocaleDateString('es-CL');
+    if (diffDays === 0) {
+      return 'Hoy';
+    } else if (diffDays === 1) {
+      return 'Ayer';
+    } else if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    } else {
+      return date.toLocaleDateString('es-CL');
+    }
   };
+
+  const handleViewRequest = (requestId: string) => {
+    console.log('View maintenance request:', requestId);
+  };
+
+  const handleContactProvider = (requestId: string) => {
+    console.log('Contact provider for request:', requestId);
+  };
+
+  const handleScheduleVisit = (requestId: string) => {
+    console.log('Schedule visit for request:', requestId);
+  };
+
+  const filteredRequests = maintenanceRequests.filter(request => {
+    const matchesSearch =
+      request.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
+    const matchesPriority = filterPriority === 'all' || request.priority === filterPriority;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando sistema de backups...</p>
+          <p className="text-gray-600">Cargando solicitudes de mantenimiento...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Mantenimiento" subtitle="Cargando información...">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header with actions */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Mantenimiento</h1>
-                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => createBackup('full')}>
-                    <Play className="w-4 h-4 mr-2" />
-                    Backup Completo
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Backup Incremental
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configuración
-                  </Button>
-                </div>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Archive className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <HardDrive className="w-6 h-6 text-green-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
-                      </div>
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Backup List */}
-                <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Historial de Backups</CardTitle>
-                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {backups.map((backup) => (
-                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
-                                    {getTypeIcon(backup.type)}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
-                                      {getStatusBadge(backup.status)}
-                                      {backup.encrypted && (
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                    <Shield className="w-3 h-3 mr-1" />
-                                    Encriptado
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <HardDrive className="w-3 h-3" />
-                                  <span>{formatBytes(backup.size)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {getLocationIcon(backup.location)}
-                                  <span className="capitalize">{backup.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{formatRelativeTime(backup.createdAt)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{backup.retentionDays} días retención</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            {backup.status === 'completed' && (
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => deleteBackup(backup.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Backup Schedules */}
+    <UnifiedDashboardLayout
+      title="Mantenimiento"
+      subtitle="Gestiona solicitudes de mantenimiento de tus propiedades"
+    >
+      <div className="container mx-auto px-4 py-6">
+        {/* Header with actions */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Programación</CardTitle>
-                <CardDescription>Backups automáticos programados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {schedules.map((schedule) => (
-                    <Card key={schedule.id} className="border">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-sm">{schedule.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.frequency === 'daily' ? 'Diario' : 
-                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={schedule.enabled ? 'default' : 'outline'}
-                            onClick={() => toggleSchedule(schedule.id)}
-                          >
-                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                        
-                        <div className="space-y-2 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>Horario:</span>
-                            <span>{schedule.time}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Próxima ejecución:</span>
-                            <span>{formatRelativeTime(schedule.nextRun)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Retención:</span>
-                            <span>{schedule.retention} días</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                <Button className="w-full mt-4" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Programación
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Storage Info */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Almacenamiento</CardTitle>
-                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Usado</span>
-                      <span>{formatBytes(stats.storageUsed)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Disponible:</span>
-                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>{formatBytes(stats.storageAvailable)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <h1 className="text-2xl font-bold text-gray-900">Solicitudes de Mantenimiento</h1>
+            <p className="text-gray-600">Coordina reparaciones y mantenimientos de propiedades</p>
           </div>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Solicitudes</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalRequests}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Wrench className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingRequests}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Urgentes</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.urgentRequests}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Costo Estimado Total</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {formatCurrency(stats.totalEstimatedCost)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar solicitudes por propiedad, propietario o descripción..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="assigned">Asignados</SelectItem>
+                <SelectItem value="in_progress">En Progreso</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Prioridad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="low">Baja</SelectItem>
+                <SelectItem value="medium">Media</SelectItem>
+                <SelectItem value="high">Alta</SelectItem>
+                <SelectItem value="urgent">Urgente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Maintenance Requests List */}
+        <div className="space-y-4">
+          {filteredRequests.map(request => (
+            <Card
+              key={request.id}
+              className={`border-l-4 ${request.urgency === 'emergency' ? 'border-l-red-500' : request.urgency === 'urgent' ? 'border-l-orange-500' : 'border-l-blue-500'}`}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div
+                      className={`p-3 rounded-lg ${request.urgency === 'emergency' ? 'bg-red-50' : request.urgency === 'urgent' ? 'bg-orange-50' : 'bg-blue-50'}`}
+                    >
+                      <Wrench className="w-6 h-6 text-current" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-900">{request.propertyTitle}</h3>
+                        {getStatusBadge(request.status)}
+                        {getPriorityBadge(request.priority)}
+                        {getIssueTypeBadge(request.issueType)}
+                        {request.urgency === 'emergency' && (
+                          <Badge className="bg-red-100 text-red-800">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            EMERGENCIA
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                            <Building className="w-4 h-4" />
+                            <span className="font-medium">{request.propertyAddress}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                            <Users className="w-4 h-4" />
+                            <span>Propietario: {request.ownerName}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                            <Users className="w-4 h-4" />
+                            <span>Inquilino: {request.tenantName}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="w-4 h-4" />
+                            <span>Reportado: {formatRelativeTime(request.createdAt)}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">{request.description}</p>
+                          {request.estimatedCost && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span>Costo estimado: {formatCurrency(request.estimatedCost)}</span>
+                            </div>
+                          )}
+                          {request.actualCost && (
+                            <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Costo real: {formatCurrency(request.actualCost)}</span>
+                            </div>
+                          )}
+                          {request.providerName && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                              <Wrench className="w-4 h-4" />
+                              <span>Proveedor: {request.providerName}</span>
+                            </div>
+                          )}
+                          {request.scheduledDate && (
+                            <div className="flex items-center gap-2 text-sm text-blue-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>Programado: {formatDateTime(request.scheduledDate)}</span>
+                            </div>
+                          )}
+                          {request.completedDate && (
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Completado: {formatDateTime(request.completedDate)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewRequest(request.id)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    {request.providerName && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleContactProvider(request.id)}
+                      >
+                        <Phone className="w-4 h-4" />
+                      </Button>
+                    )}
+                    {request.status === 'pending' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleScheduleVisit(request.id)}
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {filteredRequests.length === 0 && (
+          <div className="text-center py-12">
+            <Wrench className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No hay solicitudes de mantenimiento
+            </h3>
+            <p className="text-gray-600">
+              Las solicitudes aparecerán aquí cuando se reporten problemas
+            </p>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );
 }
-
-
