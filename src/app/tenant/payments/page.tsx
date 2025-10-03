@@ -4,7 +4,17 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
   RefreshCw,
   AlertTriangle,
   Building,
@@ -16,17 +26,49 @@ import {
   Filter,
   Download,
   BarChart3,
-  Settings
+  Settings,
+  Search,
+  Eye,
+  CreditCard,
+  Calendar,
+  TrendingUp,
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
 
-export default function PagosPage() {
+interface Payment {
+  id: string;
+  propertyTitle: string;
+  amount: number;
+  dueDate: string;
+  paymentDate?: string;
+  status: 'paid' | 'pending' | 'overdue';
+  method?: string;
+  invoiceNumber?: string;
+}
+
+interface PaymentStats {
+  totalPaid: number;
+  totalPending: number;
+  totalOverdue: number;
+  thisMonthPaid: number;
+}
+
+export default function TenantPaymentsPage() {
+  const { user, loading: userLoading } = useUserState();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [stats, setStats] = useState<PaymentStats>({
+    totalPaid: 0,
+    totalPending: 0,
+    totalOverdue: 0,
+    thisMonthPaid: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    // Cargar datos de la página
     loadPageData();
   }, []);
 
@@ -34,33 +76,169 @@ export default function PagosPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/tenant/payments`);
-      // const result = await response.json();
-      // setData(result);
-      
+
+      // Mock data for tenant payments
+      const mockPayments: Payment[] = [
+        {
+          id: '1',
+          propertyTitle: 'Departamento Las Condes',
+          amount: 450000,
+          dueDate: '2024-01-15',
+          paymentDate: '2024-01-14',
+          status: 'paid',
+          method: 'transferencia',
+          invoiceNumber: 'INV-001',
+        },
+        {
+          id: '2',
+          propertyTitle: 'Casa Vitacura',
+          amount: 650000,
+          dueDate: '2024-02-15',
+          paymentDate: '2024-02-10',
+          status: 'paid',
+          method: 'transferencia',
+          invoiceNumber: 'INV-002',
+        },
+        {
+          id: '3',
+          propertyTitle: 'Departamento Providencia',
+          amount: 380000,
+          dueDate: '2024-03-15',
+          status: 'pending',
+          method: 'transferencia',
+        },
+        {
+          id: '4',
+          propertyTitle: 'Loft Santiago Centro',
+          amount: 420000,
+          dueDate: '2024-01-10',
+          status: 'overdue',
+          method: 'transferencia',
+        },
+      ];
+
+      const mockStats: PaymentStats = {
+        totalPaid: 1100000,
+        totalPending: 380000,
+        totalOverdue: 420000,
+        thisMonthPaid: 650000,
+      };
+
+      setPayments(mockPayments);
+      setStats(mockStats);
+
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
     } catch (error) {
-      logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los datos");
+      logger.error('Error loading tenant payments:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los pagos');
     } finally {
       setLoading(false);
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      paid: { label: 'Pagado', color: 'bg-green-100 text-green-800' },
+      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+      overdue: { label: 'Vencido', color: 'bg-red-100 text-red-800' },
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const filteredPayments = payments.filter(payment => {
+    const matchesSearch = payment.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleViewPayment = (paymentId: string) => {
+    // Navigate to payment detail view
+    window.open(`/tenant/payments/${paymentId}`, '_blank');
+  };
+
+  const handleDownloadReceipt = (paymentId: string) => {
+    // Download payment receipt
+    const payment = payments.find(p => p.id === paymentId);
+    if (payment && payment.invoiceNumber) {
+      alert(
+        `Descargando recibo: ${payment.invoiceNumber}\nMonto: ${formatCurrency(payment.amount)}`
+      );
+    }
+  };
+
+  const handleMakePayment = (paymentId: string) => {
+    // Navigate to payment process
+    const payment = payments.find(p => p.id === paymentId);
+    if (payment) {
+      window.open(`/tenant/payments/${paymentId}/pay`, '_blank');
+    }
+  };
+
+  const handleExportPayments = () => {
+    // Export payments data to CSV
+    if (filteredPayments.length === 0) {
+      alert('No hay pagos para exportar');
+      return;
+    }
+
+    const csvData = filteredPayments.map(payment => ({
+      ID: payment.id,
+      Propiedad: payment.propertyTitle,
+      Monto: formatCurrency(payment.amount),
+      'Fecha Vencimiento': formatDate(payment.dueDate),
+      'Fecha Pago': payment.paymentDate ? formatDate(payment.paymentDate) : 'Pendiente',
+      Estado:
+        payment.status === 'paid'
+          ? 'Pagado'
+          : payment.status === 'pending'
+            ? 'Pendiente'
+            : 'Vencido',
+      Método: payment.method || 'N/A',
+      Factura: payment.invoiceNumber || 'N/A',
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      Object.keys(csvData[0]!).join(',') +
+      '\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `pagos_inquilino_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
-      <DashboardLayout 
-        title="Pagos"
-        subtitle="Cargando información..."
-      >
+      <DashboardLayout title="Mis Pagos" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando...</p>
+            <p className="mt-4 text-gray-600">Cargando pagos...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -69,10 +247,7 @@ export default function PagosPage() {
 
   if (error) {
     return (
-      <DashboardLayout 
-        title="Pagos"
-        subtitle="Error al cargar la página"
-      >
+      <DashboardLayout title="Mis Pagos" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -91,129 +266,216 @@ export default function PagosPage() {
   }
 
   return (
-    <DashboardLayout 
-      title="Pagos"
-      subtitle="Gestiona y visualiza la información de pagos"
+    <DashboardLayout
+      title="Mis Pagos"
+      subtitle="Gestiona y visualiza tu historial de pagos de arriendo"
     >
       <div className="space-y-6">
-        {/* Header con estadísticas */}
+        {/* Estadísticas de Pagos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(stats.totalPaid)}
+              </div>
+              <p className="text-xs text-muted-foreground">Histórico completo</p>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
-            </CardContent>
-          </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+              <div className="text-2xl font-bold text-yellow-600">
+                {formatCurrency(stats.totalPending)}
+              </div>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">
-                +0% desde el mes pasado
-              </p>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(stats.totalOverdue)}
+              </div>
+              <p className="text-xs text-muted-foreground">Pagos atrasados</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Este Mes</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(stats.thisMonthPaid)}
+              </div>
+              <p className="text-xs text-muted-foreground">Pagos realizados</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Filtros y Búsqueda */}
         <Card>
           <CardHeader>
-            <CardTitle>Pagos</CardTitle>
-            <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con pagos.
-            </CardDescription>
+            <CardTitle>Filtros y Búsqueda</CardTitle>
+            <CardDescription>Filtra tus pagos por diferentes criterios</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div>
+                <Input
+                  placeholder="Buscar por propiedad..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="paid">Pagados</SelectItem>
+                  <SelectItem value="pending">Pendientes</SelectItem>
+                  <SelectItem value="overdue">Vencidos</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" onClick={loadPageData}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualizar
+              </Button>
+
+              <Button variant="outline" onClick={handleExportPayments}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Acciones rápidas */}
+        {/* Lista de Pagos */}
         <Card>
           <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
-              Accede rápidamente a las funciones más utilizadas
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Historial de Pagos ({filteredPayments.length})</CardTitle>
+                <CardDescription>Lista completa de tus pagos de arriendo</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Plus className="w-6 h-6 mb-2" />
-                <span>Agregar Nuevo</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
-                <span>Filtrar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
-                <span>Exportar</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <BarChart3 className="w-6 h-6 mb-2" />
-                <span>Reportes</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Settings className="w-6 h-6 mb-2" />
-                <span>Configuración</span>
-              </Button>
-              
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
-                <span>Actualizar</span>
-              </Button>
-            </div>
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-4">
+                {filteredPayments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No se encontraron pagos
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      No hay pagos que coincidan con los criterios de búsqueda.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('all');
+                      }}
+                    >
+                      Limpiar Filtros
+                    </Button>
+                  </div>
+                ) : (
+                  filteredPayments.map(payment => (
+                    <div
+                      key={payment.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Building className="w-5 h-5 text-gray-600" />
+                            <h3 className="font-bold text-lg text-gray-800">
+                              {payment.propertyTitle}
+                            </h3>
+                            {getStatusBadge(payment.status)}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <DollarSign className="w-4 h-4" />
+                              <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>Vence: {formatDate(payment.dueDate)}</span>
+                            </div>
+
+                            {payment.paymentDate && (
+                              <div className="flex items-center gap-2 text-sm text-green-600">
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Pagado: {formatDate(payment.paymentDate)}</span>
+                              </div>
+                            )}
+
+                            {payment.invoiceNumber && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <CreditCard className="w-4 h-4" />
+                                <span>Factura: {payment.invoiceNumber}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewPayment(payment.id)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Ver Detalles
+                          </Button>
+
+                          {payment.status === 'pending' && (
+                            <Button size="sm" onClick={() => handleMakePayment(payment.id)}>
+                              <CreditCard className="w-4 h-4 mr-1" />
+                              Pagar Ahora
+                            </Button>
+                          )}
+
+                          {payment.status === 'paid' && payment.invoiceNumber && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownloadReceipt(payment.id)}
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Descargar Recibo
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
