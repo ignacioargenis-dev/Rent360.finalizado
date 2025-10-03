@@ -1,0 +1,58 @@
+[
+  {
+    "email": "admin@rent360.cl",
+    "name": "Administrador",
+    "role": "ADMIN",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXQxbzAwMDB2ZWhibmRkdHI1YXAiLCJlbWFpbCI6ImFkbWluQHJlbnQzNjAuY2wiLCJyb2xlIjoiQURNSU4iLCJuYW1lIjoiQWRtaW5pc3RyYWRvciIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzU5NTM0MjU1fQ.PAyC5azEHJOh1T6Jr_neTeB8XCJSxU1CwxX3eaYW2I4",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXQxbzAwMDB2ZWhibmRkdHI1YXAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ.pMYEwEZ_6FoTs_1zS8RyWWkTQK2N--bgjPiTq7fuQLs"
+  },
+  {
+    "email": "propietario@rent360.cl",
+    "name": "Propietario",
+    "role": "OWNER",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXQ2ejAwMDF2ZWhieDNpMnM0Z3YiLCJlbWFpbCI6InByb3BpZXRhcmlvQHJlbnQzNjAuY2wiLCJyb2xlIjoiT1dORVIiLCJuYW1lIjoiUHJvcGlldGFyaW8iLCJpYXQiOjE3NTk1MzA2NTUsImV4cCI6MTc1OTUzNDI1NX0.YvF4FU92eC-bYFZqRoNUCkqTVRQKACuempDZXof6E7A",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXQ2ejAwMDF2ZWhieDNpMnM0Z3YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ.WliFvwNdc0IUJi4qo7m4tjTL_9KvJkHFsR-BEWv2eu0"
+  },
+  {
+    "email": "inquilino@rent360.cl",
+    "name": "Inquilino",
+    "role": "TENANT",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRhazAwMDJ2ZWhiZThydGJvZ3ciLCJlbWFpbCI6ImlucXVpbGlub0ByZW50MzYwLmNsIiwicm9sZSI6IlRFTkFOVCIsIm5hbWUiOiJJbnF1aWxpbm8iLCJpYXQiOjE3NTk1MzA2NTUsImV4cCI6MTc1OTUzNDI1NX0.Fyckq5YXDd_A3SavDFyzBRXatdPIMzzoBZWQkgdIdcI",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRhazAwMDJ2ZWhiZThydGJvZ3ciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ.KrG572Ud8Bz4CRKmiNvL4vUYKk8SqpX6yPHO0Wvutmw"
+  },
+  {
+    "email": "corredor@rent360.cl",
+    "name": "Corredor",
+    "role": "BROKER",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRlMzAwMDN2ZWhidzNnMHd3N3ciLCJlbWFpbCI6ImNvcnJlZG9yQHJlbnQzNjAuY2wiLCJyb2xlIjoiQlJPS0VSIiwibmFtZSI6IkNvcnJlZG9yIiwiaWF0IjoxNzU5NTMwNjU1LCJleHAiOjE3NTk1MzQyNTV9.mZRlW3BqRzg_X6mw1db9XF_mwSGlAUjBsRyjeanY9cE",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRlMzAwMDN2ZWhidzNnMHd3N3ciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ.f7uEy9s7-aZfV7zDGn3ZSEvP880CRour6Co4WxEgxzQ"
+  },
+  {
+    "email": "runner@rent360.cl",
+    "name": "Runner",
+    "role": "RUNNER",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRobTAwMDR2ZWhicDIxOW5mMmIiLCJlbWFpbCI6InJ1bm5lckByZW50MzYwLmNsIiwicm9sZSI6IlJVTk5FUiIsIm5hbWUiOiJSdW5uZXIiLCJpYXQiOjE3NTk1MzA2NTUsImV4cCI6MTc1OTUzNDI1NX0.Y4oLSoUce8gqLBVjvCOMeuC8rV_FrLmHrCFFLxRCYs0",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRobTAwMDR2ZWhicDIxOW5mMmIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ._ZE2GDyEMWHstlZrbTxx9bVjHx6HxsbcNs9KmRHqoSk"
+  },
+  {
+    "email": "soporte@rent360.cl",
+    "name": "Soporte",
+    "role": "SUPPORT",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRsNjAwMDV2ZWhiaWY2MG1wc2wiLCJlbWFpbCI6InNvcG9ydGVAcmVudDM2MC5jbCIsInJvbGUiOiJTVVBQT1JUIiwibmFtZSI6IlNvcG9ydGUiLCJpYXQiOjE3NTk1MzA2NTUsImV4cCI6MTc1OTUzNDI1NX0.ExeFPDJoUoGnMKKwYyz8ODTIrfQ9ntI9V-4NHmUDTlw",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRsNjAwMDV2ZWhiaWY2MG1wc2wiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NSwiZXhwIjoxNzYwMTM1NDU1fQ.VsGc3DexLtCVGF4y_TgBj8qLUchJpoN8u02G2pDmgfc"
+  },
+  {
+    "email": "proveedor@rent360.cl",
+    "name": "Proveedor de Servicios",
+    "role": "PROVIDER",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRwMTAwMDZ2ZWhibm8yMmRjbnMiLCJlbWFpbCI6InByb3ZlZWRvckByZW50MzYwLmNsIiwicm9sZSI6IlBST1ZJREVSIiwibmFtZSI6IlByb3ZlZWRvciBkZSBTZXJ2aWNpb3MiLCJpYXQiOjE3NTk1MzA2NTYsImV4cCI6MTc1OTUzNDI1Nn0.1-dP1w5mqM27wetsGcpk7TUelMXWlct9OxkV-pA50zM",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRwMTAwMDZ2ZWhibm8yMmRjbnMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NiwiZXhwIjoxNzYwMTM1NDU2fQ.QrtUfHDZOu-PhVWEohw6A1e4ZocQK9yBvSZikJ1vW3M"
+  },
+  {
+    "email": "mantenimiento@rent360.cl",
+    "name": "Servicio de Mantenimiento",
+    "role": "MAINTENANCE",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRzaTAwMDd2ZWhicXNmMGwyMXYiLCJlbWFpbCI6Im1hbnRlbmltaWVudG9AcmVudDM2MC5jbCIsInJvbGUiOiJNQUlOVEVOQU5DRSIsIm5hbWUiOiJTZXJ2aWNpbyBkZSBNYW50ZW5pbWllbnRvIiwiaWF0IjoxNzU5NTMwNjU2LCJleHAiOjE3NTk1MzQyNTZ9._dKLHcSyFa6HbdVm75ddESzUqWmLFWPNm16tI-mE0MU",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZzZ0dXRzaTAwMDd2ZWhicXNmMGwyMXYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1OTUzMDY1NiwiZXhwIjoxNzYwMTM1NDU2fQ.jV78vFyRmsDa0kUJrnXz5X9-eoso_yHiMWD_tUJXLmY"
+  }
+]

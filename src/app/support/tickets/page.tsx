@@ -471,6 +471,13 @@ export default function TicketsPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo Ticket
               </Button>
+              <Button
+                onClick={() => (window.location.href = '/support/tickets/board')}
+                variant="outline"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Vista Tablero
+              </Button>
               <Button onClick={loadTickets} variant="outline">
                 <Search className="w-4 h-4 mr-2" />
                 Buscar

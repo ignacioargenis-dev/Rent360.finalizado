@@ -75,12 +75,12 @@ export default function AdminTicketsPage() {
 
   const handleNewTicket = () => {
     // Navigate to new ticket creation page
-    window.open('/admin/tickets/new', '_blank');
+    router.push('/admin/tickets/new');
   };
 
   const handleFilterTickets = () => {
-    // Open advanced filter modal
-    alert('Funcionalidad: Abrir filtros avanzados para tickets de soporte');
+    // Open advanced filter modal - for now redirect to a filter page
+    router.push('/admin/tickets?filter=advanced');
   };
 
   const handleExportTickets = () => {
@@ -127,7 +127,22 @@ export default function AdminTicketsPage() {
     if (ticket) {
       const assignedTo = prompt(`Asignar ticket "${ticket.title}" a:`, 'soporte@rent360.cl');
       if (assignedTo) {
-        alert(`Ticket asignado exitosamente a: ${assignedTo}`);
+        // Simulate API call
+        setTimeout(() => {
+          setTickets(prevTickets =>
+            prevTickets.map(t =>
+              t.id === ticketId
+                ? {
+                    ...t,
+                    assignedTo,
+                    status: 'in_progress' as const,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : t
+            )
+          );
+          alert(`Ticket asignado exitosamente a: ${assignedTo}`);
+        }, 500);
       }
     }
   };
@@ -137,7 +152,17 @@ export default function AdminTicketsPage() {
     const ticket = tickets.find(t => t.id === ticketId);
     if (ticket) {
       if (confirm(`¿Está seguro de cerrar el ticket "${ticket.title}"?`)) {
-        alert('Ticket cerrado exitosamente');
+        // Simulate API call
+        setTimeout(() => {
+          setTickets(prevTickets =>
+            prevTickets.map(t =>
+              t.id === ticketId
+                ? { ...t, status: 'closed' as const, updatedAt: new Date().toISOString() }
+                : t
+            )
+          );
+          alert('Ticket cerrado exitosamente');
+        }, 500);
       }
     }
   };
@@ -148,7 +173,23 @@ export default function AdminTicketsPage() {
     if (ticket) {
       const resolution = prompt(`Ingrese la resolución para el ticket "${ticket.title}":`);
       if (resolution) {
-        alert('Ticket resuelto exitosamente');
+        // Simulate API call
+        setTimeout(() => {
+          setTickets(prevTickets =>
+            prevTickets.map(t =>
+              t.id === ticketId
+                ? {
+                    ...t,
+                    status: 'resolved' as const,
+                    updatedAt: new Date().toISOString(),
+                    resolutionTime: 2.5,
+                    satisfaction: 4,
+                  }
+                : t
+            )
+          );
+          alert('Ticket resuelto exitosamente');
+        }, 500);
       }
     }
   };
@@ -684,28 +725,28 @@ export default function AdminTicketsPage() {
                     icon={Headphones}
                     label="Centro de Llamadas"
                     description="Atención telefónica"
-                    onClick={() => alert('Funcionalidad: Abrir centro de llamadas')}
+                    onClick={() => window.open('/admin/support/calls', '_blank')}
                   />
 
                   <QuickActionButton
                     icon={Mail}
                     label="Bandeja Email"
                     description="Gestión de correos"
-                    onClick={() => alert('Funcionalidad: Abrir bandeja de email')}
+                    onClick={() => window.open('/admin/support/emails', '_blank')}
                   />
 
                   <QuickActionButton
                     icon={MessageSquare}
                     label="Chat en Vivo"
                     description="Atención en tiempo real"
-                    onClick={() => alert('Funcionalidad: Iniciar chat en vivo')}
+                    onClick={() => window.open('/admin/support/chat', '_blank')}
                   />
 
                   <QuickActionButton
                     icon={BarChart3}
                     label="Reportes"
                     description="Estadísticas avanzadas"
-                    onClick={() => router.push('/admin/reports/tickets')}
+                    onClick={() => router.push('/admin/reports')}
                   />
 
                   <QuickActionButton
@@ -720,6 +761,27 @@ export default function AdminTicketsPage() {
                     label="Automatizaciones"
                     description="Flujos automáticos"
                     onClick={() => router.push('/admin/settings')}
+                  />
+
+                  <QuickActionButton
+                    icon={Ticket}
+                    label="Vista Tablero"
+                    description="Vista Kanban"
+                    onClick={() => router.push('/admin/tickets/board')}
+                  />
+
+                  <QuickActionButton
+                    icon={TrendingUp}
+                    label="Analytics"
+                    description="Métricas detalladas"
+                    onClick={() => router.push('/admin/analytics')}
+                  />
+
+                  <QuickActionButton
+                    icon={Clock}
+                    label="Tiempo Real"
+                    description="Monitoreo live"
+                    onClick={() => router.push('/admin/monitoring')}
                   />
                 </div>
               </CardContent>
