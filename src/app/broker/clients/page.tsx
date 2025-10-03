@@ -250,19 +250,29 @@ export default function BrokerClientsPage() {
   };
 
   const handleNewClient = () => {
-    console.log('Navigate to new client form');
+    // Navigate to new client creation page
+    window.open('/broker/clients/new', '_blank');
   };
 
   const handleViewClient = (clientId: string) => {
-    console.log('View client:', clientId);
+    // Navigate to client detail view
+    window.open(`/broker/clients/${clientId}`, '_blank');
   };
 
   const handleEditClient = (clientId: string) => {
-    console.log('Edit client:', clientId);
+    // Navigate to client edit page
+    window.open(`/broker/clients/${clientId}/edit`, '_blank');
   };
 
   const handleContactClient = (clientId: string) => {
-    console.log('Contact client:', clientId);
+    // Open contact modal or redirect to messaging
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      alert(
+        `Iniciando contacto con ${client.name}\nEmail: ${client.email}\nTeléfono: ${client.phone}`
+      );
+      window.open(`/broker/messages/new?to=${client.email}`, '_blank');
+    }
   };
 
   const filteredClients = clients.filter(client => {

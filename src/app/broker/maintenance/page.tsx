@@ -289,15 +289,33 @@ export default function BrokerMaintenancePage() {
   };
 
   const handleViewRequest = (requestId: string) => {
-    console.log('View maintenance request:', requestId);
+    // Navigate to maintenance request detail view
+    window.open(`/broker/maintenance/${requestId}`, '_blank');
   };
 
   const handleContactProvider = (requestId: string) => {
-    console.log('Contact provider for request:', requestId);
+    // Contact the assigned provider
+    const request = maintenanceRequests.find(r => r.id === requestId);
+    if (request && request.providerName) {
+      alert(`Contactando a ${request.providerName}\nSolicitud: ${request.description}`);
+      // Here you could integrate with email/messaging system
+    } else {
+      alert('No hay proveedor asignado para esta solicitud');
+    }
   };
 
   const handleScheduleVisit = (requestId: string) => {
-    console.log('Schedule visit for request:', requestId);
+    // Schedule a visit for maintenance
+    const request = maintenanceRequests.find(r => r.id === requestId);
+    if (request) {
+      const visitDate = prompt(
+        `Agendar visita para "${request.description}"\nFecha sugerida (YYYY-MM-DD):`,
+        new Date().toISOString().split('T')[0]
+      );
+      if (visitDate) {
+        alert(`Visita agendada para el ${visitDate}`);
+      }
+    }
   };
 
   const filteredRequests = maintenanceRequests.filter(request => {

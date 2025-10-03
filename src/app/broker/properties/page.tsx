@@ -257,15 +257,18 @@ export default function BrokerPropertiesPage() {
   };
 
   const handleViewProperty = (propertyId: string) => {
-    console.log('View property:', propertyId);
+    // Navigate to property detail view
+    window.open(`/broker/properties/${propertyId}`, '_blank');
   };
 
   const handleEditProperty = (propertyId: string) => {
-    console.log('Edit property:', propertyId);
+    // Navigate to property edit page
+    window.open(`/broker/properties/${propertyId}/edit`, '_blank');
   };
 
   const handleAddProperty = () => {
-    console.log('Navigate to add property form');
+    // Navigate to new property creation page
+    window.open('/broker/properties/new', '_blank');
   };
 
   const filteredProperties = properties.filter(property => {
