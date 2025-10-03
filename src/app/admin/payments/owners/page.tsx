@@ -5,6 +5,14 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   DollarSign,
@@ -69,6 +77,8 @@ export default function AdminPaymentsOwnersPage() {
     successRate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -249,6 +259,42 @@ export default function AdminPaymentsOwnersPage() {
     }).format(amount);
   };
 
+  const handleNewPayment = () => {
+    // TODO: Implement navigation to new payment form
+    console.log('Navigate to new payment form');
+  };
+
+  const handleFilterPayments = () => {
+    // TODO: Implement payment filtering
+    console.log('Open payment filters');
+  };
+
+  const handleExportPayments = () => {
+    // TODO: Implement payment export
+    console.log('Export payments data');
+  };
+
+  const handleViewPayment = (paymentId: string) => {
+    // TODO: Implement payment view
+    console.log('View payment:', paymentId);
+  };
+
+  const handleEditPayment = (paymentId: string) => {
+    // TODO: Implement payment edit
+    console.log('Edit payment:', paymentId);
+  };
+
+  const filteredPayouts = payouts.filter(payout => {
+    const matchesSearch =
+      payout.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payout.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payout.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter = filterStatus === 'all' || payout.status === filterStatus;
+
+    return matchesSearch && matchesFilter;
+  });
+
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('es-CL', {
       year: 'numeric',
@@ -317,18 +363,47 @@ export default function AdminPaymentsOwnersPage() {
             <p className="text-gray-600">Administra pagos mensuales y comisiones a propietarios</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm">
+            <Button size="sm" onClick={handleNewPayment}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Pago
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleFilterPayments}>
               <Filter className="w-4 h-4 mr-2" />
               Filtrar
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleExportPayments}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar pagos por propietario, descripción o dirección..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="processing">Procesando</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+                <SelectItem value="failed">Fallidos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -405,7 +480,7 @@ export default function AdminPaymentsOwnersPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {payouts.map(payout => (
+                  {filteredPayouts.map(payout => (
                     <Card key={payout.id} className={`border-l-4 ${getStatusColor(payout.status)}`}>
                       <CardContent className="pt-4">
                         <div className="flex items-start justify-between">
@@ -472,14 +547,28 @@ export default function AdminPaymentsOwnersPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewPayment(payout.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditPayment(payout.id)}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
                             {payout.status === 'completed' && payout.invoiceNumber && (
-                              <Button size="sm" variant="outline">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  console.log('Download invoice:', payout.invoiceNumber)
+                                }
+                              >
                                 <Download className="w-4 h-4" />
                               </Button>
                             )}

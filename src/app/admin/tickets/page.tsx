@@ -70,6 +70,41 @@ export default function AdminTicketsPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const handleNewTicket = () => {
+    // TODO: Implement navigation to new ticket form
+    console.log('Navigate to new ticket form');
+  };
+
+  const handleFilterTickets = () => {
+    // TODO: Implement ticket filtering
+    console.log('Open ticket filters');
+  };
+
+  const handleExportTickets = () => {
+    // TODO: Implement ticket export
+    console.log('Export tickets data');
+  };
+
+  const handleViewTicket = (ticketId: string) => {
+    // TODO: Implement ticket view
+    console.log('View ticket:', ticketId);
+  };
+
+  const handleAssignTicket = (ticketId: string) => {
+    // TODO: Implement ticket assignment
+    console.log('Assign ticket:', ticketId);
+  };
+
+  const handleCloseTicket = (ticketId: string) => {
+    // TODO: Implement ticket closing
+    console.log('Close ticket:', ticketId);
+  };
+
+  const handleResolveTicket = (ticketId: string) => {
+    // TODO: Implement ticket resolution
+    console.log('Resolve ticket:', ticketId);
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -356,17 +391,17 @@ export default function AdminTicketsPage() {
             <p className="text-gray-600">Gestiona y administra todos los tickets de soporte</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm">
+            <Button size="sm" onClick={handleNewTicket}>
               <Ticket className="w-4 h-4 mr-2" />
               Nuevo Ticket
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleFilterTickets}>
               <Filter className="w-4 h-4 mr-2" />
               Filtrar
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleExportTickets}>
               <BarChart3 className="w-4 h-4 mr-2" />
-              Reportes
+              Exportar
             </Button>
           </div>
         </div>
@@ -483,17 +518,39 @@ export default function AdminTicketsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewTicket(ticket.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
                             {ticket.status === 'open' && (
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => handleAssignTicket(ticket.id)}
+                              >
                                 <UserCheck className="w-4 h-4 mr-1" />
                                 Asignar
                               </Button>
                             )}
+                            {ticket.status === 'resolved' && (
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleCloseTicket(ticket.id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Cerrar
+                              </Button>
+                            )}
                             {ticket.status === 'in_progress' && (
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleResolveTicket(ticket.id)}
+                              >
                                 <CheckCircle className="w-4 h-4 mr-1" />
                                 Resolver
                               </Button>

@@ -5,6 +5,14 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   FileText,
@@ -69,6 +77,8 @@ export default function AdminContractsPage() {
     averageContractDuration: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -279,6 +289,48 @@ export default function AdminContractsPage() {
     return date.toLocaleDateString('es-CL');
   };
 
+  const handleNewContract = () => {
+    // TODO: Implement navigation to new contract form
+    console.log('Navigate to new contract form');
+  };
+
+  const handleFilterContracts = () => {
+    // TODO: Implement contract filtering
+    console.log('Open contract filters');
+  };
+
+  const handleExportContracts = () => {
+    // TODO: Implement contract export
+    console.log('Export contracts data');
+  };
+
+  const handleViewContract = (contractId: string) => {
+    // TODO: Implement contract view
+    console.log('View contract:', contractId);
+  };
+
+  const handleEditContract = (contractId: string) => {
+    // TODO: Implement contract edit
+    console.log('Edit contract:', contractId);
+  };
+
+  const handleDownloadContract = (contractId: string) => {
+    // TODO: Implement contract download
+    console.log('Download contract:', contractId);
+  };
+
+  const filteredContracts = contracts.filter(contract => {
+    const matchesSearch =
+      contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter = filterStatus === 'all' || contract.status === filterStatus;
+
+    return matchesSearch && matchesFilter;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -303,18 +355,48 @@ export default function AdminContractsPage() {
             <p className="text-gray-600">Administra y monitorea todos los contratos de arriendo</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm">
+            <Button size="sm" onClick={handleNewContract}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Contrato
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleFilterContracts}>
               <Filter className="w-4 h-4 mr-2" />
               Filtrar
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={handleExportContracts}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar contratos por título, inquilino, propietario o dirección..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="expired">Vencidos</SelectItem>
+                <SelectItem value="terminated">Terminados</SelectItem>
+                <SelectItem value="draft">Borradores</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -389,7 +471,7 @@ export default function AdminContractsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {contracts.map(contract => (
+                  {filteredContracts.map(contract => (
                     <Card
                       key={contract.id}
                       className={`border-l-4 ${getStatusColor(contract.status)}`}
@@ -456,14 +538,26 @@ export default function AdminContractsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewContract(contract.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditContract(contract.id)}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
                             {contract.status === 'active' && (
-                              <Button size="sm" variant="outline">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownloadContract(contract.id)}
+                              >
                                 <Download className="w-4 h-4" />
                               </Button>
                             )}
