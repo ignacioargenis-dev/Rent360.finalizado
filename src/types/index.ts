@@ -1,11 +1,32 @@
-export type UserRole = 'tenant' | 'owner' | 'broker' | 'runner' | 'support' | 'admin';
+export type UserRole =
+  | 'tenant'
+  | 'owner'
+  | 'broker'
+  | 'runner'
+  | 'support'
+  | 'admin'
+  | 'provider'
+  | 'maintenance';
 
 // Status and type enums
 export type PropertyStatus = 'AVAILABLE' | 'RENTED' | 'PENDING' | 'MAINTENANCE' | 'INACTIVE';
 export type PropertyType = 'HOUSE' | 'APARTMENT' | 'OFFICE' | 'WAREHOUSE' | 'LAND' | 'COMMERCIAL';
-export type ContractStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'TERMINATED' | 'CANCELLED';
+export type ContractStatus =
+  | 'DRAFT'
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'EXPIRED'
+  | 'TERMINATED'
+  | 'CANCELLED';
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIAL' | 'OVERDUE';
-export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CHECK' | 'OTHER' | 'KHIPU';
+export type PaymentMethod =
+  | 'CASH'
+  | 'BANK_TRANSFER'
+  | 'CREDIT_CARD'
+  | 'DEBIT_CARD'
+  | 'CHECK'
+  | 'OTHER'
+  | 'KHIPU';
 
 export interface User {
   id: string;
@@ -149,7 +170,15 @@ export interface TicketComment {
 export interface Document {
   id: string;
   userId: string;
-  type: 'id_front' | 'id_back' | 'criminal_record' | 'social_security' | 'property_deed' | 'residence_proof' | 'contract' | 'other';
+  type:
+    | 'id_front'
+    | 'id_back'
+    | 'criminal_record'
+    | 'social_security'
+    | 'property_deed'
+    | 'residence_proof'
+    | 'contract'
+    | 'other';
   name: string;
   fileName: string;
   filePath: string;
@@ -165,7 +194,15 @@ export interface Document {
 export interface Notification {
   id: string;
   userId: string;
-  type: 'PAYMENT_REMINDER' | 'CONTRACT_EXPIRING' | 'NEW_MESSAGE' | 'CONTRACT_SIGNED' | 'PAYMENT_RECEIVED' | 'MAINTENANCE_REQUEST' | 'RATING_RECEIVED' | 'SYSTEM_UPDATE';
+  type:
+    | 'PAYMENT_REMINDER'
+    | 'CONTRACT_EXPIRING'
+    | 'NEW_MESSAGE'
+    | 'CONTRACT_SIGNED'
+    | 'PAYMENT_RECEIVED'
+    | 'MAINTENANCE_REQUEST'
+    | 'RATING_RECEIVED'
+    | 'SYSTEM_UPDATE';
   title: string;
   message: string;
   isRead: boolean;
