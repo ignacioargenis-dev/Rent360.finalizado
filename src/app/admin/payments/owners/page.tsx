@@ -684,23 +684,40 @@ export default function AdminPaymentsOwnersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <QuickActionButton
                     icon={Plus}
-                    label="Procesar Pago"
-                    description="Nuevo pago"
-                    onClick={() => alert('Funcionalidad: Procesar nuevo pago')}
+                    label="Nuevo Pago"
+                    description="Procesar pago"
+                    onClick={() => alert('Funcionalidad: Abrir formulario de nuevo pago')}
                   />
 
                   <QuickActionButton
                     icon={Search}
                     label="Buscar"
                     description="Buscar pagos"
-                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                    onClick={() => {
+                      // Focus on search input
+                      const searchInput = document.querySelector(
+                        'input[placeholder*="Buscar pagos"]'
+                      ) as HTMLInputElement;
+                      if (searchInput) {
+                        searchInput.focus();
+                        searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
                   />
 
                   <QuickActionButton
                     icon={AlertTriangle}
-                    label="Vencidos"
-                    description="Pagos pendientes"
-                    onClick={() => alert('Funcionalidad: Ver pagos vencidos')}
+                    label="Pendientes"
+                    description="Pagos por procesar"
+                    onClick={() => {
+                      // Filter by pending status
+                      const pendingFilter = document.querySelector('select') as HTMLSelectElement;
+                      if (pendingFilter) {
+                        pendingFilter.value = 'pending';
+                        pendingFilter.dispatchEvent(new Event('change', { bubbles: true }));
+                      }
+                      alert('Mostrando pagos pendientes de procesamiento');
+                    }}
                   />
 
                   <QuickActionButton

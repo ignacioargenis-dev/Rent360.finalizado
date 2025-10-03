@@ -338,12 +338,12 @@ export default function AdminContractsPage() {
 
   const handleViewContract = (contractId: string) => {
     // Navigate to contract detail view
-    alert(`Funcionalidad: Ver detalles del contrato ${contractId}`);
+    router.push(`/admin/contracts/${contractId}`);
   };
 
   const handleEditContract = (contractId: string) => {
     // Navigate to contract edit page
-    alert(`Funcionalidad: Editar contrato ${contractId}`);
+    router.push(`/admin/contracts/${contractId}/edit`);
   };
 
   const handleDownloadContract = (contractId: string) => {
@@ -676,21 +676,34 @@ export default function AdminContractsPage() {
                     icon={Plus}
                     label="Nuevo Contrato"
                     description="Crear contrato"
-                    onClick={() => alert('Funcionalidad: Crear nuevo contrato')}
+                    onClick={() => router.push('/admin/contracts/new')}
                   />
 
                   <QuickActionButton
                     icon={Search}
                     label="Buscar"
                     description="Buscar contratos"
-                    onClick={() => alert('Funcionalidad: Abrir búsqueda avanzada')}
+                    onClick={() => {
+                      // Focus on search input
+                      const searchInput = document.querySelector(
+                        'input[placeholder*="Buscar contratos"]'
+                      ) as HTMLInputElement;
+                      if (searchInput) {
+                        searchInput.focus();
+                        searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
                   />
 
                   <QuickActionButton
                     icon={AlertTriangle}
                     label="Vencimientos"
                     description="Próximos vencimientos"
-                    onClick={() => alert('Funcionalidad: Ver contratos próximos a vencer')}
+                    onClick={() => {
+                      // Filter by expired contracts
+                      setFilterStatus('expired');
+                      alert('Mostrando contratos vencidos o próximos a vencer');
+                    }}
                   />
 
                   <QuickActionButton

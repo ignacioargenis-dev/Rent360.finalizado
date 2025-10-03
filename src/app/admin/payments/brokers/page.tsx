@@ -696,21 +696,38 @@ export default function AdminPaymentsBrokersPage() {
                     icon={Plus}
                     label="Nueva Comisión"
                     description="Procesar comisión"
-                    onClick={() => alert('Funcionalidad: Procesar nueva comisión')}
+                    onClick={() => alert('Funcionalidad: Abrir formulario de nueva comisión')}
                   />
 
                   <QuickActionButton
                     icon={Search}
                     label="Buscar"
-                    description="Buscar pagos"
-                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                    description="Buscar comisiones"
+                    onClick={() => {
+                      // Focus on search input
+                      const searchInput = document.querySelector(
+                        'input[placeholder*="Buscar comisiones"]'
+                      ) as HTMLInputElement;
+                      if (searchInput) {
+                        searchInput.focus();
+                        searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
                   />
 
                   <QuickActionButton
                     icon={AlertTriangle}
-                    label="Vencidas"
-                    description="Comisiones pendientes"
-                    onClick={() => alert('Funcionalidad: Ver comisiones vencidas')}
+                    label="Pendientes"
+                    description="Comisiones por procesar"
+                    onClick={() => {
+                      // Filter by pending status
+                      const pendingFilter = document.querySelector('select') as HTMLSelectElement;
+                      if (pendingFilter) {
+                        pendingFilter.value = 'pending';
+                        pendingFilter.dispatchEvent(new Event('change', { bubbles: true }));
+                      }
+                      alert('Mostrando comisiones pendientes de procesamiento');
+                    }}
                   />
 
                   <QuickActionButton

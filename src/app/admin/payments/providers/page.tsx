@@ -722,21 +722,40 @@ export default function AdminPaymentsProvidersPage() {
                     icon={Plus}
                     label="Nuevo Proveedor"
                     description="Registrar proveedor"
-                    onClick={() => alert('Funcionalidad: Registrar nuevo proveedor')}
+                    onClick={() =>
+                      alert('Funcionalidad: Abrir formulario de registro de proveedor')
+                    }
                   />
 
                   <QuickActionButton
                     icon={Search}
                     label="Buscar"
                     description="Buscar pagos"
-                    onClick={() => alert('Funcionalidad: Abrir búsqueda de pagos')}
+                    onClick={() => {
+                      // Focus on search input
+                      const searchInput = document.querySelector(
+                        'input[placeholder*="Buscar pagos"]'
+                      ) as HTMLInputElement;
+                      if (searchInput) {
+                        searchInput.focus();
+                        searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
                   />
 
                   <QuickActionButton
                     icon={AlertTriangle}
-                    label="Vencidos"
-                    description="Pagos pendientes"
-                    onClick={() => alert('Funcionalidad: Ver pagos vencidos')}
+                    label="Pendientes"
+                    description="Pagos por aprobar"
+                    onClick={() => {
+                      // Filter by pending status
+                      const pendingFilter = document.querySelector('select') as HTMLSelectElement;
+                      if (pendingFilter) {
+                        pendingFilter.value = 'pending';
+                        pendingFilter.dispatchEvent(new Event('change', { bubbles: true }));
+                      }
+                      alert('Mostrando pagos pendientes de aprobación');
+                    }}
                   />
 
                   <QuickActionButton
