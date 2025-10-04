@@ -144,15 +144,37 @@ export default function ContractDetailPage() {
   };
 
   const handleViewProperty = () => {
-    alert('Funcionalidad: Ver detalles de la propiedad');
+    // Since we don't have a propertyId, we'll search for properties by address
+    if (contract?.propertyAddress) {
+      const searchQuery = encodeURIComponent(contract.propertyAddress);
+      router.push(`/admin/properties?search=${searchQuery}`);
+    } else {
+      alert('No se encontró información de la dirección de la propiedad');
+    }
   };
 
   const handleContactTenant = () => {
-    alert('Funcionalidad: Contactar al inquilino');
+    if (contract?.tenantEmail) {
+      const subject = encodeURIComponent(`Contrato: ${contract?.title}`);
+      const body = encodeURIComponent(
+        `Hola ${contract?.tenantName},\n\nTe contacto respecto al contrato: ${contract?.title}\n\nAtentamente,\nEquipo Rent360`
+      );
+      window.open(`mailto:${contract.tenantEmail}?subject=${subject}&body=${body}`);
+    } else {
+      alert('No se encontró información de contacto del inquilino');
+    }
   };
 
   const handleContactOwner = () => {
-    alert('Funcionalidad: Contactar al propietario');
+    if (contract?.ownerEmail) {
+      const subject = encodeURIComponent(`Contrato: ${contract?.title}`);
+      const body = encodeURIComponent(
+        `Hola ${contract?.ownerName},\n\nTe contacto respecto al contrato: ${contract?.title}\n\nAtentamente,\nEquipo Rent360`
+      );
+      window.open(`mailto:${contract.ownerEmail}?subject=${subject}&body=${body}`);
+    } else {
+      alert('No se encontró información de contacto del propietario');
+    }
   };
 
   if (loading) {

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   ArrowLeft,
   Send,
@@ -21,6 +22,10 @@ import {
   Edit,
   RefreshCw,
   Trash2,
+  UserCheck,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Ticket as TicketType, TicketComment } from '@/types';
@@ -30,7 +35,7 @@ interface TicketDetailsResponse {
   comments: TicketComment[];
 }
 
-export default function TicketDetailsPage() {
+export default function AdminTicketDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
@@ -117,6 +122,45 @@ export default function TicketDetailsPage() {
     }
   };
 
+  const handleAssignTicket = () => {
+    const assignedTo = prompt('Asignar ticket a:', 'soporte@rent360.cl');
+    if (assignedTo) {
+      alert(`Ticket asignado a: ${assignedTo}`);
+      fetchTicketDetails(); // Refresh
+    }
+  };
+
+  const handleChangeStatus = async (newStatus: string) => {
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        alert(`Estado del ticket cambiado exitosamente a: ${newStatus}`);
+        fetchTicketDetails(); // Refresh
+      } else {
+        throw new Error('Error al cambiar el estado');
+      }
+    } catch (error) {
+      logger.error('Error updating ticket status:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al cambiar el estado del ticket. Por favor intenta nuevamente.');
+    }
+  };
+
+  const handleCloseTicket = () => {
+    if (confirm('¿Está seguro de cerrar este ticket?')) {
+      alert('Ticket cerrado exitosamente');
+      router.push('/admin/tickets');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
@@ -159,59 +203,62 @@ export default function TicketDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando detalles del ticket...</p>
+      <UnifiedDashboardLayout title="Detalles del Ticket" subtitle="Cargando...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Cargando detalles del ticket...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error && !ticket) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-red-600 mb-4">
-            <AlertCircle className="w-16 h-16 mx-auto" />
+      <UnifiedDashboardLayout title="Detalles del Ticket" subtitle="Error">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center max-w-md">
+            <div className="text-red-600 mb-4">
+              <AlertCircle className="w-16 h-16 mx-auto" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Link href="/admin/tickets">
+              <Button>Volver a Tickets</Button>
+            </Link>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/support/tickets">
-            <Button>Volver a Tickets</Button>
-          </Link>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/support/tickets">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Detalles del Ticket</h1>
-                <p className="text-gray-600">Seguimiento y gestión del ticket</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Actualizar
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <UnifiedDashboardLayout
+      title="Detalles del Ticket"
+      subtitle={`Ticket #${ticket?.ticketNumber || ticketId}`}
+    >
       <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/tickets">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Detalles del Ticket</h1>
+              <p className="text-gray-600">Gestión administrativa del ticket</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -371,61 +418,59 @@ export default function TicketDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Timeline Card */}
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Cronología</CardTitle>
+                <CardTitle className="text-lg">Acciones Rápidas</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm font-medium">Ticket creado</p>
-                    <p className="text-xs text-gray-500">
-                      {ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}
-                    </p>
-                  </div>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3">
+                  <QuickActionButton
+                    icon={UserCheck}
+                    label="Asignar Ticket"
+                    description="Cambiar asignación"
+                    onClick={handleAssignTicket}
+                  />
+
+                  <QuickActionButton
+                    icon={Clock}
+                    label="Cambiar Estado"
+                    description="Actualizar progreso"
+                    onClick={() => handleChangeStatus('in_progress')}
+                  />
+
+                  <QuickActionButton
+                    icon={CheckCircle}
+                    label="Marcar Resuelto"
+                    description="Completar ticket"
+                    onClick={() => handleChangeStatus('resolved')}
+                  />
+
+                  <QuickActionButton
+                    icon={XCircle}
+                    label="Cerrar Ticket"
+                    description="Finalizar ticket"
+                    onClick={handleCloseTicket}
+                  />
                 </div>
-
-                {ticket?.status === ('IN_PROGRESS' as any) && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-yellow-600 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium">En progreso</p>
-                      <p className="text-xs text-gray-500">El ticket está siendo atendido</p>
-                    </div>
-                  </div>
-                )}
-
-                {ticket?.status === ('RESOLVED' as any) && ticket?.resolvedAt && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium">Resuelto</p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(ticket?.resolvedAt.toISOString())}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
-            {/* Actions Card */}
+            {/* Admin Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Acciones</CardTitle>
+                <CardTitle className="text-lg">Acciones Administrativas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                   <QuickActionButton
                     icon={Edit}
                     label="Editar Ticket"
                     description="Modificar información"
                     onClick={() => {
                       const editUrl = window.location.pathname.replace(
-                        '/support/tickets/',
-                        '/support/tickets/edit/'
+                        '/admin/tickets/',
+                        '/admin/tickets/edit/'
                       );
                       router.push(editUrl);
                     }}
@@ -436,7 +481,6 @@ export default function TicketDetailsPage() {
                     label="Adjuntar Archivo"
                     description="Agregar documentos"
                     onClick={() => {
-                      // Trigger file input
                       const fileInput = document.createElement('input');
                       fileInput.type = 'file';
                       fileInput.multiple = true;
@@ -469,13 +513,13 @@ export default function TicketDetailsPage() {
                         )
                       ) {
                         try {
-                          const response = await fetch(`/api/tickets/${params.id}`, {
+                          const response = await fetch(`/api/tickets/${ticketId}`, {
                             method: 'DELETE',
                           });
 
                           if (response.ok) {
                             alert('Ticket eliminado exitosamente');
-                            router.push('/support/tickets');
+                            router.push('/admin/tickets');
                           } else {
                             throw new Error('Error al eliminar el ticket');
                           }
@@ -494,6 +538,6 @@ export default function TicketDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </UnifiedDashboardLayout>
   );
 }

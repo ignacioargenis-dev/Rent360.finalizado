@@ -197,12 +197,63 @@ export default function SupportPropertyDetailPage() {
     }
   };
 
-  const handleAssignIssue = (issueId: string) => {
-    alert(`Funcionalidad: Asignar problema ${issueId} a un técnico`);
+  const handleAssignIssue = async (issueId: string) => {
+    try {
+      const assignedTo = prompt('Asignar problema a:', 'tecnico@rent360.cl');
+      if (!assignedTo) {
+        return;
+      }
+
+      const response = await fetch(`/api/properties/${propertyId}/issues/${issueId}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assignedTo }),
+      });
+
+      if (response.ok) {
+        alert(`Problema asignado exitosamente a: ${assignedTo}`);
+        // Refresh property data
+        if (propertyId) {
+          await loadPropertyDetail(propertyId as string);
+        }
+      } else {
+        throw new Error('Error al asignar el problema');
+      }
+    } catch (error) {
+      logger.error('Error assigning issue:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al asignar el problema. Por favor intenta nuevamente.');
+    }
   };
 
-  const handleUpdateIssueStatus = (issueId: string, newStatus: string) => {
-    alert(`Funcionalidad: Cambiar estado del problema ${issueId} a ${newStatus}`);
+  const handleUpdateIssueStatus = async (issueId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/properties/${propertyId}/issues/${issueId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        alert(`Estado del problema actualizado exitosamente a: ${newStatus}`);
+        // Refresh property data
+        if (propertyId) {
+          await loadPropertyDetail(propertyId as string);
+        }
+      } else {
+        throw new Error('Error al actualizar el estado');
+      }
+    } catch (error) {
+      logger.error('Error updating issue status:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al actualizar el estado. Por favor intenta nuevamente.');
+    }
   };
 
   if (loading) {

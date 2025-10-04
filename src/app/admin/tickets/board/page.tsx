@@ -350,69 +350,71 @@ export default function TicketsBoardPage() {
         </div>
 
         {/* Kanban Board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 h-full overflow-x-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 min-h-[600px]">
           {columns.map(column => (
-            <div key={column.status} className="flex flex-col h-full">
+            <div key={column.status} className="flex flex-col">
               <Card className="flex flex-col h-full">
                 <CardHeader className={`pb-3 border-l-4 ${column.color}`}>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
                       {getStatusIcon(column.status)}
-                      {column.title}
+                      <span className="truncate">{column.title}</span>
                     </CardTitle>
-                    <Badge variant="secondary" className="text-sm">
+                    <Badge variant="secondary" className="text-xs shrink-0">
                       {getTicketsByStatus(column.status).length}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-y-auto p-4 pt-0">
-                  <div className="space-y-3">
+                <CardContent className="flex-1 overflow-y-auto p-3 pt-0 max-h-[500px]">
+                  <div className="space-y-2">
                     {getTicketsByStatus(column.status).map(ticket => (
                       <Card
                         key={ticket.id}
                         className={`cursor-pointer hover:shadow-md transition-shadow border-l-4 ${getStatusColor(ticket.status)}`}
                         onClick={() => handleViewTicket(ticket.id)}
                       >
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
+                        <CardContent className="p-3">
+                          <div className="space-y-2">
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-sm leading-tight">
+                              <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
                                 {ticket.title}
                               </h3>
-                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-2 break-words">
                                 {ticket.description}
                               </p>
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap gap-1">
                               {getPriorityBadge(ticket.priority)}
                               {getCategoryBadge(ticket.category)}
                             </div>
 
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                <span className="truncate max-w-[80px]">{ticket.clientName}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{formatRelativeTime(ticket.createdAt)}</span>
-                              </div>
-                            </div>
-
-                            {ticket.assignedTo && (
+                            <div className="space-y-1">
                               <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <UserCheck className="w-3 h-3" />
-                                <span className="truncate">{ticket.assignedTo}</span>
+                                <Users className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{ticket.clientName}</span>
                               </div>
-                            )}
-
-                            {ticket.resolutionTime && (
-                              <div className="flex items-center gap-1 text-xs text-green-600">
-                                <CheckCircle className="w-3 h-3" />
-                                <span>{ticket.resolutionTime}h resolución</span>
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Clock className="w-3 h-3 shrink-0" />
+                                <span className="truncate">
+                                  {formatRelativeTime(ticket.createdAt)}
+                                </span>
                               </div>
-                            )}
+                              {ticket.assignedTo && (
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <UserCheck className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{ticket.assignedTo}</span>
+                                </div>
+                              )}
+                              {ticket.resolutionTime && (
+                                <div className="flex items-center gap-1 text-xs text-green-600">
+                                  <CheckCircle className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">
+                                    {ticket.resolutionTime}h resolución
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

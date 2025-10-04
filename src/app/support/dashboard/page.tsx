@@ -772,7 +772,8 @@ export default function SupportDashboard() {
                     label="Centro de Llamadas"
                     description="Atención telefónica"
                     onClick={() => {
-                      alert('Funcionalidad: Abrir aplicación de VoIP para atención telefónica');
+                      // Open VoIP application or redirect to calls page
+                      window.open('/support/calls', '_blank');
                     }}
                   />
 
@@ -781,7 +782,8 @@ export default function SupportDashboard() {
                     label="Gestión de Emails"
                     description="Bandeja de correos"
                     onClick={() => {
-                      alert('Funcionalidad: Abrir cliente de email integrado para soporte');
+                      // Open email management page
+                      window.open('/support/emails', '_blank');
                     }}
                   />
 

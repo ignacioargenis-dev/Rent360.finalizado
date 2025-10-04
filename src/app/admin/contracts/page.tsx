@@ -82,6 +82,7 @@ export default function AdminContractsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -298,8 +299,8 @@ export default function AdminContractsPage() {
   };
 
   const handleFilterContracts = () => {
-    // Open advanced filter modal or toggle filter panel
-    alert('Funcionalidad: Abrir panel de filtros avanzados para contratos');
+    // Toggle advanced filters panel
+    setShowFilters(!showFilters);
   };
 
   const handleExportContracts = () => {
