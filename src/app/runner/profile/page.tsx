@@ -52,7 +52,7 @@ export default function PerfilPage() {
 
   const [loading, setLoading] = useState(true);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -61,18 +61,108 @@ export default function PerfilPage() {
     loadPageData();
   }, []);
 
+  const handleAddSkill = () => {
+    alert('Funcionalidad: Formulario para agregar nueva habilidad');
+  };
+
+  const handleExportCV = () => {
+    // Create and download CV/Profile as PDF
+    const cvContent = `
+      CURRICULUM VITAE - RUNNER
+      =========================
+
+      ${data?.personalInfo.name}
+      ${data?.personalInfo.email} | ${data?.personalInfo.phone}
+      ${data?.personalInfo.location}
+
+      EXPERIENCIA PROFESIONAL:
+      ${data?.experience.map((exp: any) => `- ${exp.position} en ${exp.company} (${exp.period})`).join('\n')}
+
+      HABILIDADES:
+      ${data?.skills.map((skill: any) => `- ${skill.name} (${skill.level})`).join('\n')}
+
+      CERTIFICACIONES:
+      ${data?.certifications.map((cert: any) => `- ${cert.name} (${cert.issuer})`).join('\n')}
+
+      EQUIPO:
+      ${data?.equipment.join('\n')}
+
+      ESTADÍSTICAS:
+      - Visitas Totales: ${data?.stats.totalVisits}
+      - Calificación Promedio: ${data?.stats.avgRating}/5.0
+      - Tasa de Completación: ${data?.stats.completionRate}%
+    `;
+
+    const blob = new Blob([cvContent], { type: 'text/plain;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `CV_${data?.personalInfo.name.replace(' ', '_')}.txt`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const loadPageData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/runner/profile`);
-      // const result = await response.json();
-      // setData(result);
+      // Mock runner profile data
+      const mockProfile = {
+        personalInfo: {
+          name: 'Carlos Mendoza',
+          email: 'carlos.mendoza@email.com',
+          phone: '+56 9 8765 4321',
+          avatar: '/avatars/carlos.jpg',
+          location: 'Santiago Centro',
+          joinDate: '2023-03-15',
+          status: 'active'
+        },
+        stats: {
+          totalVisits: 245,
+          completedTasks: 238,
+          avgRating: 4.7,
+          totalEarnings: 1250000,
+          responseTime: '2.3 horas',
+          completionRate: 97.1
+        },
+        skills: [
+          { name: 'Fotografía Profesional', level: 'Experto', verified: true },
+          { name: 'Inspección de Propiedades', level: 'Avanzado', verified: true },
+          { name: 'Entrega de Llaves', level: 'Intermedio', verified: true },
+          { name: 'Reportes Técnicos', level: 'Avanzado', verified: false },
+          { name: 'Atención al Cliente', level: 'Experto', verified: true }
+        ],
+        experience: [
+          {
+            company: 'Rent360',
+            position: 'Runner Senior',
+            period: 'Mar 2023 - Presente',
+            description: 'Responsable de visitas de propiedades, fotografías profesionales y coordinación con clientes.'
+          },
+          {
+            company: 'Propiedades Express',
+            position: 'Asistente de Ventas',
+            period: 'Ene 2022 - Feb 2023',
+            description: 'Apoyo en ventas de propiedades y coordinación de visitas.'
+          }
+        ],
+        certifications: [
+          { name: 'Certificación Fotografía Inmobiliaria', issuer: 'ChileProp', date: '2023-08-10', validUntil: '2025-08-10' },
+          { name: 'Curso Seguridad en Propiedades', issuer: 'SENCE', date: '2023-05-15', validUntil: '2024-05-15' }
+        ],
+        equipment: [
+          'Cámara DSLR Canon EOS R',
+          'Tripode profesional',
+          'Medidor láser',
+          'Kit de herramientas básicas',
+          'Dispositivo GPS'
+        ]
+      };
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setData(mockProfile);
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -166,29 +256,174 @@ export default function PerfilPage() {
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Información Personal */}
         <Card>
           <CardHeader>
-            <CardTitle>Perfil</CardTitle>
-            <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con perfil.
-            </CardDescription>
+            <CardTitle>Información Personal</CardTitle>
+            <CardDescription>Detalles básicos de tu perfil</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
-                funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+            <div className="flex items-start gap-6">
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                <Users className="w-12 h-12 text-gray-600" />
+              </div>
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Nombre</label>
+                    <p className="text-lg font-semibold">{data?.personalInfo.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Email</label>
+                    <p className="text-lg">{data?.personalInfo.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Teléfono</label>
+                    <p className="text-lg">{data?.personalInfo.phone}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Ubicación</label>
+                    <p className="text-lg">{data?.personalInfo.location}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Fecha de Ingreso</label>
+                    <p className="text-lg">{new Date(data?.personalInfo.joinDate).toLocaleDateString('es-CL')}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Estado</label>
+                    <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Visitas Totales</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data?.stats.totalVisits}</div>
+              <p className="text-xs text-muted-foreground">Completadas exitosamente</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Calificación</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data?.stats.avgRating}/5.0</div>
+              <p className="text-xs text-muted-foreground">Promedio de clientes</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tasa de Completación</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data?.stats.completionRate}%</div>
+              <p className="text-xs text-muted-foreground">De tareas asignadas</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Habilidades */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Habilidades</CardTitle>
+              <CardDescription>Competencias técnicas y certificaciones</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data?.skills.map((skill: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {skill.verified && <CheckCircle className="w-4 h-4 text-green-500" />}
+                      <span className="font-medium">{skill.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{skill.level}</Badge>
+                      {skill.verified && <Badge className="bg-green-100 text-green-800">Verificado</Badge>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Experiencia */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Experiencia Laboral</CardTitle>
+              <CardDescription>Historial profesional</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data?.experience.map((exp: any, index: number) => (
+                  <div key={index} className="border-l-2 border-blue-500 pl-4">
+                    <div className="font-semibold">{exp.position}</div>
+                    <div className="text-sm text-gray-600">{exp.company}</div>
+                    <div className="text-xs text-gray-500 mb-2">{exp.period}</div>
+                    <p className="text-sm text-gray-700">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Certificaciones */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Certificaciones</CardTitle>
+              <CardDescription>Credenciales y capacitaciones</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data?.certifications.map((cert: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{cert.name}</div>
+                      <div className="text-sm text-gray-600">Emitido por {cert.issuer}</div>
+                      <div className="text-xs text-gray-500">
+                        Válido hasta {new Date(cert.validUntil).toLocaleDateString('es-CL')}
+                      </div>
+                    </div>
+                    <Shield className="w-5 h-5 text-blue-500" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Equipo */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Equipo y Herramientas</CardTitle>
+              <CardDescription>Recursos disponibles para el trabajo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {data?.equipment.map((item: string, index: number) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="text-sm">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Acciones rápidas */}
         <Card>
@@ -202,21 +437,21 @@ export default function PerfilPage() {
                 icon={Plus}
                 label="Nueva Habilidad"
                 description="Agregar competencia"
-                onClick={() => alert('Funcionalidad: Agregar nueva habilidad')}
+                onClick={handleAddSkill}
               />
 
               <QuickActionButton
-                icon={Filter}
-                label="Filtrar"
-                description="Buscar habilidades"
-                onClick={() => alert('Funcionalidad: Abrir filtros de habilidades')}
+                icon={Edit}
+                label="Editar Perfil"
+                description="Actualizar información"
+                onClick={() => router.push('/runner/profile/edit')}
               />
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar CV"
                 description="Descargar perfil"
-                onClick={() => alert('Funcionalidad: Exportar CV del runner')}
+                onClick={handleExportCV}
               />
 
               <QuickActionButton
