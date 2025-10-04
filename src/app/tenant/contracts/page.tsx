@@ -22,7 +22,6 @@ import {
 import { Contract, Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
   Dialog,
@@ -38,7 +37,8 @@ interface ContractWithDetails extends Contract {
 }
 
 export default function TenantContractsPage() {
-  const { user, loading: userLoading } = useUserState();
+  const [user, setUser] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
 
   const [contracts, setContracts] = useState<ContractWithDetails[]>([]);
 
@@ -51,6 +51,39 @@ export default function TenantContractsPage() {
   const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
 
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+
+  // Load user data
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          // For development, set a mock user
+          setUser({
+            id: '1',
+            name: 'Juan Pérez',
+            email: 'juan.perez@example.com',
+            role: 'tenant'
+          });
+        }
+      } catch (error) {
+        // For development, set a mock user
+        setUser({
+          id: '1',
+          name: 'Juan Pérez',
+          email: 'juan.perez@example.com',
+          role: 'tenant'
+        });
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   useEffect(() => {
     // Mock data for demo

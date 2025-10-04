@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useRouter } from 'next/navigation';
 import {
   Home,
   DollarSign,
@@ -76,6 +77,7 @@ interface TenantStats {
 }
 
 export default function TenantDashboardPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [contracts, setContracts] = useState<RentalContract[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -249,7 +251,7 @@ export default function TenantDashboardPage() {
   };
 
   const handlePayRent = (paymentId: string) => {
-    window.open(`/tenant/payments/${paymentId}/pay`, '_blank');
+    router.push(`/tenant/payments/${paymentId}/pay`);
   };
 
   const handleContactLandlord = (contract: RentalContract) => {
@@ -261,30 +263,30 @@ export default function TenantDashboardPage() {
   };
 
   const handleNewMaintenanceRequest = () => {
-    window.open('/tenant/maintenance', '_blank');
+    router.push('/tenant/maintenance');
   };
 
   const handleViewMessages = () => {
-    window.open('/tenant/messages', '_blank');
+    router.push('/tenant/messages');
   };
 
   const handleViewContractDetails = (contractId: string) => {
-    window.open(`/tenant/contracts`, '_blank');
+    router.push(`/tenant/contracts`);
   };
 
   const handleViewMaintenanceDetails = (maintenanceId: string) => {
-    window.open('/tenant/maintenance', '_blank');
+    router.push('/tenant/maintenance');
   };
 
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Dashboard Inquilino" subtitle="Cargando...">
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Cargando información...</p>
-          </div>
         </div>
+      </div>
       </UnifiedDashboardLayout>
     );
   }
@@ -295,104 +297,104 @@ export default function TenantDashboardPage() {
       title="Panel de Control de Inquilino"
       subtitle="Gestiona tus contratos y pagos de arriendo"
     >
-      <div className="container mx-auto px-4 py-6">
-        {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
+            <div className="container mx-auto px-4 py-6">
+              {/* Header with actions */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div>
             <h1 className="text-2xl font-bold text-gray-900">Panel de Control</h1>
             <p className="text-gray-600">Bienvenido de vuelta, {user?.name || 'Inquilino'}</p>
-          </div>
-          <div className="flex gap-2">
+                </div>
+                <div className="flex gap-2">
             <Button onClick={handleNewMaintenanceRequest}>
               <Wrench className="w-4 h-4 mr-2" />
               Solicitar Mantenimiento
-            </Button>
+                  </Button>
             <Button variant="outline" onClick={handleViewMessages}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Mensajes ({stats.unreadMessages})
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Contratos Activos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeContracts}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Home className="w-6 h-6 text-blue-600" />
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
+        {/* Stats Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                  <p className="text-sm font-medium text-gray-600">Contratos Activos</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeContracts}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Home className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
                   <p className="text-sm font-medium text-gray-600">Pagos Pendientes</p>
                   <p className="text-2xl font-bold text-yellow-900">{stats.pendingPayments}</p>
                   {stats.overduePayments > 0 && (
                     <p className="text-xs text-red-600">{stats.overduePayments} vencidos</p>
                   )}
-                </div>
+                      </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <CreditCard className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
                   <p className="text-sm font-medium text-gray-600">Arriendo Mensual</p>
                   <p className="text-2xl font-bold text-green-900">
                     {formatCurrency(stats.totalMonthlyRent)}
                   </p>
-                </div>
+                      </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
                   <p className="text-sm font-medium text-gray-600">Solicitudes Mant.</p>
                   <p className="text-2xl font-bold text-purple-900">{stats.maintenanceRequests}</p>
-                </div>
+                      </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Wrench className="w-6 h-6 text-purple-600" />
-                </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Contracts and Payments */}
           <div className="lg:col-span-2 space-y-6">
             {/* Active Contracts */}
-            <Card>
-              <CardHeader>
+                  <Card>
+                    <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Home className="w-5 h-5 text-blue-600" />
                   Mis Contratos de Arriendo
                 </CardTitle>
                 <CardDescription>Propiedades que tienes alquiladas actualmente</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
                   {contracts.map(contract => (
                     <div key={contract.id} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -402,28 +404,28 @@ export default function TenantDashboardPage() {
                             <MapPin className="w-4 h-4" />
                             {contract.propertyAddress}
                           </p>
-                        </div>
+                                  </div>
                         <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                      </div>
+                              </div>
 
                       <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                         <div>
                           <span className="text-gray-600">Propietario:</span>
                           <p className="font-medium">{contract.landlordName}</p>
-                        </div>
+                                </div>
                         <div>
                           <span className="text-gray-600">Arriendo mensual:</span>
                           <p className="font-medium">{formatCurrency(contract.monthlyRent)}</p>
-                        </div>
+                                </div>
                         <div>
                           <span className="text-gray-600">Próximo pago:</span>
                           <p className="font-medium">{formatDate(contract.nextPaymentDate)}</p>
-                        </div>
+                                </div>
                         <div>
                           <span className="text-gray-600">Fin contrato:</span>
                           <p className="font-medium">{formatDate(contract.endDate)}</p>
-                        </div>
-                      </div>
+                                </div>
+                              </div>
 
                       <div className="flex gap-2">
                         <Button
@@ -433,16 +435,16 @@ export default function TenantDashboardPage() {
                         >
                           <Mail className="w-4 h-4 mr-1" />
                           Contactar Propietario
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
                           onClick={() => handleViewContractDetails(contract.id)}
-                        >
+                            >
                           <Eye className="w-4 h-4 mr-1" />
                           Ver Detalles
-                        </Button>
-                      </div>
+                            </Button>
+                          </div>
                     </div>
                   ))}
 
@@ -452,9 +454,9 @@ export default function TenantDashboardPage() {
                       <p>No tienes contratos activos</p>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
 
             {/* Pending Payments */}
             <Card>
@@ -535,7 +537,7 @@ export default function TenantDashboardPage() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-sm">{request.title}</h4>
                         {getMaintenanceStatusBadge(request.status)}
-                      </div>
+                            </div>
                       <p className="text-xs text-gray-600 mb-2">{request.description}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -545,16 +547,16 @@ export default function TenantDashboardPage() {
                               Est. {formatCurrency(request.estimatedCost)}
                             </span>
                           )}
-                        </div>
-                        <Button
-                          size="sm"
+                          </div>
+                          <Button
+                            size="sm"
                           variant="outline"
                           onClick={() => handleViewMaintenanceDetails(request.id)}
-                        >
+                          >
                           <Eye className="w-3 h-3 mr-1" />
                           Ver
-                        </Button>
-                      </div>
+                          </Button>
+                        </div>
                     </div>
                   ))}
 
@@ -562,11 +564,11 @@ export default function TenantDashboardPage() {
                     <div className="text-center py-4 text-gray-500">
                       <Wrench className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-xs">Sin solicitudes activas</p>
-                    </div>
+                          </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
 
             {/* Quick Actions */}
             <Card>
@@ -593,7 +595,7 @@ export default function TenantDashboardPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => window.open('/tenant/contracts', '_blank')}
+                  onClick={() => router.push('/tenant/contracts')}
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   Ver Contratos
@@ -601,7 +603,7 @@ export default function TenantDashboardPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => window.open('/tenant/payments/upcoming', '_blank')}
+                  onClick={() => router.push('/tenant/payments/upcoming')}
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   Calendario de Pagos
@@ -635,7 +637,7 @@ export default function TenantDashboardPage() {
                       <p className="text-xs text-gray-600">Fuga en grifería de cocina</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                       <Bell className="w-4 h-4 text-yellow-600" />

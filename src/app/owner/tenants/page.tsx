@@ -37,6 +37,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useRouter } from 'next/navigation';
 
 interface Tenant {
   id: string;
@@ -66,6 +67,7 @@ interface TenantStats {
 }
 
 export default function InquilinosPage() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([]);
@@ -379,11 +381,11 @@ export default function InquilinosPage() {
   }, []);
 
   const handleViewTenant = (tenantId: string) => {
-    window.open(`/owner/tenants/${tenantId}`, '_blank');
+    router.push(`/owner/tenants/${tenantId}`);
   };
 
   const handleEditTenant = (tenantId: string) => {
-    window.open(`/owner/tenants/${tenantId}/edit`, '_blank');
+    router.push(`/owner/tenants/${tenantId}/edit`);
   };
 
   const handleContactTenant = (email: string) => {

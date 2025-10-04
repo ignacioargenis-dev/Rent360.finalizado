@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useRouter } from 'next/navigation';
 import { Eye, Edit, DollarSign, Users, TrendingUp, Home, MapPin, Calendar, Plus, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
@@ -48,6 +49,7 @@ interface PropertyStats {
 }
 
 export default function OwnerPropertiesPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
@@ -244,11 +246,11 @@ export default function OwnerPropertiesPage() {
   };
 
   const handleViewProperty = (propertyId: string) => {
-    window.open(`/owner/properties/${propertyId}`, '_blank');
+    router.push(`/owner/properties/${propertyId}`);
   };
 
   const handleEditProperty = (propertyId: string) => {
-    window.open(`/owner/properties/${propertyId}/edit`, '_blank');
+    router.push(`/owner/properties/${propertyId}/edit`);
   };
 
   const handleContactTenant = (tenantEmail: string) => {
