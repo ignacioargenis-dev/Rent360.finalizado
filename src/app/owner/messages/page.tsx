@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,8 +75,32 @@ export default function MessagesPage() {
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Load user data
+        const userResponse = await fetch('/api/auth/me');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
+        }
+
+        // Load messages data
+        await loadMessages();
+      } catch (error) {
+        setError('Error al cargar los datos');
+        logger.error('Error loading data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
+  }, [loadMessages]); // Include loadMessages as dependency
 
   useEffect(() => {
     let filtered = messages;
@@ -126,7 +150,7 @@ export default function MessagesPage() {
     }
   };
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       // Mock messages data
       const mockMessages: Message[] = [
@@ -230,7 +254,7 @@ export default function MessagesPage() {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  };
+  }, [user]);
 
   const handleMarkAsRead = async (messageId: string) => {
     setMessages(prev => prev.map(msg =>

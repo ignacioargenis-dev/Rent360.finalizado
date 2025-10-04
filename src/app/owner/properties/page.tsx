@@ -465,9 +465,6 @@ export default function OwnerPropertiesPage() {
                       src={property.images[0]}
                       alt={property.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/property-placeholder.jpg';
-                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

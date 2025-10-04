@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,8 +77,32 @@ export default function InquilinosPage() {
   const [paymentFilter, setPaymentFilter] = useState('all');
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Load user data
+        const userResponse = await fetch('/api/auth/me');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
+        }
+
+        // Load tenants data
+        await loadTenantsData();
+      } catch (error) {
+        setError('Error al cargar los datos');
+        logger.error('Error loading data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
+  }, [loadTenantsData]); // Include loadTenantsData as dependency
 
   useEffect(() => {
     let filtered = tenants;
@@ -126,7 +150,7 @@ export default function InquilinosPage() {
     }
   };
 
-  const loadTenantsData = async () => {
+  const loadTenantsData = useCallback(async () => {
     try {
       // Mock tenants data
       const mockTenants: Tenant[] = [
@@ -226,7 +250,7 @@ export default function InquilinosPage() {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  };
+  }, []);
 
   const handleViewTenant = (tenantId: string) => {
     window.open(`/owner/tenants/${tenantId}`, '_blank');

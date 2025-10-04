@@ -215,7 +215,7 @@ export default function CalificacionesPage() {
                     </div>
 
                     {rating.comment && (
-                      <p className="text-gray-700 mb-3 italic">"{rating.comment}"</p>
+                      <p className="text-gray-700 mb-3 italic">{rating.comment}</p>
                     )}
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
