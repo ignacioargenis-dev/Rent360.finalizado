@@ -64,6 +64,7 @@ export default function AppointmentDetailPage() {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadUserData = useCallback(async () => {
     try {
@@ -130,7 +131,7 @@ export default function AppointmentDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [appointmentId]);
+  }, []);
 
   useEffect(() => {
     loadAppointmentDetails();
@@ -145,6 +146,7 @@ export default function AppointmentDetailPage() {
     }
 
     setSubmittingComment(true);
+    setActionError(null);
 
     try {
       // Simulate API call
@@ -165,7 +167,7 @@ export default function AppointmentDetailPage() {
       logger.error('Error submitting comment:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al enviar el comentario. Por favor intenta nuevamente.');
+      setActionError('Error al enviar el comentario. Por favor intenta nuevamente.');
     } finally {
       setSubmittingComment(false);
     }
@@ -177,6 +179,7 @@ export default function AppointmentDetailPage() {
     }
 
     setUpdatingStatus(true);
+    setActionError(null);
 
     try {
       // Simulate API call
@@ -186,12 +189,12 @@ export default function AppointmentDetailPage() {
         prev ? { ...prev, status: newStatus as any, updatedAt: new Date().toISOString() } : null
       );
 
-      alert(`Estado de la cita actualizado exitosamente a: ${newStatus}`);
+      // Success - no alert needed, status will be updated in UI
     } catch (error) {
       logger.error('Error updating appointment status:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al actualizar el estado. Por favor intenta nuevamente.');
+      setActionError('Error al actualizar el estado. Por favor intenta nuevamente.');
     } finally {
       setUpdatingStatus(false);
     }
@@ -283,6 +286,16 @@ export default function AppointmentDetailPage() {
   return (
     <UnifiedDashboardLayout title="Detalles de la Cita" subtitle={`Cita #${appointmentId}`}>
       <div className="container mx-auto px-4 py-6">
+        {/* Action Error */}
+        {actionError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+              <p className="text-red-800">{actionError}</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">

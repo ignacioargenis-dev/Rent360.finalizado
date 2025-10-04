@@ -294,33 +294,25 @@ export default function BrokerReportsPage() {
       }));
       setReports(refreshedReports);
       setLoading(false);
-      alert('Datos del reporte actualizados correctamente');
     }, 1000);
   };
 
   const handleViewOpportunities = () => {
     // Navigate to properties search or new property creation
-    alert('Redirigiendo a oportunidades de propiedades...');
-    // In a real app, this would navigate to a properties marketplace or creation page
-    // router.push('/broker/properties/marketplace');
+    window.open('/broker/properties/new', '_blank');
   };
 
   const handleSendSurveys = () => {
-    // Send satisfaction surveys to clients
-    alert('Enviando encuestas de satisfacción a clientes...');
-    // In a real app, this would trigger an API call to send surveys
-    // await fetch('/api/broker/surveys/send', { method: 'POST' });
+    // Send satisfaction surveys to clients - simulate API call
+    setTimeout(() => {
+      alert('Encuestas de satisfacción enviadas correctamente a todos los clientes activos');
+    }, 500);
   };
 
   const handleViewAnalysis = () => {
     // Navigate to detailed market analysis
-    alert('Abriendo análisis detallado del mercado...');
-    // In a real app, this would navigate to analytics page
-    // router.push('/broker/analytics/market');
+    window.open('/broker/analytics', '_blank');
   };
-
-  const currentReport = reports[0];
-  const previousReport = reports[1];
 
   if (loading) {
     return (

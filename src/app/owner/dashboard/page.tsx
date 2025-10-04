@@ -29,6 +29,7 @@ import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
+import { logger } from '@/lib/logger';
 
 interface DashboardStats {
   totalProperties: number;
@@ -71,16 +72,6 @@ export default function OwnerDashboard() {
   const [recentProperties, setRecentProperties] = useState<PropertySummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    } else if (!userLoading) {
-      // Usuario no autenticado, mostrar datos vacíos
-      setLoading(false);
-    }
-    loadDashboardData();
-  }, [user, userLoading, loadDashboardData]);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -184,6 +175,16 @@ export default function OwnerDashboard() {
       setLoading(false);
     }
   }, [user?.createdAt]);
+
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    } else if (!userLoading) {
+      // Usuario no autenticado, mostrar datos vacíos
+      setLoading(false);
+    }
+    loadDashboardData();
+  }, [user, userLoading, loadDashboardData]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {

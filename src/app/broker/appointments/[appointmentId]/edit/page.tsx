@@ -64,11 +64,6 @@ export default function EditAppointmentPage() {
     notes: '',
   });
 
-  useEffect(() => {
-    loadAppointmentData();
-    loadUserData();
-  }, [appointmentId, loadAppointmentData, loadUserData]);
-
   const loadUserData = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/me');
@@ -105,8 +100,8 @@ export default function EditAppointmentPage() {
 
       // Convert dateTime to separate date and time
       const dateTime = new Date(mockAppointment.dateTime);
-      const date = dateTime.toISOString().split('T')[0];
-      const time = dateTime.toTimeString().slice(0, 5);
+      const date = dateTime.toISOString().split('T')[0]!;
+      const time = dateTime.toTimeString().slice(0, 5)!;
 
       setFormData({
         clientName: mockAppointment.clientName,
@@ -132,6 +127,11 @@ export default function EditAppointmentPage() {
     }
   }, [appointmentId]);
 
+  useEffect(() => {
+    loadAppointmentData();
+    loadUserData();
+  }, [appointmentId, loadAppointmentData, loadUserData]);
+
   const handleInputChange = (field: keyof AppointmentForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -147,23 +147,24 @@ export default function EditAppointmentPage() {
       !formData.date ||
       !formData.time
     ) {
-      alert('Por favor completa todos los campos obligatorios');
+      setError('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setSaving(true);
+    setError(null);
 
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      alert('Cita actualizada exitosamente');
+      // Success - navigate back to appointment details
       router.push(`/broker/appointments/${appointmentId}`);
     } catch (error) {
       logger.error('Error updating appointment:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al actualizar la cita. Por favor intenta nuevamente.');
+      setError('Error al actualizar la cita. Por favor intenta nuevamente.');
     } finally {
       setSaving(false);
     }
