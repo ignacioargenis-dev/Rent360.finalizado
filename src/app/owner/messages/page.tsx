@@ -7,8 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   MessageSquare,
   Users,
@@ -87,8 +101,114 @@ export default function MessagesPage() {
           setUser(userData.user);
         }
 
-        // Load messages data
-        await loadMessages();
+        // Load messages data directly (inline function)
+        try {
+          // Mock messages data
+          const mockMessages: Message[] = [
+            {
+              id: '1',
+              sender: {
+                id: 'tenant1',
+                name: 'María González',
+                email: 'maria.gonzalez@email.com',
+                role: 'tenant',
+              },
+              recipient: {
+                id: user?.id || 'owner1',
+                name: user?.name || 'Propietario',
+                email: user?.email || 'owner@email.com',
+                role: 'owner',
+              },
+              subject: 'Problema con la llave del baño',
+              content:
+                'Hola, tengo un problema con la llave del baño en el departamento 5B. El agua no para de gotear y necesito que venga alguien a repararlo lo antes posible.',
+              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+              read: false,
+              priority: 'high',
+              type: 'maintenance',
+              propertyId: 'prop1',
+              propertyTitle: 'Departamento en Providencia',
+            },
+            {
+              id: '2',
+              sender: {
+                id: 'tenant2',
+                name: 'Carlos Rodríguez',
+                email: 'carlos.rodriguez@email.com',
+                role: 'tenant',
+              },
+              recipient: {
+                id: user?.id || 'owner1',
+                name: user?.name || 'Propietario',
+                email: user?.email || 'owner@email.com',
+                role: 'owner',
+              },
+              subject: 'Pago del arriendo enero 2024',
+              content:
+                'Le confirmo que ya realicé el pago del arriendo correspondiente al mes de enero. El comprobante deberá llegarle por email.',
+              timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+              read: true,
+              priority: 'medium',
+              type: 'payment',
+              propertyId: 'prop2',
+              propertyTitle: 'Casa Familiar en Las Condes',
+            },
+            {
+              id: '3',
+              sender: {
+                id: 'maintenance1',
+                name: 'Servicio de Mantenimiento XYZ',
+                email: 'contacto@mantxyz.cl',
+                role: 'maintenance',
+              },
+              recipient: {
+                id: user?.id || 'owner1',
+                name: user?.name || 'Propietario',
+                email: user?.email || 'owner@email.com',
+                role: 'owner',
+              },
+              subject: 'Cotización para reparación eléctrica',
+              content:
+                'Adjunto cotización para la reparación completa del sistema eléctrico en su propiedad de Las Condes. El trabajo incluye revisión completa, reemplazo de conductores dañados y certificación.',
+              timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              read: false,
+              priority: 'medium',
+              type: 'general',
+              propertyId: 'prop2',
+              propertyTitle: 'Casa Familiar en Las Condes',
+            },
+            {
+              id: '4',
+              sender: {
+                id: 'tenant3',
+                name: 'Ana López',
+                email: 'ana.lopez@email.com',
+                role: 'tenant',
+              },
+              recipient: {
+                id: user?.id || 'owner1',
+                name: user?.name || 'Propietario',
+                email: user?.email || 'owner@email.com',
+                role: 'owner',
+              },
+              subject: 'Consulta sobre renovación de contrato',
+              content:
+                'Hola, me gustaría saber si es posible renovar mi contrato de arriendo por un año más. Estoy muy contenta con el departamento.',
+              timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+              read: true,
+              priority: 'low',
+              type: 'general',
+              propertyId: 'prop3',
+              propertyTitle: 'Estudio Moderno Centro',
+            },
+          ];
+
+          setMessages(mockMessages);
+        } catch (error) {
+          logger.error('Error loading messages:', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       } catch (error) {
         setError('Error al cargar los datos');
         logger.error('Error loading data:', {
@@ -100,16 +220,17 @@ export default function MessagesPage() {
     };
 
     initializeData();
-  }, [loadMessages]); // Include loadMessages as dependency
+  }, []); // Empty dependency array for initialization
 
   useEffect(() => {
     let filtered = messages;
 
     if (searchTerm) {
-      filtered = filtered.filter(message =>
-        message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        message.sender.name.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        message =>
+          message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          message.sender.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -118,9 +239,7 @@ export default function MessagesPage() {
     }
 
     if (readFilter !== 'all') {
-      filtered = filtered.filter(message =>
-        readFilter === 'read' ? message.read : !message.read
-      );
+      filtered = filtered.filter(message => (readFilter === 'read' ? message.read : !message.read));
     }
 
     setFilteredMessages(filtered);
@@ -169,7 +288,8 @@ export default function MessagesPage() {
             role: 'owner',
           },
           subject: 'Problema con la llave del baño',
-          content: 'Hola, tengo un problema con la llave del baño en el departamento 5B. El agua no para de gotear y necesito que venga alguien a repararlo lo antes posible.',
+          content:
+            'Hola, tengo un problema con la llave del baño en el departamento 5B. El agua no para de gotear y necesito que venga alguien a repararlo lo antes posible.',
           timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           read: false,
           priority: 'high',
@@ -192,7 +312,8 @@ export default function MessagesPage() {
             role: 'owner',
           },
           subject: 'Pago del arriendo enero 2024',
-          content: 'Le confirmo que ya realicé el pago del arriendo correspondiente al mes de enero. El comprobante debería llegarle por email.',
+          content:
+            'Le confirmo que ya realicé el pago del arriendo correspondiente al mes de enero. El comprobante debería llegarle por email.',
           timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           read: true,
           priority: 'medium',
@@ -215,7 +336,8 @@ export default function MessagesPage() {
             role: 'owner',
           },
           subject: 'Cotización para reparación eléctrica',
-          content: 'Adjunto cotización para la reparación completa del sistema eléctrico en su propiedad de Las Condes. El trabajo incluye revisión completa, reemplazo de conductores dañados y certificación.',
+          content:
+            'Adjunto cotización para la reparación completa del sistema eléctrico en su propiedad de Las Condes. El trabajo incluye revisión completa, reemplazo de conductores dañados y certificación.',
           timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
           read: false,
           priority: 'medium',
@@ -238,7 +360,8 @@ export default function MessagesPage() {
             role: 'owner',
           },
           subject: 'Consulta sobre renovación de contrato',
-          content: 'Hola, me gustaría saber si es posible renovar mi contrato de arriendo por un año más. Estoy muy contenta con el departamento.',
+          content:
+            'Hola, me gustaría saber si es posible renovar mi contrato de arriendo por un año más. Estoy muy contenta con el departamento.',
           timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
           read: true,
           priority: 'low',
@@ -257,19 +380,17 @@ export default function MessagesPage() {
   }, [user]);
 
   const handleMarkAsRead = async (messageId: string) => {
-    setMessages(prev => prev.map(msg =>
-      msg.id === messageId ? { ...msg, read: true } : msg
-    ));
+    setMessages(prev => prev.map(msg => (msg.id === messageId ? { ...msg, read: true } : msg)));
   };
 
   const handleMarkAsUnread = async (messageId: string) => {
-    setMessages(prev => prev.map(msg =>
-      msg.id === messageId ? { ...msg, read: false } : msg
-    ));
+    setMessages(prev => prev.map(msg => (msg.id === messageId ? { ...msg, read: false } : msg)));
   };
 
   const handleReply = async () => {
-    if (!selectedMessage || !replyContent.trim()) return;
+    if (!selectedMessage || !replyContent.trim()) {
+      return;
+    }
 
     // Simulate sending reply
     alert('Respuesta enviada exitosamente');
@@ -280,30 +401,44 @@ export default function MessagesPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'high':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'low':
+        return 'text-green-600 bg-green-50 border-green-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'maintenance': return <Wrench className="w-4 h-4" />;
-      case 'payment': return <DollarSign className="w-4 h-4" />;
-      case 'general': return <MessageSquare className="w-4 h-4" />;
-      case 'urgent': return <AlertTriangle className="w-4 h-4" />;
-      default: return <MessageSquare className="w-4 h-4" />;
+      case 'maintenance':
+        return <Wrench className="w-4 h-4" />;
+      case 'payment':
+        return <DollarSign className="w-4 h-4" />;
+      case 'general':
+        return <MessageSquare className="w-4 h-4" />;
+      case 'urgent':
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <MessageSquare className="w-4 h-4" />;
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'maintenance': return 'text-blue-600 bg-blue-50';
-      case 'payment': return 'text-green-600 bg-green-50';
-      case 'general': return 'text-gray-600 bg-gray-50';
-      case 'urgent': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'maintenance':
+        return 'text-blue-600 bg-blue-50';
+      case 'payment':
+        return 'text-green-600 bg-green-50';
+      case 'general':
+        return 'text-gray-600 bg-gray-50';
+      case 'urgent':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
     }
   };
 
@@ -371,7 +506,10 @@ export default function MessagesPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Mensajes" subtitle="Gestiona tus comunicaciones con inquilinos y proveedores">
+    <UnifiedDashboardLayout
+      title="Mensajes"
+      subtitle="Gestiona tus comunicaciones con inquilinos y proveedores"
+    >
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -423,11 +561,13 @@ export default function MessagesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {messages.filter(m => {
-                  const messageDate = new Date(m.timestamp);
-                  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                  return messageDate > weekAgo;
-                }).length}
+                {
+                  messages.filter(m => {
+                    const messageDate = new Date(m.timestamp);
+                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    return messageDate > weekAgo;
+                  }).length
+                }
               </div>
               <p className="text-xs text-muted-foreground">Mensajes recientes</p>
             </CardContent>
@@ -443,7 +583,7 @@ export default function MessagesPage() {
                 <Input
                   placeholder="Buscar por remitente, asunto o contenido..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -494,8 +634,11 @@ export default function MessagesPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredMessages.map((message) => (
-              <Card key={message.id} className={`hover:shadow-md transition-shadow ${!message.read ? 'border-l-4 border-l-blue-500' : ''}`}>
+            filteredMessages.map(message => (
+              <Card
+                key={message.id}
+                className={`hover:shadow-md transition-shadow ${!message.read ? 'border-l-4 border-l-blue-500' : ''}`}
+              >
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
@@ -509,7 +652,9 @@ export default function MessagesPage() {
                       {/* Contenido del mensaje */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`font-semibold ${!message.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                          <h3
+                            className={`font-semibold ${!message.read ? 'text-gray-900' : 'text-gray-700'}`}
+                          >
                             {message.subject}
                           </h3>
                           {!message.read && (
@@ -536,7 +681,9 @@ export default function MessagesPage() {
                           </span>
                         </div>
 
-                        <p className={`text-sm ${!message.read ? 'text-gray-900' : 'text-gray-600'} line-clamp-2 mb-3`}>
+                        <p
+                          className={`text-sm ${!message.read ? 'text-gray-900' : 'text-gray-600'} line-clamp-2 mb-3`}
+                        >
                           {message.content}
                         </p>
 
@@ -544,16 +691,25 @@ export default function MessagesPage() {
                           <Badge className={getTypeColor(message.type)}>
                             <span className="flex items-center gap-1">
                               {getTypeIcon(message.type)}
-                              {message.type === 'maintenance' ? 'Mantenimiento' :
-                               message.type === 'payment' ? 'Pago' :
-                               message.type === 'general' ? 'General' :
-                               message.type === 'urgent' ? 'Urgente' : message.type}
+                              {message.type === 'maintenance'
+                                ? 'Mantenimiento'
+                                : message.type === 'payment'
+                                  ? 'Pago'
+                                  : message.type === 'general'
+                                    ? 'General'
+                                    : message.type === 'urgent'
+                                      ? 'Urgente'
+                                      : message.type}
                             </span>
                           </Badge>
 
                           <Badge className={getPriorityColor(message.priority)}>
-                            Prioridad {message.priority === 'high' ? 'Alta' :
-                                      message.priority === 'medium' ? 'Media' : 'Baja'}
+                            Prioridad{' '}
+                            {message.priority === 'high'
+                              ? 'Alta'
+                              : message.priority === 'medium'
+                                ? 'Media'
+                                : 'Baja'}
                           </Badge>
                         </div>
                       </div>
@@ -575,7 +731,11 @@ export default function MessagesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => message.read ? handleMarkAsUnread(message.id) : handleMarkAsRead(message.id)}
+                        onClick={() =>
+                          message.read
+                            ? handleMarkAsUnread(message.id)
+                            : handleMarkAsRead(message.id)
+                        }
                       >
                         {message.read ? <Eye className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
@@ -596,19 +756,15 @@ export default function MessagesPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Responder a {selectedMessage?.sender.name}</DialogTitle>
-              <DialogDescription>
-                Re: {selectedMessage?.subject}
-              </DialogDescription>
+              <DialogDescription>Re: {selectedMessage?.subject}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tu respuesta
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tu respuesta</label>
                 <Textarea
                   value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
+                  onChange={e => setReplyContent(e.target.value)}
                   placeholder="Escribe tu respuesta..."
                   rows={6}
                 />

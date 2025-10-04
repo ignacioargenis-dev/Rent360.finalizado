@@ -6,7 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertTriangle,
   RefreshCw,
@@ -89,8 +95,127 @@ export default function InquilinosPage() {
           setUser(userData.user);
         }
 
-        // Load tenants data
-        await loadTenantsData();
+        // Load tenants data directly (inline function)
+        try {
+          // Mock tenants data
+          const mockTenants: Tenant[] = [
+            {
+              id: '1',
+              name: 'María González',
+              email: 'maria.gonzalez@email.com',
+              phone: '+56 9 1234 5678',
+              property: {
+                id: 'prop1',
+                title: 'Departamento en Providencia',
+                address: 'Providencia 1234',
+              },
+              leaseStart: new Date('2024-01-01').toISOString(),
+              leaseEnd: new Date('2024-12-31').toISOString(),
+              monthlyRent: 450000,
+              status: 'ACTIVE',
+              paymentStatus: 'CURRENT',
+              lastPayment: new Date('2024-09-01').toISOString(),
+              outstandingBalance: 0,
+            },
+            {
+              id: '2',
+              name: 'Carlos Rodríguez',
+              email: 'carlos.rodriguez@email.com',
+              phone: '+56 9 8765 4321',
+              property: {
+                id: 'prop2',
+                title: 'Casa en Las Condes',
+                address: 'Las Condes 5678',
+              },
+              leaseStart: new Date('2024-02-01').toISOString(),
+              leaseEnd: new Date('2025-01-31').toISOString(),
+              monthlyRent: 650000,
+              status: 'ACTIVE',
+              paymentStatus: 'LATE',
+              lastPayment: new Date('2024-08-01').toISOString(),
+              outstandingBalance: 650000,
+            },
+            {
+              id: '3',
+              name: 'Ana Silva',
+              email: 'ana.silva@email.com',
+              phone: '+56 9 5555 6666',
+              property: {
+                id: 'prop3',
+                title: 'Estudio en Centro',
+                address: 'Centro 999',
+              },
+              leaseStart: new Date('2024-03-01').toISOString(),
+              leaseEnd: new Date('2024-08-31').toISOString(),
+              monthlyRent: 320000,
+              status: 'PENDING',
+              paymentStatus: 'CURRENT',
+              lastPayment: new Date('2024-09-01').toISOString(),
+              outstandingBalance: 0,
+            },
+            {
+              id: '4',
+              name: 'Pedro Morales',
+              email: 'pedro.morales@email.com',
+              phone: '+56 9 7777 8888',
+              property: {
+                id: 'prop4',
+                title: 'Apartamento en Ñuñoa',
+                address: 'Ñuñoa 4321',
+              },
+              leaseStart: new Date('2023-06-01').toISOString(),
+              leaseEnd: new Date('2024-05-31').toISOString(),
+              monthlyRent: 380000,
+              status: 'ACTIVE',
+              paymentStatus: 'CURRENT',
+              lastPayment: new Date('2024-09-01').toISOString(),
+              outstandingBalance: 0,
+            },
+            {
+              id: '5',
+              name: 'Sofía Vargas',
+              email: 'sofia.vargas@email.com',
+              phone: '+56 9 9999 0000',
+              property: {
+                id: 'prop5',
+                title: 'Loft en Bellavista',
+                address: 'Bellavista 2468',
+              },
+              leaseStart: new Date('2024-01-15').toISOString(),
+              leaseEnd: new Date('2025-01-14').toISOString(),
+              monthlyRent: 550000,
+              status: 'ACTIVE',
+              paymentStatus: 'LATE',
+              lastPayment: new Date('2024-08-15').toISOString(),
+              outstandingBalance: 275000,
+            },
+          ];
+
+          setTenants(mockTenants);
+
+          // CalcuLATE stats
+          const totalTenants = mockTenants.length;
+          const activeTenants = mockTenants.filter(t => t.status === 'ACTIVE').length;
+          const pendingTenants = mockTenants.filter(t => t.status === 'PENDING').length;
+          const totalMonthlyIncome = mockTenants
+            .filter(t => t.status === 'ACTIVE')
+            .reduce((sum, t) => sum + t.monthlyRent, 0);
+          const overduePayments = mockTenants.filter(t => t.paymentStatus === 'LATE').length;
+
+          const tenantStats: TenantStats = {
+            totalTenants,
+            activeTenants,
+            pendingTenants,
+            totalMonthlyIncome,
+            overduePayments,
+          };
+
+          setStats(tenantStats);
+        } catch (error) {
+          logger.error('Error loading tenants data:', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       } catch (error) {
         setError('Error al cargar los datos');
         logger.error('Error loading data:', {
@@ -102,16 +227,17 @@ export default function InquilinosPage() {
     };
 
     initializeData();
-  }, [loadTenantsData]); // Include loadTenantsData as dependency
+  }, []); // Empty dependency array for initialization
 
   useEffect(() => {
     let filtered = tenants;
 
     if (searchTerm) {
-      filtered = filtered.filter(tenant =>
-        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.property.title.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        tenant =>
+          tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tenant.property.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -230,7 +356,7 @@ export default function InquilinosPage() {
 
       setTenants(mockTenants);
 
-      // Calculate stats
+      // CalcuLATE stats
       const activeTenants = mockTenants.filter(t => t.status === 'ACTIVE');
       const pendingTenants = mockTenants.filter(t => t.status === 'PENDING');
       const totalMonthlyIncome = activeTenants.reduce((sum, tenant) => sum + tenant.monthlyRent, 0);
@@ -266,20 +392,29 @@ export default function InquilinosPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800';
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'NOTICE': return 'bg-orange-100 text-orange-800';
-      case 'TERMINATED': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'ACTIVE':
+        return 'bg-green-100 text-green-800';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'NOTICE':
+        return 'bg-orange-100 text-orange-800';
+      case 'TERMINATED':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'CURRENT': return 'bg-green-100 text-green-800';
-      case 'LATE': return 'bg-yellow-100 text-yellow-800';
-      case 'OVERDUE': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'CURRENT':
+        return 'bg-green-100 text-green-800';
+      case 'LATE':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'OVERDUE':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -329,7 +464,10 @@ export default function InquilinosPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Inquilinos" subtitle="Gestiona todos tus inquilinos y contratos de arrendamiento">
+    <UnifiedDashboardLayout
+      title="Inquilinos"
+      subtitle="Gestiona todos tus inquilinos y contratos de arrendamiento"
+    >
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -385,11 +523,11 @@ export default function InquilinosPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -transLATE-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Buscar por nombre, email o propiedad..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -441,7 +579,7 @@ export default function InquilinosPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredTenants.map((tenant) => (
+            filteredTenants.map(tenant => (
               <Card key={tenant.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
@@ -449,25 +587,35 @@ export default function InquilinosPage() {
                       {/* Avatar del inquilino */}
                       <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium text-gray-600">
-                          {tenant.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {tenant.name
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()}
                         </span>
                       </div>
 
                       {/* Información del inquilino */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg text-gray-900">
-                            {tenant.name}
-                          </h3>
+                          <h3 className="font-semibold text-lg text-gray-900">{tenant.name}</h3>
                           <Badge className={getStatusColor(tenant.status)}>
-                            {tenant.status === 'ACTIVE' ? 'Activo' :
-                             tenant.status === 'PENDING' ? 'Pendiente' :
-                             tenant.status === 'NOTICE' ? 'Con aviso' : 'Terminado'}
+                            {tenant.status === 'ACTIVE'
+                              ? 'Activo'
+                              : tenant.status === 'PENDING'
+                                ? 'Pendiente'
+                                : tenant.status === 'NOTICE'
+                                  ? 'Con aviso'
+                                  : 'Terminado'}
                           </Badge>
                           <Badge className={getPaymentStatusColor(tenant.paymentStatus)}>
-                            {tenant.paymentStatus === 'CURRENT' ? 'Al día' :
-                             tenant.paymentStatus === 'LATE' ? 'Atrasado' :
-                             tenant.paymentStatus === 'OVERDUE' ? 'Vencido' : tenant.paymentStatus}
+                            {tenant.paymentStatus === 'CURRENT'
+                              ? 'Al día'
+                              : tenant.paymentStatus === 'LATE'
+                                ? 'Atrasado'
+                                : tenant.paymentStatus === 'OVERDUE'
+                                  ? 'Vencido'
+                                  : tenant.paymentStatus}
                           </Badge>
                         </div>
 
@@ -515,19 +663,11 @@ export default function InquilinosPage() {
 
                     {/* Acciones */}
                     <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewTenant(tenant.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleViewTenant(tenant.id)}>
                         <Eye className="w-4 h-4" />
                       </Button>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditTenant(tenant.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEditTenant(tenant.id)}>
                         <Edit className="w-4 h-4" />
                       </Button>
 
