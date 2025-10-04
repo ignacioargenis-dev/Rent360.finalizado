@@ -23,9 +23,9 @@ import {
   ThumbsUp,
   MapPin,
   Calendar,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType } from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
@@ -72,7 +72,7 @@ export default function RateServicePage() {
     value: 0,
     comments: '',
     isAnonymous: false,
-    isVerified: true
+    isVerified: true,
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -111,9 +111,10 @@ export default function RateServicePage() {
           setExistingRating(existing);
         }
       }
-
     } catch (error) {
-      logger.error('Error cargando datos del servicio:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error cargando datos del servicio:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,7 @@ export default function RateServicePage() {
   const handleRatingChange = (type: keyof RatingForm, value: number) => {
     setRating(prev => ({
       ...prev,
-      [type]: value
+      [type]: value,
     }));
 
     // Si cambia el rating general, actualizar otros ratings automáticamente
@@ -133,7 +134,7 @@ export default function RateServicePage() {
         professionalism: value,
         communication: value,
         quality: value,
-        value: value
+        value: value,
       }));
     }
   };
@@ -153,15 +154,20 @@ export default function RateServicePage() {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm() || !job || !user) return;
+    if (!validateForm() || !job || !user) {
+      return;
+    }
 
     try {
       setSubmitting(true);
 
       const ratingData = {
         providerId: job.providerId,
-        providerType: (job.providerType === 'MAINTENANCE_PROVIDER' ? 'MAINTENANCE' :
-                      job.providerType === 'SERVICE_PROVIDER' ? 'SERVICE' : 'SERVICE') as 'MAINTENANCE' | 'SERVICE',
+        providerType: (job.providerType === 'MAINTENANCE_PROVIDER'
+          ? 'MAINTENANCE'
+          : job.providerType === 'SERVICE_PROVIDER'
+            ? 'SERVICE'
+            : 'SERVICE') as 'MAINTENANCE' | 'SERVICE',
         clientId: user.id,
         jobId: job.id,
         ratings: {
@@ -172,11 +178,11 @@ export default function RateServicePage() {
           property_knowledge: rating.quality, // Adaptar al enum
           cleanliness: rating.quality,
           quality_of_work: rating.quality,
-          value: rating.value
+          value: rating.value,
         },
         comments: rating.comments.trim(),
         isAnonymous: rating.isAnonymous,
-        isVerified: rating.isVerified
+        isVerified: rating.isVerified,
       };
 
       await ratingService.createRating(ratingData);
@@ -186,9 +192,10 @@ export default function RateServicePage() {
       setTimeout(() => {
         router.push('/client/services');
       }, 3000);
-
     } catch (error) {
-      logger.error('Error enviando reseña:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error enviando reseña:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al enviar la reseña. Por favor intenta nuevamente.');
     } finally {
       setSubmitting(false);
@@ -196,22 +203,22 @@ export default function RateServicePage() {
   };
 
   const renderStarSelector = (type: keyof RatingForm, label: string, description: string) => {
-    if (typeof rating[type] !== 'number') return null;
+    if (typeof rating[type] !== 'number') {
+      return null;
+    }
 
     const value = rating[type] as number;
 
     return (
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
           <p className="text-xs text-gray-500">{description}</p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
+            {[1, 2, 3, 4, 5].map(star => (
               <button
                 key={star}
                 onClick={() => handleRatingChange(type, star)}
@@ -244,7 +251,7 @@ export default function RateServicePage() {
       rating.professionalism,
       rating.communication,
       rating.quality,
-      rating.value
+      rating.value,
     ].filter(value => value > 0).length;
 
     return (completedFields / totalFields) * 100;
@@ -263,7 +270,7 @@ export default function RateServicePage() {
 
   if (!job || !user) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         user={user}
         title="Servicio no encontrado"
         subtitle="No se pudo encontrar la información del servicio solicitado"
@@ -272,26 +279,22 @@ export default function RateServicePage() {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Servicio no encontrado
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Servicio no encontrado</h2>
                 <p className="text-gray-600 mb-6">
                   No se pudo encontrar la información del servicio solicitado.
                 </p>
-                <Button onClick={() => router.back()}>
-                  Volver
-                </Button>
+                <Button onClick={() => router.back()}>Volver</Button>
               </div>
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (existingRating) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         user={user}
         title="Reseña ya enviada"
         subtitle="Ya has calificado este servicio anteriormente"
@@ -311,12 +314,11 @@ export default function RateServicePage() {
                   ¡Ya has enviado tu reseña!
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Gracias por calificar el servicio de {job.providerName}. Tu opinión es muy valiosa para otros clientes.
+                  Gracias por calificar el servicio de {job.providerName}. Tu opinión es muy valiosa
+                  para otros clientes.
                 </p>
                 <div className="flex gap-3 justify-center">
-                  <Button onClick={() => router.push('/client/services')}>
-                    Ver mis servicios
-                  </Button>
+                  <Button onClick={() => router.push('/client/services')}>Ver mis servicios</Button>
                   <Button variant="outline" onClick={() => router.push('/providers/top-rated')}>
                     Ver proveedores top
                   </Button>
@@ -325,22 +327,18 @@ export default function RateServicePage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (submitted) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         user={user}
         title="Reseña enviada"
         subtitle="Gracias por tu evaluación del servicio"
       >
-        <DashboardHeader
-          user={user}
-          title="¡Reseña enviada!"
-          subtitle="Gracias por tu opinión"
-        />
+        <DashboardHeader user={user} title="¡Reseña enviada!" subtitle="Gracias por tu opinión" />
 
         <div className="container mx-auto px-4 py-6 max-w-2xl">
           <Card>
@@ -351,22 +349,20 @@ export default function RateServicePage() {
                   ¡Gracias por tu reseña!
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Tu calificación ayudará a otros clientes a elegir el mejor proveedor.
-                  Te redirigiremos automáticamente en unos segundos...
+                  Tu calificación ayudará a otros clientes a elegir el mejor proveedor. Te
+                  redirigiremos automáticamente en unos segundos...
                 </p>
-                <Button onClick={() => router.push('/client/services')}>
-                  Ir a mis servicios
-                </Button>
+                <Button onClick={() => router.push('/client/services')}>Ir a mis servicios</Button>
               </div>
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Calificar Servicio"
       subtitle={`Deja tu opinión sobre el servicio de ${job.providerName}`}
@@ -398,7 +394,11 @@ export default function RateServicePage() {
                   </Avatar>
                   <div>
                     <h3 className="font-semibold text-gray-900">{job.providerName}</h3>
-                    <p className="text-sm text-gray-600">{job.providerType === 'MAINTENANCE_PROVIDER' ? 'Proveedor de Mantenimiento' : 'Proveedor de Servicios'}</p>
+                    <p className="text-sm text-gray-600">
+                      {job.providerType === 'MAINTENANCE_PROVIDER'
+                        ? 'Proveedor de Mantenimiento'
+                        : 'Proveedor de Servicios'}
+                    </p>
                   </div>
                 </div>
 
@@ -458,19 +458,37 @@ export default function RateServicePage() {
                 <Star className="w-5 h-5" />
                 Calificaciones
               </CardTitle>
-              <CardDescription>
-                Califica cada aspecto del servicio recibido
-              </CardDescription>
+              <CardDescription>Califica cada aspecto del servicio recibido</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {renderStarSelector('overall', 'Calificación General', '¿Qué tan satisfecho estás con el servicio en general?')}
+              {renderStarSelector(
+                'overall',
+                'Calificación General',
+                '¿Qué tan satisfecho estás con el servicio en general?'
+              )}
 
               <div className="border-t pt-6 space-y-6">
                 {renderStarSelector('punctuality', 'Puntualidad', '¿El proveedor llegó a tiempo?')}
-                {renderStarSelector('professionalism', 'Profesionalismo', '¿El servicio fue realizado de manera profesional?')}
-                {renderStarSelector('communication', 'Comunicación', '¿La comunicación fue clara y efectiva?')}
-                {renderStarSelector('quality', 'Calidad del Trabajo', '¿El resultado del trabajo cumple con tus expectativas?')}
-                {renderStarSelector('value', 'Relación Calidad-Precio', '¿Consideras que el precio es justo por la calidad recibida?')}
+                {renderStarSelector(
+                  'professionalism',
+                  'Profesionalismo',
+                  '¿El servicio fue realizado de manera profesional?'
+                )}
+                {renderStarSelector(
+                  'communication',
+                  'Comunicación',
+                  '¿La comunicación fue clara y efectiva?'
+                )}
+                {renderStarSelector(
+                  'quality',
+                  'Calidad del Trabajo',
+                  '¿El resultado del trabajo cumple con tus expectativas?'
+                )}
+                {renderStarSelector(
+                  'value',
+                  'Relación Calidad-Precio',
+                  '¿Consideras que el precio es justo por la calidad recibida?'
+                )}
               </div>
             </CardContent>
           </Card>
@@ -482,9 +500,7 @@ export default function RateServicePage() {
                 <MessageSquare className="w-5 h-5" />
                 Tu Opinión
               </CardTitle>
-              <CardDescription>
-                Comparte tu experiencia detalladamente
-              </CardDescription>
+              <CardDescription>Comparte tu experiencia detalladamente</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Comentarios */}
@@ -494,7 +510,7 @@ export default function RateServicePage() {
                 </label>
                 <Textarea
                   value={rating.comments}
-                  onChange={(e) => setRating(prev => ({ ...prev, comments: e.target.value }))}
+                  onChange={e => setRating(prev => ({ ...prev, comments: e.target.value }))}
                   placeholder="Describe tu experiencia con el servicio. ¿Qué te gustó? ¿Qué podría mejorar? Tu opinión ayuda a otros clientes y al proveedor."
                   rows={6}
                   disabled={submitting}
@@ -511,7 +527,7 @@ export default function RateServicePage() {
                   <Checkbox
                     id="anonymous"
                     checked={rating.isAnonymous}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       setRating(prev => ({ ...prev, isAnonymous: checked as boolean }))
                     }
                     disabled={submitting}
@@ -529,7 +545,7 @@ export default function RateServicePage() {
                   <Checkbox
                     id="verified"
                     checked={rating.isVerified}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       setRating(prev => ({ ...prev, isVerified: checked as boolean }))
                     }
                     disabled={submitting}
@@ -609,6 +625,6 @@ export default function RateServicePage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

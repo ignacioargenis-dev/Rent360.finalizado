@@ -21,11 +21,16 @@ import {
   Award,
   MapPin,
   Phone,
-  Mail
+  Mail,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { ratingService, RatingType, type ProviderRatingSummary, type ProviderRating } from '@/lib/ratings/rating-service';
+import {
+  ratingService,
+  RatingType,
+  type ProviderRatingSummary,
+  type ProviderRating,
+} from '@/lib/ratings/rating-service';
 import { logger } from '@/lib/logger';
 
 interface ProviderProfile {
@@ -87,9 +92,10 @@ export default function ProviderRatingsPage() {
       // Obtener ratings recientes
       const recentRatings = await ratingService.getProviderRatings(providerId, 20);
       setRatings(recentRatings);
-
     } catch (error) {
-      logger.error('Error cargando datos del proveedor:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error cargando datos del proveedor:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
@@ -100,7 +106,9 @@ export default function ProviderRatingsPage() {
       await ratingService.reportRating(ratingId, reason, user?.id || 'anonymous');
       alert('Gracias por reportar. Revisaremos la calificación.');
     } catch (error) {
-      logger.error('Error reportando rating:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error reportando rating:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al reportar la calificación');
     }
   };
@@ -109,18 +117,24 @@ export default function ProviderRatingsPage() {
     return new Date(date).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const getTrustScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    if (score >= 80) {
+      return 'text-green-600 bg-green-100';
+    }
+    if (score >= 60) {
+      return 'text-yellow-600 bg-yellow-100';
+    }
     return 'text-red-600 bg-red-100';
   };
 
   const getRatingDistribution = (type: RatingType) => {
-    if (!summary || !summary.ratingDistribution) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    if (!summary || !summary.ratingDistribution) {
+      return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    }
     return summary.ratingDistribution[type];
   };
 
@@ -128,18 +142,16 @@ export default function ProviderRatingsPage() {
     const sizeClasses = {
       sm: 'w-4 h-4',
       md: 'w-5 h-5',
-      lg: 'w-6 h-6'
+      lg: 'w-6 h-6',
     };
 
     return (
       <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
+        {[1, 2, 3, 4, 5].map(star => (
           <Star
             key={star}
             className={`${sizeClasses[size]} ${
-              star <= rating
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
+              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
             }`}
           />
         ))}
@@ -176,7 +188,7 @@ export default function ProviderRatingsPage() {
 
   if (!provider || !summary) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         user={user}
         title="Proveedor no encontrado"
         subtitle="El proveedor solicitado no existe"
@@ -199,12 +211,12 @@ export default function ProviderRatingsPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title={`Perfil de ${provider.businessName}`}
       subtitle="Perfil y calificaciones del proveedor"
@@ -239,7 +251,10 @@ export default function ProviderRatingsPage() {
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600">
-                        Miembro desde {provider.memberSince ? provider.memberSince.getFullYear() : new Date().getFullYear()}
+                        Miembro desde{' '}
+                        {provider.memberSince
+                          ? provider.memberSince.getFullYear()
+                          : new Date().getFullYear()}
                       </span>
                     </div>
                   </div>
@@ -249,7 +264,9 @@ export default function ProviderRatingsPage() {
               {/* Estadísticas Principales */}
               <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{summary.overallAverage?.toFixed(1) || '0.0'}</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {summary.overallAverage?.toFixed(1) || '0.0'}
+                  </div>
                   <div className="flex items-center justify-center gap-1 mb-1">
                     {renderStars(summary.overallAverage || 0)}
                   </div>
@@ -257,7 +274,9 @@ export default function ProviderRatingsPage() {
                 </div>
 
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{summary.totalRatings || 0}</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {summary.totalRatings || 0}
+                  </div>
                   <div className="text-sm text-gray-600">Reseñas totales</div>
                 </div>
 
@@ -267,7 +286,9 @@ export default function ProviderRatingsPage() {
                 </div>
 
                 <div className="text-center">
-                  <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTrustScoreColor(summary.trustScore || 0)}`}>
+                  <div
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTrustScoreColor(summary.trustScore || 0)}`}
+                  >
                     <Shield className="w-4 h-4" />
                     {summary.trustScore || 0}
                   </div>
@@ -282,7 +303,9 @@ export default function ProviderRatingsPage() {
 
               <div className="flex flex-wrap gap-2 mb-4">
                 {provider.services.map((service, index) => (
-                  <Badge key={index} variant="secondary">{service}</Badge>
+                  <Badge key={index} variant="secondary">
+                    {service}
+                  </Badge>
                 ))}
               </div>
 
@@ -292,7 +315,11 @@ export default function ProviderRatingsPage() {
                   <span className="text-sm text-gray-600">Certificaciones:</span>
                   <div className="flex gap-2">
                     {provider.certifications.map((cert, index) => (
-                      <Badge key={index} variant="outline" className="text-green-600 border-green-600">
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="text-green-600 border-green-600"
+                      >
                         {cert}
                       </Badge>
                     ))}
@@ -324,7 +351,7 @@ export default function ProviderRatingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {[5, 4, 3, 2, 1].map((stars) => {
+                    {[5, 4, 3, 2, 1].map(stars => {
                       const distribution = getRatingDistribution(RatingType.OVERALL);
                       const count = distribution[stars as keyof typeof distribution];
                       return renderRatingBar(stars, count, summary.totalRatings);
@@ -340,13 +367,16 @@ export default function ProviderRatingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Object.values(RatingType).map((type) => (
+                    {Object.values(RatingType).map(type => (
                       <div key={type} className="flex items-center justify-between">
                         <span className="text-sm font-medium capitalize">
                           {type.replace('_', ' ').toLowerCase()}
                         </span>
                         <div className="flex items-center gap-2">
-                          {renderStars(summary.averageRatings ? (summary.averageRatings[type] || 0) : 0, 'sm')}
+                          {renderStars(
+                            summary.averageRatings ? summary.averageRatings[type] || 0 : 0,
+                            'sm'
+                          )}
                         </div>
                       </div>
                     ))}
@@ -373,13 +403,17 @@ export default function ProviderRatingsPage() {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-600">
-                      {summary.recentRatings ? summary.recentRatings.filter(r => (r.ratings?.overall ?? 0) >= 4).length : 0}
+                      {summary.recentRatings
+                        ? summary.recentRatings.filter(r => (r.ratings?.overall ?? 0) >= 4).length
+                        : 0}
                     </div>
                     <div className="text-sm text-gray-600">Reseñas positivas recientes</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-purple-600">
-                      {(summary.totalRatings || 0) > 0 ? Math.round((summary.totalRatings || 0) / 30) : 0}
+                      {(summary.totalRatings || 0) > 0
+                        ? Math.round((summary.totalRatings || 0) / 30)
+                        : 0}
                     </div>
                     <div className="text-sm text-gray-600">Reseñas por mes</div>
                   </div>
@@ -395,9 +429,7 @@ export default function ProviderRatingsPage() {
                 <CardContent className="pt-6">
                   <div className="text-center py-12">
                     <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      No hay reseñas aún
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay reseñas aún</h3>
                     <p className="text-gray-600">
                       Este proveedor aún no tiene reseñas de clientes.
                     </p>
@@ -406,20 +438,26 @@ export default function ProviderRatingsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {ratings.map((rating) => (
+                {ratings.map(rating => (
                   <Card key={rating.id}>
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback>
-                              {rating.clientId ? rating.clientId.substring(0, 2).toUpperCase() : '??'}
+                              {rating.clientId
+                                ? rating.clientId.substring(0, 2).toUpperCase()
+                                : '??'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">Cliente {rating.clientId.substring(0, 8)}</div>
+                            <div className="font-medium">
+                              Cliente {rating.clientId.substring(0, 8)}
+                            </div>
                             <div className="text-sm text-gray-600">
-                              {rating.createdAt ? formatDate(rating.createdAt) : 'Fecha desconocida'}
+                              {rating.createdAt
+                                ? formatDate(rating.createdAt)
+                                : 'Fecha desconocida'}
                             </div>
                           </div>
                         </div>
@@ -433,33 +471,32 @@ export default function ProviderRatingsPage() {
                         </div>
                       </div>
 
-                      {rating.comments && (
-                        <p className="text-gray-700 mb-4">{rating.comments}</p>
-                      )}
+                      {rating.comments && <p className="text-gray-700 mb-4">{rating.comments}</p>}
 
                       {/* Ratings detallados */}
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        {rating.ratings && Object.entries(rating.ratings).map(([type, value]) => {
-                          if (type === 'overall') return null;
-                          return (
-                            <div key={type} className="text-sm">
-                              <span className="text-gray-600 capitalize">
-                                {type.replace('_', ' ').toLowerCase()}:
-                              </span>
-                              <div className="flex items-center gap-1 mt-1">
-                                {renderStars(value, 'sm')}
+                        {rating.ratings &&
+                          Object.entries(rating.ratings).map(([type, value]) => {
+                            if (type === 'overall') {
+                              return null;
+                            }
+                            return (
+                              <div key={type} className="text-sm">
+                                <span className="text-gray-600 capitalize">
+                                  {type.replace('_', ' ').toLowerCase()}:
+                                </span>
+                                <div className="flex items-center gap-1 mt-1">
+                                  {renderStars(value, 'sm')}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                       </div>
 
                       {/* Acciones */}
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-2">
-                          {rating.isAnonymous && (
-                            <Badge variant="secondary">Anónima</Badge>
-                          )}
+                          {rating.isAnonymous && <Badge variant="secondary">Anónima</Badge>}
                           {rating.isVerified && (
                             <Badge className="bg-green-100 text-green-800">
                               <Shield className="w-3 h-3 mr-1" />
@@ -493,9 +530,7 @@ export default function ProviderRatingsPage() {
                   <Phone className="w-5 h-5" />
                   Información de Contacto
                 </CardTitle>
-                <CardDescription>
-                  Contacta directamente con {provider.businessName}
-                </CardDescription>
+                <CardDescription>Contacta directamente con {provider.businessName}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -554,6 +589,6 @@ export default function ProviderRatingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
