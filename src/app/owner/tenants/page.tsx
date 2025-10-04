@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertTriangle,
   RefreshCw,
@@ -17,38 +20,255 @@ import {
   Download,
   BarChart3,
   Settings,
+  Search,
+  Users,
+  Mail,
+  Phone,
+  Calendar,
+  Home,
+  Eye,
+  Edit,
+  MessageSquare,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
+interface Tenant {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  property: {
+    id: string;
+    title: string;
+    address: string;
+  };
+  leaseStart: string;
+  leaseEnd: string;
+  monthlyRent: number;
+  status: 'ACTIVE' | 'PENDING' | 'NOTICE' | 'TERMINATED';
+  paymentStatus: 'CURRENT' | 'LATE' | 'OVERDUE';
+  lastPayment: string;
+  outstandingBalance: number;
+}
+
+interface TenantStats {
+  totalTenants: number;
+  activeTenants: number;
+  pendingTenants: number;
+  totalMonthlyIncome: number;
+  overduePayments: number;
+}
+
 export default function InquilinosPage() {
+  const [user, setUser] = useState<any>(null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([]);
+  const [stats, setStats] = useState<TenantStats>({
+    totalTenants: 0,
+    activeTenants: 0,
+    pendingTenants: 0,
+    totalMonthlyIncome: 0,
+    overduePayments: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
 
   useEffect(() => {
-    // Cargar datos de la página
-    loadPageData();
+    loadData();
   }, []);
 
-  const loadPageData = async () => {
+  useEffect(() => {
+    let filtered = tenants;
+
+    if (searchTerm) {
+      filtered = filtered.filter(tenant =>
+        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.property.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tenant => tenant.status === statusFilter);
+    }
+
+    if (paymentFilter !== 'all') {
+      filtered = filtered.filter(tenant => tenant.paymentStatus === paymentFilter);
+    }
+
+    setFilteredTenants(filtered);
+  }, [tenants, searchTerm, statusFilter, paymentFilter]);
+
+  const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/owner/tenants`);
-      // const result = await response.json();
-      // setData(result);
+      // Load user data
+      const userResponse = await fetch('/api/auth/me');
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData.user);
+      }
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Load tenants data
+      await loadTenantsData();
     } catch (error) {
-      logger.error('Error loading page data:', {
+      setError('Error al cargar los datos');
+      logger.error('Error loading data:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setError('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadTenantsData = async () => {
+    try {
+      // Mock tenants data
+      const mockTenants: Tenant[] = [
+        {
+          id: '1',
+          name: 'María González',
+          email: 'maria.gonzalez@email.com',
+          phone: '+56 9 1234 5678',
+          property: {
+            id: 'prop1',
+            title: 'Departamento en Providencia',
+            address: 'Av. Providencia 1234, Dpto 5B',
+          },
+          leaseStart: '2024-01-01',
+          leaseEnd: '2024-12-31',
+          monthlyRent: 450000,
+          status: 'ACTIVE',
+          paymentStatus: 'CURRENT',
+          lastPayment: '2024-01-05',
+          outstandingBalance: 0,
+        },
+        {
+          id: '2',
+          name: 'Carlos Rodríguez',
+          email: 'carlos.rodriguez@email.com',
+          phone: '+56 9 8765 4321',
+          property: {
+            id: 'prop2',
+            title: 'Casa Familiar en Las Condes',
+            address: 'Calle Los Militares 5678',
+          },
+          leaseStart: '2024-01-01',
+          leaseEnd: '2024-12-31',
+          monthlyRent: 650000,
+          status: 'ACTIVE',
+          paymentStatus: 'LATE',
+          lastPayment: '2023-12-28',
+          outstandingBalance: 650000,
+        },
+        {
+          id: '3',
+          name: 'Ana López',
+          email: 'ana.lopez@email.com',
+          phone: '+56 9 5555 6666',
+          property: {
+            id: 'prop3',
+            title: 'Estudio Moderno Centro',
+            address: 'Pasaje Ahumada 432',
+          },
+          leaseStart: '2024-01-15',
+          leaseEnd: '2024-12-14',
+          monthlyRent: 280000,
+          status: 'PENDING',
+          paymentStatus: 'CURRENT',
+          lastPayment: '2024-01-15',
+          outstandingBalance: 0,
+        },
+        {
+          id: '4',
+          name: 'Pedro Sánchez',
+          email: 'pedro.sanchez@email.com',
+          phone: '+56 9 7777 8888',
+          property: {
+            id: 'prop4',
+            title: 'Oficina Corporativa',
+            address: 'Av. Apoquindo 3456, Piso 12',
+          },
+          leaseStart: '2023-06-01',
+          leaseEnd: '2024-05-31',
+          monthlyRent: 950000,
+          status: 'NOTICE',
+          paymentStatus: 'OVERDUE',
+          lastPayment: '2023-11-30',
+          outstandingBalance: 3800000,
+        },
+      ];
+
+      setTenants(mockTenants);
+
+      // Calculate stats
+      const activeTenants = mockTenants.filter(t => t.status === 'ACTIVE');
+      const pendingTenants = mockTenants.filter(t => t.status === 'PENDING');
+      const totalMonthlyIncome = activeTenants.reduce((sum, tenant) => sum + tenant.monthlyRent, 0);
+      const overduePayments = mockTenants.filter(t => t.paymentStatus === 'OVERDUE').length;
+
+      const tenantStats: TenantStats = {
+        totalTenants: mockTenants.length,
+        activeTenants: activeTenants.length,
+        pendingTenants: pendingTenants.length,
+        totalMonthlyIncome,
+        overduePayments,
+      };
+
+      setStats(tenantStats);
+    } catch (error) {
+      logger.error('Error loading tenants data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleViewTenant = (tenantId: string) => {
+    window.open(`/owner/tenants/${tenantId}`, '_blank');
+  };
+
+  const handleEditTenant = (tenantId: string) => {
+    window.open(`/owner/tenants/${tenantId}/edit`, '_blank');
+  };
+
+  const handleContactTenant = (email: string) => {
+    window.open(`mailto:${email}`, '_blank');
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'NOTICE': return 'bg-orange-100 text-orange-800';
+      case 'TERMINATED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'CURRENT': return 'bg-green-100 text-green-800';
+      case 'LATE': return 'bg-yellow-100 text-yellow-800';
+      case 'OVERDUE': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL');
   };
 
   if (loading) {
@@ -73,7 +293,7 @@ export default function InquilinosPage() {
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
+              <Button onClick={loadData}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -85,32 +305,42 @@ export default function InquilinosPage() {
   }
 
   return (
-    <UnifiedDashboardLayout
-      title="Inquilinos"
-      subtitle="Gestiona y visualiza la información de inquilinos"
-    >
-      <div className="space-y-6">
+    <UnifiedDashboardLayout title="Inquilinos" subtitle="Gestiona todos tus inquilinos y contratos de arrendamiento">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Inquilinos</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{stats.totalTenants}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.activeTenants} activos actualmente
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalMonthlyIncome)}</div>
+              <p className="text-xs text-muted-foreground">De contratos activos</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.overduePayments}</div>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
 
@@ -120,87 +350,177 @@ export default function InquilinosPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold text-yellow-600">{stats.pendingTenants}</div>
+              <p className="text-xs text-muted-foreground">Esperando aprobación</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Inquilinos</CardTitle>
-            <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con inquilinos.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
-                funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+        {/* Filtros y búsqueda */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Buscar por nombre, email o propiedad..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Estado del contrato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="ACTIVE">Activo</SelectItem>
+                  <SelectItem value="PENDING">Pendiente</SelectItem>
+                  <SelectItem value="NOTICE">Con aviso</SelectItem>
+                  <SelectItem value="TERMINATED">Terminado</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Estado de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los pagos</SelectItem>
+                  <SelectItem value="CURRENT">Al día</SelectItem>
+                  <SelectItem value="LATE">Atrasado</SelectItem>
+                  <SelectItem value="OVERDUE">Vencido</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Acciones rápidas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Plus className="w-6 h-6 mb-2" />
-                <span>Agregar Nuevo</span>
-              </Button>
+        {/* Lista de inquilinos */}
+        <div className="space-y-4">
+          {filteredTenants.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {searchTerm || statusFilter !== 'all' || paymentFilter !== 'all'
+                      ? 'No se encontraron inquilinos'
+                      : 'No tienes inquilinos registrados'}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm || statusFilter !== 'all' || paymentFilter !== 'all'
+                      ? 'Intenta ajustar los filtros de búsqueda'
+                      : 'Los inquilinos aparecerán aquí una vez que registres tus primeras propiedades y contratos'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredTenants.map((tenant) => (
+              <Card key={tenant.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      {/* Avatar del inquilino */}
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-600">
+                          {tenant.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </span>
+                      </div>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Filter className="w-6 h-6 mb-2" />
-                <span>Filtrar</span>
-              </Button>
+                      {/* Información del inquilino */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-lg text-gray-900">
+                            {tenant.name}
+                          </h3>
+                          <Badge className={getStatusColor(tenant.status)}>
+                            {tenant.status === 'ACTIVE' ? 'Activo' :
+                             tenant.status === 'PENDING' ? 'Pendiente' :
+                             tenant.status === 'NOTICE' ? 'Con aviso' : 'Terminado'}
+                          </Badge>
+                          <Badge className={getPaymentStatusColor(tenant.paymentStatus)}>
+                            {tenant.paymentStatus === 'CURRENT' ? 'Al día' :
+                             tenant.paymentStatus === 'LATE' ? 'Atrasado' :
+                             tenant.paymentStatus === 'OVERDUE' ? 'Vencido' : tenant.paymentStatus}
+                          </Badge>
+                        </div>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Download className="w-6 h-6 mb-2" />
-                <span>Exportar</span>
-              </Button>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-4 h-4" />
+                            {tenant.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-4 h-4" />
+                            {tenant.phone}
+                          </span>
+                        </div>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <BarChart3 className="w-6 h-6 mb-2" />
-                <span>Reportes</span>
-              </Button>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                          <span className="flex items-center gap-1">
+                            <Home className="w-4 h-4" />
+                            {tenant.property.title}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(tenant.leaseStart)} - {formatDate(tenant.leaseEnd)}
+                          </span>
+                        </div>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <Settings className="w-6 h-6 mb-2" />
-                <span>Configuración</span>
-              </Button>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {formatCurrency(tenant.monthlyRent)}
+                            </p>
+                            <p className="text-sm text-gray-600">Renta mensual</p>
+                          </div>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                <RefreshCw className="w-6 h-6 mb-2" />
-                <span>Actualizar</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                          {tenant.outstandingBalance > 0 && (
+                            <div className="text-right">
+                              <p className="text-lg font-semibold text-red-600">
+                                {formatCurrency(tenant.outstandingBalance)}
+                              </p>
+                              <p className="text-sm text-gray-600">Saldo pendiente</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewTenant(tenant.id)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditTenant(tenant.id)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleContactTenant(tenant.email)}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </UnifiedDashboardLayout>
   );

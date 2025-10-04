@@ -1,384 +1,217 @@
-'use client';
-
-// Build fix - force update
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { Database,
-  Download,
-  Upload,
-  RefreshCw,
-  Calendar,
-  Clock,
-  HardDrive,
-  Shield,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Settings,
-  Trash2, Eye, Play,
-  Pause,
-  Archive,
-  Cloud,
-  Server,
-  Plus, Info
-} from 'lucide-react';
-import Link from 'next/link';
-import { User } from '@/types';
+import { User, Bell, Shield, CreditCard, Mail, Phone, MapPin, Save, Eye, EyeOff, Key } from 'lucide-react';
+import { User as UserType } from '@/types';
 
 
-interface Backup {
-  id: string;
-  name: string;
-  type: 'full' | 'incremental' | 'database' | 'files';
-  size: number;
-  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
-  createdAt: string;
-  completedAt?: string;
-  location: 'local' | 'cloud' | 'both';
-  description: string;
-  retentionDays: number;
-  encrypted: boolean;
-  checksum?: string;
-}
-
-interface BackupStats {
-  totalBackups: number;
-  totalSize: number;
-  lastBackup: string;
-  nextBackup: string;
-  successRate: number;
-  storageUsed: number;
-  storageAvailable: number;
-}
-
-interface BackupSchedule {
-  id: string;
-  name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  time: string;
-  type: 'full' | 'incremental';
-  enabled: boolean;
-  nextRun: string;
-  retention: number;
+interface OwnerSettings {
+  profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    region: string;
+    description: string;
+  };
+  notifications: {
+    emailNotifications: boolean;
+    paymentReminders: boolean;
+    maintenanceAlerts: boolean;
+    contractUpdates: boolean;
+    marketingEmails: boolean;
+  };
+  security: {
+    twoFactorEnabled: boolean;
+    sessionTimeout: number;
+    passwordLastChanged: string;
+  };
+  business: {
+    taxId: string;
+    businessType: string;
+    commissionRate: number;
+    paymentTerms: string;
+  };
 }
 
 export default function OwnerSettingsPage() {
-
-  const [user, setUser] = useState<User | null>(null);
-
-  const [backups, setBackups] = useState<Backup[]>([]);
-
-  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
-
-  const [stats, setStats] = useState<BackupStats>({
-    totalBackups: 0,
-    totalSize: 0,
-    lastBackup: '',
-    nextBackup: '',
-    successRate: 0,
-    storageUsed: 0,
-    storageAvailable: 0,
+  const [user, setUser] = useState<UserType | null>(null);
+  const [settings, setSettings] = useState<OwnerSettings>({
+    profile: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      region: '',
+      description: '',
+    },
+    notifications: {
+      emailNotifications: true,
+      paymentReminders: true,
+      maintenanceAlerts: true,
+      contractUpdates: true,
+      marketingEmails: false,
+    },
+    security: {
+      twoFactorEnabled: false,
+      sessionTimeout: 30,
+      passwordLastChanged: '',
+    },
+    business: {
+      taxId: '',
+      businessType: 'individual',
+      commissionRate: 5.0,
+      paymentTerms: '15 dÃ­as',
+    },
   });
-
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
+        setLoading(true);
+
+        // Load user data
+        const userResponse = await fetch('/api/auth/me');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
+
+          // Initialize settings with user data
+          setSettings(prev => ({
+            ...prev,
+            profile: {
+              ...prev.profile,
+              firstName: userData.user.firstName || '',
+              lastName: userData.user.lastName || '',
+              email: userData.user.email || '',
+              phone: userData.user.phone || '',
+            }
+          }));
         }
+
+        // Load settings (mock for now)
+        await loadSettings();
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
-      }
-    };
-
-    const loadBackupData = async () => {
-      try {
-        // Mock backups data
-        const mockBackups: Backup[] = [
-          {
-            id: '1',
-            name: 'Backup Completo Diario',
-            type: 'full',
-            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            location: 'both',
-            description: 'Backup completo del sistema incluyendo base de datos y archivos',
-            retentionDays: 30,
-            encrypted: true,
-            checksum: 'a1b2c3d4e5f6...',
-          },
-          {
-            id: '2',
-            name: 'Backup Incremental',
-            type: 'incremental',
-            size: 150 * 1024 * 1024, // 150 MB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
-            location: 'cloud',
-            description: 'Backup incremental con cambios desde el último backup completo',
-            retentionDays: 7,
-            encrypted: true,
-          },
-          {
-            id: '3',
-            name: 'Backup Base de Datos',
-            type: 'database',
-            size: 450 * 1024 * 1024, // 450 MB
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            location: 'local',
-            description: 'Backup exclusivo de la base de datos PostgreSQL',
-            retentionDays: 14,
-            encrypted: true,
-          },
-          {
-            id: '4',
-            name: 'Backup Archivos',
-            type: 'files',
-            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
-            status: 'failed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-            location: 'cloud',
-            description: 'Backup de archivos de usuario y medios',
-            retentionDays: 21,
-            encrypted: true,
-          },
-          {
-            id: '5',
-            name: 'Backup Programado',
-            type: 'full',
-            size: 0,
-            status: 'scheduled',
-            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            location: 'both',
-            description: 'Backup completo programado automáticamente',
-            retentionDays: 30,
-            encrypted: true,
-          },
-        ];
-
-        // Mock schedules
-        const mockSchedules: BackupSchedule[] = [
-          {
-            id: '1',
-            name: 'Backup Diario Completo',
-            frequency: 'daily',
-            time: '02:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            retention: 30,
-          },
-          {
-            id: '2',
-            name: 'Backup Incremental Horario',
-            frequency: 'daily',
-            time: '06:00, 12:00, 18:00',
-            type: 'incremental',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
-            retention: 7,
-          },
-          {
-            id: '3',
-            name: 'Backup Semanal',
-            frequency: 'weekly',
-            time: 'domingo 03:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-            retention: 90,
-          },
-        ];
-
-        setBackups(mockBackups);
-        setSchedules(mockSchedules);
-
-        // Calculate stats
-        const completedBackups = mockBackups.filter(b => b.status === 'completed');
-        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
-        const successRate = completedBackups.length > 0 ? 
-          (completedBackups.length / mockBackups.length) * 100 : 0;
-
-        const backupStats: BackupStats = {
-          totalBackups: mockBackups.length,
-          totalSize,
-          lastBackup: completedBackups.length > 0 ?
-            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
-          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
-          successRate,
-          storageUsed: totalSize,
-          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
-        };
-
-        setStats(backupStats);
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading data:', { error: error instanceof Error ? error.message : String(error) });
+      } finally {
         setLoading(false);
       }
     };
 
-    loadUserData();
-    loadBackupData();
+    loadData();
   }, []);
 
-  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
-    const newBackup: Backup = {
-      id: Date.now().toString(),
-      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
-      type,
-      size: 0,
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-      location: 'both',
-      description: `Backup ${type} iniciado manualmente`,
-      retentionDays: 30,
-      encrypted: true,
-    };
+  const loadSettings = async () => {
+    try {
+      // Mock settings data - in real app this would come from API
+      const mockSettings: Partial<OwnerSettings> = {
+        profile: {
+          firstName: 'Juan',
+          lastName: 'Pérez',
+          email: 'juan.perez@email.com',
+          phone: '+56987654321',
+          address: 'Av. Providencia 1234',
+          city: 'Santiago',
+          region: 'Metropolitana',
+          description: 'Propietario de propiedades residenciales con más de 10 años de experiencia.',
+        },
+        security: {
+          twoFactorEnabled: false,
+          sessionTimeout: 30,
+          passwordLastChanged: '2024-01-15',
+        },
+        business: {
+          taxId: '12.345.678-9',
+          businessType: 'company',
+          commissionRate: 5.0,
+          paymentTerms: '30 días',
+        },
+      };
 
-    setBackups(prev => [newBackup, ...prev]);
-  };
-
-  const deleteBackup = async (backupId: string) => {
-    setBackups(prev => prev.filter(backup => backup.id !== backupId));
-  };
-
-  const toggleSchedule = async (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { ...schedule, enabled: !schedule.enabled }
-        : schedule,
-    ));
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'in_progress':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'failed':
-        return 'text-red-600 bg-red-50 border-red-200';
-      case 'scheduled':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+      setSettings(prev => ({
+        ...prev,
+        ...mockSettings,
+        profile: { ...prev.profile, ...mockSettings.profile },
+        security: { ...prev.security, ...mockSettings.security },
+        business: { ...prev.business, ...mockSettings.business },
+      }));
+    } catch (error) {
+      logger.error('Error loading settings:', { error: error instanceof Error ? error.message : String(error) });
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
-      default:
-        return <Badge>Desconocido</Badge>;
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      alert('ConfiguraciÃ³n guardada exitosamente');
+    } catch (error) {
+      logger.error('Error saving settings:', { error: error instanceof Error ? error.message : String(error) });
+      alert('Error al guardar la configuraciÃ³n');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'in_progress':
-        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      case 'scheduled':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
+  const updateProfile = (field: string, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      profile: {
+        ...prev.profile,
+        [field]: value,
+      },
+    }));
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'full':
-        return <Archive className="w-5 h-5" />;
-      case 'incremental':
-        return <RefreshCw className="w-5 h-5" />;
-      case 'database':
-        return <Database className="w-5 h-5" />;
-      case 'files':
-        return <HardDrive className="w-5 h-5" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
+  const updateNotifications = (field: string, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [field]: value,
+      },
+    }));
   };
 
-  const getLocationIcon = (location: string) => {
-    switch (location) {
-      case 'local':
-        return <Server className="w-4 h-4" />;
-      case 'cloud':
-        return <Cloud className="w-4 h-4" />;
-      case 'both':
-        return <div className="flex gap-1">
-          <Server className="w-4 h-4" />
-          <Cloud className="w-4 h-4" />
-        </div>;
-      default:
-        return <Server className="w-4 h-4" />;
-    }
+  const updateSecurity = (field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      security: {
+        ...prev.security,
+        [field]: value,
+      },
+    }));
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) {
-return '0 B';
-}
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
-    }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
-    }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    }
-
-    return date.toLocaleDateString('es-CL');
+  const updateBusiness = (field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      business: {
+        ...prev.business,
+        [field]: value,
+      },
+    }));
   };
 
   if (loading) {
@@ -393,267 +226,348 @@ return '0 B';
   }
 
   return (
-    <UnifiedDashboardLayout title="Configuración" subtitle="Gestiona tu perfil y preferencias de propietario">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header with actions */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => createBackup('full')}>
-                    <Play className="w-4 h-4 mr-2" />
-                    Backup Completo
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Backup Incremental
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configuración
-                  </Button>
-                </div>
-              </div>
+    <UnifiedDashboardLayout title="ConfiguraciÃ³n" subtitle="Gestiona tu perfil y preferencias de propietario">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">ConfiguraciÃ³n</h1>
+          <p className="text-gray-600">Administra tu perfil, preferencias de notificaciones y configuraciÃ³n de seguridad</p>
+        </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Archive className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
+            <TabsTrigger value="security">Seguridad</TabsTrigger>
+            <TabsTrigger value="business">Negocio</TabsTrigger>
+          </TabsList>
 
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <HardDrive className="w-6 h-6 text-green-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
-                      </div>
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Backup List */}
-                <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Historial de Backups</CardTitle>
-                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {backups.map((backup) => (
-                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
-                                    {getTypeIcon(backup.type)}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
-                                      {getStatusBadge(backup.status)}
-                                      {backup.encrypted && (
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                    <Shield className="w-3 h-3 mr-1" />
-                                    Encriptado
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <HardDrive className="w-3 h-3" />
-                                  <span>{formatBytes(backup.size)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {getLocationIcon(backup.location)}
-                                  <span className="capitalize">{backup.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{formatRelativeTime(backup.createdAt)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{backup.retentionDays} días retención</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            {backup.status === 'completed' && (
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => deleteBackup(backup.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Backup Schedules */}
-          <div>
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Programación</CardTitle>
-                <CardDescription>Backups automáticos programados</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  InformaciÃ³n Personal
+                </CardTitle>
+                <CardDescription>
+                  Actualiza tu informaciÃ³n personal y de contacto
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {schedules.map((schedule) => (
-                    <Card key={schedule.id} className="border">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-sm">{schedule.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.frequency === 'daily' ? 'Diario' : 
-                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={schedule.enabled ? 'default' : 'outline'}
-                            onClick={() => toggleSchedule(schedule.id)}
-                          >
-                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                        
-                        <div className="space-y-2 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>Horario:</span>
-                            <span>{schedule.time}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Próxima ejecución:</span>
-                            <span>{formatRelativeTime(schedule.nextRun)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Retención:</span>
-                            <span>{schedule.retention} días</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                <Button className="w-full mt-4" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Programación
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Storage Info */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Almacenamiento</CardTitle>
-                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Usado</span>
-                      <span>{formatBytes(stats.storageUsed)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
-                      ></div>
-                    </div>
+                    <Label htmlFor="firstName">Nombre</Label>
+                    <Input
+                      id="firstName"
+                      value={settings.profile.firstName}
+                      onChange={(e) => updateProfile('firstName', e.target.value)}
+                      placeholder="Tu nombre"
+                    />
                   </div>
-                  
-                  <div className="text-xs text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Disponible:</span>
-                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>{formatBytes(stats.storageAvailable)}</span>
-                    </div>
+                  <div>
+                    <Label htmlFor="lastName">Apellido</Label>
+                    <Input
+                      id="lastName"
+                      value={settings.profile.lastName}
+                      onChange={(e) => updateProfile('lastName', e.target.value)}
+                      placeholder="Tu apellido"
+                    />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="email">Correo ElectrÃ³nico</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={settings.profile.email}
+                    onChange={(e) => updateProfile('email', e.target.value)}
+                    placeholder="tu@email.com"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="phone">TelÃ©fono</Label>
+                  <Input
+                    id="phone"
+                    value={settings.profile.phone}
+                    onChange={(e) => updateProfile('phone', e.target.value)}
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="address">DirecciÃ³n</Label>
+                  <Input
+                    id="address"
+                    value={settings.profile.address}
+                    onChange={(e) => updateProfile('address', e.target.value)}
+                    placeholder="Tu direcciÃ³n completa"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city">Ciudad</Label>
+                    <Input
+                      id="city"
+                      value={settings.profile.city}
+                      onChange={(e) => updateProfile('city', e.target.value)}
+                      placeholder="Ciudad"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="region">RegiÃ³n</Label>
+                    <Select value={settings.profile.region} onValueChange={(value) => updateProfile('region', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona regiÃ³n" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Metropolitana">Metropolitana</SelectItem>
+                        <SelectItem value="ValparaÃ­so">ValparaÃ­so</SelectItem>
+                        <SelectItem value="BiobÃ­o">BiobÃ­o</SelectItem>
+                        <SelectItem value="Maule">Maule</SelectItem>
+                        <SelectItem value="AraucanÃ­a">AraucanÃ­a</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">DescripciÃ³n</Label>
+                  <Textarea
+                    id="description"
+                    value={settings.profile.description}
+                    onChange={(e) => updateProfile('description', e.target.value)}
+                    placeholder="CuÃ©ntanos sobre ti y tu experiencia como propietario..."
+                    rows={4}
+                  />
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Preferencias de Notificaciones
+                </CardTitle>
+                <CardDescription>
+                  Configura cÃ³mo y cuÃ¡ndo quieres recibir notificaciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="email-notifications">Notificaciones por Email</Label>
+                    <p className="text-sm text-gray-600">Recibe actualizaciones importantes por correo</p>
+                  </div>
+                  <Switch
+                    id="email-notifications"
+                    checked={settings.notifications.emailNotifications}
+                    onCheckedChange={(checked) => updateNotifications('emailNotifications', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="payment-reminders">Recordatorios de Pago</Label>
+                    <p className="text-sm text-gray-600">Recibe alertas sobre pagos pendientes</p>
+                  </div>
+                  <Switch
+                    id="payment-reminders"
+                    checked={settings.notifications.paymentReminders}
+                    onCheckedChange={(checked) => updateNotifications('paymentReminders', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="maintenance-alerts">Alertas de Mantenimiento</Label>
+                    <p className="text-sm text-gray-600">Notificaciones sobre solicitudes de mantenimiento</p>
+                  </div>
+                  <Switch
+                    id="maintenance-alerts"
+                    checked={settings.notifications.maintenanceAlerts}
+                    onCheckedChange={(checked) => updateNotifications('maintenanceAlerts', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="contract-updates">Actualizaciones de Contratos</Label>
+                    <p className="text-sm text-gray-600">Cambios en contratos y renovaciones</p>
+                  </div>
+                  <Switch
+                    id="contract-updates"
+                    checked={settings.notifications.contractUpdates}
+                    onCheckedChange={(checked) => updateNotifications('contractUpdates', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="marketing-emails">Emails de Marketing</Label>
+                    <p className="text-sm text-gray-600">Ofertas y novedades de Rent360</p>
+                  </div>
+                  <Switch
+                    id="marketing-emails"
+                    checked={settings.notifications.marketingEmails}
+                    onCheckedChange={(checked) => updateNotifications('marketingEmails', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Seguridad de la Cuenta
+                </CardTitle>
+                <CardDescription>
+                  Gestiona la seguridad de tu cuenta
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="two-factor">AutenticaciÃ³n de Dos Factores</Label>
+                    <p className="text-sm text-gray-600">AÃ±ade una capa extra de seguridad</p>
+                  </div>
+                  <Switch
+                    id="two-factor"
+                    checked={settings.security.twoFactorEnabled}
+                    onCheckedChange={(checked) => updateSecurity('twoFactorEnabled', checked)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="session-timeout">Tiempo de SesiÃ³n (minutos)</Label>
+                  <Select
+                    value={settings.security.sessionTimeout.toString()}
+                    onValueChange={(value) => updateSecurity('sessionTimeout', parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">1 hora</SelectItem>
+                      <SelectItem value="240">4 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Ãšltimo Cambio de ContraseÃ±a</Label>
+                  <p className="text-sm text-gray-600">
+                    {settings.security.passwordLastChanged
+                      ? new Date(settings.security.passwordLastChanged).toLocaleDateString('es-CL')
+                      : 'Nunca'}
+                  </p>
+                  <Button variant="outline" className="mt-2">
+                    <Key className="w-4 h-4 mr-2" />
+                    Cambiar ContraseÃ±a
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Business Tab */}
+          <TabsContent value="business" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  InformaciÃ³n Empresarial
+                </CardTitle>
+                <CardDescription>
+                  Configura tu informaciÃ³n fiscal y de negocio
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="tax-id">RUT / ID Fiscal</Label>
+                  <Input
+                    id="tax-id"
+                    value={settings.business.taxId}
+                    onChange={(e) => updateBusiness('taxId', e.target.value)}
+                    placeholder="12.345.678-9"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="business-type">Tipo de Negocio</Label>
+                  <Select
+                    value={settings.business.businessType}
+                    onValueChange={(value) => updateBusiness('businessType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">Persona Natural</SelectItem>
+                      <SelectItem value="company">Empresa</SelectItem>
+                      <SelectItem value="partnership">Sociedad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="commission-rate">Tasa de ComisiÃ³n (%)</Label>
+                  <Input
+                    id="commission-rate"
+                    type="number"
+                    step="0.1"
+                    value={settings.business.commissionRate}
+                    onChange={(e) => updateBusiness('commissionRate', parseFloat(e.target.value) || 0)}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Esta tasa es configurada por el administrador del sistema
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="payment-terms">TÃ©rminos de Pago</Label>
+                  <Input
+                    id="payment-terms"
+                    value={settings.business.paymentTerms}
+                    onChange={(e) => updateBusiness('paymentTerms', e.target.value)}
+                    placeholder="Ej: 30 dÃ­as"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end mt-6">
+          <Button onClick={handleSaveSettings} disabled={saving}>
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Cambios
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </UnifiedDashboardLayout>
   );
 }
-
-
