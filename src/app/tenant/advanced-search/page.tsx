@@ -66,6 +66,43 @@ export default function BúsquedaAvanzadaPage() {
     }
   };
 
+  const handleSaveSearch = () => {
+    // Mock data for saved search
+    const currentFilters = {
+      location: 'Las Condes',
+      priceRange: { min: 300000, max: 600000 },
+      bedrooms: 2,
+      bathrooms: 1,
+      propertyType: 'APARTMENT',
+      features: ['parking', 'elevator']
+    };
+
+    // Save to localStorage for demo (in real app this would go to API)
+    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    const newSearch = {
+      id: Date.now().toString(),
+      name: `Búsqueda ${new Date().toLocaleDateString()}`,
+      filters: currentFilters,
+      createdAt: new Date().toISOString()
+    };
+
+    savedSearches.push(newSearch);
+    localStorage.setItem('savedSearches', JSON.stringify(savedSearches));
+
+    alert('Búsqueda guardada exitosamente');
+  };
+
+  const handleOpenFilters = () => {
+    // Scroll to filter section or open modal
+    const filterSection = document.querySelector('[data-filters]');
+    if (filterSection) {
+      filterSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // If no filter section exists, navigate to properties search
+      router.push('/properties/search');
+    }
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Búsqueda Avanzada" subtitle="Cargando información...">
@@ -206,24 +243,14 @@ export default function BúsquedaAvanzadaPage() {
                 icon={Filter}
                 label="Filtros"
                 description="Aplicar filtros"
-                onClick={() => {
-                  // Scroll to filter section
-                  const filterSection = document.querySelector('[data-filters]');
-                  if (filterSection) {
-                    filterSection.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    alert('Funcionalidad: Abrir panel de filtros avanzados');
-                  }
-                }}
+                onClick={handleOpenFilters}
               />
 
               <QuickActionButton
                 icon={Download}
-                label="Exportar"
+                label="Guardar"
                 description="Guardar búsqueda"
-                onClick={() => {
-                  alert('Funcionalidad: Guardar criterios de búsqueda para uso futuro');
-                }}
+                onClick={handleSaveSearch}
               />
 
               <QuickActionButton

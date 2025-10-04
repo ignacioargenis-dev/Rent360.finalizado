@@ -55,6 +55,55 @@ export default function CalificacionesPage() {
     }
   };
 
+  const handleNewRating = () => {
+    // Navigate to properties search to rate a property/service
+    router.push('/properties/search');
+  };
+
+  const handleExportRatings = () => {
+    // Mock data for export - in real app this would come from state
+    const mockRatings = [
+      {
+        date: '2024-01-15',
+        property: 'Departamento Las Condes',
+        rating: 5,
+        comment: 'Excelente propiedad, muy cómoda y bien ubicada.'
+      },
+      {
+        date: '2024-01-10',
+        property: 'Casa Providencia',
+        rating: 4,
+        comment: 'Buena propiedad, solo faltó algunos detalles menores.'
+      }
+    ];
+
+    if (mockRatings.length === 0) {
+      alert('No hay calificaciones para exportar');
+      return;
+    }
+
+    // Create CSV content
+    const csvHeaders = ['Fecha', 'Propiedad', 'Calificación', 'Comentario'];
+    const csvRows = mockRatings.map(rating =>
+      [rating.date, rating.property, rating.rating.toString(), rating.comment]
+    );
+
+    const csvContent = [csvHeaders, ...csvRows]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `calificaciones_tenant_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Calificaciones" subtitle="Cargando información...">
@@ -177,7 +226,7 @@ export default function CalificacionesPage() {
                 icon={Plus}
                 label="Nueva Calificación"
                 description="Calificar servicio"
-                onClick={() => alert('Funcionalidad: Abrir formulario para calificar un servicio')}
+                onClick={handleNewRating}
               />
 
               <QuickActionButton
@@ -200,9 +249,7 @@ export default function CalificacionesPage() {
                 icon={Download}
                 label="Exportar"
                 description="Descargar reviews"
-                onClick={() => {
-                  alert('Funcionalidad: Exportar calificaciones en formato CSV');
-                }}
+                onClick={handleExportRatings}
               />
 
               <QuickActionButton

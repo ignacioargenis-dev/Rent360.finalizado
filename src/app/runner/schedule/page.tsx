@@ -52,7 +52,7 @@ export default function HorarioPage() {
 
   const [loading, setLoading] = useState(true);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -66,13 +66,62 @@ export default function HorarioPage() {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/runner/schedule`);
-      // const result = await response.json();
-      // setData(result);
+      // Mock schedule data for runner
+      const mockSchedule = {
+        overview: {
+          todayVisits: 3,
+          weekVisits: 12,
+          monthVisits: 45,
+          pendingVisits: 2,
+          completedToday: 1
+        },
+        todaySchedule: [
+          {
+            id: '1',
+            time: '09:00',
+            duration: '1.5 horas',
+            type: 'Visita inicial',
+            property: 'Departamento Las Condes',
+            address: 'Av. Apoquindo 1234',
+            client: 'María González',
+            status: 'completed',
+            notes: 'Cliente interesado en propiedad de 2 dormitorios'
+          },
+          {
+            id: '2',
+            time: '11:30',
+            duration: '2 horas',
+            type: 'Fotografía',
+            property: 'Casa Providencia',
+            address: 'Providencia 5678',
+            client: 'Propietario Casa Providencia',
+            status: 'in_progress',
+            notes: 'Tomar fotos profesionales de todas las habitaciones'
+          },
+          {
+            id: '3',
+            time: '15:00',
+            duration: '45 minutos',
+            type: 'Entrega de llaves',
+            property: 'Estudio Centro',
+            address: 'Centro 999',
+            client: 'Carlos Rodríguez',
+            status: 'pending',
+            notes: 'Nuevo inquilino - verificar documentos'
+          }
+        ],
+        weekSchedule: [
+          { day: 'Lunes', visits: 4, completed: 4 },
+          { day: 'Martes', visits: 3, completed: 2 },
+          { day: 'Miércoles', visits: 5, completed: 3 },
+          { day: 'Jueves', visits: 4, completed: 4 },
+          { day: 'Viernes', visits: 2, completed: 1 },
+          { day: 'Sábado', visits: 1, completed: 0 },
+          { day: 'Domingo', visits: 0, completed: 0 }
+        ]
+      };
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setData(mockSchedule);
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -116,33 +165,87 @@ export default function HorarioPage() {
     );
   }
 
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      completed: { label: 'Completada', color: 'bg-green-100 text-green-800' },
+      in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
+      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const handleNewVisit = () => {
+    router.push('/runner/visits/new');
+  };
+
+  const handleViewVisit = (visitId: string) => {
+    router.push(`/runner/visits/${visitId}`);
+  };
+
+  const handleExportSchedule = () => {
+    if (!data) return;
+
+    const csvContent = [
+      ['Hora', 'Tipo', 'Propiedad', 'Dirección', 'Cliente', 'Estado', 'Notas']
+    ];
+
+    data.todaySchedule.forEach((visit: any) => {
+      csvContent.push([
+        visit.time,
+        visit.type,
+        visit.property,
+        visit.address,
+        visit.client,
+        visit.status,
+        visit.notes
+      ]);
+    });
+
+    const csvString = csvContent.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `agenda_runner_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <UnifiedDashboardLayout
-      title="Horario"
-      subtitle="Gestiona y visualiza la información de horario"
+      title="Mi Horario"
+      subtitle="Gestiona tus visitas y actividades programadas"
     >
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Visitas Hoy</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.todayVisits || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {data?.overview.completedToday || 0} completadas
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.weekVisits || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Visitas programadas
+              </p>
             </CardContent>
           </Card>
 
@@ -152,43 +255,121 @@ export default function HorarioPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.pendingVisits || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Requieren atención
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Este Mes</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.monthVisits || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Total de visitas
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Agenda del día */}
         <Card>
           <CardHeader>
-            <CardTitle>Horario</CardTitle>
+            <CardTitle>Agenda de Hoy</CardTitle>
             <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con horario.
+              Tus visitas y actividades programadas para {new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
-                funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+            <div className="space-y-4">
+              {data?.todaySchedule.map((visit: any, index: number) => (
+                <Card key={visit.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="flex flex-col items-center">
+                          <div className="text-lg font-bold text-blue-600">{visit.time}</div>
+                          <div className="text-xs text-gray-500">{visit.duration}</div>
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{visit.type}</h3>
+                            {getStatusBadge(visit.status)}
+                          </div>
+
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4" />
+                              <span>{visit.property}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{visit.address}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4" />
+                              <span>{visit.client}</span>
+                            </div>
+                          </div>
+
+                          {visit.notes && (
+                            <div className="mt-2 text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                              <strong>Notas:</strong> {visit.notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewVisit(visit.id)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver
+                        </Button>
+                        {visit.status !== 'completed' && (
+                          <Button size="sm">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Completar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resumen semanal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumen Semanal</CardTitle>
+            <CardDescription>Visitas programadas por día de la semana</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-7 gap-4">
+              {data?.weekSchedule.map((day: any, index: number) => (
+                <div key={index} className="text-center">
+                  <div className="text-sm font-medium text-gray-700 mb-2">{day.day}</div>
+                  <div className="space-y-1">
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                      {day.visits} programadas
+                    </div>
+                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                      {day.completed} completadas
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -205,7 +386,7 @@ export default function HorarioPage() {
                 icon={Plus}
                 label="Nueva Visita"
                 description="Agendar visita"
-                onClick={() => router.push('/runner/visits/new')}
+                onClick={handleNewVisit}
               />
 
               <QuickActionButton
@@ -228,9 +409,7 @@ export default function HorarioPage() {
                 icon={Download}
                 label="Exportar"
                 description="Descargar agenda"
-                onClick={() => {
-                  alert('Funcionalidad: Exportar agenda en formato PDF/calendario');
-                }}
+                onClick={handleExportSchedule}
               />
 
               <QuickActionButton

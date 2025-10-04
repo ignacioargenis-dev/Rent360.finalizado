@@ -52,7 +52,7 @@ export default function ReportesPage() {
 
   const [loading, setLoading] = useState(true);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -66,13 +66,53 @@ export default function ReportesPage() {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos específicos de la página
-      // const response = await fetch(`/api/runner/reports`);
-      // const result = await response.json();
-      // setData(result);
+      // Mock reports data for runner
+      const mockReports = {
+        overview: {
+          totalVisits: 156,
+          totalConversions: 23,
+          conversionRate: 14.7,
+          avgVisitDuration: 45,
+          topPerformingAreas: ['Las Condes', 'Providencia', 'Vitacura'],
+          monthlyGrowth: 8.5
+        },
+        conversions: {
+          byType: [
+            { type: 'Alquiler', count: 12, percentage: 52.2 },
+            { type: 'Venta', count: 8, percentage: 34.8 },
+            { type: 'Información', count: 3, percentage: 13.0 }
+          ],
+          byProperty: [
+            { property: 'Departamento Las Condes', conversions: 5 },
+            { property: 'Casa Providencia', conversions: 3 },
+            { property: 'Estudio Centro', conversions: 2 }
+          ]
+        },
+        visits: {
+          byDay: [
+            { day: 'Lunes', visits: 28, conversions: 4 },
+            { day: 'Martes', visits: 32, conversions: 6 },
+            { day: 'Miércoles', visits: 35, conversions: 5 },
+            { day: 'Jueves', visits: 31, conversions: 4 },
+            { day: 'Viernes', visits: 30, conversions: 4 }
+          ],
+          byTime: [
+            { time: '09:00-11:00', visits: 25 },
+            { time: '11:00-13:00', visits: 35 },
+            { time: '14:00-16:00', visits: 42 },
+            { time: '16:00-18:00', visits: 38 },
+            { time: '18:00-20:00', visits: 16 }
+          ]
+        },
+        performance: {
+          avgRating: 4.3,
+          totalPhotos: 1247,
+          reportsSubmitted: 89,
+          tasksCompleted: 145
+        }
+      };
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setData(mockReports);
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -116,82 +156,203 @@ export default function ReportesPage() {
     );
   }
 
+  const handleExportReports = () => {
+    if (!data) return;
+
+    const csvContent = [
+      ['Métrica', 'Valor'],
+      ['Visitas Totales', data.overview.totalVisits.toString()],
+      ['Conversiones Totales', data.overview.totalConversions.toString()],
+      ['Tasa de Conversión', `${data.overview.conversionRate}%`],
+      ['Duración Promedio Visita', `${data.overview.avgVisitDuration} min`],
+      ['Crecimiento Mensual', `${data.overview.monthlyGrowth}%`],
+      ['Calificación Promedio', data.performance.avgRating.toString()],
+      ['Fotos Totales', data.performance.totalPhotos.toString()],
+      ['Reportes Enviados', data.performance.reportsSubmitted.toString()],
+      ['Tareas Completadas', data.performance.tasksCompleted.toString()]
+    ];
+
+    const csvString = csvContent.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reportes_runner_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <UnifiedDashboardLayout
-      title="Reportes"
-      subtitle="Gestiona y visualiza la información de reportes"
+      title="Mis Reportes"
+      subtitle="Visualiza tu rendimiento y estadísticas"
     >
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Visitas Totales</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.totalVisits || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                +{data?.overview.monthlyGrowth || 0}% este mes
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Conversiones</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.totalConversions || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Tasa: {data?.overview.conversionRate || 0}%
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+              <CardTitle className="text-sm font-medium">Duración Promedio</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.avgVisitDuration || 0} min</div>
+              <p className="text-xs text-muted-foreground">
+                Por visita
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Calificación</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.performance.avgRating || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Promedio de clientes
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Reportes</CardTitle>
-            <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con reportes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
-                funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Conversiones por tipo */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversiones por Tipo</CardTitle>
+              <CardDescription>Distribución de conversiones según el tipo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data?.conversions.byType.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-sm font-medium">{item.type}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold">{item.count}</div>
+                      <div className="text-xs text-gray-600">{item.percentage}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Visitas por día */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Visitas por Día</CardTitle>
+              <CardDescription>Distribución semanal de visitas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data?.visits.byDay.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-sm">{item.day}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-gray-600">
+                        {item.visits} visitas
+                      </div>
+                      <div className="text-sm font-medium text-green-600">
+                        {item.conversions} conv.
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Rendimiento general */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Rendimiento General</CardTitle>
+              <CardDescription>Métricas de desempeño del mes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-blue-500" />
+                    <span>Fotos tomadas</span>
+                  </div>
+                  <div className="font-bold">{data?.performance.totalPhotos || 0}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-green-500" />
+                    <span>Reportes enviados</span>
+                  </div>
+                  <div className="font-bold">{data?.performance.reportsSubmitted || 0}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-500" />
+                    <span>Tareas completadas</span>
+                  </div>
+                  <div className="font-bold">{data?.performance.tasksCompleted || 0}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Zonas más activas */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Zonas Más Activas</CardTitle>
+              <CardDescription>Áreas con mayor actividad</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data?.overview.topPerformingAreas.map((area: string, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-red-500" />
+                      <span className="text-sm">{area}</span>
+                    </div>
+                    <Badge variant="outline">#{index + 1}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Acciones rápidas */}
         <Card>
@@ -205,7 +366,7 @@ export default function ReportesPage() {
                 icon={Plus}
                 label="Nuevo Reporte"
                 description="Crear reporte"
-                onClick={() => alert('Funcionalidad: Crear nuevo reporte')}
+                onClick={() => router.push('/runner/reports/new')}
               />
 
               <QuickActionButton

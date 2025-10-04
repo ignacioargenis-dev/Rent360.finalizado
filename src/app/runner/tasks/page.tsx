@@ -52,20 +52,83 @@ export default function TareasPage() {
 
   const [loading, setLoading] = useState(true);
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
 
   const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      // Simulated API call
-      const response = await fetch('/api/tasks');
-      if (!response.ok) {
-        throw new Error('Error al cargar los datos');
-      }
-      const data = await response.json();
-      setData(data);
+      // Mock data for runner tasks
+      const mockTasks = {
+        overview: {
+          totalTasks: 24,
+          completedTasks: 18,
+          pendingTasks: 6,
+          inProgressTasks: 3,
+          todayTasks: 5,
+          thisWeekTasks: 12
+        },
+        tasks: [
+          {
+            id: '1',
+            title: 'Visita inicial - Departamento Las Condes',
+            description: 'Realizar visita inicial para mostrar propiedad a potencial inquilino',
+            status: 'completed',
+            priority: 'high',
+            dueDate: '2024-01-15',
+            propertyAddress: 'Av. Apoquindo 1234, Las Condes',
+            clientName: 'María González',
+            estimatedDuration: '2 horas'
+          },
+          {
+            id: '2',
+            title: 'Fotografía - Casa Providencia',
+            description: 'Tomar fotografías profesionales de la propiedad para actualizar listado',
+            status: 'in_progress',
+            priority: 'medium',
+            dueDate: '2024-01-18',
+            propertyAddress: 'Providencia 5678',
+            clientName: 'Propietario Casa Providencia',
+            estimatedDuration: '1.5 horas'
+          },
+          {
+            id: '3',
+            title: 'Inspección mantenimiento - Edificio Centro',
+            description: 'Verificar estado de instalaciones y reportar necesidades de mantenimiento',
+            status: 'pending',
+            priority: 'high',
+            dueDate: '2024-01-20',
+            propertyAddress: 'Centro 999, Santiago Centro',
+            clientName: 'Administrador Edificio',
+            estimatedDuration: '3 horas'
+          },
+          {
+            id: '4',
+            title: 'Entrega de llaves - Estudio Ñuñoa',
+            description: 'Coordinar entrega de llaves al nuevo inquilino',
+            status: 'pending',
+            priority: 'medium',
+            dueDate: '2024-01-22',
+            propertyAddress: 'Ñuñoa 4321',
+            clientName: 'Carlos Rodríguez',
+            estimatedDuration: '30 minutos'
+          },
+          {
+            id: '5',
+            title: 'Actualización de precios - Portafolio completo',
+            description: 'Revisar y actualizar precios de propiedades según mercado actual',
+            status: 'pending',
+            priority: 'low',
+            dueDate: '2024-01-25',
+            propertyAddress: 'Múltiples propiedades',
+            clientName: 'Equipo de Ventas',
+            estimatedDuration: '4 horas'
+          }
+        ]
+      };
+
+      setData(mockTasks);
       setError(null);
     } catch (error) {
       setError('Error al cargar los datos');
@@ -137,30 +200,69 @@ export default function TareasPage() {
     );
   }
 
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      completed: { label: 'Completada', color: 'bg-green-100 text-green-800' },
+      in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
+      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      high: { label: 'Alta', color: 'bg-red-100 text-red-800' },
+      medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800' },
+      low: { label: 'Baja', color: 'bg-green-100 text-green-800' }
+    };
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const handleCreateTask = () => {
+    router.push('/runner/tasks/new');
+  };
+
+  const handleViewTask = (taskId: string) => {
+    router.push(`/runner/tasks/${taskId}`);
+  };
+
+  const handleMarkCompleted = (taskId: string) => {
+    // In a real app, this would make an API call
+    // For now, just refresh the data to simulate completion
+    fetchTasks(); // Refresh data
+  };
+
   return (
-    <UnifiedDashboardLayout title="Tareas" subtitle="Gestiona y visualiza la información de tareas">
+    <UnifiedDashboardLayout title="Tareas" subtitle="Gestiona tus tareas diarias">
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Tareas</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.totalTasks || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {data?.overview.completedTasks || 0} completadas
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">En Progreso</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.inProgressTasks || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Activas actualmente
+              </p>
             </CardContent>
           </Card>
 
@@ -170,43 +272,94 @@ export default function TareasPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.pendingTasks || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Requieren atención
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Hoy</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">+0% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{data?.overview.todayTasks || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Para completar hoy
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contenido principal */}
+        {/* Lista de tareas */}
         <Card>
           <CardHeader>
-            <CardTitle>Tareas</CardTitle>
+            <CardTitle>Mis Tareas</CardTitle>
             <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con tareas.
+              Lista de todas tus tareas asignadas y su estado actual
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
-              <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
-                funcionalidades.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nuevo
-              </Button>
+            <div className="space-y-4">
+              {data?.tasks.map((task: any, index: number) => (
+                <Card key={task.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{task.title}</h3>
+                          {getStatusBadge(task.status)}
+                          {getPriorityBadge(task.priority)}
+                        </div>
+
+                        <p className="text-gray-600 mb-3">{task.description}</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            <span>{task.propertyAddress}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>{task.clientName}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>Vence: {new Date(task.dueDate).toLocaleDateString('es-CL')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>Duración estimada: {task.estimatedDuration}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewTask(task.id)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Ver
+                        </Button>
+
+                        {task.status !== 'completed' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkCompleted(task.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Completar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -223,7 +376,7 @@ export default function TareasPage() {
                 icon={Plus}
                 label="Nueva Tarea"
                 description="Crear tarea"
-                onClick={() => alert('Funcionalidad: Abrir formulario para crear nueva tarea')}
+                onClick={handleCreateTask}
               />
 
               <QuickActionButton
@@ -268,8 +421,7 @@ export default function TareasPage() {
                   ];
 
                   if (mockTasks.length === 0) {
-                    alert('No hay tareas para exportar');
-                    return;
+                    return; // No tasks to export
                   }
 
                   const csvData = mockTasks.map(task => ({
