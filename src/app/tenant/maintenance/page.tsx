@@ -219,7 +219,7 @@ export default function MantenimientoPage() {
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
+              <Button onClick={loadMaintenanceData}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -305,6 +305,11 @@ export default function MantenimientoPage() {
 
   const handleExportReport = () => {
     // Simulate export
+    if (maintenanceRequests.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
     const csvData = maintenanceRequests.map(request => ({
       ID: request.id,
       Propiedad: request.propertyTitle,
@@ -321,7 +326,7 @@ export default function MantenimientoPage() {
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]).join(',') +
+      Object.keys(csvData[0]!).join(',') +
       '\n' +
       csvData.map(row => Object.values(row).join(',')).join('\n');
 
