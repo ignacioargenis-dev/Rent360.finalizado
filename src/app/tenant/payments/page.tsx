@@ -33,7 +33,7 @@ import {
   Calendar,
   TrendingUp,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface Payment {
@@ -234,20 +234,20 @@ export default function TenantPaymentsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Mis Pagos" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Mis Pagos" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando pagos...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Mis Pagos" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Mis Pagos" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -261,12 +261,12 @@ export default function TenantPaymentsPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Mis Pagos"
       subtitle="Gestiona y visualiza tu historial de pagos de arriendo"
     >
@@ -479,6 +479,6 @@ export default function TenantPaymentsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

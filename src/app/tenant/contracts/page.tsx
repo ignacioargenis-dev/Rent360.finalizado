@@ -17,14 +17,20 @@ import {
   Filter,
   Search,
   FileText,
-  User
+  User,
 } from 'lucide-react';
 import { Contract, Property } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface ContractWithDetails extends Contract {
   property?: Property;
@@ -52,7 +58,7 @@ export default function TenantContractsPage() {
 
     setTimeout(() => {
       setContracts([
-                {
+        {
           id: 'pending-tenant-1',
           contractNumber: 'CTR-2024-004',
           propertyId: '4',
@@ -94,7 +100,7 @@ export default function TenantContractsPage() {
           },
           ownerName: 'Propietario Ñuñoa',
         },
-                {
+        {
           id: '1',
           contractNumber: 'CTR-2024-001',
           propertyId: '1',
@@ -106,7 +112,8 @@ export default function TenantContractsPage() {
           deposit: 550000,
           status: 'ACTIVE' as any,
           brokerId: '3',
-          terms: 'Contrato estándar de arrendamiento por 12 meses con cláusulas de garantía y mantenimiento.',
+          terms:
+            'Contrato estándar de arrendamiento por 12 meses con cláusulas de garantía y mantenimiento.',
           signedAt: new Date('2023-12-20'),
           terminatedAt: null,
           createdAt: new Date('2023-12-15'),
@@ -209,11 +216,11 @@ export default function TenantContractsPage() {
 
   const handleSignatureComplete = (signatureId: string) => {
     // Actualizar el estado del contrato a firmado
-    setContracts(prev => prev.map(contract =>
-      contract.id === selectedContract?.id
-        ? { ...contract, status: 'ACTIVE' as any }
-        : contract
-    ));
+    setContracts(prev =>
+      prev.map(contract =>
+        contract.id === selectedContract?.id ? { ...contract, status: 'ACTIVE' as any } : contract
+      )
+    );
     setShowSignatureDialog(false);
     setSelectedContract(null);
   };
@@ -239,8 +246,9 @@ export default function TenantContractsPage() {
   };
 
   const filteredContracts = contracts.filter(contract => {
-    const matchesSearch = contract.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.ownerName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      contract.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.ownerName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -257,13 +265,11 @@ export default function TenantContractsPage() {
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
-        user={user}
-        title="Mis Contratos"
-        subtitle="Gestiona tus contratos de arriendo"
-      />
-
+    <UnifiedDashboardLayout
+      user={user}
+      title="Mis Contratos"
+      subtitle="Gestiona tus contratos de arriendo"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -342,7 +348,7 @@ export default function TenantContractsPage() {
                     placeholder="Buscar por propiedad o propietario..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
@@ -350,7 +356,7 @@ export default function TenantContractsPage() {
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="ACTIVE">Activos</option>
@@ -369,7 +375,7 @@ export default function TenantContractsPage() {
 
         {/* Contracts List */}
         <div className="space-y-4">
-          {filteredContracts.map((contract) => (
+          {filteredContracts.map(contract => (
             <Card key={contract.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -390,19 +396,27 @@ export default function TenantContractsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-gray-600">Arriendo mensual</p>
-                        <p className="font-semibold text-gray-900">{formatPrice(contract.monthlyRent)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {formatPrice(contract.monthlyRent)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Depósito</p>
-                        <p className="font-semibold text-gray-900">{formatPrice(contract.deposit)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {formatPrice(contract.deposit)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Inicio</p>
-                        <p className="font-semibold text-gray-900">{formatDate(contract.startDate)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {formatDate(contract.startDate)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Término</p>
-                        <p className="font-semibold text-gray-900">{formatDate(contract.endDate)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {formatDate(contract.endDate)}
+                        </p>
                       </div>
                     </div>
 
@@ -420,9 +434,16 @@ export default function TenantContractsPage() {
 
                   <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
                     {contract.status === 'PENDING' && (
-                      <Dialog open={showSignatureDialog && selectedContract?.id === contract.id} onOpenChange={setShowSignatureDialog}>
+                      <Dialog
+                        open={showSignatureDialog && selectedContract?.id === contract.id}
+                        onOpenChange={setShowSignatureDialog}
+                      >
                         <DialogTrigger asChild>
-                          <Button size="sm" className="flex-1" onClick={() => handleSignContract(contract)}>
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleSignContract(contract)}
+                          >
                             <FileText className="w-4 h-4 mr-2" />
                             Firmar Contrato
                           </Button>
@@ -466,10 +487,9 @@ export default function TenantContractsPage() {
                 No se encontraron contratos
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter !== 'all' 
+                {searchTerm || statusFilter !== 'all'
                   ? 'Intenta ajustar tus filtros de búsqueda.'
-                  : 'Aún no tienes contratos de arriendo.'
-                }
+                  : 'Aún no tienes contratos de arriendo.'}
               </p>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -479,6 +499,6 @@ export default function TenantContractsPage() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

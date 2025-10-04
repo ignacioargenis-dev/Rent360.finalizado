@@ -7,14 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, 
-  Search, 
-  Filter, 
-  Plus, 
-  Download, 
-  Eye, 
+import {
+  FileText,
+  Search,
+  Filter,
+  Plus,
+  Download,
+  Eye,
   Share,
   Trash2,
   CheckCircle,
@@ -30,39 +37,45 @@ import { FileText,
   BarChart3,
   RefreshCw,
   Settings,
-  Upload
+  Upload,
 } from 'lucide-react';
 import DocumentUpload from '@/components/documents/DocumentUpload';
 import DigitalSignature from '@/components/documents/DigitalSignature';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface Document {
-  id: string
-  title: string
-  description?: string
-  category: string
-  file_name: string
-  file_path: string
-  file_size: number
-  file_type: string
-  tags?: string
-  uploaded_by: string
-  status: string
-  created_at: string
-  updated_at: string
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  tags?: string;
+  uploaded_by: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
   user?: {
-    name: string
-    email: string
-  }
+    name: string;
+    email: string;
+  };
 }
 
 interface DocumentStats {
-  total_documents: number
-  by_category: { category: string; count: number }[]
-  by_status: { status: string; count: number }[]
-  recent_uploads: Document[]
+  total_documents: number;
+  by_category: { category: string; count: number }[];
+  by_status: { status: string; count: number }[];
+  recent_uploads: Document[];
 }
 
 export default function DocumentsPage() {
@@ -98,7 +111,8 @@ export default function DocumentsPage() {
           {
             id: 'doc-1',
             title: 'Acuerdo de Confidencialidad',
-            description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+            description:
+              'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
             category: 'agreement',
             file_name: 'acuerdo-confidencialidad.pdf',
             file_path: '/uploads/acuerdo-confidencialidad.pdf',
@@ -148,7 +162,8 @@ export default function DocumentsPage() {
           {
             id: 'doc-1',
             title: 'Acuerdo de Confidencialidad',
-            description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+            description:
+              'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
             category: 'agreement',
             file_name: 'acuerdo-confidencialidad.pdf',
             file_path: '/uploads/acuerdo-confidencialidad.pdf',
@@ -193,13 +208,16 @@ export default function DocumentsPage() {
         ]);
       }
     } catch (error) {
-      logger.error('Error fetching documents:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching documents:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Fallback a documentos mock
       setDocuments([
         {
           id: 'doc-1',
           title: 'Acuerdo de Confidencialidad',
-          description: 'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
+          description:
+            'Acuerdo de confidencialidad entre las partes para proteger información sensible.',
           category: 'agreement',
           file_name: 'acuerdo-confidencialidad.pdf',
           file_path: '/uploads/acuerdo-confidencialidad.pdf',
@@ -266,23 +284,26 @@ export default function DocumentsPage() {
         recent_uploads: [],
       });
     } catch (error) {
-      logger.error('Error fetching stats:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching stats:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   const filteredDocuments = documents.filter(document => {
-    const matchesSearch = document.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         document.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      document.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      document.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || document.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || document.status === statusFilter;
-    
+
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) {
-return '0 Bytes';
-}
+      return '0 Bytes';
+    }
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -317,29 +338,36 @@ return '0 Bytes';
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'contract': return 'Contrato';
-      case 'agreement': return 'Acuerdo';
-      case 'receipt': return 'Recibo';
-      case 'form': return 'Formulario';
-      case 'property': return 'Propiedad';
-      case 'maintenance': return 'Mantenimiento';
-      default: return 'Otro';
+      case 'contract':
+        return 'Contrato';
+      case 'agreement':
+        return 'Acuerdo';
+      case 'receipt':
+        return 'Recibo';
+      case 'form':
+        return 'Formulario';
+      case 'property':
+        return 'Propiedad';
+      case 'maintenance':
+        return 'Mantenimiento';
+      default:
+        return 'Otro';
     }
   };
 
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) {
-return '🖼️';
-}
+      return '🖼️';
+    }
     if (type.includes('pdf')) {
-return '📄';
-}
+      return '📄';
+    }
     if (type.includes('word')) {
-return '📝';
-}
+      return '📝';
+    }
     if (type.includes('excel')) {
-return '📊';
-}
+      return '📊';
+    }
     return '📎';
   };
 
@@ -361,7 +389,7 @@ return '📊';
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Gestión de Documentos"
       subtitle="Administra y organiza tus documentos digitales"
@@ -399,13 +427,11 @@ return '📊';
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.total_documents}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Documentos gestionados
-                  </p>
+                  <p className="text-xs text-muted-foreground">Documentos gestionados</p>
                 </CardContent>
               </Card>
 
-              {stats.by_category.slice(0, 3).map((category) => (
+              {stats.by_category.slice(0, 3).map(category => (
                 <Card key={category.category}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -442,7 +468,7 @@ return '📊';
                           <Input
                             placeholder="Buscar documentos..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.target.value)}
                             className="pl-10"
                           />
                         </div>
@@ -482,7 +508,7 @@ return '📊';
 
                 {/* Documents List */}
                 <div className="grid gap-4">
-                  {filteredDocuments.map((document) => (
+                  {filteredDocuments.map(document => (
                     <Card key={document.id} className="hover:shadow-md transition-shadow">
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -503,10 +529,18 @@ return '📊';
                             )}
                           </div>
                           <div className="flex gap-2">
-                            {(document.category === 'agreement' || document.category === 'contract') && (
-                              <Dialog open={showSignatureDialog && selectedDocument?.id === document.id} onOpenChange={setShowSignatureDialog}>
+                            {(document.category === 'agreement' ||
+                              document.category === 'contract') && (
+                              <Dialog
+                                open={showSignatureDialog && selectedDocument?.id === document.id}
+                                onOpenChange={setShowSignatureDialog}
+                              >
                                 <DialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={() => handleSignDocument(document)}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSignDocument(document)}
+                                  >
                                     <PenTool className="h-4 w-4" />
                                   </Button>
                                 </DialogTrigger>
@@ -520,21 +554,24 @@ return '📊';
                                         id: selectedDocument.id,
                                         title: selectedDocument.title,
                                         type: selectedDocument.category as any,
-                                        content: selectedDocument.description || 'Contenido del documento',
-                                        parties: [{
-                                          name: user.name || 'Usuario',
-                                          email: user.email || 'usuario@email.com',
-                                          phone: user.phone || '+56912345678',
-                                          role: 'signer'
-                                        }],
-                                        metadata: {}
+                                        content:
+                                          selectedDocument.description || 'Contenido del documento',
+                                        parties: [
+                                          {
+                                            name: user.name || 'Usuario',
+                                            email: user.email || 'usuario@email.com',
+                                            phone: user.phone || '+56912345678',
+                                            role: 'signer',
+                                          },
+                                        ],
+                                        metadata: {},
                                       }}
                                       currentUser={{
                                         id: user.id || '1',
                                         name: user.name || 'Usuario',
                                         email: user.email || 'usuario@email.com',
                                         phone: user.phone || '+56912345678',
-                                        role: user.role || 'tenant'
+                                        role: user.role || 'tenant',
                                       }}
                                       mode="sign"
                                       onSigned={handleSignatureComplete}
@@ -570,7 +607,9 @@ return '📊';
                             <span>{formatDate(document.created_at)}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{formatFileSize(document.file_size)}</span>
+                            <span className="font-medium">
+                              {formatFileSize(document.file_size)}
+                            </span>
                           </div>
                         </div>
                         {document.tags && (
@@ -585,14 +624,14 @@ return '📊';
                       </CardContent>
                     </Card>
                   ))}
-                  
+
                   {filteredDocuments.length === 0 && (
                     <Card>
                       <CardContent className="pt-6 text-center">
                         <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-600">No se encontraron documentos</p>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="mt-4"
                           onClick={() => setShowUpload(true)}
                         >
@@ -607,7 +646,7 @@ return '📊';
 
               <TabsContent value="categories" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {stats.by_category.map((category) => (
+                  {stats.by_category.map(category => (
                     <Card key={category.category}>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -618,8 +657,8 @@ return '📊';
                       <CardContent>
                         <div className="text-2xl font-bold mb-2">{category.count}</div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${(category.count / stats.total_documents) * 100}%` }}
                           ></div>
                         </div>
@@ -643,7 +682,9 @@ return '📊';
                   <CardContent>
                     <div className="text-center py-8">
                       <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Las analíticas estarán disponibles próximamente</p>
+                      <p className="text-gray-600">
+                        Las analíticas estarán disponibles próximamente
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -660,7 +701,9 @@ return '📊';
                   <CardContent>
                     <div className="text-center py-8">
                       <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">La configuración estará disponible próximamente</p>
+                      <p className="text-gray-600">
+                        La configuración estará disponible próximamente
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -669,6 +712,6 @@ return '📊';
           </>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

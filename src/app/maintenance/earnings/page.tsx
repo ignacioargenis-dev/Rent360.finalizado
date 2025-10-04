@@ -5,9 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   DollarSign,
   TrendingUp,
@@ -40,9 +53,9 @@ import {
   Users,
   MessageSquare,
   Bell,
-  Plus
+  Plus,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 // INTERFACES PARA DASHBOARD DE GANANCIAS DE MANTENIMIENTO
 interface EarningsStats {
@@ -119,7 +132,7 @@ export default function MaintenanceEarningsPage() {
           date: '2024-09-28',
           description: 'Reparación de calefacción - Depto. Las Condes',
           propertyAddress: 'Av. Apoquindo 3400, Las Condes',
-          clientName: 'Carlos Ramírez'
+          clientName: 'Carlos Ramírez',
         },
         {
           id: '2',
@@ -128,7 +141,7 @@ export default function MaintenanceEarningsPage() {
           date: '2024-09-25',
           description: 'Mantenimiento preventivo ascensor',
           propertyAddress: 'Providencia 123, Providencia',
-          clientName: 'Edificio Corporativo Ltda.'
+          clientName: 'Edificio Corporativo Ltda.',
         },
         {
           id: '3',
@@ -137,7 +150,7 @@ export default function MaintenanceEarningsPage() {
           date: '2024-09-30',
           description: 'Reparación de fuga de agua',
           propertyAddress: 'Vitacura 890, Vitacura',
-          clientName: 'María González'
+          clientName: 'María González',
         },
       ]);
 
@@ -146,7 +159,6 @@ export default function MaintenanceEarningsPage() {
         { month: 'Agosto', earnings: 720000, jobs: 12, rating: 4.7 },
         { month: 'Septiembre', earnings: 890000, jobs: 15, rating: 4.8 },
       ]);
-
     } catch (err) {
       console.error('Error loading earnings data:', err);
       setError('Error al cargar los datos de ganancias');
@@ -178,7 +190,7 @@ export default function MaintenanceEarningsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         title="Ganancias"
         subtitle="Gestión financiera de tus servicios de mantenimiento"
       >
@@ -188,13 +200,13 @@ export default function MaintenanceEarningsPage() {
             <p className="text-gray-600">Cargando datos de ganancias...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         title="Ganancias"
         subtitle="Gestión financiera de tus servicios de mantenimiento"
       >
@@ -208,12 +220,12 @@ export default function MaintenanceEarningsPage() {
             </Button>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Ganancias"
       subtitle="Gestión financiera de tus servicios de mantenimiento"
     >
@@ -227,9 +239,7 @@ export default function MaintenanceEarningsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(stats.totalEarnings)}</div>
-              <p className="text-xs text-muted-foreground">
-                +12% vs mes anterior
-              </p>
+              <p className="text-xs text-muted-foreground">+12% vs mes anterior</p>
             </CardContent>
           </Card>
 
@@ -253,9 +263,7 @@ export default function MaintenanceEarningsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(stats.pendingPayments)}</div>
-              <p className="text-xs text-muted-foreground">
-                Por confirmar
-              </p>
+              <p className="text-xs text-muted-foreground">Por confirmar</p>
             </CardContent>
           </Card>
 
@@ -266,9 +274,7 @@ export default function MaintenanceEarningsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.averageRating}</div>
-              <p className="text-xs text-muted-foreground">
-                ★★★★★ Excelente
-              </p>
+              <p className="text-xs text-muted-foreground">★★★★★ Excelente</p>
             </CardContent>
           </Card>
         </div>
@@ -289,9 +295,7 @@ export default function MaintenanceEarningsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Ganancias Mensuales</CardTitle>
-                  <CardDescription>
-                    Evolución de tus ingresos por mantenimiento
-                  </CardDescription>
+                  <CardDescription>Evolución de tus ingresos por mantenimiento</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -318,9 +322,7 @@ export default function MaintenanceEarningsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Resumen de Trabajos</CardTitle>
-                  <CardDescription>
-                    Estadísticas de tus servicios de mantenimiento
-                  </CardDescription>
+                  <CardDescription>Estadísticas de tus servicios de mantenimiento</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -355,8 +357,11 @@ export default function MaintenanceEarningsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {payments.map(payment => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="space-y-1">
                         <p className="font-medium">{payment.description}</p>
                         <p className="text-sm text-muted-foreground">
@@ -491,18 +496,20 @@ export default function MaintenanceEarningsPage() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Detalles del Pago</DialogTitle>
-              <DialogDescription>
-                Información completa del pago seleccionado
-              </DialogDescription>
+              <DialogDescription>Información completa del pago seleccionado</DialogDescription>
             </DialogHeader>
             {selectedPayment && (
               <div className="space-y-4">
                 <div>
                   <p className="font-medium">Monto: {formatCurrency(selectedPayment.amount)}</p>
-                  <p className="text-sm text-muted-foreground">Estado: {getStatusBadge(selectedPayment.status)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Estado: {getStatusBadge(selectedPayment.status)}
+                  </p>
                 </div>
                 <div>
-                  <p className="font-medium">Fecha: {new Date(selectedPayment.date).toLocaleDateString('es-CL')}</p>
+                  <p className="font-medium">
+                    Fecha: {new Date(selectedPayment.date).toLocaleDateString('es-CL')}
+                  </p>
                 </div>
                 <div>
                   <p className="font-medium">Descripción:</p>
@@ -517,6 +524,6 @@ export default function MaintenanceEarningsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

@@ -18,7 +18,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useUserState } from '@/hooks/useUserState';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface ServiceRequest {
   id: string;
@@ -106,7 +106,7 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Dashboard Proveedor"
       subtitle="Gestiona tus servicios y clientes"
@@ -373,6 +373,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

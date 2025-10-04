@@ -24,7 +24,7 @@ import {
   Wrench,
   Clock,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 
 interface CalendarJob {
@@ -192,20 +192,20 @@ export default function MaintenanceCalendarPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Calendario" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Calendario" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando calendario...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Calendario" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Calendario" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -219,7 +219,7 @@ export default function MaintenanceCalendarPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
@@ -240,7 +240,7 @@ export default function MaintenanceCalendarPage() {
   ];
 
   return (
-    <DashboardLayout title="Calendario" subtitle="Agenda tus trabajos de mantenimiento">
+    <UnifiedDashboardLayout title="Calendario" subtitle="Agenda tus trabajos de mantenimiento">
       <div className="space-y-6">
         {/* Header with navigation */}
         <Card>
@@ -485,6 +485,6 @@ export default function MaintenanceCalendarPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

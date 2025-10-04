@@ -1,24 +1,28 @@
-﻿'use client';
+'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-import { 
-  Filter, 
-  Search, 
-  AlertTriangle, 
-  Eye, 
-  CheckCircle 
-} from 'lucide-react';
-
-import { useState, useEffect } from 'react';
+import { Filter, Search, AlertTriangle, Eye, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Property } from '@/types';
 
@@ -38,7 +42,6 @@ interface Report {
 }
 
 export default function AdminReportedPropertiesPage() {
-
   const [reports, setReports] = useState<Report[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -59,14 +62,14 @@ export default function AdminReportedPropertiesPage() {
           id: '1',
           propertyId: 'prop1',
           reporterId: 'user1',
-          reason: 'Información falsa',
-          description: 'La propiedad no existe en la dirección indicada',
+          reason: 'Informaci�n falsa',
+          description: 'La propiedad no existe en la direcci�n indicada',
           status: 'OPEN',
           createdAt: new Date('2024-01-15'),
           property: {
             id: '1',
             title: 'Departamento en Providencia',
-            description: 'Hermoso departamento en el corazón de Providencia',
+            description: 'Hermoso departamento en el coraz�n de Providencia',
             address: 'Av. Providencia 1234',
             city: 'Santiago',
             commune: 'Providencia',
@@ -87,7 +90,7 @@ export default function AdminReportedPropertiesPage() {
             images: '/images/prop1-1.jpg, /images/prop1-2.jpg',
           },
           reporter: {
-            name: 'Juan Pérez',
+            name: 'Juan P�rez',
             email: 'juan@example.com',
           },
         },
@@ -95,7 +98,7 @@ export default function AdminReportedPropertiesPage() {
           id: '2',
           propertyId: 'prop2',
           reporterId: 'user2',
-          reason: 'Fotos engañosas',
+          reason: 'Fotos enga�osas',
           description: 'Las fotos no corresponden al estado actual de la propiedad',
           status: 'INVESTIGATING',
           createdAt: new Date('2024-01-12'),
@@ -119,39 +122,47 @@ export default function AdminReportedPropertiesPage() {
             ownerId: 'owner-2',
             createdAt: new Date('2024-01-10'),
             updatedAt: new Date('2024-01-10'),
-            features: 'Jardín, Estacionamiento, Seguridad',
+            features: 'Jard�n, Estacionamiento, Seguridad',
             images: '/images/prop2-1.jpg, /images/prop2-2.jpg',
           },
           reporter: {
-            name: 'María González',
+            name: 'Mar�a Gonz�lez',
             email: 'maria@example.com',
           },
         },
       ];
       setReports(mockReports);
     } catch (error) {
-      logger.error('Error fetching reports:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching reports:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const filteredReports = reports.filter(report => {
-    const matchesSearch = report.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.property?.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.reason.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      report.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.property?.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.reason.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-     const handleUpdateStatus = async (reportId: string, status: 'OPEN' | 'RESOLVED' | 'INVESTIGATING' | 'DISMISSED') => {
+  const handleUpdateStatus = async (
+    reportId: string,
+    status: 'OPEN' | 'RESOLVED' | 'INVESTIGATING' | 'DISMISSED'
+  ) => {
     try {
-      // Simular actualización
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? { ...report, status } : report,
-      ));
+      // Simular actualizaci�n
+      setReports(prev =>
+        prev.map(report => (report.id === reportId ? { ...report, status } : report))
+      );
     } catch (error) {
-      logger.error('Error updating report status:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error updating report status:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -180,9 +191,12 @@ export default function AdminReportedPropertiesPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Propiedades Reportadas" subtitle="Gestiona las propiedades reportadas por usuarios">
+    <UnifiedDashboardLayout
+      title="Propiedades Reportadas"
+      subtitle="Gestiona las propiedades reportadas por usuarios"
+    >
       <div className="space-y-6">
-        {/* Filtros y Búsqueda */}
+        {/* Filtros y B�squeda */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -195,9 +209,9 @@ export default function AdminReportedPropertiesPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Buscar por propiedad, razón o reportador..."
+                  placeholder="Buscar por propiedad, raz�n o reportador..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -217,7 +231,7 @@ export default function AdminReportedPropertiesPage() {
           </CardContent>
         </Card>
 
-        {/* Estadísticas */}
+        {/* Estad�sticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -237,7 +251,7 @@ export default function AdminReportedPropertiesPage() {
               <div className="text-2xl font-bold text-red-600">
                 {filteredReports.filter(r => r.status === 'OPEN').length}
               </div>
-              <p className="text-xs text-muted-foreground">Requieren atención</p>
+              <p className="text-xs text-muted-foreground">Requieren atenci�n</p>
             </CardContent>
           </Card>
           <Card>
@@ -248,7 +262,7 @@ export default function AdminReportedPropertiesPage() {
               <div className="text-2xl font-bold text-blue-600">
                 {filteredReports.filter(r => r.status === 'INVESTIGATING').length}
               </div>
-              <p className="text-xs text-muted-foreground">En investigación</p>
+              <p className="text-xs text-muted-foreground">En investigaci�n</p>
             </CardContent>
           </Card>
           <Card>
@@ -268,16 +282,14 @@ export default function AdminReportedPropertiesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Reportes de Propiedades</CardTitle>
-            <CardDescription>
-              Lista de propiedades reportadas por usuarios
-            </CardDescription>
+            <CardDescription>Lista de propiedades reportadas por usuarios</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Propiedad</TableHead>
-                  <TableHead>Razón</TableHead>
+                  <TableHead>Raz�n</TableHead>
                   <TableHead>Reportador</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha</TableHead>
@@ -285,7 +297,7 @@ export default function AdminReportedPropertiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReports.map((report) => (
+                {filteredReports.map(report => (
                   <TableRow key={report.id}>
                     <TableCell>
                       <div>
@@ -308,15 +320,15 @@ export default function AdminReportedPropertiesPage() {
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(report.status)}</TableCell>
-                    <TableCell>
-                      {new Date(report.createdAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(report.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(`/admin/properties/${report.propertyId}`, '_blank')}
+                          onClick={() =>
+                            window.open(`/admin/properties/${report.propertyId}`, '_blank')
+                          }
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -356,7 +368,7 @@ export default function AdminReportedPropertiesPage() {
                 ))}
               </TableBody>
             </Table>
-            
+
             {filteredReports.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No se encontraron reportes de propiedades
@@ -368,7 +380,3 @@ export default function AdminReportedPropertiesPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

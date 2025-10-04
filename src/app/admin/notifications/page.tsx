@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import {
   TestTube,
   Send,
   Phone,
-  Bell
+  Bell,
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -66,14 +66,14 @@ export default function NotificationsAdminPage() {
         tracking: true,
         bulk: true,
         personalization: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         fromEmail: 'noreply@rent360.cl',
         fromName: 'Rent360',
-        environment: 'test'
-      }
+        environment: 'test',
+      },
     },
     {
       name: 'Twilio',
@@ -86,14 +86,14 @@ export default function NotificationsAdminPage() {
         tracking: true,
         bulk: true,
         personalization: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         apiSecret: '',
         phoneNumber: '+56912345678',
-        environment: 'test'
-      }
+        environment: 'test',
+      },
     },
     {
       name: 'Firebase',
@@ -106,14 +106,14 @@ export default function NotificationsAdminPage() {
         tracking: true,
         bulk: true,
         personalization: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         apiSecret: '',
-        environment: 'test'
-      }
-    }
+        environment: 'test',
+      },
+    },
   ];
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export default function NotificationsAdminPage() {
     try {
       setLoading(true);
 
-      // Cargar configuración desde variables de entorno y base de datos
+      // Cargar configuraci�n desde variables de entorno y base de datos
       const loadedProviders = availableProviders.map(provider => {
         const envPrefix = provider.name.toUpperCase();
 
@@ -142,42 +142,49 @@ export default function NotificationsAdminPage() {
             apiSecret: process.env[`${envPrefix}_API_SECRET`] || '',
             fromEmail: process.env[`${envPrefix}_FROM_EMAIL`] || provider.config.fromEmail || '',
             fromName: process.env[`${envPrefix}_FROM_NAME`] || provider.config.fromName || '',
-            phoneNumber: process.env[`${envPrefix}_PHONE_NUMBER`] || provider.config.phoneNumber || '',
-            environment: process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test'
-          }
+            phoneNumber:
+              process.env[`${envPrefix}_PHONE_NUMBER`] || provider.config.phoneNumber || '',
+            environment:
+              process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test',
+          },
         };
       });
 
       setProviders(loadedProviders);
     } catch (err) {
-      error('Error al cargar configuración', 'No se pudo cargar la configuración de proveedores de notificaciones');
+      error(
+        'Error al cargar configuraci�n',
+        'No se pudo cargar la configuraci�n de proveedores de notificaciones'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const updateProviderConfig = (providerName: string, field: string, value: any) => {
-    setProviders(prev => prev.map(provider =>
-      provider.name === providerName
-        ? {
-            ...provider,
-            config: { ...provider.config, [field]: value },
-            configured: !!(
-              provider.config.apiKey && 
-              (provider.type === 'email' ? provider.config.fromEmail : true) &&
-              (provider.type === 'sms' ? provider.config.phoneNumber : true)
-            )
-          }
-        : provider
-    ));
+    setProviders(prev =>
+      prev.map(provider =>
+        provider.name === providerName
+          ? {
+              ...provider,
+              config: { ...provider.config, [field]: value },
+              configured: !!(
+                provider.config.apiKey &&
+                (provider.type === 'email' ? provider.config.fromEmail : true) &&
+                (provider.type === 'sms' ? provider.config.phoneNumber : true)
+              ),
+            }
+          : provider
+      )
+    );
   };
 
   const toggleProvider = (providerName: string) => {
-    setProviders(prev => prev.map(provider =>
-      provider.name === providerName
-        ? { ...provider, enabled: !provider.enabled }
-        : provider
-    ));
+    setProviders(prev =>
+      prev.map(provider =>
+        provider.name === providerName ? { ...provider, enabled: !provider.enabled } : provider
+      )
+    );
   };
 
   const saveConfiguration = async () => {
@@ -190,39 +197,48 @@ export default function NotificationsAdminPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          settings: providers.map(provider => ({
-            key: `${provider.name.toUpperCase()}_API_KEY`,
-            value: provider.config.apiKey || '',
-            category: 'email',
-            isEncrypted: true,
-            isPublic: false
-          })).concat(
-            providers.map(provider => ({
-              key: `${provider.name.toUpperCase()}_API_SECRET`,
-              value: provider.config.apiSecret || '',
+          settings: providers
+            .map(provider => ({
+              key: `${provider.name.toUpperCase()}_API_KEY`,
+              value: provider.config.apiKey || '',
               category: 'email',
               isEncrypted: true,
-              isPublic: false
+              isPublic: false,
             }))
-          ).concat(
-            providers.map(provider => ({
-              key: `${provider.name.toUpperCase()}_ENVIRONMENT`,
-              value: provider.config.environment || 'test',
-              category: 'email',
-              isEncrypted: false,
-              isPublic: false
-            }))
-          )
-        })
+            .concat(
+              providers.map(provider => ({
+                key: `${provider.name.toUpperCase()}_API_SECRET`,
+                value: provider.config.apiSecret || '',
+                category: 'email',
+                isEncrypted: true,
+                isPublic: false,
+              }))
+            )
+            .concat(
+              providers.map(provider => ({
+                key: `${provider.name.toUpperCase()}_ENVIRONMENT`,
+                value: provider.config.environment || 'test',
+                category: 'email',
+                isEncrypted: false,
+                isPublic: false,
+              }))
+            ),
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Error guardando configuración');
+        throw new Error('Error guardando configuraci�n');
       }
 
-      success('Configuración guardada', 'Los proveedores de notificaciones se han configurado correctamente');
+      success(
+        'Configuraci�n guardada',
+        'Los proveedores de notificaciones se han configurado correctamente'
+      );
     } catch (err) {
-      error('Error guardando configuración', 'No se pudo guardar la configuración de proveedores de notificaciones');
+      error(
+        'Error guardando configuraci�n',
+        'No se pudo guardar la configuraci�n de proveedores de notificaciones'
+      );
     } finally {
       setSaving(false);
     }
@@ -231,16 +247,16 @@ export default function NotificationsAdminPage() {
   const testProvider = async (providerName: string) => {
     try {
       const response = await fetch(`/api/admin/notifications/test/${providerName.toLowerCase()}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (response.ok) {
-        success('Prueba exitosa', `El proveedor ${providerName} está funcionando correctamente`);
+        success('Prueba exitosa', `El proveedor ${providerName} est� funcionando correctamente`);
       } else {
-        error('Prueba fallida', `El proveedor ${providerName} no está configurado correctamente`);
+        error('Prueba fallida', `El proveedor ${providerName} no est� configurado correctamente`);
       }
     } catch (err) {
-      error('Error en prueba', 'No se pudo probar la conexión con el proveedor');
+      error('Error en prueba', 'No se pudo probar la conexi�n con el proveedor');
     }
   };
 
@@ -260,11 +276,23 @@ export default function NotificationsAdminPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'email':
-        return <Badge variant="outline" className="text-blue-600">Email</Badge>;
+        return (
+          <Badge variant="outline" className="text-blue-600">
+            Email
+          </Badge>
+        );
       case 'sms':
-        return <Badge variant="outline" className="text-green-600">SMS</Badge>;
+        return (
+          <Badge variant="outline" className="text-green-600">
+            SMS
+          </Badge>
+        );
       case 'push':
-        return <Badge variant="outline" className="text-purple-600">Push</Badge>;
+        return (
+          <Badge variant="outline" className="text-purple-600">
+            Push
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -272,38 +300,44 @@ export default function NotificationsAdminPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Notificaciones" subtitle="Cargando configuración...">
+      <UnifiedDashboardLayout title="Notificaciones" subtitle="Cargando configuraci�n...">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-    </UnifiedDashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Notificaciones" subtitle="Configura los proveedores y plantillas de notificación">
+    <UnifiedDashboardLayout
+      title="Notificaciones"
+      subtitle="Configura los proveedores y plantillas de notificaci�n"
+    >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Configuración de Notificaciones</h1>
-            <p className="text-gray-600">Gestiona los proveedores de notificaciones y sus configuraciones</p>
+            <h1 className="text-3xl font-bold">Configuraci�n de Notificaciones</h1>
+            <p className="text-gray-600">
+              Gestiona los proveedores de notificaciones y sus configuraciones
+            </p>
           </div>
           <Button onClick={saveConfiguration} disabled={saving} className="flex items-center gap-2">
             <Save className="h-4 w-4" />
-            {saving ? 'Guardando...' : 'Guardar Configuración'}
+            {saving ? 'Guardando...' : 'Guardar Configuraci�n'}
           </Button>
         </div>
 
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Las credenciales de los proveedores de notificaciones se almacenan de forma encriptada en la base de datos.
-            Solo los administradores pueden ver y modificar estas configuraciones.
+            Las credenciales de los proveedores de notificaciones se almacenan de forma encriptada
+            en la base de datos. Solo los administradores pueden ver y modificar estas
+            configuraciones.
           </AlertDescription>
         </Alert>
 
         <div className="grid gap-6">
-          {providers.map((provider) => (
+          {providers.map(provider => (
             <Card key={provider.name} className="overflow-hidden">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -354,7 +388,7 @@ export default function NotificationsAdminPage() {
                       id={`${provider.name}-apiKey`}
                       type="password"
                       value={provider.config.apiKey || ''}
-                      onChange={(e) => updateProviderConfig(provider.name, 'apiKey', e.target.value)}
+                      onChange={e => updateProviderConfig(provider.name, 'apiKey', e.target.value)}
                       placeholder="Ingresa tu API Key"
                     />
                   </div>
@@ -366,7 +400,9 @@ export default function NotificationsAdminPage() {
                         id={`${provider.name}-apiSecret`}
                         type="password"
                         value={provider.config.apiSecret || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'apiSecret', e.target.value)}
+                        onChange={e =>
+                          updateProviderConfig(provider.name, 'apiSecret', e.target.value)
+                        }
                         placeholder="Ingresa tu API Secret"
                       />
                     </div>
@@ -375,22 +411,26 @@ export default function NotificationsAdminPage() {
                   {provider.type === 'email' && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor={`${provider.name}-fromEmail`}>Email de Envío</Label>
+                        <Label htmlFor={`${provider.name}-fromEmail`}>Email de Env�o</Label>
                         <Input
                           id={`${provider.name}-fromEmail`}
                           type="email"
                           value={provider.config.fromEmail || ''}
-                          onChange={(e) => updateProviderConfig(provider.name, 'fromEmail', e.target.value)}
+                          onChange={e =>
+                            updateProviderConfig(provider.name, 'fromEmail', e.target.value)
+                          }
                           placeholder="noreply@rent360.cl"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`${provider.name}-fromName`}>Nombre de Envío</Label>
+                        <Label htmlFor={`${provider.name}-fromName`}>Nombre de Env�o</Label>
                         <Input
                           id={`${provider.name}-fromName`}
                           value={provider.config.fromName || ''}
-                          onChange={(e) => updateProviderConfig(provider.name, 'fromName', e.target.value)}
+                          onChange={e =>
+                            updateProviderConfig(provider.name, 'fromName', e.target.value)
+                          }
                           placeholder="Rent360"
                         />
                       </div>
@@ -399,11 +439,13 @@ export default function NotificationsAdminPage() {
 
                   {provider.type === 'sms' && (
                     <div className="space-y-2">
-                      <Label htmlFor={`${provider.name}-phoneNumber`}>Número de Teléfono</Label>
+                      <Label htmlFor={`${provider.name}-phoneNumber`}>N�mero de Tel�fono</Label>
                       <Input
                         id={`${provider.name}-phoneNumber`}
                         value={provider.config.phoneNumber || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'phoneNumber', e.target.value)}
+                        onChange={e =>
+                          updateProviderConfig(provider.name, 'phoneNumber', e.target.value)
+                        }
                         placeholder="+56912345678"
                       />
                     </div>
@@ -414,11 +456,13 @@ export default function NotificationsAdminPage() {
                     <select
                       id={`${provider.name}-environment`}
                       value={provider.config.environment || 'test'}
-                      onChange={(e) => updateProviderConfig(provider.name, 'environment', e.target.value)}
+                      onChange={e =>
+                        updateProviderConfig(provider.name, 'environment', e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="test">Pruebas</option>
-                      <option value="live">Producción</option>
+                      <option value="live">Producci�n</option>
                     </select>
                   </div>
                 </div>
@@ -426,7 +470,7 @@ export default function NotificationsAdminPage() {
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Características disponibles</Label>
+                  <Label className="text-sm font-medium">Caracter�sticas disponibles</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {Object.entries(provider.features).map(([feature, available]) => (
                       <div key={feature} className="flex items-center gap-2">
@@ -450,7 +494,3 @@ export default function NotificationsAdminPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

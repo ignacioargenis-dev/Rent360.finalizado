@@ -5,7 +5,8 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText,
+import {
+  FileText,
   Download,
   Eye,
   Calendar,
@@ -23,14 +24,20 @@ import { FileText,
   Trash2,
   RefreshCw,
   BarChart3,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import { User, Contract, Property } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface ContractWithDetails extends Contract {
   property?: Property;
@@ -271,8 +278,9 @@ export default function OwnerContractsPage() {
   };
 
   const filteredContracts = contracts.filter(contract => {
-    const matchesSearch = contract.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.tenantName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      contract.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.tenantName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -290,11 +298,11 @@ export default function OwnerContractsPage() {
 
   const handleSignatureComplete = (signatureId: string) => {
     // Actualizar el estado del contrato a firmado
-    setContracts(prev => prev.map(contract =>
-      contract.id === selectedContract?.id
-        ? { ...contract, status: 'ACTIVE' as any }
-        : contract
-    ));
+    setContracts(prev =>
+      prev.map(contract =>
+        contract.id === selectedContract?.id ? { ...contract, status: 'ACTIVE' as any } : contract
+      )
+    );
     setShowSignatureDialog(false);
     setSelectedContract(null);
   };
@@ -306,7 +314,9 @@ export default function OwnerContractsPage() {
 
   const handleStartLegalCase = (contract: ContractWithDetails) => {
     logger.info('Iniciando caso legal para contrato:', { contractId: contract.id });
-    alert(`Caso legal iniciado para el contrato ${contract.contractNumber}.\n\nSe ha enviado la solicitud al equipo legal para proceder con las acciones correspondientes por mora o incumplimiento del contrato.`);
+    alert(
+      `Caso legal iniciado para el contrato ${contract.contractNumber}.\n\nSe ha enviado la solicitud al equipo legal para proceder con las acciones correspondientes por mora o incumplimiento del contrato.`
+    );
     // TODO: Implement API call to start legal case
     // const response = await fetch('/api/owner/contracts/start-legal-case', {
     //   method: 'POST',
@@ -331,8 +341,8 @@ export default function OwnerContractsPage() {
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Contratos de Arriendo"
         subtitle="Gestiona todos tus contratos de arriendo"
@@ -392,9 +402,7 @@ export default function OwnerContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Depósitos Totales</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(totalDeposits)}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{formatPrice(totalDeposits)}</p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                   <AlertCircle className="w-6 h-6 text-orange-600" />
@@ -444,7 +452,7 @@ export default function OwnerContractsPage() {
                     placeholder="Buscar por propiedad o inquilino..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
@@ -452,7 +460,7 @@ export default function OwnerContractsPage() {
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="ACTIVE">Activos</option>
@@ -475,12 +483,15 @@ export default function OwnerContractsPage() {
 
         {/* Contracts List */}
         <div className="space-y-4">
-          {filteredContracts.map((contract) => {
+          {filteredContracts.map(contract => {
             const daysUntilExpiry = getDaysUntilExpiry(contract.endDate);
             const isExpiringSoon = daysUntilExpiry > 0 && daysUntilExpiry <= 30;
-            
+
             return (
-              <Card key={contract.id} className={`hover:shadow-lg transition-shadow ${isExpiringSoon ? 'border-orange-200 bg-orange-50' : ''}`}>
+              <Card
+                key={contract.id}
+                className={`hover:shadow-lg transition-shadow ${isExpiringSoon ? 'border-orange-200 bg-orange-50' : ''}`}
+              >
                 <CardContent className="pt-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
@@ -497,9 +508,7 @@ export default function OwnerContractsPage() {
                         <div className="flex items-center gap-2">
                           {getStatusBadge(contract.status)}
                           {isExpiringSoon && (
-                            <Badge className="bg-orange-100 text-orange-800">
-                              Expira pronto
-                            </Badge>
+                            <Badge className="bg-orange-100 text-orange-800">Expira pronto</Badge>
                           )}
                         </div>
                       </div>
@@ -507,11 +516,15 @@ export default function OwnerContractsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600">Arriendo mensual</p>
-                          <p className="font-semibold text-gray-900">{formatPrice(contract.monthlyRent)}</p>
+                          <p className="font-semibold text-gray-900">
+                            {formatPrice(contract.monthlyRent)}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Depósito</p>
-                          <p className="font-semibold text-gray-900">{formatPrice(contract.deposit)}</p>
+                          <p className="font-semibold text-gray-900">
+                            {formatPrice(contract.deposit)}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Periodo</p>
@@ -521,7 +534,9 @@ export default function OwnerContractsPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Tiempo restante</p>
-                          <p className={`font-semibold ${daysUntilExpiry > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <p
+                            className={`font-semibold ${daysUntilExpiry > 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
                             {daysUntilExpiry > 0 ? `${daysUntilExpiry} días` : 'Expirado'}
                           </p>
                         </div>
@@ -541,16 +556,25 @@ export default function OwnerContractsPage() {
 
                     <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
                       {contract.status === 'PENDING' && (
-                        <Dialog open={showSignatureDialog && selectedContract?.id === contract.id} onOpenChange={setShowSignatureDialog}>
+                        <Dialog
+                          open={showSignatureDialog && selectedContract?.id === contract.id}
+                          onOpenChange={setShowSignatureDialog}
+                        >
                           <DialogTrigger asChild>
-                            <Button size="sm" className="flex-1" onClick={() => handleSignContract(contract)}>
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleSignContract(contract)}
+                            >
                               <FileText className="w-4 h-4 mr-2" />
                               Firmar Contrato
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Firmar Contrato - {contract.property?.title}</DialogTitle>
+                              <DialogTitle>
+                                Firmar Contrato - {contract.property?.title}
+                              </DialogTitle>
                             </DialogHeader>
                             {selectedContract && (
                               <ElectronicSignature
@@ -603,10 +627,9 @@ export default function OwnerContractsPage() {
                 No se encontraron contratos
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter !== 'all' 
+                {searchTerm || statusFilter !== 'all'
                   ? 'Intenta ajustar tus filtros de búsqueda.'
-                  : 'Aún no tienes contratos de arriendo.'
-                }
+                  : 'Aún no tienes contratos de arriendo.'}
               </p>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -616,7 +639,6 @@ export default function OwnerContractsPage() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
-

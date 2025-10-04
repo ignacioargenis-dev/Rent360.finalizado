@@ -20,7 +20,7 @@ import {
   BarChart3,
   Settings,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 export default function BúsquedaAvanzadaPage() {
   const router = useRouter();
@@ -68,20 +68,20 @@ export default function BúsquedaAvanzadaPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Búsqueda Avanzada" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Búsqueda Avanzada" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Búsqueda Avanzada" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Búsqueda Avanzada" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -95,12 +95,12 @@ export default function BúsquedaAvanzadaPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Búsqueda Avanzada"
       subtitle="Gestiona y visualiza la información de búsqueda avanzada"
     >
@@ -250,6 +250,6 @@ export default function BúsquedaAvanzadaPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

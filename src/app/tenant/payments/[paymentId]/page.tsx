@@ -20,7 +20,7 @@ import {
   Share2,
   Clock,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface PaymentDetail {
@@ -147,20 +147,20 @@ export default function TenantPaymentDetailPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Detalle de Pago" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Detalle de Pago" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando detalles del pago...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error || !payment) {
     return (
-      <DashboardLayout title="Detalle de Pago" subtitle="Error al cargar">
+      <UnifiedDashboardLayout title="Detalle de Pago" subtitle="Error al cargar">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -174,12 +174,15 @@ export default function TenantPaymentDetailPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout title={`Pago - ${payment.propertyTitle}`} subtitle={`ID: ${payment.id}`}>
+    <UnifiedDashboardLayout
+      title={`Pago - ${payment.propertyTitle}`}
+      subtitle={`ID: ${payment.id}`}
+    >
       <div className="space-y-6">
         {/* Header with actions */}
         <div className="flex items-center justify-between">
@@ -356,6 +359,6 @@ export default function TenantPaymentDetailPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

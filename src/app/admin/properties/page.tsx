@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,14 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
-  Building, 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
+  Building,
+  Search,
+  Filter,
+  Eye,
+  Edit,
   Plus,
   MapPin,
   DollarSign,
@@ -21,14 +27,13 @@ import {
   Calendar,
   MoreHorizontal,
   Grid,
-  List } from 'lucide-react';
+  List,
+} from 'lucide-react';
 import { User, Property } from '@/types';
 
 import RecordModal from '@/components/forms/RecordModal';
 
-
 export default function AdminPropertiesPage() {
-
   const [user, setUser] = useState<User | null>(null);
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -57,7 +62,9 @@ export default function AdminPropertiesPage() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -92,7 +99,7 @@ export default function AdminPropertiesPage() {
           {
             id: '2',
             title: 'Oficina Providencia',
-            description: 'Oficina moderna en el corazón de Providencia',
+            description: 'Oficina moderna en el coraz�n de Providencia',
             address: 'Av. Providencia 1245, Providencia',
             city: 'Santiago',
             commune: 'Providencia',
@@ -112,7 +119,7 @@ export default function AdminPropertiesPage() {
           {
             id: '3',
             title: 'Casa Vitacura',
-            description: 'Amplia casa familiar con jardín',
+            description: 'Amplia casa familiar con jard�n',
             address: 'Av. Vitacura 8900, Vitacura',
             city: 'Santiago',
             commune: 'Vitacura',
@@ -131,8 +138,8 @@ export default function AdminPropertiesPage() {
           },
           {
             id: '4',
-            title: 'Estudio Centro Histórico',
-            description: 'Acogedor estudio en el centro histórico',
+            title: 'Estudio Centro Hist�rico',
+            description: 'Acogedor estudio en el centro hist�rico',
             address: 'Bandera 123, Santiago Centro',
             city: 'Santiago',
             commune: 'Santiago Centro',
@@ -155,7 +162,9 @@ export default function AdminPropertiesPage() {
         setFilteredProperties(mockProperties as unknown as Property[]);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading properties:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading properties:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
@@ -169,11 +178,12 @@ export default function AdminPropertiesPage() {
     let filtered = properties;
 
     if (searchQuery) {
-      filtered = filtered.filter(property =>
-        property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.ownerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.commune.toLowerCase().includes(searchQuery.toLowerCase()),
+      filtered = filtered.filter(
+        property =>
+          property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          property.ownerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          property.commune.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -197,8 +207,8 @@ export default function AdminPropertiesPage() {
       const newProperty = {
         id: Date.now().toString(),
         title: propertyData.title || 'Nueva Propiedad',
-        description: propertyData.description || 'Descripción pendiente',
-        address: propertyData.address || 'Dirección pendiente',
+        description: propertyData.description || 'Descripci�n pendiente',
+        address: propertyData.address || 'Direcci�n pendiente',
         city: propertyData.city || 'Santiago',
         commune: propertyData.commune || 'Centro',
         region: 'Metropolitana',
@@ -219,7 +229,9 @@ export default function AdminPropertiesPage() {
       // Add to properties list
       setProperties([newProperty, ...properties]);
     } catch (error) {
-      logger.error('Error creating property:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creating property:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al crear propiedad');
     }
   };
@@ -262,23 +274,19 @@ export default function AdminPropertiesPage() {
         <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
           <Building className="w-16 h-16 text-blue-400" />
         </div>
-        <div className="absolute top-2 right-2">
-          {getStatusBadge(property.status)}
-        </div>
+        <div className="absolute top-2 right-2">{getStatusBadge(property.status)}</div>
       </div>
-      
+
       <CardContent className="p-4">
         <h3 className="font-semibold text-lg mb-2 line-clamp-1">{property.title}</h3>
-        
+
         <div className="flex items-center text-sm text-gray-600 mb-2">
           <MapPin className="w-4 h-4 mr-1" />
           <span className="line-clamp-1">{property.commune}</span>
         </div>
-        
-        <div className="text-xl font-bold text-blue-600 mb-2">
-          {formatPrice(property.price)}
-        </div>
-        
+
+        <div className="text-xl font-bold text-blue-600 mb-2">{formatPrice(property.price)}</div>
+
         <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
           <div className="flex items-center">
             <span className="font-medium">{property.bedrooms}</span>
@@ -286,14 +294,14 @@ export default function AdminPropertiesPage() {
           </div>
           <div className="flex items-center">
             <span className="font-medium">{property.bathrooms}</span>
-            <span className="ml-1">baños</span>
+            <span className="ml-1">ba�os</span>
           </div>
           <div className="flex items-center">
             <span className="font-medium">{property.area}</span>
-            <span className="ml-1">m²</span>
+            <span className="ml-1">m�</span>
           </div>
         </div>
-        
+
         <div className="text-xs text-gray-500 mb-3">
           <div>Propietario ID: {property.ownerId}</div>
           <div>Estado: {property.status}</div>
@@ -306,7 +314,7 @@ export default function AdminPropertiesPage() {
             <Users className="w-3 h-3 ml-2" />
             <span>Propietario</span>
           </div>
-          
+
           <div className="flex gap-1">
             <Button size="sm" variant="ghost">
               <Eye className="w-4 h-4" />
@@ -328,7 +336,7 @@ export default function AdminPropertiesPage() {
             <h3 className="text-lg font-semibold">{property.title}</h3>
             {getStatusBadge(property.status)}
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4 mb-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -351,11 +359,11 @@ export default function AdminPropertiesPage() {
                 </div>
                 <div className="flex items-center">
                   <span className="font-medium">{property.bathrooms}</span>
-                  <span className="ml-1">baños</span>
+                  <span className="ml-1">ba�os</span>
                 </div>
                 <div className="flex items-center">
                   <span className="font-medium">{property.area}</span>
-                  <span className="ml-1">m²</span>
+                  <span className="ml-1">m�</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -364,7 +372,7 @@ export default function AdminPropertiesPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-600" />
@@ -380,7 +388,7 @@ export default function AdminPropertiesPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 ml-4">
           <Button size="sm" variant="outline">
             <Eye className="w-4 h-4 mr-2" />
@@ -410,7 +418,10 @@ export default function AdminPropertiesPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Gestión de Propiedades" subtitle="Administra todas las propiedades del sistema">
+    <UnifiedDashboardLayout
+      title="Gesti�n de Propiedades"
+      subtitle="Administra todas las propiedades del sistema"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Header Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -486,10 +497,10 @@ export default function AdminPropertiesPage() {
                 placeholder="Buscar propiedades..."
                 className="pl-10"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Estado" />
@@ -502,7 +513,7 @@ export default function AdminPropertiesPage() {
                 <SelectItem value="MAINTENANCE">Mantenimiento</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select value={cityFilter} onValueChange={setCityFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Ciudad" />
@@ -510,12 +521,12 @@ export default function AdminPropertiesPage() {
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="Santiago">Santiago</SelectItem>
-                <SelectItem value="Valparaíso">Valparaíso</SelectItem>
-                <SelectItem value="Concepción">Concepción</SelectItem>
+                <SelectItem value="Valpara�so">Valpara�so</SelectItem>
+                <SelectItem value="Concepci�n">Concepci�n</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <Filter className="w-4 h-4 mr-2" />
@@ -556,13 +567,13 @@ export default function AdminPropertiesPage() {
         {/* Properties List */}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
+            {filteredProperties.map(property => (
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredProperties.map((property) => (
+            {filteredProperties.map(property => (
               <PropertyListItem key={property.id} property={property} />
             ))}
           </div>
@@ -573,11 +584,7 @@ export default function AdminPropertiesPage() {
             <CardContent className="pt-6 text-center">
               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No se encontraron propiedades</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => setShowCreateModal(true)}
-              >
+              <Button variant="outline" className="mt-4" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Crear primera propiedad
               </Button>
@@ -597,7 +604,3 @@ export default function AdminPropertiesPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,7 @@ export default function AdminSettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirigir automáticamente a la configuración avanzada
+    // Redirigir autom�ticamente a la configuraci�n avanzada
     router.replace('/admin/settings/enhanced');
   }, [router]);
 
@@ -16,11 +16,8 @@ export default function AdminSettingsPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-gray-600">Redirigiendo a Configuración Avanzada...</p>
+        <p className="mt-4 text-gray-600">Redirigiendo a Configuraci�n Avanzada...</p>
       </div>
     </div>
   );
 }
-
-
-

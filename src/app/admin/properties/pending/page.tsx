@@ -1,29 +1,32 @@
-﻿'use client';
+'use client';
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-import { 
-  Filter, 
-  Search, 
-  Eye, 
-  CheckCircle, 
-  XCircle 
-} from 'lucide-react';
-
-import { useState, useEffect } from 'react';
+import { Filter, Search, Eye, CheckCircle, XCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Property } from '@/types';
 
 export default function AdminPendingPropertiesPage() {
-
   const [properties, setProperties] = useState<Property[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -44,15 +47,18 @@ export default function AdminPendingPropertiesPage() {
         setProperties(data.properties || []);
       }
     } catch (error) {
-      logger.error('Error fetching properties:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching properties:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.address.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -71,7 +77,9 @@ export default function AdminPendingPropertiesPage() {
         await fetchProperties();
       }
     } catch (error) {
-      logger.error('Error approving property:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error approving property:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -89,7 +97,9 @@ export default function AdminPendingPropertiesPage() {
         await fetchProperties();
       }
     } catch (error) {
-      logger.error('Error rejecting property:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error rejecting property:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -103,9 +113,12 @@ export default function AdminPendingPropertiesPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Propiedades Pendientes" subtitle="Gestiona las propiedades pendientes de aprobación">
+    <UnifiedDashboardLayout
+      title="Propiedades Pendientes"
+      subtitle="Gestiona las propiedades pendientes de aprobaci�n"
+    >
       <div className="space-y-6">
-        {/* Filtros y Búsqueda */}
+        {/* Filtros y B�squeda */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -118,9 +131,9 @@ export default function AdminPendingPropertiesPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Buscar por título o dirección..."
+                  placeholder="Buscar por t�tulo o direcci�n..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -131,14 +144,14 @@ export default function AdminPendingPropertiesPage() {
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="PENDING">Pendiente</SelectItem>
-                  <SelectItem value="UNDER_REVIEW">En revisión</SelectItem>
+                  <SelectItem value="UNDER_REVIEW">En revisi�n</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Estadísticas */}
+        {/* Estad�sticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -155,18 +168,18 @@ export default function AdminPendingPropertiesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {filteredProperties.filter(p => p.status === 'PENDING_REVIEW' as any).length}
+                {filteredProperties.filter(p => p.status === ('PENDING_REVIEW' as any)).length}
               </div>
-              <p className="text-xs text-muted-foreground">Esperando aprobación</p>
+              <p className="text-xs text-muted-foreground">Esperando aprobaci�n</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En Revisión</CardTitle>
+              <CardTitle className="text-sm font-medium">En Revisi�n</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {filteredProperties.filter(p => p.status === 'UNDER_REVIEW' as any).length}
+                {filteredProperties.filter(p => p.status === ('UNDER_REVIEW' as any)).length}
               </div>
               <p className="text-xs text-muted-foreground">Siendo revisadas</p>
             </CardContent>
@@ -178,7 +191,7 @@ export default function AdminPendingPropertiesPage() {
           <CardHeader>
             <CardTitle>Propiedades Pendientes</CardTitle>
             <CardDescription>
-              Lista de propiedades que requieren aprobación para ser publicadas
+              Lista de propiedades que requieren aprobaci�n para ser publicadas
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -186,7 +199,7 @@ export default function AdminPendingPropertiesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Propiedad</TableHead>
-                  <TableHead>Dirección</TableHead>
+                  <TableHead>Direcci�n</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Propietario</TableHead>
                   <TableHead>Estado</TableHead>
@@ -195,13 +208,13 @@ export default function AdminPendingPropertiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProperties.map((property) => (
+                {filteredProperties.map(property => (
                   <TableRow key={property.id}>
                     <TableCell>
                       <div>
                         <div className="font-medium">{property.title}</div>
                         <div className="text-sm text-gray-500">
-                          {property.bedrooms} hab • {property.bathrooms} baños • {property.area}m²
+                          {property.bedrooms} hab � {property.bathrooms} ba�os � {property.area}m�
                         </div>
                       </div>
                     </TableCell>
@@ -209,15 +222,11 @@ export default function AdminPendingPropertiesPage() {
                     <TableCell>${property.price.toLocaleString()}</TableCell>
                     <TableCell>Usuario #{property.ownerId}</TableCell>
                     <TableCell>
-                      <Badge variant={
-                        property.status === 'PENDING' ? 'secondary' : 'default'
-                      }>
+                      <Badge variant={property.status === 'PENDING' ? 'secondary' : 'default'}>
                         {property.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {new Date(property.createdAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(property.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
@@ -249,7 +258,7 @@ export default function AdminPendingPropertiesPage() {
                 ))}
               </TableBody>
             </Table>
-            
+
             {filteredProperties.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No se encontraron propiedades pendientes
@@ -261,7 +270,3 @@ export default function AdminPendingPropertiesPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

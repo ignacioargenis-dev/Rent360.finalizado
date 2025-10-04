@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star,
+import {
+  Star,
   RefreshCw,
   AlertTriangle,
   ThumbsUp,
@@ -19,9 +20,9 @@ import { Star,
   Target,
   Users,
   Calendar,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface Rating {
   id: string;
@@ -84,40 +85,44 @@ export default function MaintenanceRatingsPage() {
           clientName: 'Carlos Ramírez',
           propertyAddress: 'Av. Apoquindo 3400, Las Condes',
           rating: 5,
-          comment: 'Excelente trabajo en la reparación de la calefacción. Muy profesional y eficiente. El servicio fue impecable.',
+          comment:
+            'Excelente trabajo en la reparación de la calefacción. Muy profesional y eficiente. El servicio fue impecable.',
           date: '2024-09-28',
           jobType: 'Reparación de Calefacción',
           response: 'Gracias por su calificación. Fue un placer ayudarlo.',
-          responseDate: '2024-09-29'
+          responseDate: '2024-09-29',
         },
         {
           id: '2',
           clientName: 'María González',
           propertyAddress: 'Vitacura 890, Vitacura',
           rating: 4,
-          comment: 'Buen trabajo en la reparación de la fuga. Llegaron a tiempo y resolvieron el problema.',
+          comment:
+            'Buen trabajo en la reparación de la fuga. Llegaron a tiempo y resolvieron el problema.',
           date: '2024-09-25',
-          jobType: 'Reparación de Plomería'
+          jobType: 'Reparación de Plomería',
         },
         {
           id: '3',
           clientName: 'Edificio Corporativo Ltda.',
           propertyAddress: 'Providencia 123, Providencia',
           rating: 5,
-          comment: 'Servicio de mantenimiento preventivo excepcional. El ascensor funciona perfectamente ahora.',
+          comment:
+            'Servicio de mantenimiento preventivo excepcional. El ascensor funciona perfectamente ahora.',
           date: '2024-09-20',
           jobType: 'Mantenimiento de Ascensor',
           response: 'Agradecemos su confianza. Continuaremos brindando el mejor servicio.',
-          responseDate: '2024-09-21'
+          responseDate: '2024-09-21',
         },
         {
           id: '4',
           clientName: 'Ana López',
           propertyAddress: 'Ñuñoa 456, Ñuñoa',
           rating: 5,
-          comment: 'Reparación eléctrica realizada con mucha profesionalidad. Altamente recomendado.',
+          comment:
+            'Reparación eléctrica realizada con mucha profesionalidad. Altamente recomendado.',
           date: '2024-09-15',
-          jobType: 'Reparación Eléctrica'
+          jobType: 'Reparación Eléctrica',
         },
         {
           id: '5',
@@ -126,8 +131,8 @@ export default function MaintenanceRatingsPage() {
           rating: 3,
           comment: 'El trabajo estuvo bien, pero demoraron un poco más de lo esperado.',
           date: '2024-09-10',
-          jobType: 'Mantenimiento General'
-        }
+          jobType: 'Mantenimiento General',
+        },
       ];
 
       setRatings(mockRatings);
@@ -136,51 +141,56 @@ export default function MaintenanceRatingsPage() {
       const totalRatings = mockRatings.length;
       const averageRating = mockRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
 
-      const ratingCounts = mockRatings.reduce((acc, rating) => {
-        switch (rating.rating) {
-          case 5:
-            acc.fiveStarRatings++;
-            break;
-          case 4:
-            acc.fourStarRatings++;
-            break;
-          case 3:
-            acc.threeStarRatings++;
-            break;
-          case 2:
-            acc.twoStarRatings++;
-            break;
-          case 1:
-            acc.oneStarRatings++;
-            break;
+      const ratingCounts = mockRatings.reduce(
+        (acc, rating) => {
+          switch (rating.rating) {
+            case 5:
+              acc.fiveStarRatings++;
+              break;
+            case 4:
+              acc.fourStarRatings++;
+              break;
+            case 3:
+              acc.threeStarRatings++;
+              break;
+            case 2:
+              acc.twoStarRatings++;
+              break;
+            case 1:
+              acc.oneStarRatings++;
+              break;
+          }
+          return acc;
+        },
+        {
+          fiveStarRatings: 0,
+          fourStarRatings: 0,
+          threeStarRatings: 0,
+          twoStarRatings: 0,
+          oneStarRatings: 0,
         }
-        return acc;
-      }, {
-        fiveStarRatings: 0,
-        fourStarRatings: 0,
-        threeStarRatings: 0,
-        twoStarRatings: 0,
-        oneStarRatings: 0,
-      });
+      );
 
       setStats({
         averageRating,
         totalRatings,
-        ...ratingCounts
+        ...ratingCounts,
       });
-
     } catch (error) {
-      logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los datos");
+      logger.error('Error loading page data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
   };
 
   const filteredRatings = ratings.filter(rating => {
-    const matchesSearch = rating.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rating.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rating.jobType.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      rating.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rating.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rating.jobType.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRating = filterRating === 'all' || rating.rating.toString() === filterRating;
 
@@ -191,16 +201,14 @@ export default function MaintenanceRatingsPage() {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-        }`}
+        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
   };
 
   if (loading) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         title="Calificaciones"
         subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
       >
@@ -210,13 +218,13 @@ export default function MaintenanceRatingsPage() {
             <p className="text-gray-600">Cargando calificaciones...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         title="Calificaciones"
         subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
       >
@@ -230,12 +238,12 @@ export default function MaintenanceRatingsPage() {
             </Button>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Calificaciones"
       subtitle="Reseñas y comentarios de tus servicios de mantenimiento"
     >
@@ -265,9 +273,7 @@ export default function MaintenanceRatingsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalRatings}</div>
-              <p className="text-xs text-muted-foreground">
-                +2 esta semana
-              </p>
+              <p className="text-xs text-muted-foreground">+2 esta semana</p>
             </CardContent>
           </Card>
 
@@ -291,9 +297,7 @@ export default function MaintenanceRatingsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">95%</div>
-              <p className="text-xs text-muted-foreground">
-                Respondes rápido
-              </p>
+              <p className="text-xs text-muted-foreground">Respondes rápido</p>
             </CardContent>
           </Card>
         </div>
@@ -302,9 +306,7 @@ export default function MaintenanceRatingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Todas las Calificaciones</CardTitle>
-            <CardDescription>
-              Gestiona y responde a las reseñas de tus clientes
-            </CardDescription>
+            <CardDescription>Gestiona y responde a las reseñas de tus clientes</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -315,7 +317,7 @@ export default function MaintenanceRatingsPage() {
                     type="text"
                     placeholder="Buscar por cliente, comentario o tipo de trabajo..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -323,7 +325,7 @@ export default function MaintenanceRatingsPage() {
               <div className="flex gap-2">
                 <select
                   value={filterRating}
-                  onChange={(e) => setFilterRating(e.target.value)}
+                  onChange={e => setFilterRating(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">Todas las calificaciones</option>
@@ -348,7 +350,7 @@ export default function MaintenanceRatingsPage() {
                   <p className="text-gray-500">No se encontraron calificaciones</p>
                 </div>
               ) : (
-                filteredRatings.map((rating) => (
+                filteredRatings.map(rating => (
                   <div key={rating.id} className="border border-gray-200 rounded-lg p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start space-x-4">
@@ -360,9 +362,7 @@ export default function MaintenanceRatingsPage() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
                             <h4 className="font-medium text-gray-900">{rating.clientName}</h4>
-                            <div className="flex items-center">
-                              {renderStars(rating.rating)}
-                            </div>
+                            <div className="flex items-center">{renderStars(rating.rating)}</div>
                           </div>
                           <p className="text-sm text-gray-600 mb-2">{rating.propertyAddress}</p>
                           <p className="text-sm text-gray-600 mb-2">
@@ -373,7 +373,7 @@ export default function MaintenanceRatingsPage() {
                             {new Date(rating.date).toLocaleDateString('es-CL', {
                               year: 'numeric',
                               month: 'long',
-                              day: 'numeric'
+                              day: 'numeric',
                             })}
                           </p>
                         </div>
@@ -389,7 +389,8 @@ export default function MaintenanceRatingsPage() {
                             <p className="text-sm font-medium text-blue-900">Tu respuesta:</p>
                             <p className="text-sm text-blue-800 mt-1">{rating.response}</p>
                             <p className="text-xs text-blue-600 mt-2">
-                              Respondido el {new Date(rating.responseDate!).toLocaleDateString('es-CL')}
+                              Respondido el{' '}
+                              {new Date(rating.responseDate!).toLocaleDateString('es-CL')}
                             </p>
                           </div>
                         </div>
@@ -413,6 +414,6 @@ export default function MaintenanceRatingsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

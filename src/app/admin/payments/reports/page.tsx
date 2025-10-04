@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,15 +6,28 @@ import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Calendar, 
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Calendar,
   Download,
   RefreshCw,
   CreditCard,
@@ -41,7 +54,6 @@ interface PropertyPerformance {
 }
 
 export default function AdminPaymentReportsPage() {
-
   const [reportData, setReportData] = useState<PaymentReport[]>([]);
 
   const [propertyPerformance, setPropertyPerformance] = useState<PropertyPerformance[]>([]);
@@ -117,7 +129,7 @@ export default function AdminPaymentReportsPage() {
           totalRevenue: 2100000,
           occupancyRate: 95,
           averagePaymentTime: 3,
-          tenantName: 'Juan Pérez',
+          tenantName: 'Juan P�rez',
         },
         {
           propertyId: '2',
@@ -125,7 +137,7 @@ export default function AdminPaymentReportsPage() {
           totalRevenue: 2550000,
           occupancyRate: 100,
           averagePaymentTime: 2,
-          tenantName: 'María González',
+          tenantName: 'Mar�a Gonz�lez',
         },
         {
           propertyId: '3',
@@ -133,51 +145,67 @@ export default function AdminPaymentReportsPage() {
           totalRevenue: 1800000,
           occupancyRate: 85,
           averagePaymentTime: 5,
-          tenantName: 'Carlos Rodríguez',
+          tenantName: 'Carlos Rodr�guez',
         },
       ];
 
       setReportData(mockReportData);
       setPropertyPerformance(mockPropertyPerformance);
     } catch (error) {
-      logger.error('Error fetching report data:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching report data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const calculateTotals = () => {
-    return reportData.reduce((acc, month) => ({
-      totalAmount: acc.totalAmount + month.totalAmount,
-      paidAmount: acc.paidAmount + month.paidAmount,
-      pendingAmount: acc.pendingAmount + month.pendingAmount,
-      overdueAmount: acc.overdueAmount + month.overdueAmount,
-      transactionCount: acc.transactionCount + month.transactionCount,
-    }), {
-      totalAmount: 0,
-      paidAmount: 0,
-      pendingAmount: 0,
-      overdueAmount: 0,
-      transactionCount: 0,
-    });
+    return reportData.reduce(
+      (acc, month) => ({
+        totalAmount: acc.totalAmount + month.totalAmount,
+        paidAmount: acc.paidAmount + month.paidAmount,
+        pendingAmount: acc.pendingAmount + month.pendingAmount,
+        overdueAmount: acc.overdueAmount + month.overdueAmount,
+        transactionCount: acc.transactionCount + month.transactionCount,
+      }),
+      {
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        overdueAmount: 0,
+        transactionCount: 0,
+      }
+    );
   };
 
   const totals = calculateTotals();
-  const collectionRate = totals.totalAmount > 0 ? (totals.paidAmount / totals.totalAmount) * 100 : 0;
+  const collectionRate =
+    totals.totalAmount > 0 ? (totals.paidAmount / totals.totalAmount) * 100 : 0;
 
   const exportReport = () => {
-    const headers = ['Mes', 'Monto Total', 'Monto Pagado', 'Monto Pendiente', 'Monto Vencido', 'Cantidad Transacciones', 'Tasa de Cobro'];
+    const headers = [
+      'Mes',
+      'Monto Total',
+      'Monto Pagado',
+      'Monto Pendiente',
+      'Monto Vencido',
+      'Cantidad Transacciones',
+      'Tasa de Cobro',
+    ];
     const csvContent = [
       headers.join(','),
-      ...reportData.map(month => [
-        month.month,
-        month.totalAmount,
-        month.paidAmount,
-        month.pendingAmount,
-        month.overdueAmount,
-        month.transactionCount,
-        `${((month.paidAmount / month.totalAmount) * 100).toFixed(1)}%`,
-      ].join(',')),
+      ...reportData.map(month =>
+        [
+          month.month,
+          month.totalAmount,
+          month.paidAmount,
+          month.pendingAmount,
+          month.overdueAmount,
+          month.transactionCount,
+          `${((month.paidAmount / month.totalAmount) * 100).toFixed(1)}%`,
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -203,14 +231,14 @@ export default function AdminPaymentReportsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Reportes de Pagos" subtitle="Análisis y reportes financieros">
+    <UnifiedDashboardLayout title="Reportes de Pagos" subtitle="An�lisis y reportes financieros">
       <div className="space-y-6">
         {/* Controles */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Configuración de Reporte
+              Configuraci�n de Reporte
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -222,15 +250,15 @@ export default function AdminPaymentReportsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1month">Último mes</SelectItem>
-                    <SelectItem value="3months">Últimos 3 meses</SelectItem>
-                    <SelectItem value="6months">Últimos 6 meses</SelectItem>
-                    <SelectItem value="1year">Último año</SelectItem>
+                    <SelectItem value="1month">�ltimo mes</SelectItem>
+                    <SelectItem value="3months">�ltimos 3 meses</SelectItem>
+                    <SelectItem value="6months">�ltimos 6 meses</SelectItem>
+                    <SelectItem value="1year">�ltimo a�o</SelectItem>
                     <SelectItem value="custom">Personalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Propiedad</label>
                 <Select value={selectedProperty} onValueChange={setSelectedProperty}>
@@ -247,7 +275,7 @@ export default function AdminPaymentReportsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex items-end gap-2">
                 <Button onClick={fetchReportData} variant="outline">
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -271,12 +299,10 @@ export default function AdminPaymentReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${totals.totalAmount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                {reportData.length} meses
-              </p>
+              <p className="text-xs text-muted-foreground">{reportData.length} meses</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Tasa de Cobro</CardTitle>
@@ -285,11 +311,15 @@ export default function AdminPaymentReportsPage() {
             <CardContent>
               <div className="text-2xl font-bold">{collectionRate.toFixed(1)}%</div>
               <p className="text-xs text-muted-foreground">
-                {collectionRate >= 95 ? 'Excelente' : collectionRate >= 85 ? 'Bueno' : 'Necesita mejora'}
+                {collectionRate >= 95
+                  ? 'Excelente'
+                  : collectionRate >= 85
+                    ? 'Bueno'
+                    : 'Necesita mejora'}
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendiente de Cobro</CardTitle>
@@ -300,11 +330,15 @@ export default function AdminPaymentReportsPage() {
                 ${(totals.pendingAmount + totals.overdueAmount).toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
-                {((totals.pendingAmount + totals.overdueAmount) / totals.totalAmount * 100).toFixed(1)}% del total
+                {(
+                  ((totals.pendingAmount + totals.overdueAmount) / totals.totalAmount) *
+                  100
+                ).toFixed(1)}
+                % del total
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Transacciones</CardTitle>
@@ -323,9 +357,7 @@ export default function AdminPaymentReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Reporte Mensual de Ingresos</CardTitle>
-            <CardDescription>
-              Desglose mensual de ingresos y estado de cobros
-            </CardDescription>
+            <CardDescription>Desglose mensual de ingresos y estado de cobros</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -346,7 +378,9 @@ export default function AdminPaymentReportsPage() {
                   return (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{month.month}</TableCell>
-                      <TableCell className="text-right">${month.totalAmount.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        ${month.totalAmount.toLocaleString()}
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         ${month.paidAmount.toLocaleString()}
                       </TableCell>
@@ -358,11 +392,23 @@ export default function AdminPaymentReportsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <span className={monthCollectionRate >= 95 ? 'text-green-600' : monthCollectionRate >= 85 ? 'text-yellow-600' : 'text-red-600'}>
+                          <span
+                            className={
+                              monthCollectionRate >= 95
+                                ? 'text-green-600'
+                                : monthCollectionRate >= 85
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                            }
+                          >
                             {monthCollectionRate.toFixed(1)}%
                           </span>
-                          {monthCollectionRate >= 95 && <TrendingUp className="w-4 h-4 text-green-600" />}
-                          {monthCollectionRate < 85 && <TrendingDown className="w-4 h-4 text-red-600" />}
+                          {monthCollectionRate >= 95 && (
+                            <TrendingUp className="w-4 h-4 text-green-600" />
+                          )}
+                          {monthCollectionRate < 85 && (
+                            <TrendingDown className="w-4 h-4 text-red-600" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">{month.transactionCount}</TableCell>
@@ -378,9 +424,7 @@ export default function AdminPaymentReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Rendimiento por Propiedad</CardTitle>
-            <CardDescription>
-              Análisis de rendimiento y ocupación por propiedad
-            </CardDescription>
+            <CardDescription>An�lisis de rendimiento y ocupaci�n por propiedad</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -389,30 +433,46 @@ export default function AdminPaymentReportsPage() {
                   <TableHead>Propiedad</TableHead>
                   <TableHead>Inquilino</TableHead>
                   <TableHead className="text-right">Ingresos Totales</TableHead>
-                  <TableHead className="text-right">Tasa de Ocupación</TableHead>
+                  <TableHead className="text-right">Tasa de Ocupaci�n</TableHead>
                   <TableHead className="text-right">Tiempo Promedio de Pago</TableHead>
                   <TableHead className="text-right">Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {propertyPerformance.map((property) => (
+                {propertyPerformance.map(property => (
                   <TableRow key={property.propertyId}>
                     <TableCell className="font-medium">{property.propertyTitle}</TableCell>
                     <TableCell>{property.tenantName}</TableCell>
-                    <TableCell className="text-right">${property.totalRevenue.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      ${property.totalRevenue.toLocaleString()}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <span>{property.occupancyRate}%</span>
-                        {property.occupancyRate >= 95 && <TrendingUp className="w-4 h-4 text-green-600" />}
-                        {property.occupancyRate < 85 && <TrendingDown className="w-4 h-4 text-red-600" />}
+                        {property.occupancyRate >= 95 && (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        )}
+                        {property.occupancyRate < 85 && (
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {property.averagePaymentTime} días
-                    </TableCell>
+                    <TableCell className="text-right">{property.averagePaymentTime} d�as</TableCell>
                     <TableCell>
-                      <Badge variant={property.occupancyRate >= 95 ? 'default' : property.occupancyRate >= 85 ? 'secondary' : 'destructive'}>
-                        {property.occupancyRate >= 95 ? 'Excelente' : property.occupancyRate >= 85 ? 'Bueno' : 'Mejorable'}
+                      <Badge
+                        variant={
+                          property.occupancyRate >= 95
+                            ? 'default'
+                            : property.occupancyRate >= 85
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                      >
+                        {property.occupancyRate >= 95
+                          ? 'Excelente'
+                          : property.occupancyRate >= 85
+                            ? 'Bueno'
+                            : 'Mejorable'}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -425,7 +485,3 @@ export default function AdminPaymentReportsPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

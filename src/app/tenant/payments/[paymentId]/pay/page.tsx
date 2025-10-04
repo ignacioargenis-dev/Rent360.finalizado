@@ -21,7 +21,7 @@ import {
   Shield,
   Lock,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 interface PaymentData {
@@ -182,20 +182,20 @@ export default function TenantPaymentProcessPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Procesar Pago" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Procesar Pago" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando información del pago...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error && !payment) {
     return (
-      <DashboardLayout title="Procesar Pago" subtitle="Error al cargar">
+      <UnifiedDashboardLayout title="Procesar Pago" subtitle="Error al cargar">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -209,13 +209,13 @@ export default function TenantPaymentProcessPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (!payment) {
     return (
-      <DashboardLayout title="Procesar Pago" subtitle="Pago no encontrado">
+      <UnifiedDashboardLayout title="Procesar Pago" subtitle="Pago no encontrado">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -231,12 +231,12 @@ export default function TenantPaymentProcessPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Procesar Pago" subtitle={`Pago de ${payment.propertyTitle}`}>
+    <UnifiedDashboardLayout title="Procesar Pago" subtitle={`Pago de ${payment.propertyTitle}`}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -392,6 +392,6 @@ export default function TenantPaymentProcessPage() {
           </AlertDescription>
         </Alert>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

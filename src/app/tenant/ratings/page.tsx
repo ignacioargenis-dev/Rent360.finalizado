@@ -20,7 +20,7 @@ import {
   BarChart3,
   Settings,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 export default function CalificacionesPage() {
   const router = useRouter();
@@ -57,20 +57,20 @@ export default function CalificacionesPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Calificaciones" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Calificaciones" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Calificaciones" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Calificaciones" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -84,12 +84,12 @@ export default function CalificacionesPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Calificaciones"
       subtitle="Gestiona y visualiza la información de calificaciones"
     >
@@ -229,6 +229,6 @@ export default function CalificacionesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

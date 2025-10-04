@@ -6,11 +6,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, 
-  Save, 
-  X, 
-  Upload, 
-  MapPin, 
+import {
+  Plus,
+  Save,
+  X,
+  Upload,
+  MapPin,
   Home,
   Building,
   DollarSign,
@@ -25,9 +26,11 @@ import { Plus,
   Camera,
   Star,
   CheckCircle,
-  AlertCircle, Info } from 'lucide-react';
+  AlertCircle,
+  Info,
+} from 'lucide-react';
 import { Property } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -78,7 +81,7 @@ const regions = [
   'Los Lagos',
   'Biobío',
   'Maule',
-  'O\'Higgins',
+  "O'Higgins",
   'Tarapacá',
   'Atacama',
   'Los Ríos',
@@ -129,7 +132,7 @@ export default function NewPropertyPage() {
         } else if (formData.title.trim().length > 200) {
           newErrors.title = 'El título no puede exceder 200 caracteres';
         }
-        
+
         if (!formData.description.trim()) {
           newErrors.description = 'La descripción es requerida';
         } else if (formData.description.trim().length < 20) {
@@ -137,61 +140,61 @@ export default function NewPropertyPage() {
         } else if (formData.description.trim().length > 2000) {
           newErrors.description = 'La descripción no puede exceder 2000 caracteres';
         }
-        
+
         if (!formData.propertyType) {
           newErrors.propertyType = 'El tipo de propiedad es requerido';
         }
         break;
-        
+
       case 2:
         if (!formData.address.trim()) {
           newErrors.address = 'La dirección es requerida';
         } else if (formData.address.trim().length < 10) {
           newErrors.address = 'La dirección debe tener al menos 10 caracteres';
         }
-        
+
         if (!formData.city.trim()) {
           newErrors.city = 'La ciudad es requerida';
         } else if (formData.city.trim().length < 2) {
           newErrors.city = 'La ciudad debe tener al menos 2 caracteres';
         }
-        
+
         if (!formData.commune.trim()) {
           newErrors.commune = 'La comuna es requerida';
         } else if (formData.commune.trim().length < 2) {
           newErrors.commune = 'La comuna debe tener al menos 2 caracteres';
         }
-        
+
         if (!formData.region) {
           newErrors.region = 'La región es requerida';
         }
         break;
-        
+
       case 3:
         if (formData.price <= 0) {
           newErrors.price = 'El precio debe ser mayor a 0';
         } else if (formData.price > 10000000) {
           newErrors.price = 'El precio no puede exceder $10,000,000';
         }
-        
+
         if (formData.deposit < 0) {
           newErrors.deposit = 'El depósito no puede ser negativo';
         } else if (formData.deposit > formData.price * 2) {
           newErrors.deposit = 'El depósito no puede exceder el doble del precio';
         }
-        
+
         if (formData.bedrooms < 0) {
           newErrors.bedrooms = 'El número de dormitorios no puede ser negativo';
         } else if (formData.bedrooms > 20) {
           newErrors.bedrooms = 'El número de dormitorios no puede exceder 20';
         }
-        
+
         if (formData.bathrooms < 0) {
           newErrors.bathrooms = 'El número de baños no puede ser negativo';
         } else if (formData.bathrooms > 20) {
           newErrors.bathrooms = 'El número de baños no puede exceder 20';
         }
-        
+
         if (formData.area <= 0) {
           newErrors.area = 'El área debe ser mayor a 0';
         } else if (formData.area > 10000) {
@@ -214,7 +217,10 @@ export default function NewPropertyPage() {
     setStep(step - 1);
   };
 
-  const handleInputChange = (field: keyof PropertyFormData, value: string | number | string[] | File[]) => {
+  const handleInputChange = (
+    field: keyof PropertyFormData,
+    value: string | number | string[] | File[]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -232,27 +238,27 @@ export default function NewPropertyPage() {
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
+
     // Validate file types
     const validFiles = files.filter(file => {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       return validTypes.includes(file.type);
     });
-    
+
     if (validFiles.length !== files.length) {
       alert('Solo se permiten imágenes en formato JPEG, PNG o WebP');
     }
-    
+
     // Validate file size (max 5MB per file)
     const sizeValidFiles = validFiles.filter(file => {
       const maxSize = 5 * 1024 * 1024; // 5MB
       return file.size <= maxSize;
     });
-    
+
     if (sizeValidFiles.length !== validFiles.length) {
       alert('Las imágenes no pueden superar los 5MB cada una');
     }
-    
+
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, ...sizeValidFiles],
@@ -277,14 +283,14 @@ export default function NewPropertyPage() {
 
   const handleSubmit = async () => {
     if (!validateStep(step)) {
-return;
-}
+      return;
+    }
 
     setLoading(true);
     try {
       // Create FormData for file upload
       const formDataToSend = new FormData();
-      
+
       // Add all property data
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
@@ -306,17 +312,17 @@ return;
       formDataToSend.append('contactPhone', user?.phone || '');
       formDataToSend.append('contactEmail', user?.email || '');
       formDataToSend.append('features', JSON.stringify(formData.features));
-      
+
       // Add images
       formData.images.forEach((image, index) => {
         formDataToSend.append('images', image);
       });
-      
+
       const response = await fetch('/api/properties', {
         method: 'POST',
         body: formDataToSend,
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert('Propiedad creada exitosamente');
@@ -327,7 +333,9 @@ return;
         alert(error.error || 'Error al crear la propiedad');
       }
     } catch (error) {
-      logger.error('Error creating property:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creating property:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al crear la propiedad');
     } finally {
       setLoading(false);
@@ -346,8 +354,8 @@ return;
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Nueva Propiedad"
         subtitle="Publica una nueva propiedad en Rent360"
@@ -363,22 +371,18 @@ return;
                 <span className="text-sm text-gray-600">Paso {step} de 4</span>
               </div>
               <div className="flex items-center gap-2">
-                {[1, 2, 3, 4].map((stepNumber) => (
+                {[1, 2, 3, 4].map(stepNumber => (
                   <div key={stepNumber} className="flex items-center">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step >= stepNumber
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                        step >= stepNumber ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {stepNumber}
                     </div>
                     {stepNumber < 4 && (
                       <div
-                        className={`w-16 h-1 ${
-                          step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
+                        className={`w-16 h-1 ${step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'}`}
                       />
                     )}
                   </div>
@@ -406,9 +410,11 @@ return;
                           }`}
                           placeholder="Ej: Departamento Las Condes con vista panorámica"
                           value={formData.title}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          onChange={e => handleInputChange('title', e.target.value)}
                         />
-                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                        {errors.title && (
+                          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                        )}
                       </div>
 
                       <div>
@@ -422,9 +428,11 @@ return;
                           }`}
                           placeholder="Describe las características principales de tu propiedad..."
                           value={formData.description}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          onChange={e => handleInputChange('description', e.target.value)}
                         />
-                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                        {errors.description && (
+                          <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                        )}
                       </div>
 
                       <div>
@@ -436,16 +444,18 @@ return;
                             errors.propertyType ? 'border-red-500' : 'border-gray-300'
                           }`}
                           value={formData.propertyType}
-                          onChange={(e) => handleInputChange('propertyType', e.target.value)}
+                          onChange={e => handleInputChange('propertyType', e.target.value)}
                         >
                           <option value="">Selecciona un tipo</option>
-                          {propertyTypes.map((type) => (
+                          {propertyTypes.map(type => (
                             <option key={type.value} value={type.value}>
                               {type.label}
                             </option>
                           ))}
                         </select>
-                        {errors.propertyType && <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>}
+                        {errors.propertyType && (
+                          <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -468,9 +478,11 @@ return;
                           }`}
                           placeholder="Ej: Av. Apoquindo 3400"
                           value={formData.address}
-                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          onChange={e => handleInputChange('address', e.target.value)}
                         />
-                        {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                        {errors.address && (
+                          <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -485,9 +497,11 @@ return;
                             }`}
                             placeholder="Ej: Santiago"
                             value={formData.city}
-                            onChange={(e) => handleInputChange('city', e.target.value)}
+                            onChange={e => handleInputChange('city', e.target.value)}
                           />
-                          {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                          {errors.city && (
+                            <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                          )}
                         </div>
 
                         <div>
@@ -501,9 +515,11 @@ return;
                             }`}
                             placeholder="Ej: Las Condes"
                             value={formData.commune}
-                            onChange={(e) => handleInputChange('commune', e.target.value)}
+                            onChange={e => handleInputChange('commune', e.target.value)}
                           />
-                          {errors.commune && <p className="text-red-500 text-sm mt-1">{errors.commune}</p>}
+                          {errors.commune && (
+                            <p className="text-red-500 text-sm mt-1">{errors.commune}</p>
+                          )}
                         </div>
 
                         <div>
@@ -515,16 +531,18 @@ return;
                               errors.region ? 'border-red-500' : 'border-gray-300'
                             }`}
                             value={formData.region}
-                            onChange={(e) => handleInputChange('region', e.target.value)}
+                            onChange={e => handleInputChange('region', e.target.value)}
                           >
                             <option value="">Selecciona una región</option>
-                            {regions.map((region) => (
+                            {regions.map(region => (
                               <option key={region} value={region}>
                                 {region}
                               </option>
                             ))}
                           </select>
-                          {errors.region && <p className="text-red-500 text-sm mt-1">{errors.region}</p>}
+                          {errors.region && (
+                            <p className="text-red-500 text-sm mt-1">{errors.region}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -549,9 +567,11 @@ return;
                             }`}
                             placeholder="550000"
                             value={formData.price || ''}
-                            onChange={(e) => handleInputChange('price', Number(e.target.value))}
+                            onChange={e => handleInputChange('price', Number(e.target.value))}
                           />
-                          {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                          {errors.price && (
+                            <p className="text-red-500 text-sm mt-1">{errors.price}</p>
+                          )}
                         </div>
 
                         <div>
@@ -565,9 +585,11 @@ return;
                             }`}
                             placeholder="550000"
                             value={formData.deposit || ''}
-                            onChange={(e) => handleInputChange('deposit', Number(e.target.value))}
+                            onChange={e => handleInputChange('deposit', Number(e.target.value))}
                           />
-                          {errors.deposit && <p className="text-red-500 text-sm mt-1">{errors.deposit}</p>}
+                          {errors.deposit && (
+                            <p className="text-red-500 text-sm mt-1">{errors.deposit}</p>
+                          )}
                         </div>
 
                         <div>
@@ -581,9 +603,11 @@ return;
                             }`}
                             placeholder="2"
                             value={formData.bedrooms || ''}
-                            onChange={(e) => handleInputChange('bedrooms', Number(e.target.value))}
+                            onChange={e => handleInputChange('bedrooms', Number(e.target.value))}
                           />
-                          {errors.bedrooms && <p className="text-red-500 text-sm mt-1">{errors.bedrooms}</p>}
+                          {errors.bedrooms && (
+                            <p className="text-red-500 text-sm mt-1">{errors.bedrooms}</p>
+                          )}
                         </div>
 
                         <div>
@@ -597,9 +621,11 @@ return;
                             }`}
                             placeholder="2"
                             value={formData.bathrooms || ''}
-                            onChange={(e) => handleInputChange('bathrooms', Number(e.target.value))}
+                            onChange={e => handleInputChange('bathrooms', Number(e.target.value))}
                           />
-                          {errors.bathrooms && <p className="text-red-500 text-sm mt-1">{errors.bathrooms}</p>}
+                          {errors.bathrooms && (
+                            <p className="text-red-500 text-sm mt-1">{errors.bathrooms}</p>
+                          )}
                         </div>
 
                         <div className="md:col-span-2">
@@ -613,9 +639,11 @@ return;
                             }`}
                             placeholder="85"
                             value={formData.area || ''}
-                            onChange={(e) => handleInputChange('area', Number(e.target.value))}
+                            onChange={e => handleInputChange('area', Number(e.target.value))}
                           />
-                          {errors.area && <p className="text-red-500 text-sm mt-1">{errors.area}</p>}
+                          {errors.area && (
+                            <p className="text-red-500 text-sm mt-1">{errors.area}</p>
+                          )}
                         </div>
                       </div>
 
@@ -624,7 +652,7 @@ return;
                           Características
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {propertyFeatures.map((feature) => {
+                          {propertyFeatures.map(feature => {
                             const Icon = feature.icon;
                             const isSelected = formData.features.includes(feature.id);
                             return (
@@ -718,7 +746,7 @@ return;
                           type="date"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.availabilityDate}
-                          onChange={(e) => handleInputChange('availabilityDate', e.target.value)}
+                          onChange={e => handleInputChange('availabilityDate', e.target.value)}
                         />
                       </div>
 
@@ -729,7 +757,7 @@ return;
                         <select
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.contactPreference}
-                          onChange={(e) => handleInputChange('contactPreference', e.target.value)}
+                          onChange={e => handleInputChange('contactPreference', e.target.value)}
                         >
                           <option value="platform">A través de la plataforma</option>
                           <option value="email">Email</option>
@@ -742,10 +770,12 @@ return;
                         <div className="flex items-start gap-3">
                           <Info className="w-5 h-5 text-blue-600 mt-0.5" />
                           <div>
-                            <h4 className="font-medium text-blue-900 mb-1">Información importante</h4>
+                            <h4 className="font-medium text-blue-900 mb-1">
+                              Información importante
+                            </h4>
                             <p className="text-sm text-blue-700">
-                              Al publicar tu propiedad, aceptas nuestros términos y condiciones. 
-                              La propiedad será revisada por nuestro equipo antes de ser publicada.
+                              Al publicar tu propiedad, aceptas nuestros términos y condiciones. La
+                              propiedad será revisada por nuestro equipo antes de ser publicada.
                             </p>
                           </div>
                         </div>
@@ -757,19 +787,13 @@ return;
 
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8 pt-6 border-t">
-                <Button
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={step === 1}
-                >
+                <Button variant="outline" onClick={prevStep} disabled={step === 1}>
                   Anterior
                 </Button>
-                
+
                 <div className="flex gap-2">
                   {step < 4 ? (
-                    <Button onClick={nextStep}>
-                      Siguiente
-                    </Button>
+                    <Button onClick={nextStep}>Siguiente</Button>
                   ) : (
                     <Button onClick={handleSubmit} disabled={loading}>
                       {loading ? (
@@ -791,8 +815,6 @@ return;
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
-
-

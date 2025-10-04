@@ -45,7 +45,7 @@ import {
   Upload,
   RefreshCw,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -85,20 +85,20 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Perfil" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Perfil" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Perfil" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Perfil" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -112,12 +112,12 @@ export default function PerfilPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Perfil" subtitle="Gestiona y visualiza la información de perfil">
+    <UnifiedDashboardLayout title="Perfil" subtitle="Gestiona y visualiza la información de perfil">
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -243,6 +243,6 @@ export default function PerfilPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

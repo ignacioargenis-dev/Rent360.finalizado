@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,15 +6,28 @@ import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Building, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Building,
+  Users,
   Calendar,
   Download,
   RefreshCw,
@@ -48,7 +61,6 @@ interface ExpenseBreakdown {
 }
 
 export default function AdminFinancialReportsPage() {
-
   const [financialData, setFinancialData] = useState<FinancialMetric[]>([]);
 
   const [revenueByCategory, setRevenueByCategory] = useState<RevenueByCategory[]>([]);
@@ -127,10 +139,16 @@ export default function AdminFinancialReportsPage() {
       ];
 
       const mockExpenses: ExpenseBreakdown[] = [
-        { category: 'Mantenimiento', amount: 850000, percentage: 25, budget: 800000, variance: 6.25 },
+        {
+          category: 'Mantenimiento',
+          amount: 850000,
+          percentage: 25,
+          budget: 800000,
+          variance: 6.25,
+        },
         { category: 'Personal', amount: 1200000, percentage: 35, budget: 1150000, variance: 4.35 },
         { category: 'Marketing', amount: 450000, percentage: 13, budget: 500000, variance: -10.0 },
-        { category: 'Tecnología', amount: 380000, percentage: 11, budget: 400000, variance: -5.0 },
+        { category: 'Tecnolog�a', amount: 380000, percentage: 11, budget: 400000, variance: -5.0 },
         { category: 'Seguros', amount: 280000, percentage: 8, budget: 300000, variance: -6.67 },
         { category: 'Otros', amount: 290000, percentage: 8, budget: 300000, variance: -3.33 },
       ];
@@ -139,24 +157,29 @@ export default function AdminFinancialReportsPage() {
       setRevenueByCategory(mockRevenueByCategory);
       setExpenses(mockExpenses);
     } catch (error) {
-      logger.error('Error fetching financial data:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching financial data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const calculateTotals = () => {
-    return financialData.reduce((acc, period) => ({
-      revenue: acc.revenue + period.revenue,
-      expenses: acc.expenses + period.expenses,
-      profit: acc.profit + period.profit,
-      growth: acc.growth + period.growth,
-    }), {
-      revenue: 0,
-      expenses: 0,
-      profit: 0,
-      growth: 0,
-    });
+    return financialData.reduce(
+      (acc, period) => ({
+        revenue: acc.revenue + period.revenue,
+        expenses: acc.expenses + period.expenses,
+        profit: acc.profit + period.profit,
+        growth: acc.growth + period.growth,
+      }),
+      {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        growth: 0,
+      }
+    );
   };
 
   const totals = calculateTotals();
@@ -164,17 +187,26 @@ export default function AdminFinancialReportsPage() {
   const averageGrowth = financialData.length > 0 ? totals.growth / financialData.length : 0;
 
   const exportFinancialReport = () => {
-    const headers = ['Período', 'Ingresos', 'Egresos', 'Utilidad', 'Margen de Utilidad', 'Crecimiento'];
+    const headers = [
+      'Per�odo',
+      'Ingresos',
+      'Egresos',
+      'Utilidad',
+      'Margen de Utilidad',
+      'Crecimiento',
+    ];
     const csvContent = [
       headers.join(','),
-      ...financialData.map(period => [
-        period.period,
-        period.revenue,
-        period.expenses,
-        period.profit,
-        `${period.profitMargin}%`,
-        `${period.growth}%`,
-      ].join(',')),
+      ...financialData.map(period =>
+        [
+          period.period,
+          period.revenue,
+          period.expenses,
+          period.profit,
+          `${period.profitMargin}%`,
+          `${period.growth}%`,
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -200,14 +232,17 @@ export default function AdminFinancialReportsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Reportes Financieros" subtitle="Análisis financiero detallado del sistema">
+    <UnifiedDashboardLayout
+      title="Reportes Financieros"
+      subtitle="An�lisis financiero detallado del sistema"
+    >
       <div className="space-y-6">
         {/* Controles */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Configuración de Reporte
+              Configuraci�n de Reporte
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -219,15 +254,15 @@ export default function AdminFinancialReportsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1month">Último mes</SelectItem>
-                    <SelectItem value="3months">Últimos 3 meses</SelectItem>
-                    <SelectItem value="6months">Últimos 6 meses</SelectItem>
-                    <SelectItem value="1year">Último año</SelectItem>
+                    <SelectItem value="1month">�ltimo mes</SelectItem>
+                    <SelectItem value="3months">�ltimos 3 meses</SelectItem>
+                    <SelectItem value="6months">�ltimos 6 meses</SelectItem>
+                    <SelectItem value="1year">�ltimo a�o</SelectItem>
                     <SelectItem value="custom">Personalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo de Reporte</label>
                 <Select value={reportType} onValueChange={setReportType}>
@@ -236,13 +271,13 @@ export default function AdminFinancialReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="overview">Resumen General</SelectItem>
-                    <SelectItem value="detailed">Análisis Detallado</SelectItem>
-                    <SelectItem value="forecast">Pronósticos</SelectItem>
+                    <SelectItem value="detailed">An�lisis Detallado</SelectItem>
+                    <SelectItem value="forecast">Pron�sticos</SelectItem>
                     <SelectItem value="comparison">Comparativo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex items-end gap-2">
                 <Button onClick={fetchFinancialData} variant="outline">
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -281,7 +316,7 @@ export default function AdminFinancialReportsPage() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Utilidad Neta</CardTitle>
@@ -294,7 +329,7 @@ export default function AdminFinancialReportsPage() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Egresos</CardTitle>
@@ -307,7 +342,7 @@ export default function AdminFinancialReportsPage() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Eficiencia</CardTitle>
@@ -315,23 +350,19 @@ export default function AdminFinancialReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{averageProfitMargin.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground">
-                Margen de utilidad promedio
-              </p>
+              <p className="text-xs text-muted-foreground">Margen de utilidad promedio</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Ingresos por Categoría */}
+        {/* Ingresos por Categor�a */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChart className="w-5 h-5" />
-              Ingresos por Categoría
+              Ingresos por Categor�a
             </CardTitle>
-            <CardDescription>
-              Desglose de ingresos por tipo de servicio
-            </CardDescription>
+            <CardDescription>Desglose de ingresos por tipo de servicio</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -346,21 +377,32 @@ export default function AdminFinancialReportsPage() {
                       <span className="font-bold">${category.amount.toLocaleString()}</span>
                       <span className="text-sm text-gray-500">({category.percentage}%)</span>
                       {category.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-600" />}
-                      {category.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-600" />}
+                      {category.trend === 'down' && (
+                        <TrendingDown className="w-4 h-4 text-red-600" />
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
-              
+
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-2">Distribución de Ingresos</div>
+                  <div className="text-sm text-gray-600 mb-2">Distribuci�n de Ingresos</div>
                   <div className="relative w-32 h-32 mx-auto">
-                    {/* Simulación de gráfico circular */}
+                    {/* Simulaci�n de gr�fico circular */}
                     <div className="absolute inset-0 rounded-full border-8 border-blue-600"></div>
-                    <div className="absolute inset-0 rounded-full border-8 border-green-600" style={{ clipPath: 'polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 50% 100%)' }}></div>
-                    <div className="absolute inset-0 rounded-full border-8 border-yellow-600" style={{ clipPath: 'polygon(50% 50%, 100% 0%, 100% 30%, 50% 50%)' }}></div>
-                    <div className="absolute inset-0 rounded-full border-8 border-red-600" style={{ clipPath: 'polygon(50% 50%, 100% 30%, 100% 50%, 50% 50%)' }}></div>
+                    <div
+                      className="absolute inset-0 rounded-full border-8 border-green-600"
+                      style={{ clipPath: 'polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 50% 100%)' }}
+                    ></div>
+                    <div
+                      className="absolute inset-0 rounded-full border-8 border-yellow-600"
+                      style={{ clipPath: 'polygon(50% 50%, 100% 0%, 100% 30%, 50% 50%)' }}
+                    ></div>
+                    <div
+                      className="absolute inset-0 rounded-full border-8 border-red-600"
+                      style={{ clipPath: 'polygon(50% 50%, 100% 30%, 100% 50%, 50% 50%)' }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -368,19 +410,17 @@ export default function AdminFinancialReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Análisis de Egresos */}
+        {/* An�lisis de Egresos */}
         <Card>
           <CardHeader>
-            <CardTitle>Análisis de Egresos</CardTitle>
-            <CardDescription>
-              Desglose de gastos y variación vs presupuesto
-            </CardDescription>
+            <CardTitle>An�lisis de Egresos</CardTitle>
+            <CardDescription>Desglose de gastos y variaci�n vs presupuesto</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Categoría</TableHead>
+                  <TableHead>Categor�a</TableHead>
                   <TableHead className="text-right">Monto</TableHead>
                   <TableHead className="text-right">Porcentaje</TableHead>
                   <TableHead className="text-right">Presupuesto</TableHead>
@@ -397,12 +437,25 @@ export default function AdminFinancialReportsPage() {
                     <TableCell className="text-right">${expense.budget.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       <span className={expense.variance > 0 ? 'text-red-600' : 'text-green-600'}>
-                        {expense.variance > 0 ? '+' : ''}{expense.variance.toFixed(1)}%
+                        {expense.variance > 0 ? '+' : ''}
+                        {expense.variance.toFixed(1)}%
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={expense.variance <= 0 ? 'default' : expense.variance <= 5 ? 'secondary' : 'destructive'}>
-                        {expense.variance <= 0 ? 'Bajo presupuesto' : expense.variance <= 5 ? 'Límite' : 'Sobre presupuesto'}
+                      <Badge
+                        variant={
+                          expense.variance <= 0
+                            ? 'default'
+                            : expense.variance <= 5
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                      >
+                        {expense.variance <= 0
+                          ? 'Bajo presupuesto'
+                          : expense.variance <= 5
+                            ? 'L�mite'
+                            : 'Sobre presupuesto'}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -412,19 +465,17 @@ export default function AdminFinancialReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Evolución Financiera */}
+        {/* Evoluci�n Financiera */}
         <Card>
           <CardHeader>
-            <CardTitle>Evolución Financiera</CardTitle>
-            <CardDescription>
-              Tendencias de ingresos, egresos y utilidad neta
-            </CardDescription>
+            <CardTitle>Evoluci�n Financiera</CardTitle>
+            <CardDescription>Tendencias de ingresos, egresos y utilidad neta</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Período</TableHead>
+                  <TableHead>Per�odo</TableHead>
                   <TableHead className="text-right">Ingresos</TableHead>
                   <TableHead className="text-right">Egresos</TableHead>
                   <TableHead className="text-right">Utilidad</TableHead>
@@ -437,8 +488,12 @@ export default function AdminFinancialReportsPage() {
                   <TableRow key={index}>
                     <TableCell className="font-medium">{period.period}</TableCell>
                     <TableCell className="text-right">${period.revenue.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${period.expenses.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-bold">${period.profit.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      ${period.expenses.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right font-bold">
+                      ${period.profit.toLocaleString()}
+                    </TableCell>
                     <TableCell className="text-right">{period.profitMargin.toFixed(1)}%</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -465,7 +520,3 @@ export default function AdminFinancialReportsPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

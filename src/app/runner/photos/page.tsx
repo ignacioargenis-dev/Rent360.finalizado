@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Camera, 
-  Upload, 
-  Download, Eye, Trash2, 
+import {
+  Camera,
+  Upload,
+  Download,
+  Eye,
+  Trash2,
   Plus,
   Search,
   Filter,
@@ -29,9 +32,11 @@ import { Camera,
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Maximize, Info } from 'lucide-react';
+  Maximize,
+  Info,
+} from 'lucide-react';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -200,7 +205,7 @@ export default function RunnerPhotosPage() {
       ];
 
       setPhotoReports(mockPhotoReports);
-      
+
       // Calculate stats
       const totalPhotos = mockPhotoReports.reduce((sum, report) => sum + report.photos.length, 0);
       const pendingUploads = mockPhotoReports.filter(report => report.status === 'PENDING').length;
@@ -208,8 +213,10 @@ export default function RunnerPhotosPage() {
         .filter(report => {
           const uploadDate = new Date(report.createdAt);
           const now = new Date();
-          return uploadDate.getMonth() === now.getMonth() && 
-                 uploadDate.getFullYear() === now.getFullYear();
+          return (
+            uploadDate.getMonth() === now.getMonth() &&
+            uploadDate.getFullYear() === now.getFullYear()
+          );
         })
         .reduce((sum, report) => sum + report.photos.length, 0);
       const approvedPhotos = mockPhotoReports
@@ -254,8 +261,8 @@ export default function RunnerPhotosPage() {
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) {
-return '0 Bytes';
-}
+      return '0 Bytes';
+    }
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -298,43 +305,54 @@ return '0 Bytes';
 
   const getCategoryName = (category: string) => {
     switch (category) {
-      case 'general': return 'General';
-      case 'bedroom': return 'Dormitorio';
-      case 'bathroom': return 'Baño';
-      case 'kitchen': return 'Cocina';
-      case 'living': return 'Sala de Estar';
-      case 'exterior': return 'Exterior';
-      case 'special': return 'Especial';
-      default: return category;
+      case 'general':
+        return 'General';
+      case 'bedroom':
+        return 'Dormitorio';
+      case 'bathroom':
+        return 'Baño';
+      case 'kitchen':
+        return 'Cocina';
+      case 'living':
+        return 'Sala de Estar';
+      case 'exterior':
+        return 'Exterior';
+      case 'special':
+        return 'Especial';
+      default:
+        return category;
     }
   };
 
   const filteredReports = photoReports.filter(report => {
-    const matchesSearch = report.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      report.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-    
+
     let matchesDate = true;
     if (dateFilter !== 'all') {
       const reportDate = new Date(report.visitDate);
       const now = new Date();
-      
+
       switch (dateFilter) {
         case 'thisMonth':
-          matchesDate = reportDate.getMonth() === now.getMonth() && 
-                        reportDate.getFullYear() === now.getFullYear();
+          matchesDate =
+            reportDate.getMonth() === now.getMonth() &&
+            reportDate.getFullYear() === now.getFullYear();
           break;
         case 'lastMonth':
           const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          matchesDate = reportDate >= lastMonth && reportDate < new Date(now.getFullYear(), now.getMonth(), 1);
+          matchesDate =
+            reportDate >= lastMonth && reportDate < new Date(now.getFullYear(), now.getMonth(), 1);
           break;
         case 'pending':
           matchesDate = report.status === 'PENDING';
           break;
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -350,8 +368,8 @@ return '0 Bytes';
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Reportes Fotográficos"
         subtitle="Gestiona las fotos de tus visitas a propiedades"
@@ -459,7 +477,7 @@ return '0 Bytes';
                     placeholder="Buscar por propiedad, cliente o dirección..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
@@ -467,7 +485,7 @@ return '0 Bytes';
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="PENDING">Pendientes</option>
@@ -478,7 +496,7 @@ return '0 Bytes';
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
+                  onChange={e => setDateFilter(e.target.value)}
                 >
                   <option value="all">Todas las fechas</option>
                   <option value="thisMonth">Este mes</option>
@@ -519,7 +537,7 @@ return '0 Bytes';
         {/* Photo Reports */}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredReports.map((report) => (
+            {filteredReports.map(report => (
               <Card key={report.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
@@ -537,7 +555,7 @@ return '0 Bytes';
                     {/* Photos Grid */}
                     {report.photos.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
-                        {report.photos.slice(0, 4).map((photo) => (
+                        {report.photos.slice(0, 4).map(photo => (
                           <div key={photo.id} className="relative group">
                             <img
                               src={photo.url}
@@ -616,7 +634,7 @@ return '0 Bytes';
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredReports.map((report) => (
+            {filteredReports.map(report => (
               <Card key={report.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
@@ -652,9 +670,7 @@ return '0 Bytes';
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Ganancias</p>
-                      <p className="font-medium text-green-600">
-                        {formatPrice(report.earnings)}
-                      </p>
+                      <p className="font-medium text-green-600">{formatPrice(report.earnings)}</p>
                     </div>
                   </div>
 
@@ -662,7 +678,7 @@ return '0 Bytes';
                     <div className="mb-4">
                       <p className="text-sm font-medium text-gray-700 mb-2">Fotos recientes:</p>
                       <div className="flex gap-2">
-                        {report.photos.slice(0, 3).map((photo) => (
+                        {report.photos.slice(0, 3).map(photo => (
                           <div key={photo.id} className="relative">
                             <img
                               src={photo.url}
@@ -678,7 +694,9 @@ return '0 Bytes';
                         ))}
                         {report.photos.length > 3 && (
                           <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <span className="text-xs text-gray-600">+{report.photos.length - 3}</span>
+                            <span className="text-xs text-gray-600">
+                              +{report.photos.length - 3}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -728,8 +746,7 @@ return '0 Bytes';
               <p className="text-gray-600 mb-4">
                 {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
                   ? 'Intenta ajustar tus filtros de búsqueda.'
-                  : 'Aún no has subido fotos de visitas.'
-                }
+                  : 'Aún no has subido fotos de visitas.'}
               </p>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -739,6 +756,6 @@ return '0 Bytes';
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

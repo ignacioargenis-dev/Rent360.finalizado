@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,11 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, UserPlus, Edit, 
-  Trash2, 
-  Mail, 
-  Phone, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Search,
+  UserPlus,
+  Edit,
+  Trash2,
+  Mail,
+  Phone,
   Calendar,
   Shield,
   Users,
@@ -19,7 +28,7 @@ import { Search, UserPlus, Edit,
   CheckCircle,
   XCircle,
   Loader2,
-  X
+  X,
 } from 'lucide-react';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -73,7 +82,9 @@ export default function AdminUsersPage() {
       const data = await response.json();
       setUsers(data.users || []);
     } catch (error) {
-      logger.error('Error fetching users:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching users:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
@@ -84,10 +95,11 @@ export default function AdminUsersPage() {
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.phone && user.phone.includes(searchQuery)),
+      filtered = filtered.filter(
+        user =>
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (user.phone && user.phone.includes(searchQuery))
       );
     }
 
@@ -98,8 +110,8 @@ export default function AdminUsersPage() {
 
     // Apply status filter
     if (statusFilter) {
-      filtered = filtered.filter(user => 
-        statusFilter === 'active' ? user.isActive : !user.isActive,
+      filtered = filtered.filter(user =>
+        statusFilter === 'active' ? user.isActive : !user.isActive
       );
     }
 
@@ -116,8 +128,10 @@ export default function AdminUsersPage() {
       support: { label: 'Soporte', className: 'bg-red-100 text-red-800' },
     };
 
-    const config = roleConfig[role as keyof typeof roleConfig] || 
-      { label: role, className: 'bg-gray-100 text-gray-800' };
+    const config = roleConfig[role as keyof typeof roleConfig] || {
+      label: role,
+      className: 'bg-gray-100 text-gray-800',
+    };
 
     return <Badge className={config.className}>{config.label}</Badge>;
   };
@@ -144,12 +158,18 @@ export default function AdminUsersPage() {
         await fetchUsers(); // Refresh the list
       }
     } catch (error) {
-      logger.error('Error toggling user status:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error toggling user status:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
+    if (
+      !confirm(
+        '�Est�s seguro de que deseas eliminar este usuario? Esta acci�n no se puede deshacer.'
+      )
+    ) {
       return;
     }
 
@@ -162,7 +182,9 @@ export default function AdminUsersPage() {
         await fetchUsers(); // Refresh the list
       }
     } catch (error) {
-      logger.error('Error deleting user:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error deleting user:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -196,7 +218,9 @@ export default function AdminUsersPage() {
         alert(error.error || 'Error al crear usuario');
       }
     } catch (error) {
-      logger.error('Error creating user:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creating user:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al crear usuario');
     } finally {
       setCreatingUser(false);
@@ -211,7 +235,7 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Cargando usuarios...">
+      <UnifiedDashboardLayout title="Gesti�n de Usuarios" subtitle="Cargando usuarios...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
@@ -223,12 +247,15 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Administra todos los usuarios del sistema">
+    <UnifiedDashboardLayout
+      title="Gesti�n de Usuarios"
+      subtitle="Administra todos los usuarios del sistema"
+    >
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
+            <h1 className="text-3xl font-bold">Gesti�n de Usuarios</h1>
             <p className="text-muted-foreground">Administra todos los usuarios de la plataforma</p>
           </div>
           <Button onClick={() => setShowCreateModal(true)}>
@@ -249,7 +276,7 @@ export default function AdminUsersPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -263,7 +290,7 @@ export default function AdminUsersPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -277,7 +304,7 @@ export default function AdminUsersPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -303,10 +330,10 @@ export default function AdminUsersPage() {
                   placeholder="Buscar usuarios..."
                   className="pl-10"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
-              
+
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Rol" />
@@ -321,7 +348,7 @@ export default function AdminUsersPage() {
                   <SelectItem value="support">Soporte</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Estado" />
@@ -332,9 +359,9 @@ export default function AdminUsersPage() {
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchQuery('');
                   setRoleFilter('');
@@ -372,7 +399,7 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentUsers.map((user) => (
+                  {currentUsers.map(user => (
                     <tr key={user.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -401,12 +428,12 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        {getRoleBadge(user.role)}
-                      </td>
+                      <td className="py-3 px-4">{getRoleBadge(user.role)}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                          <div
+                            className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}
+                          ></div>
                           <span className="text-sm">{user.isActive ? 'Activo' : 'Inactivo'}</span>
                         </div>
                       </td>
@@ -420,7 +447,11 @@ export default function AdminUsersPage() {
                             size="sm"
                             onClick={() => toggleUserStatus(user.id, user.isActive)}
                           >
-                            {user.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                            {user.isActive ? (
+                              <XCircle className="w-4 h-4" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
                           </Button>
                           <Button variant="outline" size="sm">
                             <Edit className="w-4 h-4" />
@@ -446,7 +477,7 @@ export default function AdminUsersPage() {
                 <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No se encontraron usuarios</h3>
                 <p className="text-gray-600">
-                  No hay usuarios que coincidan con tus criterios de búsqueda
+                  No hay usuarios que coincidan con tus criterios de b�squeda
                 </p>
               </div>
             )}
@@ -455,7 +486,7 @@ export default function AdminUsersPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6 pt-6 border-t">
                 <div className="text-sm text-gray-700">
-                  Mostrando página {currentPage} de {totalPages}
+                  Mostrando p�gina {currentPage} de {totalPages}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -479,7 +510,7 @@ export default function AdminUsersPage() {
             )}
           </CardContent>
         </Card>
-        
+
         {/* Create User Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -490,7 +521,7 @@ export default function AdminUsersPage() {
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -498,40 +529,37 @@ export default function AdminUsersPage() {
                   </label>
                   <Input
                     value={newUser.name}
-                    onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                    placeholder="Juan Pérez"
+                    onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                    placeholder="Juan P�rez"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <Input
                     type="email"
                     value={newUser.email}
-                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                     placeholder="juan@ejemplo.com"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contraseña
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Contrase�a</label>
                   <Input
                     type="password"
                     value={newUser.password}
-                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                    placeholder="••••••••"
+                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                    placeholder="��������"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rol
-                  </label>
-                  <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value})}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                  <Select
+                    value={newUser.role}
+                    onValueChange={value => setNewUser({ ...newUser, role: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -548,19 +576,16 @@ export default function AdminUsersPage() {
                   </Select>
                 </div>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setShowCreateModal(false)}
                   disabled={creatingUser}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  onClick={createUser}
-                  disabled={creatingUser}
-                >
+                <Button onClick={createUser} disabled={creatingUser}>
                   {creatingUser ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -581,7 +606,3 @@ export default function AdminUsersPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

@@ -6,15 +6,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Save, 
-  MapPin, 
-  Search,
-  Building,
-  UserIcon,
-  CheckCircle
-} from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Save, MapPin, Search, Building, UserIcon, CheckCircle } from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -186,30 +179,30 @@ export default function NewVisitPage() {
     switch (currentStep) {
       case 1:
         if (!formData.propertyId) {
-newErrors.propertyId = 'Debes seleccionar una propiedad';
-}
+          newErrors.propertyId = 'Debes seleccionar una propiedad';
+        }
         if (!formData.clientId) {
-newErrors.clientId = 'Debes seleccionar un cliente';
-}
+          newErrors.clientId = 'Debes seleccionar un cliente';
+        }
         break;
       case 2:
         if (!formData.scheduledDate) {
-newErrors.scheduledDate = 'Debes seleccionar una fecha';
-}
+          newErrors.scheduledDate = 'Debes seleccionar una fecha';
+        }
         if (!formData.scheduledTime) {
-newErrors.scheduledTime = 'Debes seleccionar una hora';
-}
+          newErrors.scheduledTime = 'Debes seleccionar una hora';
+        }
         if (!formData.estimatedDuration) {
-newErrors.estimatedDuration = 'Debes seleccionar una duración';
-}
+          newErrors.estimatedDuration = 'Debes seleccionar una duración';
+        }
         break;
       case 3:
         if (!formData.priority) {
-newErrors.priority = 'Debes seleccionar una prioridad';
-}
+          newErrors.priority = 'Debes seleccionar una prioridad';
+        }
         if (formData.earnings <= 0) {
-newErrors.earnings = 'Las ganancias deben ser mayores a 0';
-}
+          newErrors.earnings = 'Las ganancias deben ser mayores a 0';
+        }
         break;
     }
 
@@ -248,41 +241,45 @@ newErrors.earnings = 'Las ganancias deben ser mayores a 0';
     const baseRatePerMinute = 500;
     // Bonus for high-value properties
     const propertyBonus = propertyPrice && propertyPrice > 1000000 ? 200 : 0;
-    return (duration * baseRatePerMinute) + propertyBonus;
+    return duration * baseRatePerMinute + propertyBonus;
   };
 
   const handleSubmit = async () => {
     if (!validateStep(step)) {
-return;
-}
+      return;
+    }
 
     setLoading(true);
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Here you would normally send the data to your API
       logger.debug('Visit data:', { formData });
-      
+
       // Show success message and redirect
       alert('Visita programada exitosamente');
       // Redirect to runner visits page
     } catch (error) {
-      logger.error('Error creating visit:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creating visit:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al programar la visita');
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProperties = properties.filter(property =>
-    property.title.toLowerCase().includes(searchPropertyTerm.toLowerCase()) ||
-    property.address.toLowerCase().includes(searchPropertyTerm.toLowerCase()),
+  const filteredProperties = properties.filter(
+    property =>
+      property.title.toLowerCase().includes(searchPropertyTerm.toLowerCase()) ||
+      property.address.toLowerCase().includes(searchPropertyTerm.toLowerCase())
   );
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchClientTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchClientTerm.toLowerCase()),
+  const filteredClients = clients.filter(
+    client =>
+      client.name.toLowerCase().includes(searchClientTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchClientTerm.toLowerCase())
   );
 
   const selectedProperty = properties.find(p => p.id === formData.propertyId);
@@ -300,8 +297,8 @@ return;
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Nueva Visita"
         subtitle="Programa una nueva visita a propiedad"
@@ -317,22 +314,18 @@ return;
                 <span className="text-sm text-gray-600">Paso {step} de 4</span>
               </div>
               <div className="flex items-center gap-2">
-                {[1, 2, 3, 4].map((stepNumber) => (
+                {[1, 2, 3, 4].map(stepNumber => (
                   <div key={stepNumber} className="flex items-center">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step >= stepNumber
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                        step >= stepNumber ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {stepNumber}
                     </div>
                     {stepNumber < 4 && (
                       <div
-                        className={`w-16 h-1 ${
-                          step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
+                        className={`w-16 h-1 ${step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'}`}
                       />
                     )}
                   </div>
@@ -360,20 +353,25 @@ return;
                             placeholder="Buscar propiedad..."
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={searchPropertyTerm}
-                            onChange={(e) => setSearchPropertyTerm(e.target.value)}
+                            onChange={e => setSearchPropertyTerm(e.target.value)}
                           />
                         </div>
                         <div className="max-h-60 overflow-y-auto border rounded-lg">
-                          {filteredProperties.map((property) => (
+                          {filteredProperties.map(property => (
                             <div
                               key={property.id}
                               className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                                formData.propertyId === property.id ? 'bg-blue-50 border-blue-500' : ''
+                                formData.propertyId === property.id
+                                  ? 'bg-blue-50 border-blue-500'
+                                  : ''
                               }`}
                               onClick={() => {
                                 handleInputChange('propertyId', property.id);
                                 // Auto-calculate earnings based on property price and duration
-                                const earnings = calculateEarnings(formData.estimatedDuration, property.price);
+                                const earnings = calculateEarnings(
+                                  formData.estimatedDuration,
+                                  property.price
+                                );
                                 handleInputChange('earnings', earnings);
                               }}
                             >
@@ -394,13 +392,15 @@ return;
                                   </p>
                                   <Badge className="bg-green-100 text-green-800 text-xs mt-1">
                                     Disponible
-                          </Badge>
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
                           ))}
                         </div>
-                        {errors.propertyId && <p className="text-red-500 text-sm mt-1">{errors.propertyId}</p>}
+                        {errors.propertyId && (
+                          <p className="text-red-500 text-sm mt-1">{errors.propertyId}</p>
+                        )}
                       </div>
 
                       <div>
@@ -414,11 +414,11 @@ return;
                             placeholder="Buscar cliente..."
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={searchClientTerm}
-                            onChange={(e) => setSearchClientTerm(e.target.value)}
+                            onChange={e => setSearchClientTerm(e.target.value)}
                           />
                         </div>
                         <div className="max-h-60 overflow-y-auto border rounded-lg">
-                          {filteredClients.map((client) => (
+                          {filteredClients.map(client => (
                             <div
                               key={client.id}
                               className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
@@ -432,18 +432,22 @@ return;
                                   <p className="text-sm text-gray-600">{client.email}</p>
                                   <p className="text-sm text-gray-500">{client.phone}</p>
                                 </div>
-                                <Badge className={
-                                  client.type === 'OWNER' 
-                                    ? 'bg-blue-100 text-blue-800' 
-                                    : 'bg-purple-100 text-purple-800'
-                                }>
+                                <Badge
+                                  className={
+                                    client.type === 'OWNER'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-purple-100 text-purple-800'
+                                  }
+                                >
                                   {client.type === 'OWNER' ? 'Propietario' : 'Inquilino'}
                                 </Badge>
                               </div>
                             </div>
                           ))}
                         </div>
-                        {errors.clientId && <p className="text-red-500 text-sm mt-1">{errors.clientId}</p>}
+                        {errors.clientId && (
+                          <p className="text-red-500 text-sm mt-1">{errors.clientId}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -466,10 +470,12 @@ return;
                               errors.scheduledDate ? 'border-red-500' : 'border-gray-300'
                             }`}
                             value={formData.scheduledDate}
-                            onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
+                            onChange={e => handleInputChange('scheduledDate', e.target.value)}
                             min={new Date().toISOString().substring(0, 10)}
                           />
-                          {errors.scheduledDate && <p className="text-red-500 text-sm mt-1">{errors.scheduledDate}</p>}
+                          {errors.scheduledDate && (
+                            <p className="text-red-500 text-sm mt-1">{errors.scheduledDate}</p>
+                          )}
                         </div>
 
                         <div>
@@ -482,9 +488,11 @@ return;
                               errors.scheduledTime ? 'border-red-500' : 'border-gray-300'
                             }`}
                             value={formData.scheduledTime}
-                            onChange={(e) => handleInputChange('scheduledTime', e.target.value)}
+                            onChange={e => handleInputChange('scheduledTime', e.target.value)}
                           />
-                          {errors.scheduledTime && <p className="text-red-500 text-sm mt-1">{errors.scheduledTime}</p>}
+                          {errors.scheduledTime && (
+                            <p className="text-red-500 text-sm mt-1">{errors.scheduledTime}</p>
+                          )}
                         </div>
                       </div>
 
@@ -493,7 +501,7 @@ return;
                           Duración estimada *
                         </label>
                         <div className="grid grid-cols-3 gap-2">
-                          {durationOptions.map((option) => (
+                          {durationOptions.map(option => (
                             <button
                               key={option.value}
                               type="button"
@@ -505,7 +513,10 @@ return;
                               onClick={() => {
                                 handleInputChange('estimatedDuration', option.value);
                                 // Recalculate earnings
-                                const earnings = calculateEarnings(option.value, selectedProperty?.price);
+                                const earnings = calculateEarnings(
+                                  option.value,
+                                  selectedProperty?.price
+                                );
                                 handleInputChange('earnings', earnings);
                               }}
                             >
@@ -513,7 +524,9 @@ return;
                             </button>
                           ))}
                         </div>
-                        {errors.estimatedDuration && <p className="text-red-500 text-sm mt-1">{errors.estimatedDuration}</p>}
+                        {errors.estimatedDuration && (
+                          <p className="text-red-500 text-sm mt-1">{errors.estimatedDuration}</p>
+                        )}
                       </div>
 
                       {selectedProperty && (
@@ -560,7 +573,7 @@ return;
                           Prioridad *
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {priorityOptions.map((option) => (
+                          {priorityOptions.map(option => (
                             <button
                               key={option.value}
                               type="button"
@@ -575,7 +588,9 @@ return;
                             </button>
                           ))}
                         </div>
-                        {errors.priority && <p className="text-red-500 text-sm mt-1">{errors.priority}</p>}
+                        {errors.priority && (
+                          <p className="text-red-500 text-sm mt-1">{errors.priority}</p>
+                        )}
                       </div>
 
                       <div>
@@ -589,9 +604,11 @@ return;
                           }`}
                           placeholder="15000"
                           value={formData.earnings || ''}
-                          onChange={(e) => handleInputChange('earnings', Number(e.target.value))}
+                          onChange={e => handleInputChange('earnings', Number(e.target.value))}
                         />
-                        {errors.earnings && <p className="text-red-500 text-sm mt-1">{errors.earnings}</p>}
+                        {errors.earnings && (
+                          <p className="text-red-500 text-sm mt-1">{errors.earnings}</p>
+                        )}
                         <p className="text-sm text-gray-500 mt-1">
                           Calculado automáticamente según duración y valor de la propiedad
                         </p>
@@ -603,7 +620,7 @@ return;
                             type="checkbox"
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             checked={formData.photosRequired}
-                            onChange={(e) => handleInputChange('photosRequired', e.target.checked)}
+                            onChange={e => handleInputChange('photosRequired', e.target.checked)}
                           />
                           <span className="text-sm font-medium text-gray-700">
                             Se requieren fotografías
@@ -623,7 +640,7 @@ return;
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Instrucciones especiales, puntos a destacar, etc."
                           value={formData.notes}
-                          onChange={(e) => handleInputChange('notes', e.target.value)}
+                          onChange={e => handleInputChange('notes', e.target.value)}
                         />
                       </div>
 
@@ -636,7 +653,7 @@ return;
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Requerimientos específicos del cliente para la visita"
                           value={formData.specialInstructions}
-                          onChange={(e) => handleInputChange('specialInstructions', e.target.value)}
+                          onChange={e => handleInputChange('specialInstructions', e.target.value)}
                         />
                       </div>
                     </div>
@@ -676,7 +693,9 @@ return;
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="text-blue-700">Duración:</span>
-                            <span className="font-medium ml-2 text-blue-900">{formData.estimatedDuration} minutos</span>
+                            <span className="font-medium ml-2 text-blue-900">
+                              {formData.estimatedDuration} minutos
+                            </span>
                           </div>
                           <div>
                             <span className="text-blue-700">Prioridad:</span>
@@ -708,7 +727,9 @@ return;
 
                       {formData.specialInstructions && (
                         <div className="bg-orange-50 p-4 rounded-lg">
-                          <h4 className="font-medium text-orange-900 mb-2">Instrucciones Especiales</h4>
+                          <h4 className="font-medium text-orange-900 mb-2">
+                            Instrucciones Especiales
+                          </h4>
                           <p className="text-sm text-orange-800">{formData.specialInstructions}</p>
                         </div>
                       )}
@@ -719,7 +740,8 @@ return;
                           <div>
                             <h4 className="font-medium text-green-900 mb-1">Confirmación</h4>
                             <p className="text-sm text-green-700">
-                              La visita ha sido programada correctamente. Se notificará al cliente y se enviarán los detalles a tu correo.
+                              La visita ha sido programada correctamente. Se notificará al cliente y
+                              se enviarán los detalles a tu correo.
                             </p>
                           </div>
                         </div>
@@ -731,19 +753,13 @@ return;
 
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8 pt-6 border-t">
-                <Button
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={step === 1}
-                >
+                <Button variant="outline" onClick={prevStep} disabled={step === 1}>
                   Anterior
                 </Button>
-                
+
                 <div className="flex gap-2">
                   {step < 4 ? (
-                    <Button onClick={nextStep}>
-                      Siguiente
-                    </Button>
+                    <Button onClick={nextStep}>Siguiente</Button>
                   ) : (
                     <Button onClick={handleSubmit} disabled={loading}>
                       {loading ? (
@@ -765,6 +781,6 @@ return;
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 // Build fix - force update
 
@@ -59,7 +59,7 @@ export default function ProveedoresPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Cargar datos de la página
+    // Cargar datos de la p�gina
     loadPageData();
   }, []);
 
@@ -68,7 +68,7 @@ export default function ProveedoresPage() {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos específicos de la página
+      // TODO: Implementar carga de datos espec�ficos de la p�gina
       // const response = await fetch(`/api/admin/providers`);
       // const result = await response.json();
       // setData(result);
@@ -87,7 +87,7 @@ export default function ProveedoresPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Proveedores" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Proveedores" subtitle="Cargando informaci�n...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -100,7 +100,7 @@ export default function ProveedoresPage() {
 
   if (error) {
     return (
-      <UnifiedDashboardLayout title="Proveedores" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Proveedores" subtitle="Error al cargar la p�gina">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -121,10 +121,10 @@ export default function ProveedoresPage() {
   return (
     <UnifiedDashboardLayout
       title="Proveedores"
-      subtitle="Gestiona y visualiza la información de proveedores"
+      subtitle="Gestiona y visualiza la informaci�n de proveedores"
     >
       <div className="space-y-6">
-        {/* Header con estadísticas */}
+        {/* Header con estad�sticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -176,7 +176,7 @@ export default function ProveedoresPage() {
           <CardHeader>
             <CardTitle>Proveedores</CardTitle>
             <CardDescription>
-              Aquí puedes gestionar y visualizar toda la información relacionada con proveedores.
+              Aqu� puedes gestionar y visualizar toda la informaci�n relacionada con proveedores.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -184,7 +184,7 @@ export default function ProveedoresPage() {
               <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Contenido en desarrollo</h3>
               <p className="text-gray-600 mb-4">
-                Esta página está siendo desarrollada. Pronto tendrás acceso a todas las
+                Esta p�gina est� siendo desarrollada. Pronto tendr�s acceso a todas las
                 funcionalidades.
               </p>
               <Button>
@@ -195,11 +195,11 @@ export default function ProveedoresPage() {
           </CardContent>
         </Card>
 
-        {/* Acciones rápidas */}
+        {/* Acciones r�pidas */}
         <Card>
           <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
+            <CardTitle>Acciones R�pidas</CardTitle>
+            <CardDescription>Accede r�pidamente a las funciones m�s utilizadas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,13 +227,13 @@ export default function ProveedoresPage() {
               <QuickActionButton
                 icon={BarChart3}
                 label="Reportes"
-                description="Ver estadísticas detalladas"
+                description="Ver estad�sticas detalladas"
                 onClick={() => router.push('/admin/reports/providers')}
               />
 
               <QuickActionButton
                 icon={Settings}
-                label="Configuración"
+                label="Configuraci�n"
                 description="Ajustes del sistema"
                 onClick={() => router.push('/admin/settings')}
               />

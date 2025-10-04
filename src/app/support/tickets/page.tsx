@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface Ticket {
   id: string;
@@ -304,20 +304,20 @@ export default function TicketsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Tickets" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Tickets" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando tickets...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Tickets" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Tickets" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -331,12 +331,12 @@ export default function TicketsPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Tickets de Soporte"
       subtitle="Gestiona y visualiza todos los tickets del sistema"
     >
@@ -688,6 +688,6 @@ export default function TicketsPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

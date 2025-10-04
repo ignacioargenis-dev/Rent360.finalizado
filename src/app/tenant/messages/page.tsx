@@ -24,7 +24,7 @@ import {
   Info,
 } from 'lucide-react';
 import { User } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -290,13 +290,11 @@ export default function TenantMessagesPage() {
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader
-        user={user}
-        title="Mensajes"
-        subtitle="Comunícate con propietarios y corredores"
-      />
-
+    <UnifiedDashboardLayout
+      user={user}
+      title="Mensajes"
+      subtitle="Comunícate con propietarios y corredores"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -587,6 +585,6 @@ export default function TenantMessagesPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,10 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, Building, DollarSign,
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Building,
+  DollarSign,
   FileText,
   Calendar,
   Download,
@@ -18,11 +21,10 @@ import { BarChart3,
   Activity,
   Target,
   PieChart,
-  Clock, 
-  Eye
+  Clock,
+  Eye,
 } from 'lucide-react';
 import { User } from '@/types';
-
 
 interface ReportData {
   totalUsers: number;
@@ -54,7 +56,6 @@ interface RecentActivity {
 }
 
 export default function AdminReportsPage() {
-
   const [user, setUser] = useState<User | null>(null);
 
   const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -77,7 +78,9 @@ export default function AdminReportsPage() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -128,7 +131,7 @@ export default function AdminReportsPage() {
           },
           {
             id: '5',
-            title: 'Departamento Ñuñoa',
+            title: 'Departamento �u�oa',
             views: 632,
             inquiries: 29,
             conversionRate: 4.6,
@@ -148,7 +151,7 @@ export default function AdminReportsPage() {
             id: '2',
             type: 'revenue',
             title: 'Record de ingresos',
-            description: 'Se alcanzó el máximo histórico de ingresos mensuales',
+            description: 'Se alcanz� el m�ximo hist�rico de ingresos mensuales',
             date: '2024-03-18',
             impact: 'high',
           },
@@ -164,7 +167,7 @@ export default function AdminReportsPage() {
             id: '4',
             type: 'contract',
             title: 'Contratos activos',
-            description: '423 contratos activos, un 8% más que el mes anterior',
+            description: '423 contratos activos, un 8% m�s que el mes anterior',
             date: '2024-03-12',
             impact: 'medium',
           },
@@ -175,7 +178,9 @@ export default function AdminReportsPage() {
         setRecentActivity(mockRecentActivity);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading report data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading report data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
@@ -232,24 +237,27 @@ export default function AdminReportsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Reportes Generales" subtitle="Análisis completo del sistema Rent360">
+    <UnifiedDashboardLayout
+      title="Reportes Generales"
+      subtitle="An�lisis completo del sistema Rent360"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Header with period selector */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Reportes Generales</h1>
-            <p className="text-gray-600 mt-2">Vista general del desempeño del sistema</p>
+            <p className="text-gray-600 mt-2">Vista general del desempe�o del sistema</p>
           </div>
           <div className="flex items-center gap-4">
-            <select 
+            <select
               value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+              onChange={e => setSelectedPeriod(e.target.value)}
               className="border rounded-lg px-3 py-2 text-sm"
             >
-              <option value="7d">Últimos 7 días</option>
-              <option value="30d">Últimos 30 días</option>
-              <option value="90d">Últimos 90 días</option>
-              <option value="1y">Último año</option>
+              <option value="7d">�ltimos 7 d�as</option>
+              <option value="30d">�ltimos 30 d�as</option>
+              <option value="90d">�ltimos 90 d�as</option>
+              <option value="1y">�ltimo a�o</option>
             </select>
             <Button variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -269,8 +277,12 @@ export default function AdminReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Usuarios Totales</p>
-                  <p className="text-3xl font-bold text-gray-900">{formatNumber(reportData.totalUsers)}</p>
-                  <div className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.userGrowth)}`}>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatNumber(reportData.totalUsers)}
+                  </p>
+                  <div
+                    className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.userGrowth)}`}
+                  >
                     {getGrowthIcon(reportData.userGrowth)}
                     <span className="text-sm font-medium">{reportData.userGrowth}%</span>
                   </div>
@@ -287,8 +299,12 @@ export default function AdminReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Propiedades</p>
-                  <p className="text-3xl font-bold text-gray-900">{formatNumber(reportData.totalProperties)}</p>
-                  <div className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.propertyGrowth)}`}>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatNumber(reportData.totalProperties)}
+                  </p>
+                  <div
+                    className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.propertyGrowth)}`}
+                  >
                     {getGrowthIcon(reportData.propertyGrowth)}
                     <span className="text-sm font-medium">{reportData.propertyGrowth}%</span>
                   </div>
@@ -305,10 +321,12 @@ export default function AdminReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Contratos Activos</p>
-                  <p className="text-3xl font-bold text-gray-900">{formatNumber(reportData.activeContracts)}</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatNumber(reportData.activeContracts)}
+                  </p>
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                     <Target className="w-4 h-4" />
-                    <span>Tasa de ocupación: 49.4%</span>
+                    <span>Tasa de ocupaci�n: 49.4%</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -323,8 +341,12 @@ export default function AdminReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
-                  <p className="text-3xl font-bold text-gray-900">{formatPrice(reportData.monthlyRevenue)}</p>
-                  <div className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.revenueGrowth)}`}>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatPrice(reportData.monthlyRevenue)}
+                  </p>
+                  <div
+                    className={`flex items-center gap-1 mt-2 ${getGrowthColor(reportData.revenueGrowth)}`}
+                  >
                     {getGrowthIcon(reportData.revenueGrowth)}
                     <span className="text-sm font-medium">{reportData.revenueGrowth}%</span>
                   </div>
@@ -344,16 +366,19 @@ export default function AdminReportsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5" />
-                  Propiedades Más Populares
+                  Propiedades M�s Populares
                 </CardTitle>
                 <CardDescription>
-                  Las propiedades con mayor número de vistas y conversiones
+                  Las propiedades con mayor n�mero de vistas y conversiones
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {topProperties.map((property, index) => (
-                    <div key={property.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div
+                      key={property.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center gap-4">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
                           {index + 1}
@@ -373,8 +398,10 @@ export default function AdminReportsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">{property.conversionRate}%</div>
-                        <div className="text-xs text-gray-500">Conversión</div>
+                        <div className="text-lg font-bold text-blue-600">
+                          {property.conversionRate}%
+                        </div>
+                        <div className="text-xs text-gray-500">Conversi�n</div>
                       </div>
                     </div>
                   ))}
@@ -391,13 +418,11 @@ export default function AdminReportsPage() {
                   <Activity className="w-5 h-5" />
                   Actividad Reciente
                 </CardTitle>
-                <CardDescription>
-                  Eventos importantes del sistema
-                </CardDescription>
+                <CardDescription>Eventos importantes del sistema</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
+                  {recentActivity.map(activity => (
                     <div key={activity.id} className="border-l-4 border-l-blue-500 pl-4">
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-medium text-sm">{activity.title}</h4>
@@ -423,7 +448,9 @@ export default function AdminReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Pagos</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatNumber(reportData.totalPayments)}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatNumber(reportData.totalPayments)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
@@ -450,7 +477,7 @@ export default function AdminReportsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Tasa de Conversión</p>
+                  <p className="text-sm font-medium text-gray-600">Tasa de Conversi�n</p>
                   <p className="text-2xl font-bold text-gray-900">6.2%</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -464,7 +491,3 @@ export default function AdminReportsPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

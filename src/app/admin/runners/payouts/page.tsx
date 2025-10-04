@@ -1,12 +1,27 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, DollarSign, Users, TrendingUp, CheckCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Calendar,
+  DollarSign,
+  Users,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -168,7 +183,10 @@ export default function RunnerPayoutsAdminPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Pagos de Runners" subtitle="Gestión de pagos y comisiones para runners">
+    <UnifiedDashboardLayout
+      title="Pagos de Runners"
+      subtitle="Gesti�n de pagos y comisiones para runners"
+    >
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -193,9 +211,7 @@ export default function RunnerPayoutsAdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-yellow-700">Pendiente de Pago</p>
-                  <p className="text-2xl font-bold text-yellow-900">
-                    {stats?.totalPending || 0}
-                  </p>
+                  <p className="text-2xl font-bold text-yellow-900">{stats?.totalPending || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-200 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6 text-yellow-700" />
@@ -209,9 +225,7 @@ export default function RunnerPayoutsAdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-700">Total Runners</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {stats?.totalRunners || 0}
-                  </p>
+                  <p className="text-2xl font-bold text-blue-900">{stats?.totalRunners || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center">
                   <Users className="w-6 h-6 text-blue-700" />
@@ -242,29 +256,19 @@ export default function RunnerPayoutsAdminPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Cálculo de Pagos
+              C�lculo de Pagos
             </CardTitle>
-            <CardDescription>
-              Calcula y gestiona los pagos pendientes de runners
-            </CardDescription>
+            <CardDescription>Calcula y gestiona los pagos pendientes de runners</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Fecha Inicio</label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Fecha Fin</label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+                <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Estado</label>
@@ -296,7 +300,10 @@ export default function RunnerPayoutsAdminPage() {
         {/* Payouts List */}
         <div className="space-y-4">
           {payouts.map((payout, index) => (
-            <Card key={`${payout.recipientId}-${index}`} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={`${payout.recipientId}-${index}`}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex-1">
@@ -307,32 +314,44 @@ export default function RunnerPayoutsAdminPage() {
                         </h3>
                         <p className="text-gray-600 flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Período: {formatDate(payout.period.startDate)} - {formatDate(payout.period.endDate)}
+                          Per�odo: {formatDate(payout.period.startDate)} -{' '}
+                          {formatDate(payout.period.endDate)}
                         </p>
                       </div>
                       <Badge className="bg-yellow-100 text-yellow-800">
-                        Pendiente de Aprobación
+                        Pendiente de Aprobaci�n
                       </Badge>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-gray-600">Ganancia Bruta</p>
-                        <p className="font-semibold text-gray-900">{formatPrice(payout.breakdown.commissions)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {formatPrice(payout.breakdown.commissions)}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Comisión Plataforma</p>
-                        <p className="font-semibold text-red-600">-{formatPrice(payout.breakdown.fees)}</p>
+                        <p className="text-sm text-gray-600">Comisi�n Plataforma</p>
+                        <p className="font-semibold text-red-600">
+                          -{formatPrice(payout.breakdown.fees)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Monto a Pagar</p>
-                        <p className="font-semibold text-green-600">{formatPrice(payout.breakdown.netAmount)}</p>
+                        <p className="font-semibold text-green-600">
+                          {formatPrice(payout.breakdown.netAmount)}
+                        </p>
                       </div>
                     </div>
 
                     <div className="text-sm text-gray-600">
-                      <p><strong>Visitas completadas:</strong> {payout.items.length}</p>
-                      <p><strong>Promedio por visita:</strong> {formatPrice(payout.breakdown.commissions / payout.items.length)}</p>
+                      <p>
+                        <strong>Visitas completadas:</strong> {payout.items.length}
+                      </p>
+                      <p>
+                        <strong>Promedio por visita:</strong>{' '}
+                        {formatPrice(payout.breakdown.commissions / payout.items.length)}
+                      </p>
                     </div>
                   </div>
 
@@ -374,9 +393,8 @@ export default function RunnerPayoutsAdminPage() {
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {statusFilter === 'pending'
-                    ? 'No hay payouts pendientes de aprobación.'
-                    : 'No hay payouts en el estado seleccionado.'
-                  }
+                    ? 'No hay payouts pendientes de aprobaci�n.'
+                    : 'No hay payouts en el estado seleccionado.'}
                 </p>
                 <Button onClick={calculatePayouts} disabled={loading}>
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -390,7 +408,3 @@ export default function RunnerPayoutsAdminPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

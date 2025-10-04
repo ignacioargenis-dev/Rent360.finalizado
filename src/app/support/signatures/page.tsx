@@ -7,8 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Shield,
@@ -28,9 +40,9 @@ import {
   Calendar,
   Building,
   Phone,
-  Mail
+  Mail,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface SignatureRecord {
   id: string;
@@ -99,7 +111,7 @@ export default function SupportSignaturesPage() {
           expiresAt: '2025-03-15T10:30:00Z',
           provider: 'TrustFactory',
           ipAddress: '192.168.1.100',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         },
         {
           id: '2',
@@ -110,7 +122,7 @@ export default function SupportSignaturesPage() {
           signerRole: 'owner',
           status: 'pending',
           expiresAt: '2024-03-20T15:00:00Z',
-          provider: 'FirmaPro'
+          provider: 'FirmaPro',
         },
         {
           id: '3',
@@ -124,7 +136,7 @@ export default function SupportSignaturesPage() {
           resetReason: 'Error en la firma digital',
           resetBy: 'Soporte Técnico',
           resetAt: '2024-02-11T11:20:00Z',
-          provider: 'TrustFactory'
+          provider: 'TrustFactory',
         },
         {
           id: '4',
@@ -136,13 +148,15 @@ export default function SupportSignaturesPage() {
           status: 'expired',
           signedAt: '2023-03-15T10:30:00Z',
           expiresAt: '2024-03-15T10:30:00Z',
-          provider: 'TrustFactory'
-        }
+          provider: 'TrustFactory',
+        },
       ];
 
       setSignatures(mockSignatures);
     } catch (err) {
-      logger.error('Error loading signatures:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error loading signatures:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError('Error al cargar las firmas');
     } finally {
       setLoading(false);
@@ -159,7 +173,7 @@ export default function SupportSignaturesPage() {
           property: { address: 'Av. Apoquindo 3400', city: 'Las Condes' },
           tenantName: 'Carlos Ramírez',
           ownerName: 'María González',
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         {
           id: 'contract-002',
@@ -167,20 +181,23 @@ export default function SupportSignaturesPage() {
           property: { address: 'Manuel Montt 123', city: 'Providencia' },
           tenantName: 'Ana Martínez',
           ownerName: 'Roberto Díaz',
-          status: 'PENDING'
-        }
+          status: 'PENDING',
+        },
       ];
 
       setContracts(mockContracts);
     } catch (err) {
-      logger.error('Error loading contracts:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error loading contracts:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
   const filteredSignatures = signatures.filter(signature => {
-    const matchesSearch = signature.contractTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         signature.signerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         signature.signerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      signature.contractTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      signature.signerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      signature.signerEmail.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || signature.status === statusFilter;
 
@@ -190,15 +207,40 @@ export default function SupportSignaturesPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'signed':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Firmado</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Firmado
+          </Badge>
+        );
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pendiente</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">
+            <Clock className="w-3 h-3 mr-1" />
+            Pendiente
+          </Badge>
+        );
       case 'expired':
-        return <Badge className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />Expirado</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800">
+            <AlertTriangle className="w-3 h-3 mr-1" />
+            Expirado
+          </Badge>
+        );
       case 'reset':
-        return <Badge className="bg-blue-100 text-blue-800"><RotateCcw className="w-3 h-3 mr-1" />Reseteado</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-800">
+            <RotateCcw className="w-3 h-3 mr-1" />
+            Reseteado
+          </Badge>
+        );
       case 'cancelled':
-        return <Badge className="bg-gray-100 text-gray-800"><Trash2 className="w-3 h-3 mr-1" />Cancelado</Badge>;
+        return (
+          <Badge className="bg-gray-100 text-gray-800">
+            <Trash2 className="w-3 h-3 mr-1" />
+            Cancelado
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -207,18 +249,32 @@ export default function SupportSignaturesPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'tenant':
-        return <Badge variant="outline" className="border-blue-300 text-blue-700">Inquilino</Badge>;
+        return (
+          <Badge variant="outline" className="border-blue-300 text-blue-700">
+            Inquilino
+          </Badge>
+        );
       case 'owner':
-        return <Badge variant="outline" className="border-green-300 text-green-700">Propietario</Badge>;
+        return (
+          <Badge variant="outline" className="border-green-300 text-green-700">
+            Propietario
+          </Badge>
+        );
       case 'broker':
-        return <Badge variant="outline" className="border-purple-300 text-purple-700">Corredor</Badge>;
+        return (
+          <Badge variant="outline" className="border-purple-300 text-purple-700">
+            Corredor
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
   };
 
   const handleResetSignature = async () => {
-    if (!selectedSignature || !resetReason.trim()) return;
+    if (!selectedSignature || !resetReason.trim()) {
+      return;
+    }
 
     setResetting(true);
     try {
@@ -234,25 +290,28 @@ export default function SupportSignaturesPage() {
       // });
 
       // Mock update
-      setSignatures(prev => prev.map(sig =>
-        sig.id === selectedSignature.id
-          ? {
-              ...sig,
-              status: 'reset' as const,
-              resetReason,
-              resetBy: 'Soporte Técnico',
-              resetAt: new Date().toISOString()
-            }
-          : sig
-      ));
+      setSignatures(prev =>
+        prev.map(sig =>
+          sig.id === selectedSignature.id
+            ? {
+                ...sig,
+                status: 'reset' as const,
+                resetReason,
+                resetBy: 'Soporte Técnico',
+                resetAt: new Date().toISOString(),
+              }
+            : sig
+        )
+      );
 
       logger.info('Firma reseteada:', { signatureId: selectedSignature.id, reason: resetReason });
       setShowResetDialog(false);
       setResetReason('');
       setSelectedSignature(null);
-
     } catch (error) {
-      logger.error('Error resetting signature:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error resetting signature:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setResetting(false);
     }
@@ -266,7 +325,7 @@ export default function SupportSignaturesPage() {
 
   if (loading) {
     return (
-      <DashboardLayout
+      <UnifiedDashboardLayout
         title="Firmas Electrónicas"
         subtitle="Cargando historial de firmas..."
       >
@@ -276,26 +335,23 @@ export default function SupportSignaturesPage() {
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout
-        title="Firmas Electrónicas"
-        subtitle="Error al cargar la página"
-      >
+      <UnifiedDashboardLayout title="Firmas Electrónicas" subtitle="Error al cargar la página">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Firmas Electrónicas"
       subtitle="Historial y gestión de firmas digitales"
     >
@@ -309,9 +365,7 @@ export default function SupportSignaturesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{signatures.length}</div>
-              <p className="text-xs text-muted-foreground">
-                En el sistema
-              </p>
+              <p className="text-xs text-muted-foreground">En el sistema</p>
             </CardContent>
           </Card>
 
@@ -324,9 +378,7 @@ export default function SupportSignaturesPage() {
               <div className="text-2xl font-bold text-green-600">
                 {signatures.filter(s => s.status === 'signed').length}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Firmas válidas
-              </p>
+              <p className="text-xs text-muted-foreground">Firmas válidas</p>
             </CardContent>
           </Card>
 
@@ -339,9 +391,7 @@ export default function SupportSignaturesPage() {
               <div className="text-2xl font-bold text-yellow-600">
                 {signatures.filter(s => s.status === 'pending').length}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Esperando firma
-              </p>
+              <p className="text-xs text-muted-foreground">Esperando firma</p>
             </CardContent>
           </Card>
 
@@ -352,11 +402,12 @@ export default function SupportSignaturesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {signatures.filter(s => ['expired', 'reset', 'cancelled'].includes(s.status)).length}
+                {
+                  signatures.filter(s => ['expired', 'reset', 'cancelled'].includes(s.status))
+                    .length
+                }
               </div>
-              <p className="text-xs text-muted-foreground">
-                Requieren atención
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
         </div>
@@ -365,9 +416,7 @@ export default function SupportSignaturesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Historial de Firmas</CardTitle>
-            <CardDescription>
-              Busca y filtra las firmas electrónicas del sistema
-            </CardDescription>
+            <CardDescription>Busca y filtra las firmas electrónicas del sistema</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4 mb-6">
@@ -377,7 +426,7 @@ export default function SupportSignaturesPage() {
                   <Input
                     placeholder="Buscar por contrato, firmante o email..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -402,14 +451,19 @@ export default function SupportSignaturesPage() {
               {filteredSignatures.length === 0 ? (
                 <div className="text-center py-12">
                   <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron firmas</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No se encontraron firmas
+                  </h3>
                   <p className="text-gray-600">
                     No hay firmas que coincidan con los criterios de búsqueda.
                   </p>
                 </div>
               ) : (
-                filteredSignatures.map((signature) => (
-                  <div key={signature.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300">
+                filteredSignatures.map(signature => (
+                  <div
+                    key={signature.id}
+                    className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300"
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -436,7 +490,10 @@ export default function SupportSignaturesPage() {
                             {signature.signedAt && (
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                <span>Firmado: {new Date(signature.signedAt).toLocaleDateString('es-ES')}</span>
+                                <span>
+                                  Firmado:{' '}
+                                  {new Date(signature.signedAt).toLocaleDateString('es-ES')}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -505,37 +562,65 @@ export default function SupportSignaturesPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Información del Contrato</h4>
-                  <p><strong>Título:</strong> {selectedSignature.contractTitle}</p>
-                  <p><strong>ID:</strong> {selectedSignature.contractId}</p>
+                  <p>
+                    <strong>Título:</strong> {selectedSignature.contractTitle}
+                  </p>
+                  <p>
+                    <strong>ID:</strong> {selectedSignature.contractId}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Información del Firmante</h4>
-                  <p><strong>Nombre:</strong> {selectedSignature.signerName}</p>
-                  <p><strong>Email:</strong> {selectedSignature.signerEmail}</p>
-                  <p><strong>Rol:</strong> {selectedSignature.signerRole === 'tenant' ? 'Inquilino' :
-                                             selectedSignature.signerRole === 'owner' ? 'Propietario' : 'Corredor'}</p>
+                  <p>
+                    <strong>Nombre:</strong> {selectedSignature.signerName}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {selectedSignature.signerEmail}
+                  </p>
+                  <p>
+                    <strong>Rol:</strong>{' '}
+                    {selectedSignature.signerRole === 'tenant'
+                      ? 'Inquilino'
+                      : selectedSignature.signerRole === 'owner'
+                        ? 'Propietario'
+                        : 'Corredor'}
+                  </p>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Estado de la Firma</h4>
-                  <p><strong>Estado:</strong> {getStatusBadge(selectedSignature.status)}</p>
-                  <p><strong>Proveedor:</strong> {selectedSignature.provider}</p>
+                  <p>
+                    <strong>Estado:</strong> {getStatusBadge(selectedSignature.status)}
+                  </p>
+                  <p>
+                    <strong>Proveedor:</strong> {selectedSignature.provider}
+                  </p>
                   {selectedSignature.signedAt && (
-                    <p><strong>Fecha de firma:</strong> {new Date(selectedSignature.signedAt).toLocaleString('es-ES')}</p>
+                    <p>
+                      <strong>Fecha de firma:</strong>{' '}
+                      {new Date(selectedSignature.signedAt).toLocaleString('es-ES')}
+                    </p>
                   )}
                   {selectedSignature.expiresAt && (
-                    <p><strong>Expira:</strong> {new Date(selectedSignature.expiresAt).toLocaleString('es-ES')}</p>
+                    <p>
+                      <strong>Expira:</strong>{' '}
+                      {new Date(selectedSignature.expiresAt).toLocaleString('es-ES')}
+                    </p>
                   )}
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Información Técnica</h4>
                   {selectedSignature.ipAddress && (
-                    <p><strong>IP:</strong> {selectedSignature.ipAddress}</p>
+                    <p>
+                      <strong>IP:</strong> {selectedSignature.ipAddress}
+                    </p>
                   )}
                   {selectedSignature.userAgent && (
-                    <p><strong>Navegador:</strong> {selectedSignature.userAgent.substring(0, 50)}...</p>
+                    <p>
+                      <strong>Navegador:</strong> {selectedSignature.userAgent.substring(0, 50)}...
+                    </p>
                   )}
                 </div>
               </div>
@@ -543,12 +628,19 @@ export default function SupportSignaturesPage() {
               {selectedSignature.resetReason && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                   <h4 className="font-semibold text-yellow-800 mb-1">Información de Reseteo</h4>
-                  <p className="text-yellow-700"><strong>Razón:</strong> {selectedSignature.resetReason}</p>
+                  <p className="text-yellow-700">
+                    <strong>Razón:</strong> {selectedSignature.resetReason}
+                  </p>
                   {selectedSignature.resetBy && (
-                    <p className="text-yellow-700"><strong>Reseteado por:</strong> {selectedSignature.resetBy}</p>
+                    <p className="text-yellow-700">
+                      <strong>Reseteado por:</strong> {selectedSignature.resetBy}
+                    </p>
                   )}
                   {selectedSignature.resetAt && (
-                    <p className="text-yellow-700"><strong>Fecha:</strong> {new Date(selectedSignature.resetAt).toLocaleString('es-ES')}</p>
+                    <p className="text-yellow-700">
+                      <strong>Fecha:</strong>{' '}
+                      {new Date(selectedSignature.resetAt).toLocaleString('es-ES')}
+                    </p>
                   )}
                 </div>
               )}
@@ -567,15 +659,19 @@ export default function SupportSignaturesPage() {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Esta acción reseteará la firma del contrato. El firmante tendrá que firmar nuevamente.
-                Esta acción no se puede deshacer.
+                Esta acción reseteará la firma del contrato. El firmante tendrá que firmar
+                nuevamente. Esta acción no se puede deshacer.
               </AlertDescription>
             </Alert>
 
             {selectedSignature && (
               <div className="bg-gray-50 p-3 rounded">
-                <p><strong>Contrato:</strong> {selectedSignature.contractTitle}</p>
-                <p><strong>Firmante:</strong> {selectedSignature.signerName}</p>
+                <p>
+                  <strong>Contrato:</strong> {selectedSignature.contractTitle}
+                </p>
+                <p>
+                  <strong>Firmante:</strong> {selectedSignature.signerName}
+                </p>
               </div>
             )}
 
@@ -584,7 +680,7 @@ export default function SupportSignaturesPage() {
               <Input
                 id="reset-reason"
                 value={resetReason}
-                onChange={(e) => setResetReason(e.target.value)}
+                onChange={e => setResetReason(e.target.value)}
                 placeholder="Ej: Error técnico, solicitud del cliente..."
                 className="mt-1"
               />
@@ -622,6 +718,6 @@ export default function SupportSignaturesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

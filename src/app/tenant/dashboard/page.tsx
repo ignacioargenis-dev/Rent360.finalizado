@@ -249,8 +249,7 @@ export default function TenantDashboardPage() {
   };
 
   const handlePayRent = (paymentId: string) => {
-    alert(`Redirigiendo al pago de arriendo ${paymentId}`);
-    // In a real app: router.push(`/tenant/payments/${paymentId}`);
+    window.open(`/tenant/payments/${paymentId}/pay`, '_blank');
   };
 
   const handleContactLandlord = (contract: RentalContract) => {
@@ -262,13 +261,19 @@ export default function TenantDashboardPage() {
   };
 
   const handleNewMaintenanceRequest = () => {
-    alert('Redirigiendo a nueva solicitud de mantenimiento');
-    // In a real app: router.push('/tenant/maintenance/new');
+    window.open('/tenant/maintenance', '_blank');
   };
 
   const handleViewMessages = () => {
-    alert('Redirigiendo a mensajes');
-    // In a real app: router.push('/tenant/messages');
+    window.open('/tenant/messages', '_blank');
+  };
+
+  const handleViewContractDetails = (contractId: string) => {
+    window.open(`/tenant/contracts`, '_blank');
+  };
+
+  const handleViewMaintenanceDetails = (maintenanceId: string) => {
+    window.open('/tenant/maintenance', '_blank');
   };
 
   if (loading) {
@@ -429,7 +434,11 @@ export default function TenantDashboardPage() {
                           <Mail className="w-4 h-4 mr-1" />
                           Contactar Propietario
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewContractDetails(contract.id)}
+                        >
                           <Eye className="w-4 h-4 mr-1" />
                           Ver Detalles
                         </Button>
@@ -537,7 +546,11 @@ export default function TenantDashboardPage() {
                             </span>
                           )}
                         </div>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewMaintenanceDetails(request.id)}
+                        >
                           <Eye className="w-3 h-3 mr-1" />
                           Ver
                         </Button>
@@ -577,11 +590,19 @@ export default function TenantDashboardPage() {
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Ver Mensajes ({stats.unreadMessages})
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => window.open('/tenant/contracts', '_blank')}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Ver Contratos
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => window.open('/tenant/payments/upcoming', '_blank')}
+                >
                   <Calendar className="w-4 h-4 mr-2" />
                   Calendario de Pagos
                 </Button>

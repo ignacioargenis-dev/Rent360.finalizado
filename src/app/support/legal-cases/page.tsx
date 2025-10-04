@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import LegalCasesSupportDashboard from '@/components/support/LegalCasesSupportDashboard';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 export const metadata: Metadata = {
   title: 'Casos Legales - Soporte | Rent360',
@@ -10,13 +10,10 @@ export const metadata: Metadata = {
 
 export default function LegalCasesSupportPage() {
   return (
-    <DashboardLayout
-      title="Casos Legales"
-      subtitle="Gestión y seguimiento de casos legales"
-    >
+    <UnifiedDashboardLayout title="Casos Legales" subtitle="Gestión y seguimiento de casos legales">
       <div className="container mx-auto px-4 py-6">
         <LegalCasesSupportDashboard />
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

@@ -20,10 +20,10 @@ import {
   Home,
   Receipt,
   RefreshCw,
-  CreditCard
+  CreditCard,
 } from 'lucide-react';
 import { Payment, Property, Contract } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -70,7 +70,9 @@ export default function OwnerPaymentsPage() {
       logger.info('Exportando datos de pagos');
       alert('Datos de pagos exportados exitosamente');
     } catch (error) {
-      logger.error('Error exportando pagos:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error exportando pagos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -85,7 +87,9 @@ export default function OwnerPaymentsPage() {
       alert('Recordatorio enviado exitosamente');
       // TODO: Implement API call to send reminder
     } catch (error) {
-      logger.error('Error enviando recordatorio:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error enviando recordatorio:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -95,7 +99,9 @@ export default function OwnerPaymentsPage() {
       alert('Pago marcado como realizado');
       // TODO: Implement API call to mark payment as paid
     } catch (error) {
-      logger.error('Error marcando pago:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error marcando pago:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -258,27 +264,29 @@ export default function OwnerPaymentsPage() {
       ];
 
       setPayments(mockPayments);
-      
+
       // Calculate stats
       const totalReceived = mockPayments
         .filter(p => p.status === 'COMPLETED')
         .reduce((sum, p) => sum + p.amount, 0);
-      
+
       const pendingAmount = mockPayments
         .filter(p => p.status === 'PENDING')
         .reduce((sum, p) => sum + p.amount, 0);
-      
+
       const overdueAmount = mockPayments
         .filter(p => p.status === 'PENDING' && new Date() > p.dueDate)
         .reduce((sum, p) => sum + p.amount, 0);
-      
+
       const thisMonthReceived = mockPayments
         .filter(p => {
           const paidDate = new Date(p.paidDate || '');
           const now = new Date();
-          return p.status === 'COMPLETED' && 
-                 paidDate.getMonth() === now.getMonth() && 
-                 paidDate.getFullYear() === now.getFullYear();
+          return (
+            p.status === 'COMPLETED' &&
+            paidDate.getMonth() === now.getMonth() &&
+            paidDate.getFullYear() === now.getFullYear()
+          );
         })
         .reduce((sum, p) => sum + p.amount, 0);
 
@@ -350,30 +358,34 @@ export default function OwnerPaymentsPage() {
   };
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.tenantName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      payment.property?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.tenantName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    
+
     let matchesDate = true;
     if (dateFilter !== 'all') {
       const paymentDate = new Date(payment.dueDate);
       const now = new Date();
-      
+
       switch (dateFilter) {
         case 'thisMonth':
-          matchesDate = paymentDate.getMonth() === now.getMonth() && 
-                        paymentDate.getFullYear() === now.getFullYear();
+          matchesDate =
+            paymentDate.getMonth() === now.getMonth() &&
+            paymentDate.getFullYear() === now.getFullYear();
           break;
         case 'lastMonth':
           const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          matchesDate = paymentDate >= lastMonth && paymentDate < new Date(now.getFullYear(), now.getMonth(), 1);
+          matchesDate =
+            paymentDate >= lastMonth &&
+            paymentDate < new Date(now.getFullYear(), now.getMonth(), 1);
           break;
         case 'overdue':
           matchesDate = payment.status === 'PENDING' && new Date() > payment.dueDate;
           break;
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -389,8 +401,8 @@ export default function OwnerPaymentsPage() {
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Gestión de Pagos"
         subtitle="Monitorea y gestiona todos los pagos de arriendo"
@@ -468,9 +480,7 @@ export default function OwnerPaymentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Tiempo Promedio</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.averagePaymentTime}d
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.averagePaymentTime}d</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-purple-600" />
@@ -528,7 +538,7 @@ export default function OwnerPaymentsPage() {
                     placeholder="Buscar por propiedad o inquilino..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
@@ -536,7 +546,7 @@ export default function OwnerPaymentsPage() {
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="COMPLETED">Completados</option>
@@ -547,7 +557,7 @@ export default function OwnerPaymentsPage() {
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
+                  onChange={e => setDateFilter(e.target.value)}
                 >
                   <option value="all">Todas las fechas</option>
                   <option value="thisMonth">Este mes</option>
@@ -569,13 +579,20 @@ export default function OwnerPaymentsPage() {
 
         {/* Payments List */}
         <div className="space-y-4">
-          {filteredPayments.map((payment) => {
-            const daysOverdue = Math.floor((new Date().getTime() - payment.dueDate.getTime()) / (1000 * 60 * 60 * 24));
-            
+          {filteredPayments.map(payment => {
+            const daysOverdue = Math.floor(
+              (new Date().getTime() - payment.dueDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
             return (
-              <Card key={payment.id} className={`hover:shadow-lg transition-shadow ${
-                payment.status === 'PENDING' && new Date() > payment.dueDate ? 'border-red-200 bg-red-50' : ''
-              }`}>
+              <Card
+                key={payment.id}
+                className={`hover:shadow-lg transition-shadow ${
+                  payment.status === 'PENDING' && new Date() > payment.dueDate
+                    ? 'border-red-200 bg-red-50'
+                    : ''
+                }`}
+              >
                 <CardContent className="pt-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
@@ -602,20 +619,28 @@ export default function OwnerPaymentsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600">Monto</p>
-                          <p className="font-semibold text-gray-900">{formatPrice(payment.amount)}</p>
+                          <p className="font-semibold text-gray-900">
+                            {formatPrice(payment.amount)}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Fecha de Vencimiento</p>
-                          <p className="font-semibold text-gray-900">{payment.dueDate.toLocaleDateString('es-CL')}</p>
+                          <p className="font-semibold text-gray-900">
+                            {payment.dueDate.toLocaleDateString('es-CL')}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Método de Pago</p>
-                          <div>{payment.method ? getMethodBadge(payment.method) : 'No especificado'}</div>
+                          <div>
+                            {payment.method ? getMethodBadge(payment.method) : 'No especificado'}
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Fecha de Pago</p>
                           <p className="font-semibold text-gray-900">
-                            {payment.paidDate ? payment.paidDate.toLocaleDateString('es-CL') : 'No pagado'}
+                            {payment.paidDate
+                              ? payment.paidDate.toLocaleDateString('es-CL')
+                              : 'No pagado'}
                           </p>
                         </div>
                       </div>
@@ -683,14 +708,11 @@ export default function OwnerPaymentsPage() {
           <Card>
             <CardContent className="pt-12 pb-12 text-center">
               <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No se encontraron pagos
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron pagos</h3>
               <p className="text-gray-600 mb-4">
                 {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
                   ? 'Intenta ajustar tus filtros de búsqueda.'
-                  : 'Aún no hay registros de pagos.'
-                }
+                  : 'Aún no hay registros de pagos.'}
               </p>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -700,8 +722,6 @@ export default function OwnerPaymentsPage() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
-
-

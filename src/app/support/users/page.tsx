@@ -6,7 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   RefreshCw,
@@ -32,10 +38,10 @@ import {
   Tag,
   ChevronRight,
   X,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface User {
   id: string;
@@ -71,7 +77,7 @@ export default function SupportUsersPage() {
     pending: 0,
     suspended: 0,
     verified: 0,
-    unverified: 0
+    unverified: 0,
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -84,7 +90,7 @@ export default function SupportUsersPage() {
     email: '',
     phone: '',
     role: 'TENANT' as User['role'],
-    city: ''
+    city: '',
   });
 
   useEffect(() => {
@@ -117,7 +123,7 @@ export default function SupportUsersPage() {
         email: '',
         phone: '',
         role: 'TENANT',
-        city: ''
+        city: '',
       });
       setShowCreateModal(false);
 
@@ -126,7 +132,9 @@ export default function SupportUsersPage() {
 
       alert('Usuario creado exitosamente');
     } catch (error) {
-      logger.error('Error creando usuario:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error creando usuario:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al crear usuario');
     } finally {
       setCreatingUser(false);
@@ -152,7 +160,7 @@ export default function SupportUsersPage() {
           city: 'Santiago',
           verified: true,
           ticketsCount: 3,
-          propertiesCount: 1
+          propertiesCount: 1,
         },
         {
           id: '2',
@@ -166,7 +174,7 @@ export default function SupportUsersPage() {
           city: 'Providencia',
           verified: true,
           ticketsCount: 1,
-          propertiesCount: 5
+          propertiesCount: 5,
         },
         {
           id: '3',
@@ -179,7 +187,7 @@ export default function SupportUsersPage() {
           city: 'Las Condes',
           verified: false,
           ticketsCount: 0,
-          propertiesCount: 0
+          propertiesCount: 0,
         },
         {
           id: '4',
@@ -193,7 +201,7 @@ export default function SupportUsersPage() {
           city: 'Santiago',
           verified: true,
           ticketsCount: 0,
-          propertiesCount: 0
+          propertiesCount: 0,
         },
         {
           id: '5',
@@ -207,18 +215,19 @@ export default function SupportUsersPage() {
           city: 'Ñuñoa',
           verified: true,
           ticketsCount: 2,
-          propertiesCount: 1
-        }
+          propertiesCount: 1,
+        },
       ];
 
       // Filter users based on search and filters
       let filteredUsers = mockUsers;
 
       if (searchTerm) {
-        filteredUsers = filteredUsers.filter(user =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.city?.toLowerCase().includes(searchTerm.toLowerCase())
+        filteredUsers = filteredUsers.filter(
+          user =>
+            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.city?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
@@ -246,10 +255,11 @@ export default function SupportUsersPage() {
 
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 500));
-
     } catch (error) {
-      logger.error('Error loading users:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los usuarios");
+      logger.error('Error loading users:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los usuarios');
     } finally {
       setLoading(false);
     }
@@ -257,24 +267,24 @@ export default function SupportUsersPage() {
 
   const getRoleBadge = (role: string) => {
     const roleColors: Record<string, string> = {
-      'ADMIN': 'bg-red-100 text-red-800',
-      'TENANT': 'bg-blue-100 text-blue-800',
-      'OWNER': 'bg-green-100 text-green-800',
-      'BROKER': 'bg-purple-100 text-purple-800',
-      'RUNNER': 'bg-orange-100 text-orange-800',
-      'SUPPORT': 'bg-indigo-100 text-indigo-800',
-      'PROVIDER': 'bg-cyan-100 text-cyan-800',
-      'MAINTENANCE': 'bg-yellow-100 text-yellow-800'
+      ADMIN: 'bg-red-100 text-red-800',
+      TENANT: 'bg-blue-100 text-blue-800',
+      OWNER: 'bg-green-100 text-green-800',
+      BROKER: 'bg-purple-100 text-purple-800',
+      RUNNER: 'bg-orange-100 text-orange-800',
+      SUPPORT: 'bg-indigo-100 text-indigo-800',
+      PROVIDER: 'bg-cyan-100 text-cyan-800',
+      MAINTENANCE: 'bg-yellow-100 text-yellow-800',
     };
     return roleColors[role] || 'bg-gray-100 text-gray-800';
   };
 
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
-      'ACTIVE': 'bg-green-100 text-green-800',
-      'INACTIVE': 'bg-gray-100 text-gray-800',
-      'PENDING': 'bg-yellow-100 text-yellow-800',
-      'SUSPENDED': 'bg-red-100 text-red-800'
+      ACTIVE: 'bg-green-100 text-green-800',
+      INACTIVE: 'bg-gray-100 text-gray-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      SUSPENDED: 'bg-red-100 text-red-800',
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -283,7 +293,7 @@ export default function SupportUsersPage() {
     return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -293,7 +303,7 @@ export default function SupportUsersPage() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -305,26 +315,20 @@ export default function SupportUsersPage() {
 
   if (loading) {
     return (
-      <DashboardLayout
-        title="Gestión de Usuarios"
-        subtitle="Cargando información..."
-      >
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando usuarios...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout
-        title="Gestión de Usuarios"
-        subtitle="Error al cargar la página"
-      >
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -338,12 +342,12 @@ export default function SupportUsersPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Gestión de Usuarios"
       subtitle="Administra y gestiona todos los usuarios del sistema"
     >
@@ -357,9 +361,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                Usuarios registrados
-              </p>
+              <p className="text-xs text-muted-foreground">Usuarios registrados</p>
             </CardContent>
           </Card>
 
@@ -370,9 +372,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-              <p className="text-xs text-muted-foreground">
-                Usuarios activos
-              </p>
+              <p className="text-xs text-muted-foreground">Usuarios activos</p>
             </CardContent>
           </Card>
 
@@ -383,9 +383,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-              <p className="text-xs text-muted-foreground">
-                Esperando verificación
-              </p>
+              <p className="text-xs text-muted-foreground">Esperando verificación</p>
             </CardContent>
           </Card>
 
@@ -396,9 +394,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{stats.suspended}</div>
-              <p className="text-xs text-muted-foreground">
-                Usuarios suspendidos
-              </p>
+              <p className="text-xs text-muted-foreground">Usuarios suspendidos</p>
             </CardContent>
           </Card>
 
@@ -409,9 +405,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{stats.verified}</div>
-              <p className="text-xs text-muted-foreground">
-                Usuarios verificados
-              </p>
+              <p className="text-xs text-muted-foreground">Usuarios verificados</p>
             </CardContent>
           </Card>
 
@@ -422,9 +416,7 @@ export default function SupportUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{stats.unverified}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren verificación
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren verificación</p>
             </CardContent>
           </Card>
         </div>
@@ -433,9 +425,7 @@ export default function SupportUsersPage() {
         <Card>
           <CardHeader>
             <CardTitle>Filtros y Búsqueda</CardTitle>
-            <CardDescription>
-              Filtra los usuarios por diferentes criterios
-            </CardDescription>
+            <CardDescription>Filtra los usuarios por diferentes criterios</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -443,14 +433,14 @@ export default function SupportUsersPage() {
                 <Input
                   placeholder="Buscar por nombre, email o ciudad..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full"
                 />
               </div>
 
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                onChange={e => setRoleFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">Todos los roles</option>
@@ -466,7 +456,7 @@ export default function SupportUsersPage() {
 
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={e => setStatusFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">Todos los estados</option>
@@ -496,9 +486,7 @@ export default function SupportUsersPage() {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>Usuarios ({users.length})</CardTitle>
-                <CardDescription>
-                  Lista de usuarios filtrados según tus criterios
-                </CardDescription>
+                <CardDescription>Lista de usuarios filtrados según tus criterios</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -518,35 +506,51 @@ export default function SupportUsersPage() {
                 {users.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron usuarios</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No se encontraron usuarios
+                    </h3>
                     <p className="text-gray-600 mb-4">
                       No hay usuarios que coincidan con los criterios de búsqueda.
                     </p>
-                    <Button onClick={clearFilters}>
-                      Limpiar Filtros
-                    </Button>
+                    <Button onClick={clearFilters}>Limpiar Filtros</Button>
                   </div>
                 ) : (
-                  users.map((user) => (
-                    <div key={user.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+                  users.map(user => (
+                    <div
+                      key={user.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-bold text-lg text-gray-800">{user.name}</h3>
                             <Badge className={getRoleBadge(user.role)}>
-                              {user.role === 'TENANT' ? 'Inquilino' :
-                               user.role === 'OWNER' ? 'Propietario' :
-                               user.role === 'BROKER' ? 'Corredor' :
-                               user.role === 'RUNNER' ? 'Runner' :
-                               user.role === 'SUPPORT' ? 'Soporte' :
-                               user.role === 'PROVIDER' ? 'Proveedor' :
-                               user.role === 'MAINTENANCE' ? 'Mantenimiento' : user.role}
+                              {user.role === 'TENANT'
+                                ? 'Inquilino'
+                                : user.role === 'OWNER'
+                                  ? 'Propietario'
+                                  : user.role === 'BROKER'
+                                    ? 'Corredor'
+                                    : user.role === 'RUNNER'
+                                      ? 'Runner'
+                                      : user.role === 'SUPPORT'
+                                        ? 'Soporte'
+                                        : user.role === 'PROVIDER'
+                                          ? 'Proveedor'
+                                          : user.role === 'MAINTENANCE'
+                                            ? 'Mantenimiento'
+                                            : user.role}
                             </Badge>
                             <Badge className={getStatusBadge(user.status)}>
-                              {user.status === 'ACTIVE' ? 'Activo' :
-                               user.status === 'INACTIVE' ? 'Inactivo' :
-                               user.status === 'PENDING' ? 'Pendiente' :
-                               user.status === 'SUSPENDED' ? 'Suspendido' : user.status}
+                              {user.status === 'ACTIVE'
+                                ? 'Activo'
+                                : user.status === 'INACTIVE'
+                                  ? 'Inactivo'
+                                  : user.status === 'PENDING'
+                                    ? 'Pendiente'
+                                    : user.status === 'SUSPENDED'
+                                      ? 'Suspendido'
+                                      : user.status}
                             </Badge>
                             {user.verified && (
                               <Badge className="bg-blue-100 text-blue-800">
@@ -634,9 +638,7 @@ export default function SupportUsersPage() {
                 </div>
                 <h3 className="font-semibold text-gray-800 mb-2">Nuevo Usuario</h3>
                 <p className="text-sm text-gray-600 mb-4">Crear un usuario manualmente</p>
-                <Button className="w-full">
-                  Crear Usuario
-                </Button>
+                <Button className="w-full">Crear Usuario</Button>
               </div>
             </CardContent>
           </Card>
@@ -708,30 +710,26 @@ export default function SupportUsersPage() {
                 </label>
                 <Input
                   value={newUser.name}
-                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                  onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                   placeholder="Juan Pérez"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <Input
                   type="email"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="usuario@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Teléfono
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                 <Input
                   value={newUser.phone}
-                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                  onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
                   placeholder="+56 9 1234 5678"
                 />
               </div>
@@ -740,7 +738,10 @@ export default function SupportUsersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tipo de Usuario
                 </label>
-                <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value as User['role']})}>
+                <Select
+                  value={newUser.role}
+                  onValueChange={value => setNewUser({ ...newUser, role: value as User['role'] })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -755,17 +756,16 @@ export default function SupportUsersPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Nota: Los usuarios administradores deben ser creados por el administrador principal.
+                  Nota: Los usuarios administradores deben ser creados por el administrador
+                  principal.
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ciudad
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
                 <Input
                   value={newUser.city}
-                  onChange={(e) => setNewUser({...newUser, city: e.target.value})}
+                  onChange={e => setNewUser({ ...newUser, city: e.target.value })}
                   placeholder="Santiago"
                 />
               </div>
@@ -779,10 +779,7 @@ export default function SupportUsersPage() {
               >
                 Cancelar
               </Button>
-              <Button
-                onClick={createUser}
-                disabled={creatingUser}
-              >
+              <Button onClick={createUser} disabled={creatingUser}>
                 {creatingUser ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -799,6 +796,6 @@ export default function SupportUsersPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

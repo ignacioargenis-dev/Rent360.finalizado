@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +96,7 @@ export default function PaymentProcessorPage() {
     try {
       setLoading(true);
 
-      // Obtener información del usuario
+      // Obtener informaci�n del usuario
       const userResponse = await fetch('/api/auth/me');
       if (userResponse.ok) {
         const userData = await userResponse.json();
@@ -271,7 +271,7 @@ export default function PaymentProcessorPage() {
       runner_payout: 'Pago a Runner',
       provider_payout: 'Pago a Proveedor',
       service_payment: 'Pago de Servicio',
-      commission: 'Comisión',
+      commission: 'Comisi�n',
     };
     return typeMap[type as keyof typeof typeMap] || type;
   };
@@ -307,10 +307,10 @@ export default function PaymentProcessorPage() {
   return (
     <UnifiedDashboardLayout
       title="Procesador de Pagos"
-      subtitle="Gestiona pagos automáticos y transferencias bancarias"
+      subtitle="Gestiona pagos autom�ticos y transferencias bancarias"
     >
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Estadísticas Generales */}
+        {/* Estad�sticas Generales */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
             <CardContent className="pt-6">
@@ -470,7 +470,7 @@ export default function PaymentProcessorPage() {
 
                   {bank.lastSync && (
                     <div className="text-xs text-gray-500 mt-1">
-                      Última sync: {new Date(bank.lastSync).toLocaleString('es-CL')}
+                      �ltima sync: {new Date(bank.lastSync).toLocaleString('es-CL')}
                     </div>
                   )}
                 </div>
@@ -582,7 +582,7 @@ export default function PaymentProcessorPage() {
                       No hay transacciones
                     </h3>
                     <p className="text-gray-600">
-                      No se encontraron transacciones en esta categoría.
+                      No se encontraron transacciones en esta categor�a.
                     </p>
                   </div>
                 </CardContent>
@@ -608,9 +608,9 @@ export default function PaymentProcessorPage() {
 
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span>{transaction.recipientName}</span>
-                            <span>•</span>
+                            <span>�</span>
                             <span>{transaction.description}</span>
-                            <span>•</span>
+                            <span>�</span>
                             <span>
                               {new Date(transaction.createdAt).toLocaleDateString('es-CL')}
                             </span>
@@ -661,26 +661,26 @@ export default function PaymentProcessorPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Configuración Rápida */}
+        {/* Configuraci�n R�pida */}
         <Card className="mt-6 bg-gray-50 border-gray-200">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
               <Settings className="w-6 h-6 text-gray-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Configuración del Procesador</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Configuraci�n del Procesador</h4>
                 <div className="text-sm text-gray-700 space-y-1">
                   <p>
-                    • Procesamiento automático: Los pagos se procesan según la prioridad y
+                    � Procesamiento autom�tico: Los pagos se procesan seg�n la prioridad y
                     disponibilidad bancaria
                   </p>
                   <p>
-                    • Límite diario: Se respeta el límite de transacciones por día de cada banco
+                    � L�mite diario: Se respeta el l�mite de transacciones por d�a de cada banco
                   </p>
                   <p>
-                    • Reintentos: Los pagos fallidos se reintentan automáticamente hasta 3 veces
+                    � Reintentos: Los pagos fallidos se reintentan autom�ticamente hasta 3 veces
                   </p>
                   <p>
-                    • Notificaciones: Se envían notificaciones push y email en cada cambio de estado
+                    � Notificaciones: Se env�an notificaciones push y email en cada cambio de estado
                   </p>
                 </div>
               </div>

@@ -6,8 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserState } from '@/hooks/useUserState';
 import {
@@ -47,9 +59,9 @@ import {
   Download,
   Upload,
   RefreshCw,
-  X
+  X,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface MaintenanceRequest {
   id: string;
@@ -86,7 +98,7 @@ export default function MantenimientoPage() {
     activeRequests: 0,
     completedRequests: 0,
     totalCost: 0,
-    monthlyCost: 0
+    monthlyCost: 0,
   });
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -117,7 +129,7 @@ export default function MantenimientoPage() {
           urgency: 'MEDIUM',
           status: 'PENDING',
           estimatedCost: 85000,
-          createdAt: '2024-01-15T10:30:00Z'
+          createdAt: '2024-01-15T10:30:00Z',
         },
         {
           id: '2',
@@ -130,7 +142,7 @@ export default function MantenimientoPage() {
           status: 'APPROVED',
           estimatedCost: 120000,
           createdAt: '2024-01-10T14:20:00Z',
-          scheduledDate: '2024-01-25T09:00:00Z'
+          scheduledDate: '2024-01-25T09:00:00Z',
         },
         {
           id: '3',
@@ -143,7 +155,7 @@ export default function MantenimientoPage() {
           status: 'IN_PROGRESS',
           estimatedCost: 150000,
           createdAt: '2024-01-12T16:45:00Z',
-          provider: 'Servicio Rápido SpA'
+          provider: 'Servicio Rápido SpA',
         },
         {
           id: '4',
@@ -157,8 +169,8 @@ export default function MantenimientoPage() {
           estimatedCost: 60000,
           createdAt: '2024-01-05T11:15:00Z',
           completedDate: '2024-01-08T13:30:00Z',
-          provider: 'Electricistas Profesionales'
-        }
+          provider: 'Electricistas Profesionales',
+        },
       ];
 
       setMaintenanceRequests(mockRequests);
@@ -166,7 +178,9 @@ export default function MantenimientoPage() {
       // Calculate stats
       const totalRequests = mockRequests.length;
       const pendingRequests = mockRequests.filter(r => r.status === 'PENDING').length;
-      const activeRequests = mockRequests.filter(r => ['APPROVED', 'IN_PROGRESS'].includes(r.status)).length;
+      const activeRequests = mockRequests.filter(r =>
+        ['APPROVED', 'IN_PROGRESS'].includes(r.status)
+      ).length;
       const completedRequests = mockRequests.filter(r => r.status === 'COMPLETED').length;
       const totalCost = mockRequests.reduce((sum, r) => sum + r.estimatedCost, 0);
       const monthlyCost = mockRequests
@@ -179,15 +193,16 @@ export default function MantenimientoPage() {
         activeRequests,
         completedRequests,
         totalCost,
-        monthlyCost
+        monthlyCost,
       });
 
       // Simular carga
       await new Promise(resolve => setTimeout(resolve, 1000));
-
     } catch (error) {
-      logger.error('Error loading page data:', { error: error instanceof Error ? error.message : String(error) });
-      setError("Error al cargar los datos");
+      logger.error('Error loading page data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
@@ -209,7 +224,9 @@ export default function MantenimientoPage() {
       logger.info('Exportando datos de mantenimiento');
       alert('Datos exportados exitosamente');
     } catch (error) {
-      logger.error('Error exportando datos:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error exportando datos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -232,11 +249,13 @@ export default function MantenimientoPage() {
     try {
       // TODO: Implement API call to approve request
       setMaintenanceRequests(prev =>
-        prev.map(r => r.id === requestId ? {...r, status: 'APPROVED' as const} : r)
+        prev.map(r => (r.id === requestId ? { ...r, status: 'APPROVED' as const } : r))
       );
       logger.info('Solicitud de mantenimiento aprobada:', { requestId });
     } catch (error) {
-      logger.error('Error aprobando solicitud:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error aprobando solicitud:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -244,36 +263,32 @@ export default function MantenimientoPage() {
     try {
       // TODO: Implement API call to reject request
       setMaintenanceRequests(prev =>
-        prev.map(r => r.id === requestId ? {...r, status: 'REJECTED' as const} : r)
+        prev.map(r => (r.id === requestId ? { ...r, status: 'REJECTED' as const } : r))
       );
       logger.info('Solicitud de mantenimiento rechazada:', { requestId });
     } catch (error) {
-      logger.error('Error rechazando solicitud:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error rechazando solicitud:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   if (loading) {
     return (
-      <DashboardLayout 
-        title="Mantenimiento"
-        subtitle="Cargando información..."
-      >
+      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Cargando información...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout 
-        title="Mantenimiento"
-        subtitle="Error al cargar la página"
-      >
+      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Error al cargar la página">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -287,7 +302,7 @@ export default function MantenimientoPage() {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
+      </UnifiedDashboardLayout>
     );
   }
 
@@ -347,15 +362,16 @@ export default function MantenimientoPage() {
   };
 
   const filteredRequests = maintenanceRequests.filter(request => {
-    const matchesSearch = request.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      request.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Mantenimiento"
       subtitle="Gestiona solicitudes y trabajos de mantenimiento"
     >
@@ -367,12 +383,8 @@ export default function MantenimientoPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-emerald-700">Total Solicitudes</p>
-                  <p className="text-2xl font-bold text-emerald-900">
-                    {stats.totalRequests}
-                  </p>
-                  <p className="text-xs text-emerald-600 mt-1">
-                    Este mes
-                  </p>
+                  <p className="text-2xl font-bold text-emerald-900">{stats.totalRequests}</p>
+                  <p className="text-xs text-emerald-600 mt-1">Este mes</p>
                 </div>
                 <div className="w-12 h-12 bg-emerald-200 rounded-lg flex items-center justify-center">
                   <Building className="w-6 h-6 text-emerald-700" />
@@ -386,12 +398,8 @@ export default function MantenimientoPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-700">Pendientes</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {stats.pendingRequests}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Requieren atención
-                  </p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.pendingRequests}</p>
+                  <p className="text-xs text-blue-600 mt-1">Requieren atención</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6 text-blue-700" />
@@ -405,12 +413,8 @@ export default function MantenimientoPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-yellow-700">En Progreso</p>
-                  <p className="text-2xl font-bold text-yellow-900">
-                    {stats.activeRequests}
-                  </p>
-                  <p className="text-xs text-yellow-600 mt-1">
-                    Activos actualmente
-                  </p>
+                  <p className="text-2xl font-bold text-yellow-900">{stats.activeRequests}</p>
+                  <p className="text-xs text-yellow-600 mt-1">Activos actualmente</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-200 rounded-lg flex items-center justify-center">
                   <Wrench className="w-6 h-6 text-yellow-700" />
@@ -455,7 +459,7 @@ export default function MantenimientoPage() {
                   <Input
                     placeholder="Buscar por propiedad, inquilino o descripción..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -480,14 +484,19 @@ export default function MantenimientoPage() {
               {filteredRequests.length === 0 ? (
                 <div className="text-center py-12">
                   <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron solicitudes</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No se encontraron solicitudes
+                  </h3>
                   <p className="text-gray-600">
                     No hay solicitudes de mantenimiento que coincidan con los criterios de búsqueda.
                   </p>
                 </div>
               ) : (
-                filteredRequests.map((request) => (
-                  <div key={request.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300">
+                filteredRequests.map(request => (
+                  <div
+                    key={request.id}
+                    className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300"
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -509,7 +518,9 @@ export default function MantenimientoPage() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Calendar className="w-4 h-4" />
-                              <span>Creado: {new Date(request.createdAt).toLocaleDateString('es-ES')}</span>
+                              <span>
+                                Creado: {new Date(request.createdAt).toLocaleDateString('es-ES')}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <DollarSign className="w-4 h-4" />
@@ -571,9 +582,7 @@ export default function MantenimientoPage() {
         <Card>
           <CardHeader>
             <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
-              Accede rápidamente a las funciones más utilizadas
-            </CardDescription>
+            <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -646,33 +655,58 @@ export default function MantenimientoPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Información de la Propiedad</h4>
-                  <p><strong>Propiedad:</strong> {selectedRequest.propertyTitle}</p>
-                  <p><strong>ID:</strong> {selectedRequest.propertyId}</p>
-                  <p><strong>Inquilino:</strong> {selectedRequest.tenantName}</p>
+                  <p>
+                    <strong>Propiedad:</strong> {selectedRequest.propertyTitle}
+                  </p>
+                  <p>
+                    <strong>ID:</strong> {selectedRequest.propertyId}
+                  </p>
+                  <p>
+                    <strong>Inquilino:</strong> {selectedRequest.tenantName}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Detalles del Trabajo</h4>
-                  <p><strong>Tipo:</strong> {getTypeLabel(selectedRequest.type)}</p>
-                  <p><strong>Urgencia:</strong> {getUrgencyBadge(selectedRequest.urgency)}</p>
-                  <p><strong>Estado:</strong> {getStatusBadge(selectedRequest.status)}</p>
-                  <p><strong>Costo Estimado:</strong> {formatPrice(selectedRequest.estimatedCost)}</p>
+                  <p>
+                    <strong>Tipo:</strong> {getTypeLabel(selectedRequest.type)}
+                  </p>
+                  <p>
+                    <strong>Urgencia:</strong> {getUrgencyBadge(selectedRequest.urgency)}
+                  </p>
+                  <p>
+                    <strong>Estado:</strong> {getStatusBadge(selectedRequest.status)}
+                  </p>
+                  <p>
+                    <strong>Costo Estimado:</strong> {formatPrice(selectedRequest.estimatedCost)}
+                  </p>
                 </div>
               </div>
 
               <div>
                 <h4 className="font-semibold mb-2">Descripción</h4>
-                <p className="text-gray-700 bg-gray-50 p-3 rounded">{selectedRequest.description}</p>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded">
+                  {selectedRequest.description}
+                </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Fechas</h4>
-                  <p><strong>Creado:</strong> {new Date(selectedRequest.createdAt).toLocaleString('es-ES')}</p>
+                  <p>
+                    <strong>Creado:</strong>{' '}
+                    {new Date(selectedRequest.createdAt).toLocaleString('es-ES')}
+                  </p>
                   {selectedRequest.scheduledDate && (
-                    <p><strong>Programado:</strong> {new Date(selectedRequest.scheduledDate).toLocaleString('es-ES')}</p>
+                    <p>
+                      <strong>Programado:</strong>{' '}
+                      {new Date(selectedRequest.scheduledDate).toLocaleString('es-ES')}
+                    </p>
                   )}
                   {selectedRequest.completedDate && (
-                    <p><strong>Completado:</strong> {new Date(selectedRequest.completedDate).toLocaleString('es-ES')}</p>
+                    <p>
+                      <strong>Completado:</strong>{' '}
+                      {new Date(selectedRequest.completedDate).toLocaleString('es-ES')}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -688,8 +722,6 @@ export default function MantenimientoPage() {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
-
-

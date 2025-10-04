@@ -1,14 +1,15 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, 
-  Activity, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Heart,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
   XCircle,
   Database,
   Server,
@@ -23,11 +24,12 @@ import { Heart,
   Zap,
   Clock,
   TrendingUp,
-  TrendingDown, Info } from 'lucide-react';
+  TrendingDown,
+  Info,
+} from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-
 
 interface SystemComponent {
   name: string;
@@ -77,7 +79,6 @@ interface HealthAlert {
 }
 
 export default function AdminSystemHealth() {
-
   const [user, setUser] = useState<User | null>(null);
 
   const [components, setComponents] = useState<SystemComponent[]>([]);
@@ -105,7 +106,9 @@ export default function AdminSystemHealth() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -134,7 +137,7 @@ export default function AdminSystemHealth() {
             status: 'healthy',
             responseTime: 3,
             lastCheck: new Date().toISOString(),
-            description: 'Sistema de caché en memoria',
+            description: 'Sistema de cach� en memoria',
             icon: <MemoryStick className="w-5 h-5" />,
           },
           {
@@ -150,7 +153,7 @@ export default function AdminSystemHealth() {
             status: 'healthy',
             responseTime: 25,
             lastCheck: new Date().toISOString(),
-            description: 'Servicio de envío de correos',
+            description: 'Servicio de env�o de correos',
             icon: <Monitor className="w-5 h-5" />,
           },
           {
@@ -158,7 +161,7 @@ export default function AdminSystemHealth() {
             status: 'healthy',
             responseTime: 8,
             lastCheck: new Date().toISOString(),
-            description: 'Servicio de autenticación y seguridad',
+            description: 'Servicio de autenticaci�n y seguridad',
             icon: <Shield className="w-5 h-5" />,
           },
           {
@@ -174,7 +177,7 @@ export default function AdminSystemHealth() {
             status: 'healthy',
             responseTime: 15,
             lastCheck: new Date().toISOString(),
-            description: 'Red de distribución de contenido',
+            description: 'Red de distribuci�n de contenido',
             icon: <Wifi className="w-5 h-5" />,
           },
         ];
@@ -210,7 +213,7 @@ export default function AdminSystemHealth() {
             id: '3',
             type: 'warning',
             title: 'Memoria alta',
-            description: 'El uso de memoria está al 78%. Considerar optimización.',
+            description: 'El uso de memoria est� al 78%. Considerar optimizaci�n.',
             timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
             resolved: false,
           },
@@ -230,7 +233,9 @@ export default function AdminSystemHealth() {
         setLastUpdated(new Date());
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading system health:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading system health:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
@@ -310,8 +315,8 @@ export default function AdminSystemHealth() {
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) {
-return '0 B';
-}
+      return '0 B';
+    }
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -322,13 +327,13 @@ return '0 B';
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (days > 0) {
-return `${days}d ${hours}h ${minutes}m`;
-}
+      return `${days}d ${hours}h ${minutes}m`;
+    }
     if (hours > 0) {
-return `${hours}h ${minutes}m`;
-}
+      return `${hours}h ${minutes}m`;
+    }
     return `${minutes}m`;
   };
 
@@ -339,22 +344,25 @@ return `${hours}h ${minutes}m`;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    
+
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} d�as`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
-  const overallHealth = components.every(c => c.status === 'healthy') ? 'healthy' :
-                       components.some(c => c.status === 'error') ? 'error' : 'warning';
+  const overallHealth = components.every(c => c.status === 'healthy')
+    ? 'healthy'
+    : components.some(c => c.status === 'error')
+      ? 'error'
+      : 'warning';
 
   if (loading) {
     return (
@@ -370,7 +378,10 @@ return `Hace ${diffDays} días`;
   }
 
   return (
-    <UnifiedDashboardLayout title="Salud del Sistema" subtitle="Monitorea el estado de todos los componentes del sistema">
+    <UnifiedDashboardLayout
+      title="Salud del Sistema"
+      subtitle="Monitorea el estado de todos los componentes del sistema"
+    >
       <div className="container mx-auto px-4 py-6">
         {/* Header with overall status */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -381,11 +392,15 @@ return `Hace ${diffDays} días`;
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Salud del Sistema</h1>
               <p className="text-gray-600">
-                Estado general: {overallHealth === 'healthy' ? 'Saludable' : 
-                               overallHealth === 'warning' ? 'Advertencia' : 'Crítico'}
+                Estado general:{' '}
+                {overallHealth === 'healthy'
+                  ? 'Saludable'
+                  : overallHealth === 'warning'
+                    ? 'Advertencia'
+                    : 'Cr�tico'}
               </p>
               <p className="text-xs text-gray-500">
-                Última actualización: {formatRelativeTime(lastUpdated.toISOString())}
+                �ltima actualizaci�n: {formatRelativeTime(lastUpdated.toISOString())}
               </p>
             </div>
           </div>
@@ -396,7 +411,7 @@ return `Hace ${diffDays} días`;
             </Button>
             <Button variant="outline" size="sm">
               <Settings className="w-4 h-4 mr-2" />
-              Configuración
+              Configuraci�n
             </Button>
           </div>
         </div>
@@ -414,7 +429,11 @@ return `Hace ${diffDays} días`;
               </div>
               <div className="text-2xl font-bold">{metrics.cpu.usage}%</div>
               <div className="text-xs text-gray-500 flex items-center mt-1">
-                {metrics.cpu.usage > 80 ? <TrendingUp className="w-3 h-3 mr-1 text-red-600" /> : <TrendingDown className="w-3 h-3 mr-1 text-green-600" />}
+                {metrics.cpu.usage > 80 ? (
+                  <TrendingUp className="w-3 h-3 mr-1 text-red-600" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 mr-1 text-green-600" />
+                )}
                 {metrics.cpu.usage > 80 ? 'Alto uso' : 'Normal'}
               </div>
             </CardContent>
@@ -430,9 +449,7 @@ return `Hace ${diffDays} días`;
                 {getStatusBadge(metrics.memory.status)}
               </div>
               <div className="text-2xl font-bold">{metrics.memory.usage}%</div>
-              <div className="text-xs text-gray-500">
-                {metrics.memory.available}GB disponible
-              </div>
+              <div className="text-xs text-gray-500">{metrics.memory.available}GB disponible</div>
             </CardContent>
           </Card>
 
@@ -446,9 +463,7 @@ return `Hace ${diffDays} días`;
                 {getStatusBadge(metrics.disk.status)}
               </div>
               <div className="text-2xl font-bold">{metrics.disk.usage}%</div>
-              <div className="text-xs text-gray-500">
-                {metrics.disk.available}GB disponible
-              </div>
+              <div className="text-xs text-gray-500">{metrics.disk.available}GB disponible</div>
             </CardContent>
           </Card>
 
@@ -489,33 +504,44 @@ return `Hace ${diffDays} días`;
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4">Alertas Activas</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            {alerts.filter(alert => !alert.resolved).map((alert) => (
-              <Card key={alert.id} className={`border-l-4 ${getAlertColor(alert.type)}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    {getAlertIcon(alert.type)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm">{alert.title}</h4>
-                        <Badge className={
-                          alert.type === 'critical' ? 'bg-red-100 text-red-800' :
-                          alert.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'
-                        }>
-                          {alert.type === 'critical' ? 'Crítico' :
-                           alert.type === 'warning' ? 'Advertencia' : 'Info'}
-                        </Badge>
+            {alerts
+              .filter(alert => !alert.resolved)
+              .map(alert => (
+                <Card key={alert.id} className={`border-l-4 ${getAlertColor(alert.type)}`}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-start gap-3">
+                      {getAlertIcon(alert.type)}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-sm">{alert.title}</h4>
+                          <Badge
+                            className={
+                              alert.type === 'critical'
+                                ? 'bg-red-100 text-red-800'
+                                : alert.type === 'warning'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-blue-100 text-blue-800'
+                            }
+                          >
+                            {alert.type === 'critical'
+                              ? 'Cr�tico'
+                              : alert.type === 'warning'
+                                ? 'Advertencia'
+                                : 'Info'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">{alert.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatRelativeTime(alert.timestamp)}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-600 mb-2">{alert.description}</p>
-                      <p className="text-xs text-gray-500">{formatRelativeTime(alert.timestamp)}</p>
+                      <Button size="sm" variant="outline">
+                        Resolver
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline">
-                      Resolver
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </div>
 
@@ -523,8 +549,11 @@ return `Hace ${diffDays} días`;
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4">Componentes del Sistema</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {components.map((component) => (
-              <Card key={component.name} className={`border-l-4 ${getStatusColor(component.status)}`}>
+            {components.map(component => (
+              <Card
+                key={component.name}
+                className={`border-l-4 ${getStatusColor(component.status)}`}
+              >
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -535,18 +564,20 @@ return `Hace ${diffDays} días`;
                     </div>
                     {getStatusBadge(component.status)}
                   </div>
-                  
+
                   <p className="text-xs text-gray-600 mb-3">{component.description}</p>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-500">Tiempo de respuesta:</span>
-                      <span className={component.responseTime > 100 ? 'text-red-600' : 'text-green-600'}>
+                      <span
+                        className={component.responseTime > 100 ? 'text-red-600' : 'text-green-600'}
+                      >
                         {component.responseTime}ms
                       </span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Última verificación:</span>
+                      <span className="text-gray-500">�ltima verificaci�n:</span>
                       <span>{formatRelativeTime(component.lastCheck)}</span>
                     </div>
                   </div>
@@ -559,13 +590,13 @@ return `Hace ${diffDays} días`;
         {/* System Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Sistema</CardTitle>
-            <CardDescription>Detalles técnicos y configuración</CardDescription>
+            <CardTitle>Informaci�n del Sistema</CardTitle>
+            <CardDescription>Detalles t�cnicos y configuraci�n</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="font-medium text-gray-900 mb-1">Versión del Sistema</p>
+                <p className="font-medium text-gray-900 mb-1">Versi�n del Sistema</p>
                 <p className="text-gray-600">Rent360 v2.1.0</p>
               </div>
               <div>
@@ -578,7 +609,7 @@ return `Hace ${diffDays} días`;
               </div>
               <div>
                 <p className="font-medium text-gray-900 mb-1">Entorno</p>
-                <p className="text-gray-600">Producción</p>
+                <p className="text-gray-600">Producci�n</p>
               </div>
             </div>
           </CardContent>
@@ -587,7 +618,3 @@ return `Hace ${diffDays} días`;
     </UnifiedDashboardLayout>
   );
 }
-
-
-
-

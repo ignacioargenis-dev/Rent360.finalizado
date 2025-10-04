@@ -29,7 +29,7 @@ import {
   DollarSign,
   CheckCircle,
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 
 interface MaintenanceSettings {
@@ -164,7 +164,7 @@ export default function MaintenanceSettingsPage() {
   };
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       title="Configuración"
       subtitle="Personaliza tu perfil y preferencias de servicio"
     >
@@ -544,6 +544,6 @@ export default function MaintenanceSettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

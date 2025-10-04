@@ -4,25 +4,28 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, 
-  Calendar, 
-  Clock, 
-  Star, 
-  MessageCircle, 
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Star,
+  MessageCircle,
   CheckCircle,
   AlertCircle,
   Camera,
   DollarSign,
   Phone,
   Mail,
-  Eye, Plus,
+  Eye,
+  Plus,
   Search,
   Filter,
   MoreHorizontal,
   Home,
   Award,
-  Navigation } from 'lucide-react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+  Navigation,
+} from 'lucide-react';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
 
@@ -195,7 +198,7 @@ export default function RunnerVisitsPage() {
       ];
 
       setVisits(mockVisits);
-      
+
       // Calculate stats
       const totalVisits = mockVisits.length;
       const completedVisits = mockVisits.filter(v => v.status === 'COMPLETED').length;
@@ -205,9 +208,8 @@ export default function RunnerVisitsPage() {
       const totalEarnings = mockVisits
         .filter(v => v.status === 'COMPLETED')
         .reduce((sum, v) => sum + v.earnings, 0);
-      const averageRating = mockVisits
-        .filter(v => v.clientRating)
-        .reduce((sum, v) => sum + (v.clientRating || 0), 0) / 
+      const averageRating =
+        mockVisits.filter(v => v.clientRating).reduce((sum, v) => sum + (v.clientRating || 0), 0) /
         mockVisits.filter(v => v.clientRating).length;
       const completionRate = (completedVisits / totalVisits) * 100;
       const averageResponseTime = 15; // Mock value
@@ -302,20 +304,21 @@ export default function RunnerVisitsPage() {
 
   const isOverdue = (visit: Visit) => {
     if (visit.status !== 'PENDING') {
-return false;
-}
+      return false;
+    }
     const now = new Date();
     const scheduledDateTime = new Date(`${visit.scheduledDate} ${visit.scheduledTime}`);
     return now > scheduledDateTime;
   };
 
   const filteredVisits = visits.filter(visit => {
-    const matchesSearch = visit.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         visit.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         visit.address.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      visit.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      visit.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      visit.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || visit.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || visit.priority === priorityFilter;
-    
+
     let matchesDate = true;
     if (dateFilter !== 'all') {
       if (dateFilter === 'today') {
@@ -326,7 +329,7 @@ return false;
         matchesDate = visit.status === 'PENDING';
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesPriority && matchesDate;
   });
 
@@ -345,8 +348,8 @@ return false;
   }
 
   return (
-    <DashboardLayout>
-      <DashboardHeader 
+    <UnifiedDashboardLayout>
+      <DashboardHeader
         user={user}
         title="Gestión de Visitas"
         subtitle="Administra tus visitas programadas y completadas"
@@ -428,7 +431,8 @@ return false;
                 Visitas de Hoy
               </CardTitle>
               <CardDescription className="text-blue-700">
-                {todayVisits.length} visita{todayVisits.length !== 1 ? 's' : ''} programada{todayVisits.length !== 1 ? 's' : ''} para hoy
+                {todayVisits.length} visita{todayVisits.length !== 1 ? 's' : ''} programada
+                {todayVisits.length !== 1 ? 's' : ''} para hoy
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -468,7 +472,7 @@ return false;
                     placeholder="Buscar por propiedad, cliente o dirección..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
@@ -476,7 +480,7 @@ return false;
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="PENDING">Pendientes</option>
@@ -487,7 +491,7 @@ return false;
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  onChange={e => setPriorityFilter(e.target.value)}
                 >
                   <option value="all">Todas las prioridades</option>
                   <option value="URGENT">Urgentes</option>
@@ -498,7 +502,7 @@ return false;
                 <select
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
+                  onChange={e => setDateFilter(e.target.value)}
                 >
                   <option value="all">Todas las fechas</option>
                   <option value="today">Hoy</option>
@@ -520,12 +524,15 @@ return false;
 
         {/* Visits List */}
         <div className="space-y-4">
-          {filteredVisits.map((visit) => (
-            <Card 
-              key={visit.id} 
+          {filteredVisits.map(visit => (
+            <Card
+              key={visit.id}
               className={`hover:shadow-lg transition-shadow ${
-                isOverdue(visit) ? 'border-red-200 bg-red-50' : 
-                isToday(visit.scheduledDate) ? 'border-blue-200 bg-blue-50' : ''
+                isOverdue(visit)
+                  ? 'border-red-200 bg-red-50'
+                  : isToday(visit.scheduledDate)
+                    ? 'border-blue-200 bg-blue-50'
+                    : ''
               }`}
             >
               <CardContent className="pt-6">
@@ -687,10 +694,12 @@ return false;
                 No se encontraron visitas
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || dateFilter !== 'all'
+                {searchTerm ||
+                statusFilter !== 'all' ||
+                priorityFilter !== 'all' ||
+                dateFilter !== 'all'
                   ? 'Intenta ajustar tus filtros de búsqueda.'
-                  : 'Aún no tienes visitas programadas.'
-                }
+                  : 'Aún no tienes visitas programadas.'}
               </p>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -700,6 +709,6 @@ return false;
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
