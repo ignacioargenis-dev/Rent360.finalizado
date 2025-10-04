@@ -27,6 +27,9 @@ import {
   TrendingUp,
   RefreshCw,
   CheckCircle,
+  Home,
+  UserCheck,
+  MessageSquare,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -46,6 +49,11 @@ interface Prospect {
   createdAt: string;
   lastContact: string;
   notes: string;
+  // Property owner information
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerPhone?: string;
+  propertyId?: string;
 }
 
 interface ProspectStats {
@@ -134,6 +142,10 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
             notes: 'Busca oficina para empresa tech, presupuesto flexible',
+            ownerName: 'Carlos Mendoza',
+            ownerEmail: 'carlos.mendoza@email.com',
+            ownerPhone: '+56977774444',
+            propertyId: 'prop-001',
           },
           {
             id: '4',
@@ -148,6 +160,10 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
             notes: 'Compra completada - casa en Chicureo',
+            ownerName: 'María Torres',
+            ownerEmail: 'maria.torres@email.com',
+            ownerPhone: '+56988885555',
+            propertyId: 'prop-002',
           },
           {
             id: '5',
@@ -285,6 +301,40 @@ export default function BrokerProspectsPage() {
       `Hola ${prospect.name},\n\nMe comunico respecto a su interés en propiedades en ${prospect.preferredLocation}.\n\nAtentamente,\n${user?.name || 'Equipo Rent360'}`
     );
     window.open(`mailto:${prospect.email}?subject=${subject}&body=${body}`);
+  };
+
+  const handleContactOwner = (prospect: Prospect) => {
+    if (!prospect.ownerEmail) {
+      alert('No hay información de contacto del propietario disponible');
+      return;
+    }
+
+    // Open email client to contact property owner
+    const subject = encodeURIComponent(`Consulta sobre propiedad en ${prospect.preferredLocation}`);
+    const body = encodeURIComponent(
+      `Hola ${prospect.ownerName},\n\nMe comunico respecto a su propiedad en ${prospect.preferredLocation}.\n\nAtentamente,\n${user?.name || 'Equipo Rent360'}`
+    );
+    window.open(`mailto:${prospect.ownerEmail}?subject=${subject}&body=${body}`);
+  };
+
+  const handleCallOwner = (prospect: Prospect) => {
+    if (!prospect.ownerPhone) {
+      alert('No hay número de teléfono del propietario disponible');
+      return;
+    }
+
+    window.open(`tel:${prospect.ownerPhone}`);
+  };
+
+  const handleViewProperty = (prospect: Prospect) => {
+    if (!prospect.propertyId) {
+      alert('No hay información de propiedad disponible');
+      return;
+    }
+
+    // Navigate to property detail page
+    alert(`Redirigiendo a la propiedad ${prospect.propertyId}`);
+    // In a real app: router.push(`/properties/${prospect.propertyId}`);
   };
 
   const handleConvertProspect = (prospectId: string) => {
@@ -534,6 +584,25 @@ export default function BrokerProspectsPage() {
                           <strong>Interesado en:</strong> {prospect.interestedIn.join(', ')}
                         </div>
 
+                        {/* Property Owner Information */}
+                        {prospect.ownerName && (
+                          <div className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded">
+                            <strong>Propietario:</strong> {prospect.ownerName}
+                            {prospect.ownerEmail && (
+                              <span className="ml-2">
+                                <Mail className="w-3 h-3 inline mr-1" />
+                                {prospect.ownerEmail}
+                              </span>
+                            )}
+                            {prospect.ownerPhone && (
+                              <span className="ml-2">
+                                <Phone className="w-3 h-3 inline mr-1" />
+                                {prospect.ownerPhone}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {prospect.notes && (
                           <div className="text-sm text-gray-600 mt-2">
                             <strong>Notas:</strong> {prospect.notes}
@@ -566,6 +635,57 @@ export default function BrokerProspectsPage() {
                             Convertir
                           </Button>
                         )}
+
+                        {/* Property Owner Contact Buttons */}
+                        {prospect.ownerName && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleContactOwner(prospect)}
+                              title={`Contactar propietario: ${prospect.ownerName}`}
+                            >
+                              <UserCheck className="w-4 h-4" />
+                            </Button>
+                            {prospect.ownerPhone && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCallOwner(prospect)}
+                                title={`Llamar propietario: ${prospect.ownerPhone}`}
+                              >
+                                <Phone className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                        {/* Property View Button */}
+                        {prospect.propertyId && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewProperty(prospect)}
+                            title="Ver propiedad"
+                          >
+                            <Home className="w-4 h-4" />
+                          </Button>
+                        )}
+
+                        {/* Message Button */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const message = prompt('Escribe un mensaje para el prospecto:');
+                            if (message) {
+                              alert(`Mensaje enviado: "${message}"`);
+                            }
+                          }}
+                          title="Enviar mensaje"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, 
-  Calendar, 
-  Clock, 
-  Star, 
-  MessageCircle, 
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Star,
+  MessageCircle,
   Bell,
   CheckCircle,
   Camera,
@@ -18,11 +19,13 @@ import { MapPin,
   Car,
   Award,
   Target,
-  ChevronRight, Eye } from 'lucide-react';
+  ChevronRight,
+  Eye,
+} from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
 import { useUserState } from '@/hooks/useUserState';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface DashboardStats {
   totalVisits: number;
@@ -307,14 +310,11 @@ export default function RunnerDashboard() {
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Panel de Control de Runner"
       subtitle="Gestiona tus visitas y ganancias"
-      showNotifications={true}
-      notificationCount={3}
     >
-
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -329,10 +329,13 @@ export default function RunnerDashboard() {
             <p className="text-2xl font-bold">{stats.totalVisits}</p>
             <p className="text-xs text-blue-100 mt-1">{stats.completedVisits} completadas</p>
             <div className="mt-2 h-1 bg-blue-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.completedVisits / stats.totalVisits) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.completedVisits / stats.totalVisits) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <Clock className="w-8 h-8 text-yellow-100" />
@@ -344,10 +347,13 @@ export default function RunnerDashboard() {
             <p className="text-2xl font-bold">{stats.pendingVisits}</p>
             <p className="text-xs text-yellow-100 mt-1">Para hoy</p>
             <div className="mt-2 h-1 bg-yellow-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.pendingVisits / 10) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.pendingVisits / 10) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <DollarSign className="w-8 h-8 text-green-100" />
@@ -358,10 +364,13 @@ export default function RunnerDashboard() {
             <h3 className="text-sm font-medium text-green-100 mb-1">Ganancias Mensuales</h3>
             <p className="text-2xl font-bold">{formatPrice(stats.monthlyEarnings)}</p>
             <div className="mt-2 h-1 bg-green-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.monthlyEarnings / 1000000) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.monthlyEarnings / 1000000) * 100}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <Award className="w-8 h-8 text-amber-100" />
@@ -375,7 +384,10 @@ export default function RunnerDashboard() {
               <Star className="w-5 h-5 text-yellow-300 fill-current" />
             </div>
             <div className="mt-2 h-1 bg-amber-400 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${(stats.averageRating / 5) * 100}%` }}></div>
+              <div
+                className="h-full bg-white rounded-full"
+                style={{ width: `${(stats.averageRating / 5) * 100}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -394,47 +406,61 @@ export default function RunnerDashboard() {
               <h3 className="font-semibold text-gray-800 mb-2">Mis Visitas</h3>
               <p className="text-sm text-gray-600 mb-4">Gestiona tus visitas programadas</p>
               <div className="flex items-center justify-between">
-                <Link href="/runner/visits" className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center">
+                <Link
+                  href="/runner/visits"
+                  className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
+                >
                   Ver visitas
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
                 {stats.pendingVisits > 0 && (
-                  <Badge className="bg-red-100 text-red-800 text-xs">{stats.pendingVisits} pendientes</Badge>
+                  <Badge className="bg-red-100 text-red-800 text-xs">
+                    {stats.pendingVisits} pendientes
+                  </Badge>
                 )}
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 group">
               <div className="bg-gradient-to-br from-green-500 to-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Nueva Visita</h3>
               <p className="text-sm text-gray-600 mb-4">Agenda una nueva visita</p>
-              <Link href="/runner/visits/new" className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center">
+              <Link
+                href="/runner/visits/new"
+                className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center"
+              >
                 Agendar
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 group">
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Camera className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Reportes Fotográficos</h3>
               <p className="text-sm text-gray-600 mb-4">Sube fotos de tus visitas</p>
-              <Link href="/runner/photos" className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center">
+              <Link
+                href="/runner/photos"
+                className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center"
+              >
                 Subir fotos
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-orange-200 group">
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Mis Ingresos</h3>
               <p className="text-sm text-gray-600 mb-4">Revisa tus ganancias</p>
-              <Link href="/runner/earnings" className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center">
+              <Link
+                href="/runner/earnings"
+                className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center"
+              >
                 Ver ingresos
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
@@ -460,8 +486,11 @@ export default function RunnerDashboard() {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {todayVisits.map((visit) => (
-                    <div key={visit.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+                  {todayVisits.map(visit => (
+                    <div
+                      key={visit.id}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
+                    >
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h3 className="font-bold text-lg text-gray-800">{visit.propertyTitle}</h3>
@@ -475,7 +504,7 @@ export default function RunnerDashboard() {
                           {getStatusBadge(visit.status)}
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="bg-blue-50 rounded-lg p-3">
                           <p className="text-xs text-blue-600 font-medium">Cliente</p>
@@ -490,7 +519,9 @@ export default function RunnerDashboard() {
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="bg-purple-50 rounded-lg p-3">
                           <p className="text-xs text-purple-600 font-medium">Fecha</p>
-                          <p className="font-bold text-purple-800">{formatDate(visit.scheduledDate)}</p>
+                          <p className="font-bold text-purple-800">
+                            {formatDate(visit.scheduledDate)}
+                          </p>
                         </div>
                         <div className="bg-yellow-50 rounded-lg p-3">
                           <p className="text-xs text-yellow-600 font-medium">Hora</p>
@@ -516,7 +547,11 @@ export default function RunnerDashboard() {
                               <CheckCircle className="w-4 h-4 mr-1" />
                               Iniciar Visita
                             </Button>
-                            <Button size="sm" variant="outline" className="border-gray-300 hover:border-red-500 hover:text-red-600">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-300 hover:border-red-500 hover:text-red-600"
+                            >
                               <Phone className="w-4 h-4 mr-1" />
                               Llamar
                             </Button>
@@ -524,11 +559,19 @@ export default function RunnerDashboard() {
                         )}
                         {visit.status === 'COMPLETED' && (
                           <>
-                            <Button size="sm" variant="outline" className="border-gray-300 hover:border-blue-500 hover:text-blue-600">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               Ver Detalles
                             </Button>
-                            <Button size="sm" variant="outline" className="border-gray-300 hover:border-purple-500 hover:text-purple-600">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-300 hover:border-purple-500 hover:text-purple-600"
+                            >
                               <Camera className="w-4 h-4 mr-1" />
                               Subir Fotos
                             </Button>
@@ -551,9 +594,14 @@ export default function RunnerDashboard() {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}>
+                  {recentActivity.map(activity => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}
+                      >
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1">
@@ -580,16 +628,24 @@ export default function RunnerDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   {performanceMetrics.map((metric, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
                       <span className="text-sm font-medium text-gray-700">{metric.label}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-800">{metric.value}</span>
                         <div className="flex items-center gap-1">
                           {getTrendIcon(metric.trend)}
-                          <span className={`text-xs font-medium ${
-                            metric.trend === 'up' ? 'text-green-600' : 
-                            metric.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                          }`}>
+                          <span
+                            className={`text-xs font-medium ${
+                              metric.trend === 'up'
+                                ? 'text-green-600'
+                                : metric.trend === 'down'
+                                  ? 'text-red-600'
+                                  : 'text-gray-600'
+                            }`}
+                          >
                             {metric.change}
                           </span>
                         </div>
@@ -610,12 +666,12 @@ export default function RunnerDashboard() {
                     <span className="text-sm font-medium text-green-800">Disponibilidad</span>
                     <Badge className="bg-green-100 text-green-800">Disponible</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <span className="text-sm font-medium text-blue-800">Tiempo de Respuesta</span>
                     <span className="font-bold text-blue-600">{stats.responseTime} min</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                     <span className="text-sm font-medium text-purple-800">Visitas Hoy</span>
                     <span className="font-bold text-purple-600">{todayVisits.length}</span>
@@ -626,6 +682,6 @@ export default function RunnerDashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

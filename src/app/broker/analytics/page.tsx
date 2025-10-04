@@ -177,8 +177,42 @@ export default function BrokerAnalyticsPage() {
   };
 
   const handleRefreshData = () => {
-    // Refresh analytics data
-    alert('Datos de analytics actualizados correctamente');
+    // Refresh analytics data with simulated API call
+    setLoading(true);
+    setTimeout(() => {
+      // Simulate refreshed data with slight variations
+      const refreshedPerformance = {
+        ...performanceData,
+        propertyViews: performanceData.propertyViews + Math.floor(Math.random() * 50 - 25),
+        inquiriesGenerated: performanceData.inquiriesGenerated + Math.floor(Math.random() * 10 - 5),
+        conversionRate: Math.max(0, performanceData.conversionRate + (Math.random() - 0.5) * 2),
+        monthlyRevenue: performanceData.monthlyRevenue + Math.floor(Math.random() * 50000 - 25000),
+      };
+      setPerformanceData(refreshedPerformance);
+      setLoading(false);
+      alert('Datos de analytics actualizados correctamente');
+    }, 1500);
+  };
+
+  const handleViewTutorial = () => {
+    // Open tutorial or help documentation
+    alert('Abriendo tutorial de análisis de rendimiento...');
+    // In a real app, this would open a modal with tutorial content or navigate to help docs
+    // window.open('/help/analytics-tutorial', '_blank');
+  };
+
+  const handleConfigureAlerts = () => {
+    // Open alerts configuration
+    alert('Abriendo configuración de alertas de rendimiento...');
+    // In a real app, this would navigate to alerts settings
+    // router.push('/broker/settings/alerts');
+  };
+
+  const handleViewDetailedAnalysis = () => {
+    // Navigate to detailed market analysis
+    alert('Abriendo análisis detallado del mercado y tendencias...');
+    // In a real app, this would navigate to detailed analytics
+    // router.push('/broker/analytics/market-analysis');
   };
 
   if (loading) {
@@ -431,7 +465,7 @@ export default function BrokerAnalyticsPage() {
                 <p className="text-sm text-gray-600 mb-2">
                   Las propiedades con mejores fotos generan 40% más consultas
                 </p>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={handleViewTutorial}>
                   Ver Tutorial
                 </Button>
               </div>
@@ -444,7 +478,7 @@ export default function BrokerAnalyticsPage() {
                 <p className="text-sm text-gray-600 mb-2">
                   Responde en menos de 1 hora para aumentar conversiones
                 </p>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={handleConfigureAlerts}>
                   Configurar Alertas
                 </Button>
               </div>
@@ -457,7 +491,7 @@ export default function BrokerAnalyticsPage() {
                 <p className="text-sm text-gray-600 mb-2">
                   Ajusta precios según el mercado local para mejor conversión
                 </p>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={handleViewDetailedAnalysis}>
                   Ver Análisis
                 </Button>
               </div>

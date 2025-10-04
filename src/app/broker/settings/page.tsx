@@ -6,7 +6,17 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings,
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Settings,
   User,
   Bell,
   Shield,
@@ -39,11 +49,11 @@ import { Settings,
   AlertCircle,
   Target,
   Plus,
-  Building
-  } from 'lucide-react';
+  Building,
+} from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface BrokerSettings {
   profile: {
@@ -99,12 +109,42 @@ interface BrokerSettings {
     notificationsEnabled: boolean;
   };
   documents: {
-    idCard: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
-    criminalRecord: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
-    professionalTitle: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
-    brokerRegistration: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; };
-    courseCertificates: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; }[];
-    companyDocuments: { name: string; url: string; status: 'pending' | 'uploaded' | 'approved' | 'rejected'; uploadedAt?: string; }[];
+    idCard: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    };
+    criminalRecord: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    };
+    professionalTitle: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    };
+    brokerRegistration: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    };
+    courseCertificates: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    }[];
+    companyDocuments: {
+      name: string;
+      url: string;
+      status: 'pending' | 'uploaded' | 'approved' | 'rejected';
+      uploadedAt?: string;
+    }[];
   };
 }
 
@@ -185,7 +225,9 @@ export default function BrokerSettings() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -201,7 +243,9 @@ export default function BrokerSettings() {
       // Show success message
       alert('Configuración guardada exitosamente');
     } catch (error) {
-      logger.error('Error saving settings:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error saving settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al guardar la configuración');
     } finally {
       setSaving(false);
@@ -273,15 +317,17 @@ export default function BrokerSettings() {
             name: file.name,
             url: `/uploads/${file.name}`, // URL simulada
             status: 'uploaded' as const,
-            uploadedAt
-          }
-        }
+            uploadedAt,
+          },
+        },
       }));
 
       logger.info('Documento subido exitosamente:', { documentType, fileName: file.name });
       alert(`Documento "${file.name}" subido exitosamente`);
     } catch (error) {
-      logger.error('Error subiendo documento:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error subiendo documento:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al subir el documento');
     }
   };
@@ -296,21 +342,23 @@ export default function BrokerSettings() {
         name: file.name,
         url: `/uploads/${file.name}`,
         status: 'uploaded' as const,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
       };
 
       setSettings(prev => ({
         ...prev,
         documents: {
           ...prev.documents,
-          courseCertificates: [...prev.documents.courseCertificates, newCert]
-        }
+          courseCertificates: [...prev.documents.courseCertificates, newCert],
+        },
       }));
 
       logger.info('Certificado agregado exitosamente');
       alert('Certificado agregado exitosamente');
     } catch (error) {
-      logger.error('Error agregando certificado:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error agregando certificado:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al agregar el certificado');
     }
   };
@@ -325,21 +373,23 @@ export default function BrokerSettings() {
         name: file.name,
         url: `/uploads/${file.name}`,
         status: 'uploaded' as const,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
       };
 
       setSettings(prev => ({
         ...prev,
         documents: {
           ...prev.documents,
-          companyDocuments: [...prev.documents.companyDocuments, newDoc]
-        }
+          companyDocuments: [...prev.documents.companyDocuments, newDoc],
+        },
       }));
 
       logger.info('Documento de empresa agregado exitosamente');
       alert('Documento de empresa agregado exitosamente');
     } catch (error) {
-      logger.error('Error agregando documento de empresa:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error agregando documento de empresa:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al agregar el documento de empresa');
     }
   };
@@ -356,7 +406,7 @@ export default function BrokerSettings() {
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Configuración"
       subtitle="Personaliza tu cuenta y preferencias"
@@ -464,47 +514,47 @@ export default function BrokerSettings() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Nombre
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={settings.profile.firstName}
-                          onChange={(e) => updateProfile('firstName', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={e => updateProfile('firstName', e.target.value)}
+                          placeholder="Ingresa tu nombre"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Apellido
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={settings.profile.lastName}
-                          onChange={(e) => updateProfile('lastName', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={e => updateProfile('lastName', e.target.value)}
+                          placeholder="Ingresa tu apellido"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Email
                         </label>
-                        <input
+                        <Input
                           type="email"
                           value={settings.profile.email}
-                          onChange={(e) => updateProfile('email', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={e => updateProfile('email', e.target.value)}
+                          placeholder="correo@ejemplo.com"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Teléfono
                         </label>
-                        <input
+                        <Input
                           type="tel"
                           value={settings.profile.phone}
-                          onChange={(e) => updateProfile('phone', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={e => updateProfile('phone', e.target.value)}
+                          placeholder="+56912345678"
                         />
                       </div>
                     </div>
@@ -513,11 +563,11 @@ export default function BrokerSettings() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Biografía
                       </label>
-                      <textarea
+                      <Textarea
                         value={settings.profile.bio}
-                        onChange={(e) => updateProfile('bio', e.target.value)}
+                        onChange={e => updateProfile('bio', e.target.value)}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Describe tu experiencia y especialización inmobiliaria..."
                       />
                     </div>
 
@@ -529,7 +579,7 @@ export default function BrokerSettings() {
                         <input
                           type="text"
                           value={settings.profile.license}
-                          onChange={(e) => updateProfile('license', e.target.value)}
+                          onChange={e => updateProfile('license', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -540,7 +590,7 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.profile.experience}
-                          onChange={(e) => updateProfile('experience', parseInt(e.target.value))}
+                          onChange={e => updateProfile('experience', parseInt(e.target.value))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -587,14 +637,16 @@ export default function BrokerSettings() {
                         <Mail className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Notificaciones por Email</p>
-                          <p className="text-sm text-gray-600">Recibir notificaciones importantes por correo</p>
+                          <p className="text-sm text-gray-600">
+                            Recibir notificaciones importantes por correo
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.notifications.email}
-                          onChange={(e) => updateNotifications('email', e.target.checked)}
+                          onChange={e => updateNotifications('email', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -606,14 +658,16 @@ export default function BrokerSettings() {
                         <Smartphone className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Notificaciones SMS</p>
-                          <p className="text-sm text-gray-600">Recibir alertas importantes por mensaje de texto</p>
+                          <p className="text-sm text-gray-600">
+                            Recibir alertas importantes por mensaje de texto
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.notifications.sms}
-                          onChange={(e) => updateNotifications('sms', e.target.checked)}
+                          onChange={e => updateNotifications('sms', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -625,14 +679,16 @@ export default function BrokerSettings() {
                         <Bell className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Notificaciones Push</p>
-                          <p className="text-sm text-gray-600">Recibir notificaciones en tu dispositivo móvil</p>
+                          <p className="text-sm text-gray-600">
+                            Recibir notificaciones en tu dispositivo móvil
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.notifications.push}
-                          onChange={(e) => updateNotifications('push', e.target.checked)}
+                          onChange={e => updateNotifications('push', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -641,17 +697,19 @@ export default function BrokerSettings() {
 
                     <div className="border-t pt-4">
                       <h4 className="font-medium mb-3">Tipos de Notificaciones</h4>
-                      
+
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <p className="font-medium">Nuevas Consultas</p>
-                          <p className="text-sm text-gray-600">Cuando recibas nuevas consultas de clientes</p>
+                          <p className="text-sm text-gray-600">
+                            Cuando recibas nuevas consultas de clientes
+                          </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
                             checked={settings.notifications.newInquiries}
-                            onChange={(e) => updateNotifications('newInquiries', e.target.checked)}
+                            onChange={e => updateNotifications('newInquiries', e.target.checked)}
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -661,13 +719,17 @@ export default function BrokerSettings() {
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <p className="font-medium">Recordatorios de Citas</p>
-                          <p className="text-sm text-gray-600">Recordatorios de visitas y reuniones programadas</p>
+                          <p className="text-sm text-gray-600">
+                            Recordatorios de visitas y reuniones programadas
+                          </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
                             checked={settings.notifications.appointmentReminders}
-                            onChange={(e) => updateNotifications('appointmentReminders', e.target.checked)}
+                            onChange={e =>
+                              updateNotifications('appointmentReminders', e.target.checked)
+                            }
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -677,13 +739,15 @@ export default function BrokerSettings() {
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <p className="font-medium">Actualizaciones de Contratos</p>
-                          <p className="text-sm text-gray-600">Notificaciones sobre cambios en contratos</p>
+                          <p className="text-sm text-gray-600">
+                            Notificaciones sobre cambios en contratos
+                          </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
                             checked={settings.notifications.contractUpdates}
-                            onChange={(e) => updateNotifications('contractUpdates', e.target.checked)}
+                            onChange={e => updateNotifications('contractUpdates', e.target.checked)}
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -699,7 +763,9 @@ export default function BrokerSettings() {
                           <input
                             type="checkbox"
                             checked={settings.notifications.paymentNotifications}
-                            onChange={(e) => updateNotifications('paymentNotifications', e.target.checked)}
+                            onChange={e =>
+                              updateNotifications('paymentNotifications', e.target.checked)
+                            }
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -717,7 +783,7 @@ export default function BrokerSettings() {
                           <input
                             type="checkbox"
                             checked={settings.notifications.marketingEmails}
-                            onChange={(e) => updateNotifications('marketingEmails', e.target.checked)}
+                            onChange={e => updateNotifications('marketingEmails', e.target.checked)}
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -747,7 +813,7 @@ export default function BrokerSettings() {
                       </div>
                       <select
                         value={settings.privacy.profileVisibility}
-                        onChange={(e) => updatePrivacy('profileVisibility', e.target.value)}
+                        onChange={e => updatePrivacy('profileVisibility', e.target.value)}
                         className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                       >
                         <option value="public">Público</option>
@@ -761,14 +827,16 @@ export default function BrokerSettings() {
                         <Phone className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Mostrar Información de Contacto</p>
-                          <p className="text-sm text-gray-600">Mostrar teléfono y email en tu perfil</p>
+                          <p className="text-sm text-gray-600">
+                            Mostrar teléfono y email en tu perfil
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.privacy.showContactInfo}
-                          onChange={(e) => updatePrivacy('showContactInfo', e.target.checked)}
+                          onChange={e => updatePrivacy('showContactInfo', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -780,14 +848,16 @@ export default function BrokerSettings() {
                         <BarChart3 className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Mostrar Estadísticas</p>
-                          <p className="text-sm text-gray-600">Mostrar métricas de rendimiento en tu perfil</p>
+                          <p className="text-sm text-gray-600">
+                            Mostrar métricas de rendimiento en tu perfil
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.privacy.showStats}
-                          onChange={(e) => updatePrivacy('showStats', e.target.checked)}
+                          onChange={e => updatePrivacy('showStats', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -799,14 +869,16 @@ export default function BrokerSettings() {
                         <Star className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium">Permitir Reseñas</p>
-                          <p className="text-sm text-gray-600">Permitir que clientes dejen reseñas</p>
+                          <p className="text-sm text-gray-600">
+                            Permitir que clientes dejen reseñas
+                          </p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={settings.privacy.allowReviews}
-                          onChange={(e) => updatePrivacy('allowReviews', e.target.checked)}
+                          onChange={e => updatePrivacy('allowReviews', e.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -833,7 +905,7 @@ export default function BrokerSettings() {
                         <input
                           type="text"
                           value={settings.payment.bankName}
-                          onChange={(e) => updatePayment('bankName', e.target.value)}
+                          onChange={e => updatePayment('bankName', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -843,7 +915,7 @@ export default function BrokerSettings() {
                         </label>
                         <select
                           value={settings.payment.accountType}
-                          onChange={(e) => updatePayment('accountType', e.target.value)}
+                          onChange={e => updatePayment('accountType', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="Cuenta Corriente">Cuenta Corriente</option>
@@ -860,19 +932,17 @@ export default function BrokerSettings() {
                       <input
                         type="text"
                         value={settings.payment.bankAccount}
-                        onChange={(e) => updatePayment('bankAccount', e.target.value)}
+                        onChange={e => updatePayment('bankAccount', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        RUT
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">RUT</label>
                       <input
                         type="text"
                         value={settings.payment.taxId}
-                        onChange={(e) => updatePayment('taxId', e.target.value)}
+                        onChange={e => updatePayment('taxId', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -882,27 +952,35 @@ export default function BrokerSettings() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tasa de Comisión (%)
                         </label>
-                        <input
+                        <Input
                           type="number"
                           step="0.1"
                           value={settings.payment.commissionRate}
-                          onChange={(e) => updatePayment('commissionRate', parseFloat(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          readOnly
+                          className="bg-gray-50 cursor-not-allowed"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          La tasa de comisión es configurada por el administrador y no puede ser
+                          modificada por el corredor.
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Método de Pago
                         </label>
-                        <select
+                        <Select
                           value={settings.payment.paymentMethod}
-                          onChange={(e) => updatePayment('paymentMethod', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onValueChange={value => updatePayment('paymentMethod', value)}
                         >
-                          <option value="bank_transfer">Transferencia Bancaria</option>
-                          <option value="check">Cheque</option>
-                          <option value="both">Ambos</option>
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona método de pago" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bank_transfer">Transferencia Bancaria</SelectItem>
+                            <SelectItem value="check">Cheque</SelectItem>
+                            <SelectItem value="both">Ambos</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </CardContent>
@@ -914,17 +992,17 @@ export default function BrokerSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle>Apariencia y Preferencias</CardTitle>
-                  <CardDescription>Personaliza la interfaz y configuración regional</CardDescription>
+                  <CardDescription>
+                    Personaliza la interfaz y configuración regional
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tema
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tema</label>
                       <select
                         value={settings.appearance.theme}
-                        onChange={(e) => updateAppearance('theme', e.target.value)}
+                        onChange={e => updateAppearance('theme', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="light">Claro</option>
@@ -933,12 +1011,10 @@ export default function BrokerSettings() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Idioma
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
                       <select
                         value={settings.appearance.language}
-                        onChange={(e) => updateAppearance('language', e.target.value)}
+                        onChange={e => updateAppearance('language', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="es">Español</option>
@@ -954,7 +1030,7 @@ export default function BrokerSettings() {
                       </label>
                       <select
                         value={settings.appearance.dateFormat}
-                        onChange={(e) => updateAppearance('dateFormat', e.target.value)}
+                        onChange={e => updateAppearance('dateFormat', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="dd/mm/yyyy">DD/MM/YYYY</option>
@@ -968,7 +1044,7 @@ export default function BrokerSettings() {
                       </label>
                       <select
                         value={settings.appearance.timezone}
-                        onChange={(e) => updateAppearance('timezone', e.target.value)}
+                        onChange={e => updateAppearance('timezone', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="America/Santiago">Santiago (GMT-3)</option>
@@ -985,7 +1061,9 @@ export default function BrokerSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle>Metas y Objetivos</CardTitle>
-                  <CardDescription>Establece tus metas mensuales y anuales para mejorar tu rendimiento</CardDescription>
+                  <CardDescription>
+                    Establece tus metas mensuales y anuales para mejorar tu rendimiento
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Metas Mensuales */}
@@ -999,7 +1077,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.monthlyProperties}
-                          onChange={(e) => updateGoals('monthlyProperties', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('monthlyProperties', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                         />
@@ -1011,7 +1091,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.monthlyRevenue}
-                          onChange={(e) => updateGoals('monthlyRevenue', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('monthlyRevenue', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                           step="100000"
@@ -1024,7 +1106,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.monthlyClients}
-                          onChange={(e) => updateGoals('monthlyClients', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('monthlyClients', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                         />
@@ -1043,7 +1127,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.yearlyProperties}
-                          onChange={(e) => updateGoals('yearlyProperties', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('yearlyProperties', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                         />
@@ -1055,7 +1141,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.yearlyRevenue}
-                          onChange={(e) => updateGoals('yearlyRevenue', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('yearlyRevenue', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                           step="1000000"
@@ -1068,7 +1156,9 @@ export default function BrokerSettings() {
                         <input
                           type="number"
                           value={settings.goals.yearlyClients}
-                          onChange={(e) => updateGoals('yearlyClients', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            updateGoals('yearlyClients', parseInt(e.target.value) || 0)
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                         />
@@ -1086,7 +1176,9 @@ export default function BrokerSettings() {
                       <input
                         type="number"
                         value={settings.goals.commissionTarget}
-                        onChange={(e) => updateGoals('commissionTarget', parseInt(e.target.value) || 0)}
+                        onChange={e =>
+                          updateGoals('commissionTarget', parseInt(e.target.value) || 0)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         min="0"
                         step="10000"
@@ -1109,15 +1201,19 @@ export default function BrokerSettings() {
                       <input
                         type="checkbox"
                         checked={settings.goals.notificationsEnabled}
-                        onChange={(e) => updateGoals('notificationsEnabled', e.target.checked)}
+                        onChange={e => updateGoals('notificationsEnabled', e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`relative inline-block w-10 h-6 rounded-full transition-colors ${
-                        settings.goals.notificationsEnabled ? 'bg-emerald-500' : 'bg-gray-300'
-                      }`}>
-                        <span className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          settings.goals.notificationsEnabled ? 'translate-x-4' : 'translate-x-0'
-                        }`} />
+                      <div
+                        className={`relative inline-block w-10 h-6 rounded-full transition-colors ${
+                          settings.goals.notificationsEnabled ? 'bg-emerald-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                            settings.goals.notificationsEnabled ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
                       </div>
                     </label>
                   </div>
@@ -1170,18 +1266,23 @@ export default function BrokerSettings() {
                 <CardHeader>
                   <CardTitle>Documentos Requeridos</CardTitle>
                   <CardDescription>
-                    Sube y gestiona los documentos necesarios para tu aprobación como corredor de propiedades
+                    Sube y gestiona los documentos necesarios para tu aprobación como corredor de
+                    propiedades
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Documentos Personales Obligatorios */}
                   <div>
-                    <h4 className="text-lg font-semibold mb-4 text-emerald-700">Documentos Personales Obligatorios</h4>
+                    <h4 className="text-lg font-semibold mb-4 text-emerald-700">
+                      Documentos Personales Obligatorios
+                    </h4>
                     <div className="space-y-4">
                       {/* Cédula de Identidad */}
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${settings.documents.idCard.status === 'approved' ? 'bg-green-100' : settings.documents.idCard.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          <div
+                            className={`p-2 rounded-lg ${settings.documents.idCard.status === 'approved' ? 'bg-green-100' : settings.documents.idCard.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                          >
                             {settings.documents.idCard.status === 'approved' ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : settings.documents.idCard.status === 'uploaded' ? (
@@ -1193,11 +1294,15 @@ export default function BrokerSettings() {
                           <div>
                             <h5 className="font-medium">Cédula de Identidad</h5>
                             <p className="text-sm text-gray-600">
-                              {settings.documents.idCard.name || 'Documento requerido para verificación de identidad'}
+                              {settings.documents.idCard.name ||
+                                'Documento requerido para verificación de identidad'}
                             </p>
                             {settings.documents.idCard.uploadedAt && (
                               <p className="text-xs text-gray-500">
-                                Subido: {new Date(settings.documents.idCard.uploadedAt).toLocaleDateString('es-ES')}
+                                Subido:{' '}
+                                {new Date(settings.documents.idCard.uploadedAt).toLocaleDateString(
+                                  'es-ES'
+                                )}
                               </p>
                             )}
                           </div>
@@ -1208,7 +1313,10 @@ export default function BrokerSettings() {
                               <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => e.target.files?.[0] && handleFileUpload('idCard', e.target.files[0])}
+                                onChange={e =>
+                                  e.target.files?.[0] &&
+                                  handleFileUpload('idCard', e.target.files[0])
+                                }
                                 className="hidden"
                               />
                               <Button size="sm" variant="outline">
@@ -1219,19 +1327,31 @@ export default function BrokerSettings() {
                           ) : (
                             <div className="flex gap-2">
                               {settings.documents.idCard.url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.idCard.url, '_blank')}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    window.open(settings.documents.idCard.url, '_blank')
+                                  }
+                                >
                                   <Eye className="w-4 h-4 mr-2" />
                                   Ver
                                 </Button>
                               )}
-                              <Badge variant={
-                                settings.documents.idCard.status === 'approved' ? 'default' :
-                                settings.documents.idCard.status === 'uploaded' ? 'secondary' :
-                                'outline'
-                              }>
-                                {settings.documents.idCard.status === 'approved' ? 'Aprobado' :
-                                 settings.documents.idCard.status === 'uploaded' ? 'Pendiente de revisión' :
-                                 'Pendiente'}
+                              <Badge
+                                variant={
+                                  settings.documents.idCard.status === 'approved'
+                                    ? 'default'
+                                    : settings.documents.idCard.status === 'uploaded'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {settings.documents.idCard.status === 'approved'
+                                  ? 'Aprobado'
+                                  : settings.documents.idCard.status === 'uploaded'
+                                    ? 'Pendiente de revisión'
+                                    : 'Pendiente'}
                               </Badge>
                             </div>
                           )}
@@ -1241,7 +1361,9 @@ export default function BrokerSettings() {
                       {/* Certificado de Antecedentes */}
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${settings.documents.criminalRecord.status === 'approved' ? 'bg-green-100' : settings.documents.criminalRecord.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          <div
+                            className={`p-2 rounded-lg ${settings.documents.criminalRecord.status === 'approved' ? 'bg-green-100' : settings.documents.criminalRecord.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                          >
                             {settings.documents.criminalRecord.status === 'approved' ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : settings.documents.criminalRecord.status === 'uploaded' ? (
@@ -1253,11 +1375,15 @@ export default function BrokerSettings() {
                           <div>
                             <h5 className="font-medium">Certificado de Antecedentes</h5>
                             <p className="text-sm text-gray-600">
-                              {settings.documents.criminalRecord.name || 'Certificado de antecedentes penales (vigencia máxima 3 meses)'}
+                              {settings.documents.criminalRecord.name ||
+                                'Certificado de antecedentes penales (vigencia máxima 3 meses)'}
                             </p>
                             {settings.documents.criminalRecord.uploadedAt && (
                               <p className="text-xs text-gray-500">
-                                Subido: {new Date(settings.documents.criminalRecord.uploadedAt).toLocaleDateString('es-ES')}
+                                Subido:{' '}
+                                {new Date(
+                                  settings.documents.criminalRecord.uploadedAt
+                                ).toLocaleDateString('es-ES')}
                               </p>
                             )}
                           </div>
@@ -1268,7 +1394,10 @@ export default function BrokerSettings() {
                               <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => e.target.files?.[0] && handleFileUpload('criminalRecord', e.target.files[0])}
+                                onChange={e =>
+                                  e.target.files?.[0] &&
+                                  handleFileUpload('criminalRecord', e.target.files[0])
+                                }
                                 className="hidden"
                               />
                               <Button size="sm" variant="outline">
@@ -1279,19 +1408,31 @@ export default function BrokerSettings() {
                           ) : (
                             <div className="flex gap-2">
                               {settings.documents.criminalRecord.url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.criminalRecord.url, '_blank')}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    window.open(settings.documents.criminalRecord.url, '_blank')
+                                  }
+                                >
                                   <Eye className="w-4 h-4 mr-2" />
                                   Ver
                                 </Button>
                               )}
-                              <Badge variant={
-                                settings.documents.criminalRecord.status === 'approved' ? 'default' :
-                                settings.documents.criminalRecord.status === 'uploaded' ? 'secondary' :
-                                'outline'
-                              }>
-                                {settings.documents.criminalRecord.status === 'approved' ? 'Aprobado' :
-                                 settings.documents.criminalRecord.status === 'uploaded' ? 'Pendiente de revisión' :
-                                 'Pendiente'}
+                              <Badge
+                                variant={
+                                  settings.documents.criminalRecord.status === 'approved'
+                                    ? 'default'
+                                    : settings.documents.criminalRecord.status === 'uploaded'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {settings.documents.criminalRecord.status === 'approved'
+                                  ? 'Aprobado'
+                                  : settings.documents.criminalRecord.status === 'uploaded'
+                                    ? 'Pendiente de revisión'
+                                    : 'Pendiente'}
                               </Badge>
                             </div>
                           )}
@@ -1301,7 +1442,9 @@ export default function BrokerSettings() {
                       {/* Título Profesional */}
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${settings.documents.professionalTitle.status === 'approved' ? 'bg-green-100' : settings.documents.professionalTitle.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          <div
+                            className={`p-2 rounded-lg ${settings.documents.professionalTitle.status === 'approved' ? 'bg-green-100' : settings.documents.professionalTitle.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                          >
                             {settings.documents.professionalTitle.status === 'approved' ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : settings.documents.professionalTitle.status === 'uploaded' ? (
@@ -1313,11 +1456,15 @@ export default function BrokerSettings() {
                           <div>
                             <h5 className="font-medium">Título Profesional</h5>
                             <p className="text-sm text-gray-600">
-                              {settings.documents.professionalTitle.name || 'Fotocopia legalizada del título universitario'}
+                              {settings.documents.professionalTitle.name ||
+                                'Fotocopia legalizada del título universitario'}
                             </p>
                             {settings.documents.professionalTitle.uploadedAt && (
                               <p className="text-xs text-gray-500">
-                                Subido: {new Date(settings.documents.professionalTitle.uploadedAt).toLocaleDateString('es-ES')}
+                                Subido:{' '}
+                                {new Date(
+                                  settings.documents.professionalTitle.uploadedAt
+                                ).toLocaleDateString('es-ES')}
                               </p>
                             )}
                           </div>
@@ -1328,7 +1475,10 @@ export default function BrokerSettings() {
                               <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => e.target.files?.[0] && handleFileUpload('professionalTitle', e.target.files[0])}
+                                onChange={e =>
+                                  e.target.files?.[0] &&
+                                  handleFileUpload('professionalTitle', e.target.files[0])
+                                }
                                 className="hidden"
                               />
                               <Button size="sm" variant="outline">
@@ -1339,19 +1489,31 @@ export default function BrokerSettings() {
                           ) : (
                             <div className="flex gap-2">
                               {settings.documents.professionalTitle.url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.professionalTitle.url, '_blank')}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    window.open(settings.documents.professionalTitle.url, '_blank')
+                                  }
+                                >
                                   <Eye className="w-4 h-4 mr-2" />
                                   Ver
                                 </Button>
                               )}
-                              <Badge variant={
-                                settings.documents.professionalTitle.status === 'approved' ? 'default' :
-                                settings.documents.professionalTitle.status === 'uploaded' ? 'secondary' :
-                                'outline'
-                              }>
-                                {settings.documents.professionalTitle.status === 'approved' ? 'Aprobado' :
-                                 settings.documents.professionalTitle.status === 'uploaded' ? 'Pendiente de revisión' :
-                                 'Pendiente'}
+                              <Badge
+                                variant={
+                                  settings.documents.professionalTitle.status === 'approved'
+                                    ? 'default'
+                                    : settings.documents.professionalTitle.status === 'uploaded'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {settings.documents.professionalTitle.status === 'approved'
+                                  ? 'Aprobado'
+                                  : settings.documents.professionalTitle.status === 'uploaded'
+                                    ? 'Pendiente de revisión'
+                                    : 'Pendiente'}
                               </Badge>
                             </div>
                           )}
@@ -1361,7 +1523,9 @@ export default function BrokerSettings() {
                       {/* Registro de Corredor */}
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${settings.documents.brokerRegistration.status === 'approved' ? 'bg-green-100' : settings.documents.brokerRegistration.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          <div
+                            className={`p-2 rounded-lg ${settings.documents.brokerRegistration.status === 'approved' ? 'bg-green-100' : settings.documents.brokerRegistration.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                          >
                             {settings.documents.brokerRegistration.status === 'approved' ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : settings.documents.brokerRegistration.status === 'uploaded' ? (
@@ -1373,11 +1537,15 @@ export default function BrokerSettings() {
                           <div>
                             <h5 className="font-medium">Registro de Corredor</h5>
                             <p className="text-sm text-gray-600">
-                              {settings.documents.brokerRegistration.name || 'Registro oficial como corredor de propiedades'}
+                              {settings.documents.brokerRegistration.name ||
+                                'Registro oficial como corredor de propiedades'}
                             </p>
                             {settings.documents.brokerRegistration.uploadedAt && (
                               <p className="text-xs text-gray-500">
-                                Subido: {new Date(settings.documents.brokerRegistration.uploadedAt).toLocaleDateString('es-ES')}
+                                Subido:{' '}
+                                {new Date(
+                                  settings.documents.brokerRegistration.uploadedAt
+                                ).toLocaleDateString('es-ES')}
                               </p>
                             )}
                           </div>
@@ -1388,7 +1556,10 @@ export default function BrokerSettings() {
                               <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => e.target.files?.[0] && handleFileUpload('brokerRegistration', e.target.files[0])}
+                                onChange={e =>
+                                  e.target.files?.[0] &&
+                                  handleFileUpload('brokerRegistration', e.target.files[0])
+                                }
                                 className="hidden"
                               />
                               <Button size="sm" variant="outline">
@@ -1399,19 +1570,31 @@ export default function BrokerSettings() {
                           ) : (
                             <div className="flex gap-2">
                               {settings.documents.brokerRegistration.url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(settings.documents.brokerRegistration.url, '_blank')}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    window.open(settings.documents.brokerRegistration.url, '_blank')
+                                  }
+                                >
                                   <Eye className="w-4 h-4 mr-2" />
                                   Ver
                                 </Button>
                               )}
-                              <Badge variant={
-                                settings.documents.brokerRegistration.status === 'approved' ? 'default' :
-                                settings.documents.brokerRegistration.status === 'uploaded' ? 'secondary' :
-                                'outline'
-                              }>
-                                {settings.documents.brokerRegistration.status === 'approved' ? 'Aprobado' :
-                                 settings.documents.brokerRegistration.status === 'uploaded' ? 'Pendiente de revisión' :
-                                 'Pendiente'}
+                              <Badge
+                                variant={
+                                  settings.documents.brokerRegistration.status === 'approved'
+                                    ? 'default'
+                                    : settings.documents.brokerRegistration.status === 'uploaded'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {settings.documents.brokerRegistration.status === 'approved'
+                                  ? 'Aprobado'
+                                  : settings.documents.brokerRegistration.status === 'uploaded'
+                                    ? 'Pendiente de revisión'
+                                    : 'Pendiente'}
                               </Badge>
                             </div>
                           )}
@@ -1423,15 +1606,19 @@ export default function BrokerSettings() {
                   {/* Certificados de Cursos */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-semibold text-blue-700">Certificados de Cursos</h4>
+                      <h4 className="text-lg font-semibold text-blue-700">
+                        Certificados de Cursos
+                      </h4>
                       <label className="cursor-pointer">
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
                           multiple
-                          onChange={(e) => {
+                          onChange={e => {
                             if (e.target.files) {
-                              Array.from(e.target.files).forEach(file => handleAddCertificate(file));
+                              Array.from(e.target.files).forEach(file =>
+                                handleAddCertificate(file)
+                              );
                             }
                           }}
                           className="hidden"
@@ -1447,13 +1634,20 @@ export default function BrokerSettings() {
                         <div className="text-center py-8 text-gray-500">
                           <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                           <p>No hay certificados de cursos subidos</p>
-                          <p className="text-sm">Agrega certificados de cursos relacionados con bienes raíces</p>
+                          <p className="text-sm">
+                            Agrega certificados de cursos relacionados con bienes raíces
+                          </p>
                         </div>
                       ) : (
                         settings.documents.courseCertificates.map((cert, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${cert.status === 'approved' ? 'bg-green-100' : cert.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                              <div
+                                className={`p-2 rounded-lg ${cert.status === 'approved' ? 'bg-green-100' : cert.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                              >
                                 {cert.status === 'approved' ? (
                                   <CheckCircle className="w-4 h-4 text-green-600" />
                                 ) : (
@@ -1468,7 +1662,11 @@ export default function BrokerSettings() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline" onClick={() => window.open(cert.url, '_blank')}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(cert.url, '_blank')}
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
                               <Badge variant={cert.status === 'approved' ? 'default' : 'secondary'}>
@@ -1484,15 +1682,19 @@ export default function BrokerSettings() {
                   {/* Documentos de Empresa */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-semibold text-purple-700">Documentos de Empresa</h4>
+                      <h4 className="text-lg font-semibold text-purple-700">
+                        Documentos de Empresa
+                      </h4>
                       <label className="cursor-pointer">
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
                           multiple
-                          onChange={(e) => {
+                          onChange={e => {
                             if (e.target.files) {
-                              Array.from(e.target.files).forEach(file => handleAddCompanyDocument(file));
+                              Array.from(e.target.files).forEach(file =>
+                                handleAddCompanyDocument(file)
+                              );
                             }
                           }}
                           className="hidden"
@@ -1508,13 +1710,20 @@ export default function BrokerSettings() {
                         <div className="text-center py-8 text-gray-500">
                           <Building className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                           <p>No hay documentos de empresa subidos</p>
-                          <p className="text-sm">Agrega documentos como RUT de empresa, registro comercial, etc.</p>
+                          <p className="text-sm">
+                            Agrega documentos como RUT de empresa, registro comercial, etc.
+                          </p>
                         </div>
                       ) : (
                         settings.documents.companyDocuments.map((doc, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${doc.status === 'approved' ? 'bg-green-100' : doc.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                              <div
+                                className={`p-2 rounded-lg ${doc.status === 'approved' ? 'bg-green-100' : doc.status === 'uploaded' ? 'bg-blue-100' : 'bg-gray-100'}`}
+                              >
                                 {doc.status === 'approved' ? (
                                   <CheckCircle className="w-4 h-4 text-green-600" />
                                 ) : (
@@ -1529,7 +1738,11 @@ export default function BrokerSettings() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline" onClick={() => window.open(doc.url, '_blank')}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(doc.url, '_blank')}
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
                               <Badge variant={doc.status === 'approved' ? 'default' : 'secondary'}>
@@ -1554,16 +1767,21 @@ export default function BrokerSettings() {
                             settings.documents.criminalRecord.status !== 'pending' ? 1 : 0,
                             settings.documents.professionalTitle.status !== 'pending' ? 1 : 0,
                             settings.documents.brokerRegistration.status !== 'pending' ? 1 : 0,
-                          ].reduce((a, b) => a + b, 0)}/4
+                          ].reduce((a, b) => a + b, 0)}
+                          /4
                         </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Certificados</div>
-                        <div className="font-semibold">{settings.documents.courseCertificates.length}</div>
+                        <div className="font-semibold">
+                          {settings.documents.courseCertificates.length}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Docs Empresa</div>
-                        <div className="font-semibold">{settings.documents.companyDocuments.length}</div>
+                        <div className="font-semibold">
+                          {settings.documents.companyDocuments.length}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Estado General</div>
@@ -1573,7 +1791,9 @@ export default function BrokerSettings() {
                             settings.documents.criminalRecord.status === 'approved' ? 1 : 0,
                             settings.documents.professionalTitle.status === 'approved' ? 1 : 0,
                             settings.documents.brokerRegistration.status === 'approved' ? 1 : 0,
-                          ].reduce((a, b) => a + b, 0) === 4 ? 'Completo' : 'Pendiente'}
+                          ].reduce((a, b) => a + b, 0) === 4
+                            ? 'Completo'
+                            : 'Pendiente'}
                         </div>
                       </div>
                     </div>
@@ -1595,10 +1815,12 @@ export default function BrokerSettings() {
                   <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
                     <User className="w-8 h-8 text-gray-400" />
                   </div>
-                  <h3 className="font-medium">{settings.profile.firstName} {settings.profile.lastName}</h3>
+                  <h3 className="font-medium">
+                    {settings.profile.firstName} {settings.profile.lastName}
+                  </h3>
                   <p className="text-sm text-gray-600">Corredor de Propiedades</p>
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-500" />
@@ -1679,6 +1901,6 @@ export default function BrokerSettings() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }

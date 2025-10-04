@@ -73,8 +73,9 @@ export default function BrokerReportsPage() {
 
     const loadReportsData = async () => {
       try {
-        // Mock reports data
+        // Mock reports data - comprehensive dataset
         const mockReports: BrokerReport[] = [
+          // Monthly data (last 6 months)
           {
             period: 'Junio 2024',
             propertiesManaged: 12,
@@ -108,6 +109,74 @@ export default function BrokerReportsPage() {
             clientSatisfaction: 4.5,
             marketPerformance: 8.2,
           },
+          {
+            period: 'Marzo 2024',
+            propertiesManaged: 9,
+            newClients: 1,
+            totalRevenue: 3890000,
+            commissionsEarned: 1150000,
+            propertiesRented: 2,
+            maintenanceRequests: 5,
+            clientSatisfaction: 4.3,
+            marketPerformance: 7.9,
+          },
+          {
+            period: 'Febrero 2024',
+            propertiesManaged: 8,
+            newClients: 3,
+            totalRevenue: 4010000,
+            commissionsEarned: 1190000,
+            propertiesRented: 1,
+            maintenanceRequests: 9,
+            clientSatisfaction: 4.4,
+            marketPerformance: 8.1,
+          },
+          {
+            period: 'Enero 2024',
+            propertiesManaged: 7,
+            newClients: 2,
+            totalRevenue: 3950000,
+            commissionsEarned: 1170000,
+            propertiesRented: 2,
+            maintenanceRequests: 6,
+            clientSatisfaction: 4.5,
+            marketPerformance: 8.0,
+          },
+          // Quarterly data (aggregated)
+          {
+            period: 'Q2 2024',
+            propertiesManaged: 33, // average of Q2 months
+            newClients: 9, // sum of Q2 months
+            totalRevenue: 12350000, // sum of Q2 months
+            commissionsEarned: 3650000, // sum of Q2 months
+            propertiesRented: 6, // sum of Q2 months
+            maintenanceRequests: 21, // sum of Q2 months
+            clientSatisfaction: 4.5, // average of Q2 months
+            marketPerformance: 8.2, // average of Q2 months
+          },
+          {
+            period: 'Q1 2024',
+            propertiesManaged: 24, // average of Q1 months
+            newClients: 6, // sum of Q1 months
+            totalRevenue: 11850000, // sum of Q1 months
+            commissionsEarned: 3510000, // sum of Q1 months
+            propertiesRented: 5, // sum of Q1 months
+            maintenanceRequests: 20, // sum of Q1 months
+            clientSatisfaction: 4.4, // average of Q1 months
+            marketPerformance: 8.0, // average of Q1 months
+          },
+          // Annual data
+          {
+            period: '2024',
+            propertiesManaged: 28, // average annual
+            newClients: 15, // sum annual
+            totalRevenue: 24200000, // sum annual
+            commissionsEarned: 7160000, // sum annual
+            propertiesRented: 11, // sum annual
+            maintenanceRequests: 41, // sum annual
+            clientSatisfaction: 4.45, // average annual
+            marketPerformance: 8.1, // average annual
+          },
         ];
 
         setReports(mockReports);
@@ -123,6 +192,34 @@ export default function BrokerReportsPage() {
     loadUserData();
     loadReportsData();
   }, []);
+
+  // Filter reports based on selected period
+  const getFilteredReports = () => {
+    switch (selectedPeriod) {
+      case 'month':
+        return reports.filter(
+          report =>
+            report.period.includes('2024') &&
+            !report.period.includes('Q') &&
+            report.period !== '2024'
+        );
+      case 'quarter':
+        return reports.filter(report => report.period.includes('Q'));
+      case 'year':
+        return reports.filter(report => report.period === '2024');
+      default:
+        return reports.filter(
+          report =>
+            report.period.includes('2024') &&
+            !report.period.includes('Q') &&
+            report.period !== '2024'
+        );
+    }
+  };
+
+  const filteredReports = getFilteredReports();
+  const currentReport = filteredReports[0];
+  const previousReport = filteredReports[1];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -184,8 +281,42 @@ export default function BrokerReportsPage() {
   };
 
   const handleRefreshData = () => {
-    // Refresh report data
-    alert('Datos del reporte actualizados correctamente');
+    // Refresh report data - simulate API call
+    setLoading(true);
+    setTimeout(() => {
+      // Simulate refreshed data with slight variations
+      const refreshedReports = reports.map(report => ({
+        ...report,
+        totalRevenue: report.totalRevenue + Math.floor(Math.random() * 100000 - 50000),
+        commissionsEarned: report.commissionsEarned + Math.floor(Math.random() * 50000 - 25000),
+        propertiesRented: Math.max(0, report.propertiesRented + Math.floor(Math.random() * 2 - 1)),
+        newClients: Math.max(0, report.newClients + Math.floor(Math.random() * 2 - 1)),
+      }));
+      setReports(refreshedReports);
+      setLoading(false);
+      alert('Datos del reporte actualizados correctamente');
+    }, 1000);
+  };
+
+  const handleViewOpportunities = () => {
+    // Navigate to properties search or new property creation
+    alert('Redirigiendo a oportunidades de propiedades...');
+    // In a real app, this would navigate to a properties marketplace or creation page
+    // router.push('/broker/properties/marketplace');
+  };
+
+  const handleSendSurveys = () => {
+    // Send satisfaction surveys to clients
+    alert('Enviando encuestas de satisfacción a clientes...');
+    // In a real app, this would trigger an API call to send surveys
+    // await fetch('/api/broker/surveys/send', { method: 'POST' });
+  };
+
+  const handleViewAnalysis = () => {
+    // Navigate to detailed market analysis
+    alert('Abriendo análisis detallado del mercado...');
+    // In a real app, this would navigate to analytics page
+    // router.push('/broker/analytics/market');
   };
 
   const currentReport = reports[0];
@@ -405,7 +536,7 @@ export default function BrokerReportsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {reports.slice(0, 3).map((report, index) => (
+                    {filteredReports.slice(0, 3).map((report, index) => (
                       <div
                         key={report.period}
                         className="flex items-center justify-between p-3 border rounded-lg"
@@ -543,7 +674,7 @@ export default function BrokerReportsPage() {
                     <p className="text-sm text-gray-600 mb-2">
                       Considera agregar más propiedades para aumentar ingresos
                     </p>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={handleViewOpportunities}>
                       Ver Oportunidades
                     </Button>
                   </div>
@@ -556,7 +687,7 @@ export default function BrokerReportsPage() {
                     <p className="text-sm text-gray-600 mb-2">
                       Encuestas de satisfacción pueden ayudar a mejorar el servicio
                     </p>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={handleSendSurveys}>
                       Enviar Encuestas
                     </Button>
                   </div>
@@ -569,7 +700,7 @@ export default function BrokerReportsPage() {
                     <p className="text-sm text-gray-600 mb-2">
                       Revisa tendencias del mercado para optimizar precios
                     </p>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={handleViewAnalysis}>
                       Ver Análisis
                     </Button>
                   </div>

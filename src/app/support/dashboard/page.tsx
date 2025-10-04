@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useUserState } from '@/hooks/useUserState';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface DashboardStats {
   totalTickets: number;
@@ -367,12 +367,10 @@ export default function SupportDashboard() {
   }
 
   return (
-    <DashboardLayout
+    <UnifiedDashboardLayout
       user={user}
       title="Panel de Control de Soporte"
       subtitle="Gestiona tickets y métricas de soporte"
-      showNotifications={true}
-      notificationCount={stats.openTickets}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}
@@ -799,6 +797,6 @@ export default function SupportDashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UnifiedDashboardLayout>
   );
 }
