@@ -8,83 +8,47 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { Database,
-  Download,
-  Upload,
-  RefreshCw,
+import {
   Calendar,
   Clock,
-  HardDrive,
-  Shield,
-  CheckCircle,
-  XCircle,
+  CreditCard,
   AlertTriangle,
-  Settings,
-  Trash2, Eye, Play,
-  Pause,
-  Archive,
-  Cloud,
-  Server,
-  Plus, Info
+  CheckCircle,
+  DollarSign,
+  Download,
+  Eye,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
 
-
-interface Backup {
+interface UpcomingPayment {
   id: string;
-  name: string;
-  type: 'full' | 'incremental' | 'database' | 'files';
-  size: number;
-  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
-  createdAt: string;
-  completedAt?: string;
-  location: 'local' | 'cloud' | 'both';
+  propertyTitle: string;
+  propertyAddress: string;
+  amount: number;
+  dueDate: string;
+  status: 'upcoming' | 'overdue' | 'due_today';
+  type: 'rent' | 'deposit' | 'utilities' | 'maintenance';
   description: string;
-  retentionDays: number;
-  encrypted: boolean;
-  checksum?: string;
 }
 
-interface BackupStats {
-  totalBackups: number;
-  totalSize: number;
-  lastBackup: string;
-  nextBackup: string;
-  successRate: number;
-  storageUsed: number;
-  storageAvailable: number;
-}
-
-interface BackupSchedule {
-  id: string;
-  name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  time: string;
-  type: 'full' | 'incremental';
-  enabled: boolean;
-  nextRun: string;
-  retention: number;
+interface PaymentStats {
+  totalUpcoming: number;
+  totalAmount: number;
+  overdueCount: number;
+  dueTodayCount: number;
 }
 
 export default function TenantUpcomingPaymentsPage() {
-
   const [user, setUser] = useState<User | null>(null);
-
-  const [backups, setBackups] = useState<Backup[]>([]);
-
-  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
-
-  const [stats, setStats] = useState<BackupStats>({
-    totalBackups: 0,
-    totalSize: 0,
-    lastBackup: '',
-    nextBackup: '',
-    successRate: 0,
-    storageUsed: 0,
-    storageAvailable: 0,
+  const [payments, setPayments] = useState<UpcomingPayment[]>([]);
+  const [stats, setStats] = useState<PaymentStats>({
+    totalUpcoming: 0,
+    totalAmount: 0,
+    overdueCount: 0,
+    dueTodayCount: 0,
   });
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,184 +60,119 @@ export default function TenantUpcomingPaymentsPage() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
-    const loadBackupData = async () => {
+    const loadPaymentsData = async () => {
       try {
-        // Mock backups data
-        const mockBackups: Backup[] = [
+        // Mock upcoming payments data
+        const mockPayments: UpcomingPayment[] = [
           {
             id: '1',
-            name: 'Backup Completo Diario',
-            type: 'full',
-            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            location: 'both',
-            description: 'Backup completo del sistema incluyendo base de datos y archivos',
-            retentionDays: 30,
-            encrypted: true,
-            checksum: 'a1b2c3d4e5f6...',
+            propertyTitle: 'Apartamento Centro',
+            propertyAddress: 'Av. Providencia 123, Santiago',
+            amount: 450000,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days from now
+            status: 'upcoming',
+            type: 'rent',
+            description: 'Pago de arriendo mensual',
           },
           {
             id: '2',
-            name: 'Backup Incremental',
-            type: 'incremental',
-            size: 150 * 1024 * 1024, // 150 MB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
-            location: 'cloud',
-            description: 'Backup incremental con cambios desde el último backup completo',
-            retentionDays: 7,
-            encrypted: true,
+            propertyTitle: 'Casa Los Dominicos',
+            propertyAddress: 'Camino Los Dominicos 456, Las Condes',
+            amount: 25000,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // tomorrow
+            status: 'due_today',
+            type: 'utilities',
+            description: 'Gastos comunes',
           },
           {
             id: '3',
-            name: 'Backup Base de Datos',
-            type: 'database',
-            size: 450 * 1024 * 1024, // 450 MB
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            location: 'local',
-            description: 'Backup exclusivo de la base de datos PostgreSQL',
-            retentionDays: 14,
-            encrypted: true,
+            propertyTitle: 'Oficina Las Condes',
+            propertyAddress: 'Av. Apoquindo 789, Las Condes',
+            amount: 120000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+            status: 'overdue',
+            type: 'maintenance',
+            description: 'Mantenimiento mensual',
           },
           {
             id: '4',
-            name: 'Backup Archivos',
-            type: 'files',
-            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
-            status: 'failed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-            location: 'cloud',
-            description: 'Backup de archivos de usuario y medios',
-            retentionDays: 21,
-            encrypted: true,
+            propertyTitle: 'Local Comercial',
+            propertyAddress: 'Av. Libertador 321, Providencia',
+            amount: 80000,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days from now
+            status: 'upcoming',
+            type: 'rent',
+            description: 'Arriendo comercial',
           },
           {
             id: '5',
-            name: 'Backup Programado',
-            type: 'full',
-            size: 0,
-            status: 'scheduled',
-            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            location: 'both',
-            description: 'Backup completo programado automáticamente',
-            retentionDays: 30,
-            encrypted: true,
+            propertyTitle: 'Apartamento Centro',
+            propertyAddress: 'Av. Providencia 123, Santiago',
+            amount: 100000,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(), // 14 days from now
+            status: 'upcoming',
+            type: 'deposit',
+            description: 'Depósito de garantía',
           },
         ];
 
-        // Mock schedules
-        const mockSchedules: BackupSchedule[] = [
-          {
-            id: '1',
-            name: 'Backup Diario Completo',
-            frequency: 'daily',
-            time: '02:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            retention: 30,
-          },
-          {
-            id: '2',
-            name: 'Backup Incremental Horario',
-            frequency: 'daily',
-            time: '06:00, 12:00, 18:00',
-            type: 'incremental',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
-            retention: 7,
-          },
-          {
-            id: '3',
-            name: 'Backup Semanal',
-            frequency: 'weekly',
-            time: 'domingo 03:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-            retention: 90,
-          },
-        ];
-
-        setBackups(mockBackups);
-        setSchedules(mockSchedules);
+        setPayments(mockPayments);
 
         // Calculate stats
-        const completedBackups = mockBackups.filter(b => b.status === 'completed');
-        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
-        const successRate = completedBackups.length > 0 ? 
-          (completedBackups.length / mockBackups.length) * 100 : 0;
+        const totalAmount = mockPayments.reduce((sum, payment) => sum + payment.amount, 0);
+        const overdueCount = mockPayments.filter(p => p.status === 'overdue').length;
+        const dueTodayCount = mockPayments.filter(p => p.status === 'due_today').length;
 
-        const backupStats: BackupStats = {
-          totalBackups: mockBackups.length,
-          totalSize,
-          lastBackup: completedBackups.length > 0 ?
-            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
-          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
-          successRate,
-          storageUsed: totalSize,
-          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+        const paymentStats: PaymentStats = {
+          totalUpcoming: mockPayments.length,
+          totalAmount,
+          overdueCount,
+          dueTodayCount,
         };
 
-        setStats(backupStats);
+        setStats(paymentStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading payments data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadBackupData();
+    loadPaymentsData();
   }, []);
 
-  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
-    const newBackup: Backup = {
-      id: Date.now().toString(),
-      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
-      type,
-      size: 0,
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-      location: 'both',
-      description: `Backup ${type} iniciado manualmente`,
-      retentionDays: 30,
-      encrypted: true,
-    };
-
-    setBackups(prev => [newBackup, ...prev]);
+  const handlePayNow = async (paymentId: string) => {
+    // Simulate payment processing
+    alert('Redirigiendo al portal de pagos...');
   };
 
-  const deleteBackup = async (backupId: string) => {
-    setBackups(prev => prev.filter(backup => backup.id !== backupId));
+  const handleViewDetails = async (paymentId: string) => {
+    // Navigate to payment details
+    window.location.href = `/tenant/payments/${paymentId}`;
   };
 
-  const toggleSchedule = async (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { ...schedule, enabled: !schedule.enabled }
-        : schedule,
-    ));
+  const handleDownloadReceipt = async (paymentId: string) => {
+    // Simulate receipt download
+    alert('Descargando recibo...');
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'in_progress':
+      case 'upcoming':
         return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'failed':
+      case 'overdue':
         return 'text-red-600 bg-red-50 border-red-200';
-      case 'scheduled':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'due_today':
+        return 'text-orange-600 bg-orange-50 border-orange-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
@@ -281,14 +180,12 @@ export default function TenantUpcomingPaymentsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
+      case 'upcoming':
+        return <Badge className="bg-blue-100 text-blue-800">Próximo</Badge>;
+      case 'overdue':
+        return <Badge className="bg-red-100 text-red-800">Vencido</Badge>;
+      case 'due_today':
+        return <Badge className="bg-orange-100 text-orange-800">Vence Hoy</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
@@ -296,89 +193,67 @@ export default function TenantUpcomingPaymentsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'in_progress':
-        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      case 'scheduled':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+      case 'upcoming':
+        return <Clock className="w-5 h-5 text-blue-600" />;
+      case 'overdue':
+        return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      case 'due_today':
+        return <AlertTriangle className="w-5 h-5 text-orange-600" />;
       default:
-        return <Database className="w-5 h-5" />;
+        return <Clock className="w-5 h-5" />;
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'full':
-        return <Archive className="w-5 h-5" />;
-      case 'incremental':
+      case 'rent':
+        return <CreditCard className="w-5 h-5" />;
+      case 'deposit':
+        return <DollarSign className="w-5 h-5" />;
+      case 'utilities':
         return <RefreshCw className="w-5 h-5" />;
-      case 'database':
-        return <Database className="w-5 h-5" />;
-      case 'files':
-        return <HardDrive className="w-5 h-5" />;
+      case 'maintenance':
+        return <CheckCircle className="w-5 h-5" />;
       default:
-        return <Database className="w-5 h-5" />;
+        return <CreditCard className="w-5 h-5" />;
     }
   };
 
-  const getLocationIcon = (location: string) => {
-    switch (location) {
-      case 'local':
-        return <Server className="w-4 h-4" />;
-      case 'cloud':
-        return <Cloud className="w-4 h-4" />;
-      case 'both':
-        return <div className="flex gap-1">
-          <Server className="w-4 h-4" />
-          <Cloud className="w-4 h-4" />
-        </div>;
-      default:
-        return <Server className="w-4 h-4" />;
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+    }).format(amount);
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) {
-return '0 B';
-}
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Hoy';
     }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
+    if (diffDays === 1) {
+      return 'Mañana';
     }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
+    if (diffDays === -1) {
+      return 'Ayer';
+    }
+    if (diffDays < -1) {
+      return `Hace ${Math.abs(diffDays)} días`;
     }
 
-    return date.toLocaleDateString('es-CL');
+    return `En ${diffDays} días`;
   };
 
   if (loading) {
@@ -386,274 +261,163 @@ return '0 B';
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando sistema de backups...</p>
+          <p className="text-gray-600">Cargando pagos próximos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Próximos Pagos" subtitle="Gestiona tus pagos próximos y vencidos">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header with actions */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Próximos Pagos</h1>
-                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => createBackup('full')}>
-                    <Play className="w-4 h-4 mr-2" />
-                    Backup Completo
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Backup Incremental
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configuración
-                  </Button>
-                </div>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Archive className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <HardDrive className="w-6 h-6 text-green-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
-                      </div>
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Backup List */}
-                <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Historial de Backups</CardTitle>
-                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {backups.map((backup) => (
-                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
-                                    {getTypeIcon(backup.type)}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
-                                      {getStatusBadge(backup.status)}
-                                      {backup.encrypted && (
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                    <Shield className="w-3 h-3 mr-1" />
-                                    Encriptado
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <HardDrive className="w-3 h-3" />
-                                  <span>{formatBytes(backup.size)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {getLocationIcon(backup.location)}
-                                  <span className="capitalize">{backup.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{formatRelativeTime(backup.createdAt)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{backup.retentionDays} días retención</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            {backup.status === 'completed' && (
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => deleteBackup(backup.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Backup Schedules */}
+    <UnifiedDashboardLayout
+      title="Próximos Pagos"
+      subtitle="Gestiona tus pagos próximos y vencidos"
+    >
+      <div className="container mx-auto px-4 py-6">
+        {/* Header with actions */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Programación</CardTitle>
-                <CardDescription>Backups automáticos programados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {schedules.map((schedule) => (
-                    <Card key={schedule.id} className="border">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-sm">{schedule.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.frequency === 'daily' ? 'Diario' : 
-                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={schedule.enabled ? 'default' : 'outline'}
-                            onClick={() => toggleSchedule(schedule.id)}
-                          >
-                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                        
-                        <div className="space-y-2 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>Horario:</span>
-                            <span>{schedule.time}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Próxima ejecución:</span>
-                            <span>{formatRelativeTime(schedule.nextRun)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Retención:</span>
-                            <span>{schedule.retention} días</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                <Button className="w-full mt-4" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Programación
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Storage Info */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Almacenamiento</CardTitle>
-                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Usado</span>
-                      <span>{formatBytes(stats.storageUsed)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Disponible:</span>
-                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>{formatBytes(stats.storageAvailable)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <h1 className="text-2xl font-bold text-gray-900">Próximos Pagos</h1>
+            <p className="text-gray-600">Gestiona tus pagos próximos y vencidos</p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+            <Button size="sm" variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualizar
+            </Button>
           </div>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Próximos</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalUpcoming}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Monto Total</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(stats.totalAmount)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Vencidos</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.overdueCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Vencen Hoy</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.dueTodayCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payments List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pagos Próximos</CardTitle>
+            <CardDescription>Todos tus pagos próximos y pendientes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {payments.map(payment => (
+                <Card key={payment.id} className={`border-l-4 ${getStatusColor(payment.status)}`}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className={`p-2 rounded-lg ${getStatusColor(payment.status)}`}>
+                          {getTypeIcon(payment.type)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900">{payment.propertyTitle}</h3>
+                            {getStatusBadge(payment.status)}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">{payment.propertyAddress}</p>
+                          <p className="text-sm text-gray-600 mb-2">{payment.description}</p>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />
+                              <span>{formatCurrency(payment.amount)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{formatDate(payment.dueDate)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{formatRelativeTime(payment.dueDate)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(payment.status)}
+                              <span className="capitalize">{payment.type}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewDetails(payment.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        {payment.status === 'upcoming' || payment.status === 'due_today' ? (
+                          <Button size="sm" onClick={() => handlePayNow(payment.id)}>
+                            Pagar Ahora
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </UnifiedDashboardLayout>
   );
 }
-
-
