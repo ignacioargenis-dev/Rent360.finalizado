@@ -19,6 +19,8 @@ import {
   ArrowLeft,
   Shield,
   Award,
+  CheckCircle,
+  AlertCircle,
   MapPin,
   Phone,
   Mail,
@@ -63,6 +65,9 @@ export default function ProviderRatingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadData();
   }, [providerId]);
@@ -104,12 +109,14 @@ export default function ProviderRatingsPage() {
   const handleReportRating = async (ratingId: string, reason: string) => {
     try {
       await ratingService.reportRating(ratingId, reason, user?.id || 'anonymous');
-      alert('Gracias por reportar. Revisaremos la calificación.');
+      setSuccessMessage('Gracias por reportar. Revisaremos la calificación.');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error reportando rating:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al reportar la calificación');
+      setErrorMessage('Error al reportar la calificación. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -228,6 +235,38 @@ export default function ProviderRatingsPage() {
       />
 
       <div className="container mx-auto px-4 py-6 max-w-6xl">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header del Proveedor */}
         <Card className="mb-6">
           <CardContent className="pt-6">

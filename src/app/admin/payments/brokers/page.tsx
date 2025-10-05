@@ -22,6 +22,7 @@ import {
   Calendar,
   TrendingUp,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   Clock,
   Eye,
@@ -84,6 +85,9 @@ export default function AdminPaymentsBrokersPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -276,12 +280,13 @@ export default function AdminPaymentsBrokersPage() {
 
   const handleNewPayment = () => {
     // Navigate to new payment creation page
-    window.open('/admin/payments/brokers/new', '_blank');
+    window.location.href = '/admin/payments/brokers/new';
   };
 
   const handleFilterPayments = () => {
     // Open advanced filter modal
-    alert('Funcionalidad: Abrir filtros avanzados para pagos a corredores');
+    setSuccessMessage('Filtros avanzados próximamente disponibles');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleExportPayments = () => {
@@ -396,6 +401,38 @@ export default function AdminPaymentsBrokersPage() {
       subtitle="Gestión de comisiones y pagos a corredores"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
@@ -696,7 +733,10 @@ export default function AdminPaymentsBrokersPage() {
                     icon={Plus}
                     label="Nueva Comisión"
                     description="Procesar comisión"
-                    onClick={() => alert('Funcionalidad: Abrir formulario de nueva comisión')}
+                    onClick={() => {
+                      setSuccessMessage('Formulario de nuevas comisiones próximamente disponible');
+                      setTimeout(() => setSuccessMessage(''), 3000);
+                    }}
                   />
 
                   <QuickActionButton

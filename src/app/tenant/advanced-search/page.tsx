@@ -30,6 +30,7 @@ import {
 import {
   Building,
   AlertTriangle,
+  AlertCircle,
   RefreshCw,
   CheckCircle,
   Clock,
@@ -114,6 +115,9 @@ export default function BúsquedaAvanzadaPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('search');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Filters state
   const [filters, setFilters] = useState<SearchFilters>({
@@ -310,7 +314,8 @@ export default function BúsquedaAvanzadaPage() {
     setSavedSearches(updatedSearches);
     localStorage.setItem('savedSearches', JSON.stringify(updatedSearches));
 
-    alert('Búsqueda guardada exitosamente');
+    setSuccessMessage('Búsqueda guardada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   }, [filters, savedSearches]);
 
   const handleLoadSavedSearch = useCallback((search: SavedSearch) => {
@@ -425,6 +430,38 @@ export default function BúsquedaAvanzadaPage() {
       subtitle="Encuentra la propiedad perfecta con filtros detallados"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Statistics Header */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>

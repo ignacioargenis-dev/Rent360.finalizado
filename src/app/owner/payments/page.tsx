@@ -10,6 +10,7 @@ import {
   DollarSign,
   TrendingUp,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   BarChart3,
   Plus,
@@ -59,6 +60,9 @@ export default function OwnerPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   // Funciones para acciones
   const handleFilterPayments = () => {
     logger.info('Aplicando filtros de pagos');
@@ -68,11 +72,14 @@ export default function OwnerPaymentsPage() {
   const handleExportPayments = async () => {
     try {
       logger.info('Exportando datos de pagos');
-      alert('Datos de pagos exportados exitosamente');
+      setSuccessMessage('Datos de pagos exportados exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error exportando pagos:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setErrorMessage('Error al exportar los datos. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -84,24 +91,30 @@ export default function OwnerPaymentsPage() {
   const handleSendReminder = async (paymentId: string) => {
     try {
       logger.info('Enviando recordatorio de pago:', { paymentId });
-      alert('Recordatorio enviado exitosamente');
+      setSuccessMessage('Recordatorio enviado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
       // TODO: Implement API call to send reminder
     } catch (error) {
       logger.error('Error enviando recordatorio:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setErrorMessage('Error al enviar el recordatorio. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
   const handleMarkAsPaid = async (paymentId: string) => {
     try {
       logger.info('Marcando pago como realizado:', { paymentId });
-      alert('Pago marcado como realizado');
+      setSuccessMessage('Pago marcado como realizado');
+      setTimeout(() => setSuccessMessage(''), 3000);
       // TODO: Implement API call to mark payment as paid
     } catch (error) {
       logger.error('Error marcando pago:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setErrorMessage('Error al marcar el pago. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -409,6 +422,38 @@ export default function OwnerPaymentsPage() {
       />
 
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           <Card>
@@ -670,7 +715,10 @@ export default function OwnerPaymentsPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1"
-                        onClick={() => alert('Comprobante generado')}
+                        onClick={() => {
+                          setSuccessMessage('Comprobante generado exitosamente');
+                          setTimeout(() => setSuccessMessage(''), 3000);
+                        }}
                       >
                         <Receipt className="w-4 h-4 mr-2" />
                         Comprobante

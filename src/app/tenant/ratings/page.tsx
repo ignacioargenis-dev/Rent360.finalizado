@@ -27,6 +27,7 @@ import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
   Building,
   CheckCircle,
   Clock,
@@ -82,6 +83,9 @@ export default function CalificacionesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedRating, setSelectedRating] = useState<string>('all');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [sortBy, setSortBy] = useState<string>('date');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -257,7 +261,8 @@ export default function CalificacionesPage() {
 
   const handleExportRatings = useCallback(() => {
     if (filteredRatings.length === 0) {
-      alert('No hay calificaciones para exportar');
+      setErrorMessage('No hay calificaciones para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -383,6 +388,26 @@ export default function CalificacionesPage() {
   return (
     <UnifiedDashboardLayout title="Calificaciones" subtitle="Gestiona tus reseñas y calificaciones">
       <div className="space-y-6">
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Statistics Header */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>

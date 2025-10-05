@@ -79,6 +79,9 @@ export default function RateServicePage() {
   const [submitted, setSubmitted] = useState(false);
   const [existingRating, setExistingRating] = useState<any>(null);
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadData();
   }, [jobId]);
@@ -141,12 +144,14 @@ export default function RateServicePage() {
 
   const validateForm = (): boolean => {
     if (rating.overall === 0) {
-      alert('Por favor selecciona una calificación general');
+      setErrorMessage('Por favor selecciona una calificación general');
+      setTimeout(() => setErrorMessage(''), 5000);
       return false;
     }
 
     if (rating.comments.trim().length < 10) {
-      alert('Por favor escribe al menos 10 caracteres en tu comentario');
+      setErrorMessage('Por favor escribe al menos 10 caracteres en tu comentario');
+      setTimeout(() => setErrorMessage(''), 5000);
       return false;
     }
 
@@ -196,7 +201,8 @@ export default function RateServicePage() {
       logger.error('Error enviando reseña:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al enviar la reseña. Por favor intenta nuevamente.');
+      setErrorMessage('Error al enviar la reseña. Por favor intenta nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSubmitting(false);
     }
@@ -374,6 +380,26 @@ export default function RateServicePage() {
       />
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Información del Servicio */}
         <Card className="mb-6">
           <CardHeader>
