@@ -10,6 +10,7 @@ import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
   Building,
   CheckCircle,
   Clock,
@@ -75,6 +76,9 @@ export default function MantenimientoPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
 
   useEffect(() => {
@@ -306,7 +310,8 @@ export default function MantenimientoPage() {
   const handleExportReport = () => {
     // Simulate export
     if (maintenanceRequests.length === 0) {
-      alert('No hay datos para exportar');
+      setErrorMessage('No hay datos para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -378,6 +383,26 @@ export default function MantenimientoPage() {
             </Button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

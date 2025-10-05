@@ -8,13 +8,32 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { User, Bell, Shield, CreditCard, Mail, Phone, MapPin, Save, Eye, EyeOff, Key } from 'lucide-react';
+import {
+  User,
+  Bell,
+  Shield,
+  CreditCard,
+  Mail,
+  Phone,
+  MapPin,
+  Save,
+  Eye,
+  EyeOff,
+  Key,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react';
 import { User as UserType } from '@/types';
-
 
 interface OwnerSettings {
   profile: {
@@ -82,6 +101,8 @@ export default function OwnerSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -103,14 +124,16 @@ export default function OwnerSettingsPage() {
               lastName: userData.user.lastName || '',
               email: userData.user.email || '',
               phone: userData.user.phone || '',
-            }
+            },
           }));
         }
 
         // Load settings (mock for now)
         await loadSettings();
       } catch (error) {
-        logger.error('Error loading data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       } finally {
         setLoading(false);
       }
@@ -131,7 +154,8 @@ export default function OwnerSettingsPage() {
           address: 'Av. Providencia 1234',
           city: 'Santiago',
           region: 'Metropolitana',
-          description: 'Propietario de propiedades residenciales con más de 10 años de experiencia.',
+          description:
+            'Propietario de propiedades residenciales con más de 10 años de experiencia.',
         },
         security: {
           twoFactorEnabled: false,
@@ -154,7 +178,9 @@ export default function OwnerSettingsPage() {
         business: { ...prev.business, ...mockSettings.business },
       }));
     } catch (error) {
-      logger.error('Error loading settings:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error loading settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -165,10 +191,14 @@ export default function OwnerSettingsPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      alert('ConfiguraciÃ³n guardada exitosamente');
+      setSuccessMessage('Configuración guardada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      logger.error('Error saving settings:', { error: error instanceof Error ? error.message : String(error) });
-      alert('Error al guardar la configuraciÃ³n');
+      logger.error('Error saving settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
     }
@@ -226,12 +256,49 @@ export default function OwnerSettingsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="ConfiguraciÃ³n" subtitle="Gestiona tu perfil y preferencias de propietario">
+    <UnifiedDashboardLayout
+      title="ConfiguraciÃ³n"
+      subtitle="Gestiona tu perfil y preferencias de propietario"
+    >
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">ConfiguraciÃ³n</h1>
-          <p className="text-gray-600">Administra tu perfil, preferencias de notificaciones y configuraciÃ³n de seguridad</p>
+          <p className="text-gray-600">
+            Administra tu perfil, preferencias de notificaciones y configuraciÃ³n de seguridad
+          </p>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
@@ -249,9 +316,7 @@ export default function OwnerSettingsPage() {
                   <User className="w-5 h-5" />
                   InformaciÃ³n Personal
                 </CardTitle>
-                <CardDescription>
-                  Actualiza tu informaciÃ³n personal y de contacto
-                </CardDescription>
+                <CardDescription>Actualiza tu informaciÃ³n personal y de contacto</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,7 +325,7 @@ export default function OwnerSettingsPage() {
                     <Input
                       id="firstName"
                       value={settings.profile.firstName}
-                      onChange={(e) => updateProfile('firstName', e.target.value)}
+                      onChange={e => updateProfile('firstName', e.target.value)}
                       placeholder="Tu nombre"
                     />
                   </div>
@@ -269,7 +334,7 @@ export default function OwnerSettingsPage() {
                     <Input
                       id="lastName"
                       value={settings.profile.lastName}
-                      onChange={(e) => updateProfile('lastName', e.target.value)}
+                      onChange={e => updateProfile('lastName', e.target.value)}
                       placeholder="Tu apellido"
                     />
                   </div>
@@ -281,7 +346,7 @@ export default function OwnerSettingsPage() {
                     id="email"
                     type="email"
                     value={settings.profile.email}
-                    onChange={(e) => updateProfile('email', e.target.value)}
+                    onChange={e => updateProfile('email', e.target.value)}
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -291,7 +356,7 @@ export default function OwnerSettingsPage() {
                   <Input
                     id="phone"
                     value={settings.profile.phone}
-                    onChange={(e) => updateProfile('phone', e.target.value)}
+                    onChange={e => updateProfile('phone', e.target.value)}
                     placeholder="+56 9 1234 5678"
                   />
                 </div>
@@ -301,7 +366,7 @@ export default function OwnerSettingsPage() {
                   <Input
                     id="address"
                     value={settings.profile.address}
-                    onChange={(e) => updateProfile('address', e.target.value)}
+                    onChange={e => updateProfile('address', e.target.value)}
                     placeholder="Tu direcciÃ³n completa"
                   />
                 </div>
@@ -312,13 +377,16 @@ export default function OwnerSettingsPage() {
                     <Input
                       id="city"
                       value={settings.profile.city}
-                      onChange={(e) => updateProfile('city', e.target.value)}
+                      onChange={e => updateProfile('city', e.target.value)}
                       placeholder="Ciudad"
                     />
                   </div>
                   <div>
                     <Label htmlFor="region">RegiÃ³n</Label>
-                    <Select value={settings.profile.region} onValueChange={(value) => updateProfile('region', value)}>
+                    <Select
+                      value={settings.profile.region}
+                      onValueChange={value => updateProfile('region', value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona regiÃ³n" />
                       </SelectTrigger>
@@ -338,7 +406,7 @@ export default function OwnerSettingsPage() {
                   <Textarea
                     id="description"
                     value={settings.profile.description}
-                    onChange={(e) => updateProfile('description', e.target.value)}
+                    onChange={e => updateProfile('description', e.target.value)}
                     placeholder="CuÃ©ntanos sobre ti y tu experiencia como propietario..."
                     rows={4}
                   />
@@ -363,12 +431,14 @@ export default function OwnerSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="email-notifications">Notificaciones por Email</Label>
-                    <p className="text-sm text-gray-600">Recibe actualizaciones importantes por correo</p>
+                    <p className="text-sm text-gray-600">
+                      Recibe actualizaciones importantes por correo
+                    </p>
                   </div>
                   <Switch
                     id="email-notifications"
                     checked={settings.notifications.emailNotifications}
-                    onCheckedChange={(checked) => updateNotifications('emailNotifications', checked)}
+                    onCheckedChange={checked => updateNotifications('emailNotifications', checked)}
                   />
                 </div>
 
@@ -380,19 +450,21 @@ export default function OwnerSettingsPage() {
                   <Switch
                     id="payment-reminders"
                     checked={settings.notifications.paymentReminders}
-                    onCheckedChange={(checked) => updateNotifications('paymentReminders', checked)}
+                    onCheckedChange={checked => updateNotifications('paymentReminders', checked)}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="maintenance-alerts">Alertas de Mantenimiento</Label>
-                    <p className="text-sm text-gray-600">Notificaciones sobre solicitudes de mantenimiento</p>
+                    <p className="text-sm text-gray-600">
+                      Notificaciones sobre solicitudes de mantenimiento
+                    </p>
                   </div>
                   <Switch
                     id="maintenance-alerts"
                     checked={settings.notifications.maintenanceAlerts}
-                    onCheckedChange={(checked) => updateNotifications('maintenanceAlerts', checked)}
+                    onCheckedChange={checked => updateNotifications('maintenanceAlerts', checked)}
                   />
                 </div>
 
@@ -404,7 +476,7 @@ export default function OwnerSettingsPage() {
                   <Switch
                     id="contract-updates"
                     checked={settings.notifications.contractUpdates}
-                    onCheckedChange={(checked) => updateNotifications('contractUpdates', checked)}
+                    onCheckedChange={checked => updateNotifications('contractUpdates', checked)}
                   />
                 </div>
 
@@ -416,7 +488,7 @@ export default function OwnerSettingsPage() {
                   <Switch
                     id="marketing-emails"
                     checked={settings.notifications.marketingEmails}
-                    onCheckedChange={(checked) => updateNotifications('marketingEmails', checked)}
+                    onCheckedChange={checked => updateNotifications('marketingEmails', checked)}
                   />
                 </div>
               </CardContent>
@@ -431,9 +503,7 @@ export default function OwnerSettingsPage() {
                   <Shield className="w-5 h-5" />
                   Seguridad de la Cuenta
                 </CardTitle>
-                <CardDescription>
-                  Gestiona la seguridad de tu cuenta
-                </CardDescription>
+                <CardDescription>Gestiona la seguridad de tu cuenta</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -444,7 +514,7 @@ export default function OwnerSettingsPage() {
                   <Switch
                     id="two-factor"
                     checked={settings.security.twoFactorEnabled}
-                    onCheckedChange={(checked) => updateSecurity('twoFactorEnabled', checked)}
+                    onCheckedChange={checked => updateSecurity('twoFactorEnabled', checked)}
                   />
                 </div>
 
@@ -452,7 +522,7 @@ export default function OwnerSettingsPage() {
                   <Label htmlFor="session-timeout">Tiempo de SesiÃ³n (minutos)</Label>
                   <Select
                     value={settings.security.sessionTimeout.toString()}
-                    onValueChange={(value) => updateSecurity('sessionTimeout', parseInt(value))}
+                    onValueChange={value => updateSecurity('sessionTimeout', parseInt(value))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -490,9 +560,7 @@ export default function OwnerSettingsPage() {
                   <CreditCard className="w-5 h-5" />
                   InformaciÃ³n Empresarial
                 </CardTitle>
-                <CardDescription>
-                  Configura tu informaciÃ³n fiscal y de negocio
-                </CardDescription>
+                <CardDescription>Configura tu informaciÃ³n fiscal y de negocio</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -500,7 +568,7 @@ export default function OwnerSettingsPage() {
                   <Input
                     id="tax-id"
                     value={settings.business.taxId}
-                    onChange={(e) => updateBusiness('taxId', e.target.value)}
+                    onChange={e => updateBusiness('taxId', e.target.value)}
                     placeholder="12.345.678-9"
                   />
                 </div>
@@ -509,7 +577,7 @@ export default function OwnerSettingsPage() {
                   <Label htmlFor="business-type">Tipo de Negocio</Label>
                   <Select
                     value={settings.business.businessType}
-                    onValueChange={(value) => updateBusiness('businessType', value)}
+                    onValueChange={value => updateBusiness('businessType', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -529,7 +597,9 @@ export default function OwnerSettingsPage() {
                     type="number"
                     step="0.1"
                     value={settings.business.commissionRate}
-                    onChange={(e) => updateBusiness('commissionRate', parseFloat(e.target.value) || 0)}
+                    onChange={e =>
+                      updateBusiness('commissionRate', parseFloat(e.target.value) || 0)
+                    }
                     readOnly
                     className="bg-gray-50"
                   />
@@ -543,7 +613,7 @@ export default function OwnerSettingsPage() {
                   <Input
                     id="payment-terms"
                     value={settings.business.paymentTerms}
-                    onChange={(e) => updateBusiness('paymentTerms', e.target.value)}
+                    onChange={e => updateBusiness('paymentTerms', e.target.value)}
                     placeholder="Ej: 30 dÃ­as"
                   />
                 </div>

@@ -63,6 +63,9 @@ export default function MaintenancePropertiesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadProperties();
   }, []);
@@ -203,7 +206,8 @@ export default function MaintenancePropertiesPage() {
 
   const handleExportProperties = () => {
     if (filteredProperties.length === 0) {
-      alert('No hay propiedades para exportar');
+      setErrorMessage('No hay propiedades para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -284,6 +288,38 @@ export default function MaintenancePropertiesPage() {
       subtitle="Propiedades donde realizas trabajos de mantenimiento"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -432,7 +468,8 @@ export default function MaintenancePropertiesPage() {
                 onClick={() => {
                   // Filter properties with active jobs
                   setStatusFilter('maintenance');
-                  alert('Mostrando propiedades con trabajos activos');
+                  setSuccessMessage('Mostrando propiedades con trabajos activos');
+                  setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />
 
@@ -441,7 +478,8 @@ export default function MaintenancePropertiesPage() {
                 label="Próximos Trabajos"
                 description="Agenda futura"
                 onClick={() => {
-                  alert('Funcionalidad: Mostrar trabajos programados para las próximas semanas');
+                  setSuccessMessage('Agenda futura próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />
 
@@ -450,7 +488,8 @@ export default function MaintenancePropertiesPage() {
                 label="Contactos"
                 description="Lista de propietarios"
                 onClick={() => {
-                  alert('Funcionalidad: Mostrar lista completa de propietarios con contacto');
+                  setSuccessMessage('Lista de contactos próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />
 

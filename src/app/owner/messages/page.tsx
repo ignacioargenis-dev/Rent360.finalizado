@@ -87,6 +87,7 @@ export default function MessagesPage() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const initializeData = async () => {
@@ -393,10 +394,13 @@ export default function MessagesPage() {
     }
 
     // Simulate sending reply
-    alert('Respuesta enviada exitosamente');
+    setSuccessMessage('Respuesta enviada exitosamente');
     setReplyContent('');
     setIsReplyDialogOpen(false);
     setSelectedMessage(null);
+
+    // Clear success message after 3 seconds
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -573,6 +577,18 @@ export default function MessagesPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filtros y búsqueda */}
         <Card className="mb-6">

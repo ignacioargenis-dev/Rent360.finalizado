@@ -11,7 +11,13 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Building,
   Users,
@@ -23,6 +29,7 @@ import {
   TrendingUp,
   DollarSign,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   BarChart3,
   UserPlus,
@@ -79,8 +86,8 @@ export default function IntegracionesPage() {
       webhookUrl: 'https://api.rent360.cl/webhooks/khipu',
       config: {
         merchantId: '123456789',
-        secretKey: 'sk_************abcd'
-      }
+        secretKey: 'sk_************abcd',
+      },
     },
     {
       id: '2',
@@ -96,8 +103,8 @@ export default function IntegracionesPage() {
       webhookUrl: null,
       config: {
         apiKey: 'SG.************.xyz',
-        fromEmail: 'noreply@rent360.cl'
-      }
+        fromEmail: 'noreply@rent360.cl',
+      },
     },
     {
       id: '3',
@@ -113,8 +120,8 @@ export default function IntegracionesPage() {
       webhookUrl: null,
       config: {
         apiKey: 'AIza************9876',
-        libraries: ['places', 'geometry']
-      }
+        libraries: ['places', 'geometry'],
+      },
     },
     {
       id: '4',
@@ -131,8 +138,8 @@ export default function IntegracionesPage() {
       config: {
         clientId: null,
         clientSecret: null,
-        environment: 'sandbox'
-      }
+        environment: 'sandbox',
+      },
     },
     {
       id: '5',
@@ -149,8 +156,8 @@ export default function IntegracionesPage() {
       config: {
         accountSid: 'AC************5678',
         authToken: 'sk_************efgh',
-        fromNumber: '+56987654321'
-      }
+        fromNumber: '+56987654321',
+      },
     },
     {
       id: '6',
@@ -166,8 +173,8 @@ export default function IntegracionesPage() {
       webhookUrl: 'https://api.rent360.cl/webhooks/mercadopago',
       config: {
         accessToken: 'APP_USR-************-123',
-        publicKey: 'TEST-************-456'
-      }
+        publicKey: 'TEST-************-456',
+      },
     },
     {
       id: '7',
@@ -183,8 +190,8 @@ export default function IntegracionesPage() {
       webhookUrl: null,
       config: {
         dsn: 'https://************@sentry.io/1234567',
-        environment: 'production'
-      }
+        environment: 'production',
+      },
     },
     {
       id: '8',
@@ -201,13 +208,16 @@ export default function IntegracionesPage() {
       config: {
         cloudName: 'rent360',
         apiKey: '************',
-        apiSecret: '************'
-      }
-    }
+        apiSecret: '************',
+      },
+    },
   ]);
 
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Cargar datos de la página
@@ -223,8 +233,10 @@ export default function IntegracionesPage() {
       const overviewData = {
         totalIntegrations: integrations.length,
         activeIntegrations: integrations.filter(i => i.status === 'active').length,
-        pendingIntegrations: integrations.filter(i => i.status === 'pending' || i.status === 'configuring').length,
-        totalTransactions: integrations.reduce((sum, i) => sum + i.totalTransactions, 0)
+        pendingIntegrations: integrations.filter(
+          i => i.status === 'pending' || i.status === 'configuring'
+        ).length,
+        totalTransactions: integrations.reduce((sum, i) => sum + i.totalTransactions, 0),
       };
 
       setData(overviewData);
@@ -239,31 +251,41 @@ export default function IntegracionesPage() {
   };
 
   const handleToggleIntegration = (integrationId: string) => {
-    setIntegrations(prev => prev.map(integration =>
-      integration.id === integrationId
-        ? {
-            ...integration,
-            status: integration.status === 'active' ? 'inactive' : 'active',
-            lastSync: integration.status === 'active' ? null : new Date().toISOString()
-          }
-        : integration
-    ));
+    setIntegrations(prev =>
+      prev.map(integration =>
+        integration.id === integrationId
+          ? {
+              ...integration,
+              status: integration.status === 'active' ? 'inactive' : 'active',
+              lastSync: integration.status === 'active' ? null : new Date().toISOString(),
+            }
+          : integration
+      )
+    );
   };
 
   const handleTestIntegration = (integrationId: string) => {
     const integration = integrations.find(i => i.id === integrationId);
     if (integration) {
-      alert(`Probando conexión con ${integration.name}...`);
+      setSuccessMessage(`Probando conexión con ${integration.name}...`);
       // Simular test
       setTimeout(() => {
-        alert(`✅ Conexión exitosa con ${integration.name}`);
+        setSuccessMessage(`✅ Conexión exitosa con ${integration.name}`);
+        setTimeout(() => setSuccessMessage(''), 3000);
       }, 1000);
     }
   };
 
   const handleExportIntegrations = () => {
     const csvContent = [
-      ['Nombre', 'Categoría', 'Estado', 'Última Sincronización', 'Total Transacciones', 'Tasa de Éxito']
+      [
+        'Nombre',
+        'Categoría',
+        'Estado',
+        'Última Sincronización',
+        'Total Transacciones',
+        'Tasa de Éxito',
+      ],
     ];
 
     integrations.forEach(integration => {
@@ -273,7 +295,7 @@ export default function IntegracionesPage() {
         integration.status,
         integration.lastSync ? new Date(integration.lastSync).toLocaleDateString('es-CL') : 'Nunca',
         integration.totalTransactions.toString(),
-        integration.successRate > 0 ? `${integration.successRate}%` : 'N/A'
+        integration.successRate > 0 ? `${integration.successRate}%` : 'N/A',
       ]);
     });
 
@@ -294,7 +316,7 @@ export default function IntegracionesPage() {
       active: { label: 'Activo', color: 'bg-green-100 text-green-800' },
       inactive: { label: 'Inactivo', color: 'bg-red-100 text-red-800' },
       pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
-      configuring: { label: 'Configurando', color: 'bg-blue-100 text-blue-800' }
+      configuring: { label: 'Configurando', color: 'bg-blue-100 text-blue-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -302,12 +324,12 @@ export default function IntegracionesPage() {
 
   const getCategoryIcon = (category: string) => {
     const icons = {
-      'Pagos': CreditCard,
-      'Comunicación': Mail,
-      'Ubicación': MapPin,
-      'Bancario': Building,
-      'Monitoreo': Activity,
-      'Media': Camera
+      Pagos: CreditCard,
+      Comunicación: Mail,
+      Ubicación: MapPin,
+      Bancario: Building,
+      Monitoreo: Activity,
+      Media: Camera,
     };
     const IconComponent = icons[category as keyof typeof icons] || Zap;
     return <IconComponent className="w-5 h-5" />;
@@ -315,14 +337,18 @@ export default function IntegracionesPage() {
 
   const getCategoryBadge = (category: string) => {
     const colors = {
-      'Pagos': 'bg-blue-100 text-blue-800',
-      'Comunicación': 'bg-purple-100 text-purple-800',
-      'Ubicación': 'bg-green-100 text-green-800',
-      'Bancario': 'bg-orange-100 text-orange-800',
-      'Monitoreo': 'bg-red-100 text-red-800',
-      'Media': 'bg-pink-100 text-pink-800'
+      Pagos: 'bg-blue-100 text-blue-800',
+      Comunicación: 'bg-purple-100 text-purple-800',
+      Ubicación: 'bg-green-100 text-green-800',
+      Bancario: 'bg-orange-100 text-orange-800',
+      Monitoreo: 'bg-red-100 text-red-800',
+      Media: 'bg-pink-100 text-pink-800',
     };
-    return <Badge className={colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{category}</Badge>;
+    return (
+      <Badge className={colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
+        {category}
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -361,6 +387,38 @@ export default function IntegracionesPage() {
   return (
     <UnifiedDashboardLayout title="Integraciones" subtitle="Gestiona las integraciones del sistema">
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -402,7 +460,9 @@ export default function IntegracionesPage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.totalTransactions?.toLocaleString() || 0}</div>
+              <div className="text-2xl font-bold">
+                {data?.totalTransactions?.toLocaleString() || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Procesadas este mes</p>
             </CardContent>
           </Card>
@@ -419,20 +479,34 @@ export default function IntegracionesPage() {
             <TabsTrigger value="comunicacion">Comunicación</TabsTrigger>
           </TabsList>
 
-          {['all', 'active', 'inactive', 'pending', 'pagos', 'comunicacion'].map((tabValue) => (
+          {['all', 'active', 'inactive', 'pending', 'pagos', 'comunicacion'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {integrations
                   .filter(integration => {
-                    if (tabValue === 'all') return true;
-                    if (tabValue === 'active') return integration.status === 'active';
-                    if (tabValue === 'inactive') return integration.status === 'inactive';
-                    if (tabValue === 'pending') return integration.status === 'pending' || integration.status === 'configuring';
-                    if (tabValue === 'pagos') return integration.category === 'Pagos';
-                    if (tabValue === 'comunicacion') return integration.category === 'Comunicación';
+                    if (tabValue === 'all') {
+                      return true;
+                    }
+                    if (tabValue === 'active') {
+                      return integration.status === 'active';
+                    }
+                    if (tabValue === 'inactive') {
+                      return integration.status === 'inactive';
+                    }
+                    if (tabValue === 'pending') {
+                      return (
+                        integration.status === 'pending' || integration.status === 'configuring'
+                      );
+                    }
+                    if (tabValue === 'pagos') {
+                      return integration.category === 'Pagos';
+                    }
+                    if (tabValue === 'comunicacion') {
+                      return integration.category === 'Comunicación';
+                    }
                     return true;
                   })
-                  .map((integration) => (
+                  .map(integration => (
                     <Card key={integration.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -445,7 +519,9 @@ export default function IntegracionesPage() {
                                 <h3 className="font-semibold text-lg">{integration.name}</h3>
                                 {getStatusBadge(integration.status)}
                               </div>
-                              <p className="text-gray-600 text-sm mb-2">{integration.description}</p>
+                              <p className="text-gray-600 text-sm mb-2">
+                                {integration.description}
+                              </p>
                               {getCategoryBadge(integration.category)}
                             </div>
                           </div>
@@ -466,15 +542,19 @@ export default function IntegracionesPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <TrendingUp className="w-4 h-4" />
-                            <span>{integration.successRate > 0 ? `${integration.successRate}% éxito` : 'Sin datos'}</span>
+                            <span>
+                              {integration.successRate > 0
+                                ? `${integration.successRate}% éxito`
+                                : 'Sin datos'}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 col-span-2">
                             <Clock className="w-4 h-4" />
                             <span>
-                              Última sync: {integration.lastSync
+                              Última sync:{' '}
+                              {integration.lastSync
                                 ? new Date(integration.lastSync).toLocaleDateString('es-CL')
-                                : 'Nunca'
-                              }
+                                : 'Nunca'}
                             </span>
                           </div>
                         </div>
@@ -511,7 +591,10 @@ export default function IntegracionesPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   {Object.entries(integration.config).map(([key, value]) => (
                                     <div key={key} className="space-y-2">
-                                      <Label htmlFor={key} className="text-sm font-medium capitalize">
+                                      <Label
+                                        htmlFor={key}
+                                        className="text-sm font-medium capitalize"
+                                      >
                                         {key.replace(/([A-Z])/g, ' $1').trim()}
                                       </Label>
                                       <Input
@@ -525,7 +608,12 @@ export default function IntegracionesPage() {
                                   ))}
                                 </div>
                                 <div className="flex gap-2 justify-end">
-                                  <Button variant="outline" onClick={() => router.push(`/admin/integrations/${integration.id}/edit`)}>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                      router.push(`/admin/integrations/${integration.id}/edit`)
+                                    }
+                                  >
                                     <Edit className="w-4 h-4 mr-2" />
                                     Editar Configuración
                                   </Button>
@@ -550,7 +638,9 @@ export default function IntegracionesPage() {
                           {integration.status !== 'pending' && (
                             <Button
                               size="sm"
-                              onClick={() => router.push(`/admin/integrations/${integration.id}/logs`)}
+                              onClick={() =>
+                                router.push(`/admin/integrations/${integration.id}/logs`)
+                              }
                             >
                               <BarChart3 className="w-4 h-4 mr-2" />
                               Logs
@@ -586,7 +676,9 @@ export default function IntegracionesPage() {
                 description="Buscar integraciones"
                 onClick={() => {
                   // Focus on search input or open search dialog
-                  const searchInput = document.querySelector('input[placeholder*="Buscar"]') as HTMLInputElement;
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar"]'
+                  ) as HTMLInputElement;
                   if (searchInput) {
                     searchInput.focus();
                   }

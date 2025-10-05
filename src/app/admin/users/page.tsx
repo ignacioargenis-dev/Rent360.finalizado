@@ -57,6 +57,10 @@ export default function AdminUsersPage() {
 
   const [creatingUser, setCreatingUser] = useState(false);
 
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [errorMessage, setErrorMessage] = useState('');
+
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -190,7 +194,8 @@ export default function AdminUsersPage() {
 
   const createUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password || !newUser.role) {
-      alert('Por favor completa todos los campos');
+      setErrorMessage('Por favor completa todos los campos requeridos');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -213,15 +218,19 @@ export default function AdminUsersPage() {
           password: '',
           role: 'tenant',
         });
+        setSuccessMessage('Usuario creado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al crear usuario');
+        setErrorMessage(error.error || 'Error al crear usuario');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error creating user:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al crear usuario');
+      setErrorMessage('Error al crear usuario. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setCreatingUser(false);
     }
@@ -319,6 +328,38 @@ export default function AdminUsersPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <XCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card className="mb-6">

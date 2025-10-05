@@ -18,6 +18,7 @@ import {
   CreditCard,
   CheckCircle,
   AlertTriangle,
+  AlertCircle,
   Shield,
   Lock,
 } from 'lucide-react';
@@ -51,6 +52,9 @@ export default function TenantPaymentProcessPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (paymentId) {
@@ -168,8 +172,10 @@ export default function TenantPaymentProcessPage() {
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Simulate success
-      alert('Pago procesado exitosamente');
-      router.push(`/tenant/payments/${paymentId}`);
+      setSuccessMessage('Pago procesado exitosamente');
+      setTimeout(() => {
+        router.push(`/tenant/payments/${paymentId}`);
+      }, 2000);
     } catch (error) {
       logger.error('Error processing payment:', {
         error: error instanceof Error ? error.message : String(error),
@@ -245,6 +251,38 @@ export default function TenantPaymentProcessPage() {
             Volver
           </Button>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Summary */}
         <Card>

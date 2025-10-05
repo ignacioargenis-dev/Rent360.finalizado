@@ -27,6 +27,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  AlertCircle,
   BarChart3,
   Search,
   Filter,
@@ -83,6 +84,9 @@ export default function ProviderEarningsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadEarningsData();
@@ -212,16 +216,18 @@ export default function ProviderEarningsPage() {
     // Download payment invoice
     const payment = payments.find(p => p.id === paymentId);
     if (payment) {
-      alert(
-        `Descargando factura para: ${payment.jobTitle}\nMonto: ${formatCurrency(payment.amount)}`
+      setSuccessMessage(
+        `Factura descargada: ${payment.jobTitle} - ${formatCurrency(payment.amount)}`
       );
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
   const handleExportEarnings = () => {
     // Export earnings data to CSV
     if (filteredPayments.length === 0) {
-      alert('No hay ingresos para exportar');
+      setErrorMessage('No hay ingresos para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -299,6 +305,38 @@ export default function ProviderEarningsPage() {
       subtitle="Gestiona y visualiza tus ganancias como proveedor de servicios"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas de Ingresos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>

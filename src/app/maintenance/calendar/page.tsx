@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import {
   AlertCircle,
+  CheckCircle,
   RefreshCw,
   Calendar,
   ChevronLeft,
@@ -49,6 +50,9 @@ export default function MaintenanceCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadCalendarJobs();
@@ -242,6 +246,38 @@ export default function MaintenanceCalendarPage() {
   return (
     <UnifiedDashboardLayout title="Calendario" subtitle="Agenda tus trabajos de mantenimiento">
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header with navigation */}
         <Card>
           <CardContent className="p-6">
@@ -465,7 +501,10 @@ export default function MaintenanceCalendarPage() {
                 icon={Plus}
                 label="Nuevo Trabajo"
                 description="Agendar mantenimiento"
-                onClick={() => alert('Funcionalidad: Abrir formulario para agendar nuevo trabajo')}
+                onClick={() => {
+                  setSuccessMessage('Formulario de nuevo trabajo próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton

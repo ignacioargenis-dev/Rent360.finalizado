@@ -14,6 +14,7 @@ import {
   Clock,
   DollarSign,
   AlertTriangle,
+  AlertCircle,
   Info,
   Plus,
   Filter,
@@ -74,6 +75,9 @@ export default function TicketsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadTickets();
@@ -206,31 +210,34 @@ export default function TicketsPage() {
   // Funciones handle para los botones
   const handleNewTicket = () => {
     // Navigate to new ticket creation page
-    window.open('/support/tickets/new', '_blank');
+    window.location.href = '/support/tickets/new';
   };
 
   const handleViewTicket = (ticketId: string) => {
     // Navigate to ticket detail view
-    window.open(`/support/tickets/${ticketId}`, '_blank');
+    window.location.href = `/support/tickets/${ticketId}`;
   };
 
   const handleUpdateStatus = (ticketId: string, newStatus: string) => {
     // Update ticket status
-    alert(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
+    setSuccessMessage(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleAssignTicket = (ticketId: string) => {
     // Assign ticket to support agent
     const agent = prompt('Asignar ticket a:', 'soporte@rent360.cl');
     if (agent) {
-      alert(`Ticket asignado exitosamente a: ${agent}`);
+      setSuccessMessage(`Ticket asignado exitosamente a: ${agent}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
   const handleExportTickets = () => {
     // Export tickets data to CSV
     if (tickets.length === 0) {
-      alert('No hay tickets para exportar');
+      setErrorMessage('No hay tickets para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -341,6 +348,38 @@ export default function TicketsPage() {
       subtitle="Gestiona y visualiza todos los tickets del sistema"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>

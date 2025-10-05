@@ -217,16 +217,40 @@ export default function RunnerEarningsPage() {
     // Download payment receipt
     const payment = payments.find(p => p.id === paymentId);
     if (payment) {
-      alert(
-        `Descargando recibo para: ${payment.propertyTitle}\nMonto: ${formatCurrency(payment.amount)}`
-      );
+      // Create a simple receipt content
+      const receiptContent = `
+RECIBO DE PAGO - RUNNER
+========================
+
+ID de Pago: ${payment.id}
+Fecha: ${new Date(payment.visitDate).toLocaleDateString('es-CL')}
+Propiedad: ${payment.propertyTitle}
+Monto: ${formatCurrency(payment.amount)}
+Estado: ${payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
+
+Gracias por tu trabajo.
+Rent360 - ${new Date().getFullYear()}
+      `.trim();
+
+      // Create and download the receipt
+      const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `recibo_${payment.id}.txt`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      logger.debug('Recibo descargado:', { paymentId });
     }
   };
 
   const handleExportEarnings = () => {
     // Export earnings data to CSV
     if (filteredPayments.length === 0) {
-      alert('No hay ingresos para exportar');
+      logger.warn('No hay ingresos para exportar');
       return;
     }
 

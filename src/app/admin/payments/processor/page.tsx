@@ -88,6 +88,9 @@ export default function PaymentProcessorPage() {
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedBank, setSelectedBank] = useState('banco_estado');
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -148,17 +151,20 @@ export default function PaymentProcessorPage() {
 
       if (response.ok) {
         const result = await response.json();
-        alert('Pago procesado exitosamente');
+        setSuccessMessage('Pago procesado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
         await loadData();
       } else {
         const error = await response.json();
-        alert(`Error al procesar pago: ${error.message}`);
+        setErrorMessage(`Error al procesar pago: ${error.message}`);
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error procesando pago:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al procesar el pago');
+      setErrorMessage('Error al procesar el pago. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setProcessing(false);
     }
@@ -179,17 +185,20 @@ export default function PaymentProcessorPage() {
       });
 
       if (response.ok) {
-        alert('Lote procesado exitosamente');
+        setSuccessMessage('Lote procesado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
         await loadData();
       } else {
         const error = await response.json();
-        alert(`Error al procesar lote: ${error.message}`);
+        setErrorMessage(`Error al procesar lote: ${error.message}`);
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error procesando lote:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al procesar el lote');
+      setErrorMessage('Error al procesar el lote. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setProcessing(false);
     }
@@ -209,17 +218,20 @@ export default function PaymentProcessorPage() {
       });
 
       if (response.ok) {
-        alert('Lote creado exitosamente');
+        setSuccessMessage('Lote creado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
         await loadData();
       } else {
         const error = await response.json();
-        alert(`Error al crear lote: ${error.message}`);
+        setErrorMessage(`Error al crear lote: ${error.message}`);
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error creando lote:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al crear el lote');
+      setErrorMessage('Error al crear el lote. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -310,6 +322,38 @@ export default function PaymentProcessorPage() {
       subtitle="Gestiona pagos autom�ticos y transferencias bancarias"
     >
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estad�sticas Generales */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">

@@ -16,6 +16,7 @@ import {
   Bell,
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
   Save,
   User,
   Settings,
@@ -44,20 +45,21 @@ export default function ProviderSettingsPage() {
     email: 'contacto@serviciosprofesionales.cl',
     phone: '+56 9 8765 4321',
     address: 'Providencia 1234, Santiago',
-    description: 'Empresa especializada en mantenimiento de propiedades residenciales y comerciales.',
+    description:
+      'Empresa especializada en mantenimiento de propiedades residenciales y comerciales.',
     website: 'www.serviciosprofesionales.cl',
-    taxId: '76.543.210-8'
+    taxId: '76.543.210-8',
   });
   const [servicesData, setServicesData] = useState({
     availableServices: [
       { id: '1', name: 'Mantenimiento Eléctrico', active: true, price: 25000 },
       { id: '2', name: 'Reparaciones Plomería', active: true, price: 30000 },
       { id: '3', name: 'Pintura y Acabados', active: false, price: 45000 },
-      { id: '4', name: 'Jardinería', active: true, price: 35000 }
+      { id: '4', name: 'Jardinería', active: true, price: 35000 },
     ],
     responseTime: '2-4 horas',
     emergencyService: true,
-    weekendService: true
+    weekendService: true,
   });
   const [notificationsData, setNotificationsData] = useState({
     newJobs: true,
@@ -67,14 +69,17 @@ export default function ProviderSettingsPage() {
     marketing: false,
     emailNotifications: true,
     smsNotifications: false,
-    pushNotifications: true
+    pushNotifications: true,
   });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const [securityData, setSecurityData] = useState({
     twoFactorEnabled: false,
     sessionTimeout: 30,
     passwordLastChanged: '2024-01-15',
     loginAlerts: true,
-    deviceTracking: true
+    deviceTracking: true,
   });
 
   useEffect(() => {
@@ -92,8 +97,8 @@ export default function ProviderSettingsPage() {
           activeConfigs: 18,
           configuredServices: 12,
           activeNotifications: 6,
-          integrations: 3
-        }
+          integrations: 3,
+        },
       };
 
       setData(mockSettings);
@@ -109,7 +114,8 @@ export default function ProviderSettingsPage() {
 
   const handleSaveSettings = (section: string) => {
     // In a real app, this would save to the backend
-    alert(`Configuración de ${section} guardada exitosamente`);
+    setSuccessMessage(`Configuración de ${section} guardada exitosamente`);
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleInputChange = (section: string, field: string, value: any) => {
@@ -133,10 +139,8 @@ export default function ProviderSettingsPage() {
     setServicesData(prev => ({
       ...prev,
       availableServices: prev.availableServices.map(service =>
-        service.id === serviceId
-          ? { ...service, active: !service.active }
-          : service
-      )
+        service.id === serviceId ? { ...service, active: !service.active } : service
+      ),
     }));
   };
 
@@ -185,6 +189,38 @@ export default function ProviderSettingsPage() {
       subtitle="Configura tu perfil y preferencias como proveedor"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -257,7 +293,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="companyName"
                       value={profileData.companyName}
-                      onChange={(e) => handleInputChange('profile', 'companyName', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'companyName', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -265,7 +301,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="contactName"
                       value={profileData.contactName}
-                      onChange={(e) => handleInputChange('profile', 'contactName', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'contactName', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -274,7 +310,7 @@ export default function ProviderSettingsPage() {
                       id="email"
                       type="email"
                       value={profileData.email}
-                      onChange={(e) => handleInputChange('profile', 'email', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'email', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -282,7 +318,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="phone"
                       value={profileData.phone}
-                      onChange={(e) => handleInputChange('profile', 'phone', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'phone', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -290,7 +326,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="address"
                       value={profileData.address}
-                      onChange={(e) => handleInputChange('profile', 'address', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'address', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -298,7 +334,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="taxId"
                       value={profileData.taxId}
-                      onChange={(e) => handleInputChange('profile', 'taxId', e.target.value)}
+                      onChange={e => handleInputChange('profile', 'taxId', e.target.value)}
                     />
                   </div>
                 </div>
@@ -307,7 +343,7 @@ export default function ProviderSettingsPage() {
                   <Textarea
                     id="description"
                     value={profileData.description}
-                    onChange={(e) => handleInputChange('profile', 'description', e.target.value)}
+                    onChange={e => handleInputChange('profile', 'description', e.target.value)}
                     rows={3}
                   />
                 </div>
@@ -316,7 +352,7 @@ export default function ProviderSettingsPage() {
                   <Input
                     id="website"
                     value={profileData.website}
-                    onChange={(e) => handleInputChange('profile', 'website', e.target.value)}
+                    onChange={e => handleInputChange('profile', 'website', e.target.value)}
                   />
                 </div>
                 <Button onClick={() => handleSaveSettings('perfil')}>
@@ -332,15 +368,16 @@ export default function ProviderSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Configuración de Servicios</CardTitle>
-                <CardDescription>
-                  Gestiona los servicios que ofreces y sus precios
-                </CardDescription>
+                <CardDescription>Gestiona los servicios que ofreces y sus precios</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Servicios Disponibles</h3>
-                  {servicesData.availableServices.map((service) => (
-                    <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {servicesData.availableServices.map(service => (
+                    <div
+                      key={service.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         <Switch
                           checked={service.active}
@@ -353,8 +390,8 @@ export default function ProviderSettingsPage() {
                           </div>
                         </div>
                       </div>
-                      <Badge variant={service.active ? "default" : "secondary"}>
-                        {service.active ? "Activo" : "Inactivo"}
+                      <Badge variant={service.active ? 'default' : 'secondary'}>
+                        {service.active ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </div>
                   ))}
@@ -366,7 +403,7 @@ export default function ProviderSettingsPage() {
                     <Input
                       id="responseTime"
                       value={servicesData.responseTime}
-                      onChange={(e) => handleInputChange('services', 'responseTime', e.target.value)}
+                      onChange={e => handleInputChange('services', 'responseTime', e.target.value)}
                     />
                   </div>
                 </div>
@@ -377,14 +414,18 @@ export default function ProviderSettingsPage() {
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={servicesData.emergencyService}
-                        onCheckedChange={(checked) => handleInputChange('services', 'emergencyService', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('services', 'emergencyService', checked)
+                        }
                       />
                       <Label>Servicio de Emergencia 24/7</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={servicesData.weekendService}
-                        onCheckedChange={(checked) => handleInputChange('services', 'weekendService', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('services', 'weekendService', checked)
+                        }
                       />
                       <Label>Servicio los Fines de Semana</Label>
                     </div>
@@ -401,13 +442,13 @@ export default function ProviderSettingsPage() {
 
           {/* Pestaña Notificaciones */}
           <TabsContent value="notifications">
-        <Card>
-          <CardHeader>
+            <Card>
+              <CardHeader>
                 <CardTitle>Preferencias de Notificaciones</CardTitle>
-            <CardDescription>
+                <CardDescription>
                   Configura cómo quieres recibir las notificaciones del sistema
-            </CardDescription>
-          </CardHeader>
+                </CardDescription>
+              </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Notificaciones por Email</h3>
@@ -416,35 +457,45 @@ export default function ProviderSettingsPage() {
                       <Label>Nuevos trabajos disponibles</Label>
                       <Switch
                         checked={notificationsData.newJobs}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'newJobs', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'newJobs', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Actualizaciones de trabajos</Label>
                       <Switch
                         checked={notificationsData.jobUpdates}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'jobUpdates', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'jobUpdates', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Notificaciones de pagos</Label>
                       <Switch
                         checked={notificationsData.payments}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'payments', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'payments', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Reseñas y calificaciones</Label>
                       <Switch
                         checked={notificationsData.reviews}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'reviews', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'reviews', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Marketing y promociones</Label>
                       <Switch
                         checked={notificationsData.marketing}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'marketing', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'marketing', checked)
+                        }
                       />
                     </div>
                   </div>
@@ -457,28 +508,34 @@ export default function ProviderSettingsPage() {
                       <Label>Notificaciones por Email</Label>
                       <Switch
                         checked={notificationsData.emailNotifications}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'emailNotifications', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'emailNotifications', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Notificaciones SMS</Label>
                       <Switch
                         checked={notificationsData.smsNotifications}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'smsNotifications', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'smsNotifications', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Notificaciones Push</Label>
                       <Switch
                         checked={notificationsData.pushNotifications}
-                        onCheckedChange={(checked) => handleInputChange('notifications', 'pushNotifications', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('notifications', 'pushNotifications', checked)
+                        }
                       />
                     </div>
                   </div>
                 </div>
 
                 <Button onClick={() => handleSaveSettings('notificaciones')}>
-                <Save className="w-4 h-4 mr-2" />
+                  <Save className="w-4 h-4 mr-2" />
                   Guardar Preferencias
                 </Button>
               </CardContent>
@@ -505,7 +562,9 @@ export default function ProviderSettingsPage() {
                       </div>
                       <Switch
                         checked={securityData.twoFactorEnabled}
-                        onCheckedChange={(checked) => handleInputChange('security', 'twoFactorEnabled', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('security', 'twoFactorEnabled', checked)
+                        }
                       />
                     </div>
                   </div>
@@ -519,7 +578,9 @@ export default function ProviderSettingsPage() {
                       <Input
                         type="number"
                         value={securityData.sessionTimeout}
-                        onChange={(e) => handleInputChange('security', 'sessionTimeout', parseInt(e.target.value))}
+                        onChange={e =>
+                          handleInputChange('security', 'sessionTimeout', parseInt(e.target.value))
+                        }
                         className="w-20"
                       />
                     </div>
@@ -533,14 +594,18 @@ export default function ProviderSettingsPage() {
                       <Label>Alertas de inicio de sesión</Label>
                       <Switch
                         checked={securityData.loginAlerts}
-                        onCheckedChange={(checked) => handleInputChange('security', 'loginAlerts', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('security', 'loginAlerts', checked)
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Rastreo de dispositivos</Label>
                       <Switch
                         checked={securityData.deviceTracking}
-                        onCheckedChange={(checked) => handleInputChange('security', 'deviceTracking', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('security', 'deviceTracking', checked)
+                        }
                       />
                     </div>
                   </div>
@@ -551,13 +616,15 @@ export default function ProviderSettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <Label>Último cambio de contraseña</Label>
-                      <p className="text-gray-600">{new Date(securityData.passwordLastChanged).toLocaleDateString('es-CL')}</p>
+                      <p className="text-gray-600">
+                        {new Date(securityData.passwordLastChanged).toLocaleDateString('es-CL')}
+                      </p>
                     </div>
                     <div>
                       <Button variant="outline" size="sm">
                         Cambiar Contraseña
-              </Button>
-            </div>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -565,8 +632,8 @@ export default function ProviderSettingsPage() {
                   <Save className="w-4 h-4 mr-2" />
                   Guardar Configuración de Seguridad
                 </Button>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
@@ -578,32 +645,56 @@ export default function ProviderSettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/profile')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/profile')}
+              >
                 <User className="w-6 h-6 mb-2" />
                 <span>Ver Perfil Público</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/earnings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/earnings')}
+              >
                 <DollarSign className="w-6 h-6 mb-2" />
                 <span>Ver Ganancias</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/ratings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/ratings')}
+              >
                 <CheckCircle className="w-6 h-6 mb-2" />
                 <span>Ver Reseñas</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/dashboard')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/dashboard')}
+              >
                 <Settings className="w-6 h-6 mb-2" />
                 <span>Ir al Dashboard</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/services')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/services')}
+              >
                 <Wrench className="w-6 h-6 mb-2" />
                 <span>Gestionar Servicios</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={loadPageData}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={loadPageData}
+              >
                 <RefreshCw className="w-6 h-6 mb-2" />
                 <span>Actualizar Datos</span>
               </Button>

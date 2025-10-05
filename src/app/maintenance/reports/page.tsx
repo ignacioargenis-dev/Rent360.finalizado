@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import {
   AlertCircle,
+  CheckCircle,
   RefreshCw,
   BarChart3,
   TrendingUp,
@@ -53,6 +54,9 @@ export default function MaintenanceReportsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [activeTab, setActiveTab] = useState('overview');
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadReportData();
@@ -189,6 +193,38 @@ export default function MaintenanceReportsPage() {
       subtitle="Análisis y estadísticas de tus trabajos de mantenimiento"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Controls */}
         <Card>
           <CardContent className="p-6">
@@ -468,30 +504,42 @@ export default function MaintenanceReportsPage() {
                 icon={FileText}
                 label="Generar PDF"
                 description="Crear reporte en PDF"
-                onClick={() => alert('Funcionalidad: Generar reporte en formato PDF')}
+                onClick={() => {
+                  setSuccessMessage(
+                    'Generando reporte en PDF... Esta funcionalidad estará disponible próximamente.'
+                  );
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
                 icon={BarChart3}
                 label="Análisis Avanzado"
                 description="Ver métricas detalladas"
-                onClick={() => alert('Funcionalidad: Abrir panel de análisis avanzado')}
+                onClick={() => {
+                  setSuccessMessage('Análisis avanzado próximamente disponible.');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
                 icon={Calendar}
                 label="Programar Reportes"
                 description="Reportes automáticos"
-                onClick={() => alert('Funcionalidad: Configurar envío automático de reportes')}
+                onClick={() => {
+                  setSuccessMessage('Programación de reportes próximamente disponible.');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
                 icon={Eye}
                 label="Comparar Períodos"
                 description="Análisis comparativo"
-                onClick={() =>
-                  alert('Funcionalidad: Comparar rendimiento entre diferentes períodos')
-                }
+                onClick={() => {
+                  setSuccessMessage('Comparación de períodos próximamente disponible.');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton

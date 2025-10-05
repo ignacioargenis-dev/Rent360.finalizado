@@ -5,8 +5,26 @@ import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Building,
   Users,
@@ -56,6 +74,17 @@ export default function ReportesPage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  const [showFiltersDialog, setShowFiltersDialog] = useState(false);
+
+  const [filters, setFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    reportType: 'all',
+    status: 'all',
+    minRating: '',
+    maxRating: '',
+  });
+
   useEffect(() => {
     // Cargar datos de la página
     loadPageData();
@@ -74,19 +103,19 @@ export default function ReportesPage() {
           conversionRate: 14.7,
           avgVisitDuration: 45,
           topPerformingAreas: ['Las Condes', 'Providencia', 'Vitacura'],
-          monthlyGrowth: 8.5
+          monthlyGrowth: 8.5,
         },
         conversions: {
           byType: [
             { type: 'Alquiler', count: 12, percentage: 52.2 },
             { type: 'Venta', count: 8, percentage: 34.8 },
-            { type: 'Información', count: 3, percentage: 13.0 }
+            { type: 'Información', count: 3, percentage: 13.0 },
           ],
           byProperty: [
             { property: 'Departamento Las Condes', conversions: 5 },
             { property: 'Casa Providencia', conversions: 3 },
-            { property: 'Estudio Centro', conversions: 2 }
-          ]
+            { property: 'Estudio Centro', conversions: 2 },
+          ],
         },
         visits: {
           byDay: [
@@ -94,22 +123,22 @@ export default function ReportesPage() {
             { day: 'Martes', visits: 32, conversions: 6 },
             { day: 'Miércoles', visits: 35, conversions: 5 },
             { day: 'Jueves', visits: 31, conversions: 4 },
-            { day: 'Viernes', visits: 30, conversions: 4 }
+            { day: 'Viernes', visits: 30, conversions: 4 },
           ],
           byTime: [
             { time: '09:00-11:00', visits: 25 },
             { time: '11:00-13:00', visits: 35 },
             { time: '14:00-16:00', visits: 42 },
             { time: '16:00-18:00', visits: 38 },
-            { time: '18:00-20:00', visits: 16 }
-          ]
+            { time: '18:00-20:00', visits: 16 },
+          ],
         },
         performance: {
           avgRating: 4.3,
           totalPhotos: 1247,
           reportsSubmitted: 89,
-          tasksCompleted: 145
-        }
+          tasksCompleted: 145,
+        },
       };
 
       setData(mockReports);
@@ -156,8 +185,31 @@ export default function ReportesPage() {
     );
   }
 
+  const handleOpenFilters = () => {
+    setShowFiltersDialog(true);
+  };
+
+  const handleApplyFilters = () => {
+    // Apply filters logic here
+    setShowFiltersDialog(false);
+    logger.debug('Filtros aplicados:', filters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      dateFrom: '',
+      dateTo: '',
+      reportType: 'all',
+      status: 'all',
+      minRating: '',
+      maxRating: '',
+    });
+  };
+
   const handleExportReports = () => {
-    if (!data) return;
+    if (!data) {
+      return;
+    }
 
     const csvContent = [
       ['Métrica', 'Valor'],
@@ -169,7 +221,7 @@ export default function ReportesPage() {
       ['Calificación Promedio', data.performance.avgRating.toString()],
       ['Fotos Totales', data.performance.totalPhotos.toString()],
       ['Reportes Enviados', data.performance.reportsSubmitted.toString()],
-      ['Tareas Completadas', data.performance.tasksCompleted.toString()]
+      ['Tareas Completadas', data.performance.tasksCompleted.toString()],
     ];
 
     const csvString = csvContent.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
@@ -185,10 +237,7 @@ export default function ReportesPage() {
   };
 
   return (
-    <UnifiedDashboardLayout
-      title="Mis Reportes"
-      subtitle="Visualiza tu rendimiento y estadísticas"
-    >
+    <UnifiedDashboardLayout title="Mis Reportes" subtitle="Visualiza tu rendimiento y estadísticas">
       <div className="space-y-6">
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -225,9 +274,7 @@ export default function ReportesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.avgVisitDuration || 0} min</div>
-              <p className="text-xs text-muted-foreground">
-                Por visita
-              </p>
+              <p className="text-xs text-muted-foreground">Por visita</p>
             </CardContent>
           </Card>
 
@@ -238,9 +285,7 @@ export default function ReportesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.performance.avgRating || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Promedio de clientes
-              </p>
+              <p className="text-xs text-muted-foreground">Promedio de clientes</p>
             </CardContent>
           </Card>
         </div>
@@ -282,9 +327,7 @@ export default function ReportesPage() {
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm">{item.day}</span>
                     <div className="flex items-center gap-4">
-                      <div className="text-sm text-gray-600">
-                        {item.visits} visitas
-                      </div>
+                      <div className="text-sm text-gray-600">{item.visits} visitas</div>
                       <div className="text-sm font-medium text-green-600">
                         {item.conversions} conv.
                       </div>
@@ -369,18 +412,120 @@ export default function ReportesPage() {
                 onClick={() => router.push('/runner/reports/new')}
               />
 
-              <QuickActionButton
-                icon={Filter}
-                label="Filtrar"
-                description="Buscar reportes"
-                onClick={() => alert('Funcionalidad: Abrir filtros de reportes')}
-              />
+              <Dialog open={showFiltersDialog} onOpenChange={setShowFiltersDialog}>
+                <DialogTrigger asChild>
+                  <QuickActionButton
+                    icon={Filter}
+                    label="Filtrar"
+                    description="Buscar reportes"
+                    onClick={handleOpenFilters}
+                  />
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Filtros de Reportes</DialogTitle>
+                    <DialogDescription>
+                      Aplica filtros para personalizar tus reportes.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="date-from">Fecha Desde</Label>
+                        <Input
+                          id="date-from"
+                          type="date"
+                          value={filters.dateFrom}
+                          onChange={e => setFilters({ ...filters, dateFrom: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="date-to">Fecha Hasta</Label>
+                        <Input
+                          id="date-to"
+                          type="date"
+                          value={filters.dateTo}
+                          onChange={e => setFilters({ ...filters, dateTo: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Tipo de Reporte</Label>
+                      <Select
+                        value={filters.reportType}
+                        onValueChange={value => setFilters({ ...filters, reportType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="visits">Visitas</SelectItem>
+                          <SelectItem value="performance">Rendimiento</SelectItem>
+                          <SelectItem value="earnings">Ganancias</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Estado</Label>
+                      <Select
+                        value={filters.status}
+                        onValueChange={value => setFilters({ ...filters, status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="completed">Completado</SelectItem>
+                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="cancelled">Cancelado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Calificación Mínima</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={filters.minRating}
+                          onChange={e => setFilters({ ...filters, minRating: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Calificación Máxima</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={filters.maxRating}
+                          onChange={e => setFilters({ ...filters, maxRating: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <Button onClick={handleApplyFilters} className="flex-1">
+                        Aplicar Filtros
+                      </Button>
+                      <Button variant="outline" onClick={handleResetFilters}>
+                        Limpiar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <QuickActionButton
                 icon={Download}
                 label="Exportar"
                 description="Descargar datos"
-                onClick={() => alert('Funcionalidad: Exportar reportes del runner')}
+                onClick={handleExportReports}
               />
 
               <QuickActionButton

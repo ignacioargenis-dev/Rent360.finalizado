@@ -15,6 +15,7 @@ import {
   CreditCard,
   CheckCircle,
   AlertTriangle,
+  AlertCircle,
   Download,
   Printer,
   Share2,
@@ -45,6 +46,9 @@ export default function TenantPaymentDetailPage() {
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (paymentId) {
@@ -121,9 +125,10 @@ export default function TenantPaymentDetailPage() {
 
   const handleDownloadReceipt = () => {
     if (payment?.invoiceNumber) {
-      alert(
-        `Descargando recibo: ${payment.invoiceNumber}\nMonto: ${formatCurrency(payment.amount)}`
+      setSuccessMessage(
+        `Descargando recibo: ${payment.invoiceNumber} - ${formatCurrency(payment.amount)}`
       );
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -141,7 +146,8 @@ export default function TenantPaymentDetailPage() {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert('Enlace copiado al portapapeles');
+      setSuccessMessage('Enlace copiado al portapapeles');
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -208,6 +214,38 @@ export default function TenantPaymentDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Status Card */}
         <Card>

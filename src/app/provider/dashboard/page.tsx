@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  AlertCircle,
   TrendingUp,
   MessageSquare,
 } from 'lucide-react';
@@ -44,6 +45,9 @@ export default function ProviderDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const { user } = useUserState();
 
   useEffect(() => {
@@ -94,14 +98,17 @@ export default function ProviderDashboard() {
       });
 
       if (response.ok) {
-        alert('Cotización enviada exitosamente');
+        setSuccessMessage('Cotización enviada exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
         loadServiceRequests(); // Recargar solicitudes
       } else {
-        alert('Error al enviar cotización');
+        setErrorMessage('Error al enviar cotización');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       console.error('Error enviando cotización:', error);
-      alert('Error al enviar cotización');
+      setErrorMessage('Error al enviar cotización. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -112,6 +119,38 @@ export default function ProviderDashboard() {
       subtitle="Gestiona tus servicios y clientes"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas principales */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -301,16 +340,20 @@ export default function ProviderDashboard() {
                     icon={Calendar}
                     label="Nuevo Trabajo"
                     description="Agendar servicio"
-                    onClick={() =>
-                      alert('Funcionalidad: Abrir calendario para agendar nuevo trabajo')
-                    }
+                    onClick={() => {
+                      // Navegar a la página de trabajos
+                      window.location.href = '/provider/jobs';
+                    }}
                   />
 
                   <QuickActionButton
                     icon={Users}
                     label="Gestionar Clientes"
                     description="Base de clientes"
-                    onClick={() => alert('Funcionalidad: Abrir lista completa de clientes')}
+                    onClick={() => {
+                      // Navegar a la página de clientes
+                      window.location.href = '/provider/clients';
+                    }}
                   />
 
                   <QuickActionButton
@@ -318,8 +361,8 @@ export default function ProviderDashboard() {
                     label="Cotizaciones"
                     description="Generar presupuesto"
                     onClick={() => {
-                      // Abrir modal de cotización o navegar a página
-                      alert('Funcionalidad: Abrir herramienta de creación de cotizaciones');
+                      // Navegar a la página de cotizaciones
+                      window.location.href = '/provider/quotes';
                     }}
                   />
 
@@ -328,8 +371,8 @@ export default function ProviderDashboard() {
                     label="Soporte"
                     description="Centro de ayuda"
                     onClick={() => {
-                      // Abrir chat de soporte o página de soporte
-                      alert('Funcionalidad: Iniciar conversación con soporte técnico');
+                      // Abrir chat de soporte
+                      window.location.href = '/support';
                     }}
                   />
                 </div>

@@ -70,6 +70,10 @@ export default function RunnerPayoutsAdminPage() {
   const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
 
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadUser();
     loadPayouts();
@@ -120,11 +124,13 @@ export default function RunnerPayoutsAdminPage() {
       if (response.ok) {
         const data = await response.json();
         setPayouts(data.data);
-        alert(`Se calcularon ${data.data.length} payouts pendientes`);
+        setSuccessMessage(`Se calcularon ${data.data.length} payouts pendientes`);
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (error) {
       console.error('Error calculating payouts:', error);
-      alert('Error calculando payouts');
+      setErrorMessage('Error calculando payouts. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setLoading(false);
     }
@@ -142,17 +148,20 @@ export default function RunnerPayoutsAdminPage() {
 
       if (response.ok) {
         const data = await response.json();
-        alert('Payout aprobado exitosamente');
+        setSuccessMessage('Payout aprobado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
 
         // Recargar la lista
         await loadPayouts();
       } else {
         const error = await response.json();
-        alert(`Error: ${error.error || 'Error desconocido'}`);
+        setErrorMessage(`Error: ${error.error || 'Error desconocido'}`);
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       console.error('Error approving payout:', error);
-      alert('Error aprobando payout');
+      setErrorMessage('Error aprobando payout. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setProcessing(null);
     }
@@ -188,6 +197,38 @@ export default function RunnerPayoutsAdminPage() {
       subtitle="Gesti�n de pagos y comisiones para runners"
     >
       <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">

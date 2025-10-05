@@ -11,7 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Building,
   Users,
@@ -23,6 +29,7 @@ import {
   TrendingUp,
   DollarSign,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   BarChart3,
   UserPlus,
@@ -88,13 +95,15 @@ export default function MantenimientoPage() {
       providerName: null,
       providerRating: null,
       images: ['cañeria1.jpg', 'cañeria2.jpg'],
-      notes: 'Cliente reporta que el agua sale con presión alta. Posible ruptura en tubería principal.',
-      resolution: null
+      notes:
+        'Cliente reporta que el agua sale con presión alta. Posible ruptura en tubería principal.',
+      resolution: null,
     },
     {
       id: '2',
       title: 'Mantenimiento sistema eléctrico',
-      description: 'Revisión completa de instalación eléctrica, reemplazo de tomacorrientes antiguos.',
+      description:
+        'Revisión completa de instalación eléctrica, reemplazo de tomacorrientes antiguos.',
       propertyAddress: 'Providencia 567, Santiago',
       propertyType: 'Departamento',
       ownerName: 'Ana Silva',
@@ -117,7 +126,7 @@ export default function MantenimientoPage() {
       providerRating: null,
       images: [],
       notes: 'Propiedad tiene 3 dormitorios y 2 baños. Instalar 4 tomacorrientes nuevos.',
-      resolution: null
+      resolution: null,
     },
     {
       id: '3',
@@ -145,7 +154,7 @@ export default function MantenimientoPage() {
       providerRating: null,
       images: ['sala_antes.jpg'],
       notes: 'Cliente prefiere tonos neutros. Preparar superficies antes de pintar.',
-      resolution: null
+      resolution: null,
     },
     {
       id: '4',
@@ -173,7 +182,8 @@ export default function MantenimientoPage() {
       providerRating: 4.5,
       images: ['garage_motor.jpg', 'garage_reparado.jpg'],
       notes: 'Puerta marca Chamberlain modelo antiguo. Se reemplazó capacitor del motor.',
-      resolution: 'Motor reparado exitosamente. Se reemplazó capacitor defectuoso y se lubricaron mecanismos.'
+      resolution:
+        'Motor reparado exitosamente. Se reemplazó capacitor defectuoso y se lubricaron mecanismos.',
     },
     {
       id: '5',
@@ -201,12 +211,16 @@ export default function MantenimientoPage() {
       providerRating: 5.0,
       images: ['jardin_antes.jpg', 'jardin_despues.jpg', 'sistema_riego.jpg'],
       notes: 'Sistema incluye programador automático y aspersores. Jardín de césped natural.',
-      resolution: 'Sistema instalado completamente. Programador configurado para riego 3 veces por semana.'
-    }
+      resolution:
+        'Sistema instalado completamente. Programador configurado para riego 3 veces por semana.',
+    },
   ]);
 
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Cargar datos de la página
@@ -221,11 +235,13 @@ export default function MantenimientoPage() {
       // Mock maintenance overview data
       const overviewData = {
         totalRequests: maintenanceRequests.length,
-        activeRequests: maintenanceRequests.filter(r => r.status === 'in_progress' || r.status === 'assigned').length,
+        activeRequests: maintenanceRequests.filter(
+          r => r.status === 'in_progress' || r.status === 'assigned'
+        ).length,
         pendingRequests: maintenanceRequests.filter(r => r.status === 'pending').length,
         totalCost: maintenanceRequests
           .filter(r => r.actualCost || r.estimatedCost)
-          .reduce((sum, r) => sum + (r.actualCost || r.estimatedCost || 0), 0)
+          .reduce((sum, r) => sum + (r.actualCost || r.estimatedCost || 0), 0),
       };
 
       setData(overviewData);
@@ -240,38 +256,54 @@ export default function MantenimientoPage() {
   };
 
   const handleAssignProvider = (requestId: string, providerId: string, providerName: string) => {
-    setMaintenanceRequests(prev => prev.map(request =>
-      request.id === requestId
-        ? {
-            ...request,
-            status: 'assigned',
-            assignedProvider: providerId,
-            providerName: providerName,
-            scheduledDate: new Date().toISOString()
-          }
-        : request
-    ));
+    setMaintenanceRequests(prev =>
+      prev.map(request =>
+        request.id === requestId
+          ? {
+              ...request,
+              status: 'assigned',
+              assignedProvider: providerId,
+              providerName: providerName,
+              scheduledDate: new Date().toISOString(),
+            }
+          : request
+      )
+    );
     setShowAssignDialog(false);
-    alert(`Proveedor ${providerName} asignado exitosamente`);
+    setSuccessMessage(`Proveedor ${providerName} asignado exitosamente`);
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleCompleteRequest = (requestId: string) => {
-    setMaintenanceRequests(prev => prev.map(request =>
-      request.id === requestId
-        ? {
-            ...request,
-            status: 'completed',
-            completedDate: new Date().toISOString(),
-            actualCost: request.estimatedCost * 0.9 // Simular costo real ligeramente menor
-          }
-        : request
-    ));
-    alert('Solicitud completada exitosamente');
+    setMaintenanceRequests(prev =>
+      prev.map(request =>
+        request.id === requestId
+          ? {
+              ...request,
+              status: 'completed',
+              completedDate: new Date().toISOString(),
+              actualCost: request.estimatedCost * 0.9, // Simular costo real ligeramente menor
+            }
+          : request
+      )
+    );
+    setSuccessMessage('Solicitud completada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleExportRequests = () => {
     const csvContent = [
-      ['Título', 'Propiedad', 'Propietario', 'Servicio', 'Estado', 'Urgencia', 'Costo Estimado', 'Proveedor', 'Fecha Creación']
+      [
+        'Título',
+        'Propiedad',
+        'Propietario',
+        'Servicio',
+        'Estado',
+        'Urgencia',
+        'Costo Estimado',
+        'Proveedor',
+        'Fecha Creación',
+      ],
     ];
 
     maintenanceRequests.forEach(request => {
@@ -284,7 +316,7 @@ export default function MantenimientoPage() {
         request.urgency,
         request.estimatedCost.toString(),
         request.providerName || 'Sin asignar',
-        new Date(request.createdAt).toLocaleDateString('es-CL')
+        new Date(request.createdAt).toLocaleDateString('es-CL'),
       ]);
     });
 
@@ -293,7 +325,10 @@ export default function MantenimientoPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `solicitudes_mantenimiento_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `solicitudes_mantenimiento_${new Date().toISOString().split('T')[0]}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -314,7 +349,7 @@ export default function MantenimientoPage() {
       assigned: { label: 'Asignado', color: 'bg-blue-100 text-blue-800' },
       in_progress: { label: 'En Progreso', color: 'bg-orange-100 text-orange-800' },
       completed: { label: 'Completado', color: 'bg-green-100 text-green-800' },
-      cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' }
+      cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -324,7 +359,7 @@ export default function MantenimientoPage() {
     const urgencyConfig = {
       high: { label: 'Alta', color: 'bg-red-100 text-red-800' },
       medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800' },
-      low: { label: 'Baja', color: 'bg-green-100 text-green-800' }
+      low: { label: 'Baja', color: 'bg-green-100 text-green-800' },
     };
     const config = urgencyConfig[urgency as keyof typeof urgencyConfig] || urgencyConfig.medium;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -369,6 +404,38 @@ export default function MantenimientoPage() {
       subtitle="Gestiona las tareas de mantenimiento del sistema"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -426,12 +493,12 @@ export default function MantenimientoPage() {
             <TabsTrigger value="completed">Completadas</TabsTrigger>
           </TabsList>
 
-          {['all', 'pending', 'assigned', 'in_progress', 'completed'].map((tabValue) => (
+          {['all', 'pending', 'assigned', 'in_progress', 'completed'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="space-y-4">
                 {maintenanceRequests
                   .filter(request => tabValue === 'all' || request.status === tabValue)
-                  .map((request) => (
+                  .map(request => (
                     <Card key={request.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -465,8 +532,7 @@ export default function MantenimientoPage() {
                                   <div className="font-medium">
                                     {request.scheduledDate
                                       ? new Date(request.scheduledDate).toLocaleDateString('es-CL')
-                                      : 'Sin agendar'
-                                    }
+                                      : 'Sin agendar'}
                                   </div>
                                   <div className="text-xs">Programado</div>
                                 </div>
@@ -474,9 +540,13 @@ export default function MantenimientoPage() {
                               <div className="flex items-center gap-2">
                                 <DollarSign className="w-4 h-4" />
                                 <div>
-                                  <div className="font-medium">{formatCurrency(request.estimatedPrice)}</div>
+                                  <div className="font-medium">
+                                    {formatCurrency(request.estimatedPrice)}
+                                  </div>
                                   <div className="text-xs">
-                                    {request.actualCost ? `Real: ${formatCurrency(request.actualCost)}` : 'Estimado'}
+                                    {request.actualCost
+                                      ? `Real: ${formatCurrency(request.actualCost)}`
+                                      : 'Estimado'}
                                   </div>
                                 </div>
                               </div>
@@ -493,7 +563,9 @@ export default function MantenimientoPage() {
 
                             {request.resolution && (
                               <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
-                                <div className="text-sm font-medium text-green-800 mb-1">Resolución:</div>
+                                <div className="text-sm font-medium text-green-800 mb-1">
+                                  Resolución:
+                                </div>
                                 <p className="text-sm text-green-700">{request.resolution}</p>
                               </div>
                             )}
@@ -510,14 +582,21 @@ export default function MantenimientoPage() {
                                   Imágenes: {request.images.length} archivos
                                 </div>
                                 <div className="flex gap-2">
-                                  {request.images.slice(0, 3).map((image: string, index: number) => (
-                                    <div key={index} className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                      <span className="text-xs text-gray-600">IMG</span>
-                                    </div>
-                                  ))}
+                                  {request.images
+                                    .slice(0, 3)
+                                    .map((image: string, index: number) => (
+                                      <div
+                                        key={index}
+                                        className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center"
+                                      >
+                                        <span className="text-xs text-gray-600">IMG</span>
+                                      </div>
+                                    ))}
                                   {request.images.length > 3 && (
                                     <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                                      <span className="text-xs text-gray-600">+{request.images.length - 3}</span>
+                                      <span className="text-xs text-gray-600">
+                                        +{request.images.length - 3}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
@@ -538,10 +617,7 @@ export default function MantenimientoPage() {
                             {request.status === 'pending' && (
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => setSelectedRequest(request)}
-                                  >
+                                  <Button size="sm" onClick={() => setSelectedRequest(request)}>
                                     <User className="w-4 h-4 mr-2" />
                                     Asignar Proveedor
                                   </Button>
@@ -557,21 +633,39 @@ export default function MantenimientoPage() {
                                     </div>
                                     <div className="space-y-2">
                                       <Button
-                                        onClick={() => handleAssignProvider(request.id, '1', 'Servicios Integrales Ltda.')}
+                                        onClick={() =>
+                                          handleAssignProvider(
+                                            request.id,
+                                            '1',
+                                            'Servicios Integrales Ltda.'
+                                          )
+                                        }
                                         className="w-full justify-start"
                                         variant="outline"
                                       >
                                         Servicios Integrales Ltda. - Plomería/Electricidad
                                       </Button>
                                       <Button
-                                        onClick={() => handleAssignProvider(request.id, '2', 'Técnicos Eléctricos Express')}
+                                        onClick={() =>
+                                          handleAssignProvider(
+                                            request.id,
+                                            '2',
+                                            'Técnicos Eléctricos Express'
+                                          )
+                                        }
                                         className="w-full justify-start"
                                         variant="outline"
                                       >
                                         Técnicos Eléctricos Express - Electricidad
                                       </Button>
                                       <Button
-                                        onClick={() => handleAssignProvider(request.id, '3', 'Pintores Profesionales')}
+                                        onClick={() =>
+                                          handleAssignProvider(
+                                            request.id,
+                                            '3',
+                                            'Pintores Profesionales'
+                                          )
+                                        }
                                         className="w-full justify-start"
                                         variant="outline"
                                       >
@@ -583,7 +677,8 @@ export default function MantenimientoPage() {
                               </Dialog>
                             )}
 
-                            {(request.status === 'assigned' || request.status === 'in_progress') && (
+                            {(request.status === 'assigned' ||
+                              request.status === 'in_progress') && (
                               <Button
                                 size="sm"
                                 onClick={() => handleCompleteRequest(request.id)}
@@ -630,7 +725,9 @@ export default function MantenimientoPage() {
                 description="Buscar solicitudes"
                 onClick={() => {
                   // Focus on search input or open search dialog
-                  const searchInput = document.querySelector('input[placeholder*="Buscar"]') as HTMLInputElement;
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar"]'
+                  ) as HTMLInputElement;
                   if (searchInput) {
                     searchInput.focus();
                   }

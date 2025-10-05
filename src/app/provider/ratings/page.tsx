@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Star,
@@ -27,6 +33,8 @@ import {
   MapPin,
   Settings,
   Wrench,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -42,14 +50,16 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/maria.jpg',
       serviceType: 'Plomería',
       rating: 5,
-      comment: 'Excelente trabajo. El técnico llegó puntual, fue muy profesional y solucionó el problema rápidamente. Muy recomendable.',
+      comment:
+        'Excelente trabajo. El técnico llegó puntual, fue muy profesional y solucionó el problema rápidamente. Muy recomendable.',
       createdAt: '2024-01-15T14:30:00',
       propertyAddress: 'Las Condes 1234, Santiago',
       jobId: 'JOB-2024-001',
       hasResponse: true,
-      response: '¡Gracias María! Me alegra que haya quedado satisfecha con el servicio. Fue un placer ayudarla.',
+      response:
+        '¡Gracias María! Me alegra que haya quedado satisfecha con el servicio. Fue un placer ayudarla.',
       responseDate: '2024-01-15T16:45:00',
-      verified: true
+      verified: true,
     },
     {
       id: '2',
@@ -57,12 +67,13 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/carlos.jpg',
       serviceType: 'Electricidad',
       rating: 5,
-      comment: 'Trabajo impecable. Instalaron todo el sistema eléctrico de mi departamento nuevo. Profesionales y puntuales.',
+      comment:
+        'Trabajo impecable. Instalaron todo el sistema eléctrico de mi departamento nuevo. Profesionales y puntuales.',
       createdAt: '2024-01-14T11:20:00',
       propertyAddress: 'Providencia 567, Santiago',
       jobId: 'JOB-2024-002',
       hasResponse: false,
-      verified: true
+      verified: true,
     },
     {
       id: '3',
@@ -70,14 +81,16 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/ana.jpg',
       serviceType: 'Pintura',
       rating: 4,
-      comment: 'Buen trabajo general. La pintura quedó bien, pero tardaron un poco más de lo esperado.',
+      comment:
+        'Buen trabajo general. La pintura quedó bien, pero tardaron un poco más de lo esperado.',
       createdAt: '2024-01-13T09:15:00',
       propertyAddress: 'Ñuñoa 789, Santiago',
       jobId: 'JOB-2024-003',
       hasResponse: true,
-      response: 'Disculpe la demora Ana. Agradecemos su comprensión. Esperamos poder servirle nuevamente pronto.',
+      response:
+        'Disculpe la demora Ana. Agradecemos su comprensión. Esperamos poder servirle nuevamente pronto.',
       responseDate: '2024-01-13T15:30:00',
-      verified: true
+      verified: true,
     },
     {
       id: '4',
@@ -85,12 +98,13 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/pedro.jpg',
       serviceType: 'Jardinería',
       rating: 5,
-      comment: 'Fantástico servicio. Mi jardín se ve increíble. Los profesionales fueron muy cuidadosos y detallistas.',
+      comment:
+        'Fantástico servicio. Mi jardín se ve increíble. Los profesionales fueron muy cuidadosos y detallistas.',
       createdAt: '2024-01-12T16:45:00',
       propertyAddress: 'Vitacura 345, Santiago',
       jobId: 'JOB-2024-004',
       hasResponse: false,
-      verified: true
+      verified: true,
     },
     {
       id: '5',
@@ -98,14 +112,16 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/sofia.jpg',
       serviceType: 'Mantenimiento General',
       rating: 3,
-      comment: 'El trabajo estuvo bien, pero el presupuesto inicial fue mucho más bajo que el final.',
+      comment:
+        'El trabajo estuvo bien, pero el presupuesto inicial fue mucho más bajo que el final.',
       createdAt: '2024-01-11T13:10:00',
       propertyAddress: 'La Reina 456, Santiago',
       jobId: 'JOB-2024-005',
       hasResponse: true,
-      response: 'Lamentamos la diferencia en el presupuesto Sofía. Durante el trabajo se encontraron problemas adicionales que no estaban previstos inicialmente. Agradecemos su comprensión.',
+      response:
+        'Lamentamos la diferencia en el presupuesto Sofía. Durante el trabajo se encontraron problemas adicionales que no estaban previstos inicialmente. Agradecemos su comprensión.',
       responseDate: '2024-01-11T17:20:00',
-      verified: true
+      verified: true,
     },
     {
       id: '6',
@@ -113,16 +129,20 @@ export default function ProviderRatingsPage() {
       clientAvatar: '/avatars/diego.jpg',
       serviceType: 'Electricidad',
       rating: 5,
-      comment: 'Servicio de primera. Solucionaron un problema complejo de manera rápida y eficiente.',
+      comment:
+        'Servicio de primera. Solucionaron un problema complejo de manera rápida y eficiente.',
       createdAt: '2024-01-10T10:30:00',
       propertyAddress: 'Las Condes 890, Santiago',
       jobId: 'JOB-2024-006',
       hasResponse: false,
-      verified: false
-    }
+      verified: false,
+    },
   ]);
   const [replyText, setReplyText] = useState('');
   const [selectedRatingId, setSelectedRatingId] = useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     loadPageData();
@@ -140,7 +160,7 @@ export default function ProviderRatingsPage() {
         fiveStarRatings: ratings.filter(r => r.rating === 5).length,
         withComments: ratings.filter(r => r.comment).length,
         verifiedRatings: ratings.filter(r => r.verified).length,
-        respondedRatings: ratings.filter(r => r.hasResponse).length
+        respondedRatings: ratings.filter(r => r.hasResponse).length,
       };
 
       setData(overviewData);
@@ -155,24 +175,27 @@ export default function ProviderRatingsPage() {
   };
 
   const handleReplyToRating = (ratingId: string, reply: string) => {
-    setRatings(prev => prev.map(rating =>
-      rating.id === ratingId
-        ? {
-            ...rating,
-            hasResponse: true,
-            response: reply,
-            responseDate: new Date().toISOString()
-          }
-        : rating
-    ));
+    setRatings(prev =>
+      prev.map(rating =>
+        rating.id === ratingId
+          ? {
+              ...rating,
+              hasResponse: true,
+              response: reply,
+              responseDate: new Date().toISOString(),
+            }
+          : rating
+      )
+    );
     setReplyText('');
     setSelectedRatingId(null);
-    alert('Respuesta enviada exitosamente');
+    setSuccessMessage('Respuesta enviada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleExportRatings = () => {
     const csvContent = [
-      ['Cliente', 'Servicio', 'Calificación', 'Comentario', 'Fecha', 'Verificada', 'Respondida']
+      ['Cliente', 'Servicio', 'Calificación', 'Comentario', 'Fecha', 'Verificada', 'Respondida'],
     ];
 
     ratings.forEach(rating => {
@@ -183,7 +206,7 @@ export default function ProviderRatingsPage() {
         `"${rating.comment}"`,
         new Date(rating.createdAt).toLocaleDateString('es-CL'),
         rating.verified ? 'Sí' : 'No',
-        rating.hasResponse ? 'Sí' : 'No'
+        rating.hasResponse ? 'Sí' : 'No',
       ]);
     });
 
@@ -192,7 +215,10 @@ export default function ProviderRatingsPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `calificaciones_proveedor_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `calificaciones_proveedor_${new Date().toISOString().split('T')[0]}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -247,6 +273,38 @@ export default function ProviderRatingsPage() {
       subtitle="Revisa y gestiona las calificaciones que has recibido"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -303,18 +361,26 @@ export default function ProviderRatingsPage() {
             <TabsTrigger value="low">Bajas (≤3⭐)</TabsTrigger>
           </TabsList>
 
-          {['all', 'responded', 'pending', 'low'].map((tabValue) => (
+          {['all', 'responded', 'pending', 'low'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="space-y-4">
                 {ratings
                   .filter(rating => {
-                    if (tabValue === 'all') return true;
-                    if (tabValue === 'responded') return rating.hasResponse;
-                    if (tabValue === 'pending') return !rating.hasResponse;
-                    if (tabValue === 'low') return rating.rating <= 3;
+                    if (tabValue === 'all') {
+                      return true;
+                    }
+                    if (tabValue === 'responded') {
+                      return rating.hasResponse;
+                    }
+                    if (tabValue === 'pending') {
+                      return !rating.hasResponse;
+                    }
+                    if (tabValue === 'low') {
+                      return rating.rating <= 3;
+                    }
                     return true;
                   })
-                  .map((rating) => (
+                  .map(rating => (
                     <Card key={rating.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -351,7 +417,9 @@ export default function ProviderRatingsPage() {
                                 <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
                                   <div className="flex items-center gap-2 mb-1">
                                     <Reply className="w-4 h-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-800">Tu respuesta</span>
+                                    <span className="text-sm font-medium text-blue-800">
+                                      Tu respuesta
+                                    </span>
                                     <span className="text-xs text-gray-500">
                                       {new Date(rating.responseDate).toLocaleDateString('es-CL')}
                                     </span>
@@ -389,7 +457,7 @@ export default function ProviderRatingsPage() {
                                     <Textarea
                                       placeholder="Escribe tu respuesta..."
                                       value={replyText}
-                                      onChange={(e) => setReplyText(e.target.value)}
+                                      onChange={e => setReplyText(e.target.value)}
                                       rows={4}
                                     />
                                     <div className="flex gap-2 justify-end">
@@ -434,9 +502,7 @@ export default function ProviderRatingsPage() {
               <div className="text-2xl font-bold">
                 {data ? Math.round((data.respondedRatings / data.totalRatings) * 100) : 0}%
               </div>
-              <p className="text-xs text-muted-foreground">
-                De calificaciones con comentarios
-              </p>
+              <p className="text-xs text-muted-foreground">De calificaciones con comentarios</p>
             </CardContent>
           </Card>
 
@@ -474,32 +540,56 @@ export default function ProviderRatingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={handleExportRatings}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={handleExportRatings}
+              >
                 <Download className="w-6 h-6 mb-2" />
                 <span>Exportar Calificaciones</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/dashboard')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/dashboard')}
+              >
                 <TrendingUp className="w-6 h-6 mb-2" />
                 <span>Ver Estadísticas</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/requests')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/requests')}
+              >
                 <MessageSquare className="w-6 h-6 mb-2" />
                 <span>Gestionar Solicitudes</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/settings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/settings')}
+              >
                 <Settings className="w-6 h-6 mb-2" />
                 <span>Configurar Notificaciones</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/services')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/services')}
+              >
                 <Wrench className="w-6 h-6 mb-2" />
                 <span>Gestionar Servicios</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={loadPageData}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={loadPageData}
+              >
                 <RefreshCw className="w-6 h-6 mb-2" />
                 <span>Actualizar Datos</span>
               </Button>

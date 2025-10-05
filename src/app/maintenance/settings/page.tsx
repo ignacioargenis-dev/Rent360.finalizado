@@ -107,6 +107,9 @@ export default function MaintenanceSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -114,12 +117,14 @@ export default function MaintenanceSettingsPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      alert('Configuración guardada exitosamente');
+      setSuccessMessage('Configuración guardada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al guardar la configuración');
+      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
     }
@@ -169,6 +174,38 @@ export default function MaintenanceSettingsPage() {
       subtitle="Personaliza tu perfil y preferencias de servicio"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -524,21 +561,30 @@ export default function MaintenanceSettingsPage() {
                 icon={Shield}
                 label="Privacidad"
                 description="Configurar privacidad"
-                onClick={() => alert('Funcionalidad: Abrir configuración de privacidad y datos')}
+                onClick={() => {
+                  setSuccessMessage('Configuración de privacidad próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
                 icon={CheckCircle}
                 label="Verificación"
                 description="Estado de verificación"
-                onClick={() => alert('Funcionalidad: Ver estado de verificación de la cuenta')}
+                onClick={() => {
+                  setSuccessMessage('Cuenta verificada - Estado: Activo');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
                 icon={DollarSign}
                 label="Facturación"
                 description="Configurar facturación"
-                onClick={() => alert('Funcionalidad: Abrir configuración de facturación y SII')}
+                onClick={() => {
+                  setSuccessMessage('Configuración de facturación próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
             </div>
           </CardContent>

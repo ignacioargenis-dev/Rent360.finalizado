@@ -5,8 +5,25 @@ import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Building,
   Users,
@@ -56,13 +73,54 @@ export default function PerfilPage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  const [showAddSkillDialog, setShowAddSkillDialog] = useState(false);
+
+  const [newSkill, setNewSkill] = useState({
+    name: '',
+    level: 'Básico',
+  });
+
   useEffect(() => {
     // Cargar datos de la página
     loadPageData();
   }, []);
 
   const handleAddSkill = () => {
-    alert('Funcionalidad: Formulario para agregar nueva habilidad');
+    setShowAddSkillDialog(true);
+  };
+
+  const handleSaveNewSkill = () => {
+    if (!newSkill.name.trim()) {
+      return;
+    }
+
+    const updatedData = {
+      ...data,
+      skills: [
+        ...(data?.skills || []),
+        {
+          id: Date.now().toString(),
+          name: newSkill.name.trim(),
+          level: newSkill.level,
+          addedDate: new Date().toISOString(),
+        },
+      ],
+    };
+
+    setData(updatedData);
+    setNewSkill({ name: '', level: 'Básico' });
+    setShowAddSkillDialog(false);
+    logger.debug('Nueva habilidad agregada:', newSkill);
+  };
+
+  const handleRemoveSkill = (skillId: string) => {
+    if (data?.skills) {
+      const updatedData = {
+        ...data,
+        skills: data.skills.filter((skill: any) => skill.id !== skillId),
+      };
+      setData(updatedData);
+    }
   };
 
   const handleExportCV = () => {
@@ -118,7 +176,7 @@ export default function PerfilPage() {
           avatar: '/avatars/carlos.jpg',
           location: 'Santiago Centro',
           joinDate: '2023-03-15',
-          status: 'active'
+          status: 'active',
         },
         stats: {
           totalVisits: 245,
@@ -126,40 +184,51 @@ export default function PerfilPage() {
           avgRating: 4.7,
           totalEarnings: 1250000,
           responseTime: '2.3 horas',
-          completionRate: 97.1
+          completionRate: 97.1,
         },
         skills: [
           { name: 'Fotografía Profesional', level: 'Experto', verified: true },
           { name: 'Inspección de Propiedades', level: 'Avanzado', verified: true },
           { name: 'Entrega de Llaves', level: 'Intermedio', verified: true },
           { name: 'Reportes Técnicos', level: 'Avanzado', verified: false },
-          { name: 'Atención al Cliente', level: 'Experto', verified: true }
+          { name: 'Atención al Cliente', level: 'Experto', verified: true },
         ],
         experience: [
           {
             company: 'Rent360',
             position: 'Runner Senior',
             period: 'Mar 2023 - Presente',
-            description: 'Responsable de visitas de propiedades, fotografías profesionales y coordinación con clientes.'
+            description:
+              'Responsable de visitas de propiedades, fotografías profesionales y coordinación con clientes.',
           },
           {
             company: 'Propiedades Express',
             position: 'Asistente de Ventas',
             period: 'Ene 2022 - Feb 2023',
-            description: 'Apoyo en ventas de propiedades y coordinación de visitas.'
-          }
+            description: 'Apoyo en ventas de propiedades y coordinación de visitas.',
+          },
         ],
         certifications: [
-          { name: 'Certificación Fotografía Inmobiliaria', issuer: 'ChileProp', date: '2023-08-10', validUntil: '2025-08-10' },
-          { name: 'Curso Seguridad en Propiedades', issuer: 'SENCE', date: '2023-05-15', validUntil: '2024-05-15' }
+          {
+            name: 'Certificación Fotografía Inmobiliaria',
+            issuer: 'ChileProp',
+            date: '2023-08-10',
+            validUntil: '2025-08-10',
+          },
+          {
+            name: 'Curso Seguridad en Propiedades',
+            issuer: 'SENCE',
+            date: '2023-05-15',
+            validUntil: '2024-05-15',
+          },
         ],
         equipment: [
           'Cámara DSLR Canon EOS R',
           'Tripode profesional',
           'Medidor láser',
           'Kit de herramientas básicas',
-          'Dispositivo GPS'
-        ]
+          'Dispositivo GPS',
+        ],
       };
 
       setData(mockProfile);
@@ -287,7 +356,9 @@ export default function PerfilPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700">Fecha de Ingreso</label>
-                    <p className="text-lg">{new Date(data?.personalInfo.joinDate).toLocaleDateString('es-CL')}</p>
+                    <p className="text-lg">
+                      {new Date(data?.personalInfo.joinDate).toLocaleDateString('es-CL')}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700">Estado</label>
@@ -345,14 +416,24 @@ export default function PerfilPage() {
             <CardContent>
               <div className="space-y-3">
                 {data?.skills.map((skill: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between">
+                  <div key={skill.id || index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {skill.verified && <CheckCircle className="w-4 h-4 text-green-500" />}
                       <span className="font-medium">{skill.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{skill.level}</Badge>
-                      {skill.verified && <Badge className="bg-green-100 text-green-800">Verificado</Badge>}
+                      {skill.verified && (
+                        <Badge className="bg-green-100 text-green-800">Verificado</Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSkill(skill.id || index.toString())}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -391,7 +472,10 @@ export default function PerfilPage() {
             <CardContent>
               <div className="space-y-3">
                 {data?.certifications.map((cert: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div>
                       <div className="font-medium">{cert.name}</div>
                       <div className="text-sm text-gray-600">Emitido por {cert.issuer}</div>
@@ -433,12 +517,60 @@ export default function PerfilPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <QuickActionButton
-                icon={Plus}
-                label="Nueva Habilidad"
-                description="Agregar competencia"
-                onClick={handleAddSkill}
-              />
+              <Dialog open={showAddSkillDialog} onOpenChange={setShowAddSkillDialog}>
+                <DialogTrigger asChild>
+                  <QuickActionButton
+                    icon={Plus}
+                    label="Nueva Habilidad"
+                    description="Agregar competencia"
+                    onClick={handleAddSkill}
+                  />
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Agregar Nueva Habilidad</DialogTitle>
+                    <DialogDescription>
+                      Agrega una nueva competencia a tu perfil profesional.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="skill-name">Nombre de la Habilidad</Label>
+                      <Input
+                        id="skill-name"
+                        placeholder="Ej: Reparación de electrodomésticos"
+                        value={newSkill.name}
+                        onChange={e => setNewSkill({ ...newSkill, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="skill-level">Nivel de Experiencia</Label>
+                      <Select
+                        value={newSkill.level}
+                        onValueChange={value => setNewSkill({ ...newSkill, level: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Básico">Básico</SelectItem>
+                          <SelectItem value="Intermedio">Intermedio</SelectItem>
+                          <SelectItem value="Avanzado">Avanzado</SelectItem>
+                          <SelectItem value="Experto">Experto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button onClick={handleSaveNewSkill} className="flex-1">
+                        Agregar Habilidad
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowAddSkillDialog(false)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <QuickActionButton
                 icon={Edit}

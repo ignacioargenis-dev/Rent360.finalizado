@@ -215,6 +215,8 @@ export default function BrokerSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -241,12 +243,14 @@ export default function BrokerSettings() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       // Show success message
-      alert('Configuración guardada exitosamente');
+      setSuccessMessage('Configuración guardada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al guardar la configuración');
+      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
     }
@@ -323,12 +327,14 @@ export default function BrokerSettings() {
       }));
 
       logger.info('Documento subido exitosamente:', { documentType, fileName: file.name });
-      alert(`Documento "${file.name}" subido exitosamente`);
+      setSuccessMessage(`Documento "${file.name}" subido exitosamente`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error subiendo documento:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al subir el documento');
+      setErrorMessage('Error al subir el documento. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -354,12 +360,14 @@ export default function BrokerSettings() {
       }));
 
       logger.info('Certificado agregado exitosamente');
-      alert('Certificado agregado exitosamente');
+      setSuccessMessage('Certificado agregado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error agregando certificado:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al agregar el certificado');
+      setErrorMessage('Error al agregar el certificado. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -385,12 +393,14 @@ export default function BrokerSettings() {
       }));
 
       logger.info('Documento de empresa agregado exitosamente');
-      alert('Documento de empresa agregado exitosamente');
+      setSuccessMessage('Documento de empresa agregado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error agregando documento de empresa:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al agregar el documento de empresa');
+      setErrorMessage('Error al agregar el documento de empresa. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -429,6 +439,38 @@ export default function BrokerSettings() {
             </Button>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 border-b">

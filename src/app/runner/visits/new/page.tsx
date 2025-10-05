@@ -3,6 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,7 @@ const priorityOptions = [
 ];
 
 export default function NewVisitPage() {
+  const router = useRouter();
   const { user, loading: userLoading } = useUserState();
 
   const [formData, setFormData] = useState<VisitFormData>({
@@ -87,6 +89,10 @@ export default function NewVisitPage() {
   const [searchPropertyTerm, setSearchPropertyTerm] = useState('');
 
   const [searchClientTerm, setSearchClientTerm] = useState('');
+
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Mock data for demo
@@ -258,13 +264,15 @@ export default function NewVisitPage() {
       logger.debug('Visit data:', { formData });
 
       // Show success message and redirect
-      alert('Visita programada exitosamente');
-      // Redirect to runner visits page
+      setSuccessMessage('Visita programada exitosamente');
+      setTimeout(() => {
+        router.push('/runner/visits');
+      }, 2000);
     } catch (error) {
       logger.error('Error creating visit:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al programar la visita');
+      setErrorMessage('Error al programar la visita. Por favor, inténtalo nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -306,6 +314,38 @@ export default function NewVisitPage() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto">
+          {/* Success Message */}
+          {successMessage && (
+            <Card className="mb-6 border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-green-800">{successMessage}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error Message */}
+          {errorMessage && (
+            <Card className="mb-6 border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 text-red-600">⚠</div>
+                  <span className="text-red-800">{errorMessage}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setErrorMessage('')}
+                    className="ml-auto text-red-600 hover:text-red-800"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Progress Bar */}
           <Card className="mb-6">
             <CardContent className="pt-6">

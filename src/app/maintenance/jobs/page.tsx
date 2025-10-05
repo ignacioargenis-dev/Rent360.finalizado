@@ -64,6 +64,9 @@ export default function MaintenanceJobsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -212,7 +215,8 @@ export default function MaintenanceJobsPage() {
 
   const handleExportJobs = () => {
     if (filteredJobs.length === 0) {
-      alert('No hay trabajos para exportar');
+      setErrorMessage('No hay trabajos para exportar');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -291,6 +295,38 @@ export default function MaintenanceJobsPage() {
       subtitle="Gestiona tus trabajos de mantenimiento contratados"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -417,9 +453,10 @@ export default function MaintenanceJobsPage() {
                 icon={Plus}
                 label="Nuevo Trabajo"
                 description="Agendar mantenimiento"
-                onClick={() =>
-                  alert('Funcionalidad: Abrir formulario para nuevo trabajo de mantenimiento')
-                }
+                onClick={() => {
+                  setSuccessMessage('Formulario de nuevo trabajo próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
@@ -449,7 +486,10 @@ export default function MaintenanceJobsPage() {
                 icon={Calendar}
                 label="Calendario"
                 description="Ver agenda"
-                onClick={() => alert('Funcionalidad: Abrir vista de calendario')}
+                onClick={() => {
+                  setSuccessMessage('Vista de calendario próximamente disponible');
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}
               />
 
               <QuickActionButton
@@ -459,7 +499,8 @@ export default function MaintenanceJobsPage() {
                 onClick={() => {
                   setStatusFilter('in_progress');
                   setTypeFilter('all');
-                  alert('Mostrando trabajos urgentes en progreso');
+                  setSuccessMessage('Mostrando trabajos urgentes en progreso');
+                  setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />
 

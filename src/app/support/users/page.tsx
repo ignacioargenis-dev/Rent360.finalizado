@@ -39,6 +39,8 @@ import {
   ChevronRight,
   X,
   Loader2,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -83,6 +85,9 @@ export default function SupportUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [creatingUser, setCreatingUser] = useState(false);
 
   const [newUser, setNewUser] = useState({
@@ -99,7 +104,8 @@ export default function SupportUsersPage() {
 
   const createUser = async () => {
     if (!newUser.name || !newUser.email) {
-      alert('Nombre y email son requeridos');
+      setErrorMessage('Nombre y email son requeridos');
+      setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
 
@@ -130,12 +136,14 @@ export default function SupportUsersPage() {
       // Recargar lista de usuarios
       loadUsers();
 
-      alert('Usuario creado exitosamente');
+      setSuccessMessage('Usuario creado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error creando usuario:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al crear usuario');
+      setErrorMessage('Error al crear usuario. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setCreatingUser(false);
     }
@@ -352,6 +360,38 @@ export default function SupportUsersPage() {
       subtitle="Administra y gestiona todos los usuarios del sistema"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>

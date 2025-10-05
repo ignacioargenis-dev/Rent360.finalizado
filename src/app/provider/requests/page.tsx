@@ -11,6 +11,7 @@ import {
   Ticket,
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
   Clock,
   CheckCircle,
   DollarSign,
@@ -38,6 +39,9 @@ export default function ProviderRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const [requests, setRequests] = useState<any[]>([
     {
       id: '1',
@@ -54,7 +58,7 @@ export default function ProviderRequestsPage() {
       estimatedPrice: 25000,
       preferredDate: '2024-01-17',
       images: ['grifo1.jpg', 'grifo2.jpg'],
-      notes: 'Cliente disponible entre 14:00 y 18:00 hrs'
+      notes: 'Cliente disponible entre 14:00 y 18:00 hrs',
     },
     {
       id: '2',
@@ -72,7 +76,7 @@ export default function ProviderRequestsPage() {
       quotedPrice: 52000,
       preferredDate: '2024-01-18',
       images: [],
-      notes: 'Propiedad tiene 3 dormitorios y 2 baños'
+      notes: 'Propiedad tiene 3 dormitorios y 2 baños',
     },
     {
       id: '3',
@@ -91,7 +95,7 @@ export default function ProviderRequestsPage() {
       acceptedPrice: 38000,
       preferredDate: '2024-01-20',
       images: ['sala1.jpg'],
-      notes: 'Cliente prefiere tonos neutros'
+      notes: 'Cliente prefiere tonos neutros',
     },
     {
       id: '4',
@@ -111,7 +115,7 @@ export default function ProviderRequestsPage() {
       preferredDate: '2024-01-15',
       completedDate: '2024-01-16',
       images: ['jardin1.jpg', 'jardin2.jpg'],
-      notes: 'Sistema incluye programador automático'
+      notes: 'Sistema incluye programador automático',
     },
     {
       id: '5',
@@ -128,8 +132,8 @@ export default function ProviderRequestsPage() {
       estimatedPrice: 35000,
       preferredDate: '2024-01-18',
       images: ['garage1.jpg'],
-      notes: 'Puerta marca Chamberlain, modelo antiguo'
-    }
+      notes: 'Puerta marca Chamberlain, modelo antiguo',
+    },
   ]);
 
   useEffect(() => {
@@ -148,7 +152,7 @@ export default function ProviderRequestsPage() {
         completedRequests: requests.filter(r => r.status === 'completed').length,
         totalRevenue: requests
           .filter(r => r.finalPrice || r.acceptedPrice)
-          .reduce((sum, r) => sum + (r.finalPrice || r.acceptedPrice || 0), 0)
+          .reduce((sum, r) => sum + (r.finalPrice || r.acceptedPrice || 0), 0),
       };
 
       setData(overviewData);
@@ -163,32 +167,33 @@ export default function ProviderRequestsPage() {
   };
 
   const handleAcceptRequest = (requestId: string) => {
-    setRequests(prev => prev.map(request =>
-      request.id === requestId
-        ? { ...request, status: 'accepted' }
-        : request
-    ));
-    alert('Solicitud aceptada exitosamente');
+    setRequests(prev =>
+      prev.map(request => (request.id === requestId ? { ...request, status: 'accepted' } : request))
+    );
+    setSuccessMessage('Solicitud aceptada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleRejectRequest = (requestId: string) => {
-    setRequests(prev => prev.map(request =>
-      request.id === requestId
-        ? { ...request, status: 'rejected' }
-        : request
-    ));
-    alert('Solicitud rechazada');
+    setRequests(prev =>
+      prev.map(request => (request.id === requestId ? { ...request, status: 'rejected' } : request))
+    );
+    setSuccessMessage('Solicitud rechazada');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleSendQuote = (requestId: string) => {
     const request = requests.find(r => r.id === requestId);
     if (request) {
-      setRequests(prev => prev.map(r =>
-        r.id === requestId
-          ? { ...r, status: 'quoted', quotedPrice: request.estimatedPrice * 1.2 }
-          : r
-      ));
-      alert(`Cotización enviada por ${formatCurrency(request.estimatedPrice * 1.2)}`);
+      setRequests(prev =>
+        prev.map(r =>
+          r.id === requestId
+            ? { ...r, status: 'quoted', quotedPrice: request.estimatedPrice * 1.2 }
+            : r
+        )
+      );
+      setSuccessMessage(`Cotización enviada por ${formatCurrency(request.estimatedPrice * 1.2)}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -200,7 +205,7 @@ export default function ProviderRequestsPage() {
 
   const handleExportRequests = () => {
     const csvContent = [
-      ['Título', 'Cliente', 'Servicio', 'Estado', 'Urgencia', 'Precio Estimado', 'Fecha Creación']
+      ['Título', 'Cliente', 'Servicio', 'Estado', 'Urgencia', 'Precio Estimado', 'Fecha Creación'],
     ];
 
     requests.forEach(request => {
@@ -211,7 +216,7 @@ export default function ProviderRequestsPage() {
         request.status,
         request.urgency,
         request.estimatedPrice.toString(),
-        new Date(request.createdAt).toLocaleDateString('es-CL')
+        new Date(request.createdAt).toLocaleDateString('es-CL'),
       ]);
     });
 
@@ -220,7 +225,10 @@ export default function ProviderRequestsPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `solicitudes_proveedor_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `solicitudes_proveedor_${new Date().toISOString().split('T')[0]}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -241,7 +249,7 @@ export default function ProviderRequestsPage() {
       quoted: { label: 'Cotizado', color: 'bg-blue-100 text-blue-800' },
       accepted: { label: 'Aceptado', color: 'bg-green-100 text-green-800' },
       completed: { label: 'Completado', color: 'bg-purple-100 text-purple-800' },
-      rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-800' }
+      rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -251,7 +259,7 @@ export default function ProviderRequestsPage() {
     const urgencyConfig = {
       high: { label: 'Alta', color: 'bg-red-100 text-red-800' },
       medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800' },
-      low: { label: 'Baja', color: 'bg-green-100 text-green-800' }
+      low: { label: 'Baja', color: 'bg-green-100 text-green-800' },
     };
     const config = urgencyConfig[urgency as keyof typeof urgencyConfig] || urgencyConfig.medium;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -296,6 +304,38 @@ export default function ProviderRequestsPage() {
       subtitle="Gestiona las solicitudes de servicio que recibes"
     >
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -353,12 +393,12 @@ export default function ProviderRequestsPage() {
             <TabsTrigger value="completed">Completadas</TabsTrigger>
           </TabsList>
 
-          {['all', 'pending', 'quoted', 'accepted', 'completed'].map((tabValue) => (
+          {['all', 'pending', 'quoted', 'accepted', 'completed'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="space-y-4">
                 {requests
                   .filter(request => tabValue === 'all' || request.status === tabValue)
-                  .map((request) => (
+                  .map(request => (
                     <Card key={request.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -382,7 +422,9 @@ export default function ProviderRequestsPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4" />
-                                <span>{new Date(request.createdAt).toLocaleDateString('es-CL')}</span>
+                                <span>
+                                  {new Date(request.createdAt).toLocaleDateString('es-CL')}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <DollarSign className="w-4 h-4" />
@@ -403,7 +445,10 @@ export default function ProviderRequestsPage() {
                                 </div>
                                 <div className="flex gap-2">
                                   {request.images.map((image: string, index: number) => (
-                                    <div key={index} className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                    <div
+                                      key={index}
+                                      className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center"
+                                    >
                                       <span className="text-xs text-gray-600">IMG</span>
                                     </div>
                                   ))}
@@ -422,10 +467,7 @@ export default function ProviderRequestsPage() {
                               Ver Detalles
                             </Button>
 
-                            <Button
-                              size="sm"
-                              onClick={() => handleContactClient(request)}
-                            >
+                            <Button size="sm" onClick={() => handleContactClient(request)}>
                               <MessageSquare className="w-4 h-4 mr-2" />
                               Contactar
                             </Button>
@@ -497,32 +539,56 @@ export default function ProviderRequestsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/requests/new')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/requests/new')}
+              >
                 <Plus className="w-6 h-6 mb-2" />
                 <span>Crear Solicitud</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={handleExportRequests}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={handleExportRequests}
+              >
                 <Download className="w-6 h-6 mb-2" />
                 <span>Exportar Solicitudes</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/dashboard')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/dashboard')}
+              >
                 <Ticket className="w-6 h-6 mb-2" />
                 <span>Ver Dashboard</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/messages')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/messages')}
+              >
                 <MessageSquare className="w-6 h-6 mb-2" />
                 <span>Mensajes</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/ratings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/ratings')}
+              >
                 <CheckCircle className="w-6 h-6 mb-2" />
                 <span>Ver Reseñas</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={loadPageData}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={loadPageData}
+              >
                 <RefreshCw className="w-6 h-6 mb-2" />
                 <span>Actualizar Datos</span>
               </Button>

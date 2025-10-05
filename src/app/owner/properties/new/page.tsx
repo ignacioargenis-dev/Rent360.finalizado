@@ -3,6 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +93,7 @@ const regions = [
 ];
 
 export default function NewPropertyPage() {
+  const router = useRouter();
   const { user } = useUserState();
 
   // Define empty arrays with explicit types
@@ -119,6 +121,8 @@ export default function NewPropertyPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const validateStep = (currentStep: number) => {
     const newErrors: Record<string, string> = {};
@@ -246,7 +250,8 @@ export default function NewPropertyPage() {
     });
 
     if (validFiles.length !== files.length) {
-      alert('Solo se permiten imágenes en formato JPEG, PNG o WebP');
+      setErrorMessage('Solo se permiten imágenes en formato JPEG, PNG o WebP');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
 
     // Validate file size (max 5MB per file)
@@ -256,7 +261,8 @@ export default function NewPropertyPage() {
     });
 
     if (sizeValidFiles.length !== validFiles.length) {
-      alert('Las imágenes no pueden superar los 5MB cada una');
+      setErrorMessage('Las imágenes no pueden superar los 5MB cada una');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
 
     setFormData(prev => ({
@@ -325,18 +331,21 @@ export default function NewPropertyPage() {
 
       if (response.ok) {
         const result = await response.json();
-        alert('Propiedad creada exitosamente');
-        // Redirect to properties list
-        window.location.href = '/owner/properties';
+        setSuccessMessage('Propiedad creada exitosamente');
+        setTimeout(() => {
+          router.push('/owner/properties');
+        }, 2000);
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al crear la propiedad');
+        setErrorMessage(error.error || 'Error al crear la propiedad');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error creating property:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al crear la propiedad');
+      setErrorMessage('Error al crear la propiedad. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setLoading(false);
     }
@@ -363,6 +372,38 @@ export default function NewPropertyPage() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto">
+          {/* Success Message */}
+          {successMessage && (
+            <Card className="mb-6 border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-green-800">{successMessage}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error Message */}
+          {errorMessage && (
+            <Card className="mb-6 border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <span className="text-red-800">{errorMessage}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setErrorMessage('')}
+                    className="ml-auto text-red-600 hover:text-red-800"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Progress Bar */}
           <Card className="mb-6">
             <CardContent className="pt-6">

@@ -28,6 +28,8 @@ import {
   MoreHorizontal,
   Grid,
   List,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { User, Property } from '@/types';
 
@@ -49,6 +51,10 @@ export default function AdminPropertiesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [loading, setLoading] = useState(true);
+
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -232,7 +238,8 @@ export default function AdminPropertiesPage() {
       logger.error('Error creating property:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al crear propiedad');
+      setErrorMessage('Error al crear propiedad. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
@@ -423,6 +430,38 @@ export default function AdminPropertiesPage() {
       subtitle="Administra todas las propiedades del sistema"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
