@@ -1,90 +1,92 @@
 'use client';
 
-// Build fix - force update
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { Database,
-  Download,
-  Upload,
-  RefreshCw,
+import {
+  Bell,
+  Mail,
+  Phone,
   Calendar,
   Clock,
-  HardDrive,
-  Shield,
+  Send,
   CheckCircle,
-  XCircle,
   AlertTriangle,
+  Users,
+  DollarSign,
+  TrendingUp,
   Settings,
-  Trash2, Eye, Play,
-  Pause,
-  Archive,
-  Cloud,
-  Server,
-  Plus, Info
 } from 'lucide-react';
-import Link from 'next/link';
 import { User } from '@/types';
 
-
-interface Backup {
+interface PaymentReminder {
   id: string;
-  name: string;
-  type: 'full' | 'incremental' | 'database' | 'files';
-  size: number;
-  status: 'completed' | 'in_progress' | 'failed' | 'scheduled';
-  createdAt: string;
-  completedAt?: string;
-  location: 'local' | 'cloud' | 'both';
-  description: string;
-  retentionDays: number;
-  encrypted: boolean;
-  checksum?: string;
+  tenantId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  propertyId: string;
+  propertyTitle: string;
+  amount: number;
+  dueDate: string;
+  reminderType: 'first' | 'second' | 'final' | 'urgent';
+  sentDate: string;
+  status: 'sent' | 'delivered' | 'opened' | 'failed';
+  channel: 'email' | 'sms' | 'both';
+  response?: 'paid' | 'contacted' | 'ignored' | 'pending';
 }
 
-interface BackupStats {
-  totalBackups: number;
-  totalSize: number;
-  lastBackup: string;
-  nextBackup: string;
+interface ReminderStats {
+  totalSent: number;
+  delivered: number;
+  opened: number;
+  responses: number;
   successRate: number;
-  storageUsed: number;
-  storageAvailable: number;
+  pendingAmount: number;
 }
 
-interface BackupSchedule {
-  id: string;
-  name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  time: string;
-  type: 'full' | 'incremental';
-  enabled: boolean;
-  nextRun: string;
-  retention: number;
+interface ReminderSettings {
+  autoReminders: boolean;
+  firstReminderDays: number;
+  secondReminderDays: number;
+  finalReminderDays: number;
+  emailTemplates: boolean;
+  smsEnabled: boolean;
 }
 
 export default function OwnerPaymentRemindersPage() {
-
   const [user, setUser] = useState<User | null>(null);
-
-  const [backups, setBackups] = useState<Backup[]>([]);
-
-  const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
-
-  const [stats, setStats] = useState<BackupStats>({
-    totalBackups: 0,
-    totalSize: 0,
-    lastBackup: '',
-    nextBackup: '',
+  const [reminders, setReminders] = useState<PaymentReminder[]>([]);
+  const [filteredReminders, setFilteredReminders] = useState<PaymentReminder[]>([]);
+  const [stats, setStats] = useState<ReminderStats>({
+    totalSent: 0,
+    delivered: 0,
+    opened: 0,
+    responses: 0,
     successRate: 0,
-    storageUsed: 0,
-    storageAvailable: 0,
+    pendingAmount: 0,
   });
-
+  const [settings, setSettings] = useState<ReminderSettings>({
+    autoReminders: true,
+    firstReminderDays: 3,
+    secondReminderDays: 7,
+    finalReminderDays: 14,
+    emailTemplates: true,
+    smsEnabled: false,
+  });
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [channelFilter, setChannelFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,262 +98,202 @@ export default function OwnerPaymentRemindersPage() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
-    const loadBackupData = async () => {
+    const loadRemindersData = async () => {
       try {
-        // Mock backups data
-        const mockBackups: Backup[] = [
+        // Mock reminders data
+        const mockReminders: PaymentReminder[] = [
           {
-            id: '1',
-            name: 'Backup Completo Diario',
-            type: 'full',
-            size: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString(),
-            location: 'both',
-            description: 'Backup completo del sistema incluyendo base de datos y archivos',
-            retentionDays: 30,
-            encrypted: true,
-            checksum: 'a1b2c3d4e5f6...',
+            id: 'r1',
+            tenantId: 't1',
+            tenantName: 'María González',
+            tenantEmail: 'maria@example.com',
+            tenantPhone: '+56912345678',
+            propertyId: 'p1',
+            propertyTitle: 'Apartamento Centro',
+            amount: 850000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+            reminderType: 'first',
+            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            status: 'delivered',
+            channel: 'email',
+            response: 'pending',
           },
           {
-            id: '2',
-            name: 'Backup Incremental',
-            type: 'incremental',
-            size: 150 * 1024 * 1024, // 150 MB
-            status: 'completed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-            completedAt: new Date(Date.now() - 1000 * 60 * 60 * 11).toISOString(),
-            location: 'cloud',
-            description: 'Backup incremental con cambios desde el último backup completo',
-            retentionDays: 7,
-            encrypted: true,
+            id: 'r2',
+            tenantId: 't2',
+            tenantName: 'Carlos Rodríguez',
+            tenantEmail: 'carlos@example.com',
+            tenantPhone: '+56987654321',
+            propertyId: 'p2',
+            propertyTitle: 'Casa Los Dominicos',
+            amount: 1200000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
+            reminderType: 'second',
+            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+            status: 'opened',
+            channel: 'both',
+            response: 'contacted',
           },
           {
-            id: '3',
-            name: 'Backup Base de Datos',
-            type: 'database',
-            size: 450 * 1024 * 1024, // 450 MB
-            status: 'in_progress',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            location: 'local',
-            description: 'Backup exclusivo de la base de datos PostgreSQL',
-            retentionDays: 14,
-            encrypted: true,
+            id: 'r3',
+            tenantId: 't3',
+            tenantName: 'Ana López',
+            tenantEmail: 'ana@example.com',
+            tenantPhone: '+56955556666',
+            propertyId: 'p3',
+            propertyTitle: 'Oficina Las Condes',
+            amount: 75000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+            reminderType: 'first',
+            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+            status: 'sent',
+            channel: 'email',
+            response: 'pending',
           },
           {
-            id: '4',
-            name: 'Backup Archivos',
-            type: 'files',
-            size: 1.8 * 1024 * 1024 * 1024, // 1.8 GB
+            id: 'r4',
+            tenantId: 't1',
+            tenantName: 'María González',
+            tenantEmail: 'maria@example.com',
+            tenantPhone: '+56912345678',
+            propertyId: 'p1',
+            propertyTitle: 'Apartamento Centro',
+            amount: 850000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+            reminderType: 'final',
+            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
             status: 'failed',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-            location: 'cloud',
-            description: 'Backup de archivos de usuario y medios',
-            retentionDays: 21,
-            encrypted: true,
+            channel: 'email',
+            response: 'pending',
           },
           {
-            id: '5',
-            name: 'Backup Programado',
-            type: 'full',
-            size: 0,
-            status: 'scheduled',
-            createdAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            location: 'both',
-            description: 'Backup completo programado automáticamente',
-            retentionDays: 30,
-            encrypted: true,
+            id: 'r5',
+            tenantId: 't4',
+            tenantName: 'Pedro Martínez',
+            tenantEmail: 'pedro@example.com',
+            tenantPhone: '+56977778888',
+            propertyId: 'p4',
+            propertyTitle: 'Local Vitacura',
+            amount: 500000,
+            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
+            reminderType: 'urgent',
+            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+            status: 'delivered',
+            channel: 'both',
+            response: 'paid',
           },
         ];
 
-        // Mock schedules
-        const mockSchedules: BackupSchedule[] = [
-          {
-            id: '1',
-            name: 'Backup Diario Completo',
-            frequency: 'daily',
-            time: '02:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-            retention: 30,
-          },
-          {
-            id: '2',
-            name: 'Backup Incremental Horario',
-            frequency: 'daily',
-            time: '06:00, 12:00, 18:00',
-            type: 'incremental',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 1).toISOString(),
-            retention: 7,
-          },
-          {
-            id: '3',
-            name: 'Backup Semanal',
-            frequency: 'weekly',
-            time: 'domingo 03:00',
-            type: 'full',
-            enabled: true,
-            nextRun: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-            retention: 90,
-          },
-        ];
-
-        setBackups(mockBackups);
-        setSchedules(mockSchedules);
+        setReminders(mockReminders);
+        setFilteredReminders(mockReminders);
 
         // Calculate stats
-        const completedBackups = mockBackups.filter(b => b.status === 'completed');
-        const totalSize = completedBackups.reduce((sum, backup) => sum + backup.size, 0);
-        const successRate = completedBackups.length > 0 ? 
-          (completedBackups.length / mockBackups.length) * 100 : 0;
+        const totalSent = mockReminders.length;
+        const delivered = mockReminders.filter(r => r.status === 'delivered').length;
+        const opened = mockReminders.filter(r => r.status === 'opened').length;
+        const responses = mockReminders.filter(r => r.response && r.response !== 'pending').length;
+        const successRate = responses > 0 ? (responses / totalSent) * 100 : 0;
+        const pendingAmount = mockReminders
+          .filter(r => r.response !== 'paid')
+          .reduce((sum, r) => sum + r.amount, 0);
 
-        const backupStats: BackupStats = {
-          totalBackups: mockBackups.length,
-          totalSize,
-          lastBackup: completedBackups.length > 0 ?
-            completedBackups[completedBackups.length - 1]?.completedAt || '' : '',
-          nextBackup: mockBackups.find(b => b.status === 'scheduled')?.createdAt || '',
+        const reminderStats: ReminderStats = {
+          totalSent,
+          delivered,
+          opened,
+          responses,
           successRate,
-          storageUsed: totalSize,
-          storageAvailable: 10 * 1024 * 1024 * 1024 * 1024, // 10 TB
+          pendingAmount,
         };
 
-        setStats(backupStats);
+        setStats(reminderStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading backup data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading reminders data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadBackupData();
+    loadRemindersData();
   }, []);
 
-  const createBackup = async (type: 'full' | 'incremental' | 'database' | 'files') => {
-    const newBackup: Backup = {
-      id: Date.now().toString(),
-      name: `Backup ${type === 'full' ? 'Completo' : type === 'incremental' ? 'Incremental' : type === 'database' ? 'Base de Datos' : 'Archivos'}`,
-      type,
-      size: 0,
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-      location: 'both',
-      description: `Backup ${type} iniciado manualmente`,
-      retentionDays: 30,
-      encrypted: true,
-    };
+  useEffect(() => {
+    let filtered = reminders;
 
-    setBackups(prev => [newBackup, ...prev]);
-  };
-
-  const deleteBackup = async (backupId: string) => {
-    setBackups(prev => prev.filter(backup => backup.id !== backupId));
-  };
-
-  const toggleSchedule = async (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { ...schedule, enabled: !schedule.enabled }
-        : schedule,
-    ));
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'in_progress':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'failed':
-        return 'text-red-600 bg-red-50 border-red-200';
-      case 'scheduled':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(reminder => reminder.status === statusFilter);
     }
-  };
+
+    // Filter by channel
+    if (channelFilter !== 'all') {
+      filtered = filtered.filter(reminder => reminder.channel === channelFilter);
+    }
+
+    setFilteredReminders(filtered);
+  }, [reminders, statusFilter, channelFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'sent':
+        return <Badge className="bg-blue-100 text-blue-800">Enviado</Badge>;
+      case 'delivered':
+        return <Badge className="bg-green-100 text-green-800">Entregado</Badge>;
+      case 'opened':
+        return <Badge className="bg-purple-100 text-purple-800">Abierto</Badge>;
       case 'failed':
         return <Badge className="bg-red-100 text-red-800">Fallido</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>;
       default:
         return <Badge>Desconocido</Badge>;
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'in_progress':
-        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      case 'scheduled':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'full':
-        return <Archive className="w-5 h-5" />;
-      case 'incremental':
-        return <RefreshCw className="w-5 h-5" />;
-      case 'database':
-        return <Database className="w-5 h-5" />;
-      case 'files':
-        return <HardDrive className="w-5 h-5" />;
-      default:
-        return <Database className="w-5 h-5" />;
-    }
-  };
-
-  const getLocationIcon = (location: string) => {
-    switch (location) {
-      case 'local':
-        return <Server className="w-4 h-4" />;
-      case 'cloud':
-        return <Cloud className="w-4 h-4" />;
+  const getChannelBadge = (channel: string) => {
+    switch (channel) {
+      case 'email':
+        return <Badge variant="outline">Email</Badge>;
+      case 'sms':
+        return <Badge variant="outline">SMS</Badge>;
       case 'both':
-        return <div className="flex gap-1">
-          <Server className="w-4 h-4" />
-          <Cloud className="w-4 h-4" />
-        </div>;
+        return <Badge variant="outline">Email + SMS</Badge>;
       default:
-        return <Server className="w-4 h-4" />;
+        return <Badge variant="outline">{channel}</Badge>;
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) {
-return '0 B';
-}
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const getResponseBadge = (response?: string) => {
+    switch (response) {
+      case 'paid':
+        return <Badge className="bg-green-100 text-green-800">Pagado</Badge>;
+      case 'contacted':
+        return <Badge className="bg-blue-100 text-blue-800">Contactado</Badge>;
+      case 'ignored':
+        return <Badge className="bg-gray-100 text-gray-800">Ignorado</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+      default:
+        return <Badge variant="outline">Sin respuesta</Badge>;
+    }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -360,25 +302,14 @@ return '0 B';
     });
   };
 
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
-    }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
-    }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    }
+  const handleSendReminder = async (reminder: PaymentReminder) => {
+    alert(`Enviando recordatorio a ${reminder.tenantName} por ${formatCurrency(reminder.amount)}`);
+    // In a real app, this would send the reminder
+  };
 
-    return date.toLocaleDateString('es-CL');
+  const handleUpdateSettings = async () => {
+    alert('Configuración de recordatorios actualizada');
+    // In a real app, this would save the settings
   };
 
   if (loading) {
@@ -386,274 +317,267 @@ return '0 B';
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando sistema de backups...</p>
+          <p className="text-gray-600">Cargando recordatorios de pago...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Recordatorios de Pago Inteligentes" subtitle="Sistema automatizado con IA para gestionar recordatorios y notificaciones">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header with actions */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Recordatorios de Pago</h1>
-                  <p className="text-gray-600">Gestiona y monitorea todas las copias de seguridad del sistema</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => createBackup('full')}>
-                    <Play className="w-4 h-4 mr-2" />
-                    Backup Completo
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => createBackup('incremental')}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Backup Incremental
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configuración
-                  </Button>
-                </div>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Backups</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalBackups}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Archive className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Almacenamiento</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalSize)}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <HardDrive className="w-6 h-6 text-green-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.successRate.toFixed(1)}%</p>
-                      </div>
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Próximo Backup</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {stats.nextBackup ? formatRelativeTime(stats.nextBackup) : 'No programado'}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Backup List */}
-                <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Historial de Backups</CardTitle>
-                      <CardDescription>Todas las copias de seguridad realizadas</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {backups.map((backup) => (
-                          <Card key={backup.id} className={`border-l-4 ${getStatusColor(backup.status)}`}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <div className={`p-2 rounded-lg ${getStatusColor(backup.status)}`}>
-                                    {getTypeIcon(backup.type)}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h3 className="font-semibold text-gray-900">{backup.name}</h3>
-                                      {getStatusBadge(backup.status)}
-                                      {backup.encrypted && (
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                    <Shield className="w-3 h-3 mr-1" />
-                                    Encriptado
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{backup.description}</p>
-                              
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <HardDrive className="w-3 h-3" />
-                                  <span>{formatBytes(backup.size)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {getLocationIcon(backup.location)}
-                                  <span className="capitalize">{backup.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{formatRelativeTime(backup.createdAt)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{backup.retentionDays} días retención</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            {backup.status === 'completed' && (
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => deleteBackup(backup.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Backup Schedules */}
+    <UnifiedDashboardLayout
+      title="Recordatorios de Pago"
+      subtitle="Gestiona los recordatorios automáticos de pagos pendientes"
+    >
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Programación</CardTitle>
-                <CardDescription>Backups automáticos programados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {schedules.map((schedule) => (
-                    <Card key={schedule.id} className="border">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-sm">{schedule.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.frequency === 'daily' ? 'Diario' : 
-                                 schedule.frequency === 'weekly' ? 'Semanal' : 'Mensual'}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {schedule.type === 'full' ? 'Completo' : 'Incremental'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant={schedule.enabled ? 'default' : 'outline'}
-                            onClick={() => toggleSchedule(schedule.id)}
-                          >
-                            {schedule.enabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                        
-                        <div className="space-y-2 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>Horario:</span>
-                            <span>{schedule.time}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Próxima ejecución:</span>
-                            <span>{formatRelativeTime(schedule.nextRun)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Retención:</span>
-                            <span>{schedule.retention} días</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                <Button className="w-full mt-4" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Programación
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Storage Info */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Almacenamiento</CardTitle>
-                <CardDescription>Uso y disponibilidad de almacenamiento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Usado</span>
-                      <span>{formatBytes(stats.storageUsed)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(stats.storageUsed / stats.storageAvailable) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Disponible:</span>
-                      <span>{formatBytes(stats.storageAvailable - stats.storageUsed)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>{formatBytes(stats.storageAvailable)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <h1 className="text-2xl font-bold text-gray-900">Recordatorios de Pago</h1>
+            <p className="text-gray-600">
+              Monitorea y gestiona los recordatorios de pagos enviados a tus inquilinos
+            </p>
           </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Settings className="w-4 h-4 mr-2" />
+              Configuración
+            </Button>
+            <Button>
+              <Send className="w-4 h-4 mr-2" />
+              Enviar Recordatorios
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Enviados</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalSent}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Send className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Entregados</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.delivered}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Abiertos</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.opened}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Respuestas</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.responses}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Bell className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Tasa Éxito</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.successRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-teal-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Monto Pendiente</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {formatCurrency(stats.pendingAmount)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="sent">Enviado</SelectItem>
+                <SelectItem value="delivered">Entregado</SelectItem>
+                <SelectItem value="opened">Abierto</SelectItem>
+                <SelectItem value="failed">Fallido</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={channelFilter} onValueChange={setChannelFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Canal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los canales</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="sms">SMS</SelectItem>
+                <SelectItem value="both">Ambos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Reminders List */}
+        <div className="space-y-4">
+          {filteredReminders.length === 0 ? (
+            <Card>
+              <CardContent className="pt-8 pb-8 text-center">
+                <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay recordatorios</h3>
+                <p className="text-gray-600">
+                  No se encontraron recordatorios con los filtros seleccionados.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredReminders.map(reminder => (
+              <Card key={reminder.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                          <span className="text-gray-600 font-semibold text-sm">
+                            {reminder.tenantName.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {reminder.tenantName}
+                          </h3>
+                          <p className="text-sm text-gray-600">{reminder.propertyTitle}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                        <div>
+                          <span className="font-medium">Monto:</span>
+                          <p className="text-lg font-bold text-gray-900">
+                            {formatCurrency(reminder.amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Vencimiento:</span>
+                          <p>{formatDate(reminder.dueDate)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Tipo:</span>
+                          <div className="mt-1">
+                            <Badge variant="outline" className="capitalize">
+                              {reminder.reminderType === 'first'
+                                ? '1er Recordatorio'
+                                : reminder.reminderType === 'second'
+                                  ? '2do Recordatorio'
+                                  : reminder.reminderType === 'final'
+                                    ? 'Recordatorio Final'
+                                    : 'Urgente'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Estado:</span>
+                          <div className="mt-1 flex gap-2">
+                            {getStatusBadge(reminder.status)}
+                            {getChannelBadge(reminder.channel)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Enviado: {formatDate(reminder.sentDate)}</span>
+                        <div className="flex items-center gap-2">
+                          <span>Respuesta:</span>
+                          {getResponseBadge(reminder.response)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 lg:min-w-[200px]">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSendReminder(reminder)}
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Reenviar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`mailto:${reminder.tenantEmail}`)}
+                      >
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`tel:${reminder.tenantPhone}`)}
+                      >
+                        <Phone className="w-4 h-4 mr-2" />
+                        Llamar
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </div>
     </UnifiedDashboardLayout>
   );
 }
-
-
