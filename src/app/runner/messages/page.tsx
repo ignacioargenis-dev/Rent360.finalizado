@@ -74,6 +74,29 @@ export default function RunnerMessagesPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const handleNewMessage = () => {
+    alert(
+      'Abriendo formulario para nuevo mensaje... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open a new message modal
+  };
+
+  const handleArchiveConversation = () => {
+    alert('Archivando conversación... Esta funcionalidad estará disponible próximamente.');
+  };
+
+  const handleResolveConversation = () => {
+    alert(
+      'Marcando conversación como resuelta... Esta funcionalidad estará disponible próximamente.'
+    );
+  };
+
+  const handleReplyToMessage = (messageId: string) => {
+    alert(
+      `Respondiendo al mensaje ${messageId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -338,7 +361,7 @@ export default function RunnerMessagesPage() {
             <p className="text-gray-600">Gestiona tus conversaciones con clientes y el equipo</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleNewMessage}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Mensaje
             </Button>
@@ -480,10 +503,10 @@ export default function RunnerMessagesPage() {
                   <div className="flex gap-2">
                     {getSelectedConversation()?.status === 'active' && (
                       <>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={handleArchiveConversation}>
                           Archivar
                         </Button>
-                        <Button variant="default" size="sm">
+                        <Button variant="default" size="sm" onClick={handleResolveConversation}>
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Resolver
                         </Button>

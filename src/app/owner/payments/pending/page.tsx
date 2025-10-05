@@ -27,6 +27,7 @@ import {
   Search,
   Filter,
   Send,
+  FileText,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -71,6 +72,28 @@ export default function OwnerPendingPaymentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  const handleSendBulkReminders = async () => {
+    const overduePayments = filteredPayments.filter(
+      p => p.status === 'overdue' || p.status === 'urgent'
+    );
+    if (overduePayments.length === 0) {
+      alert('No hay pagos pendientes para enviar recordatorios.');
+      return;
+    }
+
+    alert(
+      `Enviando recordatorios a ${overduePayments.length} inquilinos... Esta funcionalidad estará disponible próximamente.`
+    );
+    // In a real app, this would send bulk email/SMS reminders
+  };
+
+  const handleGenerateReceipt = async (paymentId: string) => {
+    alert(
+      `Generando recibo para el pago ${paymentId}... Esta funcionalidad estará disponible próximamente.`
+    );
+    // In a real app, this would generate and download a PDF receipt
+  };
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -339,7 +362,7 @@ export default function OwnerPendingPaymentsPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleSendBulkReminders}>
               <Send className="w-4 h-4 mr-2" />
               Enviar Recordatorios Masivos
             </Button>
@@ -565,6 +588,14 @@ export default function OwnerPendingPaymentsPage() {
                       >
                         <Mail className="w-4 h-4 mr-2" />
                         Email
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateReceipt(payment.id)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Generar Recibo
                       </Button>
                       <Button
                         variant="default"

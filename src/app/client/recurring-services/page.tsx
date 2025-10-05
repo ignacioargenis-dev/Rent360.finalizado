@@ -65,6 +65,40 @@ export default function ClientRecurringServicesPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const handleConfigureServices = () => {
+    alert(
+      'Abriendo configuración de servicios recurrentes... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open service preferences modal
+  };
+
+  const handleNewService = () => {
+    alert(
+      'Abriendo formulario para solicitar nuevo servicio recurrente... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open a service request modal
+  };
+
+  const handleServiceDetails = (serviceId: string) => {
+    alert(
+      `Mostrando detalles completos del servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
+
+  const handleModifyService = (serviceId: string) => {
+    alert(
+      `Abriendo modificación del servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
+
+  const handleCancelService = (serviceId: string) => {
+    if (confirm('¿Estás seguro de que deseas cancelar este servicio recurrente?')) {
+      alert(
+        `Cancelando servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
+      );
+    }
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -276,19 +310,6 @@ export default function ClientRecurringServicesPage() {
     alert('Estado del servicio actualizado');
   };
 
-  const handleCancelService = async (serviceId: string) => {
-    if (!confirm('¿Estás seguro de que deseas cancelar este servicio?')) {
-      return;
-    }
-
-    setServices(prev =>
-      prev.map(service =>
-        service.id === serviceId ? { ...service, status: 'cancelled' } : service
-      )
-    );
-    alert('Servicio cancelado');
-  };
-
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center gap-1">
@@ -331,11 +352,11 @@ export default function ClientRecurringServicesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleConfigureServices}>
               <Settings className="w-4 h-4 mr-2" />
               Configuración
             </Button>
-            <Button>
+            <Button onClick={handleNewService}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Servicio
             </Button>
@@ -518,7 +539,11 @@ export default function ClientRecurringServicesPage() {
                           Reanudar
                         </Button>
                       )}
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleModifyService(service.id)}
+                      >
                         <Settings className="w-4 h-4 mr-2" />
                         Modificar
                       </Button>

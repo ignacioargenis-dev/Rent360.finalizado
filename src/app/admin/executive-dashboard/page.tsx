@@ -80,6 +80,48 @@ export default function AdminExecutiveDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const handleExportReport = async () => {
+    alert(
+      'Generando y descargando reporte ejecutivo... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would generate a comprehensive PDF report
+  };
+
+  const handleConfigureDashboard = () => {
+    alert(
+      'Abriendo configuración del dashboard... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open a dashboard configuration modal
+  };
+
+  const handleGenerateReport = () => {
+    alert(
+      'Generando reporte ejecutivo completo... Esta funcionalidad estará disponible próximamente.'
+    );
+  };
+
+  const handleReviewKPIs = () => {
+    alert(
+      'Abriendo revisión de KPIs del equipo... Esta funcionalidad estará disponible próximamente.'
+    );
+  };
+
+  const handleScheduleMeeting = () => {
+    alert(
+      'Abriendo calendario para programar reunión estratégica... Esta funcionalidad estará disponible próximamente.'
+    );
+  };
+
+  const handleMarketAnalysis = () => {
+    alert('Abriendo análisis de mercado... Esta funcionalidad estará disponible próximamente.');
+  };
+
+  const handleConfigureObjectives = () => {
+    alert(
+      'Abriendo configuración de objetivos... Esta funcionalidad estará disponible próximamente.'
+    );
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -231,11 +273,11 @@ export default function AdminExecutiveDashboardPage() {
             <p className="text-gray-600">Métricas clave y rendimiento del negocio</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExportReport}>
               <Download className="w-4 h-4 mr-2" />
               Exportar Reporte
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleConfigureDashboard}>
               <Settings className="w-4 h-4 mr-2" />
               Configurar Dashboard
             </Button>
@@ -458,23 +500,43 @@ export default function AdminExecutiveDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={handleGenerateReport}
+                  >
                     <FileText className="w-4 h-4 mr-2" />
                     Generar Reporte Ejecutivo
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={handleReviewKPIs}
+                  >
                     <Users className="w-4 h-4 mr-2" />
                     Revisar KPIs de Equipo
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={handleScheduleMeeting}
+                  >
                     <Calendar className="w-4 h-4 mr-2" />
                     Programar Reunión Estratégica
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={handleMarketAnalysis}
+                  >
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Análisis de Mercado
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={handleConfigureObjectives}
+                  >
                     <Settings className="w-4 h-4 mr-2" />
                     Configurar Objetivos
                   </Button>

@@ -46,10 +46,13 @@ interface ChatConversation {
     name: string;
     avatar?: string;
     role: 'owner' | 'tenant' | 'provider' | 'admin';
+    phone?: string;
+    email?: string;
   }[];
   lastMessage: ChatMessage;
   unreadCount: number;
   updatedAt: string;
+  status: 'active' | 'archived' | 'resolved';
   propertyId?: string;
   propertyTitle?: string;
 }
@@ -74,6 +77,9 @@ export default function ChatPage() {
     responseTime: '2.5h',
   });
   const [loading, setLoading] = useState(true);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredConversations, setFilteredConversations] = useState<ChatConversation[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,11 +108,15 @@ export default function ChatPage() {
                 id: 'user1',
                 name: 'María González',
                 role: 'tenant',
+                phone: '+56912345678',
+                email: 'maria@example.com',
               },
               {
                 id: 'user2',
                 name: 'Juan Pérez',
                 role: 'owner',
+                phone: '+56987654321',
+                email: 'juan@example.com',
               },
             ],
             lastMessage: {
@@ -120,6 +130,7 @@ export default function ChatPage() {
             },
             unreadCount: 2,
             updatedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+            status: 'active',
             propertyId: 'prop1',
             propertyTitle: 'Apartamento Centro',
           },
@@ -130,11 +141,15 @@ export default function ChatPage() {
                 id: 'user3',
                 name: 'Carlos Rodríguez',
                 role: 'provider',
+                phone: '+56955556666',
+                email: 'carlos@example.com',
               },
               {
                 id: 'user2',
                 name: 'Juan Pérez',
                 role: 'owner',
+                phone: '+56987654321',
+                email: 'juan@example.com',
               },
             ],
             lastMessage: {
@@ -148,6 +163,7 @@ export default function ChatPage() {
             },
             unreadCount: 0,
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            status: 'active',
             propertyId: 'prop2',
             propertyTitle: 'Casa Los Dominicos',
           },
@@ -158,11 +174,15 @@ export default function ChatPage() {
                 id: 'user4',
                 name: 'Ana López',
                 role: 'tenant',
+                phone: '+56977778888',
+                email: 'ana@example.com',
               },
               {
                 id: 'user2',
                 name: 'Juan Pérez',
                 role: 'owner',
+                phone: '+56987654321',
+                email: 'juan@example.com',
               },
             ],
             lastMessage: {
@@ -176,6 +196,7 @@ export default function ChatPage() {
             },
             unreadCount: 0,
             updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            status: 'resolved',
             propertyId: 'prop3',
             propertyTitle: 'Oficina Las Condes',
           },
@@ -239,6 +260,7 @@ export default function ChatPage() {
         };
 
         setStats(chatStats);
+        setFilteredConversations(mockConversations);
         setLoading(false);
       } catch (error) {
         logger.error('Error loading chat data:', {
@@ -251,6 +273,21 @@ export default function ChatPage() {
     loadUserData();
     loadChatData();
   }, []);
+
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+    } else {
+      const filtered = conversations.filter(
+        conv =>
+          conv.participants.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          conv.propertyTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          conv.lastMessage.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredConversations(filtered);
+    }
+  }, [conversations, searchQuery]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -300,6 +337,61 @@ export default function ChatPage() {
       };
       setMessages(prev => [...prev, autoReply]);
     }, 2000);
+  };
+
+  const handleNewChat = () => {
+    setShowNewChatDialog(true);
+  };
+
+  const handleArchiveConversation = async () => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    // Mark conversation as archived
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation ? { ...conv, status: 'archived' as const } : conv
+      )
+    );
+
+    setSelectedConversation(null);
+    alert('Conversación archivada exitosamente');
+  };
+
+  const handleResolveConversation = async () => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    // Mark conversation as resolved
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation ? { ...conv, status: 'resolved' as const } : conv
+      )
+    );
+
+    setSelectedConversation(null);
+    alert('Conversación marcada como resuelta');
+  };
+
+  const handleCallContact = (conversation: ChatConversation) => {
+    const contact = conversation.participants.find(p => p.id !== user?.id);
+    if (contact?.phone) {
+      window.open(`tel:${contact.phone}`);
+    } else {
+      alert('No hay número de teléfono disponible para este contacto');
+    }
+  };
+
+  const handleEmailContact = (conversation: ChatConversation) => {
+    const contact = conversation.participants.find(p => p.id !== user?.id);
+    if (contact?.email) {
+      const subject = `Seguimiento conversación - ${conversation.propertyTitle || 'Propiedad'}`;
+      window.open(`mailto:${contact.email}?subject=${encodeURIComponent(subject)}`);
+    } else {
+      alert('No hay dirección de email disponible para este contacto');
+    }
   };
 
   const handleConversationSelect = (conversationId: string) => {
@@ -392,7 +484,7 @@ export default function ChatPage() {
             <p className="text-gray-600">Centro de comunicación unificado</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleNewChat}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Chat
             </Button>
@@ -470,12 +562,17 @@ export default function ChatPage() {
                 </CardTitle>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input placeholder="Buscar..." className="pl-10" />
+                  <Input
+                    placeholder="Buscar conversaciones..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="space-y-1 overflow-y-auto max-h-[480px]">
-                  {conversations.map(conversation => (
+                  {filteredConversations.map(conversation => (
                     <div
                       key={conversation.id}
                       className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -566,15 +663,40 @@ export default function ChatPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCallContact(selectedConv)}
+                      >
                         <Phone className="w-4 h-4 mr-2" />
                         Llamar
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEmailContact(selectedConv)}
+                      >
                         <Mail className="w-4 h-4 mr-2" />
                         Email
                       </Button>
+                      {selectedConv.status === 'active' && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={handleArchiveConversation}>
+                            Archivar
+                          </Button>
+                          <Button variant="default" size="sm" onClick={handleResolveConversation}>
+                            <Check className="w-4 h-4 mr-2" />
+                            Resolver
+                          </Button>
+                        </>
+                      )}
+                      {selectedConv.status === 'archived' && (
+                        <Badge variant="secondary">Archivada</Badge>
+                      )}
+                      {selectedConv.status === 'resolved' && (
+                        <Badge className="bg-green-100 text-green-800">Resuelta</Badge>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -669,7 +791,7 @@ export default function ChatPage() {
                   <p className="text-gray-600 mb-4">
                     Elige una conversación de la lista para comenzar a chatear
                   </p>
-                  <Button>
+                  <Button onClick={handleNewChat}>
                     <Plus className="w-4 h-4 mr-2" />
                     Iniciar Nueva Conversación
                   </Button>

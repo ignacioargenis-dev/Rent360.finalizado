@@ -27,6 +27,7 @@ import {
   DollarSign,
   TrendingUp,
   Settings,
+  Eye,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -88,6 +89,36 @@ export default function OwnerPaymentRemindersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  const handleConfigureReminders = () => {
+    alert(
+      'Abriendo configuración de recordatorios de pago... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open a configuration modal for reminder settings
+  };
+
+  const handleSendBulkReminders = () => {
+    alert('Enviando recordatorios masivos... Esta funcionalidad estará disponible próximamente.');
+    // In a real app, this would send bulk payment reminders
+  };
+
+  const handleViewReminderDetails = (reminderId: string) => {
+    alert(
+      `Mostrando detalles del recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
+
+  const handleResendReminder = (reminderId: string) => {
+    alert(
+      `Reenviando recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
+
+  const handleCancelReminder = (reminderId: string) => {
+    alert(
+      `Cancelando recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
+    );
+  };
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -338,11 +369,11 @@ export default function OwnerPaymentRemindersPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleConfigureReminders}>
               <Settings className="w-4 h-4 mr-2" />
               Configuración
             </Button>
-            <Button>
+            <Button onClick={handleSendBulkReminders}>
               <Send className="w-4 h-4 mr-2" />
               Enviar Recordatorios
             </Button>
@@ -549,7 +580,15 @@ export default function OwnerPaymentRemindersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleSendReminder(reminder)}
+                        onClick={() => handleViewReminderDetails(reminder.id)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Ver Detalles
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResendReminder(reminder.id)}
                       >
                         <Send className="w-4 h-4 mr-2" />
                         Reenviar

@@ -61,6 +61,13 @@ export default function OwnerPropertyComparisonPage() {
   const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const handleExportComparison = () => {
+    alert(
+      'Generando y exportando comparación de propiedades... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would generate and download a PDF/Excel comparison report
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -323,7 +330,7 @@ export default function OwnerPropertyComparisonPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExportComparison}>
               <FileText className="w-4 h-4 mr-2" />
               Exportar Comparación
             </Button>

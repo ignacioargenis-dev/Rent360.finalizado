@@ -74,6 +74,57 @@ export default function BrokerActiveClientsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
+  const handleGenerateReport = async () => {
+    alert('Generando reporte de clientes... Esta funcionalidad estará disponible próximamente.');
+    // In a real app, this would generate and download a CSV/PDF report
+  };
+
+  const handleNewClient = () => {
+    alert(
+      'Abriendo formulario para nuevo cliente... Esta funcionalidad estará disponible próximamente.'
+    );
+    // In a real app, this would open a modal or navigate to a new client form
+  };
+
+  const handleViewClientDetails = (clientId: string) => {
+    alert(
+      `Mostrando detalles del cliente ${clientId}... Esta funcionalidad estará disponible próximamente.`
+    );
+    // In a real app, this would navigate to client detail page
+  };
+
+  const handleContactClient = (client: ActiveClient, method: 'phone' | 'email' | 'message') => {
+    switch (method) {
+      case 'phone':
+        if (client.phone) {
+          window.open(`tel:${client.phone}`);
+        } else {
+          alert('No hay número de teléfono disponible para este cliente');
+        }
+        break;
+      case 'email':
+        if (client.email) {
+          const subject = `Seguimiento cliente - ${client.name}`;
+          window.open(`mailto:${client.email}?subject=${encodeURIComponent(subject)}`);
+        } else {
+          alert('No hay dirección de email disponible para este cliente');
+        }
+        break;
+      case 'message':
+        alert(
+          `Iniciando conversación con ${client.name}... Esta funcionalidad estará disponible próximamente.`
+        );
+        break;
+    }
+  };
+
+  const handleRenewContract = (clientId: string) => {
+    alert(
+      `Iniciando proceso de renovación para cliente ${clientId}... Esta funcionalidad estará disponible próximamente.`
+    );
+    // In a real app, this would open a renewal modal or form
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -299,24 +350,6 @@ export default function BrokerActiveClientsPage() {
     return diffDays;
   };
 
-  const handleContactClient = (client: ActiveClient, method: 'phone' | 'email' | 'message') => {
-    switch (method) {
-      case 'phone':
-        window.open(`tel:${client.phone}`);
-        break;
-      case 'email':
-        window.open(`mailto:${client.email}?subject=Seguimiento de propiedad`);
-        break;
-      case 'message':
-        alert(`Función de mensajería no implementada aún. Cliente: ${client.name}`);
-        break;
-    }
-  };
-
-  const handleRenewContract = (clientId: string) => {
-    alert(`Función de renovación de contrato no implementada aún. Cliente ID: ${clientId}`);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -341,11 +374,11 @@ export default function BrokerActiveClientsPage() {
             <p className="text-gray-600">Administra tus clientes actuales y contratos activos</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleGenerateReport}>
               <FileText className="w-4 h-4 mr-2" />
               Reporte de Clientes
             </Button>
-            <Button>
+            <Button onClick={handleNewClient}>
               <Users className="w-4 h-4 mr-2" />
               Nuevo Cliente
             </Button>
@@ -574,7 +607,11 @@ export default function BrokerActiveClientsPage() {
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Mensaje
                       </Button>
-                      <Button variant="default" size="sm">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleViewClientDetails(client.id)}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalles
                       </Button>
