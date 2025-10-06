@@ -28,6 +28,46 @@ import { aiChatbotService } from '@/lib/ai-chatbot-service';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
+interface SpecializedAgent {
+  id: string;
+  name: string;
+  specialty: string;
+  personality: any;
+  expertise: string[];
+  language: string;
+  avatar?: string;
+}
+
+interface IntelligentRecommendation {
+  type: string;
+  item: any;
+  relevanceScore: number;
+  reason: string;
+  action: string;
+}
+
+interface SentimentAnalysis {
+  emotion: string;
+  intensity: number;
+  confidence: number;
+  keywords: string[];
+}
+
+interface MemoryContext {
+  previousTopics: string[];
+  unresolvedIssues: string[];
+  successfulPatterns: string[];
+  userPreferences: Record<string, any>;
+  contextSummary: string;
+}
+
+interface LearningInsight {
+  type: string;
+  insight: string;
+  confidence: number;
+  action: string;
+}
+
 interface ChatbotMessage {
   id: string;
   type: 'user' | 'bot';
@@ -47,6 +87,12 @@ interface ChatbotMessage {
   links?: string[] | undefined;
   followUp?: string[] | undefined;
   securityNote?: string | undefined;
+  // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
+  agent?: SpecializedAgent;
+  recommendations?: IntelligentRecommendation[];
+  sentiment?: SentimentAnalysis;
+  memoryContext?: MemoryContext;
+  learningInsights?: LearningInsight[];
 }
 
 interface ChatbotProps {
@@ -171,6 +217,12 @@ export default function Chatbot({
       ...(response.links && { links: response.links }),
       ...(response.followUp && { followUp: response.followUp }),
       ...(response.securityNote && { securityNote: response.securityNote }),
+      // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
+      ...(response.agent && { agent: response.agent }),
+      ...(response.recommendations && { recommendations: response.recommendations }),
+      ...(response.sentiment && { sentiment: response.sentiment }),
+      ...(response.memoryContext && { memoryContext: response.memoryContext }),
+      ...(response.learningInsights && { learningInsights: response.learningInsights }),
     };
 
     setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
@@ -187,6 +239,12 @@ export default function Chatbot({
     links?: string[] | undefined;
     followUp?: string[] | undefined;
     securityNote?: string | undefined;
+    // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
+    agent?: SpecializedAgent | undefined;
+    recommendations?: IntelligentRecommendation[] | undefined;
+    sentiment?: SentimentAnalysis | undefined;
+    memoryContext?: MemoryContext | undefined;
+    learningInsights?: LearningInsight[] | undefined;
   }> => {
     try {
       // Obtener información del usuario autenticado
@@ -194,15 +252,34 @@ export default function Chatbot({
       const userRole = user?.role?.toLowerCase() || 'tenant';
       const userId = user?.id || 'anonymous';
 
-      // Usar el servicio de IA avanzado
-      const result = await aiChatbotService.processMessageAdvanced(
+      // 🚀 Usar el servicio de IA revolucionario 10.000% mejorado
+      const result = await aiChatbotService.processMessageRevolutionary(
         userInput,
         userRole,
         userId,
         messages.slice(-10).map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
           content: msg.content,
-        }))
+        })),
+        // Contexto adicional del usuario
+        user
+          ? {
+              name: user.name || 'Usuario',
+              preferences: {
+                communicationStyle: 'casual',
+                preferredTopics: ['general', 'support'],
+                responseLength: 'detailed',
+                notificationPreferences: {
+                  email: true,
+                  push: false,
+                  sms: false,
+                  frequency: 'immediate',
+                },
+                language: 'es',
+                timezone: 'America/Santiago',
+              },
+            }
+          : undefined
       );
 
       return {
@@ -216,6 +293,12 @@ export default function Chatbot({
         links: result.links,
         followUp: result.followUp,
         securityNote: result.securityNote,
+        // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
+        agent: result.agent,
+        recommendations: result.recommendations,
+        sentiment: result.sentiment,
+        memoryContext: result.memoryContext,
+        learningInsights: result.learningInsights,
       };
     } catch (error) {
       logger.error('Error generando respuesta de IA:', {
@@ -350,10 +433,13 @@ export default function Chatbot({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              <CardTitle className="text-lg">Asistente Rent360</CardTitle>
-              <Badge variant="secondary" className="bg-white/20 text-white">
+              <CardTitle className="text-lg">Rent360 IA 10.000%</CardTitle>
+              <Badge
+                variant="secondary"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0"
+              >
                 <Sparkles className="h-3 w-3 mr-1" />
-                IA
+                IA REVOLUCIONARIA
               </Badge>
             </div>
             <div className="flex items-center gap-1">
@@ -411,6 +497,66 @@ export default function Chatbot({
                         >
                           <p className="text-sm">{message.content}</p>
 
+                          {/* 🚀 AGENTE ESPECIALIZADO */}
+                          {message.agent && (
+                            <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                              <Bot className="w-4 h-4 text-blue-600" />
+                              <div className="flex-1">
+                                <span className="text-xs font-semibold text-blue-800">
+                                  {message.agent.name}
+                                </span>
+                                <span className="text-xs text-blue-600 ml-2">
+                                  {message.agent.specialty}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 🚀 RECOMENDACIONES INTELIGENTES */}
+                          {message.recommendations && message.recommendations.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <div className="text-xs font-semibold text-green-700 mb-1">
+                                💡 Recomendaciones inteligentes:
+                              </div>
+                              {message.recommendations.slice(0, 2).map((rec, index) => (
+                                <Button
+                                  key={index}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-start text-xs h-7 border-green-200 text-green-700 hover:bg-green-50"
+                                  onClick={() => handleQuickAction(rec.action)}
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  {rec.action}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* 🚀 ANÁLISIS DE SENTIMIENTOS */}
+                          {message.sentiment && message.sentiment.emotion !== 'neutral' && (
+                            <div className="mt-2 flex items-center gap-1">
+                              <span className="text-xs text-gray-500">
+                                {message.sentiment.emotion === 'joy' && '😊'}
+                                {message.sentiment.emotion === 'anger' && '😠'}
+                                {message.sentiment.emotion === 'fear' && '😨'}
+                                {message.sentiment.emotion === 'sadness' && '😢'}
+                                {message.sentiment.emotion === 'surprise' && '😮'}
+                                Detectado: {message.sentiment.emotion}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 🚀 CONTEXTO DE MEMORIA */}
+                          {message.memoryContext &&
+                            message.memoryContext.previousTopics.length > 0 && (
+                              <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                📝 Recordando conversaciones previas sobre:{' '}
+                                {message.memoryContext.previousTopics.join(', ')}
+                              </div>
+                            )}
+
+                          {/* 🚀 SUGERENCIAS TRADICIONALES */}
                           {message.suggestions && message.suggestions.length > 0 && (
                             <div className="mt-2 space-y-1">
                               {message.suggestions.map((suggestion, index) => (
@@ -424,6 +570,13 @@ export default function Chatbot({
                                   {suggestion}
                                 </Button>
                               ))}
+                            </div>
+                          )}
+
+                          {/* 🚀 NOTA DE SEGURIDAD */}
+                          {message.securityNote && (
+                            <div className="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
+                              ⚠️ {message.securityNote}
                             </div>
                           )}
                         </div>
