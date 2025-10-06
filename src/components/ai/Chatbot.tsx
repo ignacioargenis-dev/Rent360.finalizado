@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { aiChatbotService } from '@/lib/ai-chatbot-service';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { logger } from '@/lib/logger';
 
 interface ChatbotMessage {
   id: string;
