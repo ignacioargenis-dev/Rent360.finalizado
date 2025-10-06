@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -95,7 +95,7 @@ export default function OwnerSettingsPage() {
       taxId: '',
       businessType: 'individual',
       commissionRate: 5.0,
-      paymentTerms: '15 dÃ­as',
+      paymentTerms: '15 días',
     },
   });
   const [loading, setLoading] = useState(true);
@@ -148,14 +148,14 @@ export default function OwnerSettingsPage() {
       const mockSettings: Partial<OwnerSettings> = {
         profile: {
           firstName: 'Juan',
-          lastName: 'Pérez',
+          lastName: 'P�rez',
           email: 'juan.perez@email.com',
           phone: '+56987654321',
           address: 'Av. Providencia 1234',
           city: 'Santiago',
           region: 'Metropolitana',
           description:
-            'Propietario de propiedades residenciales con más de 10 años de experiencia.',
+            'Propietario de propiedades residenciales con m�s de 10 a�os de experiencia.',
         },
         security: {
           twoFactorEnabled: false,
@@ -166,7 +166,7 @@ export default function OwnerSettingsPage() {
           taxId: '12.345.678-9',
           businessType: 'company',
           commissionRate: 5.0,
-          paymentTerms: '30 días',
+          paymentTerms: '30 d�as',
         },
       };
 
@@ -191,13 +191,13 @@ export default function OwnerSettingsPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      setSuccessMessage('Configuración guardada exitosamente');
+      setSuccessMessage('Configuraci�n guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setErrorMessage('Error al guardar la configuraci�n. Por favor, int�ntalo nuevamente.');
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
@@ -249,7 +249,7 @@ export default function OwnerSettingsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando configuración...</p>
+          <p className="text-gray-600">Cargando configuraci�n...</p>
         </div>
       </div>
     );
@@ -257,14 +257,14 @@ export default function OwnerSettingsPage() {
 
   return (
     <UnifiedDashboardLayout
-      title="ConfiguraciÃ³n"
+      title="Configuración"
       subtitle="Gestiona tu perfil y preferencias de propietario"
     >
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">ConfiguraciÃ³n</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Configuración</h1>
           <p className="text-gray-600">
-            Administra tu perfil, preferencias de notificaciones y configuraciÃ³n de seguridad
+            Administra tu perfil, preferencias de notificaciones y configuración de seguridad
           </p>
         </div>
 
@@ -293,7 +293,7 @@ export default function OwnerSettingsPage() {
                   onClick={() => setErrorMessage('')}
                   className="ml-auto text-red-600 hover:text-red-800"
                 >
-                  ×
+                  �
                 </Button>
               </div>
             </CardContent>
@@ -314,9 +314,9 @@ export default function OwnerSettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  InformaciÃ³n Personal
+                  Información Personal
                 </CardTitle>
-                <CardDescription>Actualiza tu informaciÃ³n personal y de contacto</CardDescription>
+                <CardDescription>Actualiza tu información personal y de contacto</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,7 +341,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Correo ElectrÃ³nico</Label>
+                  <Label htmlFor="email">Correo Electrónico</Label>
                   <Input
                     id="email"
                     type="email"
@@ -352,7 +352,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">TelÃ©fono</Label>
+                  <Label htmlFor="phone">Teléfono</Label>
                   <Input
                     id="phone"
                     value={settings.profile.phone}
@@ -362,12 +362,12 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="address">DirecciÃ³n</Label>
+                  <Label htmlFor="address">Dirección</Label>
                   <Input
                     id="address"
                     value={settings.profile.address}
                     onChange={e => updateProfile('address', e.target.value)}
-                    placeholder="Tu direcciÃ³n completa"
+                    placeholder="Tu dirección completa"
                   />
                 </div>
 
@@ -382,32 +382,32 @@ export default function OwnerSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="region">RegiÃ³n</Label>
+                    <Label htmlFor="region">Región</Label>
                     <Select
                       value={settings.profile.region}
                       onValueChange={value => updateProfile('region', value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona regiÃ³n" />
+                        <SelectValue placeholder="Selecciona región" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Metropolitana">Metropolitana</SelectItem>
-                        <SelectItem value="ValparaÃ­so">ValparaÃ­so</SelectItem>
-                        <SelectItem value="BiobÃ­o">BiobÃ­o</SelectItem>
+                        <SelectItem value="Valparaíso">Valparaíso</SelectItem>
+                        <SelectItem value="Biobío">Biobío</SelectItem>
                         <SelectItem value="Maule">Maule</SelectItem>
-                        <SelectItem value="AraucanÃ­a">AraucanÃ­a</SelectItem>
+                        <SelectItem value="Araucanía">Araucanía</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="description">DescripciÃ³n</Label>
+                  <Label htmlFor="description">Descripción</Label>
                   <Textarea
                     id="description"
                     value={settings.profile.description}
                     onChange={e => updateProfile('description', e.target.value)}
-                    placeholder="CuÃ©ntanos sobre ti y tu experiencia como propietario..."
+                    placeholder="Cuéntanos sobre ti y tu experiencia como propietario..."
                     rows={4}
                   />
                 </div>
@@ -424,7 +424,7 @@ export default function OwnerSettingsPage() {
                   Preferencias de Notificaciones
                 </CardTitle>
                 <CardDescription>
-                  Configura cÃ³mo y cuÃ¡ndo quieres recibir notificaciones
+                  Configura cómo y cuándo quieres recibir notificaciones
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -508,8 +508,8 @@ export default function OwnerSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="two-factor">AutenticaciÃ³n de Dos Factores</Label>
-                    <p className="text-sm text-gray-600">AÃ±ade una capa extra de seguridad</p>
+                    <Label htmlFor="two-factor">Autenticación de Dos Factores</Label>
+                    <p className="text-sm text-gray-600">Añade una capa extra de seguridad</p>
                   </div>
                   <Switch
                     id="two-factor"
@@ -519,7 +519,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="session-timeout">Tiempo de SesiÃ³n (minutos)</Label>
+                  <Label htmlFor="session-timeout">Tiempo de Sesión (minutos)</Label>
                   <Select
                     value={settings.security.sessionTimeout.toString()}
                     onValueChange={value => updateSecurity('sessionTimeout', parseInt(value))}
@@ -537,7 +537,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label>Ãšltimo Cambio de ContraseÃ±a</Label>
+                  <Label>Último Cambio de Contraseña</Label>
                   <p className="text-sm text-gray-600">
                     {settings.security.passwordLastChanged
                       ? new Date(settings.security.passwordLastChanged).toLocaleDateString('es-CL')
@@ -545,7 +545,7 @@ export default function OwnerSettingsPage() {
                   </p>
                   <Button variant="outline" className="mt-2">
                     <Key className="w-4 h-4 mr-2" />
-                    Cambiar ContraseÃ±a
+                    Cambiar Contraseña
                   </Button>
                 </div>
               </CardContent>
@@ -558,9 +558,9 @@ export default function OwnerSettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  InformaciÃ³n Empresarial
+                  Información Empresarial
                 </CardTitle>
-                <CardDescription>Configura tu informaciÃ³n fiscal y de negocio</CardDescription>
+                <CardDescription>Configura tu información fiscal y de negocio</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -591,7 +591,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="commission-rate">Tasa de ComisiÃ³n (%)</Label>
+                  <Label htmlFor="commission-rate">Tasa de Comisión (%)</Label>
                   <Input
                     id="commission-rate"
                     type="number"
@@ -609,12 +609,12 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="payment-terms">TÃ©rminos de Pago</Label>
+                  <Label htmlFor="payment-terms">Términos de Pago</Label>
                   <Input
                     id="payment-terms"
                     value={settings.business.paymentTerms}
                     onChange={e => updateBusiness('paymentTerms', e.target.value)}
-                    placeholder="Ej: 30 dÃ­as"
+                    placeholder="Ej: 30 días"
                   />
                 </div>
               </CardContent>

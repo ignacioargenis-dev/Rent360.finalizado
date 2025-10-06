@@ -1,253 +1,172 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/logger';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Building,
-  Users,
-  FileText,
-  CreditCard,
-  Star,
-  Settings,
-  Bell,
-  TrendingUp,
-  DollarSign,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  BarChart3,
-  UserPlus,
-  Eye,
-  Edit,
-  Trash2,
-  MessageSquare,
-  Ticket,
-  Database,
-  Shield,
-  Clock,
-  Search,
-  Calendar,
-  MapPin,
-  Wrench,
-  Camera,
-  Target,
-  Activity,
-  PieChart,
-  LineChart,
-  Info,
-  Plus,
-  Filter,
-  Download,
-  Upload,
-  RefreshCw,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Zap,
-  Mail,
-  Phone,
-  Globe,
-  Key,
+  Settings,
+  TestTube,
+  Webhook,
+  Shield,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  RefreshCw,
+  Plus,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useUserState } from '@/hooks/useUserState';
+import { logger } from '@/lib/logger';
 
-export default function IntegracionesPage() {
-  const router = useRouter();
+interface Integration {
+  id: string;
+  name: string;
+  type: 'payment' | 'communication' | 'analytics' | 'storage' | 'other';
+  provider: string;
+  status: 'active' | 'inactive' | 'error' | 'configuring';
+  lastSync: string;
+  apiKey?: string;
+  webhookUrl?: string;
+  config: Record<string, any>;
+}
 
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+interface IntegrationStats {
+  total: number;
+  active: number;
+  inactive: number;
+  error: number;
+}
 
-  const [integrations, setIntegrations] = useState<any[]>([
+export default function AdminIntegrationsPage() {
+  const { user } = useUserState();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [configData, setConfigData] = useState<Record<string, any>>({});
+
+  // Mock integrations data
+  const mockIntegrations: Integration[] = [
     {
       id: '1',
-      name: 'Khipu Pagos',
-      description: 'Sistema de pagos en línea chileno',
-      category: 'Pagos',
-      icon: 'CreditCard',
+      name: 'Stripe Payment Gateway',
+      type: 'payment',
+      provider: 'Stripe',
       status: 'active',
-      lastSync: '2024-01-15T10:30:00',
-      totalTransactions: 1247,
-      successRate: 98.5,
-      apiKey: 'khp_************1234',
-      webhookUrl: 'https://api.rent360.cl/webhooks/khipu',
+      lastSync: '2024-12-15 14:30:00',
+      apiKey: 'sk_test_...',
       config: {
-        merchantId: '123456789',
-        secretKey: 'sk_************abcd',
+        mode: 'test',
+        currency: 'CLP',
+        webhookSecret: 'whsec_...',
       },
     },
     {
       id: '2',
-      name: 'SendGrid Email',
-      description: 'Servicio de envío de correos electrónicos',
-      category: 'Comunicación',
-      icon: 'Mail',
+      name: 'Twilio SMS',
+      type: 'communication',
+      provider: 'Twilio',
       status: 'active',
-      lastSync: '2024-01-15T09:15:00',
-      totalTransactions: 3562,
-      successRate: 99.2,
-      apiKey: 'SG.************.xyz',
-      webhookUrl: null,
+      lastSync: '2024-12-15 14:25:00',
       config: {
-        apiKey: 'SG.************.xyz',
-        fromEmail: 'noreply@rent360.cl',
+        accountSid: 'AC...',
+        authToken: 'SK...',
+        phoneNumber: '+1234567890',
       },
     },
     {
       id: '3',
-      name: 'Google Maps',
-      description: 'Servicios de mapas y geolocalización',
-      category: 'Ubicación',
-      icon: 'MapPin',
-      status: 'active',
-      lastSync: '2024-01-14T16:45:00',
-      totalTransactions: 892,
-      successRate: 97.8,
-      apiKey: 'AIza************9876',
-      webhookUrl: null,
+      name: 'SendGrid Email',
+      type: 'communication',
+      provider: 'SendGrid',
+      status: 'error',
+      lastSync: '2024-12-15 12:00:00',
       config: {
-        apiKey: 'AIza************9876',
-        libraries: ['places', 'geometry'],
+        apiKey: 'SG...',
+        fromEmail: 'noreply@rent360.com',
       },
     },
     {
       id: '4',
-      name: 'Banco Estado',
-      description: 'Integración con servicios bancarios',
-      category: 'Bancario',
-      icon: 'Building',
-      status: 'pending',
-      lastSync: null,
-      totalTransactions: 0,
-      successRate: 0,
-      apiKey: null,
-      webhookUrl: null,
+      name: 'Google Analytics',
+      type: 'analytics',
+      provider: 'Google',
+      status: 'inactive',
+      lastSync: '2024-12-10 10:00:00',
       config: {
-        clientId: null,
-        clientSecret: null,
-        environment: 'sandbox',
+        trackingId: 'GA_MEASUREMENT_ID',
+        apiSecret: 'G-...',
       },
     },
     {
       id: '5',
-      name: 'Twilio SMS',
-      description: 'Servicio de envío de mensajes de texto',
-      category: 'Comunicación',
-      icon: 'Phone',
-      status: 'inactive',
-      lastSync: '2024-01-10T12:00:00',
-      totalTransactions: 234,
-      successRate: 95.6,
-      apiKey: 'AC************5678',
-      webhookUrl: null,
-      config: {
-        accountSid: 'AC************5678',
-        authToken: 'sk_************efgh',
-        fromNumber: '+56987654321',
-      },
-    },
-    {
-      id: '6',
-      name: 'MercadoPago',
-      description: 'Plataforma de pagos MercadoPago',
-      category: 'Pagos',
-      icon: 'DollarSign',
-      status: 'configuring',
-      lastSync: null,
-      totalTransactions: 0,
-      successRate: 0,
-      apiKey: 'APP_USR-************-123',
-      webhookUrl: 'https://api.rent360.cl/webhooks/mercadopago',
-      config: {
-        accessToken: 'APP_USR-************-123',
-        publicKey: 'TEST-************-456',
-      },
-    },
-    {
-      id: '7',
-      name: 'Sentry Monitoring',
-      description: 'Monitoreo de errores y rendimiento',
-      category: 'Monitoreo',
-      icon: 'Activity',
+      name: 'AWS S3 Storage',
+      type: 'storage',
+      provider: 'Amazon',
       status: 'active',
-      lastSync: '2024-01-15T11:00:00',
-      totalTransactions: 456,
-      successRate: 100,
-      apiKey: 'https://************@sentry.io/1234567',
-      webhookUrl: null,
+      lastSync: '2024-12-15 14:20:00',
       config: {
-        dsn: 'https://************@sentry.io/1234567',
-        environment: 'production',
+        accessKeyId: 'AKIA...',
+        secretAccessKey: '***',
+        region: 'us-east-1',
+        bucketName: 'rent360-storage',
       },
     },
-    {
-      id: '8',
-      name: 'Cloudinary Media',
-      description: 'Gestión y optimización de imágenes',
-      category: 'Media',
-      icon: 'Camera',
-      status: 'active',
-      lastSync: '2024-01-15T08:30:00',
-      totalTransactions: 1247,
-      successRate: 99.8,
-      apiKey: '************_cloudinary',
-      webhookUrl: null,
-      config: {
-        cloudName: 'rent360',
-        apiKey: '************',
-        apiSecret: '************',
-      },
-    },
-  ]);
-
-  const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
-  const [showConfigDialog, setShowConfigDialog] = useState(false);
-
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  ];
 
   useEffect(() => {
-    // Cargar datos de la página
-    loadPageData();
+    loadIntegrations();
   }, []);
 
-  const loadPageData = async () => {
+  const loadIntegrations = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-
-      // Mock integrations overview data
-      const overviewData = {
-        totalIntegrations: integrations.length,
-        activeIntegrations: integrations.filter(i => i.status === 'active').length,
-        pendingIntegrations: integrations.filter(
-          i => i.status === 'pending' || i.status === 'configuring'
-        ).length,
-        totalTransactions: integrations.reduce((sum, i) => sum + i.totalTransactions, 0),
-      };
-
-      setData(overviewData);
+      // Simular API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIntegrations(mockIntegrations);
     } catch (error) {
-      logger.error('Error loading page data:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      setError('Error al cargar los datos');
+      logger.error('Error al cargar integraciones', { error });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  const getStats = (): IntegrationStats => {
+    return {
+      total: integrations.length,
+      active: integrations.filter(i => i.status === 'active').length,
+      inactive: integrations.filter(i => i.status === 'inactive').length,
+      error: integrations.filter(i => i.status === 'error').length,
+    };
   };
 
   const handleToggleIntegration = (integrationId: string) => {
@@ -257,464 +176,379 @@ export default function IntegracionesPage() {
           ? {
               ...integration,
               status: integration.status === 'active' ? 'inactive' : 'active',
-              lastSync: integration.status === 'active' ? null : new Date().toISOString(),
             }
           : integration
       )
     );
+
+    logger.info('Estado de integración cambiado', { integrationId });
   };
 
-  const handleTestIntegration = (integrationId: string) => {
-    const integration = integrations.find(i => i.id === integrationId);
-    if (integration) {
-      setSuccessMessage(`Probando conexión con ${integration.name}...`);
-      // Simular test
-      setTimeout(() => {
-        setSuccessMessage(`✅ Conexión exitosa con ${integration.name}`);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      }, 1000);
+  const handleTestConnection = async (integrationId: string) => {
+    try {
+      // Simular test de conexión
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === integrationId
+            ? { ...integration, status: 'active', lastSync: new Date().toISOString() }
+            : integration
+        )
+      );
+
+      logger.info('Conexión de integración probada exitosamente', { integrationId });
+      alert('Conexión probada exitosamente.');
+    } catch (error) {
+      logger.error('Error al probar conexión', { integrationId, error });
+      alert('Error al probar la conexión.');
     }
   };
 
-  const handleExportIntegrations = () => {
-    const csvContent = [
-      [
-        'Nombre',
-        'Categoría',
-        'Estado',
-        'Última Sincronización',
-        'Total Transacciones',
-        'Tasa de Éxito',
-      ],
-    ];
+  const handleViewConfig = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setConfigData(integration.config);
+    setShowConfigDialog(true);
+  };
 
-    integrations.forEach(integration => {
-      csvContent.push([
-        integration.name,
-        integration.category,
-        integration.status,
-        integration.lastSync ? new Date(integration.lastSync).toLocaleDateString('es-CL') : 'Nunca',
-        integration.totalTransactions.toString(),
-        integration.successRate > 0 ? `${integration.successRate}%` : 'N/A',
-      ]);
-    });
+  const handleSaveConfig = () => {
+    if (!selectedIntegration) {
+      return;
+    }
 
-    const csvString = csvContent.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `integraciones_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setIntegrations(prev =>
+      prev.map(integration =>
+        integration.id === selectedIntegration.id
+          ? { ...integration, config: configData }
+          : integration
+      )
+    );
+
+    setShowConfigDialog(false);
+    setSelectedIntegration(null);
+    setConfigData({});
+
+    logger.info('Configuración de integración guardada', { integrationId: selectedIntegration.id });
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { label: 'Activo', color: 'bg-green-100 text-green-800' },
-      inactive: { label: 'Inactivo', color: 'bg-red-100 text-red-800' },
-      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
-      configuring: { label: 'Configurando', color: 'bg-blue-100 text-blue-800' },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return <Badge className={config.color}>{config.label}</Badge>;
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-500">Activa</Badge>;
+      case 'inactive':
+        return <Badge variant="secondary">Inactiva</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'configuring':
+        return (
+          <Badge variant="outline" className="text-blue-600 border-blue-600">
+            Configurando
+          </Badge>
+        );
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
   };
 
-  const getCategoryIcon = (category: string) => {
-    const icons = {
-      Pagos: CreditCard,
-      Comunicación: Mail,
-      Ubicación: MapPin,
-      Bancario: Building,
-      Monitoreo: Activity,
-      Media: Camera,
-    };
-    const IconComponent = icons[category as keyof typeof icons] || Zap;
-    return <IconComponent className="w-5 h-5" />;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'payment':
+        return <Zap className="w-5 h-5 text-yellow-600" />;
+      case 'communication':
+        return <Settings className="w-5 h-5 text-blue-600" />;
+      case 'analytics':
+        return <TestTube className="w-5 h-5 text-green-600" />;
+      case 'storage':
+        return <Shield className="w-5 h-5 text-purple-600" />;
+      default:
+        return <Settings className="w-5 h-5 text-gray-600" />;
+    }
   };
 
-  const getCategoryBadge = (category: string) => {
-    const colors = {
-      Pagos: 'bg-blue-100 text-blue-800',
-      Comunicación: 'bg-purple-100 text-purple-800',
-      Ubicación: 'bg-green-100 text-green-800',
-      Bancario: 'bg-orange-100 text-orange-800',
-      Monitoreo: 'bg-red-100 text-red-800',
-      Media: 'bg-pink-100 text-pink-800',
-    };
+  const stats = getStats();
+
+  if (isLoading) {
     return (
-      <Badge className={colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-        {category}
-      </Badge>
-    );
-  };
-
-  if (loading) {
-    return (
-      <UnifiedDashboardLayout title="Integraciones" subtitle="Cargando información...">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando...</p>
-          </div>
+      <UnifiedDashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <RefreshCw className="w-8 h-8 animate-spin mr-2" />
+          <span>Cargando integraciones...</span>
         </div>
-      </UnifiedDashboardLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <UnifiedDashboardLayout title="Integraciones" subtitle="Error al cargar la página">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reintentar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Integraciones" subtitle="Gestiona las integraciones del sistema">
-      <div className="space-y-6">
-        {/* Success Message */}
-        {successMessage && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-green-800">{successMessage}</span>
+    <UnifiedDashboardLayout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Integraciones</h1>
+            <p className="text-gray-600">Gestión de integraciones de terceros</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadIntegrations} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nueva Integración
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+                <Settings className="w-8 h-8 text-gray-600" />
               </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Error Message */}
-        {errorMessage && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                <span className="text-red-800">{errorMessage}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setErrorMessage('')}
-                  className="ml-auto text-red-600 hover:text-red-800"
-                >
-                  ×
-                </Button>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Activas</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {/* Header con estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Integraciones</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.totalIntegrations || 0}</div>
-              <p className="text-xs text-muted-foreground">+2 desde el mes pasado</p>
-            </CardContent>
-          </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activas</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.activeIntegrations || 0}</div>
-              <p className="text-xs text-muted-foreground">Funcionando correctamente</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data?.pendingIntegrations || 0}</div>
-              <p className="text-xs text-muted-foreground">Requieren configuración</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Transacciones</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data?.totalTransactions?.toLocaleString() || 0}
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Inactivas</p>
+                  <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+                </div>
+                <XCircle className="w-8 h-8 text-gray-600" />
               </div>
-              <p className="text-xs text-muted-foreground">Procesadas este mes</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Errores</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.error}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Gestión de integraciones por pestañas */}
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="active">Activas</TabsTrigger>
-            <TabsTrigger value="inactive">Inactivas</TabsTrigger>
-            <TabsTrigger value="pending">Pendientes</TabsTrigger>
-            <TabsTrigger value="pagos">Pagos</TabsTrigger>
-            <TabsTrigger value="comunicacion">Comunicación</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Resumen</TabsTrigger>
+            <TabsTrigger value="payment">Pagos</TabsTrigger>
+            <TabsTrigger value="communication">Comunicación</TabsTrigger>
           </TabsList>
 
-          {['all', 'active', 'inactive', 'pending', 'pagos', 'comunicacion'].map(tabValue => (
-            <TabsContent key={tabValue} value={tabValue}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {integrations
-                  .filter(integration => {
-                    if (tabValue === 'all') {
-                      return true;
-                    }
-                    if (tabValue === 'active') {
-                      return integration.status === 'active';
-                    }
-                    if (tabValue === 'inactive') {
-                      return integration.status === 'inactive';
-                    }
-                    if (tabValue === 'pending') {
-                      return (
-                        integration.status === 'pending' || integration.status === 'configuring'
-                      );
-                    }
-                    if (tabValue === 'pagos') {
-                      return integration.category === 'Pagos';
-                    }
-                    if (tabValue === 'comunicacion') {
-                      return integration.category === 'Comunicación';
-                    }
-                    return true;
-                  })
-                  .map(integration => (
-                    <Card key={integration.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className="p-2 bg-gray-100 rounded-lg">
-                              {getCategoryIcon(integration.category)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-lg">{integration.name}</h3>
-                                {getStatusBadge(integration.status)}
-                              </div>
-                              <p className="text-gray-600 text-sm mb-2">
-                                {integration.description}
-                              </p>
-                              {getCategoryBadge(integration.category)}
-                            </div>
-                          </div>
-
+          <TabsContent value="overview" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Todas las Integraciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Proveedor</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Última Sincronización</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {integrations.map(integration => (
+                      <TableRow key={integration.id}>
+                        <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <Switch
-                              checked={integration.status === 'active'}
-                              onCheckedChange={() => handleToggleIntegration(integration.id)}
-                              disabled={integration.status === 'pending'}
-                            />
+                            {getTypeIcon(integration.type)}
+                            {integration.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>{integration.provider}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {integration.type === 'payment'
+                              ? 'Pago'
+                              : integration.type === 'communication'
+                                ? 'Comunicación'
+                                : integration.type === 'analytics'
+                                  ? 'Analytics'
+                                  : integration.type === 'storage'
+                                    ? 'Almacenamiento'
+                                    : integration.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(integration.status)}</TableCell>
+                        <TableCell>{integration.lastSync}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleIntegration(integration.id)}
+                            >
+                              {integration.status === 'active' ? 'Desactivar' : 'Activar'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleTestConnection(integration.id)}
+                            >
+                              <TestTube className="w-4 h-4 mr-2" />
+                              Probar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewConfig(integration)}
+                            >
+                              <Settings className="w-4 h-4 mr-2" />
+                              Config
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Integraciones de Pago</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {integrations
+                    .filter(i => i.type === 'payment')
+                    .map(integration => (
+                      <div
+                        key={integration.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          {getTypeIcon(integration.type)}
+                          <div>
+                            <p className="font-medium">{integration.name}</p>
+                            <p className="text-sm text-gray-600">{integration.provider}</p>
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Activity className="w-4 h-4" />
-                            <span>{integration.totalTransactions} transacciones</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            <span>
-                              {integration.successRate > 0
-                                ? `${integration.successRate}% éxito`
-                                : 'Sin datos'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 col-span-2">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              Última sync:{' '}
-                              {integration.lastSync
-                                ? new Date(integration.lastSync).toLocaleDateString('es-CL')
-                                : 'Nunca'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {integration.apiKey && (
-                          <div className="mb-3 p-2 bg-gray-50 rounded text-xs font-mono">
-                            API Key: {integration.apiKey}
-                          </div>
-                        )}
-
-                        {integration.webhookUrl && (
-                          <div className="mb-3 p-2 bg-blue-50 rounded text-xs">
-                            <strong>Webhook:</strong> {integration.webhookUrl}
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedIntegration(integration)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver Config
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Configuración de {integration.name}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {Object.entries(integration.config).map(([key, value]) => (
-                                    <div key={key} className="space-y-2">
-                                      <Label
-                                        htmlFor={key}
-                                        className="text-sm font-medium capitalize"
-                                      >
-                                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                                      </Label>
-                                      <Input
-                                        id={key}
-                                        value={value ? String(value) : ''}
-                                        placeholder="No configurado"
-                                        readOnly
-                                        className="font-mono text-xs"
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="flex gap-2 justify-end">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                      router.push(`/admin/integrations/${integration.id}/edit`)
-                                    }
-                                  >
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar Configuración
-                                  </Button>
-                                  <Button onClick={() => handleTestIntegration(integration.id)}>
-                                    <Zap className="w-4 h-4 mr-2" />
-                                    Probar Conexión
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-
+                        <div className="flex items-center gap-4">
+                          {getStatusBadge(integration.status)}
                           <Button
-                            size="sm"
                             variant="outline"
-                            onClick={() => handleTestIntegration(integration.id)}
+                            size="sm"
+                            onClick={() => handleTestConnection(integration.id)}
                           >
-                            <Zap className="w-4 h-4 mr-2" />
+                            <TestTube className="w-4 h-4 mr-2" />
                             Probar
                           </Button>
-
-                          {integration.status !== 'pending' && (
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                router.push(`/admin/integrations/${integration.id}/logs`)
-                              }
-                            >
-                              <BarChart3 className="w-4 h-4 mr-2" />
-                              Logs
-                            </Button>
-                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            </TabsContent>
-          ))}
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="communication" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Integraciones de Comunicación</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {integrations
+                    .filter(i => i.type === 'communication')
+                    .map(integration => (
+                      <div
+                        key={integration.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          {getTypeIcon(integration.type)}
+                          <div>
+                            <p className="font-medium">{integration.name}</p>
+                            <p className="text-sm text-gray-600">{integration.provider}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          {getStatusBadge(integration.status)}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestConnection(integration.id)}
+                          >
+                            <TestTube className="w-4 h-4 mr-2" />
+                            Probar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
-        {/* Acciones rápidas */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <QuickActionButton
-                icon={Plus}
-                label="Nueva Integración"
-                description="Conectar servicio"
-                onClick={() => router.push('/admin/integrations/new')}
-              />
+        {/* Configuration Dialog */}
+        <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Configuración de {selectedIntegration?.name}</DialogTitle>
+              <DialogDescription>Configura los parámetros de la integración</DialogDescription>
+            </DialogHeader>
 
-              <QuickActionButton
-                icon={Search}
-                label="Buscar"
-                description="Buscar integraciones"
-                onClick={() => {
-                  // Focus on search input or open search dialog
-                  const searchInput = document.querySelector(
-                    'input[placeholder*="Buscar"]'
-                  ) as HTMLInputElement;
-                  if (searchInput) {
-                    searchInput.focus();
-                  }
-                }}
-              />
-
-              <QuickActionButton
-                icon={Download}
-                label="Exportar"
-                description="Descargar configuración"
-                onClick={handleExportIntegrations}
-              />
-
-              <QuickActionButton
-                icon={BarChart3}
-                label="Reportes"
-                description="Estadísticas de uso"
-                onClick={() => router.push('/admin/reports/integrations')}
-              />
-
-              <QuickActionButton
-                icon={Shield}
-                label="Seguridad"
-                description="Revisar permisos"
-                onClick={() => router.push('/admin/security')}
-              />
-
-              <QuickActionButton
-                icon={RefreshCw}
-                label="Actualizar"
-                description="Recargar datos"
-                onClick={() => loadPageData()}
-              />
+            <div className="space-y-4">
+              {selectedIntegration &&
+                Object.entries(selectedIntegration.config).map(([key, value]) => (
+                  <div key={key}>
+                    <Label htmlFor={key}>
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </Label>
+                    <Input
+                      id={key}
+                      value={configData[key] || ''}
+                      onChange={e => setConfigData(prev => ({ ...prev, [key]: e.target.value }))}
+                      type={
+                        key.toLowerCase().includes('secret') || key.toLowerCase().includes('key')
+                          ? 'password'
+                          : 'text'
+                      }
+                    />
+                  </div>
+                ))}
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowConfigDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveConfig}>Guardar Configuración</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

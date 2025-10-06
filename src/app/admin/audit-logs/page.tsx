@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { FileText, 
-  Search, 
-  Filter, 
-  Download, 
+import {
+  FileText,
+  Search,
+  Filter,
+  Download,
   Calendar,
   UserIcon,
   Shield,
@@ -21,11 +22,13 @@ import { FileText,
   Activity,
   Clock,
   MapPin,
-  Smartphone, Building, DollarSign, Info
+  Smartphone,
+  Building,
+  DollarSign,
+  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-
 
 interface AuditLog {
   id: string;
@@ -55,7 +58,6 @@ interface AuditStats {
 }
 
 export default function AdminAuditLogs() {
-
   const [user, setUser] = useState<User | null>(null);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -86,16 +88,20 @@ export default function AdminAuditLogs() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
     const loadAuditLogs = async () => {
       try {
         // Obtener logs reales de la API
-        const response = await fetch(`/api/audit-logs?page=1&limit=50&startDate=${dateRange === '7d' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10) : ''}`);
+        const response = await fetch(
+          `/api/audit-logs?page=1&limit=50&startDate=${dateRange === '7d' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10) : ''}`
+        );
         if (!response.ok) {
-          throw new Error('Error al obtener logs de auditoría');
+          throw new Error('Error al obtener logs de auditor�a');
         }
 
         const data = await response.json();
@@ -120,48 +126,58 @@ export default function AdminAuditLogs() {
 
         setAuditLogs(formattedLogs);
 
-        // Calcular estadísticas de los logs reales
+        // Calcular estad�sticas de los logs reales
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const auditStats = formattedLogs.reduce((acc, log) => {
-          acc.totalLogs++;
+        const auditStats = formattedLogs.reduce(
+          (acc, log) => {
+            acc.totalLogs++;
 
-          const logDate = new Date(log.timestamp);
-          if (logDate >= today) {
-            acc.todayLogs++;
-          }
+            const logDate = new Date(log.timestamp);
+            if (logDate >= today) {
+              acc.todayLogs++;
+            }
 
-          if (log.status === 'failed') {
-            acc.failedAttempts++;
-          }
+            if (log.status === 'failed') {
+              acc.failedAttempts++;
+            }
 
-          if (log.category === 'security') {
-            acc.securityEvents++;
-          }
+            if (log.category === 'security') {
+              acc.securityEvents++;
+            }
 
-          if (log.category === 'user' || log.category === 'property' || log.category === 'payment' || log.category === 'contract') {
-            acc.userActions++;
-          }
+            if (
+              log.category === 'user' ||
+              log.category === 'property' ||
+              log.category === 'payment' ||
+              log.category === 'contract'
+            ) {
+              acc.userActions++;
+            }
 
-          if (log.category === 'system') {
-            acc.systemActions++;
-          }
+            if (log.category === 'system') {
+              acc.systemActions++;
+            }
 
-          return acc;
-        }, {
-          totalLogs: 0,
-          todayLogs: 0,
-          failedAttempts: 0,
-          securityEvents: 0,
-          userActions: 0,
-          systemActions: 0,
-        } as AuditStats);
+            return acc;
+          },
+          {
+            totalLogs: 0,
+            todayLogs: 0,
+            failedAttempts: 0,
+            securityEvents: 0,
+            userActions: 0,
+            systemActions: 0,
+          } as AuditStats
+        );
 
         setStats(auditStats);
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading audit logs:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading audit logs:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
@@ -220,7 +236,7 @@ export default function AdminAuditLogs() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'success':
-        return <Badge className={getStatusColor(status)}>Éxito</Badge>;
+        return <Badge className={getStatusColor(status)}>�xito</Badge>;
       case 'failed':
         return <Badge className={getStatusColor(status)}>Fallido</Badge>;
       case 'pending':
@@ -233,7 +249,7 @@ export default function AdminAuditLogs() {
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <Badge className="bg-red-100 text-red-800">Crítico</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Cr�tico</Badge>;
       case 'error':
         return <Badge className="bg-red-100 text-red-800">Error</Badge>;
       case 'warning':
@@ -263,26 +279,31 @@ export default function AdminAuditLogs() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    
+
     if (diffMins < 60) {
-return `Hace ${diffMins} minutos`;
-}
+      return `Hace ${diffMins} minutos`;
+    }
     if (diffHours < 24) {
-return `Hace ${diffHours} horas`;
-}
+      return `Hace ${diffHours} horas`;
+    }
     if (diffDays < 7) {
-return `Hace ${diffDays} días`;
-}
-    
+      return `Hace ${diffDays} d�as`;
+    }
+
     return date.toLocaleDateString('es-CL');
   };
 
   const filteredAuditLogs = auditLogs.filter(log => {
-    const matchesFilter = filter === 'all' || log.category === filter || log.severity === filter || log.status === filter;
-    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      filter === 'all' ||
+      log.category === filter ||
+      log.severity === filter ||
+      log.status === filter;
+    const matchesSearch =
+      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -290,209 +311,208 @@ return `Hace ${diffDays} días`;
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600">Cargando registros de auditoría...</p>
+        <p className="text-gray-600">Cargando registros de auditor�a...</p>
       </div>
     );
   }
 
   return (
-    <UnifiedDashboardLayout title="Registros de Auditoría" subtitle="Monitorea todas las actividades del sistema">
-            <div className="container mx-auto px-4 py-6">
-              {/* Header with stats */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Registros de Auditoría</h1>
-                  <p className="text-gray-600">Monitorea y analiza todas las actividades del sistema</p>
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="24h">Últimas 24 horas</option>
-                    <option value="7d">Últimos 7 días</option>
-                    <option value="30d">Últimos 30 días</option>
-                    <option value="90d">Últimos 90 días</option>
-                  </select>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filtros
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar
-                  </Button>
-                </div>
-              </div>
+    <UnifiedDashboardLayout
+      title="Registros de Auditor�a"
+      subtitle="Monitorea todas las actividades del sistema"
+    >
+      <div className="container mx-auto px-4 py-6">
+        {/* Header with stats */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Registros de Auditor�a</h1>
+            <p className="text-gray-600">Monitorea y analiza todas las actividades del sistema</p>
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={dateRange}
+              onChange={e => setDateRange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="24h">�ltimas 24 horas</option>
+              <option value="7d">�ltimos 7 d�as</option>
+              <option value="30d">�ltimos 30 d�as</option>
+              <option value="90d">�ltimos 90 d�as</option>
+            </select>
+            <Button variant="outline" size="sm">
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </div>
+        </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalLogs}</p>
-                      <p className="text-xs text-gray-600">Total Registros</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{stats.todayLogs}</p>
-                      <p className="text-xs text-gray-600">Hoy</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-red-600">{stats.failedAttempts}</p>
-                      <p className="text-xs text-gray-600">Intentos Fallidos</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-orange-600">{stats.securityEvents}</p>
-                      <p className="text-xs text-gray-600">Eventos Seguridad</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">{stats.userActions}</p>
-                      <p className="text-xs text-gray-600">Acciones Usuario</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-600">{stats.systemActions}</p>
-                      <p className="text-xs text-gray-600">Acciones Sistema</p>
-                    </div>
-                  </CardContent>
-                </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900">{stats.totalLogs}</p>
+                <p className="text-xs text-gray-600">Total Registros</p>
               </div>
-
-              {/* Filters and Search */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Buscar registros..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="all">Todas las categorías</option>
-                    <option value="user">Usuario</option>
-                    <option value="property">Propiedad</option>
-                    <option value="contract">Contrato</option>
-                    <option value="payment">Pago</option>
-                    <option value="system">Sistema</option>
-                    <option value="security">Seguridad</option>
-                  </select>
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="all">Todas las severidades</option>
-                    <option value="critical">Crítico</option>
-                    <option value="error">Error</option>
-                    <option value="warning">Advertencia</option>
-                    <option value="info">Info</option>
-                  </select>
-                </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.todayLogs}</p>
+                <p className="text-xs text-gray-600">Hoy</p>
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">{stats.failedAttempts}</p>
+                <p className="text-xs text-gray-600">Intentos Fallidos</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-orange-600">{stats.securityEvents}</p>
+                <p className="text-xs text-gray-600">Eventos Seguridad</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{stats.userActions}</p>
+                <p className="text-xs text-gray-600">Acciones Usuario</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">{stats.systemActions}</p>
+                <p className="text-xs text-gray-600">Acciones Sistema</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-              {/* Audit Logs List */}
-              <div className="space-y-4">
-                {filteredAuditLogs.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center py-8">
-                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No se encontraron registros de auditoría</p>
-                        <p className="text-sm text-gray-400">Intenta ajustar tus filtros de búsqueda</p>
+        {/* Filters and Search */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Buscar registros..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="all">Todas las categor�as</option>
+              <option value="user">Usuario</option>
+              <option value="property">Propiedad</option>
+              <option value="contract">Contrato</option>
+              <option value="payment">Pago</option>
+              <option value="system">Sistema</option>
+              <option value="security">Seguridad</option>
+            </select>
+            <select
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="all">Todas las severidades</option>
+              <option value="critical">Cr�tico</option>
+              <option value="error">Error</option>
+              <option value="warning">Advertencia</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Audit Logs List */}
+        <div className="space-y-4">
+          {filteredAuditLogs.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No se encontraron registros de auditor�a</p>
+                  <p className="text-sm text-gray-400">Intenta ajustar tus filtros de b�squeda</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredAuditLogs.map(log => (
+              <Card key={log.id} className={`border-l-4 ${getSeverityColor(log.severity)}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className={`p-2 rounded-lg ${getSeverityColor(log.severity)}`}>
+                        {getCategoryIcon(log.category)}
                       </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  filteredAuditLogs.map((log) => (
-                    <Card
-                      key={log.id}
-                      className={`border-l-4 ${getSeverityColor(log.severity)}`}
-                    >
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className={`p-2 rounded-lg ${getSeverityColor(log.severity)}`}>
-                              {getCategoryIcon(log.category)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-gray-900">{log.action}</h3>
-                                {getStatusBadge(log.status)}
-                                {getSeverityBadge(log.severity)}
-                              </div>
-                              <p className="text-gray-600 text-sm mb-2">{log.description}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900">{log.action}</h3>
+                          {getStatusBadge(log.status)}
+                          {getSeverityBadge(log.severity)}
+                        </div>
+                        <p className="text-gray-600 text-sm mb-2">{log.description}</p>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <UserIcon className="w-3 h-3" />
-                                  <span>{log.userName} ({log.userRole})</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{formatRelativeTime(log.timestamp)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  <span>{log.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Smartphone className="w-3 h-3" />
-                                  <span>{log.device}</span>
-                                </div>
-                              </div>
-
-                              <div className="mt-2 text-xs text-gray-400">
-                                <span>IP: {log.ipAddress}</span>
-                                <span className="mx-2">•</span>
-                                <span>{formatDateTime(log.timestamp)}</span>
-                              </div>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <UserIcon className="w-3 h-3" />
+                            <span>
+                              {log.userName} ({log.userRole})
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{formatRelativeTime(log.timestamp)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>{log.location}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Smartphone className="w-3 h-3" />
+                            <span>{log.device}</span>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </div>
+
+                        <div className="mt-2 text-xs text-gray-400">
+                          <span>IP: {log.ipAddress}</span>
+                          <span className="mx-2">�</span>
+                          <span>{formatDateTime(log.timestamp)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button size="sm" variant="outline">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
     </UnifiedDashboardLayout>
   );
 }
-
-
-

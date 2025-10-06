@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -72,17 +72,17 @@ export default function MantenimientoPage() {
   const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([
     {
       id: '1',
-      title: 'Reparación de cañería principal',
-      description: 'Cañería rota en baño principal causando inundación. Urgente.',
+      title: 'Reparaci�n de ca�er�a principal',
+      description: 'Ca�er�a rota en ba�o principal causando inundaci�n. Urgente.',
       propertyAddress: 'Las Condes 1234, Santiago',
       propertyType: 'Casa',
-      ownerName: 'María González',
+      ownerName: 'Mar�a Gonz�lez',
       ownerEmail: 'maria.gonzalez@email.com',
       ownerPhone: '+56 9 1234 5678',
-      tenantName: 'Carlos Rodríguez',
+      tenantName: 'Carlos Rodr�guez',
       tenantEmail: 'carlos.rodriguez@email.com',
       tenantPhone: '+56 9 8765 4321',
-      serviceType: 'Plomería',
+      serviceType: 'Plomer�a',
       urgency: 'high',
       status: 'pending',
       priority: 'urgent',
@@ -94,16 +94,16 @@ export default function MantenimientoPage() {
       assignedProvider: null,
       providerName: null,
       providerRating: null,
-      images: ['cañeria1.jpg', 'cañeria2.jpg'],
+      images: ['ca�eria1.jpg', 'ca�eria2.jpg'],
       notes:
-        'Cliente reporta que el agua sale con presión alta. Posible ruptura en tubería principal.',
+        'Cliente reporta que el agua sale con presi�n alta. Posible ruptura en tuber�a principal.',
       resolution: null,
     },
     {
       id: '2',
-      title: 'Mantenimiento sistema eléctrico',
+      title: 'Mantenimiento sistema el�ctrico',
       description:
-        'Revisión completa de instalación eléctrica, reemplazo de tomacorrientes antiguos.',
+        'Revisi�n completa de instalaci�n el�ctrica, reemplazo de tomacorrientes antiguos.',
       propertyAddress: 'Providencia 567, Santiago',
       propertyType: 'Departamento',
       ownerName: 'Ana Silva',
@@ -122,19 +122,19 @@ export default function MantenimientoPage() {
       scheduledDate: '2024-01-18T09:00:00',
       completedDate: null,
       assignedProvider: '2',
-      providerName: 'Técnicos Eléctricos Express',
+      providerName: 'T�cnicos El�ctricos Express',
       providerRating: null,
       images: [],
-      notes: 'Propiedad tiene 3 dormitorios y 2 baños. Instalar 4 tomacorrientes nuevos.',
+      notes: 'Propiedad tiene 3 dormitorios y 2 ba�os. Instalar 4 tomacorrientes nuevos.',
       resolution: null,
     },
     {
       id: '3',
       title: 'Pintura sala y comedor',
       description: 'Pintura completa de sala de estar y comedor. Cambiar color a tonos claros.',
-      propertyAddress: 'Ñuñoa 789, Santiago',
+      propertyAddress: '�u�oa 789, Santiago',
       propertyType: 'Casa',
-      ownerName: 'Sofía Vargas',
+      ownerName: 'Sof�a Vargas',
       ownerEmail: 'sofia.vargas@email.com',
       ownerPhone: '+56 9 9999 0000',
       tenantName: null,
@@ -158,11 +158,11 @@ export default function MantenimientoPage() {
     },
     {
       id: '4',
-      title: 'Reparación puerta garage',
-      description: 'Motor de puerta automática no funciona correctamente.',
+      title: 'Reparaci�n puerta garage',
+      description: 'Motor de puerta autom�tica no funciona correctamente.',
       propertyAddress: 'Vitacura 345, Santiago',
       propertyType: 'Casa',
-      ownerName: 'Diego López',
+      ownerName: 'Diego L�pez',
       ownerEmail: 'diego.lopez@email.com',
       ownerPhone: '+56 9 1111 2222',
       tenantName: null,
@@ -178,17 +178,17 @@ export default function MantenimientoPage() {
       scheduledDate: '2024-01-12T14:00:00',
       completedDate: '2024-01-13T16:30:00',
       assignedProvider: '4',
-      providerName: 'Servicios Técnicos Integrales',
+      providerName: 'Servicios T�cnicos Integrales',
       providerRating: 4.5,
       images: ['garage_motor.jpg', 'garage_reparado.jpg'],
-      notes: 'Puerta marca Chamberlain modelo antiguo. Se reemplazó capacitor del motor.',
+      notes: 'Puerta marca Chamberlain modelo antiguo. Se reemplaz� capacitor del motor.',
       resolution:
-        'Motor reparado exitosamente. Se reemplazó capacitor defectuoso y se lubricaron mecanismos.',
+        'Motor reparado exitosamente. Se reemplaz� capacitor defectuoso y se lubricaron mecanismos.',
     },
     {
       id: '5',
-      title: 'Instalación sistema riego',
-      description: 'Instalación de sistema automático de riego para jardín de 200m².',
+      title: 'Instalaci�n sistema riego',
+      description: 'Instalaci�n de sistema autom�tico de riego para jard�n de 200m�.',
       propertyAddress: 'La Reina 456, Santiago',
       propertyType: 'Casa',
       ownerName: 'Carolina Mendoza',
@@ -197,7 +197,7 @@ export default function MantenimientoPage() {
       tenantName: null,
       tenantEmail: null,
       tenantPhone: null,
-      serviceType: 'Jardinería',
+      serviceType: 'Jardiner�a',
       urgency: 'low',
       status: 'completed',
       priority: 'low',
@@ -210,7 +210,7 @@ export default function MantenimientoPage() {
       providerName: 'Jardines Verdes',
       providerRating: 5.0,
       images: ['jardin_antes.jpg', 'jardin_despues.jpg', 'sistema_riego.jpg'],
-      notes: 'Sistema incluye programador automático y aspersores. Jardín de césped natural.',
+      notes: 'Sistema incluye programador autom�tico y aspersores. Jard�n de c�sped natural.',
       resolution:
         'Sistema instalado completamente. Programador configurado para riego 3 veces por semana.',
     },
@@ -223,7 +223,7 @@ export default function MantenimientoPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    // Cargar datos de la página
+    // Cargar datos de la p�gina
     loadPageData();
   }, []);
 
@@ -294,7 +294,7 @@ export default function MantenimientoPage() {
   const handleExportRequests = () => {
     const csvContent = [
       [
-        'Título',
+        'T�tulo',
         'Propiedad',
         'Propietario',
         'Servicio',
@@ -302,7 +302,7 @@ export default function MantenimientoPage() {
         'Urgencia',
         'Costo Estimado',
         'Proveedor',
-        'Fecha Creación',
+        'Fecha Creaci�n',
       ],
     ];
 
@@ -367,7 +367,7 @@ export default function MantenimientoPage() {
 
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Cargando información...">
+      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Cargando informaci�n...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -380,7 +380,7 @@ export default function MantenimientoPage() {
 
   if (error) {
     return (
-      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Error al cargar la página">
+      <UnifiedDashboardLayout title="Mantenimiento" subtitle="Error al cargar la p�gina">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -429,14 +429,14 @@ export default function MantenimientoPage() {
                   onClick={() => setErrorMessage('')}
                   className="ml-auto text-red-600 hover:text-red-800"
                 >
-                  ×
+                  �
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Header con estadísticas */}
+        {/* Header con estad�sticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -467,7 +467,7 @@ export default function MantenimientoPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.pendingRequests || 0}</div>
-              <p className="text-xs text-muted-foreground">Requieren asignación</p>
+              <p className="text-xs text-muted-foreground">Requieren asignaci�n</p>
             </CardContent>
           </Card>
 
@@ -483,7 +483,7 @@ export default function MantenimientoPage() {
           </Card>
         </div>
 
-        {/* Gestión de solicitudes por pestañas */}
+        {/* Gesti�n de solicitudes por pesta�as */}
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">Todas</TabsTrigger>
@@ -564,7 +564,7 @@ export default function MantenimientoPage() {
                             {request.resolution && (
                               <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
                                 <div className="text-sm font-medium text-green-800 mb-1">
-                                  Resolución:
+                                  Resoluci�n:
                                 </div>
                                 <p className="text-sm text-green-700">{request.resolution}</p>
                               </div>
@@ -579,7 +579,7 @@ export default function MantenimientoPage() {
                             {request.images && request.images.length > 0 && (
                               <div className="mb-3">
                                 <div className="text-sm text-gray-600 mb-1">
-                                  Imágenes: {request.images.length} archivos
+                                  Im�genes: {request.images.length} archivos
                                 </div>
                                 <div className="flex gap-2">
                                   {request.images
@@ -643,20 +643,20 @@ export default function MantenimientoPage() {
                                         className="w-full justify-start"
                                         variant="outline"
                                       >
-                                        Servicios Integrales Ltda. - Plomería/Electricidad
+                                        Servicios Integrales Ltda. - Plomer�a/Electricidad
                                       </Button>
                                       <Button
                                         onClick={() =>
                                           handleAssignProvider(
                                             request.id,
                                             '2',
-                                            'Técnicos Eléctricos Express'
+                                            'T�cnicos El�ctricos Express'
                                           )
                                         }
                                         className="w-full justify-start"
                                         variant="outline"
                                       >
-                                        Técnicos Eléctricos Express - Electricidad
+                                        T�cnicos El�ctricos Express - Electricidad
                                       </Button>
                                       <Button
                                         onClick={() =>
@@ -691,7 +691,7 @@ export default function MantenimientoPage() {
 
                             {request.status === 'completed' && request.providerRating && (
                               <div className="text-center text-sm text-green-600 font-medium">
-                                ⭐ {request.providerRating}/5.0
+                                ? {request.providerRating}/5.0
                               </div>
                             )}
                           </div>
@@ -704,11 +704,11 @@ export default function MantenimientoPage() {
           ))}
         </Tabs>
 
-        {/* Acciones rápidas */}
+        {/* Acciones r�pidas */}
         <Card>
           <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
+            <CardTitle>Acciones R�pidas</CardTitle>
+            <CardDescription>Accede r�pidamente a las funciones m�s utilizadas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -744,7 +744,7 @@ export default function MantenimientoPage() {
               <QuickActionButton
                 icon={BarChart3}
                 label="Reportes"
-                description="Estadísticas detalladas"
+                description="Estad�sticas detalladas"
                 onClick={() => router.push('/admin/reports/maintenance')}
               />
 
