@@ -553,7 +553,7 @@ export default function SupportSignaturesPage() {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles de la Firma</DialogTitle>
           </DialogHeader>
@@ -651,7 +651,7 @@ export default function SupportSignaturesPage() {
 
       {/* Reset Signature Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Resetear Firma</DialogTitle>
           </DialogHeader>

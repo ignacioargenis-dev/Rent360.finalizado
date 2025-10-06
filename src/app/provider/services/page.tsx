@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertCircle,
+  AlertTriangle,
   RefreshCw,
   Wrench,
   CheckCircle,
@@ -51,10 +52,10 @@ export default function ProviderServicesPage() {
       availability: {
         weekdays: true,
         weekends: false,
-        emergencies: true
+        emergencies: true,
       },
       requirements: ['Certificación eléctrica', 'Herramientas especializadas'],
-      lastUpdated: '2024-01-15'
+      lastUpdated: '2024-01-15',
     },
     {
       id: '2',
@@ -69,10 +70,10 @@ export default function ProviderServicesPage() {
       availability: {
         weekdays: true,
         weekends: true,
-        emergencies: true
+        emergencies: true,
       },
       requirements: ['Experiencia en plomería', 'Licencia sanitaria'],
-      lastUpdated: '2024-01-12'
+      lastUpdated: '2024-01-12',
     },
     {
       id: '3',
@@ -87,10 +88,10 @@ export default function ProviderServicesPage() {
       availability: {
         weekdays: true,
         weekends: false,
-        emergencies: false
+        emergencies: false,
       },
       requirements: ['Experiencia en pintura', 'Equipo de protección'],
-      lastUpdated: '2024-01-08'
+      lastUpdated: '2024-01-08',
     },
     {
       id: '4',
@@ -105,11 +106,11 @@ export default function ProviderServicesPage() {
       availability: {
         weekdays: true,
         weekends: true,
-        emergencies: false
+        emergencies: false,
       },
       requirements: ['Conocimientos de botánica', 'Herramientas de jardinería'],
-      lastUpdated: '2024-01-10'
-    }
+      lastUpdated: '2024-01-10',
+    },
   ]);
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function ProviderServicesPage() {
         totalServices: services.length,
         activeServices: services.filter(s => s.active).length,
         pendingServices: services.filter(s => !s.active).length,
-        totalRevenue: services.reduce((sum, s) => sum + (s.price * s.totalJobs), 0)
+        totalRevenue: services.reduce((sum, s) => sum + s.price * s.totalJobs, 0),
       };
 
       setData(overviewData);
@@ -141,24 +142,34 @@ export default function ProviderServicesPage() {
   };
 
   const handleToggleService = (serviceId: string) => {
-    setServices(prev => prev.map(service =>
-      service.id === serviceId
-        ? { ...service, active: !service.active }
-        : service
-    ));
+    setServices(prev =>
+      prev.map(service =>
+        service.id === serviceId ? { ...service, active: !service.active } : service
+      )
+    );
   };
 
   const handleUpdatePrice = (serviceId: string, newPrice: number) => {
-    setServices(prev => prev.map(service =>
-      service.id === serviceId
-        ? { ...service, price: newPrice, lastUpdated: new Date().toISOString().split('T')[0] }
-        : service
-    ));
+    setServices(prev =>
+      prev.map(service =>
+        service.id === serviceId
+          ? { ...service, price: newPrice, lastUpdated: new Date().toISOString().split('T')[0] }
+          : service
+      )
+    );
   };
 
   const handleExportServices = () => {
     const csvContent = [
-      ['Nombre', 'Categoría', 'Precio', 'Estado', 'Trabajos Totales', 'Calificación', 'Última Actualización']
+      [
+        'Nombre',
+        'Categoría',
+        'Precio',
+        'Estado',
+        'Trabajos Totales',
+        'Calificación',
+        'Última Actualización',
+      ],
     ];
 
     services.forEach(service => {
@@ -169,7 +180,7 @@ export default function ProviderServicesPage() {
         service.active ? 'Activo' : 'Inactivo',
         service.totalJobs.toString(),
         service.avgRating.toString(),
-        service.lastUpdated
+        service.lastUpdated,
       ]);
     });
 
@@ -178,7 +189,10 @@ export default function ProviderServicesPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `servicios_proveedor_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `servicios_proveedor_${new Date().toISOString().split('T')[0]}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -232,6 +246,30 @@ export default function ProviderServicesPage() {
       subtitle="Gestiona los servicios que ofreces como proveedor"
     >
       <div className="space-y-6">
+        {/* Alerta de precios no configurados */}
+        {services.filter(s => s.price <= 0).length > 0 && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-medium text-yellow-800">
+                    Servicios sin precios configurados
+                  </h3>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    Tienes {services.filter(s => s.price <= 0).length} servicio(s) sin precio
+                    definido. Los clientes no podrán ver cuánto cuestan estos servicios.
+                    <span className="font-medium">
+                      {' '}
+                      Configura los precios en la pestaña "Gestionar Servicios".
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header con estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -290,7 +328,7 @@ export default function ProviderServicesPage() {
           {/* Vista General */}
           <TabsContent value="overview">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {services.map((service) => (
+              {services.map(service => (
                 <Card key={service.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
@@ -298,7 +336,13 @@ export default function ProviderServicesPage() {
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-lg">{service.name}</h3>
                           <Badge variant="outline">{service.category}</Badge>
-                          <Badge className={service.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          <Badge
+                            className={
+                              service.active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }
+                          >
                             {service.active ? 'Activo' : 'Inactivo'}
                           </Badge>
                         </div>
@@ -312,8 +356,14 @@ export default function ProviderServicesPage() {
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-500" />
-                        <span>{formatCurrency(service.price)}</span>
+                        <DollarSign
+                          className={`w-4 h-4 ${service.price > 0 ? 'text-green-500' : 'text-red-500'}`}
+                        />
+                        <span className={service.price > 0 ? '' : 'text-red-600 font-medium'}>
+                          {service.price > 0
+                            ? formatCurrency(service.price)
+                            : 'Precio no configurado'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-500" />
@@ -331,11 +381,19 @@ export default function ProviderServicesPage() {
 
                     <div className="mt-4 pt-4 border-t">
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/provider/services/${service.id}`)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/provider/services/${service.id}`)}
+                        >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/provider/services/${service.id}/edit`)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/provider/services/${service.id}/edit`)}
+                        >
                           <Edit className="w-4 h-4 mr-2" />
                           Editar
                         </Button>
@@ -358,7 +416,7 @@ export default function ProviderServicesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {services.map((service) => (
+                  {services.map(service => (
                     <Card key={service.id} className="border-l-4 border-l-blue-500">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -366,7 +424,13 @@ export default function ProviderServicesPage() {
                             <h4 className="font-semibold">{service.name}</h4>
                             <p className="text-sm text-gray-600">{service.category}</p>
                           </div>
-                          <Badge className={service.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          <Badge
+                            className={
+                              service.active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }
+                          >
                             {service.active ? 'Activo' : 'Inactivo'}
                           </Badge>
                         </div>
@@ -378,14 +442,16 @@ export default function ProviderServicesPage() {
                               id={`price-${service.id}`}
                               type="number"
                               value={service.price}
-                              onChange={(e) => handleUpdatePrice(service.id, parseInt(e.target.value))}
+                              onChange={e =>
+                                handleUpdatePrice(service.id, parseInt(e.target.value))
+                              }
                               className="mt-1"
                             />
                           </div>
                           <div className="flex items-center space-x-2">
                             <Switch
                               checked={service.availability.weekdays}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={checked => {
                                 // Update availability logic would go here
                               }}
                             />
@@ -394,7 +460,7 @@ export default function ProviderServicesPage() {
                           <div className="flex items-center space-x-2">
                             <Switch
                               checked={service.availability.weekends}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={checked => {
                                 // Update availability logic would go here
                               }}
                             />
@@ -403,7 +469,8 @@ export default function ProviderServicesPage() {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                          Última actualización: {new Date(service.lastUpdated).toLocaleDateString('es-CL')}
+                          Última actualización:{' '}
+                          {new Date(service.lastUpdated).toLocaleDateString('es-CL')}
                         </div>
                       </CardContent>
                     </Card>
@@ -423,7 +490,7 @@ export default function ProviderServicesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {services.map((service) => (
+                    {services.map(service => (
                       <div key={service.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -446,12 +513,16 @@ export default function ProviderServicesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {services.map((service) => (
+                    {services.map(service => (
                       <div key={service.id} className="flex items-center justify-between">
                         <span className="text-sm font-medium">{service.name}</span>
                         <div className="text-right">
-                          <div className="font-bold">{formatCurrency(service.price * service.totalJobs)}</div>
-                          <div className="text-xs text-gray-600">{service.price.toLocaleString()} x {service.totalJobs}</div>
+                          <div className="font-bold">
+                            {formatCurrency(service.price * service.totalJobs)}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {service.price.toLocaleString()} x {service.totalJobs}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -470,32 +541,56 @@ export default function ProviderServicesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/services/new')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/services/new')}
+              >
                 <Plus className="w-6 h-6 mb-2" />
                 <span>Agregar Servicio</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={handleExportServices}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={handleExportServices}
+              >
                 <Download className="w-6 h-6 mb-2" />
                 <span>Exportar Servicios</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/earnings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/earnings')}
+              >
                 <DollarSign className="w-6 h-6 mb-2" />
                 <span>Ver Ganancias</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/ratings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/ratings')}
+              >
                 <Star className="w-6 h-6 mb-2" />
                 <span>Ver Calificaciones</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={() => router.push('/provider/settings')}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => router.push('/provider/settings')}
+              >
                 <Settings className="w-6 h-6 mb-2" />
                 <span>Configuración</span>
               </Button>
 
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center" onClick={loadPageData}>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={loadPageData}
+              >
                 <RefreshCw className="w-6 h-6 mb-2" />
                 <span>Actualizar Datos</span>
               </Button>

@@ -514,7 +514,7 @@ export default function AdminIntegrationsPage() {
 
         {/* Configuration Dialog */}
         <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Configuración de {selectedIntegration?.name}</DialogTitle>
               <DialogDescription>Configura los parámetros de la integración</DialogDescription>

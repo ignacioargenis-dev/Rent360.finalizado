@@ -60,6 +60,18 @@ interface ReportData {
   }>;
 }
 
+interface ScheduledReport {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  recipients: string;
+  nextSend: string;
+  status: 'active' | 'paused';
+  type: 'performance' | 'financial' | 'jobs' | 'clients';
+  includeCharts: boolean;
+  includeDetails: boolean;
+}
+
 export default function MaintenanceReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,8 +85,23 @@ export default function MaintenanceReportsPage() {
   const [showSchedulingModal, setShowSchedulingModal] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
 
+  // Estado para reportes programados
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
+  const [editingReport, setEditingReport] = useState<ScheduledReport | null>(null);
+
+  // Estado para formulario de nuevo reporte
+  const [newReportForm, setNewReportForm] = useState({
+    name: '',
+    type: '' as ScheduledReport['type'],
+    frequency: '' as ScheduledReport['frequency'],
+    recipients: '',
+    includeCharts: true,
+    includeDetails: false,
+  });
+
   useEffect(() => {
     loadReportData();
+    loadScheduledReports();
   }, [selectedPeriod]);
 
   const loadReportData = async () => {
@@ -117,12 +144,218 @@ export default function MaintenanceReportsPage() {
     }
   };
 
+  const loadScheduledReports = async () => {
+    try {
+      // Mock data for demonstration
+      const mockReports: ScheduledReport[] = [
+        {
+          id: '1',
+          name: 'Reporte Semanal de Rendimiento',
+          frequency: 'weekly',
+          recipients: 'tú mismo',
+          nextSend: '2024-01-29',
+          status: 'active',
+          type: 'performance',
+          includeCharts: true,
+          includeDetails: true,
+        },
+        {
+          id: '2',
+          name: 'Resumen Mensual Financiero',
+          frequency: 'monthly',
+          recipients: 'tú mismo + contador',
+          nextSend: '2024-02-01',
+          status: 'active',
+          type: 'financial',
+          includeCharts: true,
+          includeDetails: false,
+        },
+      ];
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setScheduledReports(mockReports);
+    } catch (error) {
+      logger.error('Error loading scheduled reports:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Funciones para manejar reportes programados
+  const handleEditReport = (report: ScheduledReport) => {
+    setEditingReport(report);
+    setNewReportForm({
+      name: report.name,
+      type: report.type,
+      frequency: report.frequency,
+      recipients: report.recipients,
+      includeCharts: report.includeCharts,
+      includeDetails: report.includeDetails,
+    });
+  };
+
+  const handlePauseReport = async (reportId: string) => {
+    try {
+      setScheduledReports(prev =>
+        prev.map(report =>
+          report.id === reportId
+            ? { ...report, status: report.status === 'active' ? 'paused' : 'active' }
+            : report
+        )
+      );
+      setSuccessMessage('Estado del reporte actualizado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error updating report status:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al actualizar el estado del reporte');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  };
+
+  const handleCreateReport = async () => {
+    try {
+      if (!newReportForm.name || !newReportForm.type || !newReportForm.frequency) {
+        setErrorMessage('Por favor complete todos los campos requeridos');
+        setTimeout(() => setErrorMessage(''), 3000);
+        return;
+      }
+
+      const newReport: ScheduledReport = {
+        id: Date.now().toString(),
+        name: newReportForm.name,
+        type: newReportForm.type,
+        frequency: newReportForm.frequency,
+        recipients: newReportForm.recipients,
+        nextSend: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!, // 7 días desde ahora
+        status: 'active',
+        includeCharts: newReportForm.includeCharts,
+        includeDetails: newReportForm.includeDetails,
+      };
+
+      setScheduledReports(prev => [...prev, newReport]);
+
+      // Reset form
+      setNewReportForm({
+        name: '',
+        type: '' as ScheduledReport['type'],
+        frequency: '' as ScheduledReport['frequency'],
+        recipients: '',
+        includeCharts: true,
+        includeDetails: false,
+      });
+
+      setSuccessMessage('Reporte automático creado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error creating scheduled report:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al crear el reporte automático');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  };
+
+  const handleExportAnalysis = async () => {
+    try {
+      // Crear contenido del análisis avanzado
+      const analysisData = `
+Análisis Avanzado de Rendimiento - ${new Date().toLocaleDateString('es-CL')}
+
+EFICIENCIA OPERATIVA:
+- Tiempo Promedio de Respuesta: 2.3 horas
+- Tasa de Completación: 93.2%
+- Satisfacción del Cliente: 4.7/5.0
+
+ANÁLISIS FINANCIERO:
+- Margen de Ganancia: 34.5%
+- Costo por Trabajo: $42,300
+- ROI Mensual: 127%
+
+TENDENCIAS Y PATRONES:
+- Tendencia Positiva: Los trabajos de plomería han aumentado un 25% en los últimos 3 meses
+- Área de Mejora: Los tiempos de respuesta en trabajos urgentes superan las 4 horas
+
+RECOMENDACIONES ESTRATÉGICAS:
+1. Expandir Servicios de Plomería - Contratar especialista adicional
+2. Implementar Sistema de Priorización - Automatizar clasificación por urgencia
+3. Programa de Fidelización - Descuentos para clientes recurrentes
+      `;
+
+      const blob = new Blob([analysisData], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `analisis_avanzado_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage('Análisis exportado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error exporting analysis:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al exportar el análisis');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  };
+
+  const handleExportComparison = async () => {
+    try {
+      const comparisonData = `
+Comparación de Períodos - ${new Date().toLocaleDateString('es-CL')}
+
+MÉTRICAS COMPARATIVAS:
+- Trabajos Enero 2024: 45 (+12%)
+- Ingresos Enero 2024: $2,850,000 (+8%)
+- Calificación Enero 2024: 4.6/5.0 (-2%)
+- Completación Enero 2024: 93% (+5%)
+
+COMPARACIÓN POR SERVICIO:
+- Plomería: Ene: 12 | Dic: 10 (+20%)
+- Eléctrica: Ene: 8 | Dic: 9 (-11%)
+- Limpieza: Ene: 15 | Dic: 12 (+25%)
+- Estructural: Ene: 6 | Dic: 8 (-25%)
+- Pintura: Ene: 4 | Dic: 3 (+33%)
+
+INSIGHTS:
+- Incremento significativo en trabajos de limpieza y pintura
+- Disminución en calificación requiere revisión de procesos urgentes
+- Mejora en eficiencia con tiempo de respuesta reducido
+      `;
+
+      const blob = new Blob([comparisonData], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comparacion_periodos_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage('Comparación exportada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error exporting comparison:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al exportar la comparación');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const handleExportReport = () => {
@@ -693,9 +926,7 @@ export default function MaintenanceReportsPage() {
                       <Button variant="outline" onClick={() => setShowAdvancedModal(false)}>
                         Cerrar
                       </Button>
-                      <Button onClick={() => setShowAdvancedModal(false)}>
-                        Exportar Análisis Completo
-                      </Button>
+                      <Button onClick={handleExportAnalysis}>Exportar Análisis Completo</Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -715,7 +946,7 @@ export default function MaintenanceReportsPage() {
                     </div>
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5" />
@@ -730,24 +961,7 @@ export default function MaintenanceReportsPage() {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Reportes Programados</h3>
                       <div className="space-y-3">
-                        {[
-                          {
-                            id: '1',
-                            name: 'Reporte Semanal de Rendimiento',
-                            frequency: 'Semanal',
-                            recipients: 'tú mismo',
-                            nextSend: '2024-01-29',
-                            status: 'active',
-                          },
-                          {
-                            id: '2',
-                            name: 'Resumen Mensual Financiero',
-                            frequency: 'Mensual',
-                            recipients: 'tú mismo + contador',
-                            nextSend: '2024-02-01',
-                            status: 'active',
-                          },
-                        ].map(report => (
+                        {scheduledReports.map(report => (
                           <div
                             key={report.id}
                             className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
@@ -755,7 +969,16 @@ export default function MaintenanceReportsPage() {
                             <div className="flex-1">
                               <h4 className="font-medium">{report.name}</h4>
                               <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                                <span>Frecuencia: {report.frequency}</span>
+                                <span>
+                                  Frecuencia:{' '}
+                                  {report.frequency === 'daily'
+                                    ? 'Diaria'
+                                    : report.frequency === 'weekly'
+                                      ? 'Semanal'
+                                      : report.frequency === 'monthly'
+                                        ? 'Mensual'
+                                        : 'Trimestral'}
+                                </span>
                                 <span>Destinatarios: {report.recipients}</span>
                                 <span>
                                   Próximo envío:{' '}
@@ -764,12 +987,28 @@ export default function MaintenanceReportsPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                              <Button size="sm" variant="outline">
+                              <Badge
+                                className={
+                                  report.status === 'active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }
+                              >
+                                {report.status === 'active' ? 'Activo' : 'Pausado'}
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditReport(report)}
+                              >
                                 Editar
                               </Button>
-                              <Button size="sm" variant="outline">
-                                Pausar
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handlePauseReport(report.id)}
+                              >
+                                {report.status === 'active' ? 'Pausar' : 'Activar'}
                               </Button>
                             </div>
                           </div>
@@ -780,18 +1019,34 @@ export default function MaintenanceReportsPage() {
                     {/* New Report Form */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Crear Nuevo Reporte Automático</CardTitle>
+                        <CardTitle className="text-lg">
+                          {editingReport
+                            ? 'Editar Reporte Automático'
+                            : 'Crear Nuevo Reporte Automático'}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
                           <Label htmlFor="reportName">Nombre del Reporte</Label>
-                          <Input id="reportName" placeholder="Ej: Reporte de Ingresos Semanal" />
+                          <Input
+                            id="reportName"
+                            placeholder="Ej: Reporte de Ingresos Semanal"
+                            value={newReportForm.name}
+                            onChange={e =>
+                              setNewReportForm(prev => ({ ...prev, name: e.target.value }))
+                            }
+                          />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="reportType">Tipo de Reporte</Label>
-                            <Select>
+                            <Select
+                              value={newReportForm.type}
+                              onValueChange={(value: ScheduledReport['type']) =>
+                                setNewReportForm(prev => ({ ...prev, type: value }))
+                              }
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar tipo" />
                               </SelectTrigger>
@@ -806,7 +1061,12 @@ export default function MaintenanceReportsPage() {
 
                           <div>
                             <Label htmlFor="frequency">Frecuencia</Label>
-                            <Select>
+                            <Select
+                              value={newReportForm.frequency}
+                              onValueChange={(value: ScheduledReport['frequency']) =>
+                                setNewReportForm(prev => ({ ...prev, frequency: value }))
+                              }
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar frecuencia" />
                               </SelectTrigger>
@@ -824,16 +1084,45 @@ export default function MaintenanceReportsPage() {
                           <Label htmlFor="recipients">
                             Destinatarios (emails separados por coma)
                           </Label>
-                          <Input id="recipients" placeholder="tu@email.com, contador@email.com" />
+                          <Input
+                            id="recipients"
+                            placeholder="tu@email.com, contador@email.com"
+                            value={newReportForm.recipients}
+                            onChange={e =>
+                              setNewReportForm(prev => ({ ...prev, recipients: e.target.value }))
+                            }
+                          />
                         </div>
 
                         <div className="flex items-center gap-4">
                           <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="includeCharts" className="rounded" />
+                            <input
+                              type="checkbox"
+                              id="includeCharts"
+                              className="rounded"
+                              checked={newReportForm.includeCharts}
+                              onChange={e =>
+                                setNewReportForm(prev => ({
+                                  ...prev,
+                                  includeCharts: e.target.checked,
+                                }))
+                              }
+                            />
                             <Label htmlFor="includeCharts">Incluir gráficos</Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="includeDetails" className="rounded" />
+                            <input
+                              type="checkbox"
+                              id="includeDetails"
+                              className="rounded"
+                              checked={newReportForm.includeDetails}
+                              onChange={e =>
+                                setNewReportForm(prev => ({
+                                  ...prev,
+                                  includeDetails: e.target.checked,
+                                }))
+                              }
+                            />
                             <Label htmlFor="includeDetails">Incluir detalles completos</Label>
                           </div>
                         </div>
@@ -841,11 +1130,25 @@ export default function MaintenanceReportsPage() {
                     </Card>
 
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowSchedulingModal(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowSchedulingModal(false);
+                          setEditingReport(null);
+                          setNewReportForm({
+                            name: '',
+                            type: '' as ScheduledReport['type'],
+                            frequency: '' as ScheduledReport['frequency'],
+                            recipients: '',
+                            includeCharts: true,
+                            includeDetails: false,
+                          });
+                        }}
+                      >
                         Cancelar
                       </Button>
-                      <Button onClick={() => setShowSchedulingModal(false)}>
-                        Crear Reporte Automático
+                      <Button onClick={handleCreateReport}>
+                        {editingReport ? 'Actualizar Reporte' : 'Crear Reporte Automático'}
                       </Button>
                     </div>
                   </div>
@@ -1097,9 +1400,7 @@ export default function MaintenanceReportsPage() {
                       <Button variant="outline" onClick={() => setShowComparisonModal(false)}>
                         Cerrar
                       </Button>
-                      <Button onClick={() => setShowComparisonModal(false)}>
-                        Exportar Comparación
-                      </Button>
+                      <Button onClick={handleExportComparison}>Exportar Comparación</Button>
                     </div>
                   </div>
                 </DialogContent>

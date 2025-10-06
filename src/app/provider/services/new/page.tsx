@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -421,12 +421,17 @@ export default function NewServicePage() {
             </Card>
 
             {/* Precios y Duración */}
-            <Card>
+            <Card className="border-green-200 bg-green-50/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
                   Precios y Duración
+                  <Badge className="bg-green-100 text-green-800 ml-2">Importante</Badge>
                 </CardTitle>
+                <CardDescription>
+                  Define claramente tus precios para que los clientes sepan cuánto cuesta tu
+                  servicio antes de contactarte.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -495,19 +500,32 @@ export default function NewServicePage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Precio mostrado:</strong>{' '}
-                    {serviceData.pricing.type === 'hourly'
-                      ? `${formatCurrency(serviceData.pricing.amount)}/hora`
-                      : serviceData.pricing.type === 'quote'
-                        ? 'Cotización personalizada'
-                        : formatCurrency(serviceData.pricing.amount)}
-                    {serviceData.pricing.minimumCharge &&
-                    serviceData.pricing.minimumCharge > 0 &&
-                    serviceData.pricing.type !== 'quote'
-                      ? ` (mínimo ${formatCurrency(serviceData.pricing.minimumCharge)})`
-                      : ''}
+                <div
+                  className={`p-4 rounded-lg ${serviceData.pricing.amount > 0 ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}
+                >
+                  <p
+                    className={`text-sm ${serviceData.pricing.amount > 0 ? 'text-green-800' : 'text-yellow-800'}`}
+                  >
+                    <strong>Precio mostrado a clientes:</strong>{' '}
+                    {serviceData.pricing.amount > 0 ? (
+                      <>
+                        {serviceData.pricing.type === 'hourly'
+                          ? `${formatCurrency(serviceData.pricing.amount)}/hora`
+                          : serviceData.pricing.type === 'quote'
+                            ? 'Cotización personalizada'
+                            : formatCurrency(serviceData.pricing.amount)}
+                        {serviceData.pricing.minimumCharge &&
+                        serviceData.pricing.minimumCharge > 0 &&
+                        serviceData.pricing.type !== 'quote'
+                          ? ` (mínimo ${formatCurrency(serviceData.pricing.minimumCharge)})`
+                          : ''}
+                      </>
+                    ) : (
+                      <span className="font-semibold">
+                        ⚠️ No has configurado un precio. Los clientes no podrán ver cuánto cuesta tu
+                        servicio.
+                      </span>
+                    )}
                   </p>
                 </div>
 

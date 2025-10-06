@@ -486,11 +486,15 @@ export default function ClientServicesPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-green-600">
-                            {service.price.type === 'hourly'
-                              ? `${formatCurrency(service.price.amount)}/hora`
-                              : formatCurrency(service.price.amount)}
-                          </p>
+                          <div className="bg-green-100 border border-green-300 rounded-lg p-2 mb-1">
+                            <p className="text-lg font-bold text-green-700">
+                              {service.price.type === 'hourly'
+                                ? `${formatCurrency(service.price.amount)}/hora`
+                                : service.price.type === 'quote'
+                                  ? 'Cotización'
+                                  : formatCurrency(service.price.amount)}
+                            </p>
+                          </div>
                           <p className="text-xs text-gray-500">{service.estimatedDuration}</p>
                         </div>
                       </div>
@@ -515,7 +519,7 @@ export default function ClientServicesPage() {
                               Ver Detalles
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>{service.title}</DialogTitle>
                               <DialogDescription>{service.description}</DialogDescription>
@@ -646,14 +650,38 @@ export default function ClientServicesPage() {
             </DialogHeader>
             {selectedService && (
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium">{selectedService.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{selectedService.provider.name}</p>
-                  <p className="text-sm font-semibold text-green-600 mt-2">
-                    {selectedService.price.type === 'hourly'
-                      ? `${formatCurrency(selectedService.price.amount)}/hora`
-                      : formatCurrency(selectedService.price.amount)}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900">{selectedService.title}</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Proveedor: {selectedService.provider.name}
                   </p>
+                  <div className="mt-3 p-3 bg-white rounded border">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        {selectedService.price.type === 'hourly'
+                          ? 'Precio por hora:'
+                          : selectedService.price.type === 'quote'
+                            ? 'Tipo:'
+                            : 'Precio:'}
+                      </span>
+                      <span className="text-lg font-bold text-green-700">
+                        {selectedService.price.type === 'hourly'
+                          ? `${formatCurrency(selectedService.price.amount)}/hora`
+                          : selectedService.price.type === 'quote'
+                            ? 'Cotización personalizada'
+                            : formatCurrency(selectedService.price.amount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm mt-1">
+                      <span className="text-gray-600">Duración estimada:</span>
+                      <span className="font-medium text-gray-800">
+                        {selectedService.estimatedDuration}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-blue-600">
+                    * El precio final puede variar según la complejidad del trabajo
+                  </div>
                 </div>
 
                 <div>

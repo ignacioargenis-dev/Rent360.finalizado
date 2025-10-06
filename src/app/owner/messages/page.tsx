@@ -769,7 +769,7 @@ export default function MessagesPage() {
 
         {/* Dialog para responder */}
         <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Responder a {selectedMessage?.sender.name}</DialogTitle>
               <DialogDescription>Re: {selectedMessage?.subject}</DialogDescription>
