@@ -918,8 +918,8 @@ export default function MaintenanceSettingsPage() {
                     </div>
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
+                <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
                     <DialogTitle className="flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Configuración de Facturación
@@ -928,8 +928,8 @@ export default function MaintenanceSettingsPage() {
                       Gestiona tu información fiscal y datos de facturación
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-6 py-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="billingName">Nombre/Razón Social</Label>
                         <Input
@@ -958,7 +958,7 @@ export default function MaintenanceSettingsPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="billingPhone">Teléfono</Label>
                         <Input
@@ -992,7 +992,7 @@ export default function MaintenanceSettingsPage() {
                           />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="billingComuna">Comuna</Label>
                             <Input
@@ -1055,7 +1055,7 @@ export default function MaintenanceSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 pt-4 border-t bg-white sticky bottom-0">
                       <Button variant="outline" onClick={() => setShowBillingModal(false)}>
                         Cancelar
                       </Button>
