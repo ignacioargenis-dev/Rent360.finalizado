@@ -579,10 +579,12 @@ export class AIChatbotService {
       },
       provider: {
         responses: [
+          'Para ofrecer servicios de mantenimiento, jardinería, limpieza u otros servicios, necesitas: RUT o documento de identidad, verificación de antecedentes, certificaciones profesionales si aplican (plomero, electricista, etc.), y comprobante de experiencia. El registro es gratuito y te permite aparecer en búsquedas de propietarios.',
+          'Documentos para proveedores de servicios: 1) Cédula de identidad/RUT 2) Certificaciones profesionales (si aplican) 3) Comprobante de experiencia laboral 4) Verificación de antecedentes. No necesitas certificación especial para comenzar, pero aumenta tu credibilidad.',
           'Como proveedor de servicios, puedes ofrecer: limpieza, mantenimiento, jardinería, seguridad, etc. El registro incluye verificación de experiencia y certificaciones. Apareces en búsquedas cuando propietarios necesitan servicios.',
           'Proveedores verificados: 1) Registro básico 2) Seleccionar servicios ofrecidos 3) Subir certificaciones 4) Definir precios y disponibilidad 5) Verificación de antecedentes. Gana dinero ofreciendo servicios a la comunidad.',
         ],
-        suggestions: ['Configurar servicios', 'Definir precios', 'Ver oportunidades'],
+        suggestions: ['Ver requisitos completos', 'Comenzar registro', 'Contactar soporte'],
         links: ['/provider/services/new', '/auth/register?role=provider'],
       },
     },
@@ -749,9 +751,12 @@ export class AIChatbotService {
           /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|gasfiter|limpieza|seguridad|mantenimiento)/,
           /(?:puedo|podría|quiero)\s+(?:publicar|ofrecer|prestar)\s+(?:mis\s+)?servicios/,
           /(?:como|dónde)\s+(?:ofrecer|brindar|dar)\s+(?:servicios|mantenimiento|trabajo)/,
+          /(?:para|necesito|debo tener|requiero)\s+(?:documento|certificación|certificado|licencia|registro)/,
+          /(?:qué|cuáles)\s+(?:documentos|requisitos|certificaciones)\s+(?:necesito|requiero|debo)/,
+          /(?:ofrecer|dar|prestar)\s+(?:servicios|mantenimiento)\s+(?:debo|necesito|requiero)/,
         ],
         weight: 1.0,
-        context: ['auth', 'signup', 'join', 'provider', 'services'],
+        context: ['auth', 'signup', 'join', 'provider', 'services', 'documents', 'certifications'],
       },
       {
         intent: 'property_search',
@@ -1412,9 +1417,12 @@ export class AIChatbotService {
       intent.intent === 'register' &&
       (intent.entities.join(' ').includes('jardinero') ||
         intent.entities.join(' ').includes('servicio') ||
+        intent.entities.join(' ').includes('mantenimiento') ||
+        intent.entities.join(' ').includes('document') ||
+        intent.entities.join(' ').includes('certific') ||
         userRole === 'guest')
     ) {
-      // Para preguntas sobre convertirse en proveedor, priorizar agente de mantenimiento
+      // Para preguntas sobre convertirse en proveedor/servicios/mantenimiento, priorizar agente de mantenimiento
       const maintenanceAgent = this.agentRegistry['maintenance_specialist'];
       if (maintenanceAgent && this.isAgentSuitableForRole(maintenanceAgent, userRole)) {
         return maintenanceAgent;
