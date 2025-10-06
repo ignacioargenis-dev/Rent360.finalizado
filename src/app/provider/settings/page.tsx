@@ -31,6 +31,11 @@ import {
   MapPin,
   Clock,
   CheckCircle,
+  FileText,
+  Upload,
+  Download,
+  Eye,
+  Trash2,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -80,6 +85,37 @@ export default function ProviderSettingsPage() {
     passwordLastChanged: '2024-01-15',
     loginAlerts: true,
     deviceTracking: true,
+  });
+  const [documentsData, setDocumentsData] = useState({
+    documents: [
+      {
+        id: '1',
+        name: 'Certificado de Empresa',
+        type: 'certificate',
+        status: 'approved',
+        uploadDate: '2024-01-15',
+        expiryDate: '2025-01-15',
+        fileUrl: '/api/documents/certificado-empresa.pdf',
+      },
+      {
+        id: '2',
+        name: 'Licencia Municipal',
+        type: 'license',
+        status: 'pending',
+        uploadDate: '2024-01-20',
+        expiryDate: '2025-01-20',
+        fileUrl: '/api/documents/licencia-municipal.pdf',
+      },
+      {
+        id: '3',
+        name: 'Seguro de Responsabilidad Civil',
+        type: 'insurance',
+        status: 'approved',
+        uploadDate: '2024-01-10',
+        expiryDate: '2024-12-10',
+        fileUrl: '/api/documents/seguro-rc.pdf',
+      },
+    ],
   });
 
   useEffect(() => {
@@ -270,9 +306,10 @@ export default function ProviderSettingsPage() {
 
         {/* Configuración por pestañas */}
         <Tabs defaultValue="profile" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="services">Servicios</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
             <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
             <TabsTrigger value="security">Seguridad</TabsTrigger>
           </TabsList>
@@ -435,6 +472,133 @@ export default function ProviderSettingsPage() {
                 <Button onClick={() => handleSaveSettings('servicios')}>
                   <Save className="w-4 h-4 mr-2" />
                   Guardar Servicios
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pestaña Documentos */}
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documentos y Certificaciones
+                </CardTitle>
+                <CardDescription>
+                  Gestiona tus documentos legales, certificados y licencias requeridas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Documentos Subidos</h3>
+                    <Button variant="outline">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Subir Documento
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {documentsData.documents.map(document => (
+                      <div
+                        key={document.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{document.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              Subido: {new Date(document.uploadDate).toLocaleDateString('es-CL')}
+                              {document.expiryDate &&
+                                ` • Vence: ${new Date(document.expiryDate).toLocaleDateString('es-CL')}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge
+                            variant={
+                              document.status === 'approved'
+                                ? 'default'
+                                : document.status === 'pending'
+                                  ? 'secondary'
+                                  : 'destructive'
+                            }
+                          >
+                            {document.status === 'approved'
+                              ? 'Aprobado'
+                              : document.status === 'pending'
+                                ? 'Pendiente'
+                                : 'Rechazado'}
+                          </Badge>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Download className="w-4 h-4 mr-2" />
+                              Descargar
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Documentos Requeridos</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-green-600">✓ Certificado de Empresa</h4>
+                      <p className="text-sm text-gray-600">Documento obligatorio para operar</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-yellow-600">⚠ Licencia Municipal</h4>
+                      <p className="text-sm text-gray-600">En revisión por el administrador</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-green-600">
+                        ✓ Seguro de Responsabilidad Civil
+                      </h4>
+                      <p className="text-sm text-gray-600">Vence en diciembre 2024</p>
+                    </div>
+                    <div className="p-4 border rounded-lg border-dashed">
+                      <h4 className="font-medium text-gray-400">○ Certificado de Antecedentes</h4>
+                      <p className="text-sm text-gray-600">Documento faltante</p>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Subir
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-800">Información Importante</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Todos los documentos son revisados por nuestro equipo administrativo. Los
+                        documentos aprobados son visibles para los clientes potenciales. Asegúrate
+                        de que todos los documentos estén vigentes.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button onClick={() => handleSaveSettings('documentos')}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Cambios en Documentos
                 </Button>
               </CardContent>
             </Card>
@@ -621,7 +785,18 @@ export default function ProviderSettingsPage() {
                       </p>
                     </div>
                     <div>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Implementar cambio de contraseña
+                          setSuccessMessage(
+                            'Funcionalidad de cambio de contraseña próximamente disponible'
+                          );
+                          setTimeout(() => setSuccessMessage(''), 3000);
+                        }}
+                      >
+                        <Lock className="w-4 h-4 mr-2" />
                         Cambiar Contraseña
                       </Button>
                     </div>
@@ -644,7 +819,7 @@ export default function ProviderSettingsPage() {
             <CardDescription>Accede rápidamente a las funciones más utilizadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
               <Button
                 variant="outline"
                 className="h-20 flex flex-col items-center justify-center"

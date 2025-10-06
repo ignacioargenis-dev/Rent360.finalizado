@@ -543,7 +543,14 @@ export default function OwnerSettingsPage() {
                       ? new Date(settings.security.passwordLastChanged).toLocaleDateString('es-CL')
                       : 'Nunca'}
                   </p>
-                  <Button variant="outline" className="mt-2">
+                  <Button
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => {
+                      // Implementar cambio de contraseña
+                      alert('Funcionalidad de cambio de contraseña próximamente disponible');
+                    }}
+                  >
                     <Key className="w-4 h-4 mr-2" />
                     Cambiar Contraseña
                   </Button>
