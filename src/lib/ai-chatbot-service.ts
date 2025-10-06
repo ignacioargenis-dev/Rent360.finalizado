@@ -746,9 +746,12 @@ export class AIChatbotService {
           /(?:como|dónde|quiero|necesito)\s+(?:registrarme|crear cuenta|darme de alta)/,
           /(?:registro|registrar|unirme|empezar)/,
           /(?:ser|convertirme en|quiero ser)\s+(?:propietario|inquilino|corredor|proveedor|runner)/,
+          /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|gasfiter|limpieza|seguridad|mantenimiento)/,
+          /(?:puedo|podría|quiero)\s+(?:publicar|ofrecer|prestar)\s+(?:mis\s+)?servicios/,
+          /(?:como|dónde)\s+(?:ofrecer|brindar|dar)\s+(?:servicios|mantenimiento|trabajo)/,
         ],
         weight: 1.0,
-        context: ['auth', 'signup', 'join'],
+        context: ['auth', 'signup', 'join', 'provider', 'services'],
       },
       {
         intent: 'property_search',
@@ -1404,6 +1407,20 @@ export class AIChatbotService {
     let bestAgent = this.agentRegistry['general_assistant'];
     let bestScore = 0;
 
+    // Lógica especial para intención "register" con contexto de servicios/proveedores
+    if (
+      intent.intent === 'register' &&
+      (intent.entities.join(' ').includes('jardinero') ||
+        intent.entities.join(' ').includes('servicio') ||
+        userRole === 'guest')
+    ) {
+      // Para preguntas sobre convertirse en proveedor, priorizar agente de mantenimiento
+      const maintenanceAgent = this.agentRegistry['maintenance_specialist'];
+      if (maintenanceAgent && this.isAgentSuitableForRole(maintenanceAgent, userRole)) {
+        return maintenanceAgent;
+      }
+    }
+
     for (const agent of Object.values(this.agentRegistry)) {
       let score = 0;
 
@@ -1687,6 +1704,12 @@ export class AIChatbotService {
       broker: ['general_assistant', 'broker_consultant', 'property_expert', 'financial_advisor'],
       provider: ['general_assistant', 'maintenance_specialist', 'financial_advisor'],
       admin: ['general_assistant', 'technical_support', 'legal_expert'],
+      guest: [
+        'general_assistant',
+        'maintenance_specialist',
+        'broker_consultant',
+        'property_expert',
+      ],
     };
 
     return roleAgentMapping[userRole]?.includes(agent.id) || false;

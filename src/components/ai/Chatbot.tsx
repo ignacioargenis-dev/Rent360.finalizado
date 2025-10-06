@@ -249,7 +249,7 @@ export default function Chatbot({
     try {
       // Obtener información del usuario autenticado
       const user = auth?.user;
-      const userRole = user?.role?.toLowerCase() || 'tenant';
+      const userRole = user?.role?.toLowerCase() || 'guest';
       const userId = user?.id || 'anonymous';
 
       // 🚀 Usar el servicio de IA revolucionario 10.000% mejorado
@@ -429,18 +429,11 @@ export default function Chatbot({
   return (
     <div className={cn('fixed z-50', positionClasses[position])}>
       <Card className={cn('w-96 h-[500px] shadow-xl border-0', isMinimized && 'h-16', className)}>
-        <CardHeader className="pb-3 bg-gradient-to-r from-primary to-primary/80 text-white rounded-t-lg">
+        <CardHeader className="pb-3 bg-primary text-white rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              <CardTitle className="text-lg">Rent360 IA 10.000%</CardTitle>
-              <Badge
-                variant="secondary"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0"
-              >
-                <Sparkles className="h-3 w-3 mr-1" />
-                IA REVOLUCIONARIA
-              </Badge>
+              <CardTitle className="text-lg">Chatbot Rent360</CardTitle>
             </div>
             <div className="flex items-center gap-1">
               <Button
