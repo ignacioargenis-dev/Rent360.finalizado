@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -102,6 +103,9 @@ export default function SupportDashboard() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [showTicketFilters, setShowTicketFilters] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Mock data for demo
@@ -355,6 +359,88 @@ export default function SupportDashboard() {
     }
   };
 
+  // Funciones para manejar botones
+  const handleViewTicketDetails = (ticketId: string) => {
+    router.push(`/support/tickets/${ticketId}`);
+  };
+
+  const handleTakeTicket = (ticketId: string) => {
+    // Update ticket status to in_progress and assign to current user
+    setRecentTickets(prevTickets =>
+      prevTickets.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, status: 'IN_PROGRESS' as any, assignedTo: 'Tú' }
+          : ticket
+      )
+    );
+    setStats(prev => ({
+      ...prev,
+      openTickets: prev.openTickets - 1,
+      pendingTickets: prev.pendingTickets + 1,
+    }));
+    setSuccessMessage('Ticket tomado exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleResolveTicket = (ticketId: string) => {
+    // Update ticket status to resolved
+    setRecentTickets(prevTickets =>
+      prevTickets.map(ticket =>
+        ticket.id === ticketId ? { ...ticket, status: 'RESOLVED' as any } : ticket
+      )
+    );
+    setStats(prev => ({
+      ...prev,
+      resolvedTickets: prev.resolvedTickets + 1,
+      pendingTickets: prev.pendingTickets - 1,
+    }));
+    setSuccessMessage('Ticket resuelto exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleFilterTickets = () => {
+    setShowTicketFilters(!showTicketFilters);
+    setSuccessMessage('Funcionalidad de filtros próximamente disponible');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleExportTickets = () => {
+    // Export tickets data to CSV
+    if (recentTickets.length === 0) {
+      setErrorMessage('No hay tickets para exportar');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const csvData = recentTickets.map(ticket => ({
+      ID: ticket.id,
+      Título: ticket.title,
+      Cliente: ticket.clientName,
+      Email: ticket.clientEmail,
+      Categoría: ticket.category,
+      Prioridad: ticket.priority,
+      Estado: ticket.status,
+      Asignado: ticket.assignedTo || 'Sin asignar',
+      Creado: ticket.createdAt,
+    }));
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'ID,Título,Cliente,Email,Categoría,Prioridad,Estado,Asignado,Creado\n' +
+      csvData.map(row => Object.values(row).join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `tickets_soporte_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setSuccessMessage('Tickets exportados exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
   if (userLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -373,6 +459,38 @@ export default function SupportDashboard() {
       subtitle="Gestiona tickets y métricas de soporte"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
@@ -456,7 +574,7 @@ export default function SupportDashboard() {
             <h2 className="text-2xl font-bold text-gray-800">Acciones Rápidas</h2>
             <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex-1 mx-4"></div>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Ticket className="w-6 h-6 text-white" />
@@ -537,11 +655,19 @@ export default function SupportDashboard() {
                     <p className="text-blue-100 text-sm">Tickets que requieren tu atención</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-50 border-0">
+                    <Button
+                      size="sm"
+                      className="bg-white text-blue-600 hover:bg-blue-50 border-0"
+                      onClick={handleFilterTickets}
+                    >
                       <Filter className="w-4 h-4 mr-2" />
                       Filtrar
                     </Button>
-                    <Button size="sm" className="bg-white text-blue-600 hover:bg-blue-50 border-0">
+                    <Button
+                      size="sm"
+                      className="bg-white text-blue-600 hover:bg-blue-50 border-0"
+                      onClick={handleExportTickets}
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       Exportar
                     </Button>
@@ -600,18 +726,27 @@ export default function SupportDashboard() {
                           size="sm"
                           variant="outline"
                           className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                          onClick={() => handleViewTicketDetails(ticket.id)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           Ver detalles
                         </Button>
                         {ticket.status === 'OPEN' && (
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleTakeTicket(ticket.id)}
+                          >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Tomar ticket
                           </Button>
                         )}
                         {ticket.status === 'IN_PROGRESS' && (
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleResolveTicket(ticket.id)}
+                          >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Resolver
                           </Button>
