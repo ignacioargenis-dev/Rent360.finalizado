@@ -174,59 +174,70 @@ export default function Chatbot({
   };
 
   const processUserMessage = async (content: string) => {
-    setIsLoading(true);
+    try {
+      // Agregar mensaje del usuario
+      const userMessage: ChatbotMessage = {
+        id: Date.now().toString(),
+        type: 'user',
+        content,
+        timestamp: new Date(),
+      };
 
-    // Agregar mensaje del usuario
-    const userMessage: ChatbotMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content,
-      timestamp: new Date(),
-    };
+      setMessages(prev => [...prev, userMessage]);
 
-    setMessages(prev => [...prev, userMessage]);
+      // Simular procesamiento de IA
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Simular procesamiento de IA
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      // Determinar respuesta basada en el contenido
+      const response = await generateAIResponse(content);
 
-    // Determinar respuesta basada en el contenido
-    const response = await generateAIResponse(content);
+      // Agregar mensaje de "escribiendo"
+      const typingMessage: ChatbotMessage = {
+        id: 'typing',
+        type: 'bot',
+        content: '',
+        timestamp: new Date(),
+      };
 
-    // Agregar mensaje de "escribiendo"
-    const typingMessage: ChatbotMessage = {
-      id: 'typing',
-      type: 'bot',
-      content: '',
-      timestamp: new Date(),
-    };
+      setMessages(prev => [...prev, typingMessage]);
 
-    setMessages(prev => [...prev, typingMessage]);
+      // Simular escritura
+      await simulateTyping(response.content);
 
-    // Simular escritura
-    await simulateTyping(response.content);
+      // Reemplazar mensaje de escritura con respuesta final
+      const botMessage: ChatbotMessage = {
+        id: Date.now().toString(),
+        type: 'bot',
+        content: response.content,
+        timestamp: new Date(),
+        context: response.context,
+        ...(response.suggestions && { suggestions: response.suggestions }),
+        ...(response.actions && { actions: response.actions }),
+        ...(response.links && { links: response.links }),
+        ...(response.followUp && { followUp: response.followUp }),
+        ...(response.securityNote && { securityNote: response.securityNote }),
+        // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
+        ...(response.agent && { agent: response.agent }),
+        ...(response.recommendations && { recommendations: response.recommendations }),
+        ...(response.sentiment && { sentiment: response.sentiment }),
+        ...(response.memoryContext && { memoryContext: response.memoryContext }),
+        ...(response.learningInsights && { learningInsights: response.learningInsights }),
+      };
 
-    // Reemplazar mensaje de escritura con respuesta final
-    const botMessage: ChatbotMessage = {
-      id: Date.now().toString(),
-      type: 'bot',
-      content: response.content,
-      timestamp: new Date(),
-      context: response.context,
-      ...(response.suggestions && { suggestions: response.suggestions }),
-      ...(response.actions && { actions: response.actions }),
-      ...(response.links && { links: response.links }),
-      ...(response.followUp && { followUp: response.followUp }),
-      ...(response.securityNote && { securityNote: response.securityNote }),
-      // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
-      ...(response.agent && { agent: response.agent }),
-      ...(response.recommendations && { recommendations: response.recommendations }),
-      ...(response.sentiment && { sentiment: response.sentiment }),
-      ...(response.memoryContext && { memoryContext: response.memoryContext }),
-      ...(response.learningInsights && { learningInsights: response.learningInsights }),
-    };
-
-    setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
-    setIsLoading(false);
+      setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
+    } catch (error) {
+      console.error('Error en processUserMessage:', error);
+      // Agregar mensaje de error al chat
+      const errorMessage: ChatbotMessage = {
+        id: Date.now().toString(),
+        type: 'bot',
+        content:
+          'Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta nuevamente.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      throw error; // Re-throw para que handleSendMessage lo maneje
+    }
   };
 
   const generateAIResponse = async (
@@ -380,11 +391,27 @@ export default function Chatbot({
 
     const message = inputValue.trim();
     setInputValue('');
-    await processUserMessage(message);
+    setIsLoading(true);
+
+    try {
+      await processUserMessage(message);
+    } catch (error) {
+      console.error('Error procesando mensaje:', error);
+      setIsLoading(false);
+      // Revertir el input value si hay error
+      setInputValue(message);
+    }
   };
 
   const handleQuickAction = async (action: string) => {
-    await processUserMessage(action);
+    setIsLoading(true);
+    try {
+      await processUserMessage(action);
+    } catch (error) {
+      console.error('Error procesando acción rápida:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
