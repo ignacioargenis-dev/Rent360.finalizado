@@ -201,10 +201,12 @@ export default function TenantMaintenanceReportsPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Filter records based on criteria
-      let filteredRecords = mockRecords.filter(
-        record =>
-          record.requestDate >= dateRange.startDate && record.requestDate <= dateRange.endDate
-      );
+      let filteredRecords = mockRecords.filter(record => {
+        if (!dateRange.startDate || !dateRange.endDate) {
+          return true;
+        }
+        return record.requestDate >= dateRange.startDate && record.requestDate <= dateRange.endDate;
+      });
 
       if (statusFilter !== 'all') {
         filteredRecords = filteredRecords.filter(record => record.status === statusFilter);
@@ -245,8 +247,8 @@ export default function TenantMaintenanceReportsPage() {
           if (!acc[record.provider]) {
             acc[record.provider] = { total: 0, count: 0 };
           }
-          acc[record.provider].total += record.providerRating;
-          acc[record.provider].count += 1;
+          acc[record.provider]!.total += record.providerRating;
+          acc[record.provider]!.count += 1;
           return acc;
         },
         {} as Record<string, { total: number; count: number }>
@@ -698,13 +700,13 @@ export default function TenantMaintenanceReportsPage() {
                               count: 0,
                             };
                           }
-                          acc[record.provider].total += 1;
+                          acc[record.provider]!.total += 1;
                           if (record.status === 'completed') {
-                            acc[record.provider].completed += 1;
+                            acc[record.provider]!.completed += 1;
                           }
                           if (record.rating) {
-                            acc[record.provider].rating += record.rating;
-                            acc[record.provider].count += 1;
+                            acc[record.provider]!.rating += record.rating;
+                            acc[record.provider]!.count += 1;
                           }
                           return acc;
                         },
@@ -763,8 +765,8 @@ export default function TenantMaintenanceReportsPage() {
                             if (!acc[record.serviceType]) {
                               acc[record.serviceType] = { total: 0, count: 0 };
                             }
-                            acc[record.serviceType].total += record.amount;
-                            acc[record.serviceType].count += 1;
+                            acc[record.serviceType]!.total += record.amount;
+                            acc[record.serviceType]!.count += 1;
                             return acc;
                           },
                           {} as Record<string, { total: number; count: number }>

@@ -185,13 +185,19 @@ export default function TenantReportsPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Filter data based on date range and type
-      let filteredPayments = mockPayments.filter(
-        p => p.date >= dateRange.startDate && p.date <= dateRange.endDate
-      );
+      let filteredPayments = mockPayments.filter(p => {
+        if (!dateRange.startDate || !dateRange.endDate) {
+          return true;
+        }
+        return p.date >= dateRange.startDate && p.date <= dateRange.endDate;
+      });
 
-      let filteredMaintenance = mockMaintenance.filter(
-        m => m.date >= dateRange.startDate && m.date <= dateRange.endDate
-      );
+      let filteredMaintenance = mockMaintenance.filter(m => {
+        if (!dateRange.startDate || !dateRange.endDate) {
+          return true;
+        }
+        return m.date >= dateRange.startDate && m.date <= dateRange.endDate;
+      });
 
       if (reportType === 'payments') {
         filteredMaintenance = [];

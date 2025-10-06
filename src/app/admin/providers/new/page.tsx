@@ -108,13 +108,13 @@ export default function NewProviderPage() {
       const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
-        [parent]: {
+        [parent as keyof typeof prev]: {
           ...(prev[parent as keyof typeof prev] as any),
-          [child]: value,
+          [child as any]: value,
         },
       }));
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData(prev => ({ ...prev, [field as keyof typeof prev]: value }));
     }
 
     if (errors[field]) {

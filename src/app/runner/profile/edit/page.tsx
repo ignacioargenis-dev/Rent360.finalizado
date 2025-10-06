@@ -239,14 +239,14 @@ export default function EditRunnerProfilePage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean | number) => {
+  const handleInputChange = (field: string, value: string | boolean | number | string[]) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setProfile(prev => ({
         ...prev,
-        [parent]: {
+        [parent as keyof typeof prev]: {
           ...(prev[parent as keyof typeof prev] as any),
-          [child]: value,
+          [child as any]: value,
         },
       }));
     } else {

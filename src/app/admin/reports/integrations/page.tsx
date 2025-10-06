@@ -665,9 +665,9 @@ export default function IntegrationsReportsPage() {
                         if (!acc[integration.type]) {
                           acc[integration.type] = { total: 0, success: 0 };
                         }
-                        acc[integration.type].total += 1;
+                        acc[integration.type]!.total += 1;
                         if (integration.status === 'active' && integration.successRate > 95) {
-                          acc[integration.type].success += 1;
+                          acc[integration.type]!.success += 1;
                         }
                         return acc;
                       },

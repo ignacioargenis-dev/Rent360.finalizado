@@ -366,7 +366,7 @@ export default function OwnerTenantEditPage() {
                   <div>
                     <Label htmlFor="emergencyContactRelationship">Relación</Label>
                     <Select
-                      value={formData.emergencyContactRelationship}
+                      value={formData.emergencyContactRelationship || ''}
                       onValueChange={value =>
                         handleInputChange('emergencyContactRelationship', value)
                       }
@@ -423,7 +423,7 @@ export default function OwnerTenantEditPage() {
                           : 'Terminado'}
                   </span>
                 </div>
-                {formData.income > 0 && (
+                {formData.income && formData.income > 0 && (
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Ingresos:</span>
                     <span className="font-medium text-green-600">

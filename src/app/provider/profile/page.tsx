@@ -267,7 +267,7 @@ export default function ProviderProfilePage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     if (!profile) {
       return;
     }
@@ -276,9 +276,9 @@ export default function ProviderProfilePage() {
       const [parent, child] = field.split('.');
       setProfile(prev => ({
         ...prev!,
-        [parent]: {
-          ...prev![parent as keyof typeof prev],
-          [child]: value,
+        [parent as keyof typeof prev]: {
+          ...(prev![parent as keyof typeof prev] as any),
+          [child as any]: value,
         },
       }));
     } else {

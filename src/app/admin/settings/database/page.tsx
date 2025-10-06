@@ -192,9 +192,9 @@ export default function DatabaseSettingsPage() {
       const [parent, child] = field.split('.');
       setSettings(prev => ({
         ...prev,
-        [parent]: {
+        [parent as keyof typeof prev]: {
           ...(prev[parent as keyof typeof prev] as any),
-          [child]: value,
+          [child as any]: value,
         },
       }));
     } else {

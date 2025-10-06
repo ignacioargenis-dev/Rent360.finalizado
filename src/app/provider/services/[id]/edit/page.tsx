@@ -195,9 +195,9 @@ export default function EditServicePage() {
       const [parent, child] = field.split('.');
       setServiceData(prev => ({
         ...prev,
-        [parent]: {
+        [parent as keyof typeof prev]: {
           ...(prev[parent as keyof typeof prev] as any),
-          [child]: value,
+          [child as any]: value,
         },
       }));
     } else {

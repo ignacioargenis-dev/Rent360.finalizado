@@ -160,7 +160,7 @@ export default function NewServiceRequestPage() {
       if (selectedProperty) {
         setRequestData(prev => ({
           ...prev,
-          propertyId: value,
+          propertyId: String(value),
           propertyAddress: selectedProperty.address,
           tenantId: selectedProperty.tenantId,
           tenantName: selectedProperty.tenantName,
@@ -174,7 +174,7 @@ export default function NewServiceRequestPage() {
         ...prev,
         budgetRange: {
           ...prev.budgetRange,
-          [budgetField]: value,
+          [budgetField as keyof typeof prev.budgetRange]: value,
         },
       }));
     } else {

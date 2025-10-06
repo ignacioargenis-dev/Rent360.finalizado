@@ -167,9 +167,11 @@ export default function PaymentsReportsPage() {
       }
 
       // Filter by date range
-      filteredPayments = filteredPayments.filter(
-        p => p.paymentDate >= dateRange.startDate && p.paymentDate <= dateRange.endDate
-      );
+      if (dateRange.startDate && dateRange.endDate) {
+        filteredPayments = filteredPayments.filter(
+          p => p.paymentDate >= dateRange.startDate! && p.paymentDate <= dateRange.endDate!
+        );
+      }
 
       setPayments(filteredPayments);
 

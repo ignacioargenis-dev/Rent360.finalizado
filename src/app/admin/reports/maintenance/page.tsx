@@ -176,9 +176,11 @@ export default function MaintenanceReportsPage() {
       }
 
       // Filter by date range
-      filteredRecords = filteredRecords.filter(
-        r => r.requestDate >= dateRange.startDate && r.requestDate <= dateRange.endDate
-      );
+      if (dateRange.startDate && dateRange.endDate) {
+        filteredRecords = filteredRecords.filter(
+          r => r.requestDate >= dateRange.startDate! && r.requestDate <= dateRange.endDate!
+        );
+      }
 
       setMaintenanceRecords(filteredRecords);
 

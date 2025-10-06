@@ -65,7 +65,7 @@ export default function NewRunnerReportPage() {
     serviceType: '',
     priority: 'medium',
     status: 'completed',
-    visitDate: new Date().toISOString().split('T')[0],
+    visitDate: new Date().toISOString().split('T')[0] || '',
     startTime: '',
     endTime: '',
     description: '',
