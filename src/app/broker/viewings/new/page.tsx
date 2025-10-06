@@ -15,8 +15,39 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import dynamic from 'next/dynamic';
+
+// Importar componentes que requieren client-side rendering
+const Calendar = dynamic(
+  () => import('@/components/ui/calendar').then(mod => ({ default: mod.Calendar })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 flex items-center justify-center">Cargando calendario...</div>
+    ),
+  }
+);
+
+const Popover = dynamic(
+  () => import('@/components/ui/popover').then(mod => ({ default: mod.Popover })),
+  {
+    ssr: false,
+  }
+);
+
+const PopoverContent = dynamic(
+  () => import('@/components/ui/popover').then(mod => ({ default: mod.PopoverContent })),
+  {
+    ssr: false,
+  }
+);
+
+const PopoverTrigger = dynamic(
+  () => import('@/components/ui/popover').then(mod => ({ default: mod.PopoverTrigger })),
+  {
+    ssr: false,
+  }
+);
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
