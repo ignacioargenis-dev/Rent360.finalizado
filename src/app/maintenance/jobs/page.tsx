@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ interface MaintenanceJob {
 }
 
 export default function MaintenanceJobsPage() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<MaintenanceJob[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<MaintenanceJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -453,10 +455,7 @@ export default function MaintenanceJobsPage() {
                 icon={Plus}
                 label="Nuevo Trabajo"
                 description="Agendar mantenimiento"
-                onClick={() => {
-                  setSuccessMessage('Formulario de nuevo trabajo próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
+                onClick={() => router.push('/maintenance/jobs/new')}
               />
 
               <QuickActionButton
@@ -486,10 +485,7 @@ export default function MaintenanceJobsPage() {
                 icon={Calendar}
                 label="Calendario"
                 description="Ver agenda"
-                onClick={() => {
-                  setSuccessMessage('Vista de calendario próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
+                onClick={() => router.push('/maintenance/calendar')}
               />
 
               <QuickActionButton

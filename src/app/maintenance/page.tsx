@@ -25,6 +25,8 @@ import {
   Edit,
   BarChart3,
   ChevronRight,
+  Wrench,
+  PlayCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
@@ -34,7 +36,7 @@ import { useUserState } from '@/hooks/useUserState';
 
 interface DashboardStats {
   activeJobs: number;
-  totalProperties: number;
+  totalJobs: number;
   monthlyRevenue: number;
   completedJobs: number;
   averageRating: number;
@@ -43,34 +45,41 @@ interface DashboardStats {
 
 interface RecentActivity {
   id: string;
-  type: 'property' | 'contract' | 'payment' | 'message' | 'rating';
+  type:
+    | 'job_started'
+    | 'job_completed'
+    | 'payment_received'
+    | 'message'
+    | 'rating'
+    | 'schedule_update';
   title: string;
   description: string;
   date: string;
   status?: string;
 }
 
-interface PropertySummary {
+interface JobSummary {
   id: string;
   title: string;
-  address: string;
-  status: string;
-  monthlyRent: number;
-  tenant?: string;
-  contractEnd?: string;
+  propertyAddress: string;
+  ownerName: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  scheduledDate: string;
+  estimatedCost: number;
 }
 
 export default function MaintenanceDashboard() {
   const { user } = useUserState();
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 8,
-    totalProperties: 156,
+    totalJobs: 156,
     monthlyRevenue: 3100000,
     completedJobs: 47,
     averageRating: 4.9,
     pendingJobs: 5,
   });
-  const [recentProperties, setRecentProperties] = useState<PropertySummary[]>([]);
+  const [recentJobs, setRecentJobs] = useState<JobSummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,64 +88,69 @@ export default function MaintenanceDashboard() {
     setTimeout(() => {
       setStats({
         activeJobs: 8,
-        totalProperties: 156,
+        totalJobs: 156,
         monthlyRevenue: 3100000,
         completedJobs: 47,
         averageRating: 4.9,
         pendingJobs: 5,
       });
 
-      setRecentProperties([
+      setRecentJobs([
         {
           id: '1',
-          title: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          status: 'RENTED',
-          monthlyRent: 550000,
-          tenant: 'Carlos Ramírez',
-          contractEnd: '2024-12-31',
+          title: 'Reparación de cañería',
+          propertyAddress: 'Av. Apoquindo 3400, Las Condes',
+          ownerName: 'María González',
+          status: 'in_progress',
+          priority: 'high',
+          scheduledDate: '2024-01-15',
+          estimatedCost: 45000,
         },
         {
           id: '2',
-          title: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          status: 'RENTED',
-          monthlyRent: 350000,
-          tenant: 'Empresa Soluciones Ltda.',
-          contractEnd: '2025-02-14',
+          title: 'Mantenimiento eléctrico',
+          propertyAddress: 'Av. Providencia 1245, Providencia',
+          ownerName: 'Carlos Rodríguez',
+          status: 'pending',
+          priority: 'medium',
+          scheduledDate: '2024-01-18',
+          estimatedCost: 80000,
         },
         {
           id: '3',
-          title: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          status: 'AVAILABLE',
-          monthlyRent: 1200000,
+          title: 'Limpieza general',
+          propertyAddress: 'Av. Vitacura 8900, Vitacura',
+          ownerName: 'Ana López',
+          status: 'completed',
+          priority: 'low',
+          scheduledDate: '2024-01-10',
+          estimatedCost: 30000,
         },
       ]);
 
       setRecentActivity([
         {
           id: '1',
-          type: 'payment',
-          title: 'Pago recibido',
-          description: 'Carlos Ramírez pagó arriendo de marzo',
-          date: '2024-03-15',
+          type: 'job_completed',
+          title: 'Trabajo completado',
+          description: 'Reparación de cañería en Av. Las Condes terminada exitosamente',
+          date: '2024-01-15',
           status: 'COMPLETED',
         },
         {
           id: '2',
-          type: 'contract',
-          title: 'Nuevo contrato',
-          description: 'Contrato firmado con Empresa Soluciones Ltda.',
-          date: '2024-03-10',
-          status: 'ACTIVE',
+          type: 'payment_received',
+          title: 'Pago recibido',
+          description: 'María González pagó $45.000 por reparación de plomería',
+          date: '2024-01-15',
+          status: 'COMPLETED',
         },
         {
           id: '3',
-          type: 'rating',
-          title: 'Nueva calificación',
-          description: 'Carlos Ramírez te calificó con 5 estrellas',
-          date: '2024-03-08',
+          type: 'job_started',
+          title: 'Trabajo iniciado',
+          description: 'Mantenimiento eléctrico en Providencia ha comenzado',
+          date: '2024-01-14',
         },
       ]);
 
@@ -163,38 +177,53 @@ export default function MaintenanceDashboard() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'AVAILABLE':
-        return <Badge className="bg-green-100 text-green-800">Disponible</Badge>;
-      case 'RENTED':
-        return <Badge className="bg-blue-100 text-blue-800">Arrendado</Badge>;
-      case 'PENDING':
+      case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
       case 'COMPLETED':
         return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case 'ACTIVE':
-        return <Badge className="bg-blue-100 text-blue-800">Activo</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'low':
+        return <Badge className="bg-gray-100 text-gray-800">Baja</Badge>;
+      case 'medium':
+        return <Badge className="bg-blue-100 text-blue-800">Media</Badge>;
+      case 'high':
+        return <Badge className="bg-orange-100 text-orange-800">Alta</Badge>;
+      case 'urgent':
+        return <Badge className="bg-red-100 text-red-800">Urgente</Badge>;
+      default:
+        return <Badge>{priority}</Badge>;
+    }
+  };
+
   // Icon mapping for activity items
   const iconMap = {
-    property: Building,
-    contract: FileText,
-    payment: CreditCard,
+    job_started: Wrench,
+    job_completed: CheckCircle,
+    payment_received: CreditCard,
     message: MessageCircle,
     rating: Star,
+    schedule_update: Calendar,
     default: Star,
   };
 
   // Color mapping for activity items
   const colorMap = {
-    property: 'text-blue-600 bg-blue-50',
-    contract: 'text-purple-600 bg-purple-50',
-    payment: 'text-green-600 bg-green-50',
+    job_started: 'text-blue-600 bg-blue-50',
+    job_completed: 'text-green-600 bg-green-50',
+    payment_received: 'text-emerald-600 bg-emerald-50',
     message: 'text-orange-600 bg-orange-50',
     rating: 'text-yellow-600 bg-yellow-50',
+    schedule_update: 'text-purple-600 bg-purple-50',
     default: 'text-gray-600 bg-gray-50',
   };
 
@@ -244,17 +273,17 @@ export default function MaintenanceDashboard() {
 
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
-              <FileText className="w-8 h-8 text-purple-100" />
+              <Wrench className="w-8 h-8 text-purple-100" />
               <div className="bg-purple-400 bg-opacity-30 rounded-full p-2">
-                <FileText className="w-4 h-4 text-white" />
+                <Wrench className="w-4 h-4 text-white" />
               </div>
             </div>
-            <h3 className="text-sm font-medium text-purple-100 mb-1">Propiedades</h3>
-            <p className="text-2xl font-bold">{stats.totalProperties}</p>
+            <h3 className="text-sm font-medium text-purple-100 mb-1">Trabajos Totales</h3>
+            <p className="text-2xl font-bold">{stats.totalJobs}</p>
             <div className="mt-2 h-1 bg-purple-400 rounded-full overflow-hidden">
               <div
                 className="h-full bg-white rounded-full"
-                style={{ width: `${(stats.totalProperties / 200) * 100}%` }}
+                style={{ width: `${(stats.totalJobs / 200) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -339,10 +368,12 @@ export default function MaintenanceDashboard() {
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Plus className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Nueva Propiedad</h3>
-              <p className="text-sm text-gray-600 mb-4">Agrega una nueva propiedad a tu catálogo</p>
+              <h3 className="font-semibold text-gray-800 mb-2">Nuevo Trabajo</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Agendar un nuevo trabajo de mantenimiento
+              </p>
               <Link
-                href="/owner/properties/new"
+                href="/maintenance/jobs/new"
                 className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
               >
                 Comenzar
@@ -352,30 +383,32 @@ export default function MaintenanceDashboard() {
 
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 group">
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <FileText className="w-6 h-6 text-white" />
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Contratos</h3>
-              <p className="text-sm text-gray-600 mb-4">Gestiona tus contratos de arriendo</p>
+              <h3 className="font-semibold text-gray-800 mb-2">Calendario</h3>
+              <p className="text-sm text-gray-600 mb-4">Revisa tu agenda de trabajos programados</p>
               <Link
-                href="/owner/contracts"
+                href="/maintenance/calendar"
                 className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center"
               >
-                Ver contratos
+                Ver calendario
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 group">
               <div className="bg-gradient-to-br from-green-500 to-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <CreditCard className="w-6 h-6 text-white" />
+                <DollarSign className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Pagos</h3>
-              <p className="text-sm text-gray-600 mb-4">Revisa el historial de pagos recibidos</p>
+              <h3 className="font-semibold text-gray-800 mb-2">Ganancias</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Revisa tus ingresos por trabajos realizados
+              </p>
               <Link
-                href="/owner/payments"
+                href="/maintenance/earnings"
                 className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center"
               >
-                Ver pagos
+                Ver ganancias
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
@@ -386,10 +419,10 @@ export default function MaintenanceDashboard() {
               </div>
               <h3 className="font-semibold text-gray-800 mb-2">Reportes</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Analiza el rendimiento de tus propiedades
+                Analiza tu rendimiento en trabajos de mantenimiento
               </p>
               <Link
-                href="/owner/reports"
+                href="/maintenance/reports"
                 className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center"
               >
                 Ver reportes
@@ -400,62 +433,63 @@ export default function MaintenanceDashboard() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Recent Properties */}
+          {/* Recent Jobs */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Mis Propiedades</h2>
-                    <p className="text-blue-100 text-sm">Estado actual de tus propiedades</p>
+                    <h2 className="text-xl font-bold text-white">Trabajos Recientes</h2>
+                    <p className="text-blue-100 text-sm">
+                      Estado actual de tus trabajos de mantenimiento
+                    </p>
                   </div>
                   <Button className="bg-white text-blue-600 hover:bg-blue-50 border-0">
                     <Plus className="w-4 h-4 mr-2" />
-                    Nueva Propiedad
+                    Nuevo Trabajo
                   </Button>
                 </div>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {recentProperties.map(property => (
+                  {recentJobs.map(job => (
                     <div
-                      key={property.id}
+                      key={job.id}
                       className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 hover:border-blue-300"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-bold text-lg text-gray-800">{property.title}</h3>
+                          <h3 className="font-bold text-lg text-gray-800">{job.title}</h3>
                           <p className="text-sm text-gray-600 flex items-center">
                             <MapPin className="w-4 h-4 mr-1" />
-                            {property.address}
+                            {job.propertyAddress}
                           </p>
                         </div>
-                        {getStatusBadge(property.status)}
+                        <div className="flex gap-2">
+                          {getStatusBadge(job.status)}
+                          {getPriorityBadge(job.priority)}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="bg-blue-50 rounded-lg p-3">
-                          <p className="text-xs text-blue-600 font-medium">Arriendo mensual</p>
+                          <p className="text-xs text-blue-600 font-medium">Costo Estimado</p>
                           <p className="font-bold text-blue-800">
-                            {formatPrice(property.monthlyRent)}
+                            {formatPrice(job.estimatedCost)}
                           </p>
                         </div>
-                        {property.tenant && (
-                          <div className="bg-green-50 rounded-lg p-3">
-                            <p className="text-xs text-green-600 font-medium">Inquilino</p>
-                            <p className="font-bold text-green-800">{property.tenant}</p>
-                          </div>
-                        )}
+                        <div className="bg-green-50 rounded-lg p-3">
+                          <p className="text-xs text-green-600 font-medium">Propietario</p>
+                          <p className="font-bold text-green-800">{job.ownerName}</p>
+                        </div>
                       </div>
 
-                      {property.contractEnd && (
-                        <div className="flex items-center text-sm text-gray-600 mb-4 bg-yellow-50 rounded-lg p-3">
-                          <Calendar className="w-4 h-4 mr-2 text-yellow-600" />
-                          <span className="font-medium">
-                            Fin del contrato: {formatDate(property.contractEnd)}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center text-sm text-gray-600 mb-4 bg-yellow-50 rounded-lg p-3">
+                        <Calendar className="w-4 h-4 mr-2 text-yellow-600" />
+                        <span className="font-medium">
+                          Programado: {formatDate(job.scheduledDate)}
+                        </span>
+                      </div>
 
                       <div className="flex gap-2">
                         <Button
@@ -471,13 +505,19 @@ export default function MaintenanceDashboard() {
                           variant="outline"
                           className="border-gray-300 hover:border-purple-500 hover:text-purple-600"
                         >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Editar
+                          <Wrench className="w-4 h-4 mr-1" />
+                          Actualizar
                         </Button>
-                        {property.status === 'AVAILABLE' && (
+                        {job.status === 'pending' && (
                           <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                            <Users className="w-4 h-4 mr-1" />
-                            Buscar inquilino
+                            <PlayCircle className="w-4 h-4 mr-1" />
+                            Iniciar trabajo
+                          </Button>
+                        )}
+                        {job.status === 'in_progress' && (
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Completar
                           </Button>
                         )}
                       </div>
@@ -502,14 +542,18 @@ export default function MaintenanceDashboard() {
                       key={activity.id}
                       id={activity.id}
                       type={
-                        activity.type === 'property'
-                          ? 'system'
-                          : (activity.type as
-                              | 'payment'
-                              | 'maintenance'
-                              | 'contract'
-                              | 'message'
-                              | 'system')
+                        activity.type === 'job_started' || activity.type === 'job_completed'
+                          ? 'maintenance'
+                          : activity.type === 'payment_received'
+                            ? 'payment'
+                            : activity.type === 'schedule_update'
+                              ? 'system'
+                              : (activity.type as
+                                  | 'payment'
+                                  | 'maintenance'
+                                  | 'contract'
+                                  | 'message'
+                                  | 'system')
                       }
                       title={activity.title}
                       description={activity.description}
@@ -538,29 +582,27 @@ export default function MaintenanceDashboard() {
               <div className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <span className="text-sm font-medium text-blue-800">Tasa de Ocupación</span>
-                    <span className="font-bold text-blue-600">67%</span>
+                    <span className="text-sm font-medium text-blue-800">Tasa de Completación</span>
+                    <span className="font-bold text-blue-600">
+                      {Math.round((stats.completedJobs / stats.totalJobs) * 100)}%
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium text-green-800">Ingresos Anuales</span>
+                    <span className="text-sm font-medium text-green-800">Ingresos Mensuales</span>
                     <span className="font-bold text-green-600">
-                      {formatPrice(stats.monthlyRevenue * 12)}
+                      {formatPrice(stats.monthlyRevenue)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium text-yellow-800">
-                      Propiedades Disponibles
-                    </span>
-                    <span className="font-bold text-yellow-600">
-                      {recentProperties.filter(p => p.status === 'AVAILABLE').length}
-                    </span>
+                    <span className="text-sm font-medium text-yellow-800">Trabajos Pendientes</span>
+                    <span className="font-bold text-yellow-600">{stats.pendingJobs}</span>
                   </div>
 
                   <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                     <span className="text-sm font-medium text-purple-800">
-                      Satisfacción de Inquilinos
+                      Calificación Promedio
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-purple-600">{stats.averageRating}</span>

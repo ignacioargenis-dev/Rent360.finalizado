@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -28,6 +29,7 @@ import {
   MapPin,
   DollarSign,
   CheckCircle,
+  FileText,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -70,6 +72,18 @@ interface MaintenanceSettings {
 }
 
 export default function MaintenanceSettingsPage() {
+  const [documents, setDocuments] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: string;
+      status: 'pending' | 'approved' | 'rejected';
+      uploadDate: string;
+      expiryDate?: string;
+      fileUrl: string;
+    }>
+  >([]);
+
   const [settings, setSettings] = useState<MaintenanceSettings>({
     companyName: 'Servicios de Mantenimiento XYZ',
     description:
@@ -135,6 +149,58 @@ export default function MaintenanceSettingsPage() {
       ...prev,
       [key]: value,
     }));
+  };
+
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage('Tipo de archivo no permitido. Solo se permiten PDF, JPG, PNG, DOC, DOCX.');
+      return;
+    }
+
+    // Validar tamaño (10MB máximo)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setErrorMessage('El archivo es demasiado grande. Máximo 10MB permitido.');
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+
+      // Simular subida
+      const newDocument = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type,
+        status: 'pending' as const,
+        uploadDate: new Date().toISOString(),
+        fileUrl: URL.createObjectURL(file), // En producción esto sería la URL del servidor
+      };
+
+      setDocuments(prev => [...prev, newDocument]);
+
+      logger.info('Documento subido', { fileName: file.name, fileSize: file.size });
+
+      setSuccessMessage('Documento subido exitosamente y enviado para revisión');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (error) {
+      logger.error('Error al subir documento', { error });
+      setErrorMessage('Error al subir el documento');
+    }
   };
 
   const updateWorkingHour = (day: string, field: string, value: any) => {
@@ -207,11 +273,12 @@ export default function MaintenanceSettingsPage() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="services">Servicios</TabsTrigger>
             <TabsTrigger value="schedule">Horarios</TabsTrigger>
             <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
             <TabsTrigger value="payments">Pagos</TabsTrigger>
           </TabsList>
 
@@ -453,6 +520,165 @@ export default function MaintenanceSettingsPage() {
                     checked={settings.pushNotifications}
                     onCheckedChange={checked => updateSetting('pushNotifications', checked)}
                   />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Documentos y Certificaciones
+                </CardTitle>
+                <CardDescription>
+                  Gestiona tus documentos profesionales y certificaciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Document Upload Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Subir Documentos</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                    <input
+                      type="file"
+                      id="document-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={handleDocumentUpload}
+                    />
+                    <label
+                      htmlFor="document-upload"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Shield className="w-12 h-12 text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-2">Haz clic para subir un documento</p>
+                      <p className="text-sm text-gray-500">PDF, JPG, PNG, DOC, DOCX (máx. 10MB)</p>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Required Documents */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Documentos Requeridos</h3>
+                  <div className="space-y-4">
+                    {[
+                      { id: 'rut', name: 'RUT/Cédula de Identidad', status: 'approved' },
+                      { id: 'patente', name: 'Patente Municipal', status: 'pending' },
+                      { id: 'seguro', name: 'Seguro de Responsabilidad Civil', status: 'missing' },
+                      {
+                        id: 'certificaciones',
+                        name: 'Certificaciones Profesionales',
+                        status: 'approved',
+                      },
+                      {
+                        id: 'antecedentes',
+                        name: 'Certificado de Antecedentes',
+                        status: 'pending',
+                      },
+                    ].map(doc => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-gray-400" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {doc.status === 'approved' && 'Aprobado'}
+                              {doc.status === 'pending' && 'En revisión'}
+                              {doc.status === 'missing' && 'Falta subir'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {doc.status === 'approved' && (
+                            <Badge className="bg-green-100 text-green-800">Aprobado</Badge>
+                          )}
+                          {doc.status === 'pending' && (
+                            <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+                          )}
+                          {doc.status === 'missing' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const input = document.getElementById(
+                                    'document-upload'
+                                  ) as HTMLInputElement;
+                                  if (input) {
+                                    input.click();
+                                  }
+                                }}
+                              >
+                                Subir
+                              </Button>
+                              <Badge className="bg-red-100 text-red-800">Requerido</Badge>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Uploaded Documents */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Documentos Subidos</h3>
+                  <div className="space-y-4">
+                    {documents.map(doc => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-gray-400" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-gray-600">
+                              Subido el {new Date(doc.uploadDate).toLocaleDateString('es-CL')}
+                              {doc.expiryDate &&
+                                ` • Vence: ${new Date(doc.expiryDate).toLocaleDateString('es-CL')}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={
+                              doc.status === 'approved'
+                                ? 'bg-green-100 text-green-800'
+                                : doc.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                            }
+                          >
+                            {doc.status === 'approved'
+                              ? 'Aprobado'
+                              : doc.status === 'pending'
+                                ? 'Pendiente'
+                                : 'Rechazado'}
+                          </Badge>
+                          <Button size="sm" variant="outline">
+                            Ver
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Descargar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {documents.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Shield className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <p>No has subido documentos aún</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

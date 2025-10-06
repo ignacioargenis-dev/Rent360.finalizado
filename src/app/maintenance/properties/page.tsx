@@ -478,7 +478,7 @@ export default function MaintenancePropertiesPage() {
                 label="Próximos Trabajos"
                 description="Agenda futura"
                 onClick={() => {
-                  setSuccessMessage('Agenda futura próximamente disponible');
+                  setSuccessMessage('Función de agenda próximamente disponible');
                   setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />
@@ -488,7 +488,7 @@ export default function MaintenancePropertiesPage() {
                 label="Contactos"
                 description="Lista de propietarios"
                 onClick={() => {
-                  setSuccessMessage('Lista de contactos próximamente disponible');
+                  setSuccessMessage('Función de contactos próximamente disponible');
                   setTimeout(() => setSuccessMessage(''), 3000);
                 }}
               />

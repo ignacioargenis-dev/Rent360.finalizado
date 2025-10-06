@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface CalendarJob {
 }
 
 export default function MaintenanceCalendarPage() {
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [jobs, setJobs] = useState<CalendarJob[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -501,10 +503,7 @@ export default function MaintenanceCalendarPage() {
                 icon={Plus}
                 label="Nuevo Trabajo"
                 description="Agendar mantenimiento"
-                onClick={() => {
-                  setSuccessMessage('Formulario de nuevo trabajo próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
+                onClick={() => router.push('/maintenance/jobs/new')}
               />
 
               <QuickActionButton
