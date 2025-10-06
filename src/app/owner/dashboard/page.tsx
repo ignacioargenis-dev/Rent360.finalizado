@@ -544,13 +544,12 @@ export default function OwnerDashboard() {
                               size="sm"
                               className="bg-green-600 hover:bg-green-700"
                               onClick={() => {
-                                // Simular búsqueda de inquilino
                                 logger.info('Iniciando búsqueda de inquilino para propiedad:', {
                                   propertyId: property.id,
                                 });
-                                // TODO: Implementar navegación a página de búsqueda de inquilinos
-                                alert(
-                                  `Función próximamente disponible: Búsqueda de inquilinos para ${property.title}. Por ahora puedes publicar la propiedad en las plataformas de alquiler para encontrar inquilinos.`
+                                // Navegar a página de búsqueda de inquilinos con filtros pre-aplicados
+                                router.push(
+                                  `/owner/tenants?propertyId=${property.id}&search=${encodeURIComponent(property.title)}`
                                 );
                               }}
                             >

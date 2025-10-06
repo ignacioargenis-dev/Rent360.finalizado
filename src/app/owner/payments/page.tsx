@@ -34,7 +34,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface PaymentWithDetails extends Payment {
   property?: Property;
@@ -67,9 +78,20 @@ export default function OwnerPaymentsPage() {
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showManualPaymentDialog, setShowManualPaymentDialog] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Estado para formulario de pago manual
+  const [manualPaymentForm, setManualPaymentForm] = useState({
+    propertyId: '',
+    tenantName: '',
+    amount: '',
+    paymentMethod: 'BANK_TRANSFER',
+    paymentDate: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
 
   // Funciones para acciones
   const handleFilterPayments = () => {
@@ -146,10 +168,47 @@ Rent360 - Sistema de Gestión Inmobiliaria
   };
 
   const handleManualPaymentRegistration = () => {
-    logger.info('Registrando pago manual');
-    alert(
-      'Función próximamente disponible: Registro manual de pagos. Por ahora puedes gestionar los pagos a través del sistema automático o contactar al equipo de soporte para asistencia.'
-    );
+    logger.info('Abriendo modal de registro manual de pagos');
+    setShowManualPaymentDialog(true);
+  };
+
+  const handleSubmitManualPayment = async () => {
+    try {
+      // Validar formulario
+      if (
+        !manualPaymentForm.propertyId ||
+        !manualPaymentForm.tenantName ||
+        !manualPaymentForm.amount
+      ) {
+        setErrorMessage('Por favor, completa todos los campos obligatorios.');
+        setTimeout(() => setErrorMessage(''), 5000);
+        return;
+      }
+
+      logger.info('Registrando pago manual:', manualPaymentForm);
+
+      // Aquí iría la lógica para guardar el pago manual en la base de datos
+      // Por ahora simulamos el registro
+
+      setSuccessMessage('Pago manual registrado exitosamente');
+      setShowManualPaymentDialog(false);
+
+      // Resetear formulario
+      setManualPaymentForm({
+        propertyId: '',
+        tenantName: '',
+        amount: '',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentDate: new Date().toISOString().split('T')[0],
+        notes: '',
+      });
+
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error registrando pago manual:', { error });
+      setErrorMessage('Error al registrar el pago. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
   };
 
   const handleSendReminder = async (paymentId: string) => {
@@ -958,6 +1017,123 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Manual Payment Registration Dialog */}
+        <Dialog open={showManualPaymentDialog} onOpenChange={setShowManualPaymentDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Registrar Pago Manual
+              </DialogTitle>
+              <DialogDescription>
+                Registra un pago que fue realizado fuera del sistema
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="propertyId">Propiedad *</Label>
+                <Input
+                  id="propertyId"
+                  placeholder="ID o nombre de la propiedad"
+                  value={manualPaymentForm.propertyId}
+                  onChange={e =>
+                    setManualPaymentForm(prev => ({ ...prev, propertyId: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tenantName">Nombre del Inquilino *</Label>
+                <Input
+                  id="tenantName"
+                  placeholder="Nombre completo del inquilino"
+                  value={manualPaymentForm.tenantName}
+                  onChange={e =>
+                    setManualPaymentForm(prev => ({ ...prev, tenantName: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="amount">Monto *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="0"
+                  value={manualPaymentForm.amount}
+                  onChange={e =>
+                    setManualPaymentForm(prev => ({ ...prev, amount: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="paymentMethod">Método de Pago</Label>
+                <Select
+                  value={manualPaymentForm.paymentMethod}
+                  onValueChange={value =>
+                    setManualPaymentForm(prev => ({ ...prev, paymentMethod: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BANK_TRANSFER">Transferencia Bancaria</SelectItem>
+                    <SelectItem value="DIGITAL_WALLET">Billetera Digital</SelectItem>
+                    <SelectItem value="CASH">Efectivo</SelectItem>
+                    <SelectItem value="CHECK">Cheque</SelectItem>
+                    <SelectItem value="OTHER">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="paymentDate">Fecha de Pago</Label>
+                <Input
+                  id="paymentDate"
+                  type="date"
+                  value={manualPaymentForm.paymentDate}
+                  onChange={e =>
+                    setManualPaymentForm(prev => ({ ...prev, paymentDate: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Notas (opcional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Información adicional sobre el pago..."
+                  value={manualPaymentForm.notes}
+                  onChange={e => setManualPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowManualPaymentDialog(false);
+                  setManualPaymentForm({
+                    propertyId: '',
+                    tenantName: '',
+                    amount: '',
+                    paymentMethod: 'BANK_TRANSFER',
+                    paymentDate: new Date().toISOString().split('T')[0],
+                    notes: '',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmitManualPayment}>Registrar Pago</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

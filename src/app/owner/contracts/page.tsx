@@ -30,6 +30,7 @@ import { User, Contract, Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
+import { useRouter } from 'next/navigation';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
   Dialog,
@@ -47,6 +48,7 @@ interface ContractWithDetails extends Contract {
 
 export default function OwnerContractsPage() {
   const { user } = useUserState();
+  const router = useRouter();
   const [contracts, setContracts] = useState<ContractWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -332,10 +334,7 @@ export default function OwnerContractsPage() {
 
   const handleEditContract = (contract: ContractWithDetails) => {
     logger.info('Editando contrato:', { contractId: contract.id });
-    // TODO: Implementar navegación a página de edición de contratos
-    alert(
-      `Función próximamente disponible: Edición de contrato ${contract.contractNumber}. Por ahora puedes gestionar los contratos a través del equipo de soporte.`
-    );
+    router.push(`/owner/contracts/${contract.id}/edit`);
   };
 
   const handleViewContractDetails = (contract: ContractWithDetails) => {
@@ -365,10 +364,7 @@ export default function OwnerContractsPage() {
 
   const handleNewContract = () => {
     logger.info('Creando nuevo contrato');
-    // TODO: Implementar navegación a página de creación de contratos
-    alert(
-      'Función próximamente disponible: Creación de nuevos contratos. Por ahora puedes contactar al equipo de soporte para asistencia en la creación de contratos.'
-    );
+    router.push('/owner/contracts/new');
   };
 
   if (loading) {
