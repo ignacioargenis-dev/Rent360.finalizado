@@ -11,6 +11,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,6 +38,7 @@ import {
   DollarSign,
   CheckCircle,
   FileText,
+  ChevronRight,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -123,6 +132,8 @@ export default function MaintenanceSettingsPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -783,15 +794,105 @@ export default function MaintenanceSettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <QuickActionButton
-                icon={Shield}
-                label="Privacidad"
-                description="Configurar privacidad"
-                onClick={() => {
-                  setSuccessMessage('Configuración de privacidad próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+              <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Shield className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Privacidad</h3>
+                    <p className="text-sm text-gray-600 mb-4">Configurar privacidad de datos</p>
+                    <div className="text-blue-600 font-medium text-sm flex items-center">
+                      Configurar
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Shield className="w-5 h-5" />
+                      Configuración de Privacidad
+                    </DialogTitle>
+                    <DialogDescription>
+                      Gestiona cómo se utilizan y comparten tus datos personales
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium">Datos de Contacto Públicos</Label>
+                          <p className="text-sm text-gray-600">
+                            Permitir que otros usuarios vean tu email y teléfono
+                          </p>
+                        </div>
+                        <Switch defaultChecked={false} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium">Perfil Público</Label>
+                          <p className="text-sm text-gray-600">
+                            Mostrar tu perfil en búsquedas públicas
+                          </p>
+                        </div>
+                        <Switch defaultChecked={true} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium">Historial de Trabajos</Label>
+                          <p className="text-sm text-gray-600">
+                            Mostrar trabajos realizados en tu perfil
+                          </p>
+                        </div>
+                        <Switch defaultChecked={true} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium">Calificaciones y Comentarios</Label>
+                          <p className="text-sm text-gray-600">
+                            Permitir que se muestren reseñas públicas
+                          </p>
+                        </div>
+                        <Switch defaultChecked={true} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium">Marketing y Promociones</Label>
+                          <p className="text-sm text-gray-600">
+                            Recibir ofertas y promociones por email
+                          </p>
+                        </div>
+                        <Switch defaultChecked={false} />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-2">Solicitud de Eliminación de Datos</h4>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Puedes solicitar la eliminación permanente de todos tus datos personales.
+                        Esta acción no se puede deshacer.
+                      </p>
+                      <Button variant="destructive" size="sm">
+                        Solicitar Eliminación de Datos
+                      </Button>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowPrivacyModal(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => setShowPrivacyModal(false)}>
+                        Guardar Configuración
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <QuickActionButton
                 icon={CheckCircle}
@@ -803,15 +904,168 @@ export default function MaintenanceSettingsPage() {
                 }}
               />
 
-              <QuickActionButton
-                icon={DollarSign}
-                label="Facturación"
-                description="Configurar facturación"
-                onClick={() => {
-                  setSuccessMessage('Configuración de facturación próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+              <Dialog open={showBillingModal} onOpenChange={setShowBillingModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <DollarSign className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Facturación</h3>
+                    <p className="text-sm text-gray-600 mb-4">Gestionar datos fiscales</p>
+                    <div className="text-green-600 font-medium text-sm flex items-center">
+                      Configurar
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Configuración de Facturación
+                    </DialogTitle>
+                    <DialogDescription>
+                      Gestiona tu información fiscal y datos de facturación
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="billingName">Nombre/Razón Social</Label>
+                        <Input
+                          id="billingName"
+                          placeholder="Nombre para facturación"
+                          defaultValue="Servicios de Mantenimiento XYZ SpA"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="billingRut">RUT</Label>
+                        <Input
+                          id="billingRut"
+                          placeholder="12.345.678-9"
+                          defaultValue="76.543.210-8"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="billingAddress">Dirección Fiscal</Label>
+                      <Input
+                        id="billingAddress"
+                        placeholder="Dirección completa"
+                        defaultValue="Av. Providencia 1234, Oficina 501, Providencia, Santiago"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="billingPhone">Teléfono</Label>
+                        <Input
+                          id="billingPhone"
+                          placeholder="+56 9 1234 5678"
+                          defaultValue="+56 9 8765 4321"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="billingEmail">Email de Facturación</Label>
+                        <Input
+                          id="billingEmail"
+                          type="email"
+                          placeholder="facturacion@empresa.cl"
+                          defaultValue="facturacion@mantenimiento.cl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-4">Información Adicional</h4>
+
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="billingGiro">Giro</Label>
+                          <Input
+                            id="billingGiro"
+                            placeholder="Actividad económica"
+                            defaultValue="Servicios de reparación y mantenimiento"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="billingComuna">Comuna</Label>
+                            <Input
+                              id="billingComuna"
+                              placeholder="Comuna"
+                              defaultValue="Providencia"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="billingCiudad">Ciudad</Label>
+                            <Input
+                              id="billingCiudad"
+                              placeholder="Ciudad"
+                              defaultValue="Santiago"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-2">Documentos Fiscales</h4>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Sube tus documentos fiscales para mantener tu información actualizada
+                      </p>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="font-medium">Certificado de Situación Tributaria</p>
+                              <p className="text-sm text-gray-600">Vence: 31/12/2024</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              Ver
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              Actualizar
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="font-medium">Certificado de Vigencia SII</p>
+                              <p className="text-sm text-gray-600">Vence: 31/03/2024</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge className="bg-red-100 text-red-800">Vencido</Badge>
+                            <Button size="sm">Subir Nuevo</Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowBillingModal(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => setShowBillingModal(false)}>
+                        Guardar Información Fiscal
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>

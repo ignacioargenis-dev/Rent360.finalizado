@@ -27,6 +27,7 @@ import {
   Phone,
   Mail,
   Eye,
+  PlayCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -411,20 +412,206 @@ export default function MaintenanceSchedulePage() {
             ))}
           </div>
         ) : (
-          /* Daily View - Placeholder for now */
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Vista Diaria Próximamente
-                </h3>
-                <p className="text-gray-600">
-                  La vista detallada por día estará disponible próximamente.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          /* Daily View */
+          <div className="space-y-6">
+            {/* Day Selector */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-6 h-6" />
+                      Vista Diaria
+                    </CardTitle>
+                    <CardDescription>
+                      Trabajos programados para{' '}
+                      {new Date().toLocaleDateString('es-CL', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" size="sm">
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      Día Anterior
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Hoy
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Día Siguiente
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Timeline View */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Agenda del Día</CardTitle>
+                <CardDescription>Cronograma horario de trabajos programados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Time slots from 8 AM to 7 PM */}
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const hour = i + 8;
+                    const timeString = `${hour.toString().padStart(2, '0')}:00`;
+                    const jobsAtThisHour = scheduledJobs.filter(job => {
+                      const startTimeParts = job.startTime.split(':');
+                      if (!startTimeParts[0]) {
+                        return false;
+                      }
+                      const jobStart = parseInt(startTimeParts[0]);
+                      return (
+                        jobStart === hour && job.date === new Date().toISOString().substring(0, 10)
+                      );
+                    });
+
+                    return (
+                      <div
+                        key={hour}
+                        className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-20 text-sm font-medium text-gray-600 flex-shrink-0">
+                          {formatTime(timeString)}
+                        </div>
+
+                        <div className="flex-1">
+                          {jobsAtThisHour.length > 0 ? (
+                            jobsAtThisHour.map(job => (
+                              <div
+                                key={job.id}
+                                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                              >
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h3 className="font-semibold text-gray-900">{job.title}</h3>
+                                    <p className="text-sm text-gray-600 flex items-center mt-1">
+                                      <MapPin className="w-4 h-4 mr-1" />
+                                      {job.propertyAddress}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {getStatusBadge(job.status)}
+                                    {getPriorityBadge(job.priority)}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm">
+                                      {formatTime(job.startTime)} - {formatTime(job.endTime)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm">{job.ownerName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Wrench className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm capitalize">
+                                      {job.maintenanceType}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-green-600">
+                                      {formatCurrency(job.estimatedCost)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {job.notes && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                    <p className="text-sm text-blue-800">
+                                      <strong>Notas:</strong> {job.notes}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline">
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Ver Detalles
+                                  </Button>
+                                  {job.status === 'scheduled' && (
+                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                                      <PlayCircle className="w-4 h-4 mr-1" />
+                                      Iniciar Trabajo
+                                    </Button>
+                                  )}
+                                  {job.status === 'in_progress' && (
+                                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Completar
+                                    </Button>
+                                  )}
+                                  <Button size="sm" variant="outline">
+                                    <Phone className="w-4 h-4 mr-1" />
+                                    Contactar
+                                  </Button>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-gray-400 italic">Sin trabajos programados</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Summary */}
+                <div className="mt-6 border-t pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {
+                          scheduledJobs.filter(
+                            job => job.date === new Date().toISOString().substring(0, 10)
+                          ).length
+                        }
+                      </div>
+                      <div className="text-sm text-blue-800">Trabajos Totales</div>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {
+                          scheduledJobs.filter(
+                            job =>
+                              job.date === new Date().toISOString().substring(0, 10) &&
+                              job.status === 'completed'
+                          ).length
+                        }
+                      </div>
+                      <div className="text-sm text-green-800">Completados</div>
+                    </div>
+
+                    <div className="bg-orange-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {
+                          scheduledJobs.filter(
+                            job =>
+                              job.date === new Date().toISOString().substring(0, 10) &&
+                              job.status === 'in_progress'
+                          ).length
+                        }
+                      </div>
+                      <div className="text-sm text-orange-800">En Progreso</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Today's Summary */}

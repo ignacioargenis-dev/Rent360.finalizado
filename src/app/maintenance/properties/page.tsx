@@ -30,9 +30,20 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  MessageCircle,
+  ChevronRight,
+  Mail,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface Property {
   id: string;
@@ -65,6 +76,8 @@ export default function MaintenancePropertiesPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAgendaModal, setShowAgendaModal] = useState(false);
+  const [showContactsModal, setShowContactsModal] = useState(false);
 
   useEffect(() => {
     loadProperties();
@@ -473,25 +486,394 @@ export default function MaintenancePropertiesPage() {
                 }}
               />
 
-              <QuickActionButton
-                icon={Calendar}
-                label="Próximos Trabajos"
-                description="Agenda futura"
-                onClick={() => {
-                  setSuccessMessage('Función de agenda próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+              <Dialog open={showAgendaModal} onOpenChange={setShowAgendaModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Próximos Trabajos</h3>
+                    <p className="text-sm text-gray-600 mb-4">Agenda de mantenimientos</p>
+                    <div className="text-blue-600 font-medium text-sm flex items-center">
+                      Ver Agenda
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Agenda de Próximos Trabajos
+                    </DialogTitle>
+                    <DialogDescription>
+                      Trabajos de mantenimiento programados en las próximas semanas
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    {/* Upcoming Jobs List */}
+                    <div className="space-y-4">
+                      {[
+                        {
+                          id: '1',
+                          title: 'Revisión sistema eléctrico',
+                          property: 'Av. Las Condes 1234, Depto 5B',
+                          owner: 'María González',
+                          date: '2024-01-25',
+                          time: '10:00',
+                          priority: 'high',
+                          status: 'scheduled',
+                        },
+                        {
+                          id: '2',
+                          title: 'Mantenimiento aire acondicionado',
+                          property: 'Providencia 567, Oficina 301',
+                          owner: 'Carlos Rodríguez',
+                          date: '2024-01-28',
+                          time: '14:00',
+                          priority: 'medium',
+                          status: 'scheduled',
+                        },
+                        {
+                          id: '3',
+                          title: 'Inspección estructural',
+                          property: 'Ñuñoa 890, Casa Principal',
+                          owner: 'Ana López',
+                          date: '2024-02-02',
+                          time: '09:00',
+                          priority: 'high',
+                          status: 'scheduled',
+                        },
+                        {
+                          id: '4',
+                          title: 'Limpieza general post-desocupación',
+                          property: 'Vitacura 1500, Casa 45',
+                          owner: 'Pedro Sánchez',
+                          date: '2024-02-05',
+                          time: '11:00',
+                          priority: 'low',
+                          status: 'scheduled',
+                        },
+                      ].map(job => (
+                        <div
+                          key={job.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{job.title}</h3>
+                              <p className="text-sm text-gray-600 flex items-center mt-1">
+                                <MapPin className="w-4 h-4 mr-1" />
+                                {job.property}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge
+                                className={
+                                  job.priority === 'high'
+                                    ? 'bg-red-100 text-red-800'
+                                    : job.priority === 'medium'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                }
+                              >
+                                {job.priority === 'high'
+                                  ? 'Alta'
+                                  : job.priority === 'medium'
+                                    ? 'Media'
+                                    : 'Baja'}
+                              </Badge>
+                              <Badge className="bg-yellow-100 text-yellow-800">Programado</Badge>
+                            </div>
+                          </div>
 
-              <QuickActionButton
-                icon={User}
-                label="Contactos"
-                description="Lista de propietarios"
-                onClick={() => {
-                  setSuccessMessage('Función de contactos próximamente disponible');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">
+                                {new Date(job.date).toLocaleDateString('es-CL')}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{job.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{job.owner}</span>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {Math.ceil(
+                                (new Date(job.date).getTime() - new Date().getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              )}{' '}
+                              días
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Ver Detalles
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Phone className="w-4 h-4 mr-1" />
+                              Contactar
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              Reprogramar
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-blue-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-blue-600">4</div>
+                          <div className="text-sm text-blue-800">Próximos 7 días</div>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-orange-600">2</div>
+                          <div className="text-sm text-orange-800">Próximas 2 semanas</div>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-green-600">12</div>
+                          <div className="text-sm text-green-800">Próximo mes</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowAgendaModal(false)}>
+                        Cerrar
+                      </Button>
+                      <Button onClick={() => setShowAgendaModal(false)}>
+                        Ir al Calendario Completo
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={showContactsModal} onOpenChange={setShowContactsModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Contactos</h3>
+                    <p className="text-sm text-gray-600 mb-4">Lista de propietarios</p>
+                    <div className="text-purple-600 font-medium text-sm flex items-center">
+                      Ver Contactos
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Directorio de Contactos
+                    </DialogTitle>
+                    <DialogDescription>
+                      Lista completa de propietarios e inquilinos para contacto directo
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    {/* Search and Filter */}
+                    <div className="flex gap-4">
+                      <Input
+                        placeholder="Buscar por nombre, propiedad o comuna..."
+                        className="flex-1"
+                      />
+                      <Select defaultValue="all">
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Tipo de contacto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="owner">Propietarios</SelectItem>
+                          <SelectItem value="tenant">Inquilinos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Contacts List */}
+                    <div className="space-y-4">
+                      {[
+                        {
+                          id: '1',
+                          name: 'María González Rodríguez',
+                          type: 'owner',
+                          properties: ['Av. Las Condes 1234, Depto 5B'],
+                          phone: '+56912345678',
+                          email: 'maria.gonzalez@email.com',
+                          lastContact: '2024-01-15',
+                          totalJobs: 8,
+                          activeJobs: 1,
+                        },
+                        {
+                          id: '2',
+                          name: 'Carlos Rodríguez Morales',
+                          type: 'owner',
+                          properties: ['Providencia 567, Oficina 301'],
+                          phone: '+56987654321',
+                          email: 'carlos.rodriguez@email.com',
+                          lastContact: '2024-01-14',
+                          totalJobs: 5,
+                          activeJobs: 1,
+                        },
+                        {
+                          id: '3',
+                          name: 'Ana López García',
+                          type: 'owner',
+                          properties: ['Ñuñoa 890, Casa Principal'],
+                          phone: '+56911223344',
+                          email: 'ana.lopez@email.com',
+                          lastContact: '2024-01-10',
+                          totalJobs: 12,
+                          activeJobs: 0,
+                        },
+                        {
+                          id: '4',
+                          name: 'Pedro Sánchez Ruiz',
+                          type: 'owner',
+                          properties: ['Vitacura 1500, Casa 45'],
+                          phone: '+56944332211',
+                          email: 'pedro.sanchez@email.com',
+                          lastContact: '2024-01-12',
+                          totalJobs: 6,
+                          activeJobs: 1,
+                        },
+                        {
+                          id: '5',
+                          name: 'Laura Martínez Silva',
+                          type: 'tenant',
+                          properties: ['Av. Las Condes 1234, Depto 5B'],
+                          phone: '+56955667788',
+                          email: 'laura.martinez@email.com',
+                          lastContact: '2024-01-08',
+                          totalJobs: 0,
+                          activeJobs: 0,
+                        },
+                      ].map(contact => (
+                        <div
+                          key={contact.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-gray-900">{contact.name}</h3>
+                                <Badge
+                                  className={
+                                    contact.type === 'owner'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-green-100 text-green-800'
+                                  }
+                                >
+                                  {contact.type === 'owner' ? 'Propietario' : 'Inquilino'}
+                                </Badge>
+                              </div>
+
+                              <div className="space-y-1 text-sm text-gray-600">
+                                {contact.properties.map((property, index) => (
+                                  <div key={index} className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    <span>{property}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="text-right">
+                              <div className="text-sm text-gray-600 mb-1">
+                                Último contacto:{' '}
+                                {new Date(contact.lastContact).toLocaleDateString('es-CL')}
+                              </div>
+                              <div className="flex gap-2">
+                                {contact.activeJobs > 0 && (
+                                  <Badge className="bg-orange-100 text-orange-800">
+                                    {contact.activeJobs} activo{contact.activeJobs > 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                                <Badge variant="outline">{contact.totalJobs} total</Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{contact.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{contact.email}</span>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {contact.type === 'owner'
+                                ? 'Trabajos realizados'
+                                : 'Sin trabajos activos'}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Phone className="w-4 h-4 mr-1" />
+                              Llamar
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Mail className="w-4 h-4 mr-1" />
+                              Email
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <MessageCircle className="w-4 h-4 mr-1" />
+                              WhatsApp
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Historial
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary Stats */}
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-blue-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-blue-600">9</div>
+                          <div className="text-sm text-blue-800">Total Contactos</div>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-green-600">4</div>
+                          <div className="text-sm text-green-800">Propietarios</div>
+                        </div>
+                        <div className="bg-purple-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-purple-600">1</div>
+                          <div className="text-sm text-purple-800">Inquilinos</div>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-orange-600">3</div>
+                          <div className="text-sm text-orange-800">Con Trabajos Activos</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowContactsModal(false)}>
+                        Cerrar
+                      </Button>
+                      <Button onClick={() => setShowContactsModal(false)}>Exportar Lista</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <QuickActionButton
                 icon={RefreshCw}

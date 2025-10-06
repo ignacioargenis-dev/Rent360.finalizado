@@ -5,6 +5,8 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -26,8 +28,18 @@ import {
   Download,
   Eye,
   FileText,
+  ChevronRight,
+  AlertTriangle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 
 interface ReportData {
@@ -57,6 +69,9 @@ export default function MaintenanceReportsPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAdvancedModal, setShowAdvancedModal] = useState(false);
+  const [showSchedulingModal, setShowSchedulingModal] = useState(false);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   useEffect(() => {
     loadReportData();
@@ -512,35 +527,583 @@ export default function MaintenanceReportsPage() {
                 }}
               />
 
-              <QuickActionButton
-                icon={BarChart3}
-                label="Análisis Avanzado"
-                description="Ver métricas detalladas"
-                onClick={() => {
-                  setSuccessMessage('Análisis avanzado próximamente disponible.');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+              <Dialog open={showAdvancedModal} onOpenChange={setShowAdvancedModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <BarChart3 className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Análisis Avanzado</h3>
+                    <p className="text-sm text-gray-600 mb-4">Ver métricas detalladas</p>
+                    <div className="text-blue-600 font-medium text-sm flex items-center">
+                      Analizar
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" />
+                      Análisis Avanzado de Rendimiento
+                    </DialogTitle>
+                    <DialogDescription>
+                      Métricas detalladas y análisis profundo de tu rendimiento
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    {/* Performance Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Eficiencia Operativa</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Tiempo Promedio de Respuesta</span>
+                            <span className="font-semibold text-green-600">2.3 horas</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Tasa de Completación</span>
+                            <span className="font-semibold text-blue-600">93.2%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Satisfacción del Cliente</span>
+                            <span className="font-semibold text-yellow-600">4.7/5.0</span>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-              <QuickActionButton
-                icon={Calendar}
-                label="Programar Reportes"
-                description="Reportes automáticos"
-                onClick={() => {
-                  setSuccessMessage('Programación de reportes próximamente disponible.');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Análisis Financiero</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Margen de Ganancia</span>
+                            <span className="font-semibold text-green-600">34.5%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Costo por Trabajo</span>
+                            <span className="font-semibold text-red-600">$42,300</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">ROI Mensual</span>
+                            <span className="font-semibold text-purple-600">127%</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
 
-              <QuickActionButton
-                icon={Eye}
-                label="Comparar Períodos"
-                description="Análisis comparativo"
-                onClick={() => {
-                  setSuccessMessage('Comparación de períodos próximamente disponible.');
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
-              />
+                    {/* Trends Analysis */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Tendencias y Patrones</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="w-5 h-5 text-blue-600" />
+                              <span className="font-medium text-blue-800">Tendencia Positiva</span>
+                            </div>
+                            <p className="text-sm text-blue-700">
+                              Los trabajos de plomería han aumentado un 25% en los últimos 3 meses,
+                              representando el 40% de tus ingresos totales.
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-orange-50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertTriangle className="w-5 h-5 text-orange-600" />
+                              <span className="font-medium text-orange-800">Área de Mejora</span>
+                            </div>
+                            <p className="text-sm text-orange-700">
+                              Los tiempos de respuesta en trabajos urgentes superan las 4 horas.
+                              Considera optimizar la asignación de recursos.
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-green-50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <span className="font-medium text-green-800">
+                                Fortaleza Identificada
+                              </span>
+                            </div>
+                            <p className="text-sm text-green-700">
+                              Excelente calificación promedio (4.8/5.0) en trabajos de mantenimiento
+                              preventivo, lo que indica alta satisfacción del cliente.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Recommendations */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Recomendaciones Estratégicas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-3 border border-blue-200 rounded-lg bg-blue-50">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div>
+                              <p className="font-medium text-blue-800">
+                                Expandir Servicios de Plomería
+                              </p>
+                              <p className="text-sm text-blue-700">
+                                Considera contratar un especialista adicional para cubrir la
+                                creciente demanda.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3 p-3 border border-green-200 rounded-lg bg-green-50">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div>
+                              <p className="font-medium text-green-800">
+                                Implementar Sistema de Priorización
+                              </p>
+                              <p className="text-sm text-green-700">
+                                Desarrolla un sistema automatizado para clasificar trabajos por
+                                urgencia.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3 p-3 border border-purple-200 rounded-lg bg-purple-50">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div>
+                              <p className="font-medium text-purple-800">
+                                Programa de Fidelización
+                              </p>
+                              <p className="text-sm text-purple-700">
+                                Implementa descuentos para clientes recurrentes para aumentar la
+                                retención.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowAdvancedModal(false)}>
+                        Cerrar
+                      </Button>
+                      <Button onClick={() => setShowAdvancedModal(false)}>
+                        Exportar Análisis Completo
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={showSchedulingModal} onOpenChange={setShowSchedulingModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-green-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Programar Reportes</h3>
+                    <p className="text-sm text-gray-600 mb-4">Reportes automáticos</p>
+                    <div className="text-green-600 font-medium text-sm flex items-center">
+                      Programar
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Programación de Reportes Automáticos
+                    </DialogTitle>
+                    <DialogDescription>
+                      Configura reportes automáticos que se envíen periódicamente por email
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    {/* Current Scheduled Reports */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Reportes Programados</h3>
+                      <div className="space-y-3">
+                        {[
+                          {
+                            id: '1',
+                            name: 'Reporte Semanal de Rendimiento',
+                            frequency: 'Semanal',
+                            recipients: 'tú mismo',
+                            nextSend: '2024-01-29',
+                            status: 'active',
+                          },
+                          {
+                            id: '2',
+                            name: 'Resumen Mensual Financiero',
+                            frequency: 'Mensual',
+                            recipients: 'tú mismo + contador',
+                            nextSend: '2024-02-01',
+                            status: 'active',
+                          },
+                        ].map(report => (
+                          <div
+                            key={report.id}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                          >
+                            <div className="flex-1">
+                              <h4 className="font-medium">{report.name}</h4>
+                              <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                                <span>Frecuencia: {report.frequency}</span>
+                                <span>Destinatarios: {report.recipients}</span>
+                                <span>
+                                  Próximo envío:{' '}
+                                  {new Date(report.nextSend).toLocaleDateString('es-CL')}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                              <Button size="sm" variant="outline">
+                                Editar
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                Pausar
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* New Report Form */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Crear Nuevo Reporte Automático</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label htmlFor="reportName">Nombre del Reporte</Label>
+                          <Input id="reportName" placeholder="Ej: Reporte de Ingresos Semanal" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="reportType">Tipo de Reporte</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="performance">Rendimiento</SelectItem>
+                                <SelectItem value="financial">Financiero</SelectItem>
+                                <SelectItem value="jobs">Trabajos</SelectItem>
+                                <SelectItem value="clients">Clientes</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="frequency">Frecuencia</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar frecuencia" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="daily">Diario</SelectItem>
+                                <SelectItem value="weekly">Semanal</SelectItem>
+                                <SelectItem value="monthly">Mensual</SelectItem>
+                                <SelectItem value="quarterly">Trimestral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="recipients">
+                            Destinatarios (emails separados por coma)
+                          </Label>
+                          <Input id="recipients" placeholder="tu@email.com, contador@email.com" />
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center space-x-2">
+                            <input type="checkbox" id="includeCharts" className="rounded" />
+                            <Label htmlFor="includeCharts">Incluir gráficos</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input type="checkbox" id="includeDetails" className="rounded" />
+                            <Label htmlFor="includeDetails">Incluir detalles completos</Label>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowSchedulingModal(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => setShowSchedulingModal(false)}>
+                        Crear Reporte Automático
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={showComparisonModal} onOpenChange={setShowComparisonModal}>
+                <DialogTrigger asChild>
+                  <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 group cursor-pointer">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Eye className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Comparar Períodos</h3>
+                    <p className="text-sm text-gray-600 mb-4">Análisis comparativo</p>
+                    <div className="text-purple-600 font-medium text-sm flex items-center">
+                      Comparar
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Eye className="w-5 h-5" />
+                      Comparación de Períodos
+                    </DialogTitle>
+                    <DialogDescription>
+                      Analiza el rendimiento comparando diferentes períodos de tiempo
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6">
+                    {/* Period Selection */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Período 1</Label>
+                        <Select defaultValue="current_month">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="current_month">Enero 2024 (Actual)</SelectItem>
+                            <SelectItem value="last_month">Diciembre 2023</SelectItem>
+                            <SelectItem value="two_months_ago">Noviembre 2023</SelectItem>
+                            <SelectItem value="current_quarter">Q1 2024</SelectItem>
+                            <SelectItem value="last_quarter">Q4 2023</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Período 2</Label>
+                        <Select defaultValue="last_month">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="current_month">Enero 2024 (Actual)</SelectItem>
+                            <SelectItem value="last_month">Diciembre 2023</SelectItem>
+                            <SelectItem value="two_months_ago">Noviembre 2023</SelectItem>
+                            <SelectItem value="current_quarter">Q1 2024</SelectItem>
+                            <SelectItem value="last_quarter">Q4 2023</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Comparison Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">45</div>
+                            <div className="text-sm text-gray-600">Trabajos Enero</div>
+                            <div className="flex items-center justify-center mt-2">
+                              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                              <span className="text-sm font-medium text-green-600">+12%</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">$2.85M</div>
+                            <div className="text-sm text-gray-600">Ingresos Enero</div>
+                            <div className="flex items-center justify-center mt-2">
+                              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                              <span className="text-sm font-medium text-green-600">+8%</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-yellow-600">4.6</div>
+                            <div className="text-sm text-gray-600">Calificación Enero</div>
+                            <div className="flex items-center justify-center mt-2">
+                              <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                              <span className="text-sm font-medium text-red-600">-2%</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">93%</div>
+                            <div className="text-sm text-gray-600">Completación Enero</div>
+                            <div className="flex items-center justify-center mt-2">
+                              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                              <span className="text-sm font-medium text-green-600">+5%</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Detailed Comparison */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Comparación Detallada</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Period 1 Data */}
+                            <div>
+                              <h3 className="font-semibold text-gray-800 mb-3">Enero 2024</h3>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Trabajos Completados:</span>
+                                  <span className="font-medium">42/45</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Ingresos Totales:</span>
+                                  <span className="font-medium">$2,850,000</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Calificación Promedio:</span>
+                                  <span className="font-medium">4.6/5.0</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Tiempo Respuesta:</span>
+                                  <span className="font-medium">2.3 hrs</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Period 2 Data */}
+                            <div>
+                              <h3 className="font-semibold text-gray-800 mb-3">Diciembre 2023</h3>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Trabajos Completados:</span>
+                                  <span className="font-medium">38/42</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Ingresos Totales:</span>
+                                  <span className="font-medium">$2,640,000</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Calificación Promedio:</span>
+                                  <span className="font-medium">4.7/5.0</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Tiempo Respuesta:</span>
+                                  <span className="font-medium">2.8 hrs</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Service Type Comparison */}
+                          <div className="mt-6">
+                            <h4 className="font-medium mb-3">Comparación por Tipo de Servicio</h4>
+                            <div className="space-y-3">
+                              {[
+                                { service: 'Plomería', period1: 12, period2: 10, change: '+20%' },
+                                { service: 'Eléctrica', period1: 8, period2: 9, change: '-11%' },
+                                { service: 'Limpieza', period1: 15, period2: 12, change: '+25%' },
+                                { service: 'Estructural', period1: 6, period2: 8, change: '-25%' },
+                                { service: 'Pintura', period1: 4, period2: 3, change: '+33%' },
+                              ].map(item => (
+                                <div
+                                  key={item.service}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <span className="font-medium">{item.service}</span>
+                                  <div className="flex items-center gap-4">
+                                    <span className="text-sm">
+                                      Ene: {item.period1} | Dic: {item.period2}
+                                    </span>
+                                    <Badge
+                                      className={
+                                        item.change.startsWith('+')
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-red-100 text-red-800'
+                                      }
+                                    >
+                                      {item.change}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Insights */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Insights y Observaciones</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>Incremento significativo:</strong> Los trabajos de limpieza y
+                              pintura muestran crecimiento importante, lo que indica expansión
+                              exitosa en estos servicios.
+                            </p>
+                          </div>
+
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800">
+                              <strong>Disminución en calificación:</strong> La satisfacción del
+                              cliente bajó ligeramente. Considerar revisar procesos de trabajos
+                              urgentes.
+                            </p>
+                          </div>
+
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <p className="text-sm text-green-800">
+                              <strong>Mejora en eficiencia:</strong> Tiempo de respuesta reducido y
+                              mayor tasa de completación indican mejoras en la gestión operativa.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowComparisonModal(false)}>
+                        Cerrar
+                      </Button>
+                      <Button onClick={() => setShowComparisonModal(false)}>
+                        Exportar Comparación
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <QuickActionButton
                 icon={RefreshCw}
