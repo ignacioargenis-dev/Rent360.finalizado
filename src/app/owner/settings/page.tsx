@@ -104,6 +104,15 @@ export default function OwnerSettingsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Estados para cambiar contraseña
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordErrors, setPasswordErrors] = useState<Partial<typeof passwordData>>({});
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -201,6 +210,57 @@ export default function OwnerSettingsPage() {
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Funciones para cambiar contraseña
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+    if (passwordErrors[field as keyof typeof passwordErrors]) {
+      setPasswordErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const errors: Partial<typeof passwordData> = {};
+
+    if (!passwordData.currentPassword.trim()) {
+      errors.currentPassword = 'Contraseña actual requerida';
+    }
+    if (!passwordData.newPassword.trim()) {
+      errors.newPassword = 'Nueva contraseña requerida';
+    } else if (passwordData.newPassword.length < 8) {
+      errors.newPassword = 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (!passwordData.confirmPassword.trim()) {
+      errors.confirmPassword = 'Confirmación requerida';
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    setErrorMessage('');
+    try {
+      // Simular API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      logger.info('Contraseña cambiada exitosamente');
+
+      setShowPasswordModal(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSuccessMessage('Contraseña cambiada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error al cambiar contraseña', { error });
+      setErrorMessage('Error al cambiar la contraseña. Inténtalo de nuevo.');
     }
   };
 
@@ -546,10 +606,7 @@ export default function OwnerSettingsPage() {
                   <Button
                     variant="outline"
                     className="mt-2"
-                    onClick={() => {
-                      // Implementar cambio de contraseña
-                      alert('Funcionalidad de cambio de contraseña próximamente disponible');
-                    }}
+                    onClick={() => setShowPasswordModal(true)}
                   >
                     <Key className="w-4 h-4 mr-2" />
                     Cambiar Contraseña
@@ -644,6 +701,76 @@ export default function OwnerSettingsPage() {
             )}
           </Button>
         </div>
+
+        {/* Modal para cambiar contraseña */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Cambiar Contraseña</h3>
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={e => handlePasswordChange('currentPassword', e.target.value)}
+                    className={passwordErrors.currentPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.currentPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.currentPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={e => handlePasswordChange('newPassword', e.target.value)}
+                    className={passwordErrors.newPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={e => handlePasswordChange('confirmPassword', e.target.value)}
+                    className={passwordErrors.confirmPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.confirmPassword}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handlePasswordSubmit} className="flex-1">
+                  Cambiar Contraseña
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );

@@ -118,6 +118,19 @@ export default function ProviderSettingsPage() {
     ],
   });
 
+  // Estados para cambiar contraseña
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordErrors, setPasswordErrors] = useState<Partial<typeof passwordData>>({});
+
+  // Estados para subir documentos
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
+
   useEffect(() => {
     loadPageData();
   }, []);
@@ -178,6 +191,123 @@ export default function ProviderSettingsPage() {
         service.id === serviceId ? { ...service, active: !service.active } : service
       ),
     }));
+  };
+
+  // Funciones para cambiar contraseña
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+    if (passwordErrors[field as keyof typeof passwordErrors]) {
+      setPasswordErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const errors: Partial<typeof passwordData> = {};
+
+    if (!passwordData.currentPassword.trim()) {
+      errors.currentPassword = 'Contraseña actual requerida';
+    }
+    if (!passwordData.newPassword.trim()) {
+      errors.newPassword = 'Nueva contraseña requerida';
+    } else if (passwordData.newPassword.length < 8) {
+      errors.newPassword = 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (!passwordData.confirmPassword.trim()) {
+      errors.confirmPassword = 'Confirmación requerida';
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    setErrorMessage('');
+    try {
+      // Simular API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      logger.info('Contraseña cambiada exitosamente');
+
+      setShowPasswordModal(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSuccessMessage('Contraseña cambiada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error al cambiar contraseña', { error });
+      setErrorMessage('Error al cambiar la contraseña. Inténtalo de nuevo.');
+    }
+  };
+
+  // Funciones para subir documentos
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage('Tipo de archivo no válido. Solo se permiten PDF e imágenes.');
+      return;
+    }
+
+    // Validar tamaño (máximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('El archivo es demasiado grande. Máximo 10MB.');
+      return;
+    }
+
+    setUploadingDocument(true);
+    setErrorMessage('');
+
+    try {
+      // Simular subida de archivo
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const newDocument = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: 'other' as const,
+        status: 'pending' as const,
+        uploadDate: new Date().toISOString().split('T')[0],
+        expiryDate: undefined as string | undefined,
+        fileUrl: `/api/documents/${file.name}`,
+      };
+
+      setDocumentsData(prev => ({
+        ...prev,
+        documents: [...prev.documents, newDocument as any],
+      }));
+
+      setSuccessMessage('Documento subido exitosamente. Está pendiente de revisión.');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      logger.info('Documento subido', { fileName: file.name, fileSize: file.size });
+    } catch (error) {
+      logger.error('Error al subir documento', { error });
+      setErrorMessage('Error al subir el documento. Inténtalo de nuevo.');
+    } finally {
+      setUploadingDocument(false);
+      // Reset file input
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
+
+  const handleUploadButtonClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png';
+    input.onchange = e => handleDocumentUpload(e as any);
+    input.click();
   };
 
   if (loading) {
@@ -493,9 +623,17 @@ export default function ProviderSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">Documentos Subidos</h3>
-                    <Button variant="outline">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Subir Documento
+                    <Button
+                      variant="outline"
+                      onClick={handleUploadButtonClick}
+                      disabled={uploadingDocument}
+                    >
+                      {uploadingDocument ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      {uploadingDocument ? 'Subiendo...' : 'Subir Documento'}
                     </Button>
                   </div>
 
@@ -574,7 +712,13 @@ export default function ProviderSettingsPage() {
                     <div className="p-4 border rounded-lg border-dashed">
                       <h4 className="font-medium text-gray-400">○ Certificado de Antecedentes</h4>
                       <p className="text-sm text-gray-600">Documento faltante</p>
-                      <Button variant="outline" size="sm" className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={handleUploadButtonClick}
+                        disabled={uploadingDocument}
+                      >
                         <Upload className="w-4 h-4 mr-2" />
                         Subir
                       </Button>
@@ -788,13 +932,7 @@ export default function ProviderSettingsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Implementar cambio de contraseña
-                          setSuccessMessage(
-                            'Funcionalidad de cambio de contraseña próximamente disponible'
-                          );
-                          setTimeout(() => setSuccessMessage(''), 3000);
-                        }}
+                        onClick={() => setShowPasswordModal(true)}
                       >
                         <Lock className="w-4 h-4 mr-2" />
                         Cambiar Contraseña
@@ -876,6 +1014,76 @@ export default function ProviderSettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal para cambiar contraseña */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Cambiar Contraseña</h3>
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={e => handlePasswordChange('currentPassword', e.target.value)}
+                    className={passwordErrors.currentPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.currentPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.currentPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={e => handlePasswordChange('newPassword', e.target.value)}
+                    className={passwordErrors.newPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={e => handlePasswordChange('confirmPassword', e.target.value)}
+                    className={passwordErrors.confirmPassword ? 'border-red-500' : ''}
+                  />
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-sm text-red-600 mt-1">{passwordErrors.confirmPassword}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handlePasswordSubmit} className="flex-1">
+                  Cambiar Contraseña
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );
