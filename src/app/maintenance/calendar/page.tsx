@@ -14,6 +14,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   AlertCircle,
   CheckCircle,
   RefreshCw,
@@ -25,6 +32,8 @@ import {
   User,
   Wrench,
   Clock,
+  Phone,
+  MessageCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
@@ -34,6 +43,7 @@ interface CalendarJob {
   title: string;
   propertyAddress: string;
   ownerName: string;
+  ownerPhone?: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -77,6 +87,7 @@ export default function MaintenanceCalendarPage() {
           title: 'Reparación de cañería',
           propertyAddress: 'Av. Las Condes 1234, Depto 5B',
           ownerName: 'María González',
+          ownerPhone: '+56912345678',
           date: '2024-01-15',
           startTime: '09:00',
           endTime: '11:00',
@@ -91,6 +102,7 @@ export default function MaintenanceCalendarPage() {
           title: 'Mantenimiento eléctrico',
           propertyAddress: 'Providencia 567',
           ownerName: 'Carlos Rodríguez',
+          ownerPhone: '+56987654321',
           date: '2024-01-18',
           startTime: '14:00',
           endTime: '16:00',
@@ -104,6 +116,7 @@ export default function MaintenanceCalendarPage() {
           title: 'Limpieza general',
           propertyAddress: 'Ñuñoa 890',
           ownerName: 'Ana López',
+          ownerPhone: '+56911223344',
           date: '2024-01-20',
           startTime: '10:00',
           endTime: '12:00',
@@ -556,9 +569,7 @@ export default function MaintenanceCalendarPage() {
               <Wrench className="w-5 h-5" />
               Detalles del Trabajo
             </DialogTitle>
-            <DialogDescription>
-              Información completa del trabajo programado
-            </DialogDescription>
+            <DialogDescription>Información completa del trabajo programado</DialogDescription>
           </DialogHeader>
 
           {selectedJob && (
@@ -568,19 +579,38 @@ export default function MaintenanceCalendarPage() {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Información del Trabajo</h4>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Título:</span> {selectedJob.title}</p>
-                    <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedJob.status)}</p>
-                    <p><span className="font-medium">Prioridad:</span> {getPriorityBadge(selectedJob.priority)}</p>
-                    <p><span className="font-medium">Tipo:</span> {selectedJob.maintenanceType}</p>
+                    <p>
+                      <span className="font-medium">Título:</span> {selectedJob.title}
+                    </p>
+                    <p>
+                      <span className="font-medium">Estado:</span>{' '}
+                      {getStatusBadge(selectedJob.status)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Prioridad:</span>{' '}
+                      {getPriorityBadge(selectedJob.priority)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tipo:</span> {selectedJob.maintenanceType}
+                    </p>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Información de Horario</h4>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Fecha:</span> {new Date(selectedJob.date).toLocaleDateString('es-CL')}</p>
-                    <p><span className="font-medium">Horario:</span> {selectedJob.startTime} - {selectedJob.endTime}</p>
-                    <p><span className="font-medium">Costo Estimado:</span> {formatCurrency(selectedJob.estimatedCost)}</p>
+                    <p>
+                      <span className="font-medium">Fecha:</span>{' '}
+                      {new Date(selectedJob.date).toLocaleDateString('es-CL')}
+                    </p>
+                    <p>
+                      <span className="font-medium">Horario:</span> {selectedJob.startTime} -{' '}
+                      {selectedJob.endTime}
+                    </p>
+                    <p>
+                      <span className="font-medium">Costo Estimado:</span>{' '}
+                      {formatCurrency(selectedJob.estimatedCost)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -594,10 +624,12 @@ export default function MaintenanceCalendarPage() {
                       <User className="w-4 h-4 text-gray-400" />
                       <span className="font-medium">{selectedJob.ownerName}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span>{selectedJob.ownerPhone}</span>
-                    </div>
+                    {selectedJob.ownerPhone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <span>{selectedJob.ownerPhone}</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -623,10 +655,12 @@ export default function MaintenanceCalendarPage() {
                 <Button variant="outline" onClick={() => setShowJobDetailsModal(false)}>
                   Cerrar
                 </Button>
-                <Button onClick={() => {
-                  handleContactOwner(selectedJob);
-                  setShowJobDetailsModal(false);
-                }}>
+                <Button
+                  onClick={() => {
+                    handleContactOwner(selectedJob);
+                    setShowJobDetailsModal(false);
+                  }}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Contactar Propietario
                 </Button>
@@ -654,11 +688,10 @@ export default function MaintenanceCalendarPage() {
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium mb-2">Trabajo: {selectedJob.title}</h4>
                 <p className="text-sm text-gray-600">
-                  Programado para el {new Date(selectedJob.date).toLocaleDateString('es-CL')} a las {selectedJob.startTime}
+                  Programado para el {new Date(selectedJob.date).toLocaleDateString('es-CL')} a las{' '}
+                  {selectedJob.startTime}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Propietario: {selectedJob.ownerName}
-                </p>
+                <p className="text-sm text-gray-600 mt-1">Propietario: {selectedJob.ownerName}</p>
               </div>
 
               <div className="space-y-3">
@@ -667,15 +700,21 @@ export default function MaintenanceCalendarPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <input type="radio" id="phone" name="contactMethod" defaultChecked />
-                      <label htmlFor="phone" className="text-sm">Llamada telefónica</label>
+                      <label htmlFor="phone" className="text-sm">
+                        Llamada telefónica
+                      </label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input type="radio" id="message" name="contactMethod" />
-                      <label htmlFor="message" className="text-sm">Mensaje de texto</label>
+                      <label htmlFor="message" className="text-sm">
+                        Mensaje de texto
+                      </label>
                     </div>
                     <div className="flex items-center gap-2">
                       <input type="radio" id="email" name="contactMethod" />
-                      <label htmlFor="email" className="text-sm">Correo electrónico</label>
+                      <label htmlFor="email" className="text-sm">
+                        Correo electrónico
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -695,11 +734,13 @@ export default function MaintenanceCalendarPage() {
                 <Button variant="outline" onClick={() => setShowContactModal(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={() => {
-                  setSuccessMessage('Mensaje enviado exitosamente al propietario');
-                  setShowContactModal(false);
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}>
+                <Button
+                  onClick={() => {
+                    setSuccessMessage('Mensaje enviado exitosamente al propietario');
+                    setShowContactModal(false);
+                    setTimeout(() => setSuccessMessage(''), 3000);
+                  }}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Enviar Contacto
                 </Button>

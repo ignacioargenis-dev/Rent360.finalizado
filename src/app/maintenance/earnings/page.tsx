@@ -56,6 +56,7 @@ import {
   Plus,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { logger } from '@/lib/logger';
 
 // INTERFACES PARA DASHBOARD DE GANANCIAS DE MANTENIMIENTO
 interface EarningsStats {
@@ -168,7 +169,9 @@ export default function MaintenanceEarningsPage() {
         { month: 'Septiembre', earnings: 890000, jobs: 15, rating: 4.8 },
       ]);
     } catch (err) {
-      console.error('Error loading earnings data:', err);
+      logger.error('Error loading earnings data:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError('Error al cargar los datos de ganancias');
     } finally {
       setLoading(false);
@@ -190,14 +193,15 @@ export default function MaintenanceEarningsPage() {
 
       // Mostrar mensaje de éxito
       const event = new CustomEvent('showSuccessMessage', {
-        detail: 'Configuración de pagos guardada exitosamente'
+        detail: 'Configuración de pagos guardada exitosamente',
       });
       window.dispatchEvent(event);
-
     } catch (error) {
-      console.error('Error saving payment settings:', error);
+      logger.error('Error saving payment settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       const event = new CustomEvent('showErrorMessage', {
-        detail: 'Error al guardar la configuración de pagos'
+        detail: 'Error al guardar la configuración de pagos',
       });
       window.dispatchEvent(event);
     }
@@ -493,7 +497,7 @@ export default function MaintenanceEarningsPage() {
                   <label className="block text-sm font-medium mb-2">Método de Pago Preferido</label>
                   <Select
                     value={paymentSettings.preferredMethod}
-                    onValueChange={(value) => updatePaymentSetting('preferredMethod', value)}
+                    onValueChange={value => updatePaymentSetting('preferredMethod', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -510,7 +514,7 @@ export default function MaintenanceEarningsPage() {
                   <label className="block text-sm font-medium mb-2">Frecuencia de Pagos</label>
                   <Select
                     value={paymentSettings.frequency}
-                    onValueChange={(value) => updatePaymentSetting('frequency', value)}
+                    onValueChange={value => updatePaymentSetting('frequency', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -523,11 +527,7 @@ export default function MaintenanceEarningsPage() {
                   </Select>
                 </div>
 
-                <Button
-                  className="w-full"
-                  onClick={handleSavePaymentSettings}
-                  disabled={false}
-                >
+                <Button className="w-full" onClick={handleSavePaymentSettings} disabled={false}>
                   <Settings className="w-4 h-4 mr-2" />
                   Guardar Configuración
                 </Button>

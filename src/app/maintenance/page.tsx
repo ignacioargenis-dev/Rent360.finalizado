@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Wrench,
   PlayCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
@@ -91,6 +92,10 @@ export default function MaintenanceDashboard() {
   const [recentJobs, setRecentJobs] = useState<JobSummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Estado para mensajes
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Estado para modales
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
@@ -207,9 +212,7 @@ export default function MaintenanceDashboard() {
 
   const handleStartJob = (jobId: string) => {
     setRecentJobs(prevJobs =>
-      prevJobs.map(job =>
-        job.id === jobId ? { ...job, status: 'in_progress' as const } : job
-      )
+      prevJobs.map(job => (job.id === jobId ? { ...job, status: 'in_progress' as const } : job))
     );
     setSuccessMessage('Trabajo iniciado exitosamente');
     setTimeout(() => setSuccessMessage(''), 3000);
@@ -217,9 +220,7 @@ export default function MaintenanceDashboard() {
 
   const handleCompleteJob = (jobId: string) => {
     setRecentJobs(prevJobs =>
-      prevJobs.map(job =>
-        job.id === jobId ? { ...job, status: 'completed' as const } : job
-      )
+      prevJobs.map(job => (job.id === jobId ? { ...job, status: 'completed' as const } : job))
     );
     setSuccessMessage('Trabajo completado exitosamente');
     setTimeout(() => setSuccessMessage(''), 3000);
@@ -302,6 +303,38 @@ export default function MaintenanceDashboard() {
       subtitle="Gestiona mantenimientos preventivos y correctivos"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setErrorMessage('')}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
@@ -699,18 +732,34 @@ export default function MaintenanceDashboard() {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Información del Trabajo</h4>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Título:</span> {selectedJob.title}</p>
-                    <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedJob.status)}</p>
-                    <p><span className="font-medium">Prioridad:</span> {getPriorityBadge(selectedJob.priority)}</p>
-                    <p><span className="font-medium">Fecha Programada:</span> {formatDate(selectedJob.scheduledDate)}</p>
+                    <p>
+                      <span className="font-medium">Título:</span> {selectedJob.title}
+                    </p>
+                    <p>
+                      <span className="font-medium">Estado:</span>{' '}
+                      {getStatusBadge(selectedJob.status)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Prioridad:</span>{' '}
+                      {getPriorityBadge(selectedJob.priority)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Fecha Programada:</span>{' '}
+                      {formatDate(selectedJob.scheduledDate)}
+                    </p>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Información Financiera</h4>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Costo Estimado:</span> {formatPrice(selectedJob.estimatedCost)}</p>
-                    <p><span className="font-medium">Propietario:</span> {selectedJob.ownerName}</p>
+                    <p>
+                      <span className="font-medium">Costo Estimado:</span>{' '}
+                      {formatPrice(selectedJob.estimatedCost)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Propietario:</span> {selectedJob.ownerName}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -728,11 +777,7 @@ export default function MaintenanceDashboard() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
                 <div className="flex gap-2 flex-wrap">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleUpdateJob(selectedJob)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => handleUpdateJob(selectedJob)}>
                     <Wrench className="w-4 h-4 mr-1" />
                     Actualizar Trabajo
                   </Button>
@@ -765,11 +810,7 @@ export default function MaintenanceDashboard() {
                     </Button>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowJobDetailsModal(false)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => setShowJobDetailsModal(false)}>
                     Cerrar
                   </Button>
                 </div>

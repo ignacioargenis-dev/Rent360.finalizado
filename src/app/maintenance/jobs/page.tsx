@@ -16,6 +16,13 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   AlertCircle,
   RefreshCw,
   Wrench,
@@ -716,12 +723,16 @@ export default function MaintenanceJobsPage() {
                   <div className="space-y-3">
                     <div>
                       <span className="text-sm font-medium text-gray-500">Costo Estimado:</span>
-                      <p className="font-medium text-green-600">{formatCurrency(selectedJob.estimatedCost)}</p>
+                      <p className="font-medium text-green-600">
+                        {formatCurrency(selectedJob.estimatedCost)}
+                      </p>
                     </div>
                     {selectedJob.actualCost && (
                       <div>
                         <span className="text-sm font-medium text-gray-500">Costo Real:</span>
-                        <p className="font-medium text-blue-600">{formatCurrency(selectedJob.actualCost)}</p>
+                        <p className="font-medium text-blue-600">
+                          {formatCurrency(selectedJob.actualCost)}
+                        </p>
                       </div>
                     )}
                     <div>
@@ -788,16 +799,25 @@ export default function MaintenanceJobsPage() {
                 <h4 className="font-semibold text-gray-900 mb-3">Historial de Estados</h4>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full ${selectedJob.status === 'completed' ? 'bg-green-500' :
-                      selectedJob.status === 'in_progress' ? 'bg-blue-500' :
-                      selectedJob.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        selectedJob.status === 'completed'
+                          ? 'bg-green-500'
+                          : selectedJob.status === 'in_progress'
+                            ? 'bg-blue-500'
+                            : selectedJob.status === 'pending'
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                      }`}
+                    ></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium capitalize">{selectedJob.status.replace('_', ' ')}</p>
+                      <p className="text-sm font-medium capitalize">
+                        {selectedJob.status.replace('_', ' ')}
+                      </p>
                       <p className="text-xs text-gray-500">
                         {selectedJob.status === 'completed' && selectedJob.completedDate
                           ? `Completado el ${new Date(selectedJob.completedDate).toLocaleDateString('es-CL')}`
-                          : 'Estado actual del trabajo'
-                        }
+                          : 'Estado actual del trabajo'}
                       </p>
                     </div>
                   </div>
