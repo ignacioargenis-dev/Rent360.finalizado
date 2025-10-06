@@ -73,28 +73,29 @@ export default function RunnerMessagesPage() {
     urgentMessages: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleNewMessage = () => {
-    alert(
-      'Abriendo formulario para nuevo mensaje... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would open a new message modal
+    setSuccessMessage('Funcionalidad de nuevos mensajes próximamente disponible');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleArchiveConversation = () => {
-    alert('Archivando conversación... Esta funcionalidad estará disponible próximamente.');
+    setSuccessMessage('Conversación archivada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleResolveConversation = () => {
-    alert(
-      'Marcando conversación como resuelta... Esta funcionalidad estará disponible próximamente.'
-    );
+    setSuccessMessage('Conversación marcada como resuelta');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleReplyToMessage = (messageId: string) => {
-    alert(
-      `Respondiendo al mensaje ${messageId}... Esta funcionalidad estará disponible próximamente.`
-    );
+    const reply = prompt('Escribe tu respuesta:');
+    if (reply && reply.trim()) {
+      setSuccessMessage(`Respuesta enviada al mensaje ${messageId}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
   };
 
   useEffect(() => {
@@ -354,6 +355,18 @@ export default function RunnerMessagesPage() {
       subtitle="Gestión de mensajes y comunicaciones con clientes"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

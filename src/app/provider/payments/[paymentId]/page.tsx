@@ -44,6 +44,7 @@ export default function ProviderPaymentDetailPage() {
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     if (paymentId) {
@@ -122,9 +123,40 @@ export default function ProviderPaymentDetailPage() {
 
   const handleDownloadInvoice = () => {
     if (payment) {
-      alert(
-        `Descargando factura para: ${payment.jobTitle}\nMonto: ${formatCurrency(payment.amount)}`
-      );
+      // Generate invoice content
+      const invoiceContent = `
+FACTURA DE SERVICIO
+==================
+
+Número de Factura: INV-${payment.id}
+Fecha: ${new Date().toLocaleDateString('es-ES')}
+Cliente: ${payment.clientName}
+Trabajo: ${payment.jobTitle}
+Monto: ${formatCurrency(payment.amount)}
+Estado: ${payment.status}
+Fecha de Pago: ${payment.paymentDate}
+
+DETALLES DEL SERVICIO:
+- Servicio realizado: ${payment.jobTitle}
+- Monto cobrado: ${formatCurrency(payment.amount)}
+- Tipo de trabajo: ${payment.jobType}
+
+Rent360 - Sistema de Gestión de Servicios
+      `.trim();
+
+      // Create and download the invoice
+      const blob = new Blob([invoiceContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `factura_${payment.id}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage('Factura descargada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -164,6 +196,18 @@ export default function ProviderPaymentDetailPage() {
   return (
     <UnifiedDashboardLayout title={`Pago - ${payment.jobTitle}`} subtitle={`ID: ${payment.id}`}>
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header with actions */}
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => router.back()}>

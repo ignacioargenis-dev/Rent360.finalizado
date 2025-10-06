@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,8 @@ import {
   FileText,
   Star,
   AlertTriangle,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -73,24 +76,61 @@ export default function BrokerActiveClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const router = useRouter();
 
   const handleGenerateReport = async () => {
-    alert('Generando reporte de clientes... Esta funcionalidad estará disponible próximamente.');
-    // In a real app, this would generate and download a CSV/PDF report
+    try {
+      // Generate CSV report
+      const csvData = clients.map(client => ({
+        ID: client.id,
+        Nombre: client.name,
+        Email: client.email,
+        Teléfono: client.phone,
+        'Tipo Propiedad': client.propertyType,
+        'Valor Propiedad': client.propertyValue,
+        Estado: client.status,
+        'Último Contacto': client.lastContact,
+        'Próxima Renovación': client.contractEnd,
+      }));
+
+      if (csvData.length === 0) {
+        setErrorMessage('No hay clientes para exportar');
+        setTimeout(() => setErrorMessage(''), 3000);
+        return;
+      }
+
+      const csvContent =
+        'data:text/csv;charset=utf-8,' +
+        'ID,Nombre,Email,Teléfono,Tipo Propiedad,Valor Propiedad,Estado,Último Contacto,Próxima Renovación\n' +
+        csvData.map(row => Object.values(row).join(',')).join('\n');
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute(
+        'download',
+        `clientes_activos_${new Date().toISOString().split('T')[0]}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setSuccessMessage('Reporte de clientes exportado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Error al generar el reporte');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const handleNewClient = () => {
-    alert(
-      'Abriendo formulario para nuevo cliente... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would open a modal or navigate to a new client form
+    router.push('/broker/clients/new');
   };
 
   const handleViewClientDetails = (clientId: string) => {
-    alert(
-      `Mostrando detalles del cliente ${clientId}... Esta funcionalidad estará disponible próximamente.`
-    );
-    // In a real app, this would navigate to client detail page
+    router.push(`/broker/clients/${clientId}`);
   };
 
   const handleContactClient = (client: ActiveClient, method: 'phone' | 'email' | 'message') => {
@@ -111,18 +151,16 @@ export default function BrokerActiveClientsPage() {
         }
         break;
       case 'message':
-        alert(
-          `Iniciando conversación con ${client.name}... Esta funcionalidad estará disponible próximamente.`
-        );
+        router.push(`/broker/messages?recipient=${client.id}`);
         break;
     }
   };
 
   const handleRenewContract = (clientId: string) => {
-    alert(
-      `Iniciando proceso de renovación para cliente ${clientId}... Esta funcionalidad estará disponible próximamente.`
-    );
-    // In a real app, this would open a renewal modal or form
+    // Navigate to contracts page for renewal
+    router.push('/broker/contracts?action=renew');
+    setSuccessMessage('Funcionalidad de renovación próximamente disponible');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   useEffect(() => {
@@ -367,6 +405,30 @@ export default function BrokerActiveClientsPage() {
       subtitle="Gestiona tu cartera de clientes activos y contratos vigentes"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

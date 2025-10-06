@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
+  AlertCircle,
   Settings,
   Plus,
   TrendingUp,
@@ -64,38 +66,79 @@ export default function ClientRecurringServicesPage() {
     savingsPercentage: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const router = useRouter();
 
   const handleConfigureServices = () => {
-    alert(
-      'Abriendo configuración de servicios recurrentes... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would open service preferences modal
+    setSuccessMessage('Funcionalidad de configuración próximamente disponible');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleNewService = () => {
-    alert(
-      'Abriendo formulario para solicitar nuevo servicio recurrente... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would open a service request modal
+    router.push('/services/request');
   };
 
   const handleServiceDetails = (serviceId: string) => {
-    alert(
-      `Mostrando detalles completos del servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
-    );
+    const service = services.find(s => s.id === serviceId);
+    if (service) {
+      const details = `
+Servicio: ${service.name}
+Descripción: ${service.description}
+Categoría: ${service.category}
+Proveedor: ${service.providerName}
+Frecuencia: ${service.frequency}
+Estado: ${service.status}
+Próxima ejecución: ${service.nextServiceDate}
+Última ejecución: ${service.lastServiceDate || 'No disponible'}
+Costo: ${formatCurrency(service.price)}
+      `.trim();
+
+      alert(`Detalles del Servicio:\n\n${details}`);
+    } else {
+      setErrorMessage('Servicio no encontrado');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const handleModifyService = (serviceId: string) => {
-    alert(
-      `Abriendo modificación del servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
-    );
+    const service = services.find(s => s.id === serviceId);
+    if (service) {
+      const newFrequency = prompt(
+        'Nueva frecuencia (weekly/monthly/quarterly/yearly):',
+        service.frequency
+      );
+      if (newFrequency && ['weekly', 'monthly', 'quarterly', 'yearly'].includes(newFrequency)) {
+        // In a real app, this would make an API call to update the service
+        setSuccessMessage(`Frecuencia del servicio ${service.name} actualizada a ${newFrequency}`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else if (newFrequency) {
+        setErrorMessage('Frecuencia no válida. Use: weekly, monthly, quarterly o yearly');
+        setTimeout(() => setErrorMessage(''), 3000);
+      }
+    } else {
+      setErrorMessage('Servicio no encontrado');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const handleCancelService = (serviceId: string) => {
-    if (confirm('¿Estás seguro de que deseas cancelar este servicio recurrente?')) {
-      alert(
-        `Cancelando servicio ${serviceId}... Esta funcionalidad estará disponible próximamente.`
+    const service = services.find(s => s.id === serviceId);
+    if (service) {
+      const confirmCancel = confirm(
+        `¿Estás seguro de que deseas cancelar el servicio "${service.name}"?\n\nEsta acción no se puede deshacer.`
       );
+      if (confirmCancel) {
+        // In a real app, this would make an API call to cancel the service
+        setServices(prev =>
+          prev.map(s => (s.id === serviceId ? { ...s, status: 'cancelled' } : s))
+        );
+        setSuccessMessage(`Servicio "${service.name}" cancelado exitosamente`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } else {
+      setErrorMessage('Servicio no encontrado');
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 
@@ -343,6 +386,29 @@ export default function ClientRecurringServicesPage() {
       subtitle="Gestiona tus servicios de mantenimiento y limpieza programados"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

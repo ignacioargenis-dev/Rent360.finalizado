@@ -60,12 +60,53 @@ export default function OwnerPropertyComparisonPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleExportComparison = () => {
-    alert(
-      'Generando y exportando comparación de propiedades... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would generate and download a PDF/Excel comparison report
+    if (selectedProperties.length === 0) {
+      setSuccessMessage('Selecciona al menos una propiedad para comparar');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+
+    try {
+      // Generate CSV comparison
+      const comparisonData = selectedProperties.map(property => ({
+        Dirección: property.address,
+        Tipo: property.type,
+        Precio: property.price,
+        'Precio Renta': property.rentPrice,
+        Estado: property.status,
+        'Tasa Ocupación': property.occupancyRate,
+        Inquilinos: property.tenantCount,
+        Rating: property.rating,
+        'Ingresos Mensuales': property.monthlyRevenue,
+        'Gastos Mensuales': property.monthlyExpenses,
+        ROI: property.roi,
+      }));
+
+      const csvContent =
+        'data:text/csv;charset=utf-8,' +
+        'Dirección,Tipo,Habitaciones,Baños,Superficie,Precio,Estado,Ocupación,Ingresos Mensuales\n' +
+        comparisonData.map(row => Object.values(row).join(',')).join('\n');
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute(
+        'download',
+        `comparacion_propiedades_${new Date().toISOString().split('T')[0]}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setSuccessMessage('Comparación de propiedades exportada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setSuccessMessage('Error al exportar la comparación');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
   };
 
   useEffect(() => {
@@ -321,6 +362,18 @@ export default function OwnerPropertyComparisonPage() {
       subtitle="Analiza y compara el rendimiento de tus propiedades"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

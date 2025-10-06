@@ -402,6 +402,54 @@ INSIGHTS:
     document.body.removeChild(link);
   };
 
+  const handleGeneratePDF = () => {
+    // Generate a comprehensive PDF report
+    const pdfContent = `
+REPORTE DE MANTENIMIENTO - ${selectedPeriod.toUpperCase()}
+
+INFORMACIÓN GENERAL:
+- Período: ${reportData?.period || 'N/A'}
+- Trabajos Totales: ${reportData?.totalJobs || 0}
+- Trabajos Completados: ${reportData?.completedJobs || 0}
+- Ingresos Totales: ${reportData ? formatCurrency(reportData.revenue) : '$0'}
+- Calificación Promedio: ${reportData?.averageRating || 0}/5
+
+SERVICIOS MÁS SOLICITADOS:
+${
+  reportData?.topServices
+    .map(
+      service => `- ${service.type}: ${service.count} trabajos, ${formatCurrency(service.revenue)}`
+    )
+    .join('\n') || 'No disponible'
+}
+
+TENDENCIA MENSUAL:
+${
+  reportData?.monthlyTrend
+    .map(trend => `- ${trend.month}: ${trend.jobs} trabajos, ${formatCurrency(trend.revenue)}`)
+    .join('\n') || 'No disponible'
+}
+
+REPORTES PROGRAMADOS ACTIVOS: ${scheduledReports.filter(r => r.status === 'active').length}
+
+Generado el: ${new Date().toLocaleDateString('es-ES')}
+    `.trim();
+
+    // Create and download text file (simulating PDF for now)
+    const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte_mantenimiento_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setSuccessMessage('PDF generado exitosamente (versión de texto por ahora)');
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Reportes" subtitle="Cargando información...">
@@ -751,13 +799,8 @@ INSIGHTS:
               <QuickActionButton
                 icon={FileText}
                 label="Generar PDF"
-                description="Crear reporte en PDF"
-                onClick={() => {
-                  setSuccessMessage(
-                    'Generando reporte en PDF... Esta funcionalidad estará disponible próximamente.'
-                  );
-                  setTimeout(() => setSuccessMessage(''), 3000);
-                }}
+                description="Crear reporte completo en PDF"
+                onClick={handleGeneratePDF}
               />
 
               <Dialog open={showAdvancedModal} onOpenChange={setShowAdvancedModal}>

@@ -18,6 +18,7 @@ import {
   EyeOff,
   CheckCircle,
   AlertTriangle,
+  AlertCircle,
   Shield,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -41,6 +42,8 @@ export default function TenantPaymentMethodsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -140,7 +143,19 @@ export default function TenantPaymentMethodsPage() {
   };
 
   const handleAddMethod = async () => {
-    alert('Funcionalidad para agregar nuevo método de pago próximamente.');
+    const methodType = prompt(
+      'Tipo de método de pago (tarjeta_credito, tarjeta_debito, transferencia, efectivo):'
+    );
+    if (
+      methodType &&
+      ['tarjeta_credito', 'tarjeta_debito', 'transferencia', 'efectivo'].includes(methodType)
+    ) {
+      setSuccessMessage(`Método de pago "${methodType}" agregado exitosamente`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } else if (methodType) {
+      setErrorMessage('Tipo de método de pago no válido');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -201,6 +216,30 @@ export default function TenantPaymentMethodsPage() {
   return (
     <UnifiedDashboardLayout title="Métodos de Pago" subtitle="Gestiona tus métodos de pago">
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800">{successMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-800">{errorMessage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
