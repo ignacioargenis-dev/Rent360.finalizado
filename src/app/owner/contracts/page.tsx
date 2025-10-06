@@ -312,6 +312,40 @@ export default function OwnerContractsPage() {
     setSelectedContract(null);
   };
 
+  const handleDownloadContract = (contract: ContractWithDetails) => {
+    try {
+      logger.info('Descargando contrato:', { contractId: contract.id });
+      // Simular descarga de PDF
+      const link = document.createElement('a');
+      link.href = `/api/contracts/${contract.id}/download`;
+      link.download = `contrato-${contract.contractNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      logger.info('Contrato descargado exitosamente:', { contractId: contract.id });
+    } catch (error) {
+      logger.error('Error descargando contrato:', { error, contractId: contract.id });
+      alert('Error al descargar el contrato. Por favor, inténtalo nuevamente.');
+    }
+  };
+
+  const handleEditContract = (contract: ContractWithDetails) => {
+    logger.info('Editando contrato:', { contractId: contract.id });
+    // TODO: Implementar navegación a página de edición de contratos
+    alert(
+      `Función próximamente disponible: Edición de contrato ${contract.contractNumber}. Por ahora puedes gestionar los contratos a través del equipo de soporte.`
+    );
+  };
+
+  const handleViewContractDetails = (contract: ContractWithDetails) => {
+    logger.info('Viendo detalles del contrato:', { contractId: contract.id });
+    // TODO: Implementar modal o página de detalles del contrato
+    alert(
+      `Detalles del contrato ${contract.contractNumber}:\n\nPropiedad: ${contract.property?.title}\nInquilino: ${contract.tenantName}\nMonto: $${contract.monthlyRent.toLocaleString()}\nEstado: ${contract.status}\n\nFunción de detalles próximamente disponible.`
+    );
+  };
+
   const handleStartLegalCase = (contract: ContractWithDetails) => {
     logger.info('Iniciando caso legal para contrato:', { contractId: contract.id });
     alert(
@@ -327,6 +361,14 @@ export default function OwnerContractsPage() {
     //     requestedBy: user?.id
     //   })
     // });
+  };
+
+  const handleNewContract = () => {
+    logger.info('Creando nuevo contrato');
+    // TODO: Implementar navegación a página de creación de contratos
+    alert(
+      'Función próximamente disponible: Creación de nuevos contratos. Por ahora puedes contactar al equipo de soporte para asistencia en la creación de contratos.'
+    );
   };
 
   if (loading) {
@@ -472,7 +514,7 @@ export default function OwnerContractsPage() {
                   <Filter className="w-4 h-4 mr-2" />
                   Filtros
                 </Button>
-                <Button>
+                <Button onClick={handleNewContract}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nuevo Contrato
                 </Button>
@@ -588,15 +630,29 @@ export default function OwnerContractsPage() {
                           </DialogContent>
                         </Dialog>
                       )}
-                      <Button size="sm" className="flex-1">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewContractDetails(contract)}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalles
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleDownloadContract(contract)}
+                      >
                         <Download className="w-4 h-4 mr-2" />
                         Descargar
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleEditContract(contract)}
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
                       </Button>
@@ -631,7 +687,7 @@ export default function OwnerContractsPage() {
                   ? 'Intenta ajustar tus filtros de búsqueda.'
                   : 'Aún no tienes contratos de arriendo.'}
               </p>
-              <Button>
+              <Button onClick={handleNewContract}>
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Nuevo Contrato
               </Button>

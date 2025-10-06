@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -464,7 +465,15 @@ export default function OwnerReportsPage() {
                   Análisis detallado del rendimiento de cada propiedad
                 </CardDescription>
               </div>
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  logger.info('Viendo detalles de rendimiento de propiedades');
+                  alert(
+                    'Función próximamente disponible: Vista detallada del rendimiento por propiedad. Por ahora puedes ver los datos resumidos en esta sección.'
+                  );
+                }}
+              >
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Detalles
               </Button>

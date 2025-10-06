@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 import {
   Home,
   Building,
@@ -61,6 +62,7 @@ interface PropertySummary {
 
 export default function OwnerDashboard() {
   const { user, loading: userLoading } = useUserState();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     activeContracts: 0,
@@ -523,6 +525,7 @@ export default function OwnerDashboard() {
                             size="sm"
                             variant="outline"
                             className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                            onClick={() => router.push(`/owner/properties/${property.id}`)}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Ver detalles
@@ -531,12 +534,26 @@ export default function OwnerDashboard() {
                             size="sm"
                             variant="outline"
                             className="border-gray-300 hover:border-purple-500 hover:text-purple-600"
+                            onClick={() => router.push(`/owner/properties/${property.id}/edit`)}
                           >
                             <Edit className="w-4 h-4 mr-1" />
                             Editar
                           </Button>
                           {property.status === 'AVAILABLE' && (
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                // Simular búsqueda de inquilino
+                                logger.info('Iniciando búsqueda de inquilino para propiedad:', {
+                                  propertyId: property.id,
+                                });
+                                // TODO: Implementar navegación a página de búsqueda de inquilinos
+                                alert(
+                                  `Función próximamente disponible: Búsqueda de inquilinos para ${property.title}. Por ahora puedes publicar la propiedad en las plataformas de alquiler para encontrar inquilinos.`
+                                );
+                              }}
+                            >
                               <Users className="w-4 h-4 mr-1" />
                               Buscar inquilino
                             </Button>

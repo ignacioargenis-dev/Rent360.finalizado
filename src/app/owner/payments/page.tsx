@@ -22,11 +22,19 @@ import {
   Receipt,
   RefreshCw,
   CreditCard,
+  X,
 } from 'lucide-react';
 import { Payment, Property, Contract } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useUserState } from '@/hooks/useUserState';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface PaymentWithDetails extends Payment {
   property?: Property;
@@ -86,6 +94,62 @@ export default function OwnerPaymentsPage() {
   const handleViewPaymentDetails = (payment: PaymentWithDetails) => {
     setSelectedPayment(payment);
     setShowDetailsDialog(true);
+  };
+
+  const handleGenerateReceipt = async (payment: PaymentWithDetails) => {
+    try {
+      logger.info('Generando comprobante de pago:', { paymentId: payment.id });
+      setSuccessMessage('Comprobante generado exitosamente');
+
+      // Simular generación de comprobante PDF
+      const receiptData = {
+        paymentId: payment.id,
+        amount: payment.amount,
+        property: payment.property?.title,
+        tenant: payment.tenantName,
+        date: payment.paidDate || new Date(),
+      };
+
+      // Crear contenido del comprobante como texto (simulación)
+      const receiptContent = `
+COMPROBANTE DE PAGO
+==================
+
+ID de Pago: ${receiptData.paymentId}
+Monto: $${receiptData.amount.toLocaleString()}
+Propiedad: ${receiptData.property}
+Inquilino: ${receiptData.tenant}
+Fecha de Pago: ${receiptData.date.toLocaleDateString('es-CL')}
+
+Este comprobante certifica que el pago ha sido recibido y procesado correctamente.
+
+Rent360 - Sistema de Gestión Inmobiliaria
+      `.trim();
+
+      // Simular descarga del comprobante
+      const blob = new Blob([receiptContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-${payment.id}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error generando comprobante:', { error, paymentId: payment.id });
+      setErrorMessage('Error al generar el comprobante. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const handleManualPaymentRegistration = () => {
+    logger.info('Registrando pago manual');
+    alert(
+      'Función próximamente disponible: Registro manual de pagos. Por ahora puedes gestionar los pagos a través del sistema automático o contactar al equipo de soporte para asistencia.'
+    );
   };
 
   const handleSendReminder = async (paymentId: string) => {
@@ -715,10 +779,7 @@ export default function OwnerPaymentsPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1"
-                        onClick={() => {
-                          setSuccessMessage('Comprobante generado exitosamente');
-                          setTimeout(() => setSuccessMessage(''), 3000);
-                        }}
+                        onClick={() => handleGenerateReceipt(payment)}
                       >
                         <Receipt className="w-4 h-4 mr-2" />
                         Comprobante
@@ -762,13 +823,143 @@ export default function OwnerPaymentsPage() {
                   ? 'Intenta ajustar tus filtros de búsqueda.'
                   : 'Aún no hay registros de pagos.'}
               </p>
-              <Button>
+              <Button onClick={handleManualPaymentRegistration}>
                 <Plus className="w-4 h-4 mr-2" />
                 Registrar Pago Manual
               </Button>
             </CardContent>
           </Card>
         )}
+
+        {/* Payment Details Dialog */}
+        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Receipt className="w-5 h-5" />
+                Detalles del Pago
+              </DialogTitle>
+              <DialogDescription>Información completa del pago seleccionado</DialogDescription>
+            </DialogHeader>
+
+            {selectedPayment && (
+              <div className="space-y-6">
+                {/* Payment Header */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedPayment.property?.title}</h3>
+                    <p className="text-sm text-gray-600">{selectedPayment.tenantName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatPrice(selectedPayment.amount)}
+                    </p>
+                    <p className="text-sm text-gray-600">{selectedPayment.paymentNumber}</p>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Estado del Pago</label>
+                      <div className="mt-1">{getStatusBadge(selectedPayment.status)}</div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Fecha de Vencimiento
+                      </label>
+                      <p className="mt-1">{selectedPayment.dueDate.toLocaleDateString('es-CL')}</p>
+                    </div>
+
+                    {selectedPayment.paidDate && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Fecha de Pago</label>
+                        <p className="mt-1">
+                          {selectedPayment.paidDate.toLocaleDateString('es-CL')}
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Método de Pago</label>
+                      <div className="mt-1">
+                        {selectedPayment.method
+                          ? getMethodBadge(selectedPayment.method)
+                          : 'No especificado'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Propiedad</label>
+                      <p className="mt-1">{selectedPayment.property?.title}</p>
+                      <p className="text-sm text-gray-600">{selectedPayment.property?.address}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Inquilino</label>
+                      <p className="mt-1">{selectedPayment.tenantName}</p>
+                      <p className="text-sm text-gray-600">{selectedPayment.tenantEmail}</p>
+                    </div>
+
+                    {selectedPayment.transactionId && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          ID de Transacción
+                        </label>
+                        <p className="mt-1 font-mono text-sm">{selectedPayment.transactionId}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {selectedPayment.notes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Notas</label>
+                    <p className="mt-1 p-3 bg-gray-50 rounded-lg">{selectedPayment.notes}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleGenerateReceipt(selectedPayment)}
+                    className="flex-1"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Descargar Comprobante
+                  </Button>
+
+                  {selectedPayment.status === 'PENDING' && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleSendReminder(selectedPayment.id)}
+                        className="flex-1"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Enviar Recordatorio
+                      </Button>
+
+                      <Button
+                        onClick={() => handleMarkAsPaid(selectedPayment.id)}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Marcar Pagado
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );
