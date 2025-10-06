@@ -53,6 +53,11 @@ export default function MaintenanceCalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
 
+  // Estado para modales
+  const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<CalendarJob | null>(null);
+
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -194,6 +199,17 @@ export default function MaintenanceCalendarPage() {
       currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Funciones para manejar botones
+  const handleViewJobDetails = (job: CalendarJob) => {
+    setSelectedJob(job);
+    setShowJobDetailsModal(true);
+  };
+
+  const handleContactOwner = (job: CalendarJob) => {
+    setSelectedJob(job);
+    setShowContactModal(true);
   };
 
   if (loading) {
@@ -463,11 +479,19 @@ export default function MaintenanceCalendarPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewJobDetails(job)}
+                          >
                             <Wrench className="w-4 h-4 mr-2" />
                             Ver Detalles
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleContactOwner(job)}
+                          >
                             <User className="w-4 h-4 mr-2" />
                             Contactar
                           </Button>
@@ -523,6 +547,167 @@ export default function MaintenanceCalendarPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de detalles del trabajo */}
+      <Dialog open={showJobDetailsModal} onOpenChange={setShowJobDetailsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5" />
+              Detalles del Trabajo
+            </DialogTitle>
+            <DialogDescription>
+              Información completa del trabajo programado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedJob && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Información del Trabajo</h4>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Título:</span> {selectedJob.title}</p>
+                    <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedJob.status)}</p>
+                    <p><span className="font-medium">Prioridad:</span> {getPriorityBadge(selectedJob.priority)}</p>
+                    <p><span className="font-medium">Tipo:</span> {selectedJob.maintenanceType}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Información de Horario</h4>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Fecha:</span> {new Date(selectedJob.date).toLocaleDateString('es-CL')}</p>
+                    <p><span className="font-medium">Horario:</span> {selectedJob.startTime} - {selectedJob.endTime}</p>
+                    <p><span className="font-medium">Costo Estimado:</span> {formatCurrency(selectedJob.estimatedCost)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información del propietario */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Información del Propietario</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">{selectedJob.ownerName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span>{selectedJob.ownerPhone}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm">{selectedJob.propertyAddress}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas */}
+              {selectedJob.notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Notas</h4>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">{selectedJob.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Acciones */}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowJobDetailsModal(false)}>
+                  Cerrar
+                </Button>
+                <Button onClick={() => {
+                  handleContactOwner(selectedJob);
+                  setShowJobDetailsModal(false);
+                }}>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Contactar Propietario
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de contacto */}
+      <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              Contactar Propietario
+            </DialogTitle>
+            <DialogDescription>
+              Envía un mensaje al propietario sobre el trabajo programado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedJob && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Trabajo: {selectedJob.title}</h4>
+                <p className="text-sm text-gray-600">
+                  Programado para el {new Date(selectedJob.date).toLocaleDateString('es-CL')} a las {selectedJob.startTime}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Propietario: {selectedJob.ownerName}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Método de Contacto</label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input type="radio" id="phone" name="contactMethod" defaultChecked />
+                      <label htmlFor="phone" className="text-sm">Llamada telefónica</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="radio" id="message" name="contactMethod" />
+                      <label htmlFor="message" className="text-sm">Mensaje de texto</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="radio" id="email" name="contactMethod" />
+                      <label htmlFor="email" className="text-sm">Correo electrónico</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Mensaje (opcional)</label>
+                  <textarea
+                    className="w-full p-2 border rounded-md text-sm"
+                    rows={3}
+                    placeholder="Escribe un mensaje personalizado..."
+                    defaultValue={`Hola ${selectedJob.ownerName}, te contacto respecto al trabajo de mantenimiento programado para el ${new Date(selectedJob.date).toLocaleDateString('es-CL')}.`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowContactModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={() => {
+                  setSuccessMessage('Mensaje enviado exitosamente al propietario');
+                  setShowContactModal(false);
+                  setTimeout(() => setSuccessMessage(''), 3000);
+                }}>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Enviar Contacto
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

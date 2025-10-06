@@ -33,6 +33,14 @@ import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
+import { useRouter } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface DashboardStats {
   activeJobs: number;
@@ -71,6 +79,7 @@ interface JobSummary {
 
 export default function MaintenanceDashboard() {
   const { user } = useUserState();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 8,
     totalJobs: 156,
@@ -82,6 +91,10 @@ export default function MaintenanceDashboard() {
   const [recentJobs, setRecentJobs] = useState<JobSummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Estado para modales
+  const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobSummary | null>(null);
 
   useEffect(() => {
     // Mock data for demo
@@ -173,6 +186,43 @@ export default function MaintenanceDashboard() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  // Funciones para manejar botones
+  const handleNewJob = () => {
+    router.push('/maintenance/jobs/new');
+  };
+
+  const handleViewJobDetails = (job: JobSummary) => {
+    setSelectedJob(job);
+    setShowJobDetailsModal(true);
+  };
+
+  const handleUpdateJob = (job: JobSummary) => {
+    // En una aplicación real, esto abriría un modal de edición
+    // Por ahora, solo mostraremos un mensaje
+    setSuccessMessage(`Actualizando trabajo: ${job.title}`);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleStartJob = (jobId: string) => {
+    setRecentJobs(prevJobs =>
+      prevJobs.map(job =>
+        job.id === jobId ? { ...job, status: 'in_progress' as const } : job
+      )
+    );
+    setSuccessMessage('Trabajo iniciado exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleCompleteJob = (jobId: string) => {
+    setRecentJobs(prevJobs =>
+      prevJobs.map(job =>
+        job.id === jobId ? { ...job, status: 'completed' as const } : job
+      )
+    );
+    setSuccessMessage('Trabajo completado exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const getStatusBadge = (status: string) => {
@@ -444,7 +494,10 @@ export default function MaintenanceDashboard() {
                       Estado actual de tus trabajos de mantenimiento
                     </p>
                   </div>
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50 border-0">
+                  <Button
+                    className="bg-white text-blue-600 hover:bg-blue-50 border-0"
+                    onClick={handleNewJob}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Nuevo Trabajo
                   </Button>
@@ -496,6 +549,7 @@ export default function MaintenanceDashboard() {
                           size="sm"
                           variant="outline"
                           className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                          onClick={() => handleViewJobDetails(job)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           Ver detalles
@@ -504,18 +558,27 @@ export default function MaintenanceDashboard() {
                           size="sm"
                           variant="outline"
                           className="border-gray-300 hover:border-purple-500 hover:text-purple-600"
+                          onClick={() => handleUpdateJob(job)}
                         >
                           <Wrench className="w-4 h-4 mr-1" />
                           Actualizar
                         </Button>
                         {job.status === 'pending' && (
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleStartJob(job.id)}
+                          >
                             <PlayCircle className="w-4 h-4 mr-1" />
                             Iniciar trabajo
                           </Button>
                         )}
                         {job.status === 'in_progress' && (
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleCompleteJob(job.id)}
+                          >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Completar
                           </Button>
@@ -615,6 +678,106 @@ export default function MaintenanceDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modal de detalles del trabajo */}
+      <Dialog open={showJobDetailsModal} onOpenChange={setShowJobDetailsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5" />
+              Detalles del Trabajo
+            </DialogTitle>
+            <DialogDescription>
+              Información completa del trabajo de mantenimiento seleccionado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedJob && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Información del Trabajo</h4>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Título:</span> {selectedJob.title}</p>
+                    <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedJob.status)}</p>
+                    <p><span className="font-medium">Prioridad:</span> {getPriorityBadge(selectedJob.priority)}</p>
+                    <p><span className="font-medium">Fecha Programada:</span> {formatDate(selectedJob.scheduledDate)}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Información Financiera</h4>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Costo Estimado:</span> {formatPrice(selectedJob.estimatedCost)}</p>
+                    <p><span className="font-medium">Propietario:</span> {selectedJob.ownerName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ubicación */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Ubicación</h4>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span>{selectedJob.propertyAddress}</span>
+                </div>
+              </div>
+
+              {/* Acciones disponibles */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleUpdateJob(selectedJob)}
+                  >
+                    <Wrench className="w-4 h-4 mr-1" />
+                    Actualizar Trabajo
+                  </Button>
+
+                  {selectedJob.status === 'pending' && (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        handleStartJob(selectedJob.id);
+                        setShowJobDetailsModal(false);
+                      }}
+                    >
+                      <PlayCircle className="w-4 h-4 mr-1" />
+                      Iniciar Trabajo
+                    </Button>
+                  )}
+
+                  {selectedJob.status === 'in_progress' && (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        handleCompleteJob(selectedJob.id);
+                        setShowJobDetailsModal(false);
+                      }}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Completar Trabajo
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowJobDetailsModal(false)}
+                  >
+                    Cerrar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

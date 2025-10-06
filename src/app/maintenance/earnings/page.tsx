@@ -98,6 +98,14 @@ export default function MaintenanceEarningsPage() {
 
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+
+  // Estado para configuración de pagos
+  const [paymentSettings, setPaymentSettings] = useState({
+    preferredMethod: 'bank',
+    frequency: 'weekly',
+    autoWithdraw: false,
+    minimumWithdraw: 50000,
+  });
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
@@ -173,6 +181,33 @@ export default function MaintenanceEarningsPage() {
       currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleSavePaymentSettings = async () => {
+    try {
+      // En una aplicación real, aquí iría la llamada a la API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mostrar mensaje de éxito
+      const event = new CustomEvent('showSuccessMessage', {
+        detail: 'Configuración de pagos guardada exitosamente'
+      });
+      window.dispatchEvent(event);
+
+    } catch (error) {
+      console.error('Error saving payment settings:', error);
+      const event = new CustomEvent('showErrorMessage', {
+        detail: 'Error al guardar la configuración de pagos'
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
+  const updatePaymentSetting = (key: string, value: any) => {
+    setPaymentSettings(prev => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -456,7 +491,10 @@ export default function MaintenanceEarningsPage() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Método de Pago Preferido</label>
-                  <Select defaultValue="bank">
+                  <Select
+                    value={paymentSettings.preferredMethod}
+                    onValueChange={(value) => updatePaymentSetting('preferredMethod', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -470,7 +508,10 @@ export default function MaintenanceEarningsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Frecuencia de Pagos</label>
-                  <Select defaultValue="weekly">
+                  <Select
+                    value={paymentSettings.frequency}
+                    onValueChange={(value) => updatePaymentSetting('frequency', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -482,7 +523,11 @@ export default function MaintenanceEarningsPage() {
                   </Select>
                 </div>
 
-                <Button className="w-full">
+                <Button
+                  className="w-full"
+                  onClick={handleSavePaymentSettings}
+                  disabled={false}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Guardar Configuración
                 </Button>

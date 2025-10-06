@@ -69,6 +69,10 @@ export default function MaintenanceJobsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Estado para modales
+  const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<MaintenanceJob | null>(null);
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -213,6 +217,11 @@ export default function MaintenanceJobsPage() {
         job.id === jobId ? { ...job, status: newStatus as MaintenanceJob['status'] } : job
       )
     );
+  };
+
+  const handleViewJobDetails = (job: MaintenanceJob) => {
+    setSelectedJob(job);
+    setShowJobDetailsModal(true);
   };
 
   const handleExportJobs = () => {
@@ -630,7 +639,11 @@ export default function MaintenanceJobsPage() {
                             </Button>
                           )}
 
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewJobDetails(job)}
+                          >
                             <Info className="w-4 h-4 mr-2" />
                             Detalles
                           </Button>
@@ -658,6 +671,173 @@ export default function MaintenanceJobsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de detalles del trabajo */}
+      <Dialog open={showJobDetailsModal} onOpenChange={setShowJobDetailsModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5" />
+              Detalles del Trabajo de Mantenimiento
+            </DialogTitle>
+            <DialogDescription>
+              Información completa y estado del trabajo seleccionado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedJob && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Información del Trabajo</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Título:</span>
+                      <p className="font-medium">{selectedJob.title}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Estado:</span>
+                      <div className="mt-1">{getStatusBadge(selectedJob.status)}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Prioridad:</span>
+                      <div className="mt-1">{getPriorityBadge(selectedJob.priority)}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Tipo:</span>
+                      <div className="mt-1">{getTypeBadge(selectedJob.maintenanceType)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Información Financiera</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Costo Estimado:</span>
+                      <p className="font-medium text-green-600">{formatCurrency(selectedJob.estimatedCost)}</p>
+                    </div>
+                    {selectedJob.actualCost && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">Costo Real:</span>
+                        <p className="font-medium text-blue-600">{formatCurrency(selectedJob.actualCost)}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Fecha Programada:</span>
+                      <p>{new Date(selectedJob.scheduledDate).toLocaleDateString('es-CL')}</p>
+                    </div>
+                    {selectedJob.completedDate && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">Fecha Completada:</span>
+                        <p>{new Date(selectedJob.completedDate).toLocaleDateString('es-CL')}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Descripción</h4>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-gray-700">{selectedJob.description}</p>
+                </div>
+              </div>
+
+              {/* Información de propiedad y propietario */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Propiedad</h4>
+                  <div className="space-y-2 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm">{selectedJob.propertyAddress}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Propietario</h4>
+                  <div className="space-y-2 p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium">{selectedJob.propertyOwner}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-green-600" />
+                      <span className="text-sm">{selectedJob.ownerPhone}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas */}
+              {selectedJob.notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Notas Adicionales</h4>
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-800">{selectedJob.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Historial de estados */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Historial de Estados</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className={`w-3 h-3 rounded-full ${selectedJob.status === 'completed' ? 'bg-green-500' :
+                      selectedJob.status === 'in_progress' ? 'bg-blue-500' :
+                      selectedJob.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium capitalize">{selectedJob.status.replace('_', ' ')}</p>
+                      <p className="text-xs text-gray-500">
+                        {selectedJob.status === 'completed' && selectedJob.completedDate
+                          ? `Completado el ${new Date(selectedJob.completedDate).toLocaleDateString('es-CL')}`
+                          : 'Estado actual del trabajo'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones disponibles */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowJobDetailsModal(false)}>
+                  Cerrar
+                </Button>
+                {selectedJob.status === 'pending' && (
+                  <Button
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      handleStatusChange(selectedJob.id, 'in_progress');
+                      setShowJobDetailsModal(false);
+                    }}
+                  >
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    Iniciar Trabajo
+                  </Button>
+                )}
+                {selectedJob.status === 'in_progress' && (
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => {
+                      handleStatusChange(selectedJob.id, 'completed');
+                      setShowJobDetailsModal(false);
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Completar Trabajo
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }
