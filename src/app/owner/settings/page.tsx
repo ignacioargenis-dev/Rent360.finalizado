@@ -32,8 +32,28 @@ import {
   Key,
   CheckCircle,
   AlertTriangle,
+  Upload,
+  FileText,
+  X,
+  Download,
+  Trash2,
+  FolderOpen,
+  Building,
+  UserCheck,
+  Scale,
 } from 'lucide-react';
 import { User as UserType } from '@/types';
+
+interface Document {
+  id: string;
+  name: string;
+  type: string;
+  category: 'personal' | 'property' | 'legal';
+  propertyId?: string | undefined;
+  uploadDate: string;
+  size: string;
+  url: string;
+}
 
 interface OwnerSettings {
   profile: {
@@ -64,6 +84,7 @@ interface OwnerSettings {
     commissionRate: number;
     paymentTerms: string;
   };
+  documents: Document[];
 }
 
 export default function OwnerSettingsPage() {
@@ -97,6 +118,7 @@ export default function OwnerSettingsPage() {
       commissionRate: 5.0,
       paymentTerms: '15 días',
     },
+    documents: [],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,6 +134,13 @@ export default function OwnerSettingsPage() {
     confirmPassword: '',
   });
   const [passwordErrors, setPasswordErrors] = useState<Partial<typeof passwordData>>({});
+
+  // Estados para gestión de documentos
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocumentCategory, setSelectedDocumentCategory] = useState<
+    'personal' | 'property' | 'legal'
+  >('personal');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -157,14 +186,14 @@ export default function OwnerSettingsPage() {
       const mockSettings: Partial<OwnerSettings> = {
         profile: {
           firstName: 'Juan',
-          lastName: 'P�rez',
+          lastName: 'Pérez',
           email: 'juan.perez@email.com',
           phone: '+56987654321',
           address: 'Av. Providencia 1234',
           city: 'Santiago',
           region: 'Metropolitana',
           description:
-            'Propietario de propiedades residenciales con m�s de 10 a�os de experiencia.',
+            'Propietario de propiedades residenciales con más de 10 años de experiencia.',
         },
         security: {
           twoFactorEnabled: false,
@@ -175,8 +204,39 @@ export default function OwnerSettingsPage() {
           taxId: '12.345.678-9',
           businessType: 'company',
           commissionRate: 5.0,
-          paymentTerms: '30 d�as',
+          paymentTerms: '30 días',
         },
+        documents: [
+          {
+            id: '1',
+            name: 'Cédula de Identidad.pdf',
+            type: 'PDF',
+            category: 'personal',
+            uploadDate: '2024-01-10',
+            size: '2.1 MB',
+            url: '/documents/personal/cedula.pdf',
+          },
+          {
+            id: '2',
+            name: 'ROL Propiedad Las Condes.pdf',
+            type: 'PDF',
+            category: 'property',
+            propertyId: '1',
+            uploadDate: '2024-01-12',
+            size: '1.8 MB',
+            url: '/documents/property/rol-las-condes.pdf',
+          },
+          {
+            id: '3',
+            name: 'Certificado de Avalúo.pdf',
+            type: 'PDF',
+            category: 'property',
+            propertyId: '1',
+            uploadDate: '2024-01-15',
+            size: '3.2 MB',
+            url: '/documents/property/certificado-avaluo.pdf',
+          },
+        ],
       };
 
       setSettings(prev => ({
@@ -185,6 +245,7 @@ export default function OwnerSettingsPage() {
         profile: { ...prev.profile, ...mockSettings.profile },
         security: { ...prev.security, ...mockSettings.security },
         business: { ...prev.business, ...mockSettings.business },
+        documents: mockSettings.documents || [],
       }));
     } catch (error) {
       logger.error('Error loading settings:', {
@@ -261,6 +322,114 @@ export default function OwnerSettingsPage() {
     } catch (error) {
       logger.error('Error al cambiar contraseña', { error });
       setErrorMessage('Error al cambiar la contraseña. Inténtalo de nuevo.');
+    }
+  };
+
+  // Funciones para gestión de documentos
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      // Validar tipo de archivo
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrorMessage('Solo se permiten archivos PDF, JPG o PNG');
+        return;
+      }
+
+      // Validar tamaño (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMessage('El archivo no puede superar los 10MB');
+        return;
+      }
+
+      // Simular subida del archivo
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const newDocument: Document = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type === 'application/pdf' ? 'PDF' : 'Imagen',
+        category: selectedDocumentCategory,
+        propertyId: selectedDocumentCategory === 'property' ? selectedPropertyId : undefined,
+        uploadDate:
+          new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
+        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+        url: `/documents/${selectedDocumentCategory}/${file.name}`,
+      };
+
+      setSettings(prev => ({
+        ...prev,
+        documents: [...prev.documents, newDocument],
+      }));
+
+      setShowUploadModal(false);
+      setSuccessMessage('Documento subido exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error subiendo documento:', { error });
+      setErrorMessage('Error al subir el documento. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const handleDownloadDocument = (doc: Document) => {
+    // Simular descarga
+    const link = document.createElement('a');
+    link.href = doc.url;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    logger.info('Documento descargado:', { documentId: doc.id });
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      // Simular eliminación
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setSettings(prev => ({
+        ...prev,
+        documents: prev.documents.filter(doc => doc.id !== documentId),
+      }));
+
+      setSuccessMessage('Documento eliminado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error eliminando documento:', { error });
+      setErrorMessage('Error al eliminar el documento. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'personal':
+        return <UserCheck className="w-4 h-4" />;
+      case 'property':
+        return <Building className="w-4 h-4" />;
+      case 'legal':
+        return <Scale className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'personal':
+        return 'Personal';
+      case 'property':
+        return 'Propiedad';
+      case 'legal':
+        return 'Legal';
+      default:
+        return category;
     }
   };
 
@@ -361,11 +530,12 @@ export default function OwnerSettingsPage() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
             <TabsTrigger value="security">Seguridad</TabsTrigger>
             <TabsTrigger value="business">Negocio</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -684,6 +854,130 @@ export default function OwnerSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5" />
+                  Gestión de Documentos
+                </CardTitle>
+                <CardDescription>
+                  Sube y administra tus documentos personales y de propiedades según las normas
+                  chilenas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Document Upload Section */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold">Mis Documentos</h3>
+                    <p className="text-sm text-gray-600">
+                      Documentos requeridos: Cédula, ROL de propiedades, certificados de avalúo
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowUploadModal(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir Documento
+                  </Button>
+                </div>
+
+                {/* Documents List */}
+                <div className="space-y-3">
+                  {settings.documents.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No tienes documentos subidos aún</p>
+                      <p className="text-sm">Sube tus documentos personales y de propiedades</p>
+                    </div>
+                  ) : (
+                    settings.documents.map(document => (
+                      <div
+                        key={document.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            {getCategoryIcon(document.category)}
+                            <div>
+                              <p className="font-medium">{document.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {getCategoryLabel(document.category)} • {document.type} •{' '}
+                                {document.size} • Subido:{' '}
+                                {new Date(document.uploadDate).toLocaleDateString('es-CL')}
+                              </p>
+                              {document.propertyId && (
+                                <p className="text-xs text-blue-600">
+                                  Propiedad ID: {document.propertyId}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadDocument(document)}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteDocument(document.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Legal Requirements Info */}
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <Scale className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-blue-900">
+                          Documentos Requeridos por Ley Chilena
+                        </h4>
+                        <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                          <li>
+                            • <strong>Cédula de Identidad</strong> - Documento de identificación
+                            personal
+                          </li>
+                          <li>
+                            • <strong>ROL de la Propiedad</strong> - Certificado del avalúo fiscal
+                            municipal
+                          </li>
+                          <li>
+                            • <strong>Certificado de Avalúo</strong> - Valor comercial de la
+                            propiedad
+                          </li>
+                          <li>
+                            • <strong>Escritura de Compraventa</strong> - Título de propiedad
+                          </li>
+                          <li>
+                            • <strong>Certificado de Dominio Vigente</strong> - Comprobante de
+                            propiedad
+                          </li>
+                        </ul>
+                        <p className="text-xs text-blue-700 mt-3">
+                          Estos documentos son obligatorios para contratos de arriendo según la Ley
+                          18.101
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         <div className="flex justify-end mt-6">
@@ -766,6 +1060,94 @@ export default function OwnerSettingsPage() {
                 </Button>
                 <Button onClick={handlePasswordSubmit} className="flex-1">
                   Cambiar Contraseña
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para subir documentos */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Subir Documento</h3>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="documentCategory">Categoría del Documento</Label>
+                  <Select
+                    value={selectedDocumentCategory}
+                    onValueChange={(value: 'personal' | 'property' | 'legal') =>
+                      setSelectedDocumentCategory(value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="personal">Documento Personal</SelectItem>
+                      <SelectItem value="property">Documento de Propiedad</SelectItem>
+                      <SelectItem value="legal">Documento Legal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedDocumentCategory === 'property' && (
+                  <div>
+                    <Label htmlFor="propertyId">Propiedad</Label>
+                    <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona la propiedad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Departamento Las Condes</SelectItem>
+                        <SelectItem value="2">Oficina Providencia</SelectItem>
+                        <SelectItem value="3">Casa Vitacura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="documentFile">Seleccionar Archivo</Label>
+                  <input
+                    id="documentFile"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileUpload}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Formatos permitidos: PDF, JPG, PNG (máx. 10MB)
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">Documentos Obligatorios</p>
+                      <ul className="text-xs text-yellow-700 mt-1 space-y-0.5">
+                        <li>• Cédula de Identidad</li>
+                        <li>• ROL de la propiedad</li>
+                        <li>• Certificado de avalúo</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" onClick={() => setShowUploadModal(false)}>
+                  Cancelar
                 </Button>
               </div>
             </div>

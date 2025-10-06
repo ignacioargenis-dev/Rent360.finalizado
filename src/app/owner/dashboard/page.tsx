@@ -472,10 +472,19 @@ export default function OwnerDashboard() {
                       <h2 className="text-xl font-bold text-white">Mis Propiedades</h2>
                       <p className="text-blue-100 text-sm">Estado actual de tus propiedades</p>
                     </div>
-                    <Button className="bg-white text-blue-600 hover:bg-blue-50 border-0">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Nueva Propiedad
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button className="bg-white text-blue-600 hover:bg-blue-50 border-0">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nueva Propiedad
+                      </Button>
+                      <Button
+                        className="bg-green-600 text-white hover:bg-green-700 border-0"
+                        onClick={() => router.push('/owner/runners')}
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        Buscar Runners
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="p-6">
