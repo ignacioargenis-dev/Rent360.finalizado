@@ -6,39 +6,76 @@
 
 Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proceso de arrendamiento de propiedades, contratos digitales, pagos automáticos y gestión de mantenimientos.
 
+## 🚀 Despliegue Automático
+
+### DigitalOcean App Platform
+
+[![Deploy to DigitalOcean](https://img.shields.io/badge/Deploy%20to-DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean)](https://cloud.digitalocean.com/apps)
+
+Rent360 incluye despliegue automático configurado para DigitalOcean App Platform:
+
+- ✅ **CI/CD Automático**: Despliegue automático en cada push a `main`
+- ✅ **Health Checks**: Verificación automática de estado post-deployment
+- ✅ **Base de Datos**: PostgreSQL managed con backups automáticos
+- ✅ **SSL/TLS**: Certificados automáticos con Let's Encrypt
+- ✅ **Load Balancing**: Balanceo de carga integrado
+- ✅ **Monitoring**: Logs centralizados y métricas en tiempo real
+
+#### Configuración Rápida
+
+```bash
+# 1. Configurar secrets en GitHub
+# DIGITALOCEAN_ACCESS_TOKEN
+# DIGITALOCEAN_APP_ID
+# DATABASE_URL
+# JWT_SECRET, JWT_REFRESH_SECRET, NEXTAUTH_SECRET
+
+# 2. Push a main activa el despliegue automático
+git push origin main
+
+# 3. O despliegue manual
+./scripts/deploy-to-digitalocean.sh
+```
+
 ## 🚀 Características Principales
 
 ### Gestión de Propiedades
+
 - ✅ Catálogo completo de propiedades
 - ✅ Sistema de búsqueda avanzada
 - ✅ Gestión de disponibilidad y estados
 - ✅ Galería de imágenes y características
 
 ### Contratos Digitales
+
 - ✅ Creación y gestión de contratos
 - ✅ Firmas electrónicas certificadas (Ley 19.799)
 - ✅ Validación automática de documentos
 - ✅ Historial completo de contratos
 
 ### Sistema de Pagos
+
 - ✅ Integración con múltiples proveedores (Khipu, Stripe, PayPal)
 - ✅ Pagos automáticos recurrentes
 - ✅ Gestión de depósitos y garantías
 - ✅ Reportes financieros detallados
 
 ### Gestión de Usuarios
+
 - ✅ Roles diferenciados (Propietarios, Inquilinos, Corredores, Administradores)
 - ✅ Sistema de autenticación seguro
 - ✅ Perfiles verificados con RUT chileno
 - ✅ Notificaciones inteligentes
 
 ### Mantenimiento y Servicios
+
 - ✅ Sistema de tickets de mantenimiento
 - ✅ Gestión de proveedores de servicios
 - ✅ Programación de visitas
 - ✅ Calificaciones y reseñas
 
 ### Sistema Legal
+
 - ✅ Gestión de casos legales
 - ✅ Notificaciones extrajudiciales
 - ✅ Seguimiento de procedimientos judiciales
@@ -47,6 +84,7 @@ Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proc
 ## 🛠️ Tecnologías Utilizadas
 
 ### Backend
+
 - **Framework**: Next.js 14 con App Router
 - **Base de Datos**: SQLite con Prisma ORM
 - **Autenticación**: JWT con refresh tokens
@@ -56,6 +94,7 @@ Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proc
 - **Queue**: Background jobs con Redis
 
 ### Frontend
+
 - **UI Framework**: React 18 con TypeScript
 - **Styling**: Tailwind CSS
 - **Componentes**: Radix UI
@@ -64,12 +103,14 @@ Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proc
 - **Gráficos**: Recharts
 
 ### Microservicios
+
 - **API Gateway**: Express.js con autenticación
 - **Auth Service**: Gestión de usuarios y autenticación
 - **Property Service**: Gestión de propiedades
 - **Communication**: Socket.io para tiempo real
 
 ### Integraciones Externas
+
 - **Firmas Electrónicas**: TrustFactory, FirmaPro (certificados SII)
 - **Pagos**: Khipu, Stripe, PayPal, WebPay
 - **Almacenamiento**: AWS S3, Google Cloud Storage
@@ -78,6 +119,7 @@ Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proc
 - **Mapas**: Google Maps API
 
 ### DevOps & Calidad
+
 - **CI/CD**: GitHub Actions
 - **Testing**: Jest + Playwright (Unit, Integration, E2E)
 - **Linting**: ESLint + Prettier
@@ -95,22 +137,26 @@ Rent360 es una plataforma completa de gestión inmobiliaria que facilita el proc
 ## 🚀 Instalación y Configuración
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone https://github.com/rent360/rent360.git
 cd rent360
 ```
 
 ### 2. Instalar dependencias
+
 ```bash
 npm install
 ```
 
 ### 3. Configurar variables de entorno
+
 ```bash
 cp .env.example .env.local
 ```
 
 Editar `.env.local` con tus configuraciones:
+
 ```env
 # Base de datos
 DATABASE_URL="file:./dev.db"
@@ -135,6 +181,7 @@ FIRMAPRO_API_KEY="tu-firmapro-key"
 ```
 
 ### 4. Configurar base de datos
+
 ```bash
 # Generar cliente Prisma
 npm run db:generate
@@ -147,6 +194,7 @@ npm run db:seed
 ```
 
 ### 5. Iniciar servidor de desarrollo
+
 ```bash
 npm run dev
 ```
@@ -156,11 +204,13 @@ La aplicación estará disponible en `http://localhost:3000`
 ## 🧪 Testing
 
 ### Ejecutar todos los tests
+
 ```bash
 npm run test:all
 ```
 
 ### Tests por tipo
+
 ```bash
 # Unit tests
 npm run test:unit
@@ -176,6 +226,7 @@ npm run test:security
 ```
 
 ### Coverage
+
 ```bash
 npm run test:coverage
 ```
@@ -183,6 +234,7 @@ npm run test:coverage
 ## 📚 Documentación de API
 
 La documentación completa de la API está disponible en:
+
 - **Swagger UI**: `http://localhost:3000/api-docs`
 - **OpenAPI Spec**: `/docs/api-documentation.yml`
 - **Postman Collection**: `/docs/rent360-api.postman_collection.json`
@@ -190,12 +242,14 @@ La documentación completa de la API está disponible en:
 ### Endpoints principales
 
 #### Autenticación
+
 - `POST /api/auth/login` - Iniciar sesión
 - `POST /api/auth/register` - Registrar usuario
 - `GET /api/auth/me` - Información del usuario actual
 - `POST /api/auth/logout` - Cerrar sesión
 
 #### Propiedades
+
 - `GET /api/properties` - Listar propiedades
 - `POST /api/properties` - Crear propiedad
 - `GET /api/properties/{id}` - Obtener propiedad
@@ -203,17 +257,20 @@ La documentación completa de la API está disponible en:
 - `DELETE /api/properties/{id}` - Eliminar propiedad
 
 #### Contratos
+
 - `GET /api/contracts` - Listar contratos
 - `POST /api/contracts` - Crear contrato
 - `GET /api/contracts/{id}` - Obtener contrato
 - `PUT /api/contracts/{id}` - Actualizar contrato
 
 #### Pagos
+
 - `GET /api/payments` - Listar pagos
 - `POST /api/payments` - Crear pago
 - `GET /api/payments/{id}` - Obtener pago
 
 #### Firmas Electrónicas
+
 - `GET /api/signatures` - Listar firmas
 - `POST /api/signatures` - Crear solicitud de firma
 - `POST /api/signatures/{id}/send` - Enviar firma
@@ -259,11 +316,13 @@ npm run docs             # Generar documentación
 ## 🚀 Despliegue
 
 ### Vercel (Recomendado)
+
 1. Conectar repositorio a Vercel
 2. Configurar variables de entorno
 3. Desplegar automáticamente
 
 ### Docker
+
 ```bash
 # Build
 docker build -t rent360 .
@@ -273,6 +332,7 @@ docker run -p 3000:3000 rent360
 ```
 
 ### Manual
+
 ```bash
 # Build
 npm run build
@@ -284,6 +344,7 @@ npm run start
 ## 🔒 Seguridad
 
 ### Características de Seguridad Implementadas
+
 - ✅ **Autenticación JWT** con refresh tokens
 - ✅ **Rate limiting** por IP y usuario
 - ✅ **Validación de entrada** con Zod
@@ -295,6 +356,7 @@ npm run start
 - ✅ **Validación de archivos** subidos
 
 ### Configuración de Seguridad
+
 ```env
 # JWT Secrets (requeridos)
 JWT_SECRET="tu-jwt-secret-super-seguro-min-32-chars"
@@ -311,11 +373,13 @@ ALLOWED_ORIGINS="https://tu-dominio.com,https://app.tu-dominio.com"
 ## 📊 Monitoreo y Métricas
 
 ### Health Checks
+
 - `GET /api/health` - Estado general del sistema
 - `GET /api/health/database` - Estado de la base de datos
 - `GET /api/health/cache` - Estado del cache
 
 ### Métricas Disponibles
+
 - ✅ **Performance**: Response times, throughput
 - ✅ **Errors**: Rate de errores, tipos de errores
 - ✅ **Database**: Queries lentas, conexiones
@@ -323,6 +387,7 @@ ALLOWED_ORIGINS="https://tu-dominio.com,https://app.tu-dominio.com"
 - ✅ **System**: CPU, memory, disk usage
 
 ### Logs
+
 ```bash
 # Ver logs en desarrollo
 npm run dev
@@ -334,6 +399,7 @@ tail -f logs/app.log
 ## 🤝 Contribución
 
 ### Guía de Contribución
+
 1. Fork el proyecto
 2. Crear rama feature (`git checkout -b feature/AmazingFeature`)
 3. Commit cambios (`git commit -m 'Add some AmazingFeature'`)
@@ -341,6 +407,7 @@ tail -f logs/app.log
 5. Abrir Pull Request
 
 ### Estándares de Código
+
 - ✅ **ESLint** configurado con reglas estrictas
 - ✅ **Prettier** para formateo consistente
 - ✅ **TypeScript** con strict mode
@@ -348,7 +415,9 @@ tail -f logs/app.log
 - ✅ **Coverage** mínimo del 75%
 
 ### Git Hooks
+
 Los siguientes hooks están configurados automáticamente:
+
 - `pre-commit`: Ejecuta linting y formateo
 - `commit-msg`: Valida formato de mensajes de commit
 - `pre-push`: Ejecuta tests completos
