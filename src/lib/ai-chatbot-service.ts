@@ -751,6 +751,8 @@ export class AIChatbotService {
           /(?:soy|trabajo como|me dedico a)\s+(?:jardinero|plomero|electricista|gasfiter|limpieza|seguridad|mantenimiento)/,
           /(?:puedo|podría|quiero)\s+(?:publicar|ofrecer|prestar)\s+(?:mis\s+)?servicios/,
           /(?:como|dónde)\s+(?:ofrecer|brindar|dar)\s+(?:servicios|mantenimiento|trabajo)/,
+          /(?:como|dónde)\s+(?:creo|crear|registrar|darme de alta)\s+(?:una\s+)?(?:cuenta|perfil)/,
+          /(?:cuenta|perfil|registro)\s+(?:para|de)\s+(?:ofrecer|brindar|dar)\s+servicios/,
           /(?:para|necesito|debo tener|requiero)\s+(?:documento|certificación|certificado|licencia|registro)/,
           /(?:qué|cuáles)\s+(?:documentos|requisitos|certificaciones)\s+(?:necesito|requiero|debo)/,
           /(?:ofrecer|dar|prestar)\s+(?:servicios|mantenimiento)\s+(?:debo|necesito|requiero)/,
@@ -927,6 +929,39 @@ export class AIChatbotService {
         entities.location = location;
         break;
       }
+    }
+
+    // Extraer tipos de servicios mencionados
+    const serviceTypes = [
+      'jardineria',
+      'jardinero',
+      'plomeria',
+      'plomero',
+      'electricidad',
+      'electricista',
+      'limpieza',
+      'pintura',
+      'carpinteria',
+      'mantenimiento',
+      'seguridad',
+      'gasfiter',
+    ];
+    const foundServices: string[] = [];
+    for (const service of serviceTypes) {
+      if (text.includes(service)) {
+        foundServices.push(service);
+      }
+    }
+    if (foundServices.length > 0) {
+      entities.services = foundServices;
+    }
+
+    // Extraer palabras clave relacionadas con registro/servicios
+    const keywordMatches = text.match(
+      /(?:servicios?|cuenta|registro|ofrecer|brindar|dar|jardineria?|plomeria?|electricidad|limpieza|pintura|carpinteria|mantenimiento)/gi
+    );
+    if (keywordMatches) {
+      entities.keywords = keywordMatches;
     }
 
     return entities;
@@ -1281,7 +1316,13 @@ export class AIChatbotService {
       const securityContext = this.createSecurityContext(userRole, userId);
 
       // 🤖 PASO 5: Selección del agente especializado ideal
-      const selectedAgent = this.selectSpecializedAgent(intent, userRole, sentiment, memoryContext);
+      const selectedAgent = this.selectSpecializedAgent(
+        intent,
+        userRole,
+        sentiment,
+        memoryContext,
+        userMessage
+      );
 
       // 📊 PASO 6: Generar recomendaciones inteligentes
       const recommendations = await this.generateIntelligentRecommendations(
@@ -1407,7 +1448,8 @@ export class AIChatbotService {
     intent: IntentRecognition,
     userRole: string,
     sentiment: SentimentAnalysis,
-    memoryContext: MemoryContext
+    memoryContext: MemoryContext,
+    text: string
   ): SpecializedAgent | undefined {
     let bestAgent = this.agentRegistry['general_assistant'];
     let bestScore = 0;
@@ -1416,10 +1458,14 @@ export class AIChatbotService {
     if (
       intent.intent === 'register' &&
       (intent.entities.join(' ').includes('jardinero') ||
+        intent.entities.join(' ').includes('jardineria') ||
         intent.entities.join(' ').includes('servicio') ||
         intent.entities.join(' ').includes('mantenimiento') ||
         intent.entities.join(' ').includes('document') ||
         intent.entities.join(' ').includes('certific') ||
+        text.includes('servicios de') ||
+        text.includes('cuenta para') ||
+        text.includes('ofrecer servicios') ||
         userRole === 'guest')
     ) {
       // Para preguntas sobre convertirse en proveedor/servicios/mantenimiento, priorizar agente de mantenimiento

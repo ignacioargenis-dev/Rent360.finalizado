@@ -26,8 +26,21 @@ import {
   Key,
   CheckCircle,
   AlertTriangle,
+  FileText,
+  Upload,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import type { User } from '@/types';
+
+interface Document {
+  id: string;
+  name: string;
+  category: 'identification' | 'income' | 'lease' | 'other';
+  uploadDate: string;
+  size: string;
+  url: string;
+}
 
 interface TenantSettings {
   profile: {
@@ -76,6 +89,11 @@ export default function TenantSettingsPage() {
       activityVisible: false,
     },
   });
+
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocumentCategory, setSelectedDocumentCategory] =
+    useState<Document['category']>('identification');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -207,10 +225,11 @@ export default function TenantSettingsPage() {
         )}
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
             <TabsTrigger value="privacy">Privacidad</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}

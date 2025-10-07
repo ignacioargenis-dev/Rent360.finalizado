@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,9 +76,11 @@ export default function RunnerMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const router = useRouter();
+
   const handleNewMessage = () => {
-    setSuccessMessage('Funcionalidad de nuevos mensajes próximamente disponible');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    // Navigate to new message composition
+    router.push('/runner/messages/new');
   };
 
   const handleArchiveConversation = () => {
@@ -280,7 +283,8 @@ export default function RunnerMessagesPage() {
       )
     );
 
-    alert('Mensaje enviado exitosamente');
+    setSuccessMessage('Mensaje enviado exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleConversationSelect = (conversationId: string) => {

@@ -225,6 +225,9 @@ export default function Chatbot({
       };
 
       setMessages(prev => prev.filter(msg => msg.id !== 'typing').concat(botMessage));
+
+      // IMPORTANTE: Resetear el estado de loading aquí
+      setIsLoading(false);
     } catch (error) {
       console.error('Error en processUserMessage:', error);
       // Agregar mensaje de error al chat
@@ -236,6 +239,8 @@ export default function Chatbot({
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
+      // IMPORTANTE: Resetear el estado de loading también en caso de error
+      setIsLoading(false);
       throw error; // Re-throw para que handleSendMessage lo maneje
     }
   };

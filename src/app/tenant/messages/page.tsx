@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -376,23 +384,24 @@ export default function TenantMessagesPage() {
                 <div className="space-y-3 mb-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
+                    <Input
                       type="text"
                       placeholder="Buscar conversaciones..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="pl-10"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    value={filter}
-                    onChange={e => setFilter(e.target.value)}
-                  >
-                    <option value="all">Todas las conversaciones</option>
-                    <option value="unread">No leídas</option>
-                    <option value="archived">Archivadas</option>
-                  </select>
+                  <Select value={filter} onValueChange={setFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar filtro" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las conversaciones</SelectItem>
+                      <SelectItem value="unread">No leídas</SelectItem>
+                      <SelectItem value="archived">Archivadas</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Conversations List */}
@@ -547,11 +556,7 @@ export default function TenantMessagesPage() {
                     {/* Message Input */}
                     <div className="border-t pt-4">
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Escribe un mensaje..."
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                        <Input type="text" placeholder="Escribe un mensaje..." className="flex-1" />
                         <Button>
                           <Send className="w-4 h-4 mr-2" />
                           Enviar

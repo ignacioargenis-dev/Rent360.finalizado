@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -201,6 +202,36 @@ export default function RunnerDashboard() {
       setLoading(false);
     }, 1000);
   }, []);
+
+  const router = useRouter();
+
+  // Handler functions for buttons
+  const handleViewCalendar = () => {
+    router.push('/runner/schedule');
+  };
+
+  const handleStartVisit = (visitId: string) => {
+    // Simulate starting a visit - update status and navigate to visit details
+    setTodayVisits(prevVisits =>
+      prevVisits.map(visit =>
+        visit.id === visitId ? { ...visit, status: 'IN_PROGRESS' as const } : visit
+      )
+    );
+    router.push(`/runner/visits/${visitId}`);
+  };
+
+  const handleCallClient = (phoneNumber: string) => {
+    // Open phone dialer
+    window.open(`tel:${phoneNumber}`);
+  };
+
+  const handleViewVisitDetails = (visitId: string) => {
+    router.push(`/runner/visits/${visitId}`);
+  };
+
+  const handleUploadPhotos = (visitId: string) => {
+    router.push(`/runner/photos?visitId=${visitId}`);
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -478,7 +509,10 @@ export default function RunnerDashboard() {
                     <h2 className="text-xl font-bold text-white">Visitas de Hoy</h2>
                     <p className="text-blue-100 text-sm">Visitas programadas para hoy</p>
                   </div>
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50 border-0">
+                  <Button
+                    className="bg-white text-blue-600 hover:bg-blue-50 border-0"
+                    onClick={handleViewCalendar}
+                  >
                     <Calendar className="w-4 h-4 mr-2" />
                     Ver Calendario
                   </Button>
@@ -543,7 +577,11 @@ export default function RunnerDashboard() {
                       <div className="flex gap-2">
                         {visit.status === 'PENDING' && (
                           <>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleStartVisit(visit.id)}
+                            >
                               <CheckCircle className="w-4 h-4 mr-1" />
                               Iniciar Visita
                             </Button>
@@ -551,6 +589,7 @@ export default function RunnerDashboard() {
                               size="sm"
                               variant="outline"
                               className="border-gray-300 hover:border-red-500 hover:text-red-600"
+                              onClick={() => handleCallClient(visit.clientPhone)}
                             >
                               <Phone className="w-4 h-4 mr-1" />
                               Llamar
@@ -563,6 +602,7 @@ export default function RunnerDashboard() {
                               size="sm"
                               variant="outline"
                               className="border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                              onClick={() => handleViewVisitDetails(visit.id)}
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               Ver Detalles
@@ -571,6 +611,7 @@ export default function RunnerDashboard() {
                               size="sm"
                               variant="outline"
                               className="border-gray-300 hover:border-purple-500 hover:text-purple-600"
+                              onClick={() => handleUploadPhotos(visit.id)}
                             >
                               <Camera className="w-4 h-4 mr-1" />
                               Subir Fotos

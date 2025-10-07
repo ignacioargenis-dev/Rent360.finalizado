@@ -6,10 +6,11 @@ import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -17,26 +18,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
-  User,
-  MapPin,
-  Clock,
-  Car,
-  Wrench,
-  DollarSign,
+  User as UserIcon,
   Bell,
-  Save,
-  Camera,
-  Phone,
+  Shield,
+  CreditCard,
   Mail,
+  Phone,
+  MapPin,
+  Save,
+  Eye,
+  EyeOff,
+  Key,
+  CheckCircle,
+  AlertTriangle,
+  FileText,
+  Upload,
+  Download,
+  Trash2,
+  Car,
 } from 'lucide-react';
-import Link from 'next/link';
-import { User as UserType } from '@/types';
+import type { User } from '@/types';
+
+interface Document {
+  id: string;
+  name: string;
+  category: 'identification' | 'income' | 'lease' | 'other';
+  uploadDate: string;
+  size: string;
+  url: string;
+}
 
 interface RunnerSettings {
-  personal: {
+  profile: {
     firstName: string;
     lastName: string;
     email: string;
@@ -50,29 +73,16 @@ interface RunnerSettings {
       morning: boolean;
       afternoon: boolean;
       evening: boolean;
-      weekend: boolean;
     };
-  };
-  services: {
-    emergency: boolean;
-    maintenance: boolean;
-    installation: boolean;
-    repair: boolean;
-    cleaning: boolean;
-  };
-  vehicle: {
-    type: string;
-    model: string;
-    year: number;
+    vehicleType: string;
     licensePlate: string;
-    tools: string[];
   };
   notifications: {
-    newJobs: boolean;
-    jobUpdates: boolean;
-    payments: boolean;
-    messages: boolean;
-    marketing: boolean;
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    jobReminders: boolean;
+    paymentReminders: boolean;
+    ratingUpdates: boolean;
   };
   payment: {
     bankAccount: string;
@@ -82,9 +92,9 @@ interface RunnerSettings {
 }
 
 export default function RunnerSettingsPage() {
-  const [user, setUser] = useState<UserType | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<RunnerSettings>({
-    personal: {
+    profile: {
       firstName: 'Juan',
       lastName: 'Pérez',
       email: 'juan.perez@ejemplo.com',
@@ -93,34 +103,21 @@ export default function RunnerSettingsPage() {
     },
     workArea: {
       regions: ['Santiago Centro', 'Providencia', 'Las Condes'],
-      maxDistance: 25,
+      maxDistance: 50,
       preferredTimes: {
         morning: true,
         afternoon: true,
         evening: false,
-        weekend: true,
       },
-    },
-    services: {
-      emergency: true,
-      maintenance: true,
-      installation: true,
-      repair: true,
-      cleaning: false,
-    },
-    vehicle: {
-      type: 'Camioneta',
-      model: 'Toyota Hilux',
-      year: 2020,
+      vehicleType: 'Auto',
       licensePlate: 'AB-CD-12',
-      tools: ['Llaves Allen', 'Destornilladores', 'Multímetro', 'Soldador'],
     },
     notifications: {
-      newJobs: true,
-      jobUpdates: true,
-      payments: true,
-      messages: true,
-      marketing: false,
+      emailNotifications: true,
+      smsNotifications: false,
+      jobReminders: true,
+      paymentReminders: true,
+      ratingUpdates: true,
     },
     payment: {
       bankAccount: '001234567890',
@@ -128,8 +125,16 @@ export default function RunnerSettingsPage() {
       taxId: '12.345.678-9',
     },
   });
+
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocumentCategory, setSelectedDocumentCategory] =
+    useState<Document['category']>('identification');
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -138,51 +143,66 @@ export default function RunnerSettingsPage() {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+
+          // Load settings from localStorage or API
+          const savedSettings = localStorage.getItem('tenant-settings');
+          if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+          } else {
+            // Initialize with user data
+            setSettings(prev => ({
+              ...prev,
+              profile: {
+                firstName: data.user?.firstName || '',
+                lastName: data.user?.lastName || '',
+                email: data.user?.email || '',
+                phone: data.user?.phone || '',
+                emergencyContact: '',
+                emergencyPhone: '',
+              },
+            }));
+          }
         }
       } catch (error) {
         logger.error('Error loading user data:', {
           error: error instanceof Error ? error.message : String(error),
         });
-      }
-    };
-
-    const loadSettingsData = async () => {
-      try {
-        // Mock settings loading - in real app, this would come from API
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error loading settings data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
+      } finally {
         setLoading(false);
       }
     };
 
     loadUserData();
-    loadSettingsData();
   }, []);
 
   const handleSaveSettings = async () => {
     setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+
     try {
+      // Save to localStorage (in a real app, this would be an API call)
+      localStorage.setItem('tenant-settings', JSON.stringify(settings));
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('Configuración guardada exitosamente');
+
+      setSuccessMessage('Configuración guardada exitosamente.');
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al guardar la configuración');
+      setErrorMessage('Error al guardar la configuración. Intente nuevamente.');
     } finally {
       setSaving(false);
     }
   };
 
-  const updatePersonalInfo = (field: keyof RunnerSettings['personal'], value: string) => {
+  const updateProfile = (field: keyof RunnerSettings['profile'], value: string) => {
     setSettings(prev => ({
       ...prev,
-      personal: {
-        ...prev.personal,
+      profile: {
+        ...prev.profile,
         [field]: value,
       },
     }));
@@ -193,26 +213,6 @@ export default function RunnerSettingsPage() {
       ...prev,
       workArea: {
         ...prev.workArea,
-        [field]: value,
-      },
-    }));
-  };
-
-  const updateServices = (field: keyof RunnerSettings['services'], value: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      services: {
-        ...prev.services,
-        [field]: value,
-      },
-    }));
-  };
-
-  const updateVehicle = (field: keyof RunnerSettings['vehicle'], value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      vehicle: {
-        ...prev.vehicle,
         [field]: value,
       },
     }));
@@ -238,12 +238,38 @@ export default function RunnerSettingsPage() {
     }));
   };
 
+  // Document handling functions
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Simulate file upload
+      const newDocument: Document = {
+        id: Date.now().toString(),
+        name: file.name,
+        category: selectedDocumentCategory,
+        uploadDate: new Date().toISOString(),
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        url: URL.createObjectURL(file),
+      };
+      setDocuments(prev => [...prev, newDocument]);
+      setShowUploadModal(false);
+    }
+  };
+
+  const handleDownloadDocument = (document: Document) => {
+    window.open(document.url, '_blank');
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando configuración del corredor...</p>
+          <p className="text-gray-600">Cargando configuración...</p>
         </div>
       </div>
     );
@@ -255,371 +281,338 @@ export default function RunnerSettingsPage() {
       subtitle="Gestión de perfil y preferencias"
     >
       <div className="container mx-auto px-4 py-6">
-        {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Configuración del Corredor</h1>
-            <p className="text-gray-600">Personaliza tu perfil y preferencias de trabajo</p>
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            <span className="text-green-800">{successMessage}</span>
           </div>
+        )}
+
+        {errorMessage && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <span className="text-red-800">{errorMessage}</span>
+          </div>
+        )}
+
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="work">Trabajo</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserIcon className="w-5 h-5" />
+                  Información Personal
+                </CardTitle>
+                <CardDescription>
+                  Actualiza tu información personal y datos de contacto
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Nombre</Label>
+                    <Input
+                      id="firstName"
+                      value={settings.profile.firstName}
+                      onChange={e => updateProfile('firstName', e.target.value)}
+                      placeholder="Ingresa tu nombre"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Apellido</Label>
+                    <Input
+                      id="lastName"
+                      value={settings.profile.lastName}
+                      onChange={e => updateProfile('lastName', e.target.value)}
+                      placeholder="Ingresa tu apellido"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={settings.profile.email}
+                      onChange={e => updateProfile('email', e.target.value)}
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input
+                      id="phone"
+                      value={settings.profile.phone}
+                      onChange={e => updateProfile('phone', e.target.value)}
+                      placeholder="+56 9 1234 5678"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Contacto de Emergencia
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContact">Nombre del Contacto</Label>
+                      <Input
+                        id="emergencyContact"
+                        value={settings.profile.avatar || ''}
+                        onChange={e => updateProfile('avatar', e.target.value)}
+                        placeholder="Nombre del contacto de emergencia"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyPhone">Teléfono de Emergencia</Label>
+                      <Input
+                        id="emergencyPhone"
+                        value={settings.workArea.vehicleType}
+                        onChange={e => updateWorkArea('vehicleType', e.target.value)}
+                        placeholder="+56 9 1234 5678"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="work" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Car className="w-5 h-5" />
+                  Preferencias de Trabajo
+                </CardTitle>
+                <CardDescription>
+                  Configura tu área de trabajo y preferencias laborales
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="email-notifications">Notificaciones por Email</Label>
+                      <p className="text-sm text-gray-600">
+                        Recibe actualizaciones importantes por correo electrónico
+                      </p>
+                    </div>
+                    <Switch
+                      id="email-notifications"
+                      checked={settings.notifications.emailNotifications}
+                      onCheckedChange={checked =>
+                        updateNotifications('emailNotifications', checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="sms-notifications">Notificaciones por SMS</Label>
+                      <p className="text-sm text-gray-600">
+                        Recibe alertas urgentes por mensaje de texto
+                      </p>
+                    </div>
+                    <Switch
+                      id="sms-notifications"
+                      checked={settings.notifications.smsNotifications}
+                      onCheckedChange={checked => updateNotifications('smsNotifications', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="maintenance-reminders">Recordatorios de Mantenimiento</Label>
+                      <p className="text-sm text-gray-600">
+                        Recibe recordatorios sobre mantenimientos programados
+                      </p>
+                    </div>
+                    <Switch
+                      id="maintenance-reminders"
+                      checked={settings.notifications.jobReminders}
+                      onCheckedChange={checked => updateNotifications('jobReminders', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="payment-reminders">Recordatorios de Pago</Label>
+                      <p className="text-sm text-gray-600">
+                        Recibe notificaciones sobre fechas de pago próximas
+                      </p>
+                    </div>
+                    <Switch
+                      id="payment-reminders"
+                      checked={settings.notifications.paymentReminders}
+                      onCheckedChange={checked => updateNotifications('paymentReminders', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label htmlFor="lease-updates">Actualizaciones de Contrato</Label>
+                      <p className="text-sm text-gray-600">
+                        Recibe notificaciones sobre cambios en tu contrato de arrendamiento
+                      </p>
+                    </div>
+                    <Switch
+                      id="lease-updates"
+                      checked={settings.notifications.ratingUpdates}
+                      onCheckedChange={checked => updateNotifications('ratingUpdates', checked)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Privacy Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documentos Personales
+                </CardTitle>
+                <CardDescription>
+                  Sube tus documentos personales y antecedentes para completar tu perfil de corredor
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Documentos Requeridos</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Cédula de Identidad o Pasaporte</li>
+                    <li>• Licencia de Conducir (si aplica)</li>
+                    <li>• Certificado de Antecedentes</li>
+                    <li>• Certificaciones profesionales (opcional)</li>
+                  </ul>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button onClick={() => setShowUploadModal(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir Documento
+                  </Button>
+                </div>
+
+                {documents.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Documentos Subidos</h4>
+                    {documents.map(doc => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {doc.category} • {doc.size} •{' '}
+                              {new Date(doc.uploadDate).toLocaleDateString('es-CL')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(doc.url, '_blank')}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDocuments(prev => prev.filter(d => d.id !== doc.id));
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Save Button */}
+        <div className="flex justify-end pt-6">
           <Button onClick={handleSaveSettings} disabled={saving}>
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Guardando...' : 'Guardar Cambios'}
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Configuración
+              </>
+            )}
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Información Personal
-              </CardTitle>
-              <CardDescription>Datos básicos de contacto y perfil</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">Nombre</Label>
-                  <Input
-                    id="firstName"
-                    value={settings.personal.firstName}
-                    onChange={e => updatePersonalInfo('firstName', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Apellido</Label>
-                  <Input
-                    id="lastName"
-                    value={settings.personal.lastName}
-                    onChange={e => updatePersonalInfo('lastName', e.target.value)}
-                  />
-                </div>
-              </div>
-
+        {/* Upload Document Modal */}
+        <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Subir Documento</DialogTitle>
+              <DialogDescription>
+                Selecciona el tipo de documento y sube el archivo correspondiente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="email">Correo electrónico</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    className="pl-10"
-                    value={settings.personal.email}
-                    onChange={e => updatePersonalInfo('email', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Teléfono</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="phone"
-                    className="pl-10"
-                    value={settings.personal.phone}
-                    onChange={e => updatePersonalInfo('phone', e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Work Area */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Área de Trabajo
-              </CardTitle>
-              <CardDescription>Define tu zona de cobertura y disponibilidad</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Regiones de cobertura</Label>
-                <Textarea
-                  placeholder="Ej: Santiago Centro, Providencia, Las Condes"
-                  value={settings.workArea.regions.join(', ')}
-                  onChange={e =>
-                    updateWorkArea(
-                      'regions',
-                      e.target.value.split(',').map(r => r.trim())
-                    )
+                <Label htmlFor="documentCategory">Tipo de Documento</Label>
+                <Select
+                  value={selectedDocumentCategory}
+                  onValueChange={(value: Document['category']) =>
+                    setSelectedDocumentCategory(value)
                   }
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="identification">Cédula de Identidad</SelectItem>
+                    <SelectItem value="license">Licencia de Conducir</SelectItem>
+                    <SelectItem value="background">Certificado de Antecedentes</SelectItem>
+                    <SelectItem value="certification">Certificación Profesional</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-
               <div>
-                <Label htmlFor="maxDistance">Distancia máxima (km)</Label>
+                <Label htmlFor="documentFile">Archivo</Label>
                 <Input
-                  id="maxDistance"
-                  type="number"
-                  value={settings.workArea.maxDistance}
-                  onChange={e => updateWorkArea('maxDistance', parseInt(e.target.value))}
+                  id="documentFile"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileUpload}
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Formatos aceptados: PDF, JPG, PNG. Tamaño máximo: 5MB.
+                </p>
               </div>
-
-              <div>
-                <Label>Horarios preferidos</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="morning"
-                      checked={settings.workArea.preferredTimes.morning}
-                      onCheckedChange={checked =>
-                        updateWorkArea('preferredTimes', {
-                          ...settings.workArea.preferredTimes,
-                          morning: checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="morning">Mañana</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="afternoon"
-                      checked={settings.workArea.preferredTimes.afternoon}
-                      onCheckedChange={checked =>
-                        updateWorkArea('preferredTimes', {
-                          ...settings.workArea.preferredTimes,
-                          afternoon: checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="afternoon">Tarde</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="evening"
-                      checked={settings.workArea.preferredTimes.evening}
-                      onCheckedChange={checked =>
-                        updateWorkArea('preferredTimes', {
-                          ...settings.workArea.preferredTimes,
-                          evening: checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="evening">Noche</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="weekend"
-                      checked={settings.workArea.preferredTimes.weekend}
-                      onCheckedChange={checked =>
-                        updateWorkArea('preferredTimes', {
-                          ...settings.workArea.preferredTimes,
-                          weekend: checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="weekend">Fin de semana</Label>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Services */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wrench className="w-5 h-5" />
-                Servicios Ofrecidos
-              </CardTitle>
-              <CardDescription>
-                Selecciona los tipos de servicios que puedes realizar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries({
-                  emergency: 'Emergencias',
-                  maintenance: 'Mantenimiento',
-                  installation: 'Instalaciones',
-                  repair: 'Reparaciones',
-                  cleaning: 'Limpieza',
-                }).map(([key, label]) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <Switch
-                      id={key}
-                      checked={settings.services[key as keyof RunnerSettings['services']]}
-                      onCheckedChange={checked =>
-                        updateServices(key as keyof RunnerSettings['services'], checked)
-                      }
-                    />
-                    <Label htmlFor={key}>{label}</Label>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vehicle */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Car className="w-5 h-5" />
-                Vehículo y Herramientas
-              </CardTitle>
-              <CardDescription>
-                Información de tu vehículo y herramientas disponibles
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="vehicleType">Tipo de vehículo</Label>
-                  <Select
-                    value={settings.vehicle.type}
-                    onValueChange={value => updateVehicle('type', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Camioneta">Camioneta</SelectItem>
-                      <SelectItem value="Furgón">Furgón</SelectItem>
-                      <SelectItem value="Auto">Auto</SelectItem>
-                      <SelectItem value="Moto">Moto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="model">Modelo</Label>
-                  <Input
-                    id="model"
-                    value={settings.vehicle.model}
-                    onChange={e => updateVehicle('model', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="year">Año</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={settings.vehicle.year}
-                    onChange={e => updateVehicle('year', parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="licensePlate">Patente</Label>
-                  <Input
-                    id="licensePlate"
-                    value={settings.vehicle.licensePlate}
-                    onChange={e => updateVehicle('licensePlate', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Herramientas disponibles</Label>
-                <Textarea
-                  placeholder="Ej: Llaves Allen, Destornilladores, Multímetro, Soldador"
-                  value={settings.vehicle.tools.join(', ')}
-                  onChange={e =>
-                    updateVehicle(
-                      'tools',
-                      e.target.value.split(',').map(t => t.trim())
-                    )
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Notificaciones
-              </CardTitle>
-              <CardDescription>Configura cómo quieres recibir las notificaciones</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {Object.entries({
-                  newJobs: 'Nuevos trabajos disponibles',
-                  jobUpdates: 'Actualizaciones de trabajos',
-                  payments: 'Pagos y comisiones',
-                  messages: 'Mensajes del sistema',
-                  marketing: 'Promociones y ofertas',
-                }).map(([key, label]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <Label htmlFor={`notif-${key}`}>{label}</Label>
-                    <Switch
-                      id={`notif-${key}`}
-                      checked={settings.notifications[key as keyof RunnerSettings['notifications']]}
-                      onCheckedChange={checked =>
-                        updateNotifications(key as keyof RunnerSettings['notifications'], checked)
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Información de Pago
-              </CardTitle>
-              <CardDescription>Datos bancarios para recibir tus pagos</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="bankAccount">Cuenta bancaria</Label>
-                <Input
-                  id="bankAccount"
-                  placeholder="Número de cuenta"
-                  value={settings.payment.bankAccount}
-                  onChange={e => updatePayment('bankAccount', e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label>Método de pago obligatorio</Label>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 text-sm font-bold">ℹ</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">
-                        Pagos exclusivamente por plataforma
-                      </p>
-                      <p className="text-sm text-blue-800 mt-1">
-                        Como corredor, todos tus pagos deben procesarse a través de Rent360 para
-                        garantizar seguridad y cobrar la comisión del 5%. No se permiten pagos en
-                        efectivo directos.
-                      </p>
-                      <div className="mt-2 text-xs text-blue-700">
-                        <strong>Método configurado:</strong> Transferencia bancaria automática
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="taxId">RUT</Label>
-                <Input
-                  id="taxId"
-                  placeholder="12.345.678-9"
-                  value={settings.payment.taxId}
-                  onChange={e => updatePayment('taxId', e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

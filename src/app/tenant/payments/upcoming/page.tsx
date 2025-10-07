@@ -3,6 +3,7 @@
 // Build fix - force update
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ export default function TenantUpcomingPaymentsPage() {
     dueTodayCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -151,18 +153,30 @@ export default function TenantUpcomingPaymentsPage() {
   }, []);
 
   const handlePayNow = async (paymentId: string) => {
-    // Simulate payment processing
-    alert('Redirigiendo al portal de pagos...');
+    // Redirigir al portal de pagos específico
+    router.push(`/tenant/payments/${paymentId}/pay`);
   };
 
   const handleViewDetails = async (paymentId: string) => {
     // Navigate to payment details
-    window.location.href = `/tenant/payments/${paymentId}`;
+    router.push(`/tenant/payments/${paymentId}`);
   };
 
   const handleDownloadReceipt = async (paymentId: string) => {
-    // Simulate receipt download
-    alert('Descargando recibo...');
+    // Simular descarga de recibo (por ahora genera un archivo de texto)
+    const payment = payments.find(p => p.id === paymentId);
+    if (payment) {
+      const receiptContent = `RECIBO DE PAGO PENDIENTE\n\nID de Pago: ${payment.id}\nMonto: $${payment.amount}\nFecha límite: ${payment.dueDate}\nEstado: ${payment.status}\n\nRent360 - Sistema de Gestión Inmobiliaria`;
+      const blob = new Blob([receiptContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recibo-pendiente-${paymentId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   const getStatusColor = (status: string) => {
