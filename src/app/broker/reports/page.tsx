@@ -313,7 +313,7 @@ export default function BrokerReportsPage() {
 
   const handleViewAnalysis = () => {
     // Navigate to detailed market analysis
-    window.open('/broker/analytics', '_blank');
+    router.push('/broker/analytics');
   };
 
   if (loading) {

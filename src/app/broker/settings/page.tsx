@@ -944,11 +944,11 @@ export default function BrokerSettings() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Banco
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={settings.payment.bankName}
                           onChange={e => updatePayment('bankName', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Nombre del banco"
                         />
                       </div>
                       <div>
@@ -971,21 +971,21 @@ export default function BrokerSettings() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Número de Cuenta
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={settings.payment.bankAccount}
                         onChange={e => updatePayment('bankAccount', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Número de cuenta bancaria"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">RUT</label>
-                      <input
+                      <Input
                         type="text"
                         value={settings.payment.taxId}
                         onChange={e => updatePayment('taxId', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="12.345.678-9"
                       />
                     </div>
 
