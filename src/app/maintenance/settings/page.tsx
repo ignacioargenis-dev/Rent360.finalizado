@@ -120,7 +120,7 @@ export default function MaintenanceSettingsPage() {
     smsNotifications: false,
     pushNotifications: true,
 
-    paymentMethods: ['cash', 'bank_transfer', 'credit_card'],
+    paymentMethods: ['platform_payment', 'bank_transfer', 'credit_card'],
     minimumJobValue: 15000,
     depositRequired: true,
     depositPercentage: 30,
@@ -237,6 +237,11 @@ export default function MaintenanceSettingsPage() {
   };
 
   const togglePaymentMethod = (method: string) => {
+    // No permitir deshabilitar el método obligatorio
+    if (method === 'platform_payment') {
+      return;
+    }
+
     setSettings(prev => ({
       ...prev,
       paymentMethods: prev.paymentMethods.includes(method)
@@ -710,8 +715,12 @@ export default function MaintenanceSettingsPage() {
                   <Label>Métodos de Pago Aceptados</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                     {[
-                      { id: 'cash', label: 'Efectivo' },
-                      { id: 'bank_transfer', label: 'Transferencia' },
+                      {
+                        id: 'platform_payment',
+                        label: 'Pago por Plataforma (Obligatorio)',
+                        required: true,
+                      },
+                      { id: 'bank_transfer', label: 'Transferencia Bancaria' },
                       { id: 'credit_card', label: 'Tarjeta de Crédito' },
                       { id: 'debit_card', label: 'Tarjeta de Débito' },
                       { id: 'check', label: 'Cheque' },
@@ -722,11 +731,97 @@ export default function MaintenanceSettingsPage() {
                           id={method.id}
                           checked={settings.paymentMethods.includes(method.id)}
                           onChange={() => togglePaymentMethod(method.id)}
+                          disabled={method.required}
                           className="rounded"
                         />
-                        <Label htmlFor={method.id}>{method.label}</Label>
+                        <Label
+                          htmlFor={method.id}
+                          className={method.required ? 'text-blue-700 font-medium' : ''}
+                        >
+                          {method.label}
+                          {method.required && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
                       </div>
                     ))}
+                  </div>
+                  <p className="text-sm text-blue-600 mt-2">
+                    <strong>* Obligatorio:</strong> Todos los pagos deben procesarse a través de
+                    Rent360 para garantizar seguridad y cumplimiento.
+                  </p>
+                </div>
+
+                {/* Explicación sobre pagos por plataforma */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-600 text-sm font-bold">ℹ</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-900 mb-2">
+                        ¿Por qué todos los pagos por plataforma?
+                      </h4>
+                      <div className="text-sm text-blue-800 space-y-2">
+                        <p>
+                          <strong>Comisión de Servicio (10%):</strong> Rent360 cobra una comisión
+                          justa por conectar clientes con proveedores verificados y garantizar
+                          transacciones seguras.
+                        </p>
+                        <p>
+                          <strong>Seguridad Garantizada:</strong> Todas las transacciones están
+                          protegidas por nuestros sistemas de seguridad y respaldo financiero.
+                        </p>
+                        <p>
+                          <strong>Garantía de Pago:</strong> Recibes tu pago automáticamente una vez
+                          completado el trabajo, sin riesgos de impago.
+                        </p>
+                        <p>
+                          <strong>Transparencia Total:</strong> Puedes ver exactamente cuánto cobra
+                          la plataforma y cuánto recibes neto en cada trabajo.
+                        </p>
+                        <p>
+                          <strong>Cumplimiento Legal:</strong> Todas las transacciones quedan
+                          registradas para cumplimiento tributario y regulatorio.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sección de ganancias estimadas */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-green-600 text-sm font-bold">$</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-green-900 mb-2">Ejemplo de Ganancias</h4>
+                      <div className="text-sm text-green-800">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p>
+                              <strong>Trabajo de $50.000:</strong>
+                            </p>
+                            <p>Comisión Plataforma (10%): $5.000</p>
+                            <p>
+                              <strong>Recibes: $45.000</strong>
+                            </p>
+                          </div>
+                          <div>
+                            <p>
+                              <strong>Trabajo de $100.000:</strong>
+                            </p>
+                            <p>Comisión Plataforma (10%): $10.000</p>
+                            <p>
+                              <strong>Recibes: $90.000</strong>
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-3 text-xs">
+                          * Los montos son antes de IVA y costos de transacción. Los pagos se
+                          procesan semanalmente con mínimo $10.000.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
