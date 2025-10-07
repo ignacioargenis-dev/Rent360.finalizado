@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ interface MessageStats {
 }
 
 export default function BrokerMessagesPage() {
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserType | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [stats, setStats] = useState<MessageStats>({
@@ -76,6 +78,50 @@ export default function BrokerMessagesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    // Check if coming from a "new message" link
+    const isNewMessage = searchParams.get('new') === 'true';
+
+    if (isNewMessage) {
+      const recipientData = sessionStorage.getItem('newMessageRecipient');
+      if (recipientData) {
+        try {
+          const recipient = JSON.parse(recipientData);
+
+          // Create new message with the recipient
+          const newMessage: Message = {
+            id: `msg_${Date.now()}`,
+            senderName: user?.name || 'Corredor',
+            senderType: 'broker',
+            recipientName: recipient.name,
+            recipientType: recipient.type === 'client' ? 'tenant' : (recipient.role as any) || 'tenant',
+            subject: `Consulta sobre ${recipient.propertyTitle || recipient.serviceType || 'servicio'}`,
+            content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.propertyTitle ? `la propiedad "${recipient.propertyTitle}"` : recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
+            propertyTitle: recipient.propertyTitle,
+            propertyAddress: recipient.propertyId ? `Propiedad ${recipient.propertyId}` : '',
+            type: 'inquiry',
+            status: 'unread',
+            priority: 'normal',
+            createdAt: new Date().toISOString(),
+            hasAttachments: false,
+          };
+
+          // Add the new message to the list
+          setMessages(prev => [newMessage, ...prev]);
+
+          // Clear the sessionStorage
+          sessionStorage.removeItem('newMessageRecipient');
+
+          // Update URL to remove the 'new' parameter
+          const url = new URL(window.location.href);
+          url.searchParams.delete('new');
+          window.history.replaceState({}, '', url.toString());
+
+        } catch (error) {
+          console.error('Error parsing recipient data:', error);
+        }
+      }
+    }
+
     const loadUserData = async () => {
       try {
         const response = await fetch('/api/auth/me');

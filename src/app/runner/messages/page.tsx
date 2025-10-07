@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +63,7 @@ interface MessageStats {
 }
 
 export default function RunnerMessagesPage() {
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserType | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -120,6 +122,49 @@ export default function RunnerMessagesPage() {
   };
 
   useEffect(() => {
+    // Check if coming from a "new message" link
+    const isNewMessage = searchParams.get('new') === 'true';
+
+    if (isNewMessage) {
+      const recipientData = sessionStorage.getItem('newMessageRecipient');
+      if (recipientData) {
+        try {
+          const recipient = JSON.parse(recipientData);
+
+          // Create new conversation with the recipient
+          const newConversationId = `conv_${Date.now()}`;
+          const newConversation: Conversation = {
+            id: newConversationId,
+            clientId: recipient.id,
+            clientName: recipient.name,
+            clientPhone: recipient.phone || '+56900000000',
+            clientEmail: recipient.email || `${recipient.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            propertyTitle: recipient.propertyTitle || recipient.serviceType || 'Servicio Runner',
+            lastMessage: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.propertyTitle ? `la propiedad "${recipient.propertyTitle}"` : recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
+            lastMessageTime: new Date().toLocaleString('es-CL'),
+            unreadCount: 0,
+            status: 'active',
+            priority: 'medium',
+          };
+
+          // Add the new conversation to the list
+          setConversations(prev => [newConversation, ...prev]);
+          setSelectedConversation(newConversationId);
+
+          // Clear the sessionStorage
+          sessionStorage.removeItem('newMessageRecipient');
+
+          // Update URL to remove the 'new' parameter
+          const url = new URL(window.location.href);
+          url.searchParams.delete('new');
+          window.history.replaceState({}, '', url.toString());
+
+        } catch (error) {
+          console.error('Error parsing recipient data:', error);
+        }
+      }
+    }
+
     const loadUserData = async () => {
       try {
         const response = await fetch('/api/auth/me');

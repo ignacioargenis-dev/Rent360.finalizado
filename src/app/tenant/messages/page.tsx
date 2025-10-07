@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +76,7 @@ interface Conversation {
 
 export default function TenantMessagesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUserState();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -85,6 +86,58 @@ export default function TenantMessagesPage() {
   const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
+    // Check if coming from a "new message" link
+    const isNewMessage = searchParams.get('new') === 'true';
+
+    if (isNewMessage) {
+      const recipientData = sessionStorage.getItem('newMessageRecipient');
+      if (recipientData) {
+        try {
+          const recipient = JSON.parse(recipientData);
+
+          // Create new conversation with the recipient
+          const newConversationId = `conv_${Date.now()}`;
+          const newConversation: Conversation = {
+            id: newConversationId,
+            participant: {
+              id: recipient.id,
+              name: recipient.name,
+              role: recipient.type === 'provider' ? 'provider' : recipient.role || 'unknown',
+            },
+            property: recipient.propertyId ? {
+              id: recipient.propertyId,
+              title: recipient.propertyTitle || 'Servicio Profesional',
+            } : {
+              id: 'service_1',
+              title: 'Servicio Profesional',
+            },
+            lastMessage: {
+              content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
+              timestamp: new Date().toLocaleString('es-CL'),
+              isOwn: true,
+            },
+            unreadCount: 0,
+            status: 'active',
+          };
+
+          // Add the new conversation to the list
+          setConversations(prev => [newConversation, ...prev]);
+          setSelectedConversation(newConversationId);
+
+          // Clear the sessionStorage
+          sessionStorage.removeItem('newMessageRecipient');
+
+          // Update URL to remove the 'new' parameter
+          const url = new URL(window.location.href);
+          url.searchParams.delete('new');
+          window.history.replaceState({}, '', url.toString());
+
+        } catch (error) {
+          console.error('Error parsing recipient data:', error);
+        }
+      }
+    }
+
     // Mock data for demo
     setTimeout(() => {
       setConversations([

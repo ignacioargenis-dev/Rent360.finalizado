@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +77,7 @@ interface Message {
 }
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
@@ -90,6 +92,57 @@ export default function MessagesPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
+    // Check if coming from a "new message" link
+    const isNewMessage = searchParams.get('new') === 'true';
+
+    if (isNewMessage) {
+      const recipientData = sessionStorage.getItem('newMessageRecipient');
+      if (recipientData) {
+        try {
+          const recipient = JSON.parse(recipientData);
+
+          // Create new message with the recipient
+          const newMessage: Message = {
+            id: `msg_${Date.now()}`,
+            sender: {
+              id: recipient.id,
+              name: recipient.name,
+              email: recipient.email || `${recipient.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+              role: recipient.type === 'tenant' ? 'tenant' : recipient.role || 'unknown',
+            },
+            recipient: {
+              id: 'owner_1',
+              name: 'Propietario',
+              email: 'owner@example.com',
+              role: 'owner'
+            },
+            subject: `Consulta sobre ${recipient.propertyTitle || recipient.serviceType || 'servicio'}`,
+            content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.propertyTitle ? `la propiedad "${recipient.propertyTitle}"` : recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
+            timestamp: new Date().toISOString(),
+            type: recipient.serviceType ? 'maintenance' : 'general',
+            read: false,
+            priority: 'medium',
+            propertyId: recipient.propertyId,
+            propertyTitle: recipient.propertyTitle,
+          } as Message;
+
+          // Add the new message to the list
+          setMessages(prev => [newMessage, ...prev]);
+
+          // Clear the sessionStorage
+          sessionStorage.removeItem('newMessageRecipient');
+
+          // Update URL to remove the 'new' parameter
+          const url = new URL(window.location.href);
+          url.searchParams.delete('new');
+          window.history.replaceState({}, '', url.toString());
+
+        } catch (error) {
+          console.error('Error parsing recipient data:', error);
+        }
+      }
+    }
+
     const initializeData = async () => {
       try {
         setLoading(true);

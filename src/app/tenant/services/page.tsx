@@ -82,6 +82,8 @@ export default function TenantServicesPage() {
   const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedProviderDetails, setSelectedProviderDetails] = useState<ServiceProvider | null>(null);
   const [serviceRequest, setServiceRequest] = useState<ServiceRequest>({
     serviceType: '',
     description: '',
@@ -261,6 +263,11 @@ export default function TenantServicesPage() {
     setShowRequestModal(true);
   };
 
+  const handleViewProviderDetails = (provider: ServiceProvider) => {
+    setSelectedProviderDetails(provider);
+    setShowDetailsModal(true);
+  };
+
   const handleSubmitServiceRequest = () => {
     if (!serviceRequest.description.trim()) {
       setErrorMessage('Por favor describe el servicio que necesitas');
@@ -433,7 +440,11 @@ export default function TenantServicesPage() {
         {/* Results */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProviders.map(provider => (
-            <Card key={provider.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={provider.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleViewProviderDetails(provider)}
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -480,11 +491,28 @@ export default function TenantServicesPage() {
                   <span>{provider.completedJobs} trabajos completados</span>
                 </div>
 
+                <div className="flex gap-2 mb-3">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewProviderDetails(provider);
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    Ver más detalles
+                  </Button>
+                </div>
+
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleContactProvider(provider, 'phone')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleContactProvider(provider, 'phone');
+                    }}
                     className="flex-1"
                   >
                     <Phone className="w-4 h-4 mr-1" />
@@ -493,11 +521,20 @@ export default function TenantServicesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleContactProvider(provider, 'message')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleContactProvider(provider, 'message');
+                    }}
                   >
                     <MessageSquare className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" onClick={() => handleRequestService(provider)}>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRequestService(provider);
+                    }}
+                  >
                     Solicitar
                   </Button>
                 </div>
@@ -602,6 +639,157 @@ export default function TenantServicesPage() {
               </Button>
               <Button onClick={handleSubmitServiceRequest}>Enviar Solicitud</Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Provider Details Modal */}
+        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                {selectedProviderDetails && getServiceTypeIcon(selectedProviderDetails.serviceType)}
+                {selectedProviderDetails?.name}
+                {selectedProviderDetails?.verified && (
+                  <Badge className="bg-blue-100 text-blue-800">Verificado</Badge>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                Información completa del proveedor de servicios
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedProviderDetails && (
+              <div className="space-y-6">
+                {/* Header Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Información General</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Especialidad:</span>
+                        <span>{selectedProviderDetails.specialty}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Tipo de servicio:</span>
+                        <span>{getServiceTypeLabel(selectedProviderDetails.serviceType)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <span>{selectedProviderDetails.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-green-600" />
+                        <span className="font-semibold text-green-600">
+                          {formatCurrency(selectedProviderDetails.hourlyRate)}/hora
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Estadísticas</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="font-medium">{selectedProviderDetails.rating}</span>
+                        <span className="text-gray-500">({selectedProviderDetails.reviewCount} reseñas)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <span>Respuesta: {selectedProviderDetails.responseTime}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span>{selectedProviderDetails.completedJobs} trabajos completados</span>
+                      </div>
+                      <div className="mt-2">
+                        {getAvailabilityBadge(selectedProviderDetails.availability)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Descripción del Servicio</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {selectedProviderDetails.description}
+                  </p>
+                </div>
+
+                {/* Contact Info */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Información de Contacto</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span>{selectedProviderDetails.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-gray-400" />
+                      <span>{selectedProviderDetails.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reviews Preview */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Últimas Reseñas</h3>
+                  <div className="space-y-3">
+                    {/* Mock reviews */}
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star key={star} className="w-3 h-3 text-yellow-400 fill-current" />
+                          ))}
+                        </div>
+                        <span className="text-sm font-medium">Excelente servicio</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        "Muy profesional y puntual. El trabajo quedó perfecto."
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star key={star} className="w-3 h-3 text-yellow-400 fill-current" />
+                          ))}
+                        </div>
+                        <span className="text-sm font-medium">Recomendado</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        "Buena atención y precios competitivos."
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => handleContactProvider(selectedProviderDetails, 'phone')}
+                    className="flex-1"
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    Llamar Ahora
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleContactProvider(selectedProviderDetails, 'message')}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Enviar Mensaje
+                  </Button>
+                  <Button
+                    onClick={() => handleRequestService(selectedProviderDetails)}
+                  >
+                    Solicitar Servicio
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

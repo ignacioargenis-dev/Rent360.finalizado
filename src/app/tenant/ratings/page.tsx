@@ -96,6 +96,9 @@ export default function CalificacionesPage() {
     comment: '',
     category: '',
   });
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [sortBy, setSortBy] = useState<string>('date');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -269,6 +272,105 @@ export default function CalificacionesPage() {
     setShowNewRatingModal(true);
   }, []);
 
+  const handleSearchTargets = async (searchTerm: string, type: Rating['type']) => {
+    if (searchTerm.length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      // Mock search results based on type
+      let mockResults: any[] = [];
+
+      if (type === 'property') {
+        mockResults = [
+          { id: 'prop1', name: 'Moderno departamento en Las Condes', type: 'property', address: 'Av. Las Condes 1234', ownerName: 'Carlos Rodríguez', contractActive: true, lastServiceDate: '2024-01-15' },
+          { id: 'prop2', name: 'Casa amplia en Vitacura', type: 'property', address: 'Calle Los Alpes 567', ownerName: 'María González', contractActive: true, lastServiceDate: '2024-02-20' },
+          { id: 'prop3', name: 'Estudio céntrico Santiago', type: 'property', address: 'Centro Histórico 890', ownerName: 'Juan Pérez', contractActive: false, lastServiceDate: '2023-12-10' },
+        ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.ownerName.toLowerCase().includes(searchTerm.toLowerCase()));
+      } else if (type === 'maintenance') {
+        mockResults = [
+          { id: 'serv1', name: 'Electricista Profesional - Juan Silva', type: 'maintenance', specialty: 'Reparaciones Eléctricas', company: 'ElectroServicios Ltda', lastServiceDate: '2024-01-10', canRate: true },
+          { id: 'serv2', name: 'Plomero Express - Carlos Muñoz', type: 'maintenance', specialty: 'Instalaciones Sanitarias', company: 'AguaClara SpA', lastServiceDate: '2024-02-05', canRate: true },
+          { id: 'serv3', name: 'Limpieza Profesional - Ana López', type: 'maintenance', specialty: 'Limpieza Residencial', company: 'CleanHome Chile', lastServiceDate: '2023-11-15', canRate: false },
+        ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.specialty.toLowerCase().includes(searchTerm.toLowerCase()));
+      } else if (type === 'broker') {
+        mockResults = [
+          { id: 'owner1', name: 'Carlos Rodríguez', type: 'landlord', properties: ['Moderno departamento en Las Condes'], contractActive: true, lastInteraction: '2024-01-15' },
+          { id: 'owner2', name: 'María González', type: 'landlord', properties: ['Casa amplia en Vitacura'], contractActive: true, lastInteraction: '2024-02-20' },
+          { id: 'owner3', name: 'Juan Pérez', type: 'landlord', properties: ['Estudio céntrico Santiago'], contractActive: false, lastInteraction: '2023-12-10' },
+        ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      }
+
+      setSearchResults(mockResults);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error('Error searching targets:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectTarget = (target: any) => {
+    // Check if user can rate this target
+    const canRate = checkRatingEligibility(target);
+
+    if (!canRate) {
+      setErrorMessage('No puedes calificar este elemento. Las calificaciones están limitadas a una vez por trimestre por contrato/servicio activo.');
+      setTimeout(() => setErrorMessage(''), 5000);
+      return;
+    }
+
+    setNewRatingForm(prev => ({
+      ...prev,
+      targetId: target.id,
+      targetName: target.name,
+      category: target.specialty || target.address || target.properties?.join(', ') || '',
+    }));
+
+    setShowSearchResults(false);
+    setSearchResults([]);
+  };
+
+  const checkRatingEligibility = (target: any): boolean => {
+    // Check if user has already rated this target in the current quarter
+    const currentQuarter = getCurrentQuarter();
+    const existingRating = ratings.find(r =>
+      r.targetId === target.id &&
+      isInCurrentQuarter(r.date)
+    );
+
+    if (existingRating) {
+      return false;
+    }
+
+    // Check if target has an active contract/service
+    if (target.contractActive === false || target.canRate === false) {
+      return false;
+    }
+
+    // Additional business logic for rating eligibility
+    return true;
+  };
+
+  const getCurrentQuarter = (): string => {
+    const now = new Date();
+    const quarter = Math.floor(now.getMonth() / 3) + 1;
+    return `${now.getFullYear()}-Q${quarter}`;
+  };
+
+  const isInCurrentQuarter = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+    const dateQuarter = Math.floor(date.getMonth() / 3) + 1;
+
+    return date.getFullYear() === now.getFullYear() && dateQuarter === currentQuarter;
+  };
+
   const handleSubmitNewRating = () => {
     if (!newRatingForm.targetName.trim() || !newRatingForm.comment.trim()) {
       setErrorMessage('Por favor complete todos los campos obligatorios');
@@ -276,10 +378,16 @@ export default function CalificacionesPage() {
       return;
     }
 
+    if (!newRatingForm.targetId) {
+      setErrorMessage('Por favor selecciona un elemento válido para calificar');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
     const newRating: Rating = {
       id: `rating_${Date.now()}`,
       type: newRatingForm.type,
-      targetId: newRatingForm.targetId || `target_${Date.now()}`,
+      targetId: newRatingForm.targetId,
       targetName: newRatingForm.targetName,
       rating: newRatingForm.rating,
       comment: newRatingForm.comment,
@@ -785,7 +893,9 @@ export default function CalificacionesPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Crear Nueva Calificación</DialogTitle>
-            <DialogDescription>Comparte tu experiencia y ayuda a otros usuarios</DialogDescription>
+            <DialogDescription>
+              Comparte tu experiencia y ayuda a otros usuarios. Las calificaciones están limitadas a una vez por trimestre por contrato/servicio activo.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -804,7 +914,7 @@ export default function CalificacionesPage() {
                   <SelectContent>
                     <SelectItem value="property">Propiedad</SelectItem>
                     <SelectItem value="maintenance">Servicio de Mantenimiento</SelectItem>
-                    <SelectItem value="landlord">Propietario</SelectItem>
+                    <SelectItem value="broker">Propietario/Corretaje</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -820,14 +930,59 @@ export default function CalificacionesPage() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="rating-target">Nombre del Servicio/Propiedad *</Label>
+            <div className="relative">
+              <Label htmlFor="rating-target">Buscar Servicio/Propiedad/Propietario *</Label>
               <Input
                 id="rating-target"
-                placeholder="Ej: Departamento Las Condes, Juan Pérez Electricista..."
+                placeholder="Escribe al menos 2 caracteres para buscar..."
                 value={newRatingForm.targetName}
-                onChange={e => setNewRatingForm(prev => ({ ...prev, targetName: e.target.value }))}
+                onChange={e => {
+                  const value = e.target.value;
+                  setNewRatingForm(prev => ({ ...prev, targetName: value }));
+                  handleSearchTargets(value, newRatingForm.type);
+                }}
               />
+
+              {/* Search Results Dropdown */}
+              {showSearchResults && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      Buscando...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleSelectTarget(result)}
+                      >
+                        <div className="font-medium text-gray-900">{result.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {result.address || result.specialty || result.properties?.join(', ') || result.company}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {result.contractActive !== undefined && (
+                            <Badge className={result.contractActive || result.canRate ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                              {result.contractActive || result.canRate ? 'Disponible para calificar' : 'No disponible'}
+                            </Badge>
+                          )}
+                          {result.lastServiceDate && (
+                            <span className="text-xs text-gray-500">
+                              Último servicio: {new Date(result.lastServiceDate).toLocaleDateString('es-CL')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : newRatingForm.targetName.length >= 2 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      No se encontraron resultados para "{newRatingForm.targetName}"
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div>
