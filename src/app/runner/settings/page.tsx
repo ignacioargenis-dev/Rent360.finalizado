@@ -585,22 +585,27 @@ export default function RunnerSettingsPage() {
               </div>
 
               <div>
-                <Label>Método de pago preferido</Label>
-                <Select
-                  value={settings.payment.paymentMethod}
-                  onValueChange={(value: 'transfer' | 'cash' | 'wallet') =>
-                    updatePayment('paymentMethod', value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="transfer">Transferencia bancaria</SelectItem>
-                    <SelectItem value="cash">Efectivo</SelectItem>
-                    <SelectItem value="wallet">Billetera digital</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Método de pago obligatorio</Label>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-600 text-sm font-bold">ℹ</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">
+                        Pagos exclusivamente por plataforma
+                      </p>
+                      <p className="text-sm text-blue-800 mt-1">
+                        Como corredor, todos tus pagos deben procesarse a través de Rent360 para
+                        garantizar seguridad y cobrar la comisión del 5%. No se permiten pagos en
+                        efectivo directos.
+                      </p>
+                      <div className="mt-2 text-xs text-blue-700">
+                        <strong>Método configurado:</strong> Transferencia bancaria automática
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>

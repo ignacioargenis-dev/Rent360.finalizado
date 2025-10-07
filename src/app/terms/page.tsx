@@ -50,19 +50,21 @@ export default function TermsPage() {
                 ética.
               </p>
 
-              <h3 className="text-lg font-medium mb-2">3.1 Política de Pagos para Proveedores</h3>
+              <h3 className="text-lg font-medium mb-2">
+                3.1 Política de Pagos para Proveedores y Corredores
+              </h3>
               <p className="text-muted-foreground leading-relaxed mb-2">
-                Los proveedores de servicios de mantenimiento están obligados a procesar todos los
-                pagos exclusivamente a través de la plataforma Rent360. No se permiten pagos en
-                efectivo, transferencias directas o cualquier otro método de pago fuera de la
-                plataforma.
+                Los proveedores de servicios de mantenimiento y corredores están obligados a
+                procesar todos los pagos exclusivamente a través de la plataforma Rent360. No se
+                permiten pagos en efectivo, transferencias directas o cualquier otro método de pago
+                fuera de la plataforma.
               </p>
 
               <h4 className="text-base font-medium mb-1">Razones de esta política:</h4>
               <ul className="text-muted-foreground leading-relaxed ml-6 mb-3">
                 <li>
-                  • <strong>Comisión de Servicio:</strong> Rent360 cobra una comisión del 10% por
-                  conectar clientes con proveedores verificados.
+                  • <strong>Comisión de Servicio:</strong> Rent360 cobra una comisión del 5-10% por
+                  conectar clientes con proveedores verificados y corredores.
                 </li>
                 <li>
                   • <strong>Seguridad:</strong> Todas las transacciones están protegidas por
