@@ -265,10 +265,22 @@ export default function RunnerClientsPage() {
         window.open(`tel:${client.phone}`);
         break;
       case 'email':
-        window.open(`mailto:${client.email}`);
+        window.open(
+          `mailto:${client.email}?subject=Consulta sobre servicio&body=Hola ${client.name},`
+        );
         break;
       case 'message':
-        alert(`Función de mensajería no implementada aún. Cliente: ${client.name}`);
+        // Usar sistema de mensajería interno
+        const recipientData = {
+          id: `client_${client.id}`,
+          name: client.name,
+          email: client.email,
+          phone: client.phone,
+          type: 'client' as const,
+          clientId: client.id,
+        };
+        sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+        window.location.href = '/runner/messages?new=true';
         break;
     }
   };

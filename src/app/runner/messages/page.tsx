@@ -84,13 +84,31 @@ export default function RunnerMessagesPage() {
   };
 
   const handleArchiveConversation = () => {
-    setSuccessMessage('Conversación archivada exitosamente');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    if (selectedConversation) {
+      setConversations(prevConversations =>
+        prevConversations.map(conv =>
+          conv.id === selectedConversation
+            ? { ...conv, status: 'archived' as const, updatedAt: new Date().toISOString() }
+            : conv
+        )
+      );
+      setSuccessMessage('Conversación archivada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
   };
 
   const handleResolveConversation = () => {
-    setSuccessMessage('Conversación marcada como resuelta');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    if (selectedConversation) {
+      setConversations(prevConversations =>
+        prevConversations.map(conv =>
+          conv.id === selectedConversation
+            ? { ...conv, status: 'resolved' as const, updatedAt: new Date().toISOString() }
+            : conv
+        )
+      );
+      setSuccessMessage('Conversación marcada como resuelta');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
   };
 
   const handleReplyToMessage = (messageId: string) => {

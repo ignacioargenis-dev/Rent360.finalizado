@@ -322,11 +322,35 @@ export default function RunnerPropertiesPage() {
   };
 
   const handleStartVisit = async (propertyId: string) => {
-    alert(`Iniciando visita para propiedad ${propertyId}`);
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      // Update property status to 'in_visit'
+      setProperties(prevProperties =>
+        prevProperties.map(p =>
+          p.id === propertyId
+            ? { ...p, status: 'in_visit' as const, lastVisit: new Date().toISOString() }
+            : p
+        )
+      );
+      // Navigate to visit detail
+      router.push(`/runner/visits/${propertyId}`);
+    }
   };
 
   const handleCompleteVisit = async (propertyId: string) => {
-    alert(`Completando visita para propiedad ${propertyId}`);
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      // Update property status to 'completed'
+      setProperties(prevProperties =>
+        prevProperties.map(p =>
+          p.id === propertyId
+            ? { ...p, status: 'completed' as const, lastVisit: new Date().toISOString() }
+            : p
+        )
+      );
+      // Navigate to photos upload
+      router.push(`/runner/photos?visitId=${propertyId}&action=complete`);
+    }
   };
 
   const handleContactClient = async (phone: string) => {
