@@ -6,6 +6,24 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   RefreshCw,
@@ -80,6 +98,13 @@ export default function MantenimientoPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+  const [newRequestForm, setNewRequestForm] = useState({
+    title: '',
+    description: '',
+    category: 'general' as MaintenanceRequest['category'],
+    priority: 'medium' as MaintenanceRequest['priority'],
+    attachments: [] as File[],
+  });
 
   useEffect(() => {
     loadUserData();
@@ -305,6 +330,45 @@ export default function MantenimientoPage() {
 
   const handleNewRequest = () => {
     setShowNewRequestModal(true);
+  };
+
+  const handleSubmitNewRequest = () => {
+    if (!newRequestForm.title.trim() || !newRequestForm.description.trim()) {
+      setErrorMessage('Por favor complete todos los campos obligatorios');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    // Create new maintenance request
+    const newRequest: MaintenanceRequest = {
+      id: `req_${Date.now()}`,
+      propertyId: 'current_property', // This should come from user context
+      propertyTitle: 'Propiedad Actual', // This should come from user context
+      title: newRequestForm.title,
+      description: newRequestForm.description,
+      status: 'pending',
+      priority: newRequestForm.priority,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      category: newRequestForm.category,
+      attachments: newRequestForm.attachments.map(file => file.name),
+    };
+
+    // Add to requests list
+    setMaintenanceRequests(prev => [newRequest, ...prev]);
+
+    // Reset form and close modal
+    setNewRequestForm({
+      title: '',
+      description: '',
+      category: 'general',
+      priority: 'medium',
+      attachments: [],
+    });
+    setShowNewRequestModal(false);
+
+    setSuccessMessage('Solicitud de mantenimiento creada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleExportReport = () => {
@@ -664,6 +728,111 @@ export default function MantenimientoPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* New Maintenance Request Modal */}
+      <Dialog open={showNewRequestModal} onOpenChange={setShowNewRequestModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nueva Solicitud de Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Describe el problema que necesitas resolver en tu propiedad
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="request-title">Título del problema *</Label>
+              <Input
+                id="request-title"
+                placeholder="Ej: Fuga en el baño, luz no funciona..."
+                value={newRequestForm.title}
+                onChange={e => setNewRequestForm(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="request-description">Descripción detallada *</Label>
+              <Textarea
+                id="request-description"
+                placeholder="Describe el problema con el mayor detalle posible..."
+                rows={4}
+                value={newRequestForm.description}
+                onChange={e =>
+                  setNewRequestForm(prev => ({ ...prev, description: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="request-category">Categoría</Label>
+                <Select
+                  value={newRequestForm.category}
+                  onValueChange={(value: MaintenanceRequest['category']) =>
+                    setNewRequestForm(prev => ({ ...prev, category: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="electrical">Eléctrica</SelectItem>
+                    <SelectItem value="plumbing">Plomería</SelectItem>
+                    <SelectItem value="structural">Estructural</SelectItem>
+                    <SelectItem value="appliance">Electrodomésticos</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="request-priority">Prioridad</Label>
+                <Select
+                  value={newRequestForm.priority}
+                  onValueChange={(value: MaintenanceRequest['priority']) =>
+                    setNewRequestForm(prev => ({ ...prev, priority: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona prioridad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baja</SelectItem>
+                    <SelectItem value="medium">Media</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="request-attachments">Adjuntar fotos (opcional)</Label>
+              <Input
+                id="request-attachments"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={e => {
+                  const files = Array.from(e.target.files || []);
+                  setNewRequestForm(prev => ({ ...prev, attachments: files }));
+                }}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Puedes adjuntar hasta 5 fotos del problema
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setShowNewRequestModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmitNewRequest}>Enviar Solicitud</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

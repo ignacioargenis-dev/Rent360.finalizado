@@ -118,6 +118,8 @@ export default function BúsquedaAvanzadaPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [favoriteProperties, setFavoriteProperties] = useState<string[]>([]);
+  const [compareProperties, setCompareProperties] = useState<string[]>([]);
 
   // Filters state
   const [filters, setFilters] = useState<SearchFilters>({
@@ -361,11 +363,24 @@ export default function BúsquedaAvanzadaPage() {
     [router]
   );
 
-  const handleContactOwner = useCallback((property: Property) => {
-    window.open(
-      `mailto:owner@example.com?subject=Interesado en ${property.title}&body=Hola, estoy interesado en la propiedad ubicada en ${property.address}`
-    );
-  }, []);
+  const handleContactOwner = useCallback(
+    (property: Property) => {
+      // Crear conversación con el propietario usando el sistema de mensajería
+      const recipientData = {
+        id: `owner_${property.id}`,
+        name: 'Propietario',
+        email: 'owner@example.com',
+        type: 'owner' as const,
+        propertyId: property.id,
+        propertyTitle: property.title,
+        propertyAddress: property.address,
+      };
+
+      sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+      router.push('/tenant/messages?new=true');
+    },
+    [router]
+  );
 
   const handleExportResults = useCallback(() => {
     const csvContent = [
@@ -390,6 +405,44 @@ export default function BúsquedaAvanzadaPage() {
     a.click();
     window.URL.revokeObjectURL(url);
   }, [filteredProperties]);
+
+  const handleToggleFavorite = useCallback((propertyId: string) => {
+    setFavoriteProperties(prev =>
+      prev.includes(propertyId) ? prev.filter(id => id !== propertyId) : [...prev, propertyId]
+    );
+    setSuccessMessage(prev.includes(propertyId) ? 'Removido de favoritos' : 'Agregado a favoritos');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  }, []);
+
+  const handleToggleCompare = useCallback((propertyId: string) => {
+    setCompareProperties(prev => {
+      if (prev.includes(propertyId)) {
+        return prev.filter(id => id !== propertyId);
+      } else if (prev.length < 3) {
+        return [...prev, propertyId];
+      } else {
+        setErrorMessage('Solo puedes comparar hasta 3 propiedades a la vez');
+        setTimeout(() => setErrorMessage(''), 3000);
+        return prev;
+      }
+    });
+  }, []);
+
+  const handleCompareSelected = useCallback(() => {
+    if (compareProperties.length < 2) {
+      setErrorMessage('Selecciona al menos 2 propiedades para comparar');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const compareData = {
+      properties: compareProperties,
+      timestamp: new Date().toISOString(),
+    };
+
+    sessionStorage.setItem('propertyComparison', JSON.stringify(compareData));
+    router.push('/tenant/property-comparison');
+  }, [compareProperties, router]);
 
   if (loading) {
     return (
@@ -816,9 +869,32 @@ export default function BúsquedaAvanzadaPage() {
                               alt={property.title}
                               className="w-full h-48 object-cover rounded-t-lg"
                             />
-                            <div className="absolute top-2 right-2">
-                              <Button variant="secondary" size="sm">
-                                <Heart className="w-4 h-4" />
+                            <div className="absolute top-2 right-2 flex gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleToggleFavorite(property.id)}
+                                className={
+                                  favoriteProperties.includes(property.id)
+                                    ? 'bg-red-500 text-white'
+                                    : ''
+                                }
+                              >
+                                <Heart
+                                  className={`w-4 h-4 ${favoriteProperties.includes(property.id) ? 'fill-current' : ''}`}
+                                />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleToggleCompare(property.id)}
+                                className={
+                                  compareProperties.includes(property.id)
+                                    ? 'bg-blue-500 text-white'
+                                    : ''
+                                }
+                              >
+                                <BarChart3 className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
@@ -884,6 +960,26 @@ export default function BúsquedaAvanzadaPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Comparison Banner */}
+            {compareProperties.length > 0 && (
+              <div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    <span>{compareProperties.length} propiedad(es) seleccionada(s)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" size="sm" onClick={() => setCompareProperties([])}>
+                      Limpiar
+                    </Button>
+                    <Button size="sm" onClick={handleCompareSelected}>
+                      Comparar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Saved Searches Tab */}
