@@ -173,6 +173,11 @@ const menuItems: RoleMenuItems = {
       icon: Wrench,
     },
     {
+      title: 'Buscar Servicios',
+      url: '/tenant/services',
+      icon: Zap,
+    },
+    {
       title: 'Mensajes',
       url: '/tenant/messages',
       icon: MessageSquare,

@@ -107,8 +107,8 @@ export default function TenantPaymentProcessPage() {
         {
           id: '3',
           type: 'bank_transfer',
-          name: 'Transferencia Bancaria',
-          details: 'Pago directo a propietario',
+          name: 'Transferencia por Plataforma',
+          details: 'Pago seguro a través de Rent360 (obligatorio)',
           isDefault: false,
         },
       ];
@@ -283,6 +283,17 @@ export default function TenantPaymentProcessPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Platform Payment Policy Alert */}
+        <Alert className="border-blue-200 bg-blue-50">
+          <Shield className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Política de Pagos Rent360:</strong> Todos los pagos deben procesarse
+            exclusivamente a través de nuestra plataforma para garantizar seguridad, transparencia y
+            retener la comisión correspondiente (10%). Los pagos directos al propietario están
+            prohibidos.
+          </AlertDescription>
+        </Alert>
 
         {/* Payment Summary */}
         <Card>

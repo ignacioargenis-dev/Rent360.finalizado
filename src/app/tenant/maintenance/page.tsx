@@ -371,6 +371,26 @@ export default function MantenimientoPage() {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
+  const handleViewRequestDetails = (requestId: string) => {
+    const request = maintenanceRequests.find(r => r.id === requestId);
+    if (request) {
+      // Mostrar detalles en un modal o alert (placeholder para futura implementación)
+      alert(
+        `Detalles de la solicitud:\n\nTítulo: ${request.title}\nDescripción: ${request.description}\nEstado: ${getStatusBadge(request.status)}\nPrioridad: ${getPriorityBadge(request.priority)}\nCategoría: ${getCategoryName(request.category)}\nFecha: ${formatDate(request.createdAt)}`
+      );
+    }
+  };
+
+  const handleViewAttachments = (requestId: string) => {
+    const request = maintenanceRequests.find(r => r.id === requestId);
+    if (request && request.attachments) {
+      // Mostrar adjuntos (placeholder para futura implementación con galería)
+      alert(
+        `Adjuntos de la solicitud "${request.title}":\n\n${request.attachments.map((file, index) => `${index + 1}. ${file}`).join('\n')}\n\nFuncionalidad completa próximamente con visor de imágenes.`
+      );
+    }
+  };
+
   const handleExportReport = () => {
     // Simulate export
     if (maintenanceRequests.length === 0) {
@@ -542,38 +562,39 @@ export default function MantenimientoPage() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
+                  <Input
                     placeholder="Buscar solicitudes..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
               <div className="flex gap-2">
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Todos los estados</option>
-                  <option value="pending">Pendientes</option>
-                  <option value="in_progress">En Progreso</option>
-                  <option value="completed">Completadas</option>
-                  <option value="cancelled">Canceladas</option>
-                </select>
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={priorityFilter}
-                  onChange={e => setPriorityFilter(e.target.value)}
-                >
-                  <option value="all">Todas las prioridades</option>
-                  <option value="urgent">Urgentes</option>
-                  <option value="high">Altas</option>
-                  <option value="medium">Medias</option>
-                  <option value="low">Bajas</option>
-                </select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="in_progress">En Progreso</SelectItem>
+                    <SelectItem value="completed">Completadas</SelectItem>
+                    <SelectItem value="cancelled">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Todas las prioridades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las prioridades</SelectItem>
+                    <SelectItem value="urgent">Urgentes</SelectItem>
+                    <SelectItem value="high">Altas</SelectItem>
+                    <SelectItem value="medium">Medias</SelectItem>
+                    <SelectItem value="low">Bajas</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -643,12 +664,20 @@ export default function MantenimientoPage() {
                   </div>
 
                   <div className="flex flex-col gap-2 lg:ml-4">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewRequestDetails(request.id)}
+                    >
                       <Eye className="w-4 h-4 mr-2" />
                       Ver Detalles
                     </Button>
                     {request.attachments && request.attachments.length > 0 && (
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewAttachments(request.id)}
+                      >
                         <Paperclip className="w-4 h-4 mr-2" />
                         Ver Adjuntos ({request.attachments.length})
                       </Button>

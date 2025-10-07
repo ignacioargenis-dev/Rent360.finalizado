@@ -8,9 +8,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   User as UserIcon,
@@ -23,6 +38,7 @@ import {
   Save,
   Eye,
   EyeOff,
+  Info,
   Key,
   CheckCircle,
   AlertTriangle,
@@ -160,6 +176,79 @@ export default function TenantSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !files[0]) {
+      return;
+    }
+
+    const file = files[0];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (file.size > maxSize) {
+      setErrorMessage('El archivo es demasiado grande. Tamaño máximo: 10MB.');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage('Tipo de archivo no permitido. Use PDF, JPG o PNG.');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const newDocument: Document = {
+      id: `doc_${Date.now()}`,
+      name: file.name,
+      category: selectedDocumentCategory,
+      size: formatFileSize(file.size),
+      uploadDate: new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
+      url: URL.createObjectURL(file), // In a real app, this would be uploaded to a server
+    };
+
+    setDocuments(prev => [...prev, newDocument]);
+    setShowUploadModal(false);
+    setSuccessMessage('Documento subido exitosamente.');
+    setTimeout(() => setSuccessMessage(''), 3000);
+
+    // Reset file input
+    event.target.value = '';
+  };
+
+  const handleDownloadDocument = (doc: Document) => {
+    // In a real app, this would download from server
+    // For now, create a simple download link
+    const link = document.createElement('a');
+    link.href = doc.url;
+    link.download = doc.name;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setSuccessMessage('Documento descargado exitosamente.');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este documento?')) {
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      setSuccessMessage('Documento eliminado exitosamente.');
+      setTimeout(() => setSuccessMessage(''), 2000);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) {
+      return '0 Bytes';
+    }
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const updateProfile = (field: keyof TenantSettings['profile'], value: string) => {
@@ -496,6 +585,93 @@ export default function TenantSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documentos Personales
+                </CardTitle>
+                <CardDescription>
+                  Gestiona tus documentos personales y de identificación requeridos para el alquiler
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Upload Section */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Subir Documentos</h3>
+                  <p className="text-gray-600 mb-4">
+                    Arrastra y suelta archivos o haz clic para seleccionar
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Button variant="outline" onClick={() => setShowUploadModal(true)}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Subir Documento
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Formatos aceptados: PDF, JPG, PNG. Tamaño máximo: 10MB por archivo.
+                  </p>
+                </div>
+
+                {/* Documents List */}
+                {documents.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Documentos Subidos</h4>
+                    {documents.map(doc => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {doc.category} • {doc.size} •{' '}
+                              {new Date(doc.uploadDate).toLocaleDateString('es-CL')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadDocument(doc)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Descargar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteDocument(doc.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Required Documents Info */}
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Documentos requeridos:</strong> Para completar tu perfil de inquilino,
+                    asegúrate de subir tu cédula de identidad, comprobante de ingresos y referencias
+                    personales. Estos documentos son necesarios para procesar solicitudes de
+                    arriendo.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* Save Button */}
@@ -514,6 +690,57 @@ export default function TenantSettingsPage() {
             )}
           </Button>
         </div>
+
+        {/* Document Upload Modal */}
+        <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Subir Documento</DialogTitle>
+              <DialogDescription>
+                Selecciona el tipo de documento y sube el archivo
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="document-category">Tipo de Documento</Label>
+                <Select
+                  value={selectedDocumentCategory}
+                  onValueChange={(value: Document['category']) =>
+                    setSelectedDocumentCategory(value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="identification">Cédula de Identidad</SelectItem>
+                    <SelectItem value="income">Comprobante de Ingresos</SelectItem>
+                    <SelectItem value="references">Referencias Personales</SelectItem>
+                    <SelectItem value="contract">Contrato de Trabajo</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="document-file">Seleccionar Archivo</Label>
+                <Input
+                  id="document-file"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileUpload}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setShowUploadModal(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

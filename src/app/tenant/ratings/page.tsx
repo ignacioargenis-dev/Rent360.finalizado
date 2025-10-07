@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -86,6 +87,15 @@ export default function CalificacionesPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showNewRatingModal, setShowNewRatingModal] = useState(false);
+  const [newRatingForm, setNewRatingForm] = useState({
+    type: 'property' as Rating['type'],
+    targetId: '',
+    targetName: '',
+    rating: 5,
+    comment: '',
+    category: '',
+  });
   const [sortBy, setSortBy] = useState<string>('date');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -256,8 +266,43 @@ export default function CalificacionesPage() {
   }, [ratings, searchTerm, selectedType, selectedRating, sortBy, activeTab]);
 
   const handleNewRating = useCallback(() => {
-    router.push('/properties/search');
-  }, [router]);
+    setShowNewRatingModal(true);
+  }, []);
+
+  const handleSubmitNewRating = () => {
+    if (!newRatingForm.targetName.trim() || !newRatingForm.comment.trim()) {
+      setErrorMessage('Por favor complete todos los campos obligatorios');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const newRating: Rating = {
+      id: `rating_${Date.now()}`,
+      type: newRatingForm.type,
+      targetId: newRatingForm.targetId || `target_${Date.now()}`,
+      targetName: newRatingForm.targetName,
+      rating: newRatingForm.rating,
+      comment: newRatingForm.comment,
+      date: new Date().toISOString(),
+      category: newRatingForm.category,
+      verified: false, // New ratings are not verified initially
+      helpful: 0,
+    };
+
+    setRatings(prev => [newRating, ...prev]);
+    setShowNewRatingModal(false);
+    setNewRatingForm({
+      type: 'property',
+      targetId: '',
+      targetName: '',
+      rating: 5,
+      comment: '',
+      category: '',
+    });
+
+    setSuccessMessage('Calificación creada exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
 
   const handleExportRatings = useCallback(() => {
     if (filteredRatings.length === 0) {
@@ -734,6 +779,97 @@ export default function CalificacionesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* New Rating Modal */}
+      <Dialog open={showNewRatingModal} onOpenChange={setShowNewRatingModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Crear Nueva Calificación</DialogTitle>
+            <DialogDescription>Comparte tu experiencia y ayuda a otros usuarios</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="rating-type">Tipo de Calificación</Label>
+                <Select
+                  value={newRatingForm.type}
+                  onValueChange={(value: Rating['type']) =>
+                    setNewRatingForm(prev => ({ ...prev, type: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="property">Propiedad</SelectItem>
+                    <SelectItem value="maintenance">Servicio de Mantenimiento</SelectItem>
+                    <SelectItem value="landlord">Propietario</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="rating-category">Categoría</Label>
+                <Input
+                  id="rating-category"
+                  placeholder="Ej: Departamento, Electricista..."
+                  value={newRatingForm.category}
+                  onChange={e => setNewRatingForm(prev => ({ ...prev, category: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="rating-target">Nombre del Servicio/Propiedad *</Label>
+              <Input
+                id="rating-target"
+                placeholder="Ej: Departamento Las Condes, Juan Pérez Electricista..."
+                value={newRatingForm.targetName}
+                onChange={e => setNewRatingForm(prev => ({ ...prev, targetName: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>Calificación</Label>
+              <div className="flex items-center gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewRatingForm(prev => ({ ...prev, rating: star }))}
+                    className="text-2xl focus:outline-none"
+                  >
+                    {star <= newRatingForm.rating ? '⭐' : '☆'}
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  {newRatingForm.rating} de 5 estrellas
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="rating-comment">Comentario *</Label>
+              <textarea
+                id="rating-comment"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={4}
+                placeholder="Describe tu experiencia detalladamente..."
+                value={newRatingForm.comment}
+                onChange={e => setNewRatingForm(prev => ({ ...prev, comment: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setShowNewRatingModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmitNewRating}>Publicar Calificación</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

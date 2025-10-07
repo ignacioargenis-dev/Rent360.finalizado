@@ -94,6 +94,8 @@ export default function TenantReportsPage() {
   });
   const [payments, setPayments] = useState<PaymentReport[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceReport[]>([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Mock data for reports
   const mockPayments: PaymentReport[] = [
@@ -235,7 +237,43 @@ export default function TenantReportsPage() {
     }
   };
 
-  const handleExportReport = (type: 'payments' | 'maintenance' | 'all') => {
+  const handleExportReport = (
+    type: 'payments' | 'maintenance' | 'all',
+    format: 'csv' | 'pdf' | 'detailed' = 'csv'
+  ) => {
+    if (format === 'pdf') {
+      // Simular generación de PDF
+      const pdfContent = generatePDFReport(type);
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte-${type}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage('PDF generado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+
+    if (format === 'detailed') {
+      // Exportar reporte detallado con análisis
+      const detailedReport = generateDetailedReport(type);
+      const blob = new Blob([detailedReport], { type: 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte-detallado-${type}-${new Date().toISOString().split('T')[0]}.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage('Reporte detallado generado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+
+    // Exportación CSV original
     let csvContent = '';
 
     if (type === 'payments' || type === 'all') {
@@ -268,10 +306,93 @@ export default function TenantReportsPage() {
     link.click();
     document.body.removeChild(link);
 
+    setSuccessMessage('CSV exportado exitosamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
+
     logger.info('Reportes exportados', {
       type,
+      format,
       totalRecords: payments.length + maintenance.length,
     });
+  };
+
+  const generatePDFReport = (type: string): string => {
+    // Simular contenido de PDF
+    return `REPORTE ${type.toUpperCase()} - ${new Date().toLocaleDateString('es-CL')}
+
+RESUMEN EJECUTIVO
+=================
+
+Este es un reporte simulado en formato PDF.
+En una implementación real, se generaría un PDF completo
+con gráficos, tablas formateadas y análisis detallado.
+
+DATOS INCLUIDOS:
+- ${type === 'payments' ? payments.length : maintenance.length} registros
+- Período: Últimos 3 meses
+- Generado: ${new Date().toLocaleString('es-CL')}
+
+Para una implementación completa, se recomienda usar bibliotecas como:
+- jsPDF para generación de PDF
+- Chart.js para gráficos
+- html2canvas para capturas de pantalla
+
+---
+Fin del reporte simulado`;
+  };
+
+  const generateDetailedReport = (type: string): string => {
+    const report = `ANÁLISIS DETALLADO - ${type.toUpperCase()}
+Generado: ${new Date().toLocaleString('es-CL')}
+
+${'='.repeat(50)}
+
+ESTADÍSTICAS GENERALES
+${'-'.repeat(30)}
+
+${
+  type === 'payments'
+    ? `
+Total de pagos: ${payments.length}
+Pagos completados: ${payments.filter(p => p.status === 'paid').length}
+Pagos pendientes: ${payments.filter(p => p.status === 'pending').length}
+Pagos vencidos: ${payments.filter(p => p.status === 'overdue').length}
+Monto total: ${formatCurrency(payments.reduce((sum, p) => sum + p.amount, 0))}
+Promedio mensual: ${formatCurrency(payments.reduce((sum, p) => sum + p.amount, 0) / 3)}
+`
+    : `
+Solicitudes de mantenimiento: ${maintenance.length}
+Completadas: ${maintenance.filter(m => m.status === 'completed').length}
+En progreso: ${maintenance.filter(m => m.status === 'in_progress').length}
+Programadas: ${maintenance.filter(m => m.status === 'scheduled').length}
+Monto total invertido: ${formatCurrency(maintenance.reduce((sum, m) => sum + m.amount, 0))}
+Calificación promedio: ${maintenance.length > 0 ? (maintenance.reduce((sum, m) => sum + (m.rating || 0), 0) / maintenance.length).toFixed(1) : 'N/A'} ⭐
+`
+}
+
+ANÁLISIS DE TENDENCIAS
+${'-'.repeat(30)}
+
+${getMonthlySpending()
+  .map(month => `${month.month}: ${formatCurrency(month.amount)}`)
+  .join('\n')}
+
+RECOMENDACIONES
+${'-'.repeat(30)}
+
+${
+  type === 'payments'
+    ? `• Mantenga un registro regular de pagos para evitar cargos por mora
+• Considere configurar pagos automáticos para mayor comodidad
+• Revise periódicamente los recibos de pago`
+    : `• Priorice el mantenimiento preventivo para reducir costos futuros
+• Solicite cotizaciones de múltiples proveedores
+• Mantenga registros detallados de todos los trabajos realizados`
+}
+
+---
+Fin del análisis detallado`;
+    return report;
   };
 
   const getStatusBadge = (status: string, type: 'payment' | 'maintenance') => {
@@ -475,6 +596,38 @@ export default function TenantReportsPage() {
               </Card>
             </div>
 
+            {/* Gráfico de Tendencias Mensuales */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Tendencia de Gastos Mensuales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {getMonthlySpending().map((item, index) => (
+                    <div key={item.month} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-20 text-sm font-medium">{item.month}</div>
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min((item.amount / Math.max(...getMonthlySpending().map(d => d.amount))) * 100, 100)}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(item.amount)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Estado de Pagos y Mantenimiento */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
@@ -565,6 +718,38 @@ export default function TenantReportsPage() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
+            {/* Acciones de Pagos */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('payments', 'csv')}
+                    disabled={payments.length === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('payments', 'pdf')}
+                    disabled={payments.length === 0}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generar PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('payments', 'detailed')}
+                    disabled={payments.length === 0}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Análisis Detallado
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -634,6 +819,38 @@ export default function TenantReportsPage() {
           </TabsContent>
 
           <TabsContent value="maintenance" className="space-y-6">
+            {/* Acciones de Mantenimiento */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('maintenance', 'csv')}
+                    disabled={maintenance.length === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('maintenance', 'pdf')}
+                    disabled={maintenance.length === 0}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generar PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReport('maintenance', 'detailed')}
+                    disabled={maintenance.length === 0}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Análisis Detallado
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
