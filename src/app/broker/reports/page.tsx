@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ interface PerformanceMetric {
 }
 
 export default function BrokerReportsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserType | null>(null);
   const [reports, setReports] = useState<BrokerReport[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -299,7 +301,7 @@ export default function BrokerReportsPage() {
 
   const handleViewOpportunities = () => {
     // Navigate to properties search or new property creation
-    window.open('/broker/properties/new', '_blank');
+    router.push('/broker/properties/new');
   };
 
   const handleSendSurveys = () => {

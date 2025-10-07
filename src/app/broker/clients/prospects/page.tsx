@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,7 @@ interface ProspectStats {
 }
 
 export default function BrokerProspectsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [filteredProspects, setFilteredProspects] = useState<Prospect[]>([]);
@@ -286,10 +288,8 @@ export default function BrokerProspectsPage() {
   };
 
   const handleViewProspect = (prospectId: string) => {
-    // Navigate to prospect detail
-    alert(`Abriendo detalles del prospecto ${prospectId}`);
-    // TODO: Implement navigation to prospect detail page
-    // router.push(`/broker/prospects/${prospectId}`);
+    // Navigate to prospect detail page
+    router.push(`/broker/clients/prospects/${prospectId}`);
   };
 
   const handleContactProspect = (prospect: Prospect) => {
@@ -332,13 +332,18 @@ export default function BrokerProspectsPage() {
       return;
     }
 
-    // Navigate to property detail page
-    alert(`Redirigiendo a la propiedad ${prospect.propertyId}`);
-    // In a real app: router.push(`/properties/${prospect.propertyId}`);
+    // Navigate to broker property detail page
+    router.push(`/broker/properties/${prospect.propertyId}`);
   };
 
   const handleConvertProspect = (prospectId: string) => {
     if (confirm('¿Está seguro de que desea convertir este prospecto en cliente?')) {
+      // Find the prospect to get their data
+      const prospect = prospects.find(p => p.id === prospectId);
+      if (!prospect) {
+        return;
+      }
+
       // Update prospect status in the list
       setProspects(prevProspects =>
         prevProspects.map(prospect =>
@@ -347,7 +352,21 @@ export default function BrokerProspectsPage() {
             : prospect
         )
       );
-      alert(`Prospecto ${prospectId} convertido exitosamente a cliente`);
+
+      // Navigate to create client page with prospect data
+      const clientData = {
+        name: prospect.name,
+        email: prospect.email,
+        phone: prospect.phone,
+        budget: prospect.budget,
+        preferredLocation: prospect.preferredLocation,
+        interestedIn: prospect.interestedIn,
+        source: 'prospect_conversion',
+      };
+
+      // Store prospect data temporarily and navigate
+      sessionStorage.setItem('prospectToConvert', JSON.stringify(clientData));
+      router.push('/broker/clients/new?from=prospect');
 
       // Recalculate stats
       const updatedProspects = prospects.map(prospect =>

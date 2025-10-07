@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ import {
   CheckCircle,
   AlertTriangle,
   MessageSquare,
-  Wrench,
+  UserPlus,
   Home,
   DollarSign,
   Award,
@@ -64,6 +65,7 @@ interface RunnerFilters {
 }
 
 export default function OwnerRunnersPage() {
+  const router = useRouter();
   const [runners, setRunners] = useState<Runner[]>([]);
   const [filteredRunners, setFilteredRunners] = useState<Runner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -306,9 +308,9 @@ export default function OwnerRunnersPage() {
 
   const handleSendMessage = (runner: Runner) => {
     logger.info('Enviando mensaje a runner:', { runnerId: runner.id });
-    // Implementar navegación a chat o envío de mensaje
-    alert(
-      `Función próximamente disponible: Enviar mensaje a ${runner.name}. Por ahora puedes contactarlo directamente.`
+    // Navegar a la página de mensajes con el runner seleccionado
+    router.push(
+      `/owner/messages?recipientId=${runner.id}&recipientType=runner&recipientName=${encodeURIComponent(runner.name)}`
     );
   };
 
@@ -554,7 +556,7 @@ export default function OwnerRunnersPage() {
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                     onClick={() => handleHireRunner(runner)}
                   >
-                    <Wrench className="w-4 h-4 mr-1" />
+                    <UserPlus className="w-4 h-4 mr-1" />
                     Contratar
                   </Button>
                 </div>

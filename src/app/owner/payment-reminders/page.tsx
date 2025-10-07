@@ -1,11 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -90,11 +101,43 @@ export default function OwnerPaymentRemindersPage() {
   const [channelFilter, setChannelFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
+  // Modal states
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showBulkSendModal, setShowBulkSendModal] = useState(false);
+  const [selectedReminder, setSelectedReminder] = useState<PaymentReminder | null>(null);
+
+  // Success/Error states
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // Configuration states
+  const [reminderConfig, setReminderConfig] = useState({
+    autoSendFirst: true,
+    daysBeforeDueFirst: 10,
+    autoSendSecond: true,
+    daysBeforeDueSecond: 5,
+    autoSendFinal: true,
+    daysBeforeDueFinal: 1,
+    autoSendUrgent: false,
+    daysAfterDue: 3,
+    emailTemplate: 'default',
+    smsTemplate: 'default',
+    includePropertyInfo: true,
+    includeOwnerContact: true,
+  });
+
+  // Bulk send states
+  const [bulkSendConfig, setBulkSendConfig] = useState({
+    reminderType: 'first',
+    channel: 'both',
+    message: '',
+    selectedTenants: [] as string[],
+    selectAll: false,
+  });
+
   const handleConfigureReminders = () => {
-    alert(
-      'Abriendo configuración de recordatorios de pago... Esta funcionalidad estará disponible próximamente.'
-    );
-    // In a real app, this would open a configuration modal for reminder settings
+    setShowConfigModal(true);
   };
 
   const handleSendBulkReminders = () => {
