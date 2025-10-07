@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -110,6 +111,10 @@ export default function MantenimientoPage() {
   const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [providerFilters, setProviderFilters] = useState({
+    specialty: 'all',
+    sortBy: 'rating', // 'rating', 'price_low', 'price_high', 'experience'
+  });
 
   useEffect(() => {
     // Cargar datos de la página
@@ -285,7 +290,7 @@ export default function MantenimientoPage() {
 
   const loadAvailableProviders = async () => {
     try {
-      // Mock data for available providers
+      // Mock data for available providers with different specialties
       const mockProviders = [
         {
           id: '1',
@@ -295,6 +300,8 @@ export default function MantenimientoPage() {
           location: 'Santiago Centro',
           hourlyRate: 15000,
           availability: 'available',
+          experience: '5 años',
+          completedJobs: 127,
         },
         {
           id: '2',
@@ -304,6 +311,8 @@ export default function MantenimientoPage() {
           location: 'Providencia',
           hourlyRate: 12000,
           availability: 'available',
+          experience: '3 años',
+          completedJobs: 89,
         },
         {
           id: '3',
@@ -313,6 +322,8 @@ export default function MantenimientoPage() {
           location: 'Las Condes',
           hourlyRate: 18000,
           availability: 'busy',
+          experience: '7 años',
+          completedJobs: 156,
         },
         {
           id: '4',
@@ -322,6 +333,52 @@ export default function MantenimientoPage() {
           location: 'Vitacura',
           hourlyRate: 14000,
           availability: 'available',
+          experience: '4 años',
+          completedJobs: 73,
+        },
+        {
+          id: '5',
+          name: 'Roberto Silva',
+          specialty: 'Plomería',
+          rating: 4.5,
+          location: 'Ñuñoa',
+          hourlyRate: 16000,
+          availability: 'available',
+          experience: '6 años',
+          completedJobs: 98,
+        },
+        {
+          id: '6',
+          name: 'Carmen Torres',
+          specialty: 'Pintura y Decoración',
+          rating: 4.7,
+          location: 'La Reina',
+          hourlyRate: 13000,
+          availability: 'available',
+          experience: '8 años',
+          completedJobs: 203,
+        },
+        {
+          id: '7',
+          name: 'Diego Morales',
+          specialty: 'Carpintería',
+          rating: 4.9,
+          location: 'Macul',
+          hourlyRate: 17000,
+          availability: 'available',
+          experience: '10 años',
+          completedJobs: 245,
+        },
+        {
+          id: '8',
+          name: 'Patricia Soto',
+          specialty: 'Mantenimiento General',
+          rating: 4.4,
+          location: 'Peñalolén',
+          hourlyRate: 11000,
+          availability: 'available',
+          experience: '2 años',
+          completedJobs: 45,
         },
       ];
 
@@ -329,6 +386,42 @@ export default function MantenimientoPage() {
     } catch (error) {
       logger.error('Error cargando proveedores:', { error });
     }
+  };
+
+  // Función para filtrar y ordenar proveedores
+  const getFilteredAndSortedProviders = () => {
+    let filtered = availableProviders;
+
+    // Filtrar por especialidad
+    if (providerFilters.specialty !== 'all') {
+      filtered = filtered.filter(provider =>
+        provider.specialty.toLowerCase().includes(providerFilters.specialty.toLowerCase())
+      );
+    }
+
+    // Ordenar según criterio seleccionado
+    switch (providerFilters.sortBy) {
+      case 'rating':
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'price_low':
+        filtered.sort((a, b) => a.hourlyRate - b.hourlyRate);
+        break;
+      case 'price_high':
+        filtered.sort((a, b) => b.hourlyRate - a.hourlyRate);
+        break;
+      case 'experience':
+        filtered.sort((a, b) => {
+          const expA = parseInt(a.experience.split(' ')[0]);
+          const expB = parseInt(b.experience.split(' ')[0]);
+          return expB - expA;
+        });
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
   };
 
   const handleConfirmProviderAssignment = async () => {
@@ -868,11 +961,68 @@ export default function MantenimientoPage() {
                 </CardContent>
               </Card>
 
+              {/* Filtros de búsqueda */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <h4 className="text-md font-semibold mb-3">Buscar y Filtrar Proveedores</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="specialty-filter" className="text-sm font-medium">
+                      Especialidad
+                    </Label>
+                    <Select
+                      value={providerFilters.specialty}
+                      onValueChange={value =>
+                        setProviderFilters(prev => ({ ...prev, specialty: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas las especialidades" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las especialidades</SelectItem>
+                        <SelectItem value="Mantenimiento General">Mantenimiento General</SelectItem>
+                        <SelectItem value="Plomería">Plomería</SelectItem>
+                        <SelectItem value="Reparaciones Eléctricas">
+                          Reparaciones Eléctricas
+                        </SelectItem>
+                        <SelectItem value="Jardinería">Jardinería</SelectItem>
+                        <SelectItem value="Limpieza">Limpieza Profesional</SelectItem>
+                        <SelectItem value="Pintura">Pintura y Decoración</SelectItem>
+                        <SelectItem value="Carpintería">Carpintería</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="sort-filter" className="text-sm font-medium">
+                      Ordenar por
+                    </Label>
+                    <Select
+                      value={providerFilters.sortBy}
+                      onValueChange={value =>
+                        setProviderFilters(prev => ({ ...prev, sortBy: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Ordenar por..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="rating">Calificación más alta</SelectItem>
+                        <SelectItem value="price_low">Precio más bajo</SelectItem>
+                        <SelectItem value="price_high">Precio más alto</SelectItem>
+                        <SelectItem value="experience">Más experiencia</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               {/* Selección de proveedor */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Seleccionar Proveedor</h3>
-                <div className="grid gap-4">
-                  {availableProviders.map(provider => (
+                <h3 className="text-lg font-semibold mb-4">
+                  Proveedores Disponibles ({getFilteredAndSortedProviders().length})
+                </h3>
+                <div className="grid gap-4 max-h-96 overflow-y-auto">
+                  {getFilteredAndSortedProviders().map(provider => (
                     <Card
                       key={provider.id}
                       className={`cursor-pointer transition-all ${
