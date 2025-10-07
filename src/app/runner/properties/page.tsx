@@ -3,6 +3,7 @@
 // Build fix - force update
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,7 @@ interface VisitFilter {
 }
 
 export default function RunnerPropertiesPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserType | null>(null);
   const [properties, setProperties] = useState<AssignedProperty[]>([]);
   const [stats, setStats] = useState<PropertyStats>({
@@ -324,11 +326,11 @@ export default function RunnerPropertiesPage() {
   const handleStartVisit = async (propertyId: string) => {
     const property = properties.find(p => p.id === propertyId);
     if (property) {
-      // Update property status to 'in_visit'
+      // Update property status to 'in_progress'
       setProperties(prevProperties =>
         prevProperties.map(p =>
           p.id === propertyId
-            ? { ...p, status: 'in_visit' as const, lastVisit: new Date().toISOString() }
+            ? { ...p, status: 'in_progress' as const, lastVisit: new Date().toISOString() }
             : p
         )
       );

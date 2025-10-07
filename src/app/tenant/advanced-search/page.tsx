@@ -407,11 +407,17 @@ export default function BúsquedaAvanzadaPage() {
   }, [filteredProperties]);
 
   const handleToggleFavorite = useCallback((propertyId: string) => {
-    setFavoriteProperties(prev =>
-      prev.includes(propertyId) ? prev.filter(id => id !== propertyId) : [...prev, propertyId]
-    );
-    setSuccessMessage(prev.includes(propertyId) ? 'Removido de favoritos' : 'Agregado a favoritos');
-    setTimeout(() => setSuccessMessage(''), 2000);
+    setFavoriteProperties(prev => {
+      const isCurrentlyFavorite = prev.includes(propertyId);
+      const newFavorites = isCurrentlyFavorite
+        ? prev.filter(id => id !== propertyId)
+        : [...prev, propertyId];
+
+      setSuccessMessage(isCurrentlyFavorite ? 'Removido de favoritos' : 'Agregado a favoritos');
+      setTimeout(() => setSuccessMessage(''), 2000);
+
+      return newFavorites;
+    });
   }, []);
 
   const handleToggleCompare = useCallback((propertyId: string) => {
