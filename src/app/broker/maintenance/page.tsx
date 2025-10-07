@@ -28,6 +28,8 @@ import {
   Phone,
   MessageSquare,
   DollarSign,
+  Star,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
@@ -79,6 +81,11 @@ export default function BrokerMaintenancePage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
+  const [selectedRequestForAssignment, setSelectedRequestForAssignment] =
+    useState<MaintenanceRequest | null>(null);
+  const [availableProviders, setAvailableProviders] = useState<any[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -315,6 +322,93 @@ export default function BrokerMaintenancePage() {
       if (visitDate) {
         alert(`Visita agendada para el ${visitDate}`);
       }
+    }
+  };
+
+  const handleAssignProvider = async (request: MaintenanceRequest) => {
+    setSelectedRequestForAssignment(request);
+    await loadAvailableProviders();
+    setShowAssignProviderDialog(true);
+  };
+
+  const loadAvailableProviders = async () => {
+    try {
+      // Mock data for available providers
+      const mockProviders = [
+        {
+          id: '1',
+          name: 'Carlos Rodríguez',
+          specialty: 'Mantenimiento General',
+          rating: 4.8,
+          location: 'Santiago Centro',
+          hourlyRate: 15000,
+          availability: 'available',
+        },
+        {
+          id: '2',
+          name: 'María González',
+          specialty: 'Limpieza Profesional',
+          rating: 4.9,
+          location: 'Providencia',
+          hourlyRate: 12000,
+          availability: 'available',
+        },
+        {
+          id: '3',
+          name: 'Pedro Sánchez',
+          specialty: 'Reparaciones Eléctricas',
+          rating: 4.6,
+          location: 'Las Condes',
+          hourlyRate: 18000,
+          availability: 'busy',
+        },
+        {
+          id: '4',
+          name: 'Ana López',
+          specialty: 'Jardinería',
+          rating: 4.7,
+          location: 'Vitacura',
+          hourlyRate: 14000,
+          availability: 'available',
+        },
+      ];
+
+      setAvailableProviders(mockProviders);
+    } catch (error) {
+      logger.error('Error cargando proveedores:', { error });
+    }
+  };
+
+  const handleConfirmProviderAssignment = async () => {
+    if (!selectedRequestForAssignment || !selectedProvider) {
+      return;
+    }
+
+    try {
+      const provider = availableProviders.find(p => p.id === selectedProvider);
+
+      // TODO: Implement API call to assign provider
+      setMaintenanceRequests(prev =>
+        prev.map(r =>
+          r.id === selectedRequestForAssignment.id
+            ? { ...r, status: 'assigned' as const, providerName: provider?.name }
+            : r
+        )
+      );
+
+      setShowAssignProviderDialog(false);
+      setSelectedProvider('');
+      setSelectedRequestForAssignment(null);
+
+      logger.info('Proveedor asignado a solicitud:', {
+        requestId: selectedRequestForAssignment.id,
+        providerId: selectedProvider,
+        providerName: provider?.name,
+      });
+    } catch (error) {
+      logger.error('Error asignando proveedor:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -569,6 +663,15 @@ export default function BrokerMaintenancePage() {
                         <Calendar className="w-4 h-4" />
                       </Button>
                     )}
+                    {!request.providerName && request.status === 'pending' && (
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => handleAssignProvider(request)}
+                      >
+                        <Users className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -585,6 +688,160 @@ export default function BrokerMaintenancePage() {
             <p className="text-gray-600">
               Las solicitudes aparecerán aquí cuando se reporten problemas
             </p>
+          </div>
+        )}
+
+        {/* Modal para asignar proveedor */}
+        {showAssignProviderDialog && selectedRequestForAssignment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Asignar Proveedor de Mantenimiento</h3>
+                <button
+                  onClick={() => {
+                    setShowAssignProviderDialog(false);
+                    setSelectedProvider('');
+                    setSelectedRequestForAssignment(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Información de la solicitud */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información de la Solicitud</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Propiedad</p>
+                        <p className="font-medium">{selectedRequestForAssignment.propertyTitle}</p>
+                        <p className="text-sm text-gray-500">
+                          {selectedRequestForAssignment.propertyAddress}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Tipo de Problema</p>
+                        <p className="font-medium capitalize">
+                          {selectedRequestForAssignment.issueType}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Prioridad: {selectedRequestForAssignment.priority}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Propietario</p>
+                        <p className="font-medium">{selectedRequestForAssignment.ownerName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Inquilino</p>
+                        <p className="font-medium">{selectedRequestForAssignment.tenantName}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-600">Descripción</p>
+                      <p className="bg-gray-50 p-3 rounded mt-1">
+                        {selectedRequestForAssignment.description}
+                      </p>
+                      {selectedRequestForAssignment.estimatedCost && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          Costo estimado: $
+                          {selectedRequestForAssignment.estimatedCost.toLocaleString('es-CL')}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Selección de proveedor */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Seleccionar Proveedor</h3>
+                  <div className="grid gap-4">
+                    {availableProviders.map(provider => (
+                      <Card
+                        key={provider.id}
+                        className={`cursor-pointer transition-all ${
+                          selectedProvider === provider.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'hover:border-gray-300'
+                        }`}
+                        onClick={() => setSelectedProvider(provider.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Users className="w-6 h-6 text-blue-600" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold">{provider.name}</h4>
+                                <p className="text-sm text-gray-600">{provider.specialty}</p>
+                                <div className="flex items-center gap-4 mt-2">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-sm">{provider.rating}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm">{provider.location}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="w-4 h-4 text-green-600" />
+                                    <span className="text-sm font-medium text-green-600">
+                                      ${provider.hourlyRate.toLocaleString('es-CL')}/hora
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                className={
+                                  provider.availability === 'available'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }
+                              >
+                                {provider.availability === 'available' ? 'Disponible' : 'Ocupado'}
+                              </Badge>
+                              {selectedProvider === provider.id && (
+                                <CheckCircle className="w-5 h-5 text-blue-600" />
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAssignProviderDialog(false);
+                      setSelectedProvider('');
+                      setSelectedRequestForAssignment(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleConfirmProviderAssignment}
+                    disabled={!selectedProvider}
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Asignar Proveedor
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

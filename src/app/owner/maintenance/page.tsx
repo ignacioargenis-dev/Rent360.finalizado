@@ -16,6 +16,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -106,6 +107,9 @@ export default function MantenimientoPage() {
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
+  const [availableProviders, setAvailableProviders] = useState<any[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   useEffect(() => {
     // Cargar datos de la página
@@ -269,6 +273,94 @@ export default function MantenimientoPage() {
     } catch (error) {
       logger.error('Error rechazando solicitud:', {
         error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleAssignProvider = async (request: MaintenanceRequest) => {
+    setSelectedRequest(request);
+    await loadAvailableProviders();
+    setShowAssignProviderDialog(true);
+  };
+
+  const loadAvailableProviders = async () => {
+    try {
+      // Mock data for available providers
+      const mockProviders = [
+        {
+          id: '1',
+          name: 'Carlos Rodríguez',
+          specialty: 'Mantenimiento General',
+          rating: 4.8,
+          location: 'Santiago Centro',
+          hourlyRate: 15000,
+          availability: 'available',
+        },
+        {
+          id: '2',
+          name: 'María González',
+          specialty: 'Limpieza Profesional',
+          rating: 4.9,
+          location: 'Providencia',
+          hourlyRate: 12000,
+          availability: 'available',
+        },
+        {
+          id: '3',
+          name: 'Pedro Sánchez',
+          specialty: 'Reparaciones Eléctricas',
+          rating: 4.6,
+          location: 'Las Condes',
+          hourlyRate: 18000,
+          availability: 'busy',
+        },
+        {
+          id: '4',
+          name: 'Ana López',
+          specialty: 'Jardinería',
+          rating: 4.7,
+          location: 'Vitacura',
+          hourlyRate: 14000,
+          availability: 'available',
+        },
+      ];
+
+      setAvailableProviders(mockProviders);
+    } catch (error) {
+      logger.error('Error cargando proveedores:', { error });
+    }
+  };
+
+  const handleConfirmProviderAssignment = async () => {
+    if (!selectedRequest || !selectedProvider) {
+      return;
+    }
+
+    try {
+      const provider = availableProviders.find(p => p.id === selectedProvider);
+
+      // TODO: Implement API call to assign provider
+      setMaintenanceRequests(prev =>
+        prev.map(r =>
+          r.id === selectedRequest.id
+            ? { ...r, status: 'IN_PROGRESS' as const, provider: provider?.name }
+            : r
+        )
+      );
+
+      setShowAssignProviderDialog(false);
+      setSelectedProvider('');
+      setSelectedRequest(null);
+
+      logger.info('Proveedor asignado a solicitud:', {
+        requestId: selectedRequest.id,
+        providerId: selectedProvider,
+        providerName: provider?.name,
+      });
+    } catch (error) {
+      logger.error('Error asignando proveedor:', {
+        error: error instanceof Error ? error.message : String(error),
+        requestId: selectedRequest?.id,
       });
     }
   };
@@ -569,6 +661,16 @@ export default function MantenimientoPage() {
                             </Button>
                           </>
                         )}
+                        {request.status === 'APPROVED' && !request.provider && (
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleAssignProvider(request)}
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            Asignar Proveedor
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -717,6 +819,137 @@ export default function MantenimientoPage() {
                     <p className="text-gray-500">No asignado</p>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para asignar proveedor */}
+      <Dialog open={showAssignProviderDialog} onOpenChange={setShowAssignProviderDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Asignar Proveedor de Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Selecciona un proveedor verificado para esta solicitud de mantenimiento
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedRequest && (
+            <div className="space-y-6">
+              {/* Información de la solicitud */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Información de la Solicitud</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Propiedad</p>
+                      <p className="font-medium">{selectedRequest.propertyTitle}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Tipo de Trabajo</p>
+                      <p className="font-medium">{getTypeLabel(selectedRequest.type)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Inquilino</p>
+                      <p className="font-medium">{selectedRequest.tenantName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Costo Estimado</p>
+                      <p className="font-medium">{formatPrice(selectedRequest.estimatedCost)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600">Descripción</p>
+                    <p className="bg-gray-50 p-3 rounded mt-1">{selectedRequest.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Selección de proveedor */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Seleccionar Proveedor</h3>
+                <div className="grid gap-4">
+                  {availableProviders.map(provider => (
+                    <Card
+                      key={provider.id}
+                      className={`cursor-pointer transition-all ${
+                        selectedProvider === provider.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedProvider(provider.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Users className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{provider.name}</h4>
+                              <p className="text-sm text-gray-600">{provider.specialty}</p>
+                              <div className="flex items-center gap-4 mt-2">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                  <span className="text-sm">{provider.rating}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm">{provider.location}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4 text-green-600" />
+                                  <span className="text-sm font-medium text-green-600">
+                                    {formatPrice(provider.hourlyRate)}/hora
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={
+                                provider.availability === 'available'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }
+                            >
+                              {provider.availability === 'available' ? 'Disponible' : 'Ocupado'}
+                            </Badge>
+                            {selectedProvider === provider.id && (
+                              <CheckCircle className="w-5 h-5 text-blue-600" />
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAssignProviderDialog(false);
+                    setSelectedProvider('');
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleConfirmProviderAssignment}
+                  disabled={!selectedProvider}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Asignar Proveedor
+                </Button>
               </div>
             </div>
           )}
