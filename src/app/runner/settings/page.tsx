@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -65,6 +66,8 @@ interface RunnerSettings {
     email: string;
     phone: string;
     avatar?: string;
+    emergencyContact: string;
+    emergencyPhone: string;
   };
   workArea: {
     regions: string[];
@@ -76,6 +79,13 @@ interface RunnerSettings {
     };
     vehicleType: string;
     licensePlate: string;
+    experience: string;
+    specialties: string[];
+    languages: string[];
+    hourlyRate: number;
+    availability: 'available' | 'busy' | 'offline';
+    services: string[];
+    responseTime: string;
   };
   notifications: {
     emailNotifications: boolean;
@@ -100,6 +110,8 @@ export default function RunnerSettingsPage() {
       email: 'juan.perez@ejemplo.com',
       phone: '+56912345678',
       avatar: '',
+      emergencyContact: 'María Pérez',
+      emergencyPhone: '+56987654321',
     },
     workArea: {
       regions: ['Santiago Centro', 'Providencia', 'Las Condes'],
@@ -111,6 +123,13 @@ export default function RunnerSettingsPage() {
       },
       vehicleType: 'Auto',
       licensePlate: 'AB-CD-12',
+      experience: '3 años',
+      specialties: ['Inspecciones rápidas', 'Fotografía profesional', 'Reportes detallados'],
+      languages: ['Español', 'Inglés'],
+      hourlyRate: 15000,
+      availability: 'available',
+      services: ['Visitas de inspección', 'Seguimiento de propiedades', 'Reportes fotográficos'],
+      responseTime: '< 1 hora',
     },
     notifications: {
       emailNotifications: true,
@@ -297,9 +316,11 @@ export default function RunnerSettingsPage() {
         )}
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="work">Trabajo</TabsTrigger>
+            <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
+            <TabsTrigger value="payment">Pagos</TabsTrigger>
             <TabsTrigger value="documents">Documentos</TabsTrigger>
           </TabsList>
 
@@ -366,8 +387,8 @@ export default function RunnerSettingsPage() {
                       <Label htmlFor="emergencyContact">Nombre del Contacto</Label>
                       <Input
                         id="emergencyContact"
-                        value={settings.profile.avatar || ''}
-                        onChange={e => updateProfile('avatar', e.target.value)}
+                        value={settings.profile.emergencyContact}
+                        onChange={e => updateProfile('emergencyContact', e.target.value)}
                         placeholder="Nombre del contacto de emergencia"
                       />
                     </div>
@@ -375,8 +396,8 @@ export default function RunnerSettingsPage() {
                       <Label htmlFor="emergencyPhone">Teléfono de Emergencia</Label>
                       <Input
                         id="emergencyPhone"
-                        value={settings.workArea.vehicleType}
-                        onChange={e => updateWorkArea('vehicleType', e.target.value)}
+                        value={settings.profile.emergencyPhone}
+                        onChange={e => updateProfile('emergencyPhone', e.target.value)}
                         placeholder="+56 9 1234 5678"
                       />
                     </div>
@@ -386,16 +407,254 @@ export default function RunnerSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Notifications Tab */}
+          {/* Work Area Tab */}
           <TabsContent value="work" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Car className="w-5 h-5" />
-                  Preferencias de Trabajo
+                  Área de Trabajo y Servicios
                 </CardTitle>
                 <CardDescription>
-                  Configura tu área de trabajo y preferencias laborales
+                  Configura tu zona de trabajo, experiencia y servicios que ofreces
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Experience and Services */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="experience">Años de Experiencia</Label>
+                      <Input
+                        id="experience"
+                        value={settings.workArea.experience}
+                        onChange={e => updateWorkArea('experience', e.target.value)}
+                        placeholder="Ej: 3 años"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="hourlyRate">Tarifa por Hora (CLP)</Label>
+                      <Input
+                        id="hourlyRate"
+                        type="number"
+                        value={settings.workArea.hourlyRate}
+                        onChange={e => updateWorkArea('hourlyRate', Number(e.target.value))}
+                        placeholder="15000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Servicios que Ofreces</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Visitas de inspección',
+                        'Seguimiento de propiedades',
+                        'Reportes fotográficos',
+                        'Entregas de llaves',
+                        'Coordinación de visitas',
+                        'Verificación de daños',
+                      ].map(service => (
+                        <Badge
+                          key={service}
+                          variant={
+                            settings.workArea.services.includes(service) ? 'default' : 'outline'
+                          }
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const newServices = settings.workArea.services.includes(service)
+                              ? settings.workArea.services.filter(s => s !== service)
+                              : [...settings.workArea.services, service];
+                            updateWorkArea('services', newServices);
+                          }}
+                        >
+                          {service}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Especialidades</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Inspecciones rápidas',
+                        'Fotografía profesional',
+                        'Reportes detallados',
+                        'Entregas seguras',
+                        'Verificación de daños',
+                        'Coordinación logística',
+                      ].map(specialty => (
+                        <Badge
+                          key={specialty}
+                          variant={
+                            settings.workArea.specialties.includes(specialty)
+                              ? 'default'
+                              : 'outline'
+                          }
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const newSpecialties = settings.workArea.specialties.includes(specialty)
+                              ? settings.workArea.specialties.filter(s => s !== specialty)
+                              : [...settings.workArea.specialties, specialty];
+                            updateWorkArea('specialties', newSpecialties);
+                          }}
+                        >
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Idiomas</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Español', 'Inglés', 'Portugués', 'Francés'].map(language => (
+                        <Badge
+                          key={language}
+                          variant={
+                            settings.workArea.languages.includes(language) ? 'default' : 'outline'
+                          }
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const newLanguages = settings.workArea.languages.includes(language)
+                              ? settings.workArea.languages.filter(l => l !== language)
+                              : [...settings.workArea.languages, language];
+                            updateWorkArea('languages', newLanguages);
+                          }}
+                        >
+                          {language}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle and Regions */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Vehículo y Zonas</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicleType">Tipo de Vehículo</Label>
+                      <Input
+                        id="vehicleType"
+                        value={settings.workArea.vehicleType}
+                        onChange={e => updateWorkArea('vehicleType', e.target.value)}
+                        placeholder="Auto, Moto, Bicicleta"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="licensePlate">Patente</Label>
+                      <Input
+                        id="licensePlate"
+                        value={settings.workArea.licensePlate}
+                        onChange={e => updateWorkArea('licensePlate', e.target.value)}
+                        placeholder="AB-CD-12"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="maxDistance">Distancia Máxima (km)</Label>
+                    <Input
+                      id="maxDistance"
+                      type="number"
+                      value={settings.workArea.maxDistance}
+                      onChange={e => updateWorkArea('maxDistance', Number(e.target.value))}
+                      placeholder="50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Regiones de Trabajo</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Santiago Centro',
+                        'Providencia',
+                        'Las Condes',
+                        'Vitacura',
+                        'Ñuñoa',
+                        'La Reina',
+                        'Macul',
+                      ].map(region => (
+                        <Badge
+                          key={region}
+                          variant={
+                            settings.workArea.regions.includes(region) ? 'default' : 'outline'
+                          }
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const newRegions = settings.workArea.regions.includes(region)
+                              ? settings.workArea.regions.filter(r => r !== region)
+                              : [...settings.workArea.regions, region];
+                            updateWorkArea('regions', newRegions);
+                          }}
+                        >
+                          {region}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Horarios Preferidos</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={settings.workArea.preferredTimes.morning}
+                          onChange={e =>
+                            updateWorkArea('preferredTimes', {
+                              ...settings.workArea.preferredTimes,
+                              morning: e.target.checked,
+                            })
+                          }
+                        />
+                        <span>Mañana</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={settings.workArea.preferredTimes.afternoon}
+                          onChange={e =>
+                            updateWorkArea('preferredTimes', {
+                              ...settings.workArea.preferredTimes,
+                              afternoon: e.target.checked,
+                            })
+                          }
+                        />
+                        <span>Tarde</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={settings.workArea.preferredTimes.evening}
+                          onChange={e =>
+                            updateWorkArea('preferredTimes', {
+                              ...settings.workArea.preferredTimes,
+                              evening: e.target.checked,
+                            })
+                          }
+                        />
+                        <span>Noche</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Preferencias de Notificación
+                </CardTitle>
+                <CardDescription>
+                  Configura cómo quieres recibir notificaciones sobre trabajos y actualizaciones
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -432,13 +691,13 @@ export default function RunnerSettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label htmlFor="maintenance-reminders">Recordatorios de Mantenimiento</Label>
+                      <Label htmlFor="job-reminders">Recordatorios de Trabajos</Label>
                       <p className="text-sm text-gray-600">
-                        Recibe recordatorios sobre mantenimientos programados
+                        Recibe recordatorios sobre trabajos programados
                       </p>
                     </div>
                     <Switch
-                      id="maintenance-reminders"
+                      id="job-reminders"
                       checked={settings.notifications.jobReminders}
                       onCheckedChange={checked => updateNotifications('jobReminders', checked)}
                     />
@@ -460,13 +719,13 @@ export default function RunnerSettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label htmlFor="lease-updates">Actualizaciones de Contrato</Label>
+                      <Label htmlFor="rating-updates">Actualizaciones de Calificación</Label>
                       <p className="text-sm text-gray-600">
-                        Recibe notificaciones sobre cambios en tu contrato de arrendamiento
+                        Recibe notificaciones cuando recibas nuevas calificaciones
                       </p>
                     </div>
                     <Switch
-                      id="lease-updates"
+                      id="rating-updates"
                       checked={settings.notifications.ratingUpdates}
                       onCheckedChange={checked => updateNotifications('ratingUpdates', checked)}
                     />
@@ -476,7 +735,90 @@ export default function RunnerSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Privacy Tab */}
+          {/* Payment Tab */}
+          <TabsContent value="payment" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Información de Pagos
+                </CardTitle>
+                <CardDescription>
+                  Configura tus datos bancarios para recibir pagos por tus servicios
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bankAccount">Cuenta Bancaria</Label>
+                      <Input
+                        id="bankAccount"
+                        value={settings.payment.bankAccount}
+                        onChange={e => updatePayment('bankAccount', e.target.value)}
+                        placeholder="001234567890"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="taxId">RUT</Label>
+                      <Input
+                        id="taxId"
+                        value={settings.payment.taxId}
+                        onChange={e => updatePayment('taxId', e.target.value)}
+                        placeholder="12.345.678-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Método de Pago Preferido</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="transfer"
+                          checked={settings.payment.paymentMethod === 'transfer'}
+                          onChange={e => updatePayment('paymentMethod', e.target.value)}
+                        />
+                        <span>Transferencia Bancaria</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="cash"
+                          checked={settings.payment.paymentMethod === 'cash'}
+                          onChange={e => updatePayment('paymentMethod', e.target.value)}
+                        />
+                        <span>Efectivo</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="wallet"
+                          checked={settings.payment.paymentMethod === 'wallet'}
+                          onChange={e => updatePayment('paymentMethod', e.target.value)}
+                        />
+                        <span>Billetera Digital</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">Nota Importante</h4>
+                    <p className="text-sm text-blue-800">
+                      Todos los pagos se procesan exclusivamente a través de la plataforma Rent360.
+                      Esto garantiza seguridad, trazabilidad y cumplimiento normativo.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Documents Tab */}
           <TabsContent value="documents" className="space-y-6">
             <Card>
               <CardHeader>

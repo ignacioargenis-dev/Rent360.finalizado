@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   MapPin,
   Calendar,
@@ -65,6 +74,7 @@ interface VisitStats {
 }
 
 export default function RunnerVisitsPage() {
+  const router = useRouter();
   const { user, loading: userLoading } = useUserState();
 
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -336,6 +346,65 @@ export default function RunnerVisitsPage() {
   const todayVisits = filteredVisits.filter(visit => isToday(visit.scheduledDate));
   const overdueVisits = filteredVisits.filter(visit => isOverdue(visit));
 
+  const handleNewVisit = () => {
+    router.push('/runner/visits/new');
+  };
+
+  const handleStartVisit = (visitId: string) => {
+    setVisits(prev =>
+      prev.map(visit =>
+        visit.id === visitId
+          ? { ...visit, status: 'IN_PROGRESS' as const, actualDuration: 0 }
+          : visit
+      )
+    );
+    alert('Visita iniciada exitosamente');
+  };
+
+  const handleCallClient = (phone: string) => {
+    window.open(`tel:${phone}`);
+  };
+
+  const handleUploadPhotos = (visitId: string) => {
+    router.push(`/runner/photos?visitId=${visitId}`);
+  };
+
+  const handleCompleteVisit = (visitId: string) => {
+    setVisits(prev =>
+      prev.map(visit =>
+        visit.id === visitId
+          ? { ...visit, status: 'COMPLETED' as const, actualDuration: visit.estimatedDuration }
+          : visit
+      )
+    );
+    alert('Visita completada exitosamente');
+  };
+
+  const handleViewDetails = (visitId: string) => {
+    router.push(`/runner/visits/${visitId}`);
+  };
+
+  const handleContactClient = (visitId: string) => {
+    const visit = visits.find(v => v.id === visitId);
+    if (visit) {
+      // Guardar datos del cliente para iniciar conversación
+      const recipientData = {
+        id: `client_${visit.id}`,
+        name: visit.clientName,
+        email: visit.clientEmail,
+        phone: visit.clientPhone,
+        type: 'client' as const,
+        propertyTitle: visit.propertyTitle,
+      };
+      sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+      router.push('/runner/messages?new=true');
+    }
+  };
+
+  const handleFilterToggle = () => {
+    alert('Funcionalidad de filtros avanzados próximamente disponible');
+  };
+
   if (userLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -467,53 +536,56 @@ export default function RunnerVisitsPage() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
+                  <Input
                     type="text"
                     placeholder="Buscar por propiedad, cliente o dirección..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Todos los estados</option>
-                  <option value="PENDING">Pendientes</option>
-                  <option value="IN_PROGRESS">En Progreso</option>
-                  <option value="COMPLETED">Completadas</option>
-                  <option value="CANCELLED">Canceladas</option>
-                </select>
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={priorityFilter}
-                  onChange={e => setPriorityFilter(e.target.value)}
-                >
-                  <option value="all">Todas las prioridades</option>
-                  <option value="URGENT">Urgentes</option>
-                  <option value="HIGH">Altas</option>
-                  <option value="MEDIUM">Medias</option>
-                  <option value="LOW">Bajas</option>
-                </select>
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={dateFilter}
-                  onChange={e => setDateFilter(e.target.value)}
-                >
-                  <option value="all">Todas las fechas</option>
-                  <option value="today">Hoy</option>
-                  <option value="overdue">Atrasadas</option>
-                  <option value="pending">Pendientes</option>
-                </select>
-                <Button variant="outline">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                    <SelectItem value="COMPLETED">Completadas</SelectItem>
+                    <SelectItem value="CANCELLED">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Prioridad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las prioridades</SelectItem>
+                    <SelectItem value="URGENT">Urgentes</SelectItem>
+                    <SelectItem value="HIGH">Altas</SelectItem>
+                    <SelectItem value="MEDIUM">Medias</SelectItem>
+                    <SelectItem value="LOW">Bajas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Fecha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las fechas</SelectItem>
+                    <SelectItem value="today">Hoy</SelectItem>
+                    <SelectItem value="overdue">Atrasadas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={handleFilterToggle}>
                   <Filter className="w-4 h-4 mr-2" />
                   Filtros
                 </Button>
-                <Button>
+                <Button onClick={handleNewVisit}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Visita
                 </Button>
@@ -642,11 +714,20 @@ export default function RunnerVisitsPage() {
                   <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
                     {visit.status === 'PENDING' && (
                       <>
-                        <Button size="sm" className="flex-1">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleStartVisit(visit.id)}
+                        >
                           <Navigation className="w-4 h-4 mr-2" />
                           Iniciar Visita
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleCallClient(visit.clientPhone)}
+                        >
                           <Phone className="w-4 h-4 mr-2" />
                           Llamar Cliente
                         </Button>
@@ -654,11 +735,20 @@ export default function RunnerVisitsPage() {
                     )}
                     {visit.status === 'IN_PROGRESS' && (
                       <>
-                        <Button size="sm" className="flex-1">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleUploadPhotos(visit.id)}
+                        >
                           <Camera className="w-4 h-4 mr-2" />
                           Subir Fotos
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleCompleteVisit(visit.id)}
+                        >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Finalizar
                         </Button>
@@ -666,17 +756,31 @@ export default function RunnerVisitsPage() {
                     )}
                     {visit.status === 'COMPLETED' && (
                       <>
-                        <Button size="sm" className="flex-1">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleViewDetails(visit.id)}
+                        >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleContactClient(visit.id)}
+                        >
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Contactar
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => alert('Más opciones próximamente')}
+                    >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
@@ -701,7 +805,7 @@ export default function RunnerVisitsPage() {
                   ? 'Intenta ajustar tus filtros de búsqueda.'
                   : 'Aún no tienes visitas programadas.'}
               </p>
-              <Button>
+              <Button onClick={handleNewVisit}>
                 <Plus className="w-4 h-4 mr-2" />
                 Programar Nueva Visita
               </Button>

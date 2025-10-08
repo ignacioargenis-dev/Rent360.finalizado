@@ -134,12 +134,12 @@ export default function RunnerIncentivesPage() {
           },
           {
             id: '5',
-            title: 'Lealtad Premium',
+            title: 'Bonificación por Lealtad',
             description: 'Trabajar con Rent360 por más de 6 meses',
-            type: 'reward',
+            type: 'bonus',
             category: 'loyalty',
-            value: 50,
-            currency: 'points',
+            value: 30000,
+            currency: 'CLP',
             status: 'earned',
             earnedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
           },
@@ -193,15 +193,15 @@ export default function RunnerIncentivesPage() {
           i =>
             i.earnedDate && new Date(i.earnedDate) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30)
         ).length;
-        const pointsBalance = earnedIncentives
-          .filter(i => i.currency === 'points')
+        const totalEarnedMoney = earnedIncentives
+          .filter(i => i.currency === 'CLP')
           .reduce((sum, i) => sum + i.value, 0);
 
         const incentiveStats: IncentiveStats = {
           totalEarned: earnedIncentives.length,
           activeIncentives,
           completedThisMonth,
-          pointsBalance,
+          pointsBalance: totalEarnedMoney, // Ahora representa dinero ganado
           nextMilestone: 'Corredor del Mes - 25% completado',
         };
 
@@ -295,20 +295,27 @@ export default function RunnerIncentivesPage() {
 
   return (
     <UnifiedDashboardLayout
-      title="Mis Incentivos"
-      subtitle="Logros, bonificaciones y recompensas por tu rendimiento"
+      title="Mis Recompensas"
+      subtitle="Bonificaciones monetarias y reconocimientos por tu rendimiento"
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Incentivos</h1>
-            <p className="text-gray-600">Revisa tus logros, bonificaciones y próximos objetivos</p>
+            <h1 className="text-2xl font-bold text-gray-900">Mis Recompensas</h1>
+            <p className="text-gray-600">
+              Bonificaciones monetarias y reconocimientos por tu excelente rendimiento
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
-              <Gift className="w-4 h-4 mr-2" />
-              Canjear Puntos
+            <Button
+              variant="outline"
+              onClick={() =>
+                alert('Las recompensas se pagan automáticamente al completar los objetivos')
+              }
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Ver Recompensas Disponibles
             </Button>
           </div>
         </div>
@@ -361,11 +368,13 @@ export default function RunnerIncentivesPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Puntos Disponibles</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pointsBalance}</p>
+                  <p className="text-sm font-medium text-gray-600">Total Ganado</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(stats.totalEarned * 10000, 'CLP')}
+                  </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Star className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -512,7 +521,16 @@ export default function RunnerIncentivesPage() {
                     <div className="text-center">
                       <Target className="w-12 h-12 text-blue-500 mx-auto mb-2" />
                       <p className="text-sm text-gray-600">{stats.nextMilestone}</p>
-                      <Button className="w-full mt-3" size="sm" variant="outline">
+                      <Button
+                        className="w-full mt-3"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          alert(
+                            'Próximo objetivo: Conviértete en el corredor del mes completando 25% más visitas este mes para ganar $100.000 adicionales.'
+                          )
+                        }
+                      >
                         Ver Detalles
                       </Button>
                     </div>

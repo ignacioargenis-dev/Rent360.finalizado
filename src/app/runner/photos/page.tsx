@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Camera,
   Upload,
@@ -78,6 +87,7 @@ interface PhotoStats {
 }
 
 export default function RunnerPhotosPage() {
+  const router = useRouter();
   const { user, loading: userLoading } = useUserState();
 
   const [photoReports, setPhotoReports] = useState<PhotoReport[]>([]);
@@ -324,6 +334,27 @@ export default function RunnerPhotosPage() {
     }
   };
 
+  const handleUploadPhotos = (reportId: string) => {
+    router.push(`/runner/photos/upload?reportId=${reportId}`);
+  };
+
+  const handleViewReport = (reportId: string) => {
+    router.push(`/runner/photos/${reportId}`);
+  };
+
+  const handleDownloadReport = (reportId: string) => {
+    // Simular descarga
+    alert(`Descargando reporte fotográfico ${reportId}`);
+  };
+
+  const handleFilterToggle = () => {
+    alert('Funcionalidad de filtros avanzados próximamente disponible');
+  };
+
+  const handleNewUpload = () => {
+    router.push('/runner/photos/upload');
+  };
+
   const filteredReports = photoReports.filter(report => {
     const matchesSearch =
       report.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -472,37 +503,39 @@ export default function RunnerPhotosPage() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
+                  <Input
                     type="text"
                     placeholder="Buscar por propiedad, cliente o dirección..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Todos los estados</option>
-                  <option value="PENDING">Pendientes</option>
-                  <option value="UPLOADED">Subidos</option>
-                  <option value="APPROVED">Aprobados</option>
-                  <option value="REJECTED">Rechazados</option>
-                </select>
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={dateFilter}
-                  onChange={e => setDateFilter(e.target.value)}
-                >
-                  <option value="all">Todas las fechas</option>
-                  <option value="thisMonth">Este mes</option>
-                  <option value="lastMonth">Mes pasado</option>
-                  <option value="pending">Pendientes</option>
-                </select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="UPLOADED">Subidos</SelectItem>
+                    <SelectItem value="APPROVED">Aprobados</SelectItem>
+                    <SelectItem value="REJECTED">Rechazados</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Fecha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las fechas</SelectItem>
+                    <SelectItem value="thisMonth">Este mes</SelectItem>
+                    <SelectItem value="lastMonth">Mes pasado</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="flex border rounded-lg">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -521,11 +554,11 @@ export default function RunnerPhotosPage() {
                     <List className="w-4 h-4" />
                   </Button>
                 </div>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleFilterToggle}>
                   <Filter className="w-4 h-4 mr-2" />
                   Filtros
                 </Button>
-                <Button>
+                <Button onClick={handleNewUpload}>
                   <Plus className="w-4 h-4 mr-2" />
                   Subir Fotos
                 </Button>
@@ -613,17 +646,30 @@ export default function RunnerPhotosPage() {
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-2 border-t">
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleViewReport(report.id)}
+                      >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver
                       </Button>
                       {report.status === 'PENDING' && (
-                        <Button size="sm" className="flex-1">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleUploadPhotos(report.id)}
+                        >
                           <Upload className="w-4 h-4 mr-1" />
                           Subir
                         </Button>
                       )}
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => alert('Más opciones próximamente')}
+                      >
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </div>
@@ -712,21 +758,38 @@ export default function RunnerPhotosPage() {
                   )}
 
                   <div className="flex gap-2">
-                    <Button size="sm" className="flex-1">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleViewReport(report.id)}
+                    >
                       <Eye className="w-4 h-4 mr-2" />
                       Ver Detalles
                     </Button>
                     {report.status === 'PENDING' && (
-                      <Button size="sm" className="flex-1">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleUploadPhotos(report.id)}
+                      >
                         <Upload className="w-4 h-4 mr-2" />
                         Subir Fotos
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleDownloadReport(report.id)}
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       Descargar
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => alert('Más opciones próximamente')}
+                    >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
@@ -748,7 +811,7 @@ export default function RunnerPhotosPage() {
                   ? 'Intenta ajustar tus filtros de búsqueda.'
                   : 'Aún no has subido fotos de visitas.'}
               </p>
-              <Button>
+              <Button onClick={handleNewUpload}>
                 <Plus className="w-4 h-4 mr-2" />
                 Subir Primer Reporte
               </Button>

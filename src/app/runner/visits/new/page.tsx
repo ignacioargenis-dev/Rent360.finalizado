@@ -7,6 +7,17 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Save, MapPin, Search, Building, UserIcon, CheckCircle } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -388,10 +399,10 @@ export default function NewVisitPage() {
                         </label>
                         <div className="relative mb-2">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
+                          <Input
                             type="text"
                             placeholder="Buscar propiedad..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="pl-10"
                             value={searchPropertyTerm}
                             onChange={e => setSearchPropertyTerm(e.target.value)}
                           />
@@ -449,10 +460,10 @@ export default function NewVisitPage() {
                         </label>
                         <div className="relative mb-2">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
+                          <Input
                             type="text"
                             placeholder="Buscar cliente..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="pl-10"
                             value={searchClientTerm}
                             onChange={e => setSearchClientTerm(e.target.value)}
                           />
@@ -501,17 +512,16 @@ export default function NewVisitPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <Label htmlFor="scheduledDate" className="text-sm font-medium">
                             Fecha *
-                          </label>
-                          <input
+                          </Label>
+                          <Input
+                            id="scheduledDate"
                             type="date"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              errors.scheduledDate ? 'border-red-500' : 'border-gray-300'
-                            }`}
                             value={formData.scheduledDate}
                             onChange={e => handleInputChange('scheduledDate', e.target.value)}
                             min={new Date().toISOString().substring(0, 10)}
+                            className={errors.scheduledDate ? 'border-red-500' : ''}
                           />
                           {errors.scheduledDate && (
                             <p className="text-red-500 text-sm mt-1">{errors.scheduledDate}</p>
@@ -519,16 +529,15 @@ export default function NewVisitPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <Label htmlFor="scheduledTime" className="text-sm font-medium">
                             Hora *
-                          </label>
-                          <input
+                          </Label>
+                          <Input
+                            id="scheduledTime"
                             type="time"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              errors.scheduledTime ? 'border-red-500' : 'border-gray-300'
-                            }`}
                             value={formData.scheduledTime}
                             onChange={e => handleInputChange('scheduledTime', e.target.value)}
+                            className={errors.scheduledTime ? 'border-red-500' : ''}
                           />
                           {errors.scheduledTime && (
                             <p className="text-red-500 text-sm mt-1">{errors.scheduledTime}</p>
@@ -634,17 +643,16 @@ export default function NewVisitPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Label htmlFor="earnings" className="text-sm font-medium">
                           Ganancias estimadas (CLP) *
-                        </label>
-                        <input
+                        </Label>
+                        <Input
+                          id="earnings"
                           type="number"
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            errors.earnings ? 'border-red-500' : 'border-gray-300'
-                          }`}
                           placeholder="15000"
                           value={formData.earnings || ''}
                           onChange={e => handleInputChange('earnings', Number(e.target.value))}
+                          className={errors.earnings ? 'border-red-500' : ''}
                         />
                         {errors.earnings && (
                           <p className="text-red-500 text-sm mt-1">{errors.earnings}</p>
@@ -655,29 +663,30 @@ export default function NewVisitPage() {
                       </div>
 
                       <div>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="photosRequired"
                             checked={formData.photosRequired}
-                            onChange={e => handleInputChange('photosRequired', e.target.checked)}
+                            onCheckedChange={checked =>
+                              handleInputChange('photosRequired', checked)
+                            }
                           />
-                          <span className="text-sm font-medium text-gray-700">
+                          <Label htmlFor="photosRequired" className="text-sm font-medium">
                             Se requieren fotografías
-                          </span>
-                        </label>
+                          </Label>
+                        </div>
                         <p className="text-sm text-gray-500 ml-6">
                           El cliente ha solicitado fotos detalladas de la propiedad
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Label htmlFor="notes" className="text-sm font-medium">
                           Notas para el Runner
-                        </label>
-                        <textarea
+                        </Label>
+                        <Textarea
+                          id="notes"
                           rows={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Instrucciones especiales, puntos a destacar, etc."
                           value={formData.notes}
                           onChange={e => handleInputChange('notes', e.target.value)}
@@ -685,12 +694,12 @@ export default function NewVisitPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Label htmlFor="specialInstructions" className="text-sm font-medium">
                           Instrucciones especiales del cliente
-                        </label>
-                        <textarea
+                        </Label>
+                        <Textarea
+                          id="specialInstructions"
                           rows={3}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Requerimientos específicos del cliente para la visita"
                           value={formData.specialInstructions}
                           onChange={e => handleInputChange('specialInstructions', e.target.value)}

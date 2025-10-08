@@ -287,6 +287,14 @@ export default function RunnerClientsPage() {
     }
   };
 
+  const handleViewClientDetails = (clientId: string) => {
+    router.push(`/runner/clients/${clientId}`);
+  };
+
+  const handleAddClient = () => {
+    router.push('/runner/clients/new');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -311,7 +319,7 @@ export default function RunnerClientsPage() {
             <p className="text-gray-600">Administra tu cartera de clientes y mantén el contacto</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleAddClient}>
               <Users className="w-4 h-4 mr-2" />
               Agregar Cliente
             </Button>
@@ -462,22 +470,34 @@ export default function RunnerClientsPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          <span>{client.email}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate" title={client.email}>
+                              {client.email}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Phone className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate" title={client.phone}>
+                              {client.phone}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          <span>{client.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span>{client.address}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>Último servicio: {formatDate(client.lastServiceDate)}</span>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate" title={client.address}>
+                              {client.address}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Calendar className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">
+                              Último servicio: {formatDate(client.lastServiceDate)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -536,7 +556,11 @@ export default function RunnerClientsPage() {
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Mensaje
                       </Button>
-                      <Button variant="default" size="sm">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleViewClientDetails(client.id)}
+                      >
                         Ver Detalles
                       </Button>
                     </div>
