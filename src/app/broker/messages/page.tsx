@@ -78,7 +78,8 @@ export default function BrokerMessagesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -94,7 +95,8 @@ export default function BrokerMessagesPage() {
             senderName: user?.name || 'Corredor',
             senderType: 'broker',
             recipientName: recipient.name,
-            recipientType: recipient.type === 'client' ? 'tenant' : (recipient.role as any) || 'tenant',
+            recipientType:
+              recipient.type === 'client' ? 'tenant' : (recipient.role as any) || 'tenant',
             subject: `Consulta sobre ${recipient.propertyTitle || recipient.serviceType || 'servicio'}`,
             content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.propertyTitle ? `la propiedad "${recipient.propertyTitle}"` : recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
             propertyTitle: recipient.propertyTitle,
@@ -116,7 +118,6 @@ export default function BrokerMessagesPage() {
           const url = new URL(window.location.href);
           url.searchParams.delete('new');
           window.history.replaceState({}, '', url.toString());
-
         } catch (error) {
           logger.error('Error parsing recipient data:', { error });
         }
@@ -330,58 +331,122 @@ export default function BrokerMessagesPage() {
     return date.toLocaleDateString('es-CL');
   };
 
-  const handleViewMessage = (messageId: string) => {
-    // Navigate to message detail view
-    window.open(`/broker/messages/${messageId}`, '_blank');
+  const handleViewMessage = async (messageId: string) => {
+    try {
+      // Fetch message details from API
+      const response = await fetch(`/api/messages/${messageId}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Open message in a modal or navigate to detail page
+        // For now, we'll show the message content in an alert
+        const message = data.data;
+        const content = `
+De: ${message.sender.name} (${message.sender.role})
+Para: ${message.receiver.name} (${message.receiver.role})
+Asunto: ${message.subject}
+Tipo: ${message.type}
+
+${message.content}
+
+Enviado: ${new Date(message.createdAt).toLocaleString('es-CL')}
+${message.property ? `\nPropiedad: ${message.property.title} - ${message.property.address}` : ''}
+${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
+        `;
+        alert(content);
+      } else {
+        alert('Error al cargar el mensaje');
+      }
+    } catch (error) {
+      logger.error('Error viewing message:', { error });
+      alert('Error al cargar el mensaje');
+    }
   };
 
   const handleReplyMessage = (messageId: string) => {
-    // Navigate to reply message form
-    const message = messages.find(m => m.id === messageId);
-    if (message) {
-      window.open(`/broker/messages/reply/${messageId}`, '_blank');
+    // Navigate to reply message form - for now, open in same tab
+    window.location.href = `/broker/messages/reply/${messageId}`;
+  };
+
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/read`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local state
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === messageId ? { ...msg, status: 'read' as const } : msg
+          )
+        );
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          unreadMessages: Math.max(0, prev.unreadMessages - 1),
+        }));
+      } else {
+        alert('Error al marcar mensaje como leído');
+      }
+    } catch (error) {
+      logger.error('Error marking message as read:', { error });
+      alert('Error al marcar mensaje como leído');
     }
   };
 
-  const handleMarkAsRead = (messageId: string) => {
-    // Mark message as read
-    const message = messages.find(m => m.id === messageId);
-    if (message && message.status === 'unread') {
-      alert(`Mensaje de ${message.senderName} marcado como leído`);
-    }
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim()) {
       alert('Por favor escribe un mensaje antes de enviar');
       return;
     }
 
-    const newMessageObj: Message = {
-      id: `msg_${Date.now()}`,
-      senderName: user?.name || 'Corredor',
-      senderType: 'broker',
-      recipientName: 'Sistema', // This would be the selected recipient
-      recipientType: 'owner',
-      subject: 'Nuevo mensaje',
-      content: newMessage,
-      propertyTitle: '',
-      propertyAddress: '',
-      type: 'general',
-      status: 'unread',
-      priority: 'normal',
-      createdAt: new Date().toISOString(),
-      hasAttachments: false,
-    };
+    try {
+      // Send message via API
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          receiverId: 'system_broadcast', // For system messages, or select a specific recipient
+          subject: 'Mensaje del sistema',
+          content: newMessage,
+          type: 'general',
+        }),
+      });
 
-    // Add message to list
-    setMessages(prev => [newMessageObj, ...prev]);
+      if (response.ok) {
+        const data = await response.json();
+        // Add message to list (simplified version)
+        const newMessageObj: Message = {
+          id: data.data.id,
+          senderName: user?.name || 'Corredor',
+          senderType: 'broker',
+          recipientName: 'Sistema',
+          recipientType: 'owner',
+          subject: 'Mensaje del sistema',
+          content: newMessage,
+          propertyTitle: '',
+          propertyAddress: '',
+          type: 'general',
+          status: 'unread',
+          priority: 'normal',
+          createdAt: new Date().toISOString(),
+          hasAttachments: false,
+        };
 
-    // Clear input
-    setNewMessage('');
-
-    // Show success message
-    alert('Mensaje enviado exitosamente');
+        setMessages(prev => [newMessageObj, ...prev]);
+        setNewMessage('');
+        alert('Mensaje enviado exitosamente');
+      } else {
+        const error = await response.json();
+        alert(`Error al enviar mensaje: ${error.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      logger.error('Error sending message:', { error });
+      alert('Error al enviar mensaje. Por favor intenta nuevamente.');
+    }
   };
 
   const filteredMessages = messages.filter(message => {
@@ -648,8 +713,8 @@ export default function BrokerMessagesPage() {
                   placeholder="Escribe un mensaje..."
                   className="flex-1"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                 />
                 <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                   <Send className="w-4 h-4 mr-2" />

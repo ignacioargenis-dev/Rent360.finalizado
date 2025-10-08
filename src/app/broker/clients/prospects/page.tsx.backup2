@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,18 +17,21 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   Users,
-  UserPlus,
-  Eye,
-  Mail,
-  Target,
-  TrendingUp,
-  Filter,
   Search,
-  MessageSquare,
-  Calendar,
-  Home,
+  Filter,
+  Eye,
+  UserPlus,
+  Mail,
   Phone,
+  Calendar,
+  MapPin,
+  TrendingUp,
+  RefreshCw,
+  CheckCircle,
+  Home,
   UserCheck,
+  MessageSquare,
+  Target,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -47,6 +51,20 @@ interface Prospect {
   createdAt: string;
   lastContact: string;
   notes: string;
+  // Property owner information
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerPhone?: string;
+  propertyId?: string;
+}
+
+interface ProspectStats {
+  total: number;
+  active: number;
+  contacted: number;
+  qualified: number;
+  converted: number;
+  conversionRate: number;
 }
 
 export default function BrokerProspectsPage() {
@@ -54,6 +72,14 @@ export default function BrokerProspectsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [filteredProspects, setFilteredProspects] = useState<Prospect[]>([]);
+  const [stats, setStats] = useState<ProspectStats>({
+    total: 0,
+    active: 0,
+    contacted: 0,
+    qualified: 0,
+    converted: 0,
+    conversionRate: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -68,12 +94,15 @@ export default function BrokerProspectsPage() {
           setUser(data.user);
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
     const loadProspectsData = async () => {
       try {
+        // Mock prospects data
         const mockProspects: Prospect[] = [
           {
             id: '1',
@@ -116,14 +145,70 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
             notes: 'Busca oficina para empresa tech, presupuesto flexible',
+            ownerName: 'Carlos Mendoza',
+            ownerEmail: 'carlos.mendoza@email.com',
+            ownerPhone: '+56977774444',
+            propertyId: 'prop-001',
+          },
+          {
+            id: '4',
+            name: 'Roberto Díaz',
+            email: 'roberto.diaz@email.com',
+            phone: '+56977778888',
+            interestedIn: ['house', 'land'],
+            budget: { min: 800000, max: 1500000 },
+            preferredLocation: 'Colina',
+            status: 'converted',
+            source: 'advertising',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+            notes: 'Compra completada - casa en Chicureo',
+            ownerName: 'María Torres',
+            ownerEmail: 'maria.torres@email.com',
+            ownerPhone: '+56988885555',
+            propertyId: 'prop-002',
+          },
+          {
+            id: '5',
+            name: 'Patricia Morales',
+            email: 'patricia.morales@email.com',
+            phone: '+56944443333',
+            interestedIn: ['apartment'],
+            budget: { min: 150000, max: 250000 },
+            preferredLocation: 'Ñuñoa',
+            status: 'lost',
+            source: 'website',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
+            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+            notes: 'Perdió interés, encontró opción más económica',
           },
         ];
 
         setProspects(mockProspects);
         setFilteredProspects(mockProspects);
+
+        // Calculate stats
+        const total = mockProspects.length;
+        const active = mockProspects.filter(p => p.status === 'active').length;
+        const contacted = mockProspects.filter(p => p.status === 'contacted').length;
+        const qualified = mockProspects.filter(p => p.status === 'qualified').length;
+        const converted = mockProspects.filter(p => p.status === 'converted').length;
+        const conversionRate = total > 0 ? (converted / total) * 100 : 0;
+
+        setStats({
+          total,
+          active,
+          contacted,
+          qualified,
+          converted,
+          conversionRate,
+        });
+
         setLoading(false);
       } catch (error) {
-        console.error('Error loading prospects data:', error);
+        logger.error('Error loading prospects data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setLoading(false);
       }
     };
@@ -135,6 +220,7 @@ export default function BrokerProspectsPage() {
   useEffect(() => {
     let filtered = prospects;
 
+    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(
         prospect =>
@@ -144,10 +230,12 @@ export default function BrokerProspectsPage() {
       );
     }
 
+    // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(prospect => prospect.status === statusFilter);
     }
 
+    // Filter by source
     if (sourceFilter !== 'all') {
       filtered = filtered.filter(prospect => prospect.source === sourceFilter);
     }
@@ -172,11 +260,41 @@ export default function BrokerProspectsPage() {
     }
   };
 
+  const getSourceBadge = (source: string) => {
+    const colors: { [key: string]: string } = {
+      website: 'bg-blue-100 text-blue-800',
+      referral: 'bg-green-100 text-green-800',
+      social: 'bg-purple-100 text-purple-800',
+      advertising: 'bg-orange-100 text-orange-800',
+      other: 'bg-gray-100 text-gray-800',
+    };
+
+    return <Badge className={colors[source] || colors.other}>{source}</Badge>;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   const handleViewProspect = (prospectId: string) => {
-    alert(`Ver detalles del prospecto ${prospectId}`);
+    // Navigate to prospect detail page
+    router.push(`/broker/clients/prospects/${prospectId}`);
   };
 
   const handleContactProspect = (prospect: Prospect) => {
+    // Open email client
     const subject = encodeURIComponent(
       `Información sobre propiedades en ${prospect.preferredLocation}`
     );
@@ -184,6 +302,89 @@ export default function BrokerProspectsPage() {
       `Hola ${prospect.name},\n\nMe comunico respecto a su interés en propiedades en ${prospect.preferredLocation}.\n\nAtentamente,\n${user?.name || 'Equipo Rent360'}`
     );
     window.open(`mailto:${prospect.email}?subject=${subject}&body=${body}`);
+  };
+
+  const handleContactOwner = (prospect: Prospect) => {
+    if (!prospect.ownerEmail) {
+      alert('No hay información de contacto del propietario disponible');
+      return;
+    }
+
+    // Open email client to contact property owner
+    const subject = encodeURIComponent(`Consulta sobre propiedad en ${prospect.preferredLocation}`);
+    const body = encodeURIComponent(
+      `Hola ${prospect.ownerName},\n\nMe comunico respecto a su propiedad en ${prospect.preferredLocation}.\n\nAtentamente,\n${user?.name || 'Equipo Rent360'}`
+    );
+    window.open(`mailto:${prospect.ownerEmail}?subject=${subject}&body=${body}`);
+  };
+
+  const handleCallOwner = (prospect: Prospect) => {
+    if (!prospect.ownerPhone) {
+      alert('No hay número de teléfono del propietario disponible');
+      return;
+    }
+
+    window.open(`tel:${prospect.ownerPhone}`);
+  };
+
+  const handleViewProperty = (prospect: Prospect) => {
+    if (!prospect.propertyId) {
+      alert('No hay información de propiedad disponible');
+      return;
+    }
+
+    // Navigate to broker property detail page
+    router.push(`/broker/properties/${prospect.propertyId}`);
+  };
+
+  const handleConvertProspect = (prospectId: string) => {
+    if (confirm('¿Está seguro de que desea convertir este prospecto en cliente?')) {
+      // Find the prospect to get their data
+      const prospect = prospects.find(p => p.id === prospectId);
+      if (!prospect) {
+        return;
+      }
+
+      // Update prospect status in the list
+      setProspects(prevProspects =>
+        prevProspects.map(prospect =>
+          prospect.id === prospectId
+            ? { ...prospect, status: 'converted' as const, lastContact: new Date().toISOString() }
+            : prospect
+        )
+      );
+
+      // Navigate to create client page with prospect data
+      const clientData = {
+        name: prospect.name,
+        email: prospect.email,
+        phone: prospect.phone,
+        budget: prospect.budget,
+        preferredLocation: prospect.preferredLocation,
+        interestedIn: prospect.interestedIn,
+        source: 'prospect_conversion',
+      };
+
+      // Store prospect data temporarily and navigate
+      sessionStorage.setItem('prospectToConvert', JSON.stringify(clientData));
+      router.push('/broker/clients/new?from=prospect');
+
+      // Recalculate stats
+      const updatedProspects = prospects.map(prospect =>
+        prospect.id === prospectId
+          ? { ...prospect, status: 'converted' as const, lastContact: new Date().toISOString() }
+          : prospect
+      );
+      const converted = updatedProspects.filter(p => p.status === 'converted').length;
+      const conversionRate =
+        updatedProspects.length > 0 ? (converted / updatedProspects.length) * 100 : 0;
+
+      setStats(prev => ({
+        ...prev,
+        converted,
+        conversionRate,
+      }));
+    }
   };
 
   const handleSendQuickMessage = (prospect: Prospect) => {
@@ -196,6 +397,7 @@ export default function BrokerProspectsPage() {
     const selectedMessage = quickMessages[Math.floor(Math.random() * quickMessages.length)];
 
     if (confirm(`¿Enviar mensaje rápido?\n\n"${selectedMessage}"`)) {
+      // Here you would call the API to send the message
       alert('Mensaje enviado exitosamente');
     }
   };
@@ -203,11 +405,13 @@ export default function BrokerProspectsPage() {
   const handleScheduleFollowUp = (prospect: Prospect) => {
     const followUpDate = prompt('¿Cuándo quieres programar el seguimiento? (DD/MM/YYYY)', '');
     if (followUpDate) {
+      // Here you would save the follow-up to the database
       alert(`Seguimiento programado para ${prospect.name} el ${followUpDate}`);
     }
   };
 
   const handleViewMatchingProperties = (prospect: Prospect) => {
+    // Navigate to properties page with filters matching the prospect
     const params = new URLSearchParams({
       location: prospect.preferredLocation,
       minPrice: prospect.budget.min.toString(),
@@ -219,17 +423,16 @@ export default function BrokerProspectsPage() {
   };
 
   const handleSendMessage = (prospect: Prospect) => {
-    sessionStorage.setItem(
-      'newMessageRecipient',
-      JSON.stringify({
-        id: prospect.id,
-        name: prospect.name,
-        email: prospect.email,
-        type: 'prospect',
-        propertyTitle: prospect.interestedIn.join(', ') + ' en ' + prospect.preferredLocation,
-      })
-    );
+    // Store prospect data for message composition
+    sessionStorage.setItem('newMessageRecipient', JSON.stringify({
+      id: prospect.id,
+      name: prospect.name,
+      email: prospect.email,
+      type: 'prospect',
+      propertyTitle: prospect.interestedIn.join(', ') + ' en ' + prospect.preferredLocation,
+    }));
 
+    // Navigate to messages page with new message flag
     router.push('/broker/messages?new=true');
   };
 
@@ -265,13 +468,13 @@ export default function BrokerProspectsPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Prospectos</p>
-                  <p className="text-2xl font-bold text-gray-900">{prospects.length}</p>
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Users className="w-6 h-6 text-blue-600" />
@@ -284,13 +487,11 @@ export default function BrokerProspectsPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Prospectos Activos</p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {prospects.filter(p => p.status === 'active').length}
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">Activos</p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.active}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Target className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -300,20 +501,55 @@ export default function BrokerProspectsPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Tasa de Conversión</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {prospects.length > 0
-                      ? Math.round(
-                          (prospects.filter(p => p.status === 'converted').length /
-                            prospects.length) *
-                            100
-                        )
-                      : 0}
-                    %
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">Contactados</p>
+                  <p className="text-2xl font-bold text-yellow-900">{stats.contacted}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Phone className="w-6 h-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Calificados</p>
+                  <p className="text-2xl font-bold text-purple-900">{stats.qualified}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                  <CheckCircle className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Convertidos</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.converted}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <UserPlus className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Conversión</p>
+                  <p className="text-2xl font-bold text-indigo-900">
+                    {stats.conversionRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-indigo-600" />
                 </div>
               </div>
             </CardContent>
@@ -426,9 +662,7 @@ export default function BrokerProspectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  /* Reset all filters */
-                }}
+                onClick={() => {/* Reset all filters */}}
                 className="text-xs"
               >
                 🔄 Limpiar Filtros
@@ -439,9 +673,7 @@ export default function BrokerProspectsPage() {
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium">Puntuación de Matching</label>
-                <span className="text-xs text-gray-500">
-                  Solo mostrar prospectos con alto potencial
-                </span>
+                <span className="text-xs text-gray-500">Solo mostrar prospectos con alto potencial</span>
               </div>
               <div className="flex items-center gap-4">
                 <input
@@ -450,9 +682,7 @@ export default function BrokerProspectsPage() {
                   max="100"
                   defaultValue="70"
                   className="flex-1"
-                  onChange={() => {
-                    /* Implement scoring filter */
-                  }}
+                  onChange={() => {/* Implement scoring filter */}}
                 />
                 <span className="text-sm font-medium min-w-[3rem]">70%</span>
               </div>
@@ -468,7 +698,9 @@ export default function BrokerProspectsPage() {
                 <Target className="w-5 h-5 text-green-600" />
                 Recomendaciones Inteligentes
               </CardTitle>
-              <CardDescription>Prospectos con mayor potencial de conversión</CardDescription>
+              <CardDescription>
+                Prospectos con mayor potencial de conversión
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -478,8 +710,7 @@ export default function BrokerProspectsPage() {
                     <Badge className="bg-green-100 text-green-800">95% Match</Badge>
                   </div>
                   <p className="text-sm text-green-700">
-                    Busca departamento en Las Condes. Presupuesto coincide con 3 propiedades
-                    disponibles.
+                    Busca departamento en Las Condes. Presupuesto coincide con 3 propiedades disponibles.
                   </p>
                   <Button size="sm" className="mt-2" variant="outline">
                     Ver Propiedades Compatibles
@@ -498,6 +729,19 @@ export default function BrokerProspectsPage() {
                     Contactar Referente
                   </Button>
                 </div>
+
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-purple-900">Ana Silva</span>
+                    <Badge className="bg-purple-100 text-purple-800">92% Match</Badge>
+                  </div>
+                  <p className="text-sm text-purple-700">
+                    Busca oficina corporativa. Proyecto aprobado para mudanza.
+                  </p>
+                  <Button size="sm" className="mt-2" variant="outline">
+                    Ver Propiedades Comerciales
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -508,7 +752,9 @@ export default function BrokerProspectsPage() {
                 <TrendingUp className="w-5 h-5 text-blue-600" />
                 Oportunidades de Mercado
               </CardTitle>
-              <CardDescription>Tendencias y oportunidades detectadas</CardDescription>
+              <CardDescription>
+                Tendencias y oportunidades detectadas
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -537,6 +783,19 @@ export default function BrokerProspectsPage() {
                     Explorar Mercado Oficina
                   </Button>
                 </div>
+
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="font-medium">Oportunidad en Ñuñoa</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Menos competencia, demanda estable. Buena oportunidad de entrada.
+                  </p>
+                  <Button size="sm" variant="outline">
+                    Analizar Ñuñoa
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -551,14 +810,10 @@ export default function BrokerProspectsPage() {
           <CardContent>
             <div className="space-y-4">
               {filteredProspects.map(prospect => {
-                const matchingScore =
-                  prospect.status === 'qualified'
-                    ? 92
-                    : prospect.status === 'active'
-                      ? 85
-                      : prospect.status === 'contacted'
-                        ? 78
-                        : 65;
+                // Calculate matching score (mock calculation)
+                const matchingScore = prospect.status === 'qualified' ? 92 :
+                                    prospect.status === 'active' ? 85 :
+                                    prospect.status === 'contacted' ? 78 : 65;
 
                 return (
                   <Card key={prospect.id} className="border-l-4 border-l-blue-500">
@@ -568,125 +823,186 @@ export default function BrokerProspectsPage() {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-semibold text-gray-900">{prospect.name}</h3>
                             {getStatusBadge(prospect.status)}
+                            {getSourceBadge(prospect.source)}
                             <Badge
                               variant="outline"
                               className={`${
-                                matchingScore >= 90
-                                  ? 'border-green-300 text-green-700'
-                                  : matchingScore >= 80
-                                    ? 'border-blue-300 text-blue-700'
-                                    : matchingScore >= 70
-                                      ? 'border-yellow-300 text-yellow-700'
-                                      : 'border-gray-300 text-gray-700'
+                                matchingScore >= 90 ? 'border-green-300 text-green-700' :
+                                matchingScore >= 80 ? 'border-blue-300 text-blue-700' :
+                                matchingScore >= 70 ? 'border-yellow-300 text-yellow-700' :
+                                'border-gray-300 text-gray-700'
                               }`}
                             >
                               {matchingScore}% Match
                             </Badge>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-4 h-4" />
-                              <span className="truncate">{prospect.email}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span>{prospect.preferredLocation}</span>
-                            </div>
-                          </div>
-
-                          <div className="text-sm text-gray-600 mb-2">
-                            <strong>Presupuesto:</strong> ${prospect.budget.min.toLocaleString()} -
-                            ${prospect.budget.max.toLocaleString()}
-                          </div>
-
-                          <div className="text-sm text-gray-600">
-                            <strong>Interesado en:</strong> {prospect.interestedIn.join(', ')}
-                          </div>
-
-                          {prospect.notes && (
-                            <div className="text-sm text-gray-600 mt-2">
-                              <strong>Notas:</strong> {prospect.notes}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewProspect(prospect.id)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleContactProspect(prospect)}
-                          >
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                          <div className="flex items-center gap-1">
                             <Mail className="w-4 h-4" />
-                          </Button>
-                          {prospect.status !== 'converted' && prospect.status !== 'lost' && (
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => alert(`Convertir prospecto ${prospect.name}`)}
-                            >
-                              <UserPlus className="w-4 h-4 mr-1" />
-                              Convertir
-                            </Button>
-                          )}
-
-                          {/* Quick Actions */}
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSendQuickMessage(prospect)}
-                              title="Mensaje rápido"
-                              className="px-2"
-                            >
-                              ⚡
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleScheduleFollowUp(prospect)}
-                              title="Programar seguimiento"
-                              className="px-2"
-                            >
-                              📅
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleViewMatchingProperties(prospect)}
-                              title="Ver propiedades compatibles"
-                              className="px-2"
-                            >
-                              🏠
-                            </Button>
+                            <span className="truncate">{prospect.email}</span>
                           </div>
+                          <div className="flex items-center gap-1">
+                            <Phone className="w-4 h-4" />
+                            <span>{prospect.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4" />
+                            <span>{prospect.preferredLocation}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>Último contacto: {formatDate(prospect.lastContact)}</span>
+                          </div>
+                        </div>
 
-                          {/* Message Button */}
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Presupuesto:</strong> {formatCurrency(prospect.budget.min)} -{' '}
+                          {formatCurrency(prospect.budget.max)}
+                        </div>
+
+                        <div className="text-sm text-gray-600">
+                          <strong>Interesado en:</strong> {prospect.interestedIn.join(', ')}
+                        </div>
+
+                        {/* Property Owner Information */}
+                        {prospect.ownerName && (
+                          <div className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded">
+                            <strong>Propietario:</strong> {prospect.ownerName}
+                            {prospect.ownerEmail && (
+                              <span className="ml-2">
+                                <Mail className="w-3 h-3 inline mr-1" />
+                                {prospect.ownerEmail}
+                              </span>
+                            )}
+                            {prospect.ownerPhone && (
+                              <span className="ml-2">
+                                <Phone className="w-3 h-3 inline mr-1" />
+                                {prospect.ownerPhone}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {prospect.notes && (
+                          <div className="text-sm text-gray-600 mt-2">
+                            <strong>Notas:</strong> {prospect.notes}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewProspect(prospect.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleContactProspect(prospect)}
+                        >
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                        {prospect.status !== 'converted' && prospect.status !== 'lost' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleConvertProspect(prospect.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <UserPlus className="w-4 h-4 mr-1" />
+                            Convertir
+                          </Button>
+                        )}
+
+                        {/* Property Owner Contact Buttons */}
+                        {prospect.ownerName && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleContactOwner(prospect)}
+                              title={`Contactar propietario: ${prospect.ownerName}`}
+                            >
+                              <UserCheck className="w-4 h-4" />
+                            </Button>
+                            {prospect.ownerPhone && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCallOwner(prospect)}
+                                title={`Llamar propietario: ${prospect.ownerPhone}`}
+                              >
+                                <Phone className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                        {/* Property View Button */}
+                        {prospect.propertyId && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleSendMessage(prospect)}
-                            title="Enviar mensaje personalizado"
+                            onClick={() => handleViewProperty(prospect)}
+                            title="Ver propiedad"
                           >
-                            <MessageSquare className="w-4 h-4" />
+                            <Home className="w-4 h-4" />
+                          </Button>
+                        )}
+
+                        {/* Quick Actions */}
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendQuickMessage(prospect)}
+                            title="Mensaje rápido"
+                            className="px-2"
+                          >
+                            ⚡
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleScheduleFollowUp(prospect)}
+                            title="Programar seguimiento"
+                            className="px-2"
+                          >
+                            📅
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewMatchingProperties(prospect)}
+                            title="Ver propiedades compatibles"
+                            className="px-2"
+                          >
+                            🏠
                           </Button>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
 
-              {prospects.length === 0 && (
+                        {/* Message Button */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendMessage(prospect)}
+                          title="Enviar mensaje personalizado"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {filteredProspects.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No hay prospectos disponibles</p>
+                  <p>No se encontraron prospectos que coincidan con los filtros</p>
                 </div>
               )}
             </div>

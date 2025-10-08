@@ -197,24 +197,19 @@ export default function BrokerAnalyticsPage() {
   };
 
   const handleViewTutorial = () => {
-    // Open tutorial or help documentation
-    alert('Abriendo tutorial de análisis de rendimiento...');
-    // In a real app, this would open a modal with tutorial content or navigate to help docs
-    // window.open('/help/analytics-tutorial', '_blank');
+    // Open tutorial modal or navigate to help documentation
+    // For now, navigate to a help page or open external tutorial
+    window.open('/help/analytics-tutorial', '_blank');
   };
 
   const handleConfigureAlerts = () => {
-    // Open alerts configuration
-    alert('Abriendo configuración de alertas de rendimiento...');
-    // In a real app, this would navigate to alerts settings
-    // router.push('/broker/settings/alerts');
+    // Navigate to alerts configuration page
+    window.location.href = '/broker/settings/alerts';
   };
 
   const handleViewDetailedAnalysis = () => {
-    // Navigate to detailed market analysis
-    alert('Abriendo análisis detallado del mercado y tendencias...');
-    // In a real app, this would navigate to detailed analytics
-    // router.push('/broker/analytics/market-analysis');
+    // Navigate to detailed market analysis page
+    window.location.href = '/broker/analytics/market-analysis';
   };
 
   if (loading) {

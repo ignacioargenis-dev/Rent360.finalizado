@@ -304,11 +304,32 @@ export default function BrokerReportsPage() {
     router.push('/broker/properties/new');
   };
 
-  const handleSendSurveys = () => {
-    // Send satisfaction surveys to clients - simulate API call
-    setTimeout(() => {
-      alert('Encuestas de satisfacción enviadas correctamente a todos los clientes activos');
-    }, 500);
+  const handleSendSurveys = async () => {
+    try {
+      // Send satisfaction surveys to active clients
+      const response = await fetch('/api/broker/surveys/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          surveyType: 'client_satisfaction',
+          targetAudience: 'active_clients',
+          brokerId: user?.id,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Encuestas enviadas correctamente a ${result.sentCount} clientes activos`);
+      } else {
+        const error = await response.json();
+        alert(`Error al enviar encuestas: ${error.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      logger.error('Error sending surveys:', { error });
+      alert('Error al enviar encuestas. Por favor intenta nuevamente.');
+    }
   };
 
   const handleViewAnalysis = () => {
