@@ -91,6 +91,10 @@ model User {
   runnerRatingsGiven RunnerRating[] @relation("RunnerRatings") // Calificaciones que dio como runner
   clientRatingsGiven RunnerRating[] @relation("ClientRatings") // Calificaciones que dio como cliente
 
+  // Relaciones de calificaciones universales bidireccionales
+  ratingsGiven UserRating[] @relation("RatingFrom") // Calificaciones que ha dado
+  ratingsReceived UserRating[] @relation("RatingTo") // Calificaciones que ha recibido
+
   // Relaciones para devoluciones de depósitos
   tenantRefunds       DepositRefund[] @relation("TenantRefunds")
   ownerRefunds        DepositRefund[] @relation("OwnerRefunds")
@@ -153,6 +157,8 @@ model Property {
   reviews           Review[]
   visits            Visit[]
   maintenance       Maintenance[]
+  userRatings       UserRating[]       // Calificaciones relacionadas con esta propiedad
+  messages          Message[]          // Mensajes relacionados con esta propiedad
   
   @@map("properties")
   @@index([ownerId])
@@ -195,7 +201,9 @@ model Contract {
   reviews        Review[]
   signatures     ContractSignature[]
   refunds        DepositRefund[]
-  
+  userRatings    UserRating[]  // Calificaciones relacionadas con este contrato
+  messages       Message[]     // Mensajes relacionados con este contrato
+
   // Relaciones para casos legales
   legalCases     LegalCase[]
 
@@ -299,6 +307,9 @@ model Message {
   receiverId  String
   subject     String?
   content     String
+  type        String?       // Tipo de mensaje: 'direct', 'property_inquiry', 'contract_related', 'support'
+  propertyId  String?       // ID de propiedad relacionada (opcional)
+  contractId  String?       // ID de contrato relacionado (opcional)
   status      String @default("SENT")
   isRead      Boolean       @default(false)
   createdAt   DateTime      @default(now())
@@ -308,8 +319,13 @@ model Message {
   // Relations
   sender      User          @relation("MessageSent", fields: [senderId], references: [id], onDelete: Cascade)
   receiver    User          @relation("MessageReceived", fields: [receiverId], references: [id], onDelete: Cascade)
-  
+  property    Property?     @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  contract    Contract?     @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
   @@map("messages")
+  @@index([propertyId])
+  @@index([contractId])
+  @@index([type])
 }
 
 // Ticket model
@@ -1268,6 +1284,67 @@ model RunnerRating {
   @@index([runnerId])
   @@index([clientId])
   @@index([createdAt])
+}
+
+// ============================================================================
+// Universal Rating model - Calificaciones bidireccionales entre usuarios
+model UserRating {
+  id        String   @id @default(cuid())
+  fromUserId String  // Usuario que califica
+  toUserId   String  // Usuario calificado
+  fromUser   User    @relation("RatingFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User    @relation("RatingTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  // Contexto de la calificación
+  contextType  RatingContextType // Tipo de contexto (contract, service, maintenance, etc.)
+  contextId    String            // ID del contexto (contractId, serviceId, etc.)
+
+  // Calificaciones por categorías (1-5)
+  overallRating         Int // Calificación general
+  communicationRating   Int? // Comunicación
+  reliabilityRating     Int? // Confiabilidad
+  professionalismRating Int? // Profesionalismo
+  qualityRating         Int? // Calidad del servicio/trabajo
+  punctualityRating     Int? // Puntualidad
+
+  // Feedback textual
+  comment         String?
+  positiveFeedback String[] // Aspectos positivos (JSON array)
+  improvementAreas String[] // Áreas de mejora (JSON array)
+
+  // Información adicional de contexto
+  propertyId      String?
+  property        Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  contractId      String?
+  contract        Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  // Metadata
+  isAnonymous   Boolean  @default(false)
+  isVerified    Boolean  @default(false) // Verificado por sistema
+  isPublic      Boolean  @default(true)  // Si es visible públicamente
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Índices para optimización
+  @@unique([fromUserId, toUserId, contextType, contextId]) // Un usuario solo puede calificar una vez por contexto
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([contextType])
+  @@index([contextId])
+  @@index([propertyId])
+  @@index([contractId])
+  @@index([createdAt])
+  @@map("user_ratings")
+}
+
+// Enum para tipos de contexto de calificación
+enum RatingContextType {
+  CONTRACT     // Calificación por contrato completado
+  SERVICE      // Calificación por servicio prestado
+  MAINTENANCE  // Calificación por trabajo de mantenimiento
+  PROPERTY_VISIT // Calificación por visita a propiedad
+  GENERAL      // Calificación general
+  OTHER        // Otro contexto
 }
 
 // ============================================================================

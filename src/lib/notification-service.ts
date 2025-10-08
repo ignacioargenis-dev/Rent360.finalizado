@@ -36,10 +36,12 @@ export interface CommissionNotification {
   type: 'commission_calculated' | 'commission_paid' | 'commission_pending' | 'payout_ready';
   amount: number;
   contractId?: string | undefined;
-  period?: {
-    start: Date;
-    end: Date;
-  } | undefined;
+  period?:
+    | {
+        start: Date;
+        end: Date;
+      }
+    | undefined;
   metadata?: Record<string, any> | undefined;
 }
 
@@ -83,7 +85,14 @@ Puedes revisar los detalles en tu dashboard de corredor.
 Saludos,
 Equipo Rent360`,
       type: 'email',
-      variables: ['brokerName', 'amount', 'contractNumber', 'calculatedAt', 'propertyType', 'contractValue']
+      variables: [
+        'brokerName',
+        'amount',
+        'contractNumber',
+        'calculatedAt',
+        'propertyType',
+        'contractValue',
+      ],
     });
 
     // Template para pago de comisión
@@ -106,7 +115,7 @@ El monto ha sido transferido a tu cuenta registrada.
 Saludos,
 Equipo Rent360`,
       type: 'email',
-      variables: ['brokerName', 'amount', 'paymentMethod', 'processedAt', 'reference']
+      variables: ['brokerName', 'amount', 'paymentMethod', 'processedAt', 'reference'],
     });
 
     // Template para payout listo
@@ -129,7 +138,14 @@ El pago se procesará automáticamente según tu configuración.
 Saludos,
 Equipo Rent360`,
       type: 'email',
-      variables: ['brokerName', 'amount', 'periodStart', 'periodEnd', 'contractCount', 'nextProcessingDate']
+      variables: [
+        'brokerName',
+        'amount',
+        'periodStart',
+        'periodEnd',
+        'contractCount',
+        'nextProcessingDate',
+      ],
     });
 
     // Template para alerta del sistema
@@ -148,7 +164,66 @@ Por favor revisa el sistema inmediatamente.
 
 Equipo Rent360`,
       type: 'email',
-      variables: ['title', 'message', 'severity', 'timestamp']
+      variables: ['title', 'message', 'severity', 'timestamp'],
+    });
+
+    // Template para nuevo mensaje
+    this.templates.set('new_message', {
+      id: 'new_message',
+      name: 'Nuevo Mensaje',
+      subject: 'Nuevo mensaje - Rent360',
+      body: `Hola,
+
+Has recibido un nuevo mensaje de {{senderName}}.
+
+Asunto: {{subject}}
+
+{{contentPreview}}
+
+Para ver el mensaje completo, ingresa a tu cuenta en Rent360.
+
+Saludos,
+Equipo Rent360`,
+      type: 'email',
+      variables: ['senderName', 'subject', 'contentPreview'],
+    });
+
+    // Template para mensaje leído
+    this.templates.set('message_read', {
+      id: 'message_read',
+      name: 'Mensaje Leído',
+      subject: 'Tu mensaje fue leído - Rent360',
+      body: `Hola,
+
+{{readerName}} ha leído tu mensaje.
+
+Mensaje ID: {{messageId}}
+
+Saludos,
+Equipo Rent360`,
+      type: 'email',
+      variables: ['readerName', 'messageId'],
+    });
+
+    // Template para calificación recibida
+    this.templates.set('rating_received', {
+      id: 'rating_received',
+      name: 'Calificación Recibida',
+      subject: 'Nueva calificación recibida - Rent360',
+      body: `Hola,
+
+¡Felicitaciones! Has recibido una nueva calificación.
+
+{{raterName}} te ha calificado con {{rating}} estrella(s) en el contexto de {{contextType}}.
+
+Puedes ver todos tus comentarios y calificaciones en tu perfil de Rent360.
+
+Sigue manteniendo la excelencia en tu servicio.
+
+Saludos,
+Equipo Rent360`,
+      type: 'email',
+      variables: ['raterName', 'rating', 'contextType'],
     });
 
     // Template SMS para pagos
@@ -158,7 +233,7 @@ Equipo Rent360`,
       subject: '',
       body: 'Rent360: Comisión pagada exitosamente. Ref: {{reference}}',
       type: 'sms',
-      variables: ['amount', 'reference']
+      variables: ['amount', 'reference'],
     });
 
     // ===== TEMPLATES PARA RUNNERS =====
@@ -186,7 +261,15 @@ El pago se transferirá a tu cuenta bancaria registrada en las próximas 24-48 h
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['runnerName', 'amount', 'netAmount', 'visitCount', 'periodStart', 'periodEnd', 'paymentMethod']
+      variables: [
+        'runnerName',
+        'amount',
+        'netAmount',
+        'visitCount',
+        'periodStart',
+        'periodEnd',
+        'paymentMethod',
+      ],
     });
 
     // Template SMS para payout aprobado
@@ -196,7 +279,7 @@ Equipo Rent360`,
       subject: '',
       body: 'Rent360: ¡Tu payout de {{netAmount}} ha sido aprobado! 💰 Procesamiento en 24-48h.',
       type: 'sms',
-      variables: ['netAmount']
+      variables: ['netAmount'],
     });
 
     // Template para incentivo alcanzado
@@ -222,7 +305,14 @@ Sigue así y continúa superando tus propios récords.
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['runnerName', 'incentiveName', 'incentiveLevel', 'rewardDescription', 'visitCount', 'averageRating']
+      variables: [
+        'runnerName',
+        'incentiveName',
+        'incentiveLevel',
+        'rewardDescription',
+        'visitCount',
+        'averageRating',
+      ],
     });
 
     // Template para rating actualizado
@@ -248,7 +338,14 @@ Mantén tu excelente nivel de servicio para seguir siendo uno de nuestros runner
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['runnerName', 'newRating', 'previousRating', 'clientName', 'propertyAddress', 'clientFeedback']
+      variables: [
+        'runnerName',
+        'newRating',
+        'previousRating',
+        'clientName',
+        'propertyAddress',
+        'clientFeedback',
+      ],
     });
 
     // Template para reporte semanal disponible
@@ -273,7 +370,13 @@ Visita tu dashboard para ver el reporte completo con gráficos detallados y cons
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['runnerName', 'visitsCompleted', 'earningsGenerated', 'averageRating', 'rankingPosition']
+      variables: [
+        'runnerName',
+        'visitsCompleted',
+        'earningsGenerated',
+        'averageRating',
+        'rankingPosition',
+      ],
     });
 
     // Template para notificación de ranking
@@ -296,7 +399,7 @@ Sigue así para alcanzar los primeros lugares y obtener recompensas exclusivas.
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['runnerName', 'currentPosition', 'previousPosition', 'nextMilestone']
+      variables: ['runnerName', 'currentPosition', 'previousPosition', 'nextMilestone'],
     });
 
     // ===== TEMPLATES PARA PROVEEDORES =====
@@ -325,7 +428,16 @@ El pago se transferirá a tu cuenta bancaria registrada en las próximas 24-48 h
 Saludos,
 Equipo Rent360`,
       type: 'push',
-      variables: ['providerName', 'amount', 'netAmount', 'jobCount', 'providerType', 'periodStart', 'periodEnd', 'paymentMethod']
+      variables: [
+        'providerName',
+        'amount',
+        'netAmount',
+        'jobCount',
+        'providerType',
+        'periodStart',
+        'periodEnd',
+        'paymentMethod',
+      ],
     });
 
     // Template SMS para payout aprobado de proveedor
@@ -335,7 +447,7 @@ Equipo Rent360`,
       subject: '',
       body: 'Rent360: ¡Tu payout de {{netAmount}} ha sido aprobado! 💰 Procesamiento en 24-48h.',
       type: 'sms',
-      variables: ['netAmount']
+      variables: ['netAmount'],
     });
   }
 
@@ -350,8 +462,8 @@ Equipo Rent360`,
           id: true,
           name: true,
           email: true,
-          phone: true
-        }
+          phone: true,
+        },
       });
 
       if (!broker) {
@@ -367,10 +479,10 @@ Equipo Rent360`,
             property: {
               select: {
                 title: true,
-                type: true
-              }
-            }
-          }
+                type: true,
+              },
+            },
+          },
         });
       }
 
@@ -380,7 +492,7 @@ Equipo Rent360`,
         contractNumber: contractDetails?.contractNumber || 'N/A',
         calculatedAt: new Date().toLocaleDateString('es-CL'),
         propertyType: contractDetails?.property?.type || 'N/A',
-        contractValue: contractDetails?.monthlyRent?.toLocaleString('es-CL') || 'N/A'
+        contractValue: contractDetails?.monthlyRent?.toLocaleString('es-CL') || 'N/A',
       };
 
       // Enviar notificación por email
@@ -388,17 +500,18 @@ Equipo Rent360`,
         templateId: 'commission_calculated',
         recipientId: broker.id,
         variables,
-        priority: 'medium'
+        priority: 'medium',
       });
 
       logger.info('Commission calculated notification sent', {
         brokerId: notification.brokerId,
         amount: notification.amount,
-        contractId: notification.contractId
+        contractId: notification.contractId,
       });
-
     } catch (error) {
-      logger.error('Error sending commission calculated notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending commission calculated notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -414,8 +527,8 @@ Equipo Rent360`,
           id: true,
           name: true,
           email: true,
-          phone: true
-        }
+          phone: true,
+        },
       });
 
       if (!broker) {
@@ -427,7 +540,7 @@ Equipo Rent360`,
         amount: notification.amount.toLocaleString('es-CL'),
         paymentMethod: 'Transferencia Bancaria',
         processedAt: new Date().toLocaleDateString('es-CL'),
-        reference: `PAY_${Date.now()}`
+        reference: `PAY_${Date.now()}`,
       };
 
       // Enviar notificación por email
@@ -435,7 +548,7 @@ Equipo Rent360`,
         templateId: 'commission_paid',
         recipientId: broker.id,
         variables,
-        priority: 'high'
+        priority: 'high',
       });
 
       // Enviar SMS si el corredor tiene teléfono
@@ -445,20 +558,21 @@ Equipo Rent360`,
           recipientId: broker.id,
           variables: {
             amount: notification.amount.toLocaleString('es-CL'),
-            reference: variables.reference
+            reference: variables.reference,
           },
-          priority: 'high'
+          priority: 'high',
         });
       }
 
       logger.info('Commission paid notification sent', {
         brokerId: notification.brokerId,
         amount: notification.amount,
-        methods: ['email', broker.phone ? 'sms' : null].filter(Boolean)
+        methods: ['email', broker.phone ? 'sms' : null].filter(Boolean),
       });
-
     } catch (error) {
-      logger.error('Error sending commission paid notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending commission paid notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -474,8 +588,8 @@ Equipo Rent360`,
           id: true,
           name: true,
           email: true,
-          phone: true
-        }
+          phone: true,
+        },
       });
 
       if (!broker) {
@@ -488,24 +602,25 @@ Equipo Rent360`,
         periodStart: notification.period?.start.toLocaleDateString('es-CL') || 'N/A',
         periodEnd: notification.period?.end.toLocaleDateString('es-CL') || 'N/A',
         contractCount: notification.metadata?.contractCount || 0,
-        nextProcessingDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('es-CL')
+        nextProcessingDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('es-CL'),
       };
 
       await this.sendNotification({
         templateId: 'payout_ready',
         recipientId: broker.id,
         variables,
-        priority: 'medium'
+        priority: 'medium',
       });
 
       logger.info('Payout ready notification sent', {
         brokerId: notification.brokerId,
         amount: notification.amount,
-        period: notification.period
+        period: notification.period,
       });
-
     } catch (error) {
-      logger.error('Error sending payout ready notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending payout ready notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -523,7 +638,7 @@ Equipo Rent360`,
         // Obtener todos los administradores
         const admins = await db.user.findMany({
           where: { role: 'admin' },
-          select: { id: true }
+          select: { id: true },
         });
         targetUsers = admins.map(admin => admin.id);
       }
@@ -532,7 +647,7 @@ Equipo Rent360`,
         title: notification.title,
         message: notification.message,
         severity: notification.severity.toUpperCase(),
-        timestamp: new Date().toLocaleString('es-CL')
+        timestamp: new Date().toLocaleString('es-CL'),
       };
 
       // Enviar a todos los usuarios objetivo
@@ -540,21 +655,24 @@ Equipo Rent360`,
         templateId: 'system_alert',
         recipientId: userId,
         variables,
-        priority: (notification.severity === 'critical' ? 'urgent' : 'high') as 'low' | 'medium' | 'high' | 'urgent'
+        priority: (notification.severity === 'critical' ? 'urgent' : 'high') as
+          | 'low'
+          | 'medium'
+          | 'high'
+          | 'urgent',
       }));
 
-      await Promise.all(
-        notifications.map(notification => this.sendNotification(notification))
-      );
+      await Promise.all(notifications.map(notification => this.sendNotification(notification)));
 
       logger.info('System alert notification sent', {
         type: notification.type,
         severity: notification.severity,
-        targetUsersCount: targetUsers.length
+        targetUsersCount: targetUsers.length,
       });
-
     } catch (error) {
-      logger.error('Error sending system alert notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending system alert notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -576,8 +694,8 @@ Equipo Rent360`,
           id: true,
           name: true,
           email: true,
-          phone: true
-        }
+          phone: true,
+        },
       });
 
       if (!recipient) {
@@ -617,11 +735,12 @@ Equipo Rent360`,
         subject: processedSubject,
         content: processedBody,
         priority: message.priority,
-        status: 'sent'
+        status: 'sent',
       });
-
     } catch (error) {
-      logger.error('Error sending notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       // Registrar notificación fallida
       await this.logNotification({
@@ -631,7 +750,7 @@ Equipo Rent360`,
         subject: 'Error sending notification',
         content: `Failed to send notification: ${error instanceof Error ? error.message : String(error)}`,
         priority: message.priority,
-        status: 'failed'
+        status: 'failed',
       });
 
       throw error;
@@ -651,7 +770,7 @@ Equipo Rent360`,
     logger.info('Email notification sent', {
       to: email,
       subject,
-      bodyLength: body.length
+      bodyLength: body.length,
     });
 
     // Registrar envío de email
@@ -660,7 +779,7 @@ Equipo Rent360`,
       recipient: email,
       subject,
       bodyLength: body.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -672,7 +791,7 @@ Equipo Rent360`,
     // Por ahora solo loggeamos
     logger.info('SMS notification sent', {
       to: phone,
-      messageLength: message.length
+      messageLength: message.length,
     });
 
     // Registrar envío de SMS
@@ -680,7 +799,7 @@ Equipo Rent360`,
       context: 'notification-service.sms',
       recipient: phone,
       messageLength: message.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -706,8 +825,8 @@ Equipo Rent360`,
           id: true,
           email: true,
           phone: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
@@ -726,9 +845,9 @@ Equipo Rent360`,
           visitCount: payoutData.visitCount,
           periodStart: payoutData.periodStart,
           periodEnd: payoutData.periodEnd,
-          paymentMethod: payoutData.paymentMethod
+          paymentMethod: payoutData.paymentMethod,
         },
-        priority: 'high'
+        priority: 'high',
       });
 
       // Enviar SMS si tiene teléfono
@@ -737,20 +856,21 @@ Equipo Rent360`,
           templateId: 'runner_payout_approved_sms',
           recipientId: payoutData.runnerId,
           variables: {
-            netAmount: payoutData.netAmount
+            netAmount: payoutData.netAmount,
           },
-          priority: 'high'
+          priority: 'high',
         });
       }
 
       logger.info('Runner payout approval notification sent', {
         runnerId: payoutData.runnerId,
         amount: payoutData.netAmount,
-        notificationType: 'push_and_sms'
+        notificationType: 'push_and_sms',
       });
-
     } catch (error) {
-      logger.error('Error sending runner payout notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending runner payout notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -771,12 +891,14 @@ Equipo Rent360`,
         select: {
           id: true,
           email: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
-        logger.warn('Runner not found for incentive notification', { runnerId: incentiveData.runnerId });
+        logger.warn('Runner not found for incentive notification', {
+          runnerId: incentiveData.runnerId,
+        });
         return;
       }
 
@@ -789,19 +911,20 @@ Equipo Rent360`,
           incentiveLevel: incentiveData.incentiveLevel,
           rewardDescription: incentiveData.rewardDescription,
           visitCount: incentiveData.visitCount,
-          averageRating: incentiveData.averageRating
+          averageRating: incentiveData.averageRating,
         },
-        priority: 'high'
+        priority: 'high',
       });
 
       logger.info('Runner incentive achievement notification sent', {
         runnerId: incentiveData.runnerId,
         incentiveName: incentiveData.incentiveName,
-        level: incentiveData.incentiveLevel
+        level: incentiveData.incentiveLevel,
       });
-
     } catch (error) {
-      logger.error('Error sending runner incentive notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending runner incentive notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -822,8 +945,8 @@ Equipo Rent360`,
         select: {
           id: true,
           email: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
@@ -840,19 +963,20 @@ Equipo Rent360`,
           previousRating: ratingData.previousRating,
           clientName: ratingData.clientName,
           propertyAddress: ratingData.propertyAddress,
-          clientFeedback: ratingData.clientFeedback
+          clientFeedback: ratingData.clientFeedback,
         },
-        priority: 'medium'
+        priority: 'medium',
       });
 
       logger.info('Runner rating update notification sent', {
         runnerId: ratingData.runnerId,
         newRating: ratingData.newRating,
-        previousRating: ratingData.previousRating
+        previousRating: ratingData.previousRating,
       });
-
     } catch (error) {
-      logger.error('Error sending runner rating notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending runner rating notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -872,12 +996,14 @@ Equipo Rent360`,
         select: {
           id: true,
           email: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
-        logger.warn('Runner not found for weekly report notification', { runnerId: reportData.runnerId });
+        logger.warn('Runner not found for weekly report notification', {
+          runnerId: reportData.runnerId,
+        });
         return;
       }
 
@@ -889,19 +1015,20 @@ Equipo Rent360`,
           visitsCompleted: reportData.visitsCompleted,
           earningsGenerated: reportData.earningsGenerated,
           averageRating: reportData.averageRating,
-          rankingPosition: reportData.rankingPosition
+          rankingPosition: reportData.rankingPosition,
         },
-        priority: 'medium'
+        priority: 'medium',
       });
 
       logger.info('Runner weekly report notification sent', {
         runnerId: reportData.runnerId,
         visitsCompleted: reportData.visitsCompleted,
-        earningsGenerated: reportData.earningsGenerated
+        earningsGenerated: reportData.earningsGenerated,
       });
-
     } catch (error) {
-      logger.error('Error sending runner weekly report notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending runner weekly report notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -920,12 +1047,14 @@ Equipo Rent360`,
         select: {
           id: true,
           email: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
-        logger.warn('Runner not found for ranking notification', { runnerId: rankingData.runnerId });
+        logger.warn('Runner not found for ranking notification', {
+          runnerId: rankingData.runnerId,
+        });
         return;
       }
 
@@ -936,19 +1065,20 @@ Equipo Rent360`,
           runnerName: runner.name || 'Runner',
           currentPosition: rankingData.currentPosition,
           previousPosition: rankingData.previousPosition,
-          nextMilestone: rankingData.nextMilestone
+          nextMilestone: rankingData.nextMilestone,
         },
-        priority: 'low'
+        priority: 'low',
       });
 
       logger.info('Runner ranking update notification sent', {
         runnerId: rankingData.runnerId,
         currentPosition: rankingData.currentPosition,
-        previousPosition: rankingData.previousPosition
+        previousPosition: rankingData.previousPosition,
       });
-
     } catch (error) {
-      logger.error('Error sending runner ranking notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending runner ranking notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -975,7 +1105,7 @@ Equipo Rent360`,
       // Intentar encontrar el usuario según el tipo de proveedor
       const maintenanceProvider = await db.maintenanceProvider.findUnique({
         where: { id: payoutData.providerId },
-        include: { user: true }
+        include: { user: true },
       });
 
       if (maintenanceProvider) {
@@ -983,7 +1113,7 @@ Equipo Rent360`,
       } else {
         const serviceProvider = await db.serviceProvider.findUnique({
           where: { id: payoutData.providerId },
-          include: { user: true }
+          include: { user: true },
         });
         if (serviceProvider) {
           providerUser = serviceProvider.user;
@@ -991,7 +1121,9 @@ Equipo Rent360`,
       }
 
       if (!providerUser) {
-        logger.warn('Provider user not found for payout notification', { providerId: payoutData.providerId });
+        logger.warn('Provider user not found for payout notification', {
+          providerId: payoutData.providerId,
+        });
         return;
       }
 
@@ -1007,9 +1139,9 @@ Equipo Rent360`,
           providerType: payoutData.providerType === 'MAINTENANCE' ? 'Mantenimiento' : 'Servicios',
           periodStart: payoutData.periodStart,
           periodEnd: payoutData.periodEnd,
-          paymentMethod: payoutData.paymentMethod
+          paymentMethod: payoutData.paymentMethod,
         },
-        priority: 'high'
+        priority: 'high',
       });
 
       // Enviar SMS si tiene teléfono
@@ -1018,20 +1150,21 @@ Equipo Rent360`,
           templateId: 'provider_payout_approved_sms',
           recipientId: providerUser.id,
           variables: {
-            netAmount: payoutData.netAmount
+            netAmount: payoutData.netAmount,
           },
-          priority: 'high'
+          priority: 'high',
         });
       }
 
       logger.info('Provider payout approval notification sent', {
         providerId: payoutData.providerId,
         amount: payoutData.netAmount,
-        notificationType: 'push_and_sms'
+        notificationType: 'push_and_sms',
       });
-
     } catch (error) {
-      logger.error('Error sending provider payout notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error sending provider payout notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -1055,10 +1188,12 @@ Equipo Rent360`,
         type: notification.type,
         templateId: notification.templateId,
         priority: notification.priority,
-        status: notification.status
+        status: notification.status,
       });
     } catch (error) {
-      logger.error('Error logging notification', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error logging notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -1076,9 +1211,10 @@ Equipo Rent360`,
 
       // Simular procesamiento de notificaciones programadas
       logger.info('Scheduled notifications processed', { processedCount: 0 });
-
     } catch (error) {
-      logger.error('Error processing scheduled notifications', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error processing scheduled notifications', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -1099,14 +1235,159 @@ Equipo Rent360`,
       byType: {
         email: 1100,
         sms: 135,
-        push: 15
+        push: 15,
       },
       byPriority: {
         low: 800,
         medium: 350,
         high: 95,
-        urgent: 5
-      }
+        urgent: 5,
+      },
     };
+  }
+
+  // ===== MÉTODOS DE NOTIFICACIÓN PARA MENSAJES =====
+
+  /**
+   * Notifica nuevo mensaje recibido
+   */
+  static async notifyNewMessage(messageData: {
+    recipientId: string;
+    senderId: string;
+    senderName: string;
+    subject: string;
+    content: string;
+    messageId: string;
+    type: string;
+    propertyId?: string;
+    contractId?: string;
+  }): Promise<void> {
+    try {
+      // Crear notificación push a través de WebSocket
+      const notificationData = {
+        id: `msg_${messageData.messageId}`,
+        type: 'new_message',
+        title: 'Nuevo mensaje',
+        message: `Tienes un nuevo mensaje de ${messageData.senderName}`,
+        data: {
+          messageId: messageData.messageId,
+          senderId: messageData.senderId,
+          senderName: messageData.senderName,
+          subject: messageData.subject,
+          type: messageData.type,
+          propertyId: messageData.propertyId,
+          contractId: messageData.contractId,
+        },
+        priority: 'medium' as const,
+        userId: messageData.recipientId,
+      };
+
+      // Enviar notificación en tiempo real
+      await this.sendNotification({
+        recipientId: messageData.recipientId,
+        templateId: 'new_message',
+        variables: {
+          senderName: messageData.senderName,
+          subject: messageData.subject,
+          contentPreview:
+            messageData.content.substring(0, 100) + (messageData.content.length > 100 ? '...' : ''),
+        },
+        priority: 'medium',
+      });
+    } catch (error) {
+      logger.error('Error sending new message notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Notifica mensaje marcado como leído
+   */
+  static async notifyMessageRead(messageData: {
+    senderId: string;
+    readerId: string;
+    readerName: string;
+    messageId: string;
+  }): Promise<void> {
+    try {
+      // Notificar al remitente que su mensaje fue leído
+      const notificationData = {
+        id: `read_${messageData.messageId}`,
+        type: 'message_read',
+        title: 'Mensaje leído',
+        message: `${messageData.readerName} ha leído tu mensaje`,
+        data: {
+          messageId: messageData.messageId,
+          readerId: messageData.readerId,
+          readerName: messageData.readerName,
+        },
+        priority: 'low' as const,
+        userId: messageData.senderId,
+      };
+
+      await this.sendNotification({
+        recipientId: messageData.senderId,
+        templateId: 'message_read',
+        variables: {
+          readerName: messageData.readerName,
+          messageId: messageData.messageId,
+        },
+        priority: 'low',
+      });
+    } catch (error) {
+      logger.error('Error sending message read notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  // ===== MÉTODOS DE NOTIFICACIÓN PARA CALIFICACIONES =====
+
+  /**
+   * Notifica calificación recibida
+   */
+  static async notifyUserRatingReceived(ratingData: {
+    recipientId: string;
+    raterId: string;
+    raterName: string;
+    rating: number;
+    contextType: string;
+    ratingId: string;
+  }): Promise<void> {
+    try {
+      // Crear notificación push a través de WebSocket
+      const notificationData = {
+        id: `rating_${ratingData.ratingId}`,
+        type: 'rating_received',
+        title: 'Nueva calificación',
+        message: `${ratingData.raterName} te ha calificado con ${ratingData.rating} estrella(s)`,
+        data: {
+          ratingId: ratingData.ratingId,
+          raterId: ratingData.raterId,
+          raterName: ratingData.raterName,
+          rating: ratingData.rating,
+          contextType: ratingData.contextType,
+        },
+        priority: 'medium' as const,
+        userId: ratingData.recipientId,
+      };
+
+      // Enviar notificación en tiempo real
+      await this.sendNotification({
+        recipientId: ratingData.recipientId,
+        templateId: 'rating_received',
+        variables: {
+          raterName: ratingData.raterName,
+          rating: ratingData.rating.toString(),
+          contextType: ratingData.contextType,
+        },
+        priority: 'medium',
+      });
+    } catch (error) {
+      logger.error('Error sending rating received notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 }

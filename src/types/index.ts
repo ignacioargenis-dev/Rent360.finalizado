@@ -28,6 +28,14 @@ export type PaymentMethod =
   | 'OTHER'
   | 'KHIPU';
 
+export type RatingContextType =
+  | 'CONTRACT'
+  | 'SERVICE'
+  | 'MAINTENANCE'
+  | 'PROPERTY_VISIT'
+  | 'GENERAL'
+  | 'OTHER';
+
 export interface User {
   id: string;
   email: string;
