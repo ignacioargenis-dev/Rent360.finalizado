@@ -66,7 +66,7 @@ export default function TenantContractsPage() {
             id: '1',
             name: 'Juan Pérez',
             email: 'juan.perez@example.com',
-            role: 'tenant'
+            role: 'tenant',
           });
         }
       } catch (error) {
@@ -75,7 +75,7 @@ export default function TenantContractsPage() {
           id: '1',
           name: 'Juan Pérez',
           email: 'juan.perez@example.com',
-          role: 'tenant'
+          role: 'tenant',
         });
       } finally {
         setUserLoading(false);
@@ -128,6 +128,8 @@ export default function TenantContractsPage() {
             views: 156,
             inquiries: 12,
             ownerId: '6',
+            brokerId: null,
+            createdBy: '6',
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -171,6 +173,8 @@ export default function TenantContractsPage() {
             views: 245,
             inquiries: 23,
             ownerId: '2',
+            brokerId: null,
+            createdBy: '2',
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -213,6 +217,8 @@ export default function TenantContractsPage() {
             views: 189,
             inquiries: 15,
             ownerId: '3',
+            brokerId: null,
+            createdBy: '3',
             createdAt: new Date(),
             updatedAt: new Date(),
           },

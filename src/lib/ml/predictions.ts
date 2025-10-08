@@ -88,9 +88,9 @@ class PricePredictionModel {
       r2: 0,
       mse: 0,
       mae: 0,
-      accuracy: 0
+      accuracy: 0,
     },
-    lastTrained: new Date()
+    lastTrained: new Date(),
   };
 
   // Cargar datos de entrenamiento desde la base de datos
@@ -101,7 +101,7 @@ class PricePredictionModel {
       // Query para obtener datos históricos de propiedades
       const properties = await db.property.findMany({
         where: {
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         select: {
           id: true,
@@ -126,17 +126,17 @@ class PricePredictionModel {
               reviews: true,
               propertyFavorites: true,
               visits: true,
-              maintenance: true
-            }
-          }
+              maintenance: true,
+            },
+          },
         },
-        take: 1000 // Limitar para evitar sobrecarga
+        take: 1000, // Limitar para evitar sobrecarga
       });
 
       // Transformar datos para el modelo
       this.model.trainingData = properties.map(prop => {
         const age = Math.floor((Date.now() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)); // Edad en días
-        const pricePerSqm = prop.area > 0 ? prop.price / prop.area : 0;
+        const pricePerSqm = prop.area && prop.area > 0 ? prop.price / prop.area : 0;
         const depositRatio = prop.deposit > 0 ? prop.deposit / prop.price : 0;
 
         // Extraer características del campo features (JSON)
@@ -166,7 +166,7 @@ class PricePredictionModel {
           id: prop.id,
           price: prop.price,
           deposit: prop.deposit,
-          area: prop.area,
+          area: prop.area ?? 0,
           bedrooms: prop.bedrooms || 0,
           bathrooms: prop.bathrooms || 0,
           city: prop.city,
@@ -189,7 +189,7 @@ class PricePredictionModel {
           favoriteCount: prop._count.propertyFavorites || 0,
           visitCount: prop._count.visits || 0,
           maintenanceCount: prop._count.maintenance || 0,
-          createdAt: prop.createdAt
+          createdAt: prop.createdAt,
         };
       });
 
@@ -231,7 +231,7 @@ class PricePredictionModel {
         favoriteCount: 25,
         visitCount: 35,
         maintenanceCount: 1,
-        createdAt: new Date('2024-01-01')
+        createdAt: new Date('2024-01-01'),
       },
       {
         id: 'sample-2',
@@ -260,7 +260,7 @@ class PricePredictionModel {
         favoriteCount: 45,
         visitCount: 50,
         maintenanceCount: 0,
-        createdAt: new Date('2024-01-15')
+        createdAt: new Date('2024-01-15'),
       },
       {
         id: 'sample-3',
@@ -289,8 +289,8 @@ class PricePredictionModel {
         favoriteCount: 15,
         visitCount: 20,
         maintenanceCount: 2,
-        createdAt: new Date('2023-12-15')
-      }
+        createdAt: new Date('2023-12-15'),
+      },
     ];
   }
 
@@ -309,10 +309,23 @@ class PricePredictionModel {
 
     // Características ampliadas para mejor precisión
     const features = [
-      'area', 'bedrooms', 'bathrooms', 'views', 'inquiries',
-      'age', 'pricePerSqm', 'depositRatio', 'hasParking', 'hasGarden',
-      'hasPool', 'isFurnished', 'petsAllowed', 'yearBuilt',
-      'contractCount', 'reviewCount', 'visitCount'
+      'area',
+      'bedrooms',
+      'bathrooms',
+      'views',
+      'inquiries',
+      'age',
+      'pricePerSqm',
+      'depositRatio',
+      'hasParking',
+      'hasGarden',
+      'hasPool',
+      'isFurnished',
+      'petsAllowed',
+      'yearBuilt',
+      'contractCount',
+      'reviewCount',
+      'visitCount',
     ];
 
     const n = this.model.trainingData.length;
@@ -363,7 +376,7 @@ class PricePredictionModel {
     logger.info('Modelo entrenado exitosamente', {
       features: features.length,
       trainingData: n,
-      r2: this.model.modelMetrics.r2.toFixed(3)
+      r2: this.model.modelMetrics.r2.toFixed(3),
     });
   }
 
@@ -374,26 +387,29 @@ class PricePredictionModel {
     const predictedPrices = this.model.trainingData.map(item => this.predictPrice(item));
 
     // Calcular MSE (Mean Squared Error)
-    const mse = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.pow(actual - (predictedPrices[i]!), 2), 0) / n;
+    const mse =
+      actualPrices.reduce((sum, actual, i) => sum + Math.pow(actual - predictedPrices[i]!, 2), 0) /
+      n;
 
     // Calcular MAE (Mean Absolute Error)
-    const mae = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.abs(actual - (predictedPrices[i]!)), 0) / n;
+    const mae =
+      actualPrices.reduce((sum, actual, i) => sum + Math.abs(actual - predictedPrices[i]!), 0) / n;
 
     // Calcular R² (Coeficiente de determinación)
     const avgPrice = actualPrices.reduce((sum, price) => sum + price, 0) / n;
-    const ssRes = actualPrices.reduce((sum, actual, i) =>
-      sum + Math.pow(actual - (predictedPrices[i]!), 2), 0);
-    const ssTot = actualPrices.reduce((sum, actual) =>
-      sum + Math.pow(actual - avgPrice, 2), 0);
-    const r2 = ssTot !== 0 ? 1 - (ssRes / ssTot) : 0;
+    const ssRes = actualPrices.reduce(
+      (sum, actual, i) => sum + Math.pow(actual - predictedPrices[i]!, 2),
+      0
+    );
+    const ssTot = actualPrices.reduce((sum, actual) => sum + Math.pow(actual - avgPrice, 2), 0);
+    const r2 = ssTot !== 0 ? 1 - ssRes / ssTot : 0;
 
     // Calcular precisión (porcentaje de predicciones dentro del 20% del precio real)
-    const accuracy = actualPrices.reduce((count, actual, i) => {
-      const diff = Math.abs(actual - (predictedPrices[i]!)) / actual;
-      return count + (diff <= 0.2 ? 1 : 0);
-    }, 0) / n;
+    const accuracy =
+      actualPrices.reduce((count, actual, i) => {
+        const diff = Math.abs(actual - predictedPrices[i]!) / actual;
+        return count + (diff <= 0.2 ? 1 : 0);
+      }, 0) / n;
 
     this.model.modelMetrics = { r2, mse, mae, accuracy };
   }
@@ -417,7 +433,7 @@ class PricePredictionModel {
       yearBuilt: propertyData.yearBuilt || 2020,
       contractCount: propertyData.contractCount || 0,
       reviewCount: propertyData.reviewCount || 0,
-      visitCount: propertyData.visitCount || 0
+      visitCount: propertyData.visitCount || 0,
     };
 
     let prediction = this.model.bias;
@@ -429,7 +445,12 @@ class PricePredictionModel {
   }
 
   // Predecir precio con modelo mejorado
-  predict(propertyData: Partial<PropertyData>): { price: number; confidence: number; factors: Record<string, number>; modelInfo: any } {
+  predict(propertyData: Partial<PropertyData>): {
+    price: number;
+    confidence: number;
+    factors: Record<string, number>;
+    modelInfo: any;
+  } {
     if (!this.model.trained) {
       throw new Error('El modelo no está entrenado');
     }
@@ -452,7 +473,7 @@ class PricePredictionModel {
       yearBuilt: propertyData.yearBuilt || 2020,
       contractCount: propertyData.contractCount || 0,
       reviewCount: propertyData.reviewCount || 0,
-      visitCount: propertyData.visitCount || 0
+      visitCount: propertyData.visitCount || 0,
     };
 
     let prediction = this.model.bias;
@@ -485,51 +506,91 @@ class PricePredictionModel {
         trainedAt: this.model.lastTrained,
         trainingDataSize: this.model.trainingData.length,
         modelAccuracy: this.model.modelMetrics.accuracy,
-        r2: this.model.modelMetrics.r2
-      }
+        r2: this.model.modelMetrics.r2,
+      },
     };
   }
 
-  private calculateAdvancedConfidence(propertyData: Partial<PropertyData>, prediction: number): number {
+  private calculateAdvancedConfidence(
+    propertyData: Partial<PropertyData>,
+    prediction: number
+  ): number {
     let confidence = 0.5; // Confianza base
 
     // Evaluar completitud de datos críticos
-    if (propertyData.area && propertyData.area > 0) confidence += 0.15;
-    if (propertyData.bedrooms && propertyData.bedrooms >= 0) confidence += 0.1;
-    if (propertyData.bathrooms && propertyData.bathrooms >= 0) confidence += 0.1;
-    if (propertyData.city) confidence += 0.1;
-    if (propertyData.commune) confidence += 0.1;
+    if (propertyData.area && propertyData.area > 0) {
+      confidence += 0.15;
+    }
+    if (propertyData.bedrooms && propertyData.bedrooms >= 0) {
+      confidence += 0.1;
+    }
+    if (propertyData.bathrooms && propertyData.bathrooms >= 0) {
+      confidence += 0.1;
+    }
+    if (propertyData.city) {
+      confidence += 0.1;
+    }
+    if (propertyData.commune) {
+      confidence += 0.1;
+    }
 
     // Evaluar características adicionales
-    if (propertyData.inquiries !== undefined) confidence += 0.03;
-    if (propertyData.age !== undefined) confidence += 0.03;
-    if (propertyData.pricePerSqm !== undefined) confidence += 0.03;
-    if (propertyData.contractCount !== undefined) confidence += 0.03;
-    if (propertyData.hasParking !== undefined) confidence += 0.02;
-    if (propertyData.hasGarden !== undefined) confidence += 0.02;
-    if (propertyData.isFurnished !== undefined) confidence += 0.02;
-    if (propertyData.petsAllowed !== undefined) confidence += 0.02;
+    if (propertyData.inquiries !== undefined) {
+      confidence += 0.03;
+    }
+    if (propertyData.age !== undefined) {
+      confidence += 0.03;
+    }
+    if (propertyData.pricePerSqm !== undefined) {
+      confidence += 0.03;
+    }
+    if (propertyData.contractCount !== undefined) {
+      confidence += 0.03;
+    }
+    if (propertyData.hasParking !== undefined) {
+      confidence += 0.02;
+    }
+    if (propertyData.hasGarden !== undefined) {
+      confidence += 0.02;
+    }
+    if (propertyData.isFurnished !== undefined) {
+      confidence += 0.02;
+    }
+    if (propertyData.petsAllowed !== undefined) {
+      confidence += 0.02;
+    }
 
     // Evaluar métricas del modelo
-    if (this.model.modelMetrics.r2 > 0.7) confidence += 0.1;
-    if (this.model.modelMetrics.accuracy > 0.8) confidence += 0.1;
+    if (this.model.modelMetrics.r2 > 0.7) {
+      confidence += 0.1;
+    }
+    if (this.model.modelMetrics.accuracy > 0.8) {
+      confidence += 0.1;
+    }
 
     // Evaluar tamaño del conjunto de entrenamiento
-    if (this.model.trainingData.length > 100) confidence += 0.1;
-    else if (this.model.trainingData.length < 20) confidence -= 0.2;
+    if (this.model.trainingData.length > 100) {
+      confidence += 0.1;
+    } else if (this.model.trainingData.length < 20) {
+      confidence -= 0.2;
+    }
 
     // Ajustar basado en la variabilidad de precios similares
     const similarProperties = this.findSimilarProperties(propertyData);
     if (similarProperties.length > 5) {
       const priceVariance = this.calculatePriceVariance(similarProperties);
-      if (priceVariance < 0.3) confidence += 0.1; // Precios consistentes
+      if (priceVariance < 0.3) {
+        confidence += 0.1;
+      } // Precios consistentes
     }
 
     return Math.min(1, Math.max(0, confidence));
   }
 
   private findSimilarProperties(propertyData: Partial<PropertyData>): PropertyData[] {
-    if (!propertyData.area) return [];
+    if (!propertyData.area) {
+      return [];
+    }
 
     return this.model.trainingData.filter(item => {
       const areaDiff = Math.abs((item.area - (propertyData.area || 0)) / (propertyData.area || 1));
@@ -538,11 +599,14 @@ class PricePredictionModel {
   }
 
   private calculatePriceVariance(properties: PropertyData[]): number {
-    if (properties.length < 2) return 1;
+    if (properties.length < 2) {
+      return 1;
+    }
 
     const prices = properties.map(p => p.price);
     const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-    const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+    const variance =
+      prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
 
     return Math.sqrt(variance) / mean; // Coeficiente de variación
   }
@@ -558,7 +622,9 @@ export async function initializeMLModels(): Promise<void> {
     await pricePredictionModel.train();
     logger.info('Modelos de Machine Learning inicializados exitosamente');
   } catch (error) {
-    logger.error('Error inicializando modelos de ML', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error inicializando modelos de ML', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -573,7 +639,9 @@ mlModel.loadTrainingData().then(() => {
 });
 
 // Función helper para obtener predicción de precio con modelo mejorado
-export async function predictPropertyPrice(propertyData: Partial<PropertyData>): Promise<PredictionResult> {
+export async function predictPropertyPrice(
+  propertyData: Partial<PropertyData>
+): Promise<PredictionResult> {
   try {
     // Asegurar que el modelo esté entrenado
     if (!mlModel['model'].trained) {
@@ -595,7 +663,7 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
       occupancyRate: 0.7,
       averageRentalPeriod: 24,
       demandIndex: 65,
-      priceTrend: 'stable'
+      priceTrend: 'stable',
     };
 
     // Generar recomendaciones inteligentes
@@ -606,15 +674,18 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
       confidence: prediction.confidence,
       priceRange: {
         min: Math.round(prediction.price * (0.9 - (1 - prediction.confidence) * 0.2)),
-        max: Math.round(prediction.price * (1.1 + (1 - prediction.confidence) * 0.2))
+        max: Math.round(prediction.price * (1.1 + (1 - prediction.confidence) * 0.2)),
       },
       marketComparison: {
         averagePrice: marketData.averagePrice,
-        percentile: Math.round(prediction.price > marketData.averagePrice ?
-          75 + (prediction.confidence * 25) : 25 + (prediction.confidence * 25))
+        percentile: Math.round(
+          prediction.price > marketData.averagePrice
+            ? 75 + prediction.confidence * 25
+            : 25 + prediction.confidence * 25
+        ),
       },
       recommendations,
-      factors: prediction.factors
+      factors: prediction.factors,
     };
   } catch (error) {
     logger.error('Error en predicción de precio', { error, propertyData });
@@ -626,14 +697,14 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
       confidence: 0.3,
       priceRange: {
         min: Math.round(basicPrice * 0.8),
-        max: Math.round(basicPrice * 1.2)
+        max: Math.round(basicPrice * 1.2),
       },
       marketComparison: {
         averagePrice: basicPrice,
-        percentile: 50
+        percentile: 50,
       },
       recommendations: ['Estimación básica - usar datos completos para mejor precisión'],
-      factors: {}
+      factors: {},
     };
   }
 }
@@ -641,7 +712,12 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
 // Función para generar recomendaciones inteligentes
 function generateSmartRecommendations(
   propertyData: Partial<PropertyData>,
-  prediction: { price: number; confidence: number; factors: Record<string, number>; modelInfo: any },
+  prediction: {
+    price: number;
+    confidence: number;
+    factors: Record<string, number>;
+    modelInfo: any;
+  },
   marketData: MarketData
 ): string[] {
   const recommendations: string[] = [];
@@ -649,13 +725,17 @@ function generateSmartRecommendations(
   // Recomendaciones basadas en factores del modelo
   if (prediction.factors) {
     const topFactors = Object.entries(prediction.factors)
-      .sort(([,a]: [string, number], [,b]: [string, number]) => Math.abs(b) - Math.abs(a))
+      .sort(([, a]: [string, number], [, b]: [string, number]) => Math.abs(b) - Math.abs(a))
       .slice(0, 3);
 
     if (topFactors.some(([factor]) => factor === 'area')) {
       recommendations.push('El área es un factor determinante del precio');
     }
-    if (topFactors.some(([factor]) => factor === 'isFurnished' && prediction.factors['isFurnished']! > 0)) {
+    if (
+      topFactors.some(
+        ([factor]) => factor === 'isFurnished' && prediction.factors['isFurnished']! > 0
+      )
+    ) {
       recommendations.push('Las propiedades amobladas tienen mayor valor de mercado');
     }
   }
@@ -664,9 +744,13 @@ function generateSmartRecommendations(
   const priceDiff = ((prediction.price - marketData.averagePrice) / marketData.averagePrice) * 100;
   if (Math.abs(priceDiff) > 20) {
     if (priceDiff > 0) {
-      recommendations.push(`Precio estimado ${Math.round(Math.abs(priceDiff))}% por encima del promedio del mercado`);
+      recommendations.push(
+        `Precio estimado ${Math.round(Math.abs(priceDiff))}% por encima del promedio del mercado`
+      );
     } else {
-      recommendations.push(`Precio estimado ${Math.round(Math.abs(priceDiff))}% por debajo del promedio del mercado`);
+      recommendations.push(
+        `Precio estimado ${Math.round(Math.abs(priceDiff))}% por debajo del promedio del mercado`
+      );
     }
   }
 
@@ -697,8 +781,12 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
 
         // Construir filtros para consulta
         const whereClause: any = {};
-        if (city) whereClause.city = city;
-        if (commune) whereClause.commune = commune;
+        if (city) {
+          whereClause.city = city;
+        }
+        if (commune) {
+          whereClause.commune = commune;
+        }
 
         // Obtener propiedades del área especificada
         const properties = await db.property.findMany({
@@ -709,9 +797,9 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
             status: true,
             createdAt: true,
             _count: {
-              select: { contracts: true }
-            }
-          }
+              select: { contracts: true },
+            },
+          },
         });
 
         if (properties.length === 0) {
@@ -726,9 +814,9 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
               commune: true,
               createdAt: true,
               _count: {
-                select: { contracts: true }
-              }
-            }
+                select: { contracts: true },
+              },
+            },
           });
 
           return calculateMarketStats(allProperties, city, commune);
@@ -745,24 +833,32 @@ export async function getMarketStatistics(city?: string, commune?: string): Prom
     logger.error('Error obteniendo estadísticas de mercado', { error, city, commune });
 
     // Retornar datos por defecto en caso de error
-    return [{
-      city: city || 'Santiago',
-      commune: commune || 'Providencia',
-      averagePrice: 600000,
-      averageArea: 90,
-      totalProperties: 50,
-      availableProperties: 15,
-      occupancyRate: 0.7,
-      averageRentalPeriod: 24,
-      demandIndex: 65,
-      priceTrend: 'stable' as const
-    }];
+    return [
+      {
+        city: city || 'Santiago',
+        commune: commune || 'Providencia',
+        averagePrice: 600000,
+        averageArea: 90,
+        totalProperties: 50,
+        availableProperties: 15,
+        occupancyRate: 0.7,
+        averageRentalPeriod: 24,
+        demandIndex: 65,
+        priceTrend: 'stable' as const,
+      },
+    ];
   });
 }
 
 // Función auxiliar para calcular estadísticas de mercado
-async function calculateMarketStats(properties: any[], city?: string, commune?: string): Promise<MarketData[]> {
-  if (properties.length === 0) return [];
+async function calculateMarketStats(
+  properties: any[],
+  city?: string,
+  commune?: string
+): Promise<MarketData[]> {
+  if (properties.length === 0) {
+    return [];
+  }
 
   // Calcular estadísticas básicas
   const totalProperties = properties.length;
@@ -772,43 +868,47 @@ async function calculateMarketStats(properties: any[], city?: string, commune?: 
 
   // Calcular precios promedio
   const prices = properties.map(p => p.price).filter(p => p > 0);
-  const averagePrice = prices.length > 0
-    ? prices.reduce((sum, price) => sum + price, 0) / prices.length
-    : 600000;
+  const averagePrice =
+    prices.length > 0 ? prices.reduce((sum, price) => sum + price, 0) / prices.length : 600000;
 
   // Calcular áreas promedio
   const areas = properties.map(p => p.area).filter(a => a > 0);
-  const averageArea = areas.length > 0
-    ? areas.reduce((sum, area) => sum + area, 0) / areas.length
-    : 90;
+  const averageArea =
+    areas.length > 0 ? areas.reduce((sum, area) => sum + area, 0) / areas.length : 90;
 
   // Calcular período de alquiler promedio (estimación por defecto)
   const averageRentalPeriod = 30; // 30 días promedio
 
   // Calcular índice de demanda basado en contratos recientes
-  const recentContracts = properties.filter(p => {
-    if (!p.createdAt) return false;
-    const daysSinceCreation = (Date.now() - p.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceCreation <= 90; // Últimos 90 días
-  }).reduce((sum, p) => sum + p._count.contracts, 0);
+  const recentContracts = properties
+    .filter(p => {
+      if (!p.createdAt) {
+        return false;
+      }
+      const daysSinceCreation = (Date.now() - p.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceCreation <= 90; // Últimos 90 días
+    })
+    .reduce((sum, p) => sum + p._count.contracts, 0);
 
   const demandIndex = Math.min(100, Math.max(0, (recentContracts / totalProperties) * 100));
 
   // Determinar tendencia de precios (simplificada)
   const priceTrend: 'increasing' | 'stable' | 'decreasing' = 'stable';
 
-  return [{
-    city: city || properties[0]?.city || 'Santiago',
-    commune: commune || properties[0]?.commune || 'Providencia',
-    averagePrice: Math.round(averagePrice),
-    averageArea: Math.round(averageArea),
-    totalProperties,
-    availableProperties,
-    occupancyRate,
-    averageRentalPeriod: Math.round(averageRentalPeriod),
-    demandIndex: Math.round(demandIndex),
-    priceTrend
-  }];
+  return [
+    {
+      city: city || properties[0]?.city || 'Santiago',
+      commune: commune || properties[0]?.commune || 'Providencia',
+      averagePrice: Math.round(averagePrice),
+      averageArea: Math.round(averageArea),
+      totalProperties,
+      availableProperties,
+      occupancyRate,
+      averageRentalPeriod: Math.round(averageRentalPeriod),
+      demandIndex: Math.round(demandIndex),
+      priceTrend,
+    },
+  ];
 }
 
 // Función helper para predecir demanda usando datos reales
@@ -821,16 +921,16 @@ export async function predictMarketDemand(city: string, commune: string, months:
       where: {
         property: {
           city: city,
-          commune: commune
+          commune: commune,
         },
         createdAt: {
-          gte: new Date(Date.now() - (months * 30 * 24 * 60 * 60 * 1000)) // Últimos N meses
-        }
+          gte: new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000), // Últimos N meses
+        },
       },
       select: {
         createdAt: true,
-        status: true
-      }
+        status: true,
+      },
     });
 
     if (contracts.length < 5) {
@@ -838,7 +938,7 @@ export async function predictMarketDemand(city: string, commune: string, months:
       return {
         predictedOccupancy: 70,
         confidence: 0.5,
-        trend: 'stable' as const
+        trend: 'stable' as const,
       };
     }
 
@@ -855,8 +955,11 @@ export async function predictMarketDemand(city: string, commune: string, months:
     let trend: 'increasing' | 'stable' | 'decreasing' = 'stable';
     const changeRate = (recentContracts - olderContracts) / olderContracts;
 
-    if (changeRate > 0.1) trend = 'increasing';
-    else if (changeRate < -0.1) trend = 'decreasing';
+    if (changeRate > 0.1) {
+      trend = 'increasing';
+    } else if (changeRate < -0.1) {
+      trend = 'decreasing';
+    }
 
     // Calcular confianza basada en cantidad de datos
     const confidence = Math.min(0.9, contracts.length / 50);
@@ -864,7 +967,7 @@ export async function predictMarketDemand(city: string, commune: string, months:
     return {
       predictedOccupancy: Math.round(occupancyRate),
       confidence,
-      trend
+      trend,
     };
   } catch (error) {
     logger.error('Error prediciendo demanda de mercado', { error, city, commune });
@@ -873,7 +976,7 @@ export async function predictMarketDemand(city: string, commune: string, months:
     return {
       predictedOccupancy: 70,
       confidence: 0.3,
-      trend: 'stable' as const
+      trend: 'stable' as const,
     };
   }
 }

@@ -56,7 +56,7 @@ async function main() {
   // Crear prestadores de mantenimiento
   const providers = [
     {
-      userId: createdUsers[0].id,
+      userId: createdUsers[0]?.id || '',
       businessName: 'Carlos Electricista SPA',
       rut: '12.345.678-9',
       specialty: 'Electricidad',
@@ -84,7 +84,7 @@ async function main() {
       }),
     },
     {
-      userId: createdUsers[1].id,
+      userId: createdUsers[1]?.id || '',
       businessName: 'María Plomería Express',
       rut: '98.765.432-1',
       specialty: 'Plomería',
@@ -113,7 +113,7 @@ async function main() {
       }),
     },
     {
-      userId: createdUsers[2].id,
+      userId: createdUsers[2]?.id || '',
       businessName: 'Pedro Carpintería Plus',
       rut: '55.556.667-8',
       specialty: 'Carpintería',
@@ -145,7 +145,7 @@ async function main() {
       }),
     },
     {
-      userId: createdUsers[3].id,
+      userId: createdUsers[3]?.id || '',
       businessName: 'Ana Pintura Profesional',
       rut: '44.447.778-9',
       specialty: 'Pintura',

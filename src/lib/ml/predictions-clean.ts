@@ -70,7 +70,7 @@ class PricePredictionModel {
     weights: {},
     bias: 0,
     trained: false,
-    trainingData: []
+    trainingData: [],
   };
 
   // Cargar datos de entrenamiento desde la base de datos
@@ -81,7 +81,7 @@ class PricePredictionModel {
       // Query para obtener datos históricos de propiedades
       const properties = await db.property.findMany({
         where: {
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         select: {
           id: true,
@@ -106,17 +106,17 @@ class PricePredictionModel {
               reviews: true,
               propertyFavorites: true,
               visits: true,
-              maintenance: true
-            }
-          }
+              maintenance: true,
+            },
+          },
         },
-        take: 1000 // Limitar para evitar sobrecarga
+        take: 1000, // Limitar para evitar sobrecarga
       });
 
       // Transformar datos para el modelo
       this.model.trainingData = properties.map(prop => {
         const age = Math.floor((Date.now() - prop.createdAt.getTime()) / (1000 * 60 * 60 * 24)); // Edad en días
-        const pricePerSqm = prop.area > 0 ? prop.price / prop.area : 0;
+        const pricePerSqm = prop.area && prop.area > 0 ? prop.price / prop.area : 0;
         const depositRatio = prop.deposit > 0 ? prop.deposit / prop.price : 0;
 
         // Extraer características del campo features (JSON)
@@ -138,7 +138,7 @@ class PricePredictionModel {
           id: prop.id,
           price: prop.price,
           deposit: prop.deposit,
-          area: prop.area,
+          area: prop.area ?? 0,
           bedrooms: prop.bedrooms || 0,
           bathrooms: prop.bathrooms || 0,
           city: prop.city,
@@ -158,7 +158,7 @@ class PricePredictionModel {
           favoriteCount: prop._count.propertyFavorites || 0,
           visitCount: prop._count.visits || 0,
           maintenanceCount: prop._count.maintenance || 0,
-          createdAt: prop.createdAt
+          createdAt: prop.createdAt,
         };
       });
 
@@ -197,7 +197,7 @@ class PricePredictionModel {
         favoriteCount: 25,
         visitCount: 35,
         maintenanceCount: 1,
-        createdAt: new Date('2024-01-01')
+        createdAt: new Date('2024-01-01'),
       },
       {
         id: 'sample-2',
@@ -223,7 +223,7 @@ class PricePredictionModel {
         favoriteCount: 45,
         visitCount: 50,
         maintenanceCount: 0,
-        createdAt: new Date('2024-01-15')
+        createdAt: new Date('2024-01-15'),
       },
       {
         id: 'sample-3',
@@ -249,8 +249,8 @@ class PricePredictionModel {
         favoriteCount: 15,
         visitCount: 20,
         maintenanceCount: 2,
-        createdAt: new Date('2023-12-15')
-      }
+        createdAt: new Date('2023-12-15'),
+      },
     ];
   }
 
@@ -263,16 +263,37 @@ class PricePredictionModel {
     logger.info('Entrenando modelo de predicción de precios');
 
     // Implementación simplificada de regresión lineal
-    const features = ['area', 'bedrooms', 'bathrooms', 'views', 'inquiries', 'age', 'pricePerSqm', 'depositRatio', 'contractCount', 'reviewCount', 'visitCount'];
+    const features = [
+      'area',
+      'bedrooms',
+      'bathrooms',
+      'views',
+      'inquiries',
+      'age',
+      'pricePerSqm',
+      'depositRatio',
+      'contractCount',
+      'reviewCount',
+      'visitCount',
+    ];
     const target = 'price';
 
     // Calcular pesos usando mínimos cuadrados (simplificado)
     features.forEach(feature => {
       const n = this.model.trainingData.length;
-      const sumX = this.model.trainingData.reduce((sum, item) => sum + ((item as any)[feature] || 0), 0);
+      const sumX = this.model.trainingData.reduce(
+        (sum, item) => sum + ((item as any)[feature] || 0),
+        0
+      );
       const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
-      const sumXY = this.model.trainingData.reduce((sum, item) => sum + ((item as any)[feature] || 0) * item.price, 0);
-      const sumX2 = this.model.trainingData.reduce((sum, item) => sum + Math.pow((item as any)[feature] || 0, 2), 0);
+      const sumXY = this.model.trainingData.reduce(
+        (sum, item) => sum + ((item as any)[feature] || 0) * item.price,
+        0
+      );
+      const sumX2 = this.model.trainingData.reduce(
+        (sum, item) => sum + Math.pow((item as any)[feature] || 0, 2),
+        0
+      );
 
       if (sumX2 - Math.pow(sumX, 2) / n !== 0) {
         this.model.weights[feature] = (n * sumXY - sumX * sumY) / (n * sumX2 - Math.pow(sumX, 2));
@@ -284,7 +305,9 @@ class PricePredictionModel {
     // Calcular bias
     const sumY = this.model.trainingData.reduce((sum, item) => sum + item.price, 0);
     const avgPrice = sumY / this.model.trainingData.length;
-    const avgArea = this.model.trainingData.reduce((sum, item) => sum + item.area, 0) / this.model.trainingData.length;
+    const avgArea =
+      this.model.trainingData.reduce((sum, item) => sum + item.area, 0) /
+      this.model.trainingData.length;
     this.model.bias = avgPrice - (this.model.weights['area'] || 0) * avgArea;
 
     this.model.trained = true;
@@ -292,7 +315,11 @@ class PricePredictionModel {
   }
 
   // Predecir precio
-  predict(propertyData: Partial<PropertyData>): { price: number; confidence: number; factors: Record<string, number> } {
+  predict(propertyData: Partial<PropertyData>): {
+    price: number;
+    confidence: number;
+    factors: Record<string, number>;
+  } {
     if (!this.model.trained) {
       throw new Error('El modelo no está entrenado');
     }
@@ -308,7 +335,7 @@ class PricePredictionModel {
       depositRatio: propertyData.depositRatio || 0,
       contractCount: propertyData.contractCount || 0,
       reviewCount: propertyData.reviewCount || 0,
-      visitCount: propertyData.visitCount || 0
+      visitCount: propertyData.visitCount || 0,
     };
 
     let prediction = this.model.bias;
@@ -326,18 +353,28 @@ class PricePredictionModel {
     return {
       price: Math.max(0, Math.round(prediction)),
       confidence,
-      factors
+      factors,
     };
   }
 
   private calculateConfidence(propertyData: Partial<PropertyData>): number {
     // Confianza simplificada basada en completitud de datos
     let score = 0;
-    if (propertyData.area && propertyData.area > 0) score += 0.3;
-    if (propertyData.bedrooms && propertyData.bedrooms > 0) score += 0.2;
-    if (propertyData.bathrooms && propertyData.bathrooms > 0) score += 0.2;
-    if (propertyData.city) score += 0.15;
-    if (propertyData.commune) score += 0.15;
+    if (propertyData.area && propertyData.area > 0) {
+      score += 0.3;
+    }
+    if (propertyData.bedrooms && propertyData.bedrooms > 0) {
+      score += 0.2;
+    }
+    if (propertyData.bathrooms && propertyData.bathrooms > 0) {
+      score += 0.2;
+    }
+    if (propertyData.city) {
+      score += 0.15;
+    }
+    if (propertyData.commune) {
+      score += 0.15;
+    }
 
     return Math.min(1, score);
   }
@@ -353,7 +390,9 @@ export async function initializeMLModels(): Promise<void> {
     await pricePredictionModel.train();
     logger.info('Modelos de Machine Learning inicializados exitosamente');
   } catch (error) {
-    logger.error('Error inicializando modelos de ML', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error inicializando modelos de ML', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -368,7 +407,9 @@ mlModel.loadTrainingData().then(() => {
 });
 
 // Función helper para obtener predicción de precio
-export async function predictPropertyPrice(propertyData: Partial<PropertyData>): Promise<PredictionResult> {
+export async function predictPropertyPrice(
+  propertyData: Partial<PropertyData>
+): Promise<PredictionResult> {
   try {
     // Asegurar que el modelo esté entrenado
     if (!mlModel['model'].trained) {
@@ -383,18 +424,18 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
       confidence: prediction.confidence,
       priceRange: {
         min: Math.round(prediction.price * 0.9),
-        max: Math.round(prediction.price * 1.1)
+        max: Math.round(prediction.price * 1.1),
       },
       marketComparison: {
         averagePrice: prediction.price,
-        percentile: prediction.confidence * 100
+        percentile: prediction.confidence * 100,
       },
       recommendations: [
         'Considerar el estado de la propiedad',
         'Verificar permisos y normativas locales',
-        'Evaluar demanda en la zona'
+        'Evaluar demanda en la zona',
       ],
-      factors: prediction.factors
+      factors: prediction.factors,
     };
   } catch (error) {
     logger.error('Error en predicción de precio', { error, propertyData });
@@ -406,14 +447,14 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
       confidence: 0.3,
       priceRange: {
         min: Math.round(basicPrice * 0.8),
-        max: Math.round(basicPrice * 1.2)
+        max: Math.round(basicPrice * 1.2),
       },
       marketComparison: {
         averagePrice: basicPrice,
-        percentile: 50
+        percentile: 50,
       },
       recommendations: ['Estimación básica - usar datos completos para mejor precisión'],
-      factors: {}
+      factors: {},
     };
   }
 }
@@ -421,18 +462,20 @@ export async function predictPropertyPrice(propertyData: Partial<PropertyData>):
 // Función helper para obtener estadísticas de mercado
 export async function getMarketStatistics(city?: string, commune?: string): Promise<MarketData[]> {
   // Implementación simplificada - en producción debería usar datos reales
-  return [{
-    city: city || 'Santiago',
-    commune: commune || 'Providencia',
-    averagePrice: 600000,
-    averageArea: 90,
-    totalProperties: 100,
-    availableProperties: 30,
-    occupancyRate: 0.7,
-    averageRentalPeriod: 24,
-    demandIndex: 65,
-    priceTrend: 'stable'
-  }];
+  return [
+    {
+      city: city || 'Santiago',
+      commune: commune || 'Providencia',
+      averagePrice: 600000,
+      averageArea: 90,
+      totalProperties: 100,
+      availableProperties: 30,
+      occupancyRate: 0.7,
+      averageRentalPeriod: 24,
+      demandIndex: 65,
+      priceTrend: 'stable',
+    },
+  ];
 }
 
 // Función helper para predecir demanda
@@ -440,6 +483,6 @@ export async function predictMarketDemand(city: string, commune: string, months?
   return {
     predictedOccupancy: 75,
     confidence: 0.8,
-    trend: 'stable' as const
+    trend: 'stable' as const,
   };
 }
