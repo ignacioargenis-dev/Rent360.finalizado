@@ -356,7 +356,7 @@ export default function BrokerProspectsPage() {
   };
 
   const handleViewProspect = (prospectId: string) => {
-    alert(`Ver detalles del prospecto ${prospectId}`);
+    router.push(`/broker/clients/prospects/${prospectId}`);
   };
 
   const handleContactProspect = (prospect: Prospect) => {
@@ -378,16 +378,35 @@ export default function BrokerProspectsPage() {
 
     const selectedMessage = quickMessages[Math.floor(Math.random() * quickMessages.length)];
 
-    if (confirm(`¿Enviar mensaje rápido?\n\n"${selectedMessage}"`)) {
-      alert('Mensaje enviado exitosamente');
-    }
+    // Store message data for the messages page
+    sessionStorage.setItem(
+      'quickMessage',
+      JSON.stringify({
+        recipientId: prospect.id,
+        recipientName: prospect.name,
+        recipientEmail: prospect.email,
+        subject: `Información sobre propiedades en ${prospect.preferredLocation}`,
+        content: selectedMessage,
+        type: 'prospect_quick_message',
+      })
+    );
+
+    router.push('/broker/messages?new=true&quick=true');
   };
 
   const handleScheduleFollowUp = (prospect: Prospect) => {
-    const followUpDate = prompt('¿Cuándo quieres programar el seguimiento? (DD/MM/YYYY)', '');
-    if (followUpDate) {
-      alert(`Seguimiento programado para ${prospect.name} el ${followUpDate}`);
-    }
+    // Store follow-up data for a potential follow-up management system
+    const followUpData = {
+      prospectId: prospect.id,
+      prospectName: prospect.name,
+      prospectEmail: prospect.email,
+      scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default to 1 week from now
+      type: 'follow_up',
+      notes: `Seguimiento automático programado para prospecto ${prospect.name}`,
+    };
+
+    sessionStorage.setItem('scheduledFollowUp', JSON.stringify(followUpData));
+    alert(`Seguimiento programado para ${prospect.name} en 7 días`);
   };
 
   const handleViewMatchingProperties = (prospect: Prospect) => {
@@ -467,6 +486,23 @@ export default function BrokerProspectsPage() {
   const handleAnalyzeLocation = (location: string) => {
     // Navigate to market analysis for specific location
     router.push(`/broker/analytics/market-analysis?focus=${encodeURIComponent(location)}`);
+  };
+
+  const handleConvertProspect = (prospect: Prospect) => {
+    // In a real app, this would convert the prospect to a client
+    // For now, we'll simulate the conversion and update the status
+    if (
+      confirm(
+        `¿Convertir a ${prospect.name} en cliente? Esto actualizará su estado y permitirá gestión completa.`
+      )
+    ) {
+      // Update prospect status (in real app, this would be an API call)
+      setProspects(prev =>
+        prev.map(p => (p.id === prospect.id ? { ...p, status: 'converted' as const } : p))
+      );
+
+      alert(`¡${prospect.name} ha sido convertido exitosamente a cliente!`);
+    }
   };
 
   // Advanced analytics toggle
@@ -1048,7 +1084,7 @@ export default function BrokerProspectsPage() {
                             <Button
                               size="sm"
                               className="bg-green-600 hover:bg-green-700"
-                              onClick={() => alert(`Convertir prospecto ${prospect.name}`)}
+                              onClick={() => handleConvertProspect(prospect)}
                             >
                               <UserPlus className="w-4 h-4 mr-1" />
                               Convertir

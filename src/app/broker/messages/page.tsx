@@ -76,14 +76,56 @@ export default function BrokerMessagesPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessageContent, setNewMessageContent] = useState('');
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 
   useEffect(() => {
     // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
+    const isQuickMessage = searchParams.get('quick') === 'true';
 
-    if (isNewMessage) {
+    if (isNewMessage || isQuickMessage) {
+      // Handle quick messages first
+      if (isQuickMessage) {
+        const quickMessageData = sessionStorage.getItem('quickMessage');
+        if (quickMessageData) {
+          try {
+            const quickMessage = JSON.parse(quickMessageData);
+
+            // Create new message with quick message data
+            const newMessage: Message = {
+              id: `msg_${Date.now()}`,
+              senderName: user?.name || 'Corredor',
+              senderType: 'broker',
+              recipientName: quickMessage.recipientName,
+              recipientType: 'prospect',
+              subject: quickMessage.subject,
+              content: quickMessage.content,
+              propertyTitle: `Prospecto: ${quickMessage.recipientName}`,
+              type: 'general',
+              status: 'unread',
+              priority: 'normal',
+              hasAttachments: false,
+              createdAt: new Date().toISOString(),
+            };
+
+            // Set the new message for editing
+            setEditingMessage(newMessage);
+            setNewMessageContent(newMessage.content);
+            setShowNewMessageModal(true);
+
+            // Clear the quick message data
+            sessionStorage.removeItem('quickMessage');
+            return;
+          } catch (error) {
+            logger.error('Error parsing quick message data:', { error });
+          }
+        }
+      }
+
+      // Handle regular new messages
       const recipientData = sessionStorage.getItem('newMessageRecipient');
       if (recipientData) {
         try {
@@ -110,6 +152,8 @@ export default function BrokerMessagesPage() {
 
           // Add the new message to the list
           setMessages(prev => [newMessage, ...prev]);
+          setNewMessageContent('');
+          setEditingMessage(null);
 
           // Clear the sessionStorage
           sessionStorage.removeItem('newMessageRecipient');
@@ -396,7 +440,7 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
+    if (!newMessageContent.trim()) {
       alert('Por favor escribe un mensaje antes de enviar');
       return;
     }
@@ -411,7 +455,7 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
         body: JSON.stringify({
           receiverId: 'system_broadcast', // For system messages, or select a specific recipient
           subject: 'Mensaje del sistema',
-          content: newMessage,
+          content: newMessageContent,
           type: 'general',
         }),
       });
@@ -426,7 +470,7 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
           recipientName: 'Sistema',
           recipientType: 'owner',
           subject: 'Mensaje del sistema',
-          content: newMessage,
+          content: newMessageContent,
           propertyTitle: '',
           propertyAddress: '',
           type: 'general',
@@ -437,7 +481,7 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
         };
 
         setMessages(prev => [newMessageObj, ...prev]);
-        setNewMessage('');
+        setNewMessageContent('');
         alert('Mensaje enviado exitosamente');
       } else {
         const error = await response.json();
@@ -712,11 +756,11 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
                   type="text"
                   placeholder="Escribe un mensaje..."
                   className="flex-1"
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
+                  value={newMessageContent}
+                  onChange={e => setNewMessageContent(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                 />
-                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                <Button onClick={handleSendMessage} disabled={!newMessageContent.trim()}>
                   <Send className="w-4 h-4 mr-2" />
                   Enviar
                 </Button>
