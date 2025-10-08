@@ -28,7 +28,7 @@ const assignContractorSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros basados en el rol del usuario
     const where: any = {};
-    
+
     if (user.role === 'TENANT') {
       // Inquilinos solo ven sus propias solicitudes
       where.requestedBy = user.id;
@@ -57,26 +57,26 @@ export async function GET(request: NextRequest) {
       };
     }
     // Admins ven todas las solicitudes
-    
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (priority) {
       where.priority = priority;
     }
-    
+
     if (category) {
       where.category = category;
     }
-    
+
     if (propertyId) {
       where.propertyId = propertyId;
     }
@@ -136,7 +136,6 @@ export async function GET(request: NextRequest) {
         totalActualCost: stats._sum.actualCost || 0,
       },
     });
-
   } catch (error) {
     return handleApiError(error);
   }
@@ -146,35 +145,61 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
-    // Solo inquilinos pueden crear solicitudes
-    if (user.role !== 'TENANT') {
-      return NextResponse.json(
-        { error: 'Solo los inquilinos pueden crear solicitudes de mantenimiento' },
-        { status: 403 },
-      );
-    }
+
+    // Verificar permisos: inquilinos, corredores (para propiedades que administran), o propietarios
 
     const body = await request.json();
     const validatedData = maintenanceSchema.parse(body);
 
-    // Verificar que la propiedad existe y el inquilino tiene acceso
-    const property = await db.property.findFirst({
-      where: {
-        id: validatedData.propertyId,
-        contracts: {
-          some: {
-            tenantId: user.id,
-            status: 'ACTIVE',
-          },
-        },
+    // Verificar que la propiedad existe y el usuario tiene permisos
+    const property = await db.property.findUnique({
+      where: { id: validatedData.propertyId },
+      select: {
+        id: true,
+        title: true,
+        address: true,
+        ownerId: true,
+        brokerId: true,
+        createdBy: true,
       },
     });
 
     if (!property) {
+      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
+    }
+
+    // Verificar permisos de acceso
+    let hasPermission = false;
+    let requesterRole = 'USER';
+
+    if (user.role === 'ADMIN') {
+      hasPermission = true;
+      requesterRole = 'ADMIN';
+    } else if (user.role === 'OWNER' && property.ownerId === user.id) {
+      hasPermission = true;
+      requesterRole = 'OWNER';
+    } else if (user.role === 'BROKER' && property.brokerId === user.id) {
+      hasPermission = true;
+      requesterRole = 'BROKER';
+    } else if (user.role === 'TENANT') {
+      // Verificar si el inquilino tiene un contrato activo con esta propiedad
+      const activeContract = await db.contract.findFirst({
+        where: {
+          propertyId: validatedData.propertyId,
+          tenantId: user.id,
+          status: { in: ['ACTIVE', 'PENDING'] },
+        },
+      });
+      hasPermission = !!activeContract;
+      if (hasPermission) {
+        requesterRole = 'TENANT';
+      }
+    }
+
+    if (!hasPermission) {
       return NextResponse.json(
-        { error: 'Propiedad no encontrada o no tienes acceso' },
-        { status: 404 },
+        { error: 'No tienes permisos para crear solicitudes de mantenimiento en esta propiedad' },
+        { status: 403 }
       );
     }
 
@@ -186,14 +211,17 @@ export async function POST(request: NextRequest) {
       priority: validatedData.priority,
       propertyId: validatedData.propertyId,
       requestedBy: user.id,
+      requesterRole: requesterRole,
+      status: 'OPEN',
       images: JSON.stringify(validatedData.images || []),
     };
 
+    // Agregar campos opcionales si existen
     if (validatedData.estimatedCost !== undefined) {
       maintenanceData.estimatedCost = validatedData.estimatedCost;
     }
 
-    if (validatedData.scheduledDate !== undefined) {
+    if (validatedData.scheduledDate) {
       maintenanceData.scheduledDate = new Date(validatedData.scheduledDate);
     }
 
@@ -212,14 +240,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      message: 'Solicitud de mantenimiento creada exitosamente',
-      maintenanceRequest: {
-        ...maintenanceRequest,
-        images: JSON.parse(maintenanceRequest.images || '[]'),
+    return NextResponse.json(
+      {
+        message: 'Solicitud de mantenimiento creada exitosamente',
+        maintenanceRequest: {
+          ...maintenanceRequest,
+          images: JSON.parse(maintenanceRequest.images || '[]'),
+        },
       },
-    }, { status: 201 });
-
+      { status: 201 }
+    );
   } catch (error) {
     return handleApiError(error);
   }

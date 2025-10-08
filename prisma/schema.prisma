@@ -436,6 +436,7 @@ model Maintenance {
   estimatedCost  Float?
   actualCost     Float?
   requestedBy    String
+  requesterRole  String   @default("USER")  // Rol del solicitante: OWNER, TENANT, BROKER, ADMIN
   assignedTo     String?
   maintenanceProviderId String?    // Relación con el prestador de mantenimiento
   scheduledDate  DateTime?
