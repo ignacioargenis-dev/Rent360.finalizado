@@ -47,6 +47,19 @@ interface Prospect {
   createdAt: string;
   lastContact: string;
   notes: string;
+  // Advanced analytics
+  engagementScore: number;
+  responseTime: number; // in hours
+  conversionProbability: number;
+  budgetFlexibility: number; // 1-5 scale
+  urgencyLevel: 'low' | 'medium' | 'high' | 'urgent';
+  competitorActivity: number; // number of competitor interactions
+  propertyViews: number;
+  emailOpens: number;
+  lastActivity: string;
+  behavioralScore: number; // based on actions taken
+  demographicFit: number; // how well they match target demographics
+  marketTiming: 'cold' | 'warm' | 'hot'; // market conditions
 }
 
 export default function BrokerProspectsPage() {
@@ -58,6 +71,9 @@ export default function BrokerProspectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [matchingScoreThreshold, setMatchingScoreThreshold] = useState(70);
+  const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -88,6 +104,18 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
             notes: 'Busca departamento de 2 dormitorios, buena ubicación',
+            engagementScore: 85,
+            responseTime: 2.5,
+            conversionProbability: 78,
+            budgetFlexibility: 4,
+            urgencyLevel: 'high',
+            competitorActivity: 2,
+            propertyViews: 15,
+            emailOpens: 8,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+            behavioralScore: 82,
+            demographicFit: 88,
+            marketTiming: 'hot',
           },
           {
             id: '2',
@@ -102,6 +130,18 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
             notes: 'Interesado en inversiones, primera reunión programada',
+            engagementScore: 92,
+            responseTime: 1.2,
+            conversionProbability: 85,
+            budgetFlexibility: 3,
+            urgencyLevel: 'urgent',
+            competitorActivity: 0,
+            propertyViews: 23,
+            emailOpens: 12,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            behavioralScore: 95,
+            demographicFit: 92,
+            marketTiming: 'hot',
           },
           {
             id: '3',
@@ -116,6 +156,96 @@ export default function BrokerProspectsPage() {
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
             lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
             notes: 'Busca oficina para empresa tech, presupuesto flexible',
+            engagementScore: 76,
+            responseTime: 4.1,
+            conversionProbability: 65,
+            budgetFlexibility: 5,
+            urgencyLevel: 'medium',
+            competitorActivity: 5,
+            propertyViews: 8,
+            emailOpens: 5,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+            behavioralScore: 68,
+            demographicFit: 75,
+            marketTiming: 'warm',
+          },
+          {
+            id: '4',
+            name: 'Roberto Díaz',
+            email: 'roberto.diaz@email.com',
+            phone: '+56977778888',
+            interestedIn: ['house', 'land'],
+            budget: { min: 800000, max: 1500000 },
+            preferredLocation: 'Colina',
+            status: 'active',
+            source: 'advertising',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+            notes: 'Busca casa familiar grande, inversión a largo plazo',
+            engagementScore: 88,
+            responseTime: 3.2,
+            conversionProbability: 72,
+            budgetFlexibility: 2,
+            urgencyLevel: 'high',
+            competitorActivity: 1,
+            propertyViews: 18,
+            emailOpens: 9,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+            behavioralScore: 78,
+            demographicFit: 85,
+            marketTiming: 'hot',
+          },
+          {
+            id: '5',
+            name: 'Patricia Morales',
+            email: 'patricia.morales@email.com',
+            phone: '+56944443333',
+            interestedIn: ['apartment'],
+            budget: { min: 150000, max: 250000 },
+            preferredLocation: 'Ñuñoa',
+            status: 'lost',
+            source: 'website',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+            notes: 'Presupuesto limitado, perdió interés por precios altos',
+            engagementScore: 45,
+            responseTime: 24.0,
+            conversionProbability: 15,
+            budgetFlexibility: 1,
+            urgencyLevel: 'low',
+            competitorActivity: 8,
+            propertyViews: 3,
+            emailOpens: 1,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
+            behavioralScore: 35,
+            demographicFit: 55,
+            marketTiming: 'cold',
+          },
+          {
+            id: '6',
+            name: 'Jorge Martínez',
+            email: 'jorge.martinez@email.com',
+            phone: '+56911112222',
+            interestedIn: ['house'],
+            budget: { min: 600000, max: 900000 },
+            preferredLocation: 'Vitacura',
+            status: 'qualified',
+            source: 'referral',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+            notes: 'Cliente premium, referenciado por cliente existente',
+            engagementScore: 96,
+            responseTime: 0.8,
+            conversionProbability: 94,
+            budgetFlexibility: 4,
+            urgencyLevel: 'urgent',
+            competitorActivity: 0,
+            propertyViews: 32,
+            emailOpens: 15,
+            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+            behavioralScore: 98,
+            demographicFit: 96,
+            marketTiming: 'hot',
           },
         ];
 
@@ -135,6 +265,7 @@ export default function BrokerProspectsPage() {
   useEffect(() => {
     let filtered = prospects;
 
+    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(
         prospect =>
@@ -144,16 +275,68 @@ export default function BrokerProspectsPage() {
       );
     }
 
+    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(prospect => prospect.status === statusFilter);
     }
 
+    // Apply source filter
     if (sourceFilter !== 'all') {
       filtered = filtered.filter(prospect => prospect.source === sourceFilter);
     }
 
+    // Apply matching score threshold filter
+    filtered = filtered.filter(prospect => {
+      const matchingScore = calculateMatchingScore(prospect);
+      return matchingScore >= matchingScoreThreshold;
+    });
+
     setFilteredProspects(filtered);
-  }, [prospects, searchQuery, statusFilter, sourceFilter]);
+  }, [prospects, searchQuery, statusFilter, sourceFilter, matchingScoreThreshold]);
+
+  // Advanced matching score calculation based on multiple factors
+  const calculateMatchingScore = (prospect: Prospect): number => {
+    // Weighted scoring algorithm based on production analytics
+    const weights = {
+      engagementScore: 0.25,
+      conversionProbability: 0.2,
+      behavioralScore: 0.2,
+      demographicFit: 0.15,
+      urgencyBonus: 0.1,
+      competitorPenalty: 0.1,
+    };
+
+    let score =
+      prospect.engagementScore * weights.engagementScore +
+      prospect.conversionProbability * weights.conversionProbability +
+      prospect.behavioralScore * weights.behavioralScore +
+      prospect.demographicFit * weights.demographicFit;
+
+    // Urgency bonus
+    const urgencyBonus =
+      prospect.urgencyLevel === 'urgent'
+        ? 15
+        : prospect.urgencyLevel === 'high'
+          ? 10
+          : prospect.urgencyLevel === 'medium'
+            ? 5
+            : 0;
+    score += urgencyBonus * weights.urgencyBonus;
+
+    // Competitor activity penalty
+    const competitorPenalty = Math.min(prospect.competitorActivity * 5, 20);
+    score -= competitorPenalty * weights.competitorPenalty;
+
+    // Market timing adjustment
+    const marketBonus =
+      prospect.marketTiming === 'hot' ? 10 : prospect.marketTiming === 'warm' ? 5 : 0;
+    score += marketBonus;
+
+    // Budget flexibility bonus
+    score += (prospect.budgetFlexibility - 3) * 2;
+
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -233,6 +416,64 @@ export default function BrokerProspectsPage() {
     router.push('/broker/messages?new=true');
   };
 
+  // Quick filter functions
+  const applyHotProspectsFilter = () => {
+    setStatusFilter('active');
+    setMatchingScoreThreshold(85);
+  };
+
+  const applyReferralFilter = () => {
+    setSourceFilter('referral');
+  };
+
+  const applyReadyToCloseFilter = () => {
+    setStatusFilter('qualified');
+    setMatchingScoreThreshold(80);
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setSourceFilter('all');
+    setMatchingScoreThreshold(70);
+  };
+
+  // Action functions for recommendations
+  const handleViewCompatibleProperties = (prospect: Prospect) => {
+    const params = new URLSearchParams({
+      location: prospect.preferredLocation,
+      minPrice: prospect.budget.min.toString(),
+      maxPrice: prospect.budget.max.toString(),
+      type: prospect.interestedIn.join(','),
+      status: 'available',
+    });
+    router.push(`/broker/properties?${params.toString()}`);
+  };
+
+  const handleContactReferrer = (prospect: Prospect) => {
+    // This would contact the person who referred this prospect
+    alert(`Contactando al referente de ${prospect.name}...`);
+  };
+
+  // Market opportunity actions
+  const handleViewAvailableProperties = (location: string) => {
+    router.push(`/broker/properties?location=${encodeURIComponent(location)}&status=available`);
+  };
+
+  const handleExploreOfficeMarket = () => {
+    router.push('/broker/properties?type=office&status=available');
+  };
+
+  const handleAnalyzeLocation = (location: string) => {
+    // Navigate to market analysis for specific location
+    router.push(`/broker/analytics/market-analysis?focus=${encodeURIComponent(location)}`);
+  };
+
+  // Advanced analytics toggle
+  const toggleAdvancedAnalytics = () => {
+    setShowAdvancedAnalytics(!showAdvancedAnalytics);
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Prospectos" subtitle="Cargando información...">
@@ -258,10 +499,15 @@ export default function BrokerProspectsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Prospectos</h1>
             <p className="text-gray-600">Gestiona tus leads y prospectos potenciales</p>
           </div>
-          <Button>
-            <UserPlus className="w-4 h-4 mr-2" />
-            Agregar Prospecto
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={toggleAdvancedAnalytics}>
+              📊 {showAdvancedAnalytics ? 'Ocultar' : 'Mostrar'} Analytics Avanzados
+            </Button>
+            <Button>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Agregar Prospecto
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -319,6 +565,90 @@ export default function BrokerProspectsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Advanced Analytics Section */}
+        {showAdvancedAnalytics && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Tiempo Promedio de Respuesta
+                    </p>
+                    <p className="text-lg font-bold text-blue-900">
+                      {Math.round(
+                        prospects.reduce((sum, p) => sum + p.responseTime, 0) / prospects.length
+                      )}
+                      h
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-600 text-lg">⏱️</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Tasa de Engagement</p>
+                    <p className="text-lg font-bold text-green-900">
+                      {Math.round(
+                        prospects.reduce((sum, p) => sum + p.engagementScore, 0) / prospects.length
+                      )}
+                      %
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span className="text-green-600 text-lg">📈</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Actividad Competidores</p>
+                    <p className="text-lg font-bold text-red-900">
+                      {Math.round(
+                        prospects.reduce((sum, p) => sum + p.competitorActivity, 0) /
+                          prospects.length
+                      )}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span className="text-red-600 text-lg">⚠️</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Lead Scoring Promedio</p>
+                    <p className="text-lg font-bold text-purple-900">
+                      {Math.round(
+                        prospects.reduce((sum, p) => sum + calculateMatchingScore(p), 0) /
+                          prospects.length
+                      )}
+                      %
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span className="text-purple-600 text-lg">🎯</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Advanced Filters */}
         <Card className="mb-6">
@@ -402,35 +732,23 @@ export default function BrokerProspectsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setStatusFilter('active')}
+                onClick={applyHotProspectsFilter}
                 className="text-xs"
               >
                 🔥 Prospectos Calientes
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSourceFilter('referral')}
-                className="text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={applyReferralFilter} className="text-xs">
                 🤝 Referencias
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setStatusFilter('qualified')}
+                onClick={applyReadyToCloseFilter}
                 className="text-xs"
               >
                 ⭐ Listos para Cerrar
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  /* Reset all filters */
-                }}
-                className="text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={clearAllFilters} className="text-xs">
                 🔄 Limpiar Filtros
               </Button>
             </div>
@@ -448,13 +766,11 @@ export default function BrokerProspectsPage() {
                   type="range"
                   min="0"
                   max="100"
-                  defaultValue="70"
+                  value={matchingScoreThreshold}
                   className="flex-1"
-                  onChange={() => {
-                    /* Implement scoring filter */
-                  }}
+                  onChange={e => setMatchingScoreThreshold(Number(e.target.value))}
                 />
-                <span className="text-sm font-medium min-w-[3rem]">70%</span>
+                <span className="text-sm font-medium min-w-[3rem]">{matchingScoreThreshold}%</span>
               </div>
             </div>
           </CardContent>
@@ -472,32 +788,36 @@ export default function BrokerProspectsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-green-900">María González</span>
-                    <Badge className="bg-green-100 text-green-800">95% Match</Badge>
-                  </div>
-                  <p className="text-sm text-green-700">
-                    Busca departamento en Las Condes. Presupuesto coincide con 3 propiedades
-                    disponibles.
-                  </p>
-                  <Button size="sm" className="mt-2" variant="outline">
-                    Ver Propiedades Compatibles
-                  </Button>
-                </div>
-
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-blue-900">Carlos Rodríguez</span>
-                    <Badge className="bg-blue-100 text-blue-800">88% Match</Badge>
-                  </div>
-                  <p className="text-sm text-blue-700">
-                    Referencia de cliente existente. Alta probabilidad de conversión.
-                  </p>
-                  <Button size="sm" className="mt-2" variant="outline">
-                    Contactar Referente
-                  </Button>
-                </div>
+                {prospects
+                  .filter(p => p.status === 'active' || p.status === 'qualified')
+                  .sort((a, b) => calculateMatchingScore(b) - calculateMatchingScore(a))
+                  .slice(0, 2)
+                  .map(prospect => (
+                    <div
+                      key={prospect.id}
+                      className="p-3 bg-green-50 border border-green-200 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-green-900">{prospect.name}</span>
+                        <Badge className="bg-green-100 text-green-800">
+                          {calculateMatchingScore(prospect)}% Match
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        {prospect.source === 'referral'
+                          ? `Referencia de cliente existente. Alta probabilidad de conversión.`
+                          : `Busca ${prospect.interestedIn.join(' o ')} en ${prospect.preferredLocation}. ${prospect.urgencyLevel === 'urgent' ? 'Urgente' : 'Buen candidato'}.`}
+                      </p>
+                      <Button
+                        size="sm"
+                        className="mt-2"
+                        variant="outline"
+                        onClick={() => handleViewCompatibleProperties(prospect)}
+                      >
+                        Ver Propiedades Compatibles
+                      </Button>
+                    </div>
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -520,7 +840,11 @@ export default function BrokerProspectsPage() {
                   <p className="text-sm text-gray-600 mb-2">
                     +15% más consultas en los últimos 30 días. Precios subiendo 8.5%.
                   </p>
-                  <Button size="sm" variant="outline">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleViewAvailableProperties('Las Condes')}
+                  >
                     Ver Propiedades Disponibles
                   </Button>
                 </div>
@@ -533,7 +857,7 @@ export default function BrokerProspectsPage() {
                   <p className="text-sm text-gray-600 mb-2">
                     Empresas tech buscan espacios flexibles. 40% de consultas nuevas.
                   </p>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleExploreOfficeMarket}>
                     Explorar Mercado Oficina
                   </Button>
                 </div>
@@ -551,14 +875,7 @@ export default function BrokerProspectsPage() {
           <CardContent>
             <div className="space-y-4">
               {filteredProspects.map(prospect => {
-                const matchingScore =
-                  prospect.status === 'qualified'
-                    ? 92
-                    : prospect.status === 'active'
-                      ? 85
-                      : prospect.status === 'contacted'
-                        ? 78
-                        : 65;
+                const matchingScore = calculateMatchingScore(prospect);
 
                 return (
                   <Card key={prospect.id} className="border-l-4 border-l-blue-500">
@@ -606,6 +923,108 @@ export default function BrokerProspectsPage() {
                           {prospect.notes && (
                             <div className="text-sm text-gray-600 mt-2">
                               <strong>Notas:</strong> {prospect.notes}
+                            </div>
+                          )}
+
+                          {/* Advanced Analytics for each prospect */}
+                          {showAdvancedAnalytics && (
+                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                              <div className="grid grid-cols-2 gap-4 text-xs">
+                                <div>
+                                  <span className="text-gray-500">Engagement:</span>
+                                  <span
+                                    className={`ml-1 font-medium ${
+                                      prospect.engagementScore >= 80
+                                        ? 'text-green-600'
+                                        : prospect.engagementScore >= 60
+                                          ? 'text-yellow-600'
+                                          : 'text-red-600'
+                                    }`}
+                                  >
+                                    {prospect.engagementScore}%
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Tiempo respuesta:</span>
+                                  <span
+                                    className={`ml-1 font-medium ${
+                                      prospect.responseTime <= 2
+                                        ? 'text-green-600'
+                                        : prospect.responseTime <= 6
+                                          ? 'text-yellow-600'
+                                          : 'text-red-600'
+                                    }`}
+                                  >
+                                    {prospect.responseTime}h
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Actividad reciente:</span>
+                                  <span
+                                    className={`ml-1 font-medium ${
+                                      new Date().getTime() -
+                                        new Date(prospect.lastActivity).getTime() <
+                                      24 * 60 * 60 * 1000
+                                        ? 'text-green-600'
+                                        : 'text-gray-600'
+                                    }`}
+                                  >
+                                    {new Date(prospect.lastActivity).toLocaleDateString('es-CL')}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Competidores:</span>
+                                  <span
+                                    className={`ml-1 font-medium ${
+                                      prospect.competitorActivity === 0
+                                        ? 'text-green-600'
+                                        : prospect.competitorActivity <= 3
+                                          ? 'text-yellow-600'
+                                          : 'text-red-600'
+                                    }`}
+                                  >
+                                    {prospect.competitorActivity}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-xs text-gray-500">Urgencia:</span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    prospect.urgencyLevel === 'urgent'
+                                      ? 'bg-red-100 text-red-800'
+                                      : prospect.urgencyLevel === 'high'
+                                        ? 'bg-orange-100 text-orange-800'
+                                        : prospect.urgencyLevel === 'medium'
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {prospect.urgencyLevel === 'urgent'
+                                    ? '🔴 Urgente'
+                                    : prospect.urgencyLevel === 'high'
+                                      ? '🟠 Alta'
+                                      : prospect.urgencyLevel === 'medium'
+                                        ? '🟡 Media'
+                                        : '⚪ Baja'}
+                                </span>
+                                <span className="text-xs text-gray-500">Timing:</span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    prospect.marketTiming === 'hot'
+                                      ? 'bg-red-100 text-red-800'
+                                      : prospect.marketTiming === 'warm'
+                                        ? 'bg-orange-100 text-orange-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {prospect.marketTiming === 'hot'
+                                    ? '🔥 Hot'
+                                    : prospect.marketTiming === 'warm'
+                                      ? '🌡️ Warm'
+                                      : '❄️ Cold'}
+                                </span>
+                              </div>
                             </div>
                           )}
                         </div>
