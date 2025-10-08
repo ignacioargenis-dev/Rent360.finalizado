@@ -720,7 +720,7 @@ export default function AdminTicketsPage() {
                 <CardDescription>Herramientas para gestión de soporte</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <QuickActionButton
                     icon={Headphones}
                     label="Centro de Llamadas"
@@ -760,7 +760,7 @@ export default function AdminTicketsPage() {
                     icon={Zap}
                     label="Automatizaciones"
                     description="Flujos automáticos"
-                    onClick={() => router.push('/admin/settings')}
+                    onClick={() => router.push('/admin/automations')}
                   />
 
                   <QuickActionButton

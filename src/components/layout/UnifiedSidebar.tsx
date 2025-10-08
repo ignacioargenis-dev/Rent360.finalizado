@@ -188,13 +188,6 @@ const menuItems: RoleMenuItems = {
       icon: Star,
     },
     {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
-    },
-    {
       title: 'Configuración',
       url: '/tenant/settings',
       icon: Settings,
@@ -255,13 +248,6 @@ const menuItems: RoleMenuItems = {
       title: 'Analytics',
       url: '/owner/analytics',
       icon: TrendingUp,
-    },
-    {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
     },
     {
       title: 'Configuración',
@@ -328,13 +314,6 @@ const menuItems: RoleMenuItems = {
       icon: BarChart3,
     },
     {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
-    },
-    {
       title: 'Configuración',
       url: '/broker/settings',
       icon: Settings,
@@ -397,13 +376,6 @@ const menuItems: RoleMenuItems = {
       icon: User,
     },
     {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
-    },
-    {
       title: 'Configuración',
       url: '/runner/settings',
       icon: Settings,
@@ -455,13 +427,6 @@ const menuItems: RoleMenuItems = {
       ],
     },
     {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
-    },
-    {
       title: 'Configuración',
       url: '/support/settings',
       icon: Settings,
@@ -492,13 +457,6 @@ const menuItems: RoleMenuItems = {
       title: 'Ganancias',
       url: '/provider/earnings',
       icon: DollarSign,
-    },
-    {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
     },
     {
       title: 'Configuración',
@@ -543,13 +501,6 @@ const menuItems: RoleMenuItems = {
       title: 'Calificaciones',
       url: '/maintenance/ratings',
       icon: Star,
-    },
-    {
-      title: 'Firmas Electrónicas',
-      url: '/signatures',
-      icon: Shield,
-      badge: 'SII',
-      badgeVariant: 'default',
     },
     {
       title: 'Configuración',
