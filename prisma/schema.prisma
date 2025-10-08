@@ -85,6 +85,7 @@ model User {
   documents       Document[]
   maintenanceRequests Maintenance[] @relation("MaintenanceRequester")
   serviceJobRequests ServiceJob[] @relation("ServiceJobRequester")
+  scheduledVisits  MaintenanceVisitSchedule[]
 
   // Nuevas relaciones para providers
   maintenanceProvider MaintenanceProvider?
@@ -440,6 +441,9 @@ model Maintenance {
   assignedTo     String?
   maintenanceProviderId String?    // Relación con el prestador de mantenimiento
   scheduledDate  DateTime?
+  scheduledTime  String?          // Hora programada (HH:MM)
+  visitDuration  Int?             // Duración estimada en minutos
+  visitNotes     String?          // Notas específicas de la visita
   completedDate  DateTime?
   rating         Int?             // Calificación del trabajo (1-5)
   feedback       String?          // Comentarios del cliente
@@ -452,9 +456,42 @@ model Maintenance {
   property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   requester      User             @relation("MaintenanceRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
   maintenanceProvider MaintenanceProvider? @relation(fields: [maintenanceProviderId], references: [id], onDelete: SetNull)
+  visitSchedules MaintenanceVisitSchedule[]
   transactions   ProviderTransaction[]
   
   @@map("maintenance")
+}
+
+// ============================================================================
+// PROGRAMACIÓN DE VISITAS DE MANTENIMIENTO
+// ============================================================================
+
+model MaintenanceVisitSchedule {
+  id                  String   @id @default(cuid())
+  maintenanceId       String
+  maintenanceProviderId String
+  scheduledDate       DateTime
+  scheduledTime       String   // HH:MM format
+  estimatedDuration   Int      // in minutes
+  status              String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  notes               String?
+  contactPerson       String?
+  contactPhone        String?
+  specialInstructions String?
+  createdBy           String   // User who scheduled
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  maintenance         Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  provider            MaintenanceProvider @relation(fields: [maintenanceProviderId], references: [id], onDelete: Cascade)
+  creator             User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_visit_schedules")
+  @@index([maintenanceId])
+  @@index([maintenanceProviderId])
+  @@index([scheduledDate])
+  @@index([status])
 }
 
 // Notification model
@@ -615,6 +652,7 @@ model MaintenanceProvider {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   maintenanceJobs Maintenance[]
   transactions    ProviderTransaction[]
+  visitSchedules  MaintenanceVisitSchedule[]
 
   @@map("maintenance_providers")
 }

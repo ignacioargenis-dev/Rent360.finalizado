@@ -1390,4 +1390,115 @@ Equipo Rent360`,
       });
     }
   }
+
+  // ===== MÉTODOS DE NOTIFICACIÓN PARA MANTENIMIENTO =====
+
+  /**
+   * Notifica asignación de prestador a solicitud de mantenimiento
+   */
+  static async notifyMaintenanceProviderAssigned(assignmentData: {
+    recipientId: string;
+    recipientName: string;
+    recipientEmail: string;
+    maintenanceId: string;
+    maintenanceTitle: string;
+    propertyAddress: string;
+    assignedBy: string;
+    notes?: string;
+  }): Promise<void> {
+    try {
+      await this.sendNotification({
+        templateId: 'maintenance_provider_assigned',
+        recipientId: assignmentData.recipientId,
+        variables: {
+          recipientName: assignmentData.recipientName,
+          maintenanceTitle: assignmentData.maintenanceTitle,
+          propertyAddress: assignmentData.propertyAddress,
+          assignedBy: assignmentData.assignedBy,
+          notes: assignmentData.notes || '',
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending maintenance provider assigned notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Notifica asignación de prestador al solicitante
+   */
+  static async notifyMaintenanceAssigned(assignmentData: {
+    recipientId: string;
+    recipientName: string;
+    recipientEmail: string;
+    maintenanceId: string;
+    maintenanceTitle: string;
+    providerName: string;
+    providerPhone?: string;
+    assignedBy: string;
+  }): Promise<void> {
+    try {
+      await this.sendNotification({
+        templateId: 'maintenance_assigned',
+        recipientId: assignmentData.recipientId,
+        variables: {
+          recipientName: assignmentData.recipientName,
+          maintenanceTitle: assignmentData.maintenanceTitle,
+          providerName: assignmentData.providerName,
+          providerPhone: assignmentData.providerPhone || '',
+          assignedBy: assignmentData.assignedBy,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending maintenance assigned notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Notifica programación de visita de mantenimiento
+   */
+  static async notifyMaintenanceVisitScheduled(visitData: {
+    recipientId: string;
+    recipientName: string;
+    recipientEmail: string;
+    maintenanceId: string;
+    maintenanceTitle: string;
+    propertyAddress: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    estimatedDuration: number;
+    contactPerson: string;
+    contactPhone: string;
+    specialInstructions?: string;
+    scheduledBy: string;
+  }): Promise<void> {
+    try {
+      await this.sendNotification({
+        templateId: 'maintenance_visit_scheduled',
+        recipientId: visitData.recipientId,
+        variables: {
+          recipientName: visitData.recipientName,
+          maintenanceTitle: visitData.maintenanceTitle,
+          propertyAddress: visitData.propertyAddress,
+          scheduledDate: visitData.scheduledDate,
+          scheduledTime: visitData.scheduledTime,
+          estimatedDuration: visitData.estimatedDuration.toString(),
+          contactPerson: visitData.contactPerson,
+          contactPhone: visitData.contactPhone,
+          specialInstructions: visitData.specialInstructions || '',
+          scheduledBy: visitData.scheduledBy,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending maintenance visit scheduled notification', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 }

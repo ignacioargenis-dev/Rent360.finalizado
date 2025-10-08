@@ -10,6 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -41,13 +49,16 @@ interface MaintenanceRequest {
   description: string;
   category: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'ASSIGNED' | 'SCHEDULED';
   estimatedCost?: number;
   actualCost?: number;
   requestedBy: string;
   requesterRole: string;
   assignedTo?: string;
   scheduledDate?: string;
+  scheduledTime?: string;
+  visitDuration?: number;
+  visitNotes?: string;
   completedDate?: string;
   createdAt: string;
   updatedAt: string;
@@ -64,9 +75,14 @@ interface MaintenanceRequest {
     email: string;
   };
   assignedProvider?: {
+    id: string;
     businessName: string;
-    phone: string;
-    email: string;
+    specialty: string;
+    hourlyRate: number;
+    user: {
+      phone: string;
+      email: string;
+    };
   };
 }
 
@@ -82,6 +98,18 @@ export default function BrokerMaintenanceDetailPage() {
   const [comment, setComment] = useState('');
   const [statusUpdate, setStatusUpdate] = useState('');
   const [actualCost, setActualCost] = useState('');
+  const [showAssignProvider, setShowAssignProvider] = useState(false);
+  const [showScheduleVisit, setShowScheduleVisit] = useState(false);
+  const [availableProviders, setAvailableProviders] = useState<any[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [visitData, setVisitData] = useState({
+    scheduledDate: '',
+    scheduledTime: '',
+    estimatedDuration: 120,
+    contactPerson: '',
+    contactPhone: '',
+    specialInstructions: '',
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -240,8 +268,26 @@ export default function BrokerMaintenanceDetailPage() {
   };
 
   const handleAssignContractor = async () => {
-    // Mock contractor assignment
-    alert('Funcionalidad de asignar prestador en desarrollo');
+    if (!maintenanceRequest) {
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await fetch(`/api/maintenance/${maintenanceId}/available-providers`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableProviders(data.availableProviders);
+        setShowAssignProvider(true);
+      } else {
+        alert('Error al cargar prestadores disponibles');
+      }
+    } catch (error) {
+      logger.error('Error loading available providers:', { error });
+      alert('Error al cargar prestadores disponibles');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleContactRequester = () => {
@@ -264,14 +310,129 @@ export default function BrokerMaintenanceDetailPage() {
     router.push('/broker/messages?new=true');
   };
 
-  const handleScheduleVisit = () => {
-    alert('Funcionalidad de agendar visita en desarrollo');
+  const handleScheduleVisit = async () => {
+    if (!maintenanceRequest?.assignedProvider) {
+      alert('Debe asignar un prestador antes de programar la visita');
+      return;
+    }
+
+    // Pre-llenar datos de contacto
+    setVisitData(prev => ({
+      ...prev,
+      contactPerson: maintenanceRequest.requester.name,
+      contactPhone: maintenanceRequest.requester.email, // Usar email como fallback
+    }));
+
+    setShowScheduleVisit(true);
+  };
+
+  const handleConfirmProviderAssignment = async () => {
+    if (!selectedProvider) {
+      alert('Por favor selecciona un prestador');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await fetch(`/api/maintenance/${maintenanceId}/assign-provider`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          providerId: selectedProvider,
+          notes: `Asignado por ${user?.name || 'Corredor'}`,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceRequest(prev =>
+          prev
+            ? {
+                ...prev,
+                status: 'ASSIGNED',
+                assignedProvider: data.maintenance.maintenanceProvider,
+                updatedAt: new Date().toISOString(),
+              }
+            : null
+        );
+        setShowAssignProvider(false);
+        setSelectedProvider('');
+        alert('Prestador asignado exitosamente');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error || 'Error al asignar prestador'}`);
+      }
+    } catch (error) {
+      logger.error('Error assigning provider:', { error });
+      alert('Error al asignar prestador');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleConfirmVisitSchedule = async () => {
+    if (!visitData.scheduledDate || !visitData.scheduledTime) {
+      alert('Fecha y hora son obligatorios');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await fetch(`/api/maintenance/${maintenanceId}/schedule-visit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          providerId: maintenanceRequest?.assignedProvider?.id,
+          ...visitData,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceRequest(prev =>
+          prev
+            ? {
+                ...prev,
+                status: 'SCHEDULED',
+                scheduledDate: visitData.scheduledDate,
+                updatedAt: new Date().toISOString(),
+              }
+            : null
+        );
+        setShowScheduleVisit(false);
+        setVisitData({
+          scheduledDate: '',
+          scheduledTime: '',
+          estimatedDuration: 120,
+          contactPerson: '',
+          contactPhone: '',
+          specialInstructions: '',
+        });
+        alert('Visita programada exitosamente');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error || 'Error al programar visita'}`);
+      }
+    } catch (error) {
+      logger.error('Error scheduling visit:', { error });
+      alert('Error al programar visita');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
         return <Badge className="bg-blue-100 text-blue-800">Abierto</Badge>;
+      case 'ASSIGNED':
+        return <Badge className="bg-purple-100 text-purple-800">Prestador Asignado</Badge>;
+      case 'SCHEDULED':
+        return <Badge className="bg-indigo-100 text-indigo-800">Visita Programada</Badge>;
       case 'IN_PROGRESS':
         return <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>;
       case 'COMPLETED':
@@ -609,6 +770,186 @@ export default function BrokerMaintenanceDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal para asignar prestador */}
+      <Dialog open={showAssignProvider} onOpenChange={setShowAssignProvider}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Asignar Prestador de Servicios</DialogTitle>
+            <DialogDescription>
+              Selecciona un prestador disponible para esta solicitud de mantenimiento.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {availableProviders.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No hay prestadores disponibles en este momento.</p>
+              </div>
+            ) : (
+              <RadioGroup value={selectedProvider} onValueChange={setSelectedProvider}>
+                <div className="space-y-3">
+                  {availableProviders.map(provider => (
+                    <div
+                      key={provider.id}
+                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                        selectedProvider === provider.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedProvider(provider.id)}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <RadioGroupItem value={provider.id} className="mt-1" />
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{provider.businessName}</h4>
+                              <p className="text-sm text-gray-600">
+                                {provider.specialty} • {provider.distance}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium text-green-600">
+                                ${provider.hourlyRate}/hora
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Est. ${provider.estimatedCost}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
+                            <span>
+                              ⭐ {provider.rating.toFixed(1)} ({provider.totalRatings})
+                            </span>
+                            <span>📞 {provider.user.phone}</span>
+                            <span>✅ {provider.completedJobs} trabajos</span>
+                            <span>⏱️ {provider.responseTime}h respuesta</span>
+                          </div>
+
+                          {provider.description && (
+                            <p className="mt-2 text-sm text-gray-700">{provider.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </RadioGroup>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setShowAssignProvider(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmProviderAssignment}
+              disabled={!selectedProvider || updating}
+            >
+              {updating ? 'Asignando...' : 'Asignar Prestador'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para programar visita */}
+      <Dialog open={showScheduleVisit} onOpenChange={setShowScheduleVisit}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Programar Visita de Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Programa la fecha y hora para la visita del prestador asignado.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="scheduledDate">Fecha de Visita</Label>
+              <Input
+                id="scheduledDate"
+                type="date"
+                value={visitData.scheduledDate}
+                onChange={e => setVisitData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="scheduledTime">Hora de Visita</Label>
+              <Input
+                id="scheduledTime"
+                type="time"
+                value={visitData.scheduledTime}
+                onChange={e => setVisitData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="estimatedDuration">Duración Estimada (minutos)</Label>
+              <Input
+                id="estimatedDuration"
+                type="number"
+                value={visitData.estimatedDuration}
+                onChange={e =>
+                  setVisitData(prev => ({
+                    ...prev,
+                    estimatedDuration: parseInt(e.target.value) || 120,
+                  }))
+                }
+                min="30"
+                max="480"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contactPerson">Persona de Contacto</Label>
+              <Input
+                id="contactPerson"
+                value={visitData.contactPerson}
+                onChange={e => setVisitData(prev => ({ ...prev, contactPerson: e.target.value }))}
+                placeholder="Nombre de la persona a contactar"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contactPhone">Teléfono de Contacto</Label>
+              <Input
+                id="contactPhone"
+                value={visitData.contactPhone}
+                onChange={e => setVisitData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                placeholder="Número telefónico"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="specialInstructions">Instrucciones Especiales</Label>
+              <Textarea
+                id="specialInstructions"
+                value={visitData.specialInstructions}
+                onChange={e =>
+                  setVisitData(prev => ({ ...prev, specialInstructions: e.target.value }))
+                }
+                placeholder="Instrucciones adicionales para el prestador..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setShowScheduleVisit(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmVisitSchedule}
+              disabled={!visitData.scheduledDate || !visitData.scheduledTime || updating}
+            >
+              {updating ? 'Programando...' : 'Programar Visita'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }
