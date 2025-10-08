@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { requireAuth } from '@/lib/auth';
 
 import { writeFile } from 'fs/promises';
 import path from 'path';
@@ -9,11 +9,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
   export async function POST(request: NextRequest) {
     try {
-      const session = await getServerSession();
-
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+      const user = await requireAuth(request);
 
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
@@ -137,24 +133,21 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       // Guardar información en la base de datos
       const document = await db.document.create({
         data: {
-          title: title || file.name,
-          description: description || '',
-          category: category || 'other',
-          file_name: fileName, // Usar el nombre único generado
-          file_path: `/uploads/documents/${fileName}`,
-          file_size: file.size,
-          file_type: file.type,
-          tags: tags && tags.length > 0 ? JSON.stringify(tags) : null,
-          uploaded_by: session.user?.email || 'unknown',
-          status: 'active'
+          name: title || file.name,
+          type: category || 'OTHER_DOCUMENT',
+          fileName: fileName, // Usar el nombre único generado
+          filePath: `/uploads/documents/${fileName}`,
+          fileSize: file.size,
+          mimeType: file.type,
+          uploadedById: user.id,
         },
       });
 
       uploadedFiles.push({
         id: document.id,
-        name: document.file_name,
+        name: document.fileName,
         url: `/uploads/documents/${fileName}`,
-        size: document.file_size,
+        size: document.fileSize,
         status: 'completed',
         validation: validationResult
       });
@@ -183,11 +176,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
 export async function GET(request: NextRequest) {
   try {
-         const session = await getServerSession();
-    
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -196,17 +185,16 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     const where: any = {
-      uploaded_by: session.user?.email || 'unknown',
-      status: 'active',
+      uploadedById: user.id,
     };
 
     if (category && category !== 'all') {
-      where.category = category;
+      where.type = category;
     }
 
     const documents = await db.document.findMany({
       where,
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
     });

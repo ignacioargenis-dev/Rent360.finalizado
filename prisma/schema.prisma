@@ -66,6 +66,9 @@ model User {
   contractsAsOwner Contract[] @relation("OwnerContracts")
   contractsAsTenant Contract[] @relation("TenantContracts")
   contractsAsBroker Contract[] @relation("BrokerContracts")
+  // Propiedades gestionadas por corredores
+  brokerProperties  Property[] @relation("BrokerProperties")
+  createdProperties Property[] @relation("PropertyCreator")
   payments        Payment[]
   reviewsGiven    Review[] @relation("ReviewGiven")
   reviewsReceived Review[] @relation("ReviewReceived")
@@ -79,9 +82,9 @@ model User {
   notifications   Notification[]
   auditLogs       AuditLog[]
   signatures      ContractSignature[] @relation("UserSignatures")
+  documents       Document[]
   maintenanceRequests Maintenance[] @relation("MaintenanceRequester")
   serviceJobRequests ServiceJob[] @relation("ServiceJobRequester")
-  documents       Document[]
 
   // Nuevas relaciones para providers
   maintenanceProvider MaintenanceProvider?
@@ -137,21 +140,25 @@ model Property {
   region      String
   price       Float
   deposit     Float
-  bedrooms    Int
-  bathrooms   Int
-  area        Float
+  bedrooms    Int?
+  bathrooms   Int?
+  area        Float?
   status      String @default("AVAILABLE")
   type        String
-  images      String?       // JSON array of image URLs
+  images      String?       // JSON array of image URLs (legacy compatibility)
   features    String?       // JSON array of features
   views       Int           @default(0) // Número de vistas de la propiedad
   inquiries   Int           @default(0) // Número de consultas/inquiries
   ownerId     String
+  brokerId    String?       // Corredor que gestiona la propiedad (opcional)
+  createdBy   String        // Usuario que creó la propiedad
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   // Relations
   owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  broker            User?              @relation("BrokerProperties", fields: [brokerId], references: [id], onDelete: SetNull)
+  creator           User               @relation("PropertyCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   propertyFavorites PropertyFavorite[]
   contracts         Contract[]
   reviews           Review[]
@@ -159,9 +166,13 @@ model Property {
   maintenance       Maintenance[]
   userRatings       UserRating[]       // Calificaciones relacionadas con esta propiedad
   messages          Message[]          // Mensajes relacionados con esta propiedad
-  
+  propertyImages    PropertyImage[]    // Imágenes de la propiedad
+  documents         Document[]         // Documentos asociados a la propiedad
+
   @@map("properties")
   @@index([ownerId])
+  @@index([brokerId])
+  @@index([createdBy])
   @@index([status])
   @@index([city])
   @@index([commune])
@@ -171,6 +182,25 @@ model Property {
   @@index([inquiries])
   @@index([createdAt])
   @@index([updatedAt])
+}
+
+// ============================================================================
+// IMÁGENES DE PROPIEDADES
+// ============================================================================
+
+model PropertyImage {
+  id        String   @id @default(cuid())
+  propertyId String
+  url       String   // URL relativa del archivo subido
+  alt       String?  // Texto alternativo
+  order     Int      @default(0) // Orden de visualización
+  createdAt DateTime @default(now())
+
+  // Relations
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+  @@index([propertyId])
 }
 
 // Contract model
@@ -502,26 +532,28 @@ model AuditLog {
   @@index([createdAt, entityType])
 }
 
-// Document model (existing)
+// Document model (updated for property documents)
 model Document {
   id          String   @id @default(cuid())
-  title       String
-  description String?
-  category    String   @default("other")
-  file_name   String
-  file_path   String
-  file_size   Int
-  file_type   String
-  tags        String?
-  uploaded_by String
-  status      String   @default("active")
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  name        String   // Nombre descriptivo del documento
+  type        String   // Tipo: PROPERTY_DOCUMENT, UTILITY_BILL, OTHER_DOCUMENT
+  fileName    String   // Nombre del archivo original
+  filePath    String   // Ruta relativa del archivo
+  fileSize    Int      // Tamaño en bytes
+  mimeType    String   // Tipo MIME del archivo
+  uploadedById String  // Usuario que subió el documento
+  propertyId  String?  // Propiedad asociada (opcional)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  user        User     @relation(fields: [uploaded_by], references: [id], onDelete: Cascade)
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  property    Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@map("documents")
+  @@index([uploadedById])
+  @@index([propertyId])
+  @@index([type])
 }
 
 // Enums

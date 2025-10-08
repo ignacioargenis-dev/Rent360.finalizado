@@ -160,13 +160,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar permisos básicos (documento debe estar activo)
-    if (document.status !== 'active') {
-      return NextResponse.json(
-        { error: 'El documento no está disponible para firma' },
-        { status: 400 }
-      );
-    }
+    // Verificar permisos básicos (documento debe existir)
+    // Los documentos nuevos no tienen campo status, se asume que están activos
 
     // Crear solicitud de firma usando el servicio unificado
     const signatureResult = await signatureService.createSignatureRequest(

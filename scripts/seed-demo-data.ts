@@ -91,7 +91,8 @@ async function main() {
           data: {
             ...propertyData,
             status: propertyData.status as any,
-            type: propertyData.type as any
+            type: propertyData.type as any,
+            createdBy: propertyData.ownerId, // Usar el ownerId como createdBy por defecto
           },
         });
         console.log(`Propiedad creada: ${propertyData.title}`);

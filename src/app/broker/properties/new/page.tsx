@@ -26,6 +26,12 @@ import {
   Users,
   ImageIcon,
   Upload,
+  User as UserIcon,
+  FileText,
+  Shield,
+  Receipt,
+  Zap,
+  MoreHorizontal,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -44,6 +50,19 @@ interface PropertyForm {
   parking: boolean;
   petsAllowed: boolean;
   images: File[];
+  // Owner information
+  ownerName: string;
+  ownerEmail: string;
+  ownerPhone: string;
+  ownerRut: string;
+  ownerIsRegistered: boolean;
+  // Documents
+  propertyDeed: File | null;
+  certificateOfTitle: File | null;
+  utilitiesBills: File[];
+  propertyTaxReceipt: File | null;
+  insurancePolicy: File | null;
+  otherDocuments: File[];
 }
 
 export default function BrokerNewPropertyPage() {
@@ -65,6 +84,19 @@ export default function BrokerNewPropertyPage() {
     parking: false,
     petsAllowed: false,
     images: [],
+    // Owner information
+    ownerName: '',
+    ownerEmail: '',
+    ownerPhone: '',
+    ownerRut: '',
+    ownerIsRegistered: false,
+    // Documents
+    propertyDeed: null,
+    certificateOfTitle: null,
+    utilitiesBills: [],
+    propertyTaxReceipt: null,
+    insurancePolicy: null,
+    otherDocuments: [],
   });
 
   useEffect(() => {
@@ -92,6 +124,22 @@ export default function BrokerNewPropertyPage() {
     }));
   };
 
+  const handleFileChange = (field: keyof PropertyForm, files: FileList | null) => {
+    if (!files) return;
+
+    if (field === 'utilitiesBills' || field === 'otherDocuments') {
+      setFormData(prev => ({
+        ...prev,
+        [field]: Array.from(files),
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: files[0] || null,
+      }));
+    }
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -106,22 +154,90 @@ export default function BrokerNewPropertyPage() {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.address.trim() || !formData.price) {
-      alert('Por favor complete todos los campos obligatorios.');
+      alert('Por favor complete todos los campos obligatorios de la propiedad.');
+      return;
+    }
+
+    if (!formData.ownerName.trim() || !formData.ownerEmail.trim() || !formData.ownerPhone.trim()) {
+      alert('Por favor complete toda la información del propietario.');
+      return;
+    }
+
+    if (!formData.ownerRut.trim()) {
+      alert('El RUT del propietario es obligatorio.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // TODO: Implement actual API call to create property
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const formDataToSend = new FormData();
 
-      // Mock successful creation
-      alert('Propiedad creada exitosamente');
+      // Add property data
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('city', formData.city);
+      formDataToSend.append('region', formData.region);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('bedrooms', formData.bedrooms);
+      formDataToSend.append('bathrooms', formData.bathrooms);
+      formDataToSend.append('area', formData.area);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('propertyType', formData.propertyType);
+      formDataToSend.append('furnished', formData.furnished.toString());
+      formDataToSend.append('parking', formData.parking.toString());
+      formDataToSend.append('petsAllowed', formData.petsAllowed.toString());
 
-      // Redirect back to properties list
-      router.push('/broker/properties');
+      // Add owner data
+      formDataToSend.append('ownerName', formData.ownerName);
+      formDataToSend.append('ownerEmail', formData.ownerEmail);
+      formDataToSend.append('ownerPhone', formData.ownerPhone);
+      formDataToSend.append('ownerRut', formData.ownerRut);
+      formDataToSend.append('ownerIsRegistered', formData.ownerIsRegistered.toString());
+
+      // Add images
+      formData.images.forEach((image, index) => {
+        formDataToSend.append(`images`, image);
+      });
+
+      // Add documents
+      if (formData.propertyDeed) {
+        formDataToSend.append('propertyDeed', formData.propertyDeed);
+      }
+      if (formData.certificateOfTitle) {
+        formDataToSend.append('certificateOfTitle', formData.certificateOfTitle);
+      }
+      if (formData.propertyTaxReceipt) {
+        formDataToSend.append('propertyTaxReceipt', formData.propertyTaxReceipt);
+      }
+      if (formData.insurancePolicy) {
+        formDataToSend.append('insurancePolicy', formData.insurancePolicy);
+      }
+
+      // Add multiple files
+      formData.utilitiesBills.forEach((bill, index) => {
+        formDataToSend.append(`utilitiesBills`, bill);
+      });
+
+      formData.otherDocuments.forEach((doc, index) => {
+        formDataToSend.append(`otherDocuments`, doc);
+      });
+
+      const response = await fetch('/api/broker/properties', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('Propiedad creada exitosamente con todos los documentos');
+
+        // Redirect to the created property
+        router.push(`/broker/properties/${result.propertyId}`);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear la propiedad');
+      }
     } catch (error) {
       logger.error('Error creating property:', {
         error: error instanceof Error ? error.message : String(error),
@@ -386,6 +502,108 @@ export default function BrokerNewPropertyPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Owner Information */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserIcon className="w-5 h-5" />
+                      Información del Propietario
+                    </CardTitle>
+                    <CardDescription>
+                      Datos del propietario de la propiedad
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Owner Registration Status */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ownerIsRegistered"
+                        checked={formData.ownerIsRegistered}
+                        onCheckedChange={checked =>
+                          handleInputChange('ownerIsRegistered', checked as boolean)
+                        }
+                      />
+                      <Label htmlFor="ownerIsRegistered" className="text-sm">
+                        El propietario ya está registrado en la plataforma
+                      </Label>
+                    </div>
+
+                    {!formData.ownerIsRegistered && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800 mb-4">
+                          Como corredor, puedes registrar propiedades de propietarios que no están en la plataforma.
+                          Tú tendrás control administrativo completo sobre esta propiedad.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Owner Details */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="ownerName" className="text-sm font-medium">
+                          Nombre Completo del Propietario *
+                        </Label>
+                        <Input
+                          id="ownerName"
+                          type="text"
+                          placeholder="Ej: Juan Pérez González"
+                          value={formData.ownerName}
+                          onChange={e => handleInputChange('ownerName', e.target.value)}
+                          className="mt-1"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="ownerRut" className="text-sm font-medium">
+                          RUT del Propietario *
+                        </Label>
+                        <Input
+                          id="ownerRut"
+                          type="text"
+                          placeholder="Ej: 12.345.678-9"
+                          value={formData.ownerRut}
+                          onChange={e => handleInputChange('ownerRut', e.target.value)}
+                          className="mt-1"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="ownerEmail" className="text-sm font-medium">
+                          Correo Electrónico *
+                        </Label>
+                        <Input
+                          id="ownerEmail"
+                          type="email"
+                          placeholder="Ej: propietario@email.com"
+                          value={formData.ownerEmail}
+                          onChange={e => handleInputChange('ownerEmail', e.target.value)}
+                          className="mt-1"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="ownerPhone" className="text-sm font-medium">
+                          Teléfono *
+                        </Label>
+                        <Input
+                          id="ownerPhone"
+                          type="tel"
+                          placeholder="Ej: +56912345678"
+                          value={formData.ownerPhone}
+                          onChange={e => handleInputChange('ownerPhone', e.target.value)}
+                          className="mt-1"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Sidebar */}
@@ -426,6 +644,202 @@ export default function BrokerNewPropertyPage() {
                           {formData.images.length} imagen(es) seleccionada(s)
                         </div>
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Documents Upload */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Documentos Legales
+                    </CardTitle>
+                    <CardDescription>
+                      Suba los documentos legales requeridos para la propiedad
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Property Deed */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Escritura de Propiedad
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="propertyDeed" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivo PDF
+                            </span>
+                            <Input
+                              id="propertyDeed"
+                              type="file"
+                              accept=".pdf"
+                              onChange={e => handleFileChange('propertyDeed', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.propertyDeed && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.propertyDeed.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Certificate of Title */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Certificado de Título
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="certificateOfTitle" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivo PDF
+                            </span>
+                            <Input
+                              id="certificateOfTitle"
+                              type="file"
+                              accept=".pdf"
+                              onChange={e => handleFileChange('certificateOfTitle', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.certificateOfTitle && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.certificateOfTitle.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Property Tax Receipt */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Receipt className="w-4 h-4" />
+                        Recibo de Contribuciones
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="propertyTaxReceipt" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivo PDF
+                            </span>
+                            <Input
+                              id="propertyTaxReceipt"
+                              type="file"
+                              accept=".pdf"
+                              onChange={e => handleFileChange('propertyTaxReceipt', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.propertyTaxReceipt && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.propertyTaxReceipt.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Utilities Bills */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        Recibos de Servicios Básicos
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="utilitiesBills" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivos (luz, agua, gas, etc.)
+                            </span>
+                            <Input
+                              id="utilitiesBills"
+                              type="file"
+                              multiple
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={e => handleFileChange('utilitiesBills', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.utilitiesBills.length > 0 && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.utilitiesBills.length} archivo(s) seleccionado(s)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Insurance Policy */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Póliza de Seguro (Opcional)
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="insurancePolicy" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivo PDF
+                            </span>
+                            <Input
+                              id="insurancePolicy"
+                              type="file"
+                              accept=".pdf"
+                              onChange={e => handleFileChange('insurancePolicy', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.insurancePolicy && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.insurancePolicy.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Other Documents */}
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <MoreHorizontal className="w-4 h-4" />
+                        Otros Documentos (Opcional)
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <Label htmlFor="otherDocuments" className="cursor-pointer">
+                            <span className="text-sm text-blue-600 hover:text-blue-800">
+                              Seleccionar archivos adicionales
+                            </span>
+                            <Input
+                              id="otherDocuments"
+                              type="file"
+                              multiple
+                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                              onChange={e => handleFileChange('otherDocuments', e.target.files)}
+                              className="hidden"
+                            />
+                          </Label>
+                          {formData.otherDocuments.length > 0 && (
+                            <p className="text-sm text-green-600 mt-2">
+                              ✓ {formData.otherDocuments.length} archivo(s) seleccionado(s)
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
