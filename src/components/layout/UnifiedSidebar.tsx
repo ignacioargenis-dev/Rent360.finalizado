@@ -294,6 +294,13 @@ const menuItems: RoleMenuItems = {
       icon: FileText,
     },
     {
+      title: 'Mantenimiento',
+      url: '/broker/maintenance',
+      icon: Wrench,
+      badge: '3',
+      badgeVariant: 'outline',
+    },
+    {
       title: 'Comisiones',
       url: '/broker/commissions',
       icon: TrendingUp,
