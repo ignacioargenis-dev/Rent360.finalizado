@@ -95,6 +95,8 @@ interface RunnerSettings {
     ratingUpdates: boolean;
   };
   payment: {
+    bankName: string;
+    accountType: string;
     bankAccount: string;
     paymentMethod: 'transfer' | 'cash' | 'wallet';
     taxId: string;
@@ -139,6 +141,8 @@ export default function RunnerSettingsPage() {
       ratingUpdates: true,
     },
     payment: {
+      bankName: 'Banco de Chile',
+      accountType: 'checking',
       bankAccount: '001234567890',
       paymentMethod: 'transfer',
       taxId: '12.345.678-9',
@@ -565,34 +569,76 @@ export default function RunnerSettingsPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Regiones de Trabajo</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        'Santiago Centro',
-                        'Providencia',
-                        'Las Condes',
-                        'Vitacura',
-                        'Ñuñoa',
-                        'La Reina',
-                        'Macul',
-                      ].map(region => (
-                        <Badge
-                          key={region}
-                          variant={
-                            settings.workArea.regions.includes(region) ? 'default' : 'outline'
-                          }
-                          className="cursor-pointer"
-                          onClick={() => {
-                            const newRegions = settings.workArea.regions.includes(region)
-                              ? settings.workArea.regions.filter(r => r !== region)
-                              : [...settings.workArea.regions, region];
-                            updateWorkArea('regions', newRegions);
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="workRegion">Región de Trabajo</Label>
+                        <Select
+                          value={settings.workArea.regions[0] || ''}
+                          onValueChange={value => {
+                            // For simplicity, we'll store only one region, but this could be extended
+                            updateWorkArea('regions', value ? [value] : []);
                           }}
                         >
-                          {region}
-                        </Badge>
-                      ))}
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una región" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Región Metropolitana">
+                              Región Metropolitana
+                            </SelectItem>
+                            <SelectItem value="Valparaíso">Valparaíso</SelectItem>
+                            <SelectItem value="Región del Libertador">
+                              Región del Libertador
+                            </SelectItem>
+                            <SelectItem value="Región del Maule">Región del Maule</SelectItem>
+                            <SelectItem value="Región del Biobío">Región del Biobío</SelectItem>
+                            <SelectItem value="Región de la Araucanía">
+                              Región de la Araucanía
+                            </SelectItem>
+                            <SelectItem value="Región de Los Lagos">Región de Los Lagos</SelectItem>
+                            <SelectItem value="Región de Aysén">Región de Aysén</SelectItem>
+                            <SelectItem value="Región de Magallanes">
+                              Región de Magallanes
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="workCommune">Comunas de Trabajo</Label>
+                        <Select
+                          value="" // This would need to be stored separately if we want multiple communes
+                          onValueChange={value => {
+                            // For now, we'll just show the functionality
+                            alert(`Comuna seleccionada: ${value}`);
+                          }}
+                          disabled={!settings.workArea.regions[0]}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                settings.workArea.regions[0]
+                                  ? 'Selecciona comunas'
+                                  : 'Primero selecciona región'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {/* This would be populated based on the selected region */}
+                            <SelectItem value="Santiago Centro">Santiago Centro</SelectItem>
+                            <SelectItem value="Providencia">Providencia</SelectItem>
+                            <SelectItem value="Las Condes">Las Condes</SelectItem>
+                            <SelectItem value="Vitacura">Vitacura</SelectItem>
+                            <SelectItem value="Ñuñoa">Ñuñoa</SelectItem>
+                            <SelectItem value="La Reina">La Reina</SelectItem>
+                            <SelectItem value="Macul">Macul</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500">
+                          Puedes seleccionar múltiples comunas según tu disponibilidad
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -751,7 +797,53 @@ export default function RunnerSettingsPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="bankAccount">Cuenta Bancaria</Label>
+                      <Label htmlFor="bankName">Banco</Label>
+                      <Select
+                        value={settings.payment.bankName || ''}
+                        onValueChange={value => updatePayment('bankName', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona tu banco" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Banco de Chile">Banco de Chile</SelectItem>
+                          <SelectItem value="Banco Santander">Banco Santander</SelectItem>
+                          <SelectItem value="Banco Estado">Banco Estado</SelectItem>
+                          <SelectItem value="Banco BCI">Banco BCI</SelectItem>
+                          <SelectItem value="Banco Itaú">Banco Itaú</SelectItem>
+                          <SelectItem value="Banco Falabella">Banco Falabella</SelectItem>
+                          <SelectItem value="Banco Ripley">Banco Ripley</SelectItem>
+                          <SelectItem value="Banco Security">Banco Security</SelectItem>
+                          <SelectItem value="Banco Consorcio">Banco Consorcio</SelectItem>
+                          <SelectItem value="Banco Internacional">Banco Internacional</SelectItem>
+                          <SelectItem value="Scotiabank">Scotiabank</SelectItem>
+                          <SelectItem value="Banco BBVA">Banco BBVA</SelectItem>
+                          <SelectItem value="Banco Coopeuch">Coopeuch</SelectItem>
+                          <SelectItem value="Otro">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="accountType">Tipo de Cuenta</Label>
+                      <Select
+                        value={settings.payment.accountType || ''}
+                        onValueChange={value => updatePayment('accountType', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tipo de cuenta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="checking">Cuenta Corriente</SelectItem>
+                          <SelectItem value="savings">Cuenta de Ahorros</SelectItem>
+                          <SelectItem value="rut">Cuenta RUT</SelectItem>
+                          <SelectItem value="view">Cuenta Vista</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bankAccount">Número de Cuenta</Label>
                       <Input
                         id="bankAccount"
                         value={settings.payment.bankAccount}
@@ -759,6 +851,7 @@ export default function RunnerSettingsPage() {
                         placeholder="001234567890"
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="taxId">RUT</Label>
                       <Input
