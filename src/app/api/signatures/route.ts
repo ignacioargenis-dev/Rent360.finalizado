@@ -3,8 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { signatureService } from '@/lib/signature';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
-import { SignatureType } from '@/lib/signature/types';
-import { SignatureStatus } from '@/lib/signature/types';
+import { SignatureType, SignatureStatus } from '@/lib/signature/types';
 import { db } from '@/lib/db';
 
 // Schema para crear firma
@@ -12,18 +11,22 @@ const createSignatureSchema = z.object({
   documentId: z.string().min(1, 'ID de documento requerido'),
   documentName: z.string().min(1, 'Nombre de documento requerido'),
   documentHash: z.string().min(1, 'Hash del documento requerido'),
-  signers: z.array(z.object({
-    rut: z.string().min(1, 'RUT requerido'),
-    email: z.string().email('Email válido requerido'),
-    name: z.string().min(1, 'Nombre requerido'),
-    phone: z.string().optional(),
-    order: z.number().min(1, 'Orden debe ser mayor a 0'),
-    isRequired: z.boolean().default(true)
-  })).min(1, 'Al menos un firmante requerido'),
+  signers: z
+    .array(
+      z.object({
+        rut: z.string().min(1, 'RUT requerido'),
+        email: z.string().email('Email válido requerido'),
+        name: z.string().min(1, 'Nombre requerido'),
+        phone: z.string().optional(),
+        order: z.number().min(1, 'Orden debe ser mayor a 0'),
+        isRequired: z.boolean().default(true),
+      })
+    )
+    .min(1, 'Al menos un firmante requerido'),
   type: z.nativeEnum(SignatureType).default(SignatureType.QUALIFIED),
   provider: z.string().optional(), // Si no se especifica, se selecciona automáticamente
   expiresAt: z.string().datetime().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
 });
 
 // Schema para consultar firmas
@@ -32,7 +35,7 @@ const getSignaturesSchema = z.object({
   limit: z.string().default('10').transform(Number).pipe(z.number().min(1).max(100)),
   status: z.nativeEnum(SignatureStatus).optional(),
   documentId: z.string().optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
 });
 
 /**
@@ -48,7 +51,7 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get('limit') || '10',
       status: searchParams.get('status') || undefined,
       documentId: searchParams.get('documentId') || undefined,
-      userId: searchParams.get('userId') || undefined
+      userId: searchParams.get('userId') || undefined,
     };
 
     const validatedParams = getSignaturesSchema.parse(queryParams);
@@ -56,7 +59,7 @@ export async function GET(request: NextRequest) {
     // Filtrar por usuario actual si no es admin
     const filters = {
       ...validatedParams,
-      userId: user.role === 'ADMIN' ? validatedParams.userId : user.id
+      userId: user.role === 'ADMIN' ? validatedParams.userId : user.id,
     };
 
     // Obtener firmas desde la base de datos
@@ -86,17 +89,17 @@ export async function GET(request: NextRequest) {
         contract: {
           include: {
             property: {
-              select: { id: true, title: true, address: true }
-            }
-          }
+              select: { id: true, title: true, address: true },
+            },
+          },
         },
         signer: {
-          select: { id: true, name: true, email: true }
-        }
+          select: { id: true, name: true, email: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip,
-      take: filters.limit
+      take: filters.limit,
     });
 
     const totalCount = await db.contractSignature.count({ where: whereClause });
@@ -105,7 +108,7 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       filters,
       count: signatures.length,
-      totalCount
+      totalCount,
     });
 
     return NextResponse.json({
@@ -114,13 +117,12 @@ export async function GET(request: NextRequest) {
         page: filters.page,
         limit: filters.limit,
         total: totalCount,
-        pages: Math.ceil(totalCount / filters.limit)
-      }
+        pages: Math.ceil(totalCount / filters.limit),
+      },
     });
-
   } catch (error) {
     logger.error('Error consultando firmas:', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     if (error instanceof z.ZodError) {
@@ -130,10 +132,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -150,14 +149,11 @@ export async function POST(request: NextRequest) {
 
     // Verificar que el documento existe
     const document = await db.document.findUnique({
-      where: { id: validatedData.documentId }
+      where: { id: validatedData.documentId },
     });
 
     if (!document) {
-      return NextResponse.json(
-        { error: 'Documento no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos básicos (documento debe existir)
@@ -174,22 +170,16 @@ export async function POST(request: NextRequest) {
       logger.error('Error creando solicitud de firma:', {
         userId: user.id,
         documentId: validatedData.documentId,
-        error: signatureResult.message
+        error: signatureResult.message,
       });
 
-      return NextResponse.json(
-        { error: signatureResult.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: signatureResult.message }, { status: 400 });
     }
 
     // Verificar que tenemos un ID válido
     if (!signatureResult.signatureId) {
       logger.error('No se recibió signatureId del servicio de firmas');
-      return NextResponse.json(
-        { error: 'Error interno al crear la firma' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Error interno al crear la firma' }, { status: 500 });
     }
 
     // Guardar en base de datos
@@ -201,7 +191,7 @@ export async function POST(request: NextRequest) {
         status: signatureResult.status,
         provider: signatureResult.provider,
         ...(signatureResult.metadata?.expiresAt && {
-          expiresAt: new Date(signatureResult.metadata.expiresAt)
+          expiresAt: new Date(signatureResult.metadata.expiresAt),
         }),
         metadata: JSON.stringify(signatureResult.metadata || {}),
         signers: {
@@ -214,14 +204,14 @@ export async function POST(request: NextRequest) {
               rut: signer.rut,
               phone: signer.phone || '',
               order: signer.order,
-              isRequired: signer.isRequired
-            })
-          }))
-        }
+              isRequired: signer.isRequired,
+            }),
+          })),
+        },
       },
       include: {
-        signers: true
-      }
+        signers: true,
+      },
     });
 
     logger.info('Solicitud de firma creada exitosamente:', {
@@ -229,27 +219,29 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       documentId: validatedData.documentId,
       provider: signatureResult.provider,
-      signersCount: validatedData.signers.length
+      signersCount: validatedData.signers.length,
     });
 
-    return NextResponse.json({
-      success: true,
-      signatureId: signatureResult.signatureId,
-      status: signatureResult.status,
-      provider: signatureResult.provider,
-      message: signatureResult.message,
-      databaseRecord: {
-        id: dbSignature.id,
-        documentId: dbSignature.documentId,
-        status: dbSignature.status,
-        provider: dbSignature.provider,
-        signers: dbSignature.signers
-      }
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        signatureId: signatureResult.signatureId,
+        status: signatureResult.status,
+        provider: signatureResult.provider,
+        message: signatureResult.message,
+        databaseRecord: {
+          id: dbSignature.id,
+          documentId: dbSignature.documentId,
+          status: dbSignature.status,
+          provider: dbSignature.provider,
+          signers: dbSignature.signers,
+        },
+      },
+      { status: 201 }
+    );
   } catch (error) {
     logger.error('Error creando firma:', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     if (error instanceof z.ZodError) {
@@ -259,10 +251,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -275,7 +264,11 @@ function determineSignerRole(signer: any, totalSigners: number): string {
   }
 
   // Lógica por defecto basada en el orden
-  if (signer.order === 1) return 'OWNER'; // Propietario/Arrendador
-  if (signer.order === 2) return 'TENANT'; // Inquilino/Arrendatario
+  if (signer.order === 1) {
+    return 'OWNER';
+  } // Propietario/Arrendador
+  if (signer.order === 2) {
+    return 'TENANT';
+  } // Inquilino/Arrendatario
   return 'GUARANTOR'; // Fiador u otro rol
 }
