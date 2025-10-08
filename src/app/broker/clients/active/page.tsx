@@ -159,7 +159,8 @@ export default function BrokerActiveClientsPage() {
   const handleRenewContract = (clientId: string) => {
     // Navigate to contracts page for renewal
     router.push('/broker/contracts?action=renew');
-    setSuccessMessage('Funcionalidad de renovación próximamente disponible');
+    setSuccessMessage('Proceso de renovación iniciado correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 

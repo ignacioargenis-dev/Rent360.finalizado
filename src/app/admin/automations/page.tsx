@@ -71,6 +71,7 @@ export default function AutomationsPage() {
   const [automations, setAutomations] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<AutomationRule | null>(null);
   const [newAutomation, setNewAutomation] = useState<Partial<AutomationRule>>({
     name: '',
@@ -265,6 +266,60 @@ export default function AutomationsPage() {
       });
     } catch (error) {
       logger.error('Error creating automation:', { error });
+    }
+  };
+
+  const handleEditAutomation = (automation: AutomationRule) => {
+    setEditingAutomation(automation);
+    setNewAutomation({
+      name: automation.name,
+      description: automation.description,
+      trigger: automation.trigger,
+      actions: automation.actions,
+      isActive: automation.isActive,
+      priority: automation.priority,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateAutomation = async () => {
+    if (!editingAutomation || !newAutomation.name || !newAutomation.description) {
+      return;
+    }
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setAutomations(prev =>
+        prev.map(auto =>
+          auto.id === editingAutomation.id
+            ? {
+                ...auto,
+                name: newAutomation.name!,
+                description: newAutomation.description!,
+                trigger: newAutomation.trigger!,
+                actions: newAutomation.actions!,
+                isActive: newAutomation.isActive || false,
+                priority: newAutomation.priority || 'medium',
+                updatedAt: new Date().toISOString(),
+              }
+            : auto
+        )
+      );
+
+      setShowEditDialog(false);
+      setEditingAutomation(null);
+      setNewAutomation({
+        name: '',
+        description: '',
+        trigger: { type: 'ticket_created', conditions: [] },
+        actions: [],
+        isActive: false,
+        priority: 'medium',
+      });
+    } catch (error) {
+      logger.error('Error updating automation:', { error });
     }
   };
 
@@ -471,6 +526,106 @@ export default function AutomationsPage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Automation Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Editar Automatización</DialogTitle>
+                <DialogDescription>
+                  Modifica la configuración de esta automatización
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nombre</Label>
+                  <Input
+                    id="edit-name"
+                    value={newAutomation.name || ''}
+                    onChange={e => setNewAutomation(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ej: Bienvenida automática"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Descripción</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={newAutomation.description || ''}
+                    onChange={e =>
+                      setNewAutomation(prev => ({ ...prev, description: e.target.value }))
+                    }
+                    placeholder="Describe qué hace esta automatización"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Disparador</Label>
+                  <Select
+                    value={newAutomation.trigger?.type || 'ticket_created'}
+                    onValueChange={(value: any) =>
+                      setNewAutomation(prev => ({
+                        ...prev,
+                        trigger: { ...prev.trigger!, type: value },
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ticket_created">Cuando se crea un ticket</SelectItem>
+                      <SelectItem value="ticket_updated">Cuando se actualiza un ticket</SelectItem>
+                      <SelectItem value="time_based">Basado en tiempo</SelectItem>
+                      <SelectItem value="user_action">Acción de usuario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Prioridad</Label>
+                  <Select
+                    value={newAutomation.priority || 'medium'}
+                    onValueChange={(value: any) =>
+                      setNewAutomation(prev => ({ ...prev, priority: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="edit-active"
+                    checked={newAutomation.isActive || false}
+                    onCheckedChange={checked =>
+                      setNewAutomation(prev => ({ ...prev, isActive: checked }))
+                    }
+                  />
+                  <Label htmlFor="edit-active">Activar automatización</Label>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={handleUpdateAutomation} className="flex-1">
+                    <Save className="w-4 h-4 mr-2" />
+                    Actualizar Automatización
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Statistics Cards */}
@@ -622,7 +777,11 @@ export default function AutomationsPage() {
                             handleToggleAutomation(automation.id, checked)
                           }
                         />
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditAutomation(automation)}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button

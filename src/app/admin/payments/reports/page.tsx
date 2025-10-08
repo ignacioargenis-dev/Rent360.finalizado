@@ -231,7 +231,7 @@ export default function AdminPaymentReportsPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Reportes de Pagos" subtitle="An�lisis y reportes financieros">
+    <UnifiedDashboardLayout title="Reportes de Pagos" subtitle="Análisis y reportes financieros">
       <div className="space-y-6">
         {/* Controles */}
         <Card>

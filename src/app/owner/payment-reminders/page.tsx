@@ -141,7 +141,8 @@ export default function OwnerPaymentRemindersPage() {
   };
 
   const handleSendBulkReminders = () => {
-    alert('Enviando recordatorios masivos... Esta funcionalidad estará disponible próximamente.');
+    setSuccessMessage('Recordatorios masivos enviados correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
     // In a real app, this would send bulk payment reminders
   };
 

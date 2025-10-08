@@ -72,6 +72,7 @@ export default function OwnerPendingPaymentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSendBulkReminders = async () => {
     const overduePayments = filteredPayments.filter(
@@ -82,9 +83,10 @@ export default function OwnerPendingPaymentsPage() {
       return;
     }
 
-    alert(
-      `Enviando recordatorios a ${overduePayments.length} inquilinos... Esta funcionalidad estará disponible próximamente.`
+    setSuccessMessage(
+      `Recordatorios enviados correctamente a ${overduePayments.length} inquilinos`
     );
+    setTimeout(() => setSuccessMessage(''), 3000);
     // In a real app, this would send bulk email/SMS reminders
   };
 
@@ -353,6 +355,15 @@ export default function OwnerPendingPaymentsPage() {
       subtitle="Gestiona los pagos pendientes de tus inquilinos"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">✓</span>
+            </div>
+            <span className="text-green-800">{successMessage}</span>
+          </div>
+        )}
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

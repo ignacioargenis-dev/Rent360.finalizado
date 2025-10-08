@@ -60,6 +60,7 @@ export default function BrokerAnalyticsPage() {
   });
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -190,7 +191,8 @@ export default function BrokerAnalyticsPage() {
       };
       setPerformanceData(refreshedPerformance);
       setLoading(false);
-      alert('Datos de analytics actualizados correctamente');
+      setSuccessMessage('Datos de analytics actualizados correctamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
     }, 1500);
   };
 
@@ -232,6 +234,15 @@ export default function BrokerAnalyticsPage() {
       subtitle="Métricas y rendimiento de tu negocio inmobiliario"
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">✓</span>
+            </div>
+            <span className="text-green-800">{successMessage}</span>
+          </div>
+        )}
         {/* Header with actions */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>

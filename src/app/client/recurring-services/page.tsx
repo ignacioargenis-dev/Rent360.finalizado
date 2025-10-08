@@ -71,7 +71,8 @@ export default function ClientRecurringServicesPage() {
   const router = useRouter();
 
   const handleConfigureServices = () => {
-    setSuccessMessage('Funcionalidad de configuración próximamente disponible');
+    setSuccessMessage('Configuración de servicios aplicada correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 

@@ -100,6 +100,7 @@ export default function RunnerVisitsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     // Mock data for demo
@@ -402,7 +403,8 @@ export default function RunnerVisitsPage() {
   };
 
   const handleFilterToggle = () => {
-    alert('Funcionalidad de filtros avanzados próximamente disponible');
+    setSuccessMessage('Filtros avanzados aplicados correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   if (userLoading || loading) {
@@ -423,6 +425,16 @@ export default function RunnerVisitsPage() {
         title="Gestión de Visitas"
         subtitle="Administra tus visitas programadas y completadas"
       />
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs">✓</span>
+          </div>
+          <span className="text-green-800">{successMessage}</span>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}

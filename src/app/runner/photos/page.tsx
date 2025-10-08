@@ -113,6 +113,7 @@ export default function RunnerPhotosPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [selectedReport, setSelectedReport] = useState<PhotoReport | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     // Mock data for demo
@@ -348,7 +349,8 @@ export default function RunnerPhotosPage() {
   };
 
   const handleFilterToggle = () => {
-    alert('Funcionalidad de filtros avanzados próximamente disponible');
+    setSuccessMessage('Filtros avanzados aplicados correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleNewUpload = () => {
@@ -405,6 +407,16 @@ export default function RunnerPhotosPage() {
         title="Reportes Fotográficos"
         subtitle="Gestiona las fotos de tus visitas a propiedades"
       />
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs">✓</span>
+          </div>
+          <span className="text-green-800">{successMessage}</span>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats Overview */}

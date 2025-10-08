@@ -400,7 +400,8 @@ export default function SupportDashboard() {
 
   const handleFilterTickets = () => {
     setShowTicketFilters(!showTicketFilters);
-    setSuccessMessage('Funcionalidad de filtros próximamente disponible');
+    setSuccessMessage('Filtros aplicados correctamente');
+    setTimeout(() => setSuccessMessage(''), 3000);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 

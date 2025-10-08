@@ -728,15 +728,12 @@ export default function AdminPaymentsBrokersPage() {
                 <CardDescription>Herramientas para gestión de comisiones</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <QuickActionButton
                     icon={Plus}
                     label="Nueva Comisión"
                     description="Procesar comisión"
-                    onClick={() => {
-                      setSuccessMessage('Formulario de nuevas comisiones próximamente disponible');
-                      setTimeout(() => setSuccessMessage(''), 3000);
-                    }}
+                    onClick={() => router.push('/admin/payments/brokers/new')}
                   />
 
                   <QuickActionButton
