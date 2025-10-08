@@ -250,7 +250,7 @@ export default function TenantServicesPage() {
         specialty: provider.specialty,
       };
       sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
-      window.location.href = '/tenant/messages?new=true';
+      router.push('/tenant/messages?new=true');
     }
   };
 

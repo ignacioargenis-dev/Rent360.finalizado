@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ interface ClientStats {
 }
 
 export default function RunnerClientsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
@@ -280,7 +282,7 @@ export default function RunnerClientsPage() {
           clientId: client.id,
         };
         sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
-        window.location.href = '/runner/messages?new=true';
+        router.push('/runner/messages?new=true');
         break;
     }
   };

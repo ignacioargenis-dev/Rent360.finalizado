@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,8 +85,9 @@ export default function TenantMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<string>('all');
+  const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -133,7 +135,7 @@ export default function TenantMessagesPage() {
           window.history.replaceState({}, '', url.toString());
 
         } catch (error) {
-          console.error('Error parsing recipient data:', error);
+          logger.error('Error parsing recipient data:', { error });
         }
       }
     }
@@ -239,7 +241,7 @@ export default function TenantMessagesPage() {
 
       setLoading(false);
     }, 1000);
-  }, [user?.name]);
+  }, [searchParams, user?.name]);
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('es-CL', {
@@ -326,6 +328,58 @@ export default function TenantMessagesPage() {
       default:
         return role;
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedConversation) {
+      return;
+    }
+
+    const conversation = conversations.find(c => c.id === selectedConversation);
+    if (!conversation) {
+      return;
+    }
+
+    const newMessageObj: Message = {
+      id: `msg_${Date.now()}`,
+      subject: `Re: ${conversation.property?.title || 'Mensaje'}`,
+      content: newMessage,
+      senderId: user?.id || 'tenant1',
+      senderName: user?.name || 'Inquilino',
+      senderRole: 'tenant',
+      receiverId: conversation.participant.id,
+      receiverName: conversation.participant.name,
+      propertyTitle: conversation.property?.title || '',
+      status: 'unread',
+      priority: 'medium',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add message to messages list
+    setMessages(prev => [...prev, newMessageObj]);
+
+    // Update conversation's last message
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation
+          ? {
+              ...conv,
+              lastMessage: {
+                content: newMessage,
+                timestamp: new Date().toLocaleString('es-CL'),
+                isOwn: true,
+              },
+              unreadCount: conv.unreadCount + 1, // This would be 0 for own messages in real app
+            }
+          : conv
+      )
+    );
+
+    // Clear input
+    setNewMessage('');
+
+    // Show success message
+    alert('Mensaje enviado exitosamente');
   };
 
   const filteredConversations = conversations.filter(conv => {
@@ -609,8 +663,15 @@ export default function TenantMessagesPage() {
                     {/* Message Input */}
                     <div className="border-t pt-4">
                       <div className="flex gap-2">
-                        <Input type="text" placeholder="Escribe un mensaje..." className="flex-1" />
-                        <Button>
+                        <Input
+                          type="text"
+                          placeholder="Escribe un mensaje..."
+                          className="flex-1"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        />
+                        <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                           <Send className="w-4 h-4 mr-2" />
                           Enviar
                         </Button>

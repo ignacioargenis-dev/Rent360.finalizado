@@ -90,8 +90,9 @@ export default function MessagesPage() {
   const [replyContent, setReplyContent] = useState('');
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -138,7 +139,7 @@ export default function MessagesPage() {
           window.history.replaceState({}, '', url.toString());
 
         } catch (error) {
-          console.error('Error parsing recipient data:', error);
+          logger.error('Error parsing recipient data:', { error });
         }
       }
     }
@@ -274,7 +275,7 @@ export default function MessagesPage() {
     };
 
     initializeData();
-  }, []); // Empty dependency array for initialization
+  }, [searchParams, user?.email, user?.id, user?.name]); // Dependencies for initialization
 
   useEffect(() => {
     let filtered = messages;
@@ -518,6 +519,46 @@ export default function MessagesPage() {
     }
 
     return date.toLocaleDateString('es-CL');
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) {
+      alert('Por favor escribe un mensaje antes de enviar');
+      return;
+    }
+
+    const newMessageObj: Message = {
+      id: `msg_${Date.now()}`,
+      sender: {
+        id: user?.id || 'owner1',
+        name: user?.name || 'Propietario',
+        email: user?.email || 'owner@email.com',
+        role: 'owner'
+      },
+      recipient: {
+        id: 'system',
+        name: 'Sistema Rent360',
+        email: 'system@rent360.cl',
+        role: 'system'
+      },
+      subject: 'Nuevo mensaje',
+      content: newMessage,
+      timestamp: new Date().toISOString(),
+      type: 'general',
+      read: false,
+      priority: 'medium',
+      propertyId: '',
+      propertyTitle: '',
+    };
+
+    // Add message to list
+    setMessages(prev => [newMessageObj, ...prev]);
+
+    // Clear input
+    setNewMessage('');
+
+    // Show success message
+    alert('Mensaje enviado exitosamente');
   };
 
   if (loading) {
@@ -819,6 +860,31 @@ export default function MessagesPage() {
             ))
           )}
         </div>
+
+        {/* Message Composer */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Enviar Nuevo Mensaje</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Escribe un mensaje..."
+                  className="flex-1"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Dialog para responder */}
         <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>

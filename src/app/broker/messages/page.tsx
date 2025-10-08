@@ -76,8 +76,9 @@ export default function BrokerMessagesPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -117,7 +118,7 @@ export default function BrokerMessagesPage() {
           window.history.replaceState({}, '', url.toString());
 
         } catch (error) {
-          console.error('Error parsing recipient data:', error);
+          logger.error('Error parsing recipient data:', { error });
         }
       }
     }
@@ -348,6 +349,39 @@ export default function BrokerMessagesPage() {
     if (message && message.status === 'unread') {
       alert(`Mensaje de ${message.senderName} marcado como leído`);
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) {
+      alert('Por favor escribe un mensaje antes de enviar');
+      return;
+    }
+
+    const newMessageObj: Message = {
+      id: `msg_${Date.now()}`,
+      senderName: user?.name || 'Corredor',
+      senderType: 'broker',
+      recipientName: 'Sistema', // This would be the selected recipient
+      recipientType: 'owner',
+      subject: 'Nuevo mensaje',
+      content: newMessage,
+      propertyTitle: '',
+      propertyAddress: '',
+      type: 'general',
+      status: 'unread',
+      priority: 'normal',
+      createdAt: new Date().toISOString(),
+      hasAttachments: false,
+    };
+
+    // Add message to list
+    setMessages(prev => [newMessageObj, ...prev]);
+
+    // Clear input
+    setNewMessage('');
+
+    // Show success message
+    alert('Mensaje enviado exitosamente');
   };
 
   const filteredMessages = messages.filter(message => {
@@ -600,6 +634,31 @@ export default function BrokerMessagesPage() {
             </Card>
           ))}
         </div>
+
+        {/* Message Composer */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Enviar Nuevo Mensaje</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Escribe un mensaje..."
+                  className="flex-1"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {filteredMessages.length === 0 && (
           <div className="text-center py-12">

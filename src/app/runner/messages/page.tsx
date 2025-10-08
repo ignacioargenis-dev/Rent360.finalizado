@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -121,7 +120,7 @@ export default function RunnerMessagesPage() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -160,7 +159,7 @@ export default function RunnerMessagesPage() {
           window.history.replaceState({}, '', url.toString());
 
         } catch (error) {
-          console.error('Error parsing recipient data:', error);
+          logger.error('Error parsing recipient data:', { error });
         }
       }
     }
@@ -309,7 +308,7 @@ export default function RunnerMessagesPage() {
 
     loadUserData();
     loadMessagesData();
-  }, []);
+  }, [searchParams]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) {

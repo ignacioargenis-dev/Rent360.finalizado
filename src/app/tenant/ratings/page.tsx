@@ -171,15 +171,15 @@ export default function CalificacionesPage() {
     },
   ];
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     loadPageData();
   }, []);
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
     applyFilters();
   }, [ratings, searchTerm, selectedType, selectedRating, sortBy, activeTab]);
 
-  const loadPageData = async () => {
+  const loadPageData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -222,7 +222,7 @@ export default function CalificacionesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const applyFilters = useCallback(() => {
     let filtered = [...ratings];
@@ -308,7 +308,7 @@ export default function CalificacionesPage() {
       setSearchResults(mockResults);
       setShowSearchResults(true);
     } catch (error) {
-      console.error('Error searching targets:', error);
+      logger.error('Error searching targets:', { error });
     } finally {
       setIsSearching(false);
     }
@@ -978,7 +978,7 @@ export default function CalificacionesPage() {
                     ))
                   ) : newRatingForm.targetName.length >= 2 ? (
                     <div className="p-4 text-center text-gray-500">
-                      No se encontraron resultados para "{newRatingForm.targetName}"
+                      No se encontraron resultados para &quot;{newRatingForm.targetName}&quot;
                     </div>
                   ) : null}
                 </div>
