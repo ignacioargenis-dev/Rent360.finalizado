@@ -98,6 +98,7 @@ export default function BrokerLegalCasesPage() {
   const [selectedCase, setSelectedCase] = useState<LegalCase | null>(null);
   const [settlementDialogOpen, setSettlementDialogOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [caseDetailsModalOpen, setCaseDetailsModalOpen] = useState(false);
   const [settlementAmount, setSettlementAmount] = useState('');
   const [settlementNotes, setSettlementNotes] = useState('');
   const [contactMessage, setContactMessage] = useState('');
@@ -272,19 +273,67 @@ export default function BrokerLegalCasesPage() {
 
   const handleViewCaseDetails = (legalCase: LegalCase) => {
     setSelectedCase(legalCase);
-    alert(
-      `Detalles del caso ${legalCase.caseNumber}:\n\nTipo: ${getCaseTypeLabel(legalCase.caseType)}\nEstado: ${legalCase.status}\nFase: ${getPhaseLabel(legalCase.currentPhase)}\nMonto Total: ${formatCurrency(legalCase.totalAmount)}\n\nPropiedad: ${legalCase.propertyTitle}\nInquilino: ${legalCase.tenantName}\nPropietario: ${legalCase.ownerName}\n\nComo corredor intermediario, puedes ofrecer servicios de mediación para resolver este caso.`
-    );
+    setCaseDetailsModalOpen(true);
   };
 
   const handleDownloadDocuments = (legalCase: LegalCase) => {
-    alert(`Descargando documentos del caso ${legalCase.caseNumber}`);
+    // Simular descarga de documentos legales
+    const documents = [
+      `Demanda_Judicial_${legalCase.caseNumber}.pdf`,
+      `Citacion_Inquilino_${legalCase.caseNumber}.pdf`,
+      `Citacion_Propietario_${legalCase.caseNumber}.pdf`,
+      `Evidencia_Presentada_${legalCase.caseNumber}.pdf`,
+      `Resoluciones_${legalCase.caseNumber}.pdf`,
+    ];
+
+    // Simular descarga
+    alert(
+      `📁 Descargando expediente completo del caso ${legalCase.caseNumber}\n\nDocumentos incluidos:\n${documents.map(doc => `• ${doc}`).join('\n')}\n\nLa descarga comenzará en breve...`
+    );
+
+    // Simular progreso de descarga
+    setTimeout(() => {
+      alert(
+        `✅ Expediente descargado exitosamente\nArchivo: Expediente_${legalCase.caseNumber}.zip`
+      );
+    }, 2000);
   };
 
   const handleOfferMediation = (legalCase: LegalCase) => {
-    alert(
-      `Ofreciendo servicios de mediación para el caso ${legalCase.caseNumber}\n\nSe enviará una propuesta de mediación a ambas partes.`
-    );
+    // Simular envío de propuesta de mediación a ambas partes
+    const mediationProposal = {
+      caseNumber: legalCase.caseNumber,
+      property: legalCase.propertyTitle,
+      contract: legalCase.contractNumber,
+      disputeType: getCaseTypeLabel(legalCase.caseType),
+      amount: legalCase.totalAmount,
+      benefits: [
+        'Resolución amistosa sin costos judiciales',
+        'Mantención de relación comercial',
+        'Proceso más rápido y eficiente',
+        'Confidencialidad garantizada',
+        'Acuerdos flexibles y personalizados',
+      ],
+    };
+
+    alert(`🔄 INICIANDO MEDIACIÓN PROFESIONAL
+
+Caso: ${mediationProposal.caseNumber}
+Propiedad: ${mediationProposal.property}
+Tipo de Disputa: ${mediationProposal.disputeType}
+
+📧 Enviando propuesta de mediación a ambas partes...
+
+Beneficios de la mediación:
+${mediationProposal.benefits.map(benefit => `✓ ${benefit}`).join('\n')}
+
+Próximos pasos:
+1. Ambas partes recibirán la propuesta
+2. Coordinación de reunión virtual/presencial
+3. Facilitación del diálogo constructivo
+4. Búsqueda de soluciones mutuamente beneficiosas
+
+Como corredor intermediario, ofrezco mis servicios para mediar este conflicto y ayudar a ambas partes a llegar a un acuerdo satisfactorio.`);
   };
 
   const getRiskBadge = (riskLevel: string) => {
@@ -312,10 +361,16 @@ export default function BrokerLegalCasesPage() {
   };
 
   const handleContactParty = (legalCase: LegalCase, party: 'tenant' | 'owner') => {
-    setSelectedCase(legalCase);
-    setContactType(party);
     const partyName = party === 'tenant' ? legalCase.tenantName : legalCase.ownerName;
-    const defaultMessage = `Estimado/a ${partyName},
+    const partyEmail = party === 'tenant' ? legalCase.tenantEmail : legalCase.ownerEmail;
+
+    if (!partyEmail) {
+      alert(`No se encontró el email de ${party === 'tenant' ? 'el inquilino' : 'el propietario'}`);
+      return;
+    }
+
+    const subject = `Mediación - Caso Legal ${legalCase.caseNumber}`;
+    const body = `Estimado/a ${partyName},
 
 Me contacto como corredor intermediario en el contrato ${legalCase.contractNumber} relacionado con la propiedad "${legalCase.propertyTitle}".
 
@@ -326,10 +381,14 @@ Respecto al caso legal ${legalCase.caseNumber} (${getCaseTypeLabel(legalCase.cas
 Atentamente,
 [Su Nombre]
 Corredor Inmobiliario
-Rent360`;
+Rent360
+Teléfono: [Su Teléfono]
+Email: [Su Email]`;
 
-    setContactMessage(defaultMessage);
-    setContactDialogOpen(true);
+    // Abrir cliente de email
+    window.open(
+      `mailto:${partyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    );
   };
 
   const submitSettlementOffer = async () => {
@@ -1119,6 +1178,206 @@ Rent360`;
                 Enviar Mensaje
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Case Details Modal */}
+        <Dialog open={caseDetailsModalOpen} onOpenChange={setCaseDetailsModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Detalles del Caso Legal</DialogTitle>
+              <DialogDescription>
+                Información completa del caso {selectedCase?.caseNumber}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedCase && (
+              <div className="space-y-6">
+                {/* Case Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Información del Caso</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p>
+                          <span className="font-medium">Número:</span> {selectedCase.caseNumber}
+                        </p>
+                        <p>
+                          <span className="font-medium">Tipo:</span>{' '}
+                          {getCaseTypeLabel(selectedCase.caseType)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Estado:</span>{' '}
+                          {getStatusBadge(selectedCase.status)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Fase:</span>{' '}
+                          {getPhaseLabel(selectedCase.currentPhase)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Prioridad:</span>{' '}
+                          {getPriorityBadge(selectedCase.priority)}
+                        </p>
+                        {selectedCase.riskLevel && (
+                          <p>
+                            <span className="font-medium">Riesgo:</span>{' '}
+                            {getRiskBadge(selectedCase.riskLevel)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Fechas Importantes</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p>
+                          <span className="font-medium">Inicio:</span>{' '}
+                          {formatDate(selectedCase.firstDefaultDate)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Creado:</span>{' '}
+                          {formatDate(selectedCase.createdAt)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Actualizado:</span>{' '}
+                          {formatDate(selectedCase.updatedAt)}
+                        </p>
+                        {selectedCase.nextDeadline && (
+                          <p>
+                            <span className="font-medium">Próximo plazo:</span>{' '}
+                            {selectedCase.nextDeadline}
+                          </p>
+                        )}
+                        {selectedCase.courtDate && (
+                          <p>
+                            <span className="font-medium">Audiencia:</span> {selectedCase.courtDate}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Información Financiera</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p>
+                          <span className="font-medium">Deuda Total:</span>{' '}
+                          {formatCurrency(selectedCase.totalAmount)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Intereses:</span>{' '}
+                          {formatCurrency(selectedCase.accumulatedInterest)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Gastos Legales:</span>{' '}
+                          {formatCurrency(selectedCase.legalFees)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Gastos Judiciales:</span>{' '}
+                          {formatCurrency(selectedCase.courtFees)}
+                        </p>
+                        {selectedCase.settlementOffer && (
+                          <p>
+                            <span className="font-medium text-green-600">Oferta de Acuerdo:</span>{' '}
+                            {formatCurrency(selectedCase.settlementOffer)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Abogado Asignado</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        {selectedCase.assignedLawyer ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Scale className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{selectedCase.assignedLawyer}</p>
+                              <p className="text-sm text-gray-600">
+                                Especialista en derecho inmobiliario
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-600">No asignado aún</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Property and Parties Information */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Propiedad</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p className="font-medium">{selectedCase.propertyTitle}</p>
+                      <p className="text-sm text-gray-600">{selectedCase.propertyAddress}</p>
+                      <p className="text-sm">
+                        <span className="font-medium">Contrato:</span> {selectedCase.contractNumber}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Inquilino</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p className="font-medium">{selectedCase.tenantName}</p>
+                      <p className="text-sm text-gray-600">{selectedCase.tenantEmail}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Propietario</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p className="font-medium">{selectedCase.ownerName}</p>
+                      <p className="text-sm text-gray-600">{selectedCase.ownerEmail}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Case Description */}
+                {selectedCase.notes && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Descripción del Caso</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-700">{selectedCase.notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => handleDownloadDocuments(selectedCase)}
+                    variant="outline"
+                    className="flex-1 min-w-[150px]"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Descargar Documentos
+                  </Button>
+                  <Button
+                    onClick={() => handleOfferMediation(selectedCase)}
+                    className="flex-1 min-w-[150px] bg-green-600 hover:bg-green-700"
+                  >
+                    <HeartHandshake className="w-4 h-4 mr-2" />
+                    Ofrecer Mediación
+                  </Button>
+                  {selectedCase.settlementOffer && (
+                    <Button
+                      onClick={() => handleOfferSettlement(selectedCase)}
+                      className="flex-1 min-w-[150px] bg-blue-600 hover:bg-blue-700"
+                    >
+                      <FileCheck className="w-4 h-4 mr-2" />
+                      Proponer Acuerdo
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

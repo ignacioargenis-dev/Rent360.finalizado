@@ -114,6 +114,20 @@ const menuItems: RoleMenuItems = {
       badgeVariant: 'destructive',
     },
     {
+      title: 'Casos Legales',
+      url: '/admin/legal-cases',
+      icon: Shield,
+      badge: '3',
+      badgeVariant: 'destructive',
+    },
+    {
+      title: 'Disputas de Garantía',
+      url: '/admin/disputes',
+      icon: AlertTriangle,
+      badge: '2',
+      badgeVariant: 'outline',
+    },
+    {
       title: 'Métricas del Sistema',
       url: '/admin/system-metrics',
       icon: Activity,
@@ -423,6 +437,13 @@ const menuItems: RoleMenuItems = {
       icon: FileText,
       badge: '3',
       badgeVariant: 'secondary',
+    },
+    {
+      title: 'Disputas de Garantía',
+      url: '/support/disputes',
+      icon: AlertTriangle,
+      badge: '2',
+      badgeVariant: 'outline',
     },
     {
       title: 'Usuarios',
