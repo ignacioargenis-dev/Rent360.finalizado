@@ -5,11 +5,23 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   Wrench,
@@ -87,7 +99,9 @@ export default function ProviderDashboard() {
 
     try {
       // Aquí iría la lógica para crear el trabajo rápido
-      alert(`✅ Trabajo creado exitosamente\n\nCliente: ${quickJobData.clientName}\nServicio: ${quickJobData.serviceType}\nFecha: ${quickJobData.scheduledDate || 'Por definir'}\n\nEl trabajo ha sido agendado y se notificará al cliente.`);
+      alert(
+        `✅ Trabajo creado exitosamente\n\nCliente: ${quickJobData.clientName}\nServicio: ${quickJobData.serviceType}\nFecha: ${quickJobData.scheduledDate || 'Por definir'}\n\nEl trabajo ha sido agendado y se notificará al cliente.`
+      );
 
       setShowQuickJobModal(false);
       setQuickJobData({
@@ -113,12 +127,15 @@ export default function ProviderDashboard() {
       return;
     }
 
-    const totalCost = (quickQuoteData.estimatedHours * quickQuoteData.hourlyRate) +
+    const totalCost =
+      quickQuoteData.estimatedHours * quickQuoteData.hourlyRate +
       (quickQuoteData.materials ? parseInt(quickQuoteData.materials) : 0);
 
     try {
       // Aquí iría la lógica para crear la cotización rápida
-      alert(`✅ Cotización enviada exitosamente\n\nCliente: ${quickQuoteData.clientName}\nServicio: ${quickQuoteData.serviceType}\nHoras estimadas: ${quickQuoteData.estimatedHours}\nTarifa por hora: $${quickQuoteData.hourlyRate.toLocaleString()}\n${quickQuoteData.materials ? `Materiales: $${parseInt(quickQuoteData.materials).toLocaleString()}\n` : ''}Total estimado: $${totalCost.toLocaleString()}\n\nLa cotización ha sido enviada al cliente.`);
+      alert(
+        `✅ Cotización enviada exitosamente\n\nCliente: ${quickQuoteData.clientName}\nServicio: ${quickQuoteData.serviceType}\nHoras estimadas: ${quickQuoteData.estimatedHours}\nTarifa por hora: $${quickQuoteData.hourlyRate.toLocaleString()}\n${quickQuoteData.materials ? `Materiales: $${parseInt(quickQuoteData.materials).toLocaleString()}\n` : ''}Total estimado: $${totalCost.toLocaleString()}\n\nLa cotización ha sido enviada al cliente.`
+      );
 
       setShowQuickQuoteModal(false);
       setQuickQuoteData({
@@ -148,7 +165,7 @@ export default function ProviderDashboard() {
         setJobs(data.jobs || []);
       }
     } catch (error) {
-      console.error('Error cargando trabajos:', error);
+      logger.error('Error cargando trabajos:', { error });
     } finally {
       setLoading(false);
     }
@@ -162,7 +179,7 @@ export default function ProviderDashboard() {
         setServiceRequests(data.requests || []);
       }
     } catch (error) {
-      console.error('Error cargando solicitudes de servicio:', error);
+      logger.error('Error cargando solicitudes de servicio:', { error });
     }
   };
 
@@ -191,7 +208,7 @@ export default function ProviderDashboard() {
         setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
-      console.error('Error enviando cotización:', error);
+      logger.error('Error enviando cotización:', { error });
       setErrorMessage('Error al enviar cotización. Por favor, inténtalo nuevamente.');
       setTimeout(() => setErrorMessage(''), 5000);
     }
@@ -514,7 +531,9 @@ export default function ProviderDashboard() {
       <Dialog open={showQuickJobModal} onOpenChange={setShowQuickJobModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-600">⚡ Crear Trabajo Rápido</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-blue-600">
+              ⚡ Crear Trabajo Rápido
+            </DialogTitle>
             <DialogDescription>
               Agende un nuevo servicio de manera rápida y eficiente
             </DialogDescription>
@@ -528,7 +547,7 @@ export default function ProviderDashboard() {
                   id="quick-job-client"
                   placeholder="Juan Pérez"
                   value={quickJobData.clientName}
-                  onChange={(e) => setQuickJobData(prev => ({ ...prev, clientName: e.target.value }))}
+                  onChange={e => setQuickJobData(prev => ({ ...prev, clientName: e.target.value }))}
                 />
               </div>
 
@@ -536,7 +555,9 @@ export default function ProviderDashboard() {
                 <Label htmlFor="quick-job-service">Tipo de Servicio</Label>
                 <Select
                   value={quickJobData.serviceType}
-                  onValueChange={(value) => setQuickJobData(prev => ({ ...prev, serviceType: value }))}
+                  onValueChange={value =>
+                    setQuickJobData(prev => ({ ...prev, serviceType: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar servicio" />
@@ -561,7 +582,7 @@ export default function ProviderDashboard() {
                 id="quick-job-description"
                 placeholder="Describe brevemente el trabajo a realizar..."
                 value={quickJobData.description}
-                onChange={(e) => setQuickJobData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e => setQuickJobData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
               />
             </div>
@@ -571,7 +592,7 @@ export default function ProviderDashboard() {
                 <Label htmlFor="quick-job-urgency">Urgencia</Label>
                 <Select
                   value={quickJobData.urgency}
-                  onValueChange={(value) => setQuickJobData(prev => ({ ...prev, urgency: value }))}
+                  onValueChange={value => setQuickJobData(prev => ({ ...prev, urgency: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -591,7 +612,9 @@ export default function ProviderDashboard() {
                   id="quick-job-date"
                   type="date"
                   value={quickJobData.scheduledDate}
-                  onChange={(e) => setQuickJobData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  onChange={e =>
+                    setQuickJobData(prev => ({ ...prev, scheduledDate: e.target.value }))
+                  }
                 />
               </div>
 
@@ -601,13 +624,17 @@ export default function ProviderDashboard() {
                   id="quick-job-cost"
                   placeholder="$50.000"
                   value={quickJobData.estimatedCost}
-                  onChange={(e) => setQuickJobData(prev => ({ ...prev, estimatedCost: e.target.value }))}
+                  onChange={e =>
+                    setQuickJobData(prev => ({ ...prev, estimatedCost: e.target.value }))
+                  }
                 />
               </div>
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">💡 Consejos para trabajos rápidos</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">
+                💡 Consejos para trabajos rápidos
+              </h4>
               <ul className="text-sm space-y-1">
                 <li>• Los trabajos se crean automáticamente con estado &quot;Pendiente&quot;</li>
                 <li>• Se enviará notificación automática al cliente</li>
@@ -621,7 +648,11 @@ export default function ProviderDashboard() {
                 <Calendar className="w-4 h-4 mr-2" />
                 Crear Trabajo
               </Button>
-              <Button variant="outline" onClick={() => setShowQuickJobModal(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setShowQuickJobModal(false)}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             </div>
@@ -633,10 +664,10 @@ export default function ProviderDashboard() {
       <Dialog open={showQuickQuoteModal} onOpenChange={setShowQuickQuoteModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-green-600">💰 Cotización Rápida</DialogTitle>
-            <DialogDescription>
-              Genere y envíe presupuestos de manera instantánea
-            </DialogDescription>
+            <DialogTitle className="text-xl font-bold text-green-600">
+              💰 Cotización Rápida
+            </DialogTitle>
+            <DialogDescription>Genere y envíe presupuestos de manera instantánea</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -647,7 +678,9 @@ export default function ProviderDashboard() {
                   id="quick-quote-client"
                   placeholder="María González"
                   value={quickQuoteData.clientName}
-                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, clientName: e.target.value }))}
+                  onChange={e =>
+                    setQuickQuoteData(prev => ({ ...prev, clientName: e.target.value }))
+                  }
                 />
               </div>
 
@@ -655,7 +688,9 @@ export default function ProviderDashboard() {
                 <Label htmlFor="quick-quote-service">Tipo de Servicio</Label>
                 <Select
                   value={quickQuoteData.serviceType}
-                  onValueChange={(value) => setQuickQuoteData(prev => ({ ...prev, serviceType: value }))}
+                  onValueChange={value =>
+                    setQuickQuoteData(prev => ({ ...prev, serviceType: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar servicio" />
@@ -680,7 +715,9 @@ export default function ProviderDashboard() {
                 id="quick-quote-description"
                 placeholder="Detalle del trabajo a cotizar..."
                 value={quickQuoteData.description}
-                onChange={(e) => setQuickQuoteData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e =>
+                  setQuickQuoteData(prev => ({ ...prev, description: e.target.value }))
+                }
                 rows={3}
               />
             </div>
@@ -693,7 +730,12 @@ export default function ProviderDashboard() {
                   type="number"
                   min="1"
                   value={quickQuoteData.estimatedHours}
-                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, estimatedHours: parseInt(e.target.value) || 1 }))}
+                  onChange={e =>
+                    setQuickQuoteData(prev => ({
+                      ...prev,
+                      estimatedHours: parseInt(e.target.value) || 1,
+                    }))
+                  }
                 />
               </div>
 
@@ -704,7 +746,12 @@ export default function ProviderDashboard() {
                   type="number"
                   placeholder="25000"
                   value={quickQuoteData.hourlyRate}
-                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setQuickQuoteData(prev => ({
+                      ...prev,
+                      hourlyRate: parseInt(e.target.value) || 0,
+                    }))
+                  }
                 />
               </div>
 
@@ -714,7 +761,9 @@ export default function ProviderDashboard() {
                   id="quick-quote-materials"
                   placeholder="$0"
                   value={quickQuoteData.materials}
-                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, materials: e.target.value }))}
+                  onChange={e =>
+                    setQuickQuoteData(prev => ({ ...prev, materials: e.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -724,18 +773,27 @@ export default function ProviderDashboard() {
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total Estimado:</span>
                 <span className="text-2xl font-bold text-green-600">
-                  ${(quickQuoteData.estimatedHours * quickQuoteData.hourlyRate +
-                    (quickQuoteData.materials ? parseInt(quickQuoteData.materials) : 0)).toLocaleString()}
+                  $
+                  {(
+                    quickQuoteData.estimatedHours * quickQuoteData.hourlyRate +
+                    (quickQuoteData.materials ? parseInt(quickQuoteData.materials) : 0)
+                  ).toLocaleString()}
                 </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Mano de obra: ${(quickQuoteData.estimatedHours * quickQuoteData.hourlyRate).toLocaleString()} •
-                Materiales: ${quickQuoteData.materials ? parseInt(quickQuoteData.materials).toLocaleString() : '0'}
+                Mano de obra: $
+                {(quickQuoteData.estimatedHours * quickQuoteData.hourlyRate).toLocaleString()} •
+                Materiales: $
+                {quickQuoteData.materials
+                  ? parseInt(quickQuoteData.materials).toLocaleString()
+                  : '0'}
               </div>
             </div>
 
             <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-yellow-800 mb-2">📋 Información incluida en la cotización</h4>
+              <h4 className="font-semibold text-yellow-800 mb-2">
+                📋 Información incluida en la cotización
+              </h4>
               <ul className="text-sm space-y-1">
                 <li>• Descripción detallada del servicio</li>
                 <li>• Desglose de costos (mano de obra + materiales)</li>
@@ -750,7 +808,11 @@ export default function ProviderDashboard() {
                 <DollarSign className="w-4 h-4 mr-2" />
                 Enviar Cotización
               </Button>
-              <Button variant="outline" onClick={() => setShowQuickQuoteModal(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setShowQuickQuoteModal(false)}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             </div>

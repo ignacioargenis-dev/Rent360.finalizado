@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,26 +82,137 @@ export default function OwnerRunnersPage() {
   // Lista completa de comunas chilenas
   const allCommunes = [
     // Región Metropolitana de Santiago
-    'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central', 'Huechuraba', 'Independencia',
-    'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina', 'Las Condes', 'Lo Barnechea',
-    'Lo Espejo', 'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa', 'Pedro Aguirre Cerda', 'Peñaflor', 'Peñalolén',
-    'Providencia', 'Pudahuel', 'Quilicura', 'Quinta Normal', 'Recoleta', 'Renca', 'San Bernardo',
-    'San Joaquín', 'San Miguel', 'San Ramón', 'Santiago Centro', 'Vitacura',
+    'Cerrillos',
+    'Cerro Navia',
+    'Conchalí',
+    'El Bosque',
+    'Estación Central',
+    'Huechuraba',
+    'Independencia',
+    'La Cisterna',
+    'La Florida',
+    'La Granja',
+    'La Pintana',
+    'La Reina',
+    'Las Condes',
+    'Lo Barnechea',
+    'Lo Espejo',
+    'Lo Prado',
+    'Macul',
+    'Maipú',
+    'Ñuñoa',
+    'Pedro Aguirre Cerda',
+    'Peñaflor',
+    'Peñalolén',
+    'Providencia',
+    'Pudahuel',
+    'Quilicura',
+    'Quinta Normal',
+    'Recoleta',
+    'Renca',
+    'San Bernardo',
+    'San Joaquín',
+    'San Miguel',
+    'San Ramón',
+    'Santiago Centro',
+    'Vitacura',
     // Región de Valparaíso
-    'Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio', 'San Felipe', 'Los Andes', 'Villa Alemana',
-    'Quilpué', 'Concón', 'Limache', 'Olmué', 'Llaillay', 'Putaendo', 'Santa María', 'Catemu', 'Panquehue',
-    'Llay-Llay', 'Nogales', 'La Ligua', 'Petorca', 'Cabildo', 'Papudo', 'Zapallar', 'Puchuncaví', 'Calera',
-    'Hijuelas', 'La Cruz', 'Casablanca', 'Juan Fernández', 'Isla de Pascua',
+    'Valparaíso',
+    'Viña del Mar',
+    'Quillota',
+    'San Antonio',
+    'San Felipe',
+    'Los Andes',
+    'Villa Alemana',
+    'Quilpué',
+    'Concón',
+    'Limache',
+    'Olmué',
+    'Llaillay',
+    'Putaendo',
+    'Santa María',
+    'Catemu',
+    'Panquehue',
+    'Llay-Llay',
+    'Nogales',
+    'La Ligua',
+    'Petorca',
+    'Cabildo',
+    'Papudo',
+    'Zapallar',
+    'Puchuncaví',
+    'Calera',
+    'Hijuelas',
+    'La Cruz',
+    'Casablanca',
+    'Juan Fernández',
+    'Isla de Pascua',
     // Región del Biobío
-    'Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Hualpén', 'Penco', 'Tomé',
-    'Lota', 'Hualqui', 'Florida', 'Cabrero', 'Yumbel', 'Mulchén', 'Nacimiento', 'Laja', 'San Rosendo',
-    'Quilleco', 'Antuco', 'Santa Bárbara', 'Quirihue', 'Cobquecura', 'Treguaco', 'Coihueco', 'Ñiquén',
-    'San Carlos', 'San Nicolás', 'San Fabián', 'Alto Biobío', 'Arauco', 'Cañete', 'Contulmo', 'Curanilahue',
-    'Lebu', 'Los Álamos', 'Tirúa', 'Los Ángeles', 'Chillán', 'Chillán Viejo',
+    'Concepción',
+    'Talcahuano',
+    'San Pedro de la Paz',
+    'Chiguayante',
+    'Coronel',
+    'Hualpén',
+    'Penco',
+    'Tomé',
+    'Lota',
+    'Hualqui',
+    'Florida',
+    'Cabrero',
+    'Yumbel',
+    'Mulchén',
+    'Nacimiento',
+    'Laja',
+    'San Rosendo',
+    'Quilleco',
+    'Antuco',
+    'Santa Bárbara',
+    'Quirihue',
+    'Cobquecura',
+    'Treguaco',
+    'Coihueco',
+    'Ñiquén',
+    'San Carlos',
+    'San Nicolás',
+    'San Fabián',
+    'Alto Biobío',
+    'Arauco',
+    'Cañete',
+    'Contulmo',
+    'Curanilahue',
+    'Lebu',
+    'Los Álamos',
+    'Tirúa',
+    'Los Ángeles',
+    'Chillán',
+    'Chillán Viejo',
     // Región de la Araucanía
-    'Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Valdivia', 'Osorno', 'Puerto Montt', 'Puerto Varas',
-    'Frutillar', 'Punta Arenas', 'Coyhaique', 'Iquique', 'Antofagasta', 'Calama', 'Copiapó', 'La Serena',
-    'Coquimbo', 'Ovalle', 'Illapel', 'Rancagua', 'Talca', 'Curicó', 'Linares', 'Parral', 'Cauquenes'
+    'Temuco',
+    'Padre Las Casas',
+    'Villarrica',
+    'Pucón',
+    'Valdivia',
+    'Osorno',
+    'Puerto Montt',
+    'Puerto Varas',
+    'Frutillar',
+    'Punta Arenas',
+    'Coyhaique',
+    'Iquique',
+    'Antofagasta',
+    'Calama',
+    'Copiapó',
+    'La Serena',
+    'Coquimbo',
+    'Ovalle',
+    'Illapel',
+    'Rancagua',
+    'Talca',
+    'Curicó',
+    'Linares',
+    'Parral',
+    'Cauquenes',
   ];
 
   // Filtrar comunas basado en la búsqueda
@@ -125,7 +236,7 @@ export default function OwnerRunnersPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [runners, filters]);
+  }, [applyFilters]);
 
   const loadRunners = async () => {
     try {
@@ -281,7 +392,7 @@ export default function OwnerRunnersPage() {
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = runners;
 
     // Location filter
@@ -309,7 +420,7 @@ export default function OwnerRunnersPage() {
     }
 
     setFilteredRunners(filtered);
-  };
+  }, [runners, filters]);
 
   const getAvailabilityBadge = (availability: string) => {
     switch (availability) {
@@ -471,7 +582,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   id="location-search"
                   placeholder="Escribe para buscar comuna..."
                   value={filters.locationSearch}
-                  onChange={(e) => setFilters(prev => ({ ...prev, locationSearch: e.target.value }))}
+                  onChange={e => setFilters(prev => ({ ...prev, locationSearch: e.target.value }))}
                   className="mt-1"
                 />
               </div>
@@ -487,7 +598,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas las ubicaciones</SelectItem>
-                    {filteredCommunes.slice(0, 50).map((commune) => (
+                    {filteredCommunes.slice(0, 50).map(commune => (
                       <SelectItem key={commune} value={commune}>
                         {commune}
                       </SelectItem>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,9 +105,9 @@ export default function SupportDisputesPage() {
 
   useEffect(() => {
     loadDisputes();
-  }, [statusFilter]);
+  }, [loadDisputes]);
 
-  const loadDisputes = async () => {
+  const loadDisputes = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/support/disputes?status=${statusFilter}`);
@@ -123,7 +123,7 @@ export default function SupportDisputesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -296,12 +296,22 @@ export default function SupportDisputesPage() {
   };
 
   const submitContactMessage = async () => {
-    if (!selectedDispute) return;
+    if (!selectedDispute) {
+      return;
+    }
 
     const contactInfo =
       contactParty === 'tenant'
-        ? { name: selectedDispute.tenantName, email: selectedDispute.tenantEmail, phone: selectedDispute.tenantPhone }
-        : { name: selectedDispute.ownerName, email: selectedDispute.ownerEmail, phone: selectedDispute.ownerPhone };
+        ? {
+            name: selectedDispute.tenantName,
+            email: selectedDispute.tenantEmail,
+            phone: selectedDispute.tenantPhone,
+          }
+        : {
+            name: selectedDispute.ownerName,
+            email: selectedDispute.ownerEmail,
+            phone: selectedDispute.ownerPhone,
+          };
 
     const subject = `Disputa ${selectedDispute.disputeNumber} - ${getDisputeTypeLabel(selectedDispute.disputeType)}`;
     const body = `Estimado/a ${contactInfo.name},
@@ -317,10 +327,14 @@ Equipo de Soporte Rent360`;
 
     try {
       // Abrir cliente de email con mensaje pre-llenado
-      window.open(`mailto:${contactInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      window.open(
+        `mailto:${contactInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+      );
 
       // Mostrar confirmación
-      alert(`📧 Mensaje preparado para ${contactInfo.name}\n\nCliente de email abierto con mensaje pre-llenado.`);
+      alert(
+        `📧 Mensaje preparado para ${contactInfo.name}\n\nCliente de email abierto con mensaje pre-llenado.`
+      );
 
       setContactModalOpen(false);
       setSelectedDispute(null);
@@ -714,9 +728,12 @@ Equipo de Soporte Rent360`;
         <Dialog open={disputeDetailsModalOpen} onOpenChange={setDisputeDetailsModalOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-blue-600">📋 Detalles Completos de la Disputa</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-blue-600">
+                📋 Detalles Completos de la Disputa
+              </DialogTitle>
               <DialogDescription>
-                Información detallada y acciones disponibles para la disputa {selectedDispute?.disputeNumber}
+                Información detallada y acciones disponibles para la disputa{' '}
+                {selectedDispute?.disputeNumber}
               </DialogDescription>
             </DialogHeader>
 
@@ -726,22 +743,51 @@ Equipo de Soporte Rent360`;
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Información de la Disputa</h4>
+                      <h4 className="font-semibold text-gray-900 mb-2">
+                        Información de la Disputa
+                      </h4>
                       <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                        <p><span className="font-medium">Número:</span> {selectedDispute.disputeNumber}</p>
-                        <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
-                        <p><span className="font-medium">Estado:</span> {selectedDispute.status}</p>
-                        <p><span className="font-medium">Monto Disputado:</span> {formatCurrency(selectedDispute.amount)}</p>
-                        <p><span className="font-medium">Fecha de Inicio:</span> {formatDate(selectedDispute.createdAt)}</p>
-                        <p><span className="font-medium">Días Abierta:</span> {getDaysOpen(selectedDispute.createdAt)} días</p>
+                        <p>
+                          <span className="font-medium">Número:</span>{' '}
+                          {selectedDispute.disputeNumber}
+                        </p>
+                        <p>
+                          <span className="font-medium">Tipo:</span>{' '}
+                          {getDisputeTypeLabel(selectedDispute.disputeType)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Estado:</span> {selectedDispute.status}
+                        </p>
+                        <p>
+                          <span className="font-medium">Monto Disputado:</span>{' '}
+                          {formatCurrency(selectedDispute.amount)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Fecha de Inicio:</span>{' '}
+                          {formatDate(selectedDispute.createdAt)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Días Abierta:</span>{' '}
+                          {getDaysOpen(selectedDispute.createdAt)} días
+                        </p>
                       </div>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">Iniciador</h4>
                       <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                        <p><span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}</p>
-                        <p><span className="font-medium">Rol:</span> {selectedDispute.initiatorRole === 'TENANT' ? 'Inquilino' : selectedDispute.initiatorRole === 'OWNER' ? 'Propietario' : 'Corredor'}</p>
+                        <p>
+                          <span className="font-medium">Nombre:</span>{' '}
+                          {selectedDispute.initiatorName}
+                        </p>
+                        <p>
+                          <span className="font-medium">Rol:</span>{' '}
+                          {selectedDispute.initiatorRole === 'TENANT'
+                            ? 'Inquilino'
+                            : selectedDispute.initiatorRole === 'OWNER'
+                              ? 'Propietario'
+                              : 'Corredor'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -750,19 +796,40 @@ Equipo de Soporte Rent360`;
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">Propiedad y Contrato</h4>
                       <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                        <p><span className="font-medium">Propiedad:</span> {selectedDispute.propertyTitle}</p>
-                        <p><span className="font-medium">Dirección:</span> {selectedDispute.propertyAddress}</p>
-                        <p><span className="font-medium">Contrato:</span> {selectedDispute.contractNumber}</p>
+                        <p>
+                          <span className="font-medium">Propiedad:</span>{' '}
+                          {selectedDispute.propertyTitle}
+                        </p>
+                        <p>
+                          <span className="font-medium">Dirección:</span>{' '}
+                          {selectedDispute.propertyAddress}
+                        </p>
+                        <p>
+                          <span className="font-medium">Contrato:</span>{' '}
+                          {selectedDispute.contractNumber}
+                        </p>
                       </div>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">Partes Involucradas</h4>
                       <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                        <p><span className="font-medium">Inquilino:</span> {selectedDispute.tenantName}</p>
-                        <p><span className="font-medium">Email Inquilino:</span> {selectedDispute.tenantEmail}</p>
-                        <p><span className="font-medium">Propietario:</span> {selectedDispute.ownerName}</p>
-                        <p><span className="font-medium">Email Propietario:</span> {selectedDispute.ownerEmail}</p>
+                        <p>
+                          <span className="font-medium">Inquilino:</span>{' '}
+                          {selectedDispute.tenantName}
+                        </p>
+                        <p>
+                          <span className="font-medium">Email Inquilino:</span>{' '}
+                          {selectedDispute.tenantEmail}
+                        </p>
+                        <p>
+                          <span className="font-medium">Propietario:</span>{' '}
+                          {selectedDispute.ownerName}
+                        </p>
+                        <p>
+                          <span className="font-medium">Email Propietario:</span>{' '}
+                          {selectedDispute.ownerEmail}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -782,7 +849,10 @@ Equipo de Soporte Rent360`;
                     <h4 className="font-semibold text-gray-900 mb-2">Estado de Mediación</h4>
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <p className="text-blue-800">
-                        <span className="font-medium">Estado:</span> {selectedDispute.mediationStatus === 'IN_PROGRESS' ? 'En Progreso' : 'Completada'}
+                        <span className="font-medium">Estado:</span>{' '}
+                        {selectedDispute.mediationStatus === 'IN_PROGRESS'
+                          ? 'En Progreso'
+                          : 'Completada'}
                       </p>
                     </div>
                   </div>
@@ -831,9 +901,12 @@ Equipo de Soporte Rent360`;
         <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-purple-600">📬 Contactar Parte Involucrada</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-purple-600">
+                📬 Contactar Parte Involucrada
+              </DialogTitle>
               <DialogDescription>
-                Enviar mensaje a {contactParty === 'tenant' ? 'inquilino' : 'propietario'} de la disputa {selectedDispute?.disputeNumber}
+                Enviar mensaje a {contactParty === 'tenant' ? 'inquilino' : 'propietario'} de la
+                disputa {selectedDispute?.disputeNumber}
               </DialogDescription>
             </DialogHeader>
 
@@ -843,10 +916,25 @@ Equipo de Soporte Rent360`;
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-gray-900 mb-3">Información de Contacto</h4>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Nombre:</span> {contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName}</p>
-                    <p><span className="font-medium">Email:</span> {contactParty === 'tenant' ? selectedDispute.tenantEmail : selectedDispute.ownerEmail}</p>
-                    <p><span className="font-medium">Disputa:</span> {selectedDispute.disputeNumber}</p>
-                    <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                    <p>
+                      <span className="font-medium">Nombre:</span>{' '}
+                      {contactParty === 'tenant'
+                        ? selectedDispute.tenantName
+                        : selectedDispute.ownerName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Email:</span>{' '}
+                      {contactParty === 'tenant'
+                        ? selectedDispute.tenantEmail
+                        : selectedDispute.ownerEmail}
+                    </p>
+                    <p>
+                      <span className="font-medium">Disputa:</span> {selectedDispute.disputeNumber}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tipo:</span>{' '}
+                      {getDisputeTypeLabel(selectedDispute.disputeType)}
+                    </p>
                   </div>
                 </div>
 
@@ -855,13 +943,31 @@ Equipo de Soporte Rent360`;
                   <h4 className="font-semibold text-gray-900 mb-3">Mensaje que se enviará</h4>
                   <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
                     <div className="text-sm space-y-2">
-                      <p><strong>Asunto:</strong> Disputa {selectedDispute.disputeNumber} - {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                      <p>
+                        <strong>Asunto:</strong> Disputa {selectedDispute.disputeNumber} -{' '}
+                        {getDisputeTypeLabel(selectedDispute.disputeType)}
+                      </p>
                       <div className="bg-white p-3 rounded text-sm">
-                        Estimado/a {contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName},<br/><br/>
-                        Le escribo respecto a la disputa {selectedDispute.disputeNumber} relacionada con el contrato {selectedDispute.contractNumber} y la propiedad &quot;{selectedDispute.propertyTitle}&quot;.<br/><br/>
-                        Como equipo de soporte de Rent360, estamos trabajando para resolver esta situación de manera eficiente y justa.<br/><br/>
-                        ¿Podríamos agendar una reunión o llamada para discutir los detalles?<br/><br/>
-                        Atentamente,<br/>
+                        Estimado/a{' '}
+                        {contactParty === 'tenant'
+                          ? selectedDispute.tenantName
+                          : selectedDispute.ownerName}
+                        ,<br />
+                        <br />
+                        Le escribo respecto a la disputa {selectedDispute.disputeNumber} relacionada
+                        con el contrato {selectedDispute.contractNumber} y la propiedad &quot;
+                        {selectedDispute.propertyTitle}&quot;.
+                        <br />
+                        <br />
+                        Como equipo de soporte de Rent360, estamos trabajando para resolver esta
+                        situación de manera eficiente y justa.
+                        <br />
+                        <br />
+                        ¿Podríamos agendar una reunión o llamada para discutir los detalles?
+                        <br />
+                        <br />
+                        Atentamente,
+                        <br />
                         Equipo de Soporte Rent360
                       </div>
                     </div>
@@ -876,7 +982,10 @@ Equipo de Soporte Rent360`;
                       variant="outline"
                       className="justify-start h-auto p-4"
                       onClick={() => {
-                        const phone = contactParty === 'tenant' ? selectedDispute.tenantPhone : selectedDispute.ownerPhone;
+                        const phone =
+                          contactParty === 'tenant'
+                            ? selectedDispute.tenantPhone
+                            : selectedDispute.ownerPhone;
                         window.open(`tel:${phone}`);
                         alert(`📞 Llamando a ${phone}...`);
                       }}
@@ -894,12 +1003,18 @@ Equipo de Soporte Rent360`;
                       variant="outline"
                       className="justify-start h-auto p-4"
                       onClick={() => {
-                        const phone = contactParty === 'tenant' ? selectedDispute.tenantPhone : selectedDispute.ownerPhone;
+                        const phone =
+                          contactParty === 'tenant'
+                            ? selectedDispute.tenantPhone
+                            : selectedDispute.ownerPhone;
                         if (!phone) {
                           alert('Número de teléfono no disponible para este contacto.');
                           return;
                         }
-                        const name = contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName;
+                        const name =
+                          contactParty === 'tenant'
+                            ? selectedDispute.tenantName
+                            : selectedDispute.ownerName;
                         const message = `Hola ${name}, me contacto desde Rent360 Soporte para conversar sobre la disputa ${selectedDispute.disputeNumber}.`;
                         const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
                         window.open(whatsappUrl, '_blank');
@@ -922,7 +1037,9 @@ Equipo de Soporte Rent360`;
                         <Mail className="w-5 h-5 text-white" />
                         <div className="text-left">
                           <div className="font-medium">Correo Electrónico</div>
-                          <div className="text-sm text-blue-100">Abrir cliente de email con mensaje preparado</div>
+                          <div className="text-sm text-blue-100">
+                            Abrir cliente de email con mensaje preparado
+                          </div>
                         </div>
                       </div>
                     </Button>

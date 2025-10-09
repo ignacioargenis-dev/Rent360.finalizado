@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -116,7 +116,9 @@ Me contacto desde Rent360 Mantenimiento para consultar sobre la propiedad ubicad
 
 Atentamente,
 Equipo de Mantenimiento Rent360`;
-    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    window.open(
+      `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    );
   };
 
   const contactOwnerViaWhatsApp = (phone: string, property: Property) => {
@@ -131,7 +133,7 @@ Equipo de Mantenimiento Rent360`;
 
   useEffect(() => {
     filterProperties();
-  }, [properties, searchTerm, statusFilter, typeFilter]);
+  }, [filterProperties]);
 
   const loadProperties = async () => {
     try {
@@ -211,7 +213,7 @@ Equipo de Mantenimiento Rent360`;
     }
   };
 
-  const filterProperties = () => {
+  const filterProperties = useCallback(() => {
     let filtered = properties;
 
     if (searchTerm) {
@@ -232,7 +234,7 @@ Equipo de Mantenimiento Rent360`;
     }
 
     setFilteredProperties(filtered);
-  };
+  }, [properties, searchTerm, statusFilter, typeFilter]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -1076,7 +1078,9 @@ Equipo de Mantenimiento Rent360`;
       <Dialog open={showPropertyDetailsModal} onOpenChange={setShowPropertyDetailsModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-blue-600">🏠 Detalles de la Propiedad</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-600">
+              🏠 Detalles de la Propiedad
+            </DialogTitle>
             <DialogDescription>
               Información completa de {selectedProperty?.address}
             </DialogDescription>
@@ -1090,11 +1094,22 @@ Equipo de Mantenimiento Rent360`;
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Información General</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Dirección:</span> {selectedProperty.address}</p>
-                      <p><span className="font-medium">Comuna:</span> {selectedProperty.commune}</p>
-                      <p><span className="font-medium">Región:</span> {selectedProperty.region}</p>
-                      <p><span className="font-medium">Tipo:</span> {selectedProperty.propertyType}</p>
-                      <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedProperty.status)}</p>
+                      <p>
+                        <span className="font-medium">Dirección:</span> {selectedProperty.address}
+                      </p>
+                      <p>
+                        <span className="font-medium">Comuna:</span> {selectedProperty.commune}
+                      </p>
+                      <p>
+                        <span className="font-medium">Región:</span> {selectedProperty.region}
+                      </p>
+                      <p>
+                        <span className="font-medium">Tipo:</span> {selectedProperty.propertyType}
+                      </p>
+                      <p>
+                        <span className="font-medium">Estado:</span>{' '}
+                        {getStatusBadge(selectedProperty.status)}
+                      </p>
                     </div>
                   </div>
 
@@ -1102,29 +1117,56 @@ Equipo de Mantenimiento Rent360`;
                     <h4 className="font-semibold text-gray-900 mb-2">Características</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                       {selectedProperty.bedrooms && (
-                        <p><span className="font-medium">Dormitorios:</span> {selectedProperty.bedrooms}</p>
+                        <p>
+                          <span className="font-medium">Dormitorios:</span>{' '}
+                          {selectedProperty.bedrooms}
+                        </p>
                       )}
                       {selectedProperty.bathrooms && (
-                        <p><span className="font-medium">Baños:</span> {selectedProperty.bathrooms}</p>
+                        <p>
+                          <span className="font-medium">Baños:</span> {selectedProperty.bathrooms}
+                        </p>
                       )}
-                      <p><span className="font-medium">Propietario:</span> {selectedProperty.ownerName}</p>
-                      <p><span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}</p>
+                      <p>
+                        <span className="font-medium">Propietario:</span>{' '}
+                        {selectedProperty.ownerName}
+                      </p>
+                      <p>
+                        <span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Estadísticas de Mantenimiento</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      Estadísticas de Mantenimiento
+                    </h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Trabajos Totales:</span> {selectedProperty.totalJobs}</p>
-                      <p><span className="font-medium">Trabajos Activos:</span> {selectedProperty.activeJobs}</p>
-                      <p><span className="font-medium">Ingresos Totales:</span> {formatCurrency(selectedProperty.totalRevenue)}</p>
+                      <p>
+                        <span className="font-medium">Trabajos Totales:</span>{' '}
+                        {selectedProperty.totalJobs}
+                      </p>
+                      <p>
+                        <span className="font-medium">Trabajos Activos:</span>{' '}
+                        {selectedProperty.activeJobs}
+                      </p>
+                      <p>
+                        <span className="font-medium">Ingresos Totales:</span>{' '}
+                        {formatCurrency(selectedProperty.totalRevenue)}
+                      </p>
                       {selectedProperty.lastJobDate && (
-                        <p><span className="font-medium">Último Trabajo:</span> {new Date(selectedProperty.lastJobDate).toLocaleDateString('es-CL')}</p>
+                        <p>
+                          <span className="font-medium">Último Trabajo:</span>{' '}
+                          {new Date(selectedProperty.lastJobDate).toLocaleDateString('es-CL')}
+                        </p>
                       )}
                       {selectedProperty.nextJobDate && (
-                        <p><span className="font-medium">Próximo Trabajo:</span> {new Date(selectedProperty.nextJobDate).toLocaleDateString('es-CL')}</p>
+                        <p>
+                          <span className="font-medium">Próximo Trabajo:</span>{' '}
+                          {new Date(selectedProperty.nextJobDate).toLocaleDateString('es-CL')}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1147,10 +1189,7 @@ Equipo de Mantenimiento Rent360`;
                         <User className="w-4 h-4 mr-2" />
                         Contactar Propietario
                       </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                      >
+                      <Button variant="outline" className="w-full justify-start">
                         <Calendar className="w-4 h-4 mr-2" />
                         Agendar Nuevo Trabajo
                       </Button>
@@ -1164,8 +1203,9 @@ Equipo de Mantenimiento Rent360`;
                 <h4 className="font-semibold text-gray-900 mb-2">Notas de Mantenimiento</h4>
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <p className="text-yellow-800">
-                    Esta propiedad tiene un historial de mantenimiento regular. Se recomienda inspeccionar
-                    el sistema eléctrico cada 6 meses y el sistema de plomería cada 3 meses.
+                    Esta propiedad tiene un historial de mantenimiento regular. Se recomienda
+                    inspeccionar el sistema eléctrico cada 6 meses y el sistema de plomería cada 3
+                    meses.
                   </p>
                 </div>
               </div>
@@ -1178,7 +1218,9 @@ Equipo de Mantenimiento Rent360`;
       <Dialog open={showPropertyJobsModal} onOpenChange={setShowPropertyJobsModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-green-600">🔧 Historial de Trabajos</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-green-600">
+              🔧 Historial de Trabajos
+            </DialogTitle>
             <DialogDescription>
               Trabajos realizados en {selectedProperty?.address}
             </DialogDescription>
@@ -1192,7 +1234,8 @@ Equipo de Mantenimiento Rent360`;
                   {
                     id: '1',
                     title: 'Revisión sistema eléctrico',
-                    description: 'Inspección completa del sistema eléctrico, cambio de breakers defectuosos',
+                    description:
+                      'Inspección completa del sistema eléctrico, cambio de breakers defectuosos',
                     status: 'completed',
                     priority: 'high',
                     completedDate: '2024-01-15',
@@ -1219,7 +1262,7 @@ Equipo de Mantenimiento Rent360`;
                     cost: 35000,
                     technician: 'Pedro Sánchez',
                   },
-                ].map((job) => (
+                ].map(job => (
                   <Card key={job.id} className="border-l-4 border-l-green-500">
                     <CardContent className="pt-4">
                       <div className="flex justify-between items-start mb-3">
@@ -1250,7 +1293,9 @@ Equipo de Mantenimiento Rent360`;
                           <span className="font-medium">
                             {job.status === 'completed' ? 'Completado:' : 'Iniciado:'}
                           </span>{' '}
-                          {job.completedDate ? new Date(job.completedDate).toLocaleDateString('es-CL') : 'En curso'}
+                          {job.completedDate
+                            ? new Date(job.completedDate).toLocaleDateString('es-CL')
+                            : 'En curso'}
                         </div>
                       </div>
                     </CardContent>
@@ -1263,15 +1308,21 @@ Equipo de Mantenimiento Rent360`;
                 <h4 className="font-semibold text-gray-900 mb-3">Resumen de Mantenimiento</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{selectedProperty.totalJobs}</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedProperty.totalJobs}
+                    </div>
                     <div className="text-gray-600">Trabajos Totales</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{formatCurrency(selectedProperty.totalRevenue)}</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {formatCurrency(selectedProperty.totalRevenue)}
+                    </div>
                     <div className="text-gray-600">Ingresos Totales</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">{selectedProperty.activeJobs}</div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {selectedProperty.activeJobs}
+                    </div>
                     <div className="text-gray-600">Trabajos Activos</div>
                   </div>
                 </div>
@@ -1295,7 +1346,9 @@ Equipo de Mantenimiento Rent360`;
       <Dialog open={showContactOwnerModal} onOpenChange={setShowContactOwnerModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-purple-600">📞 Contactar Propietario</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-purple-600">
+              📞 Contactar Propietario
+            </DialogTitle>
             <DialogDescription>
               Establecer contacto con el propietario de {selectedProperty?.address}
             </DialogDescription>
@@ -1307,9 +1360,15 @@ Equipo de Mantenimiento Rent360`;
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-gray-900 mb-3">Información del Propietario</h4>
                 <div className="space-y-2">
-                  <p><span className="font-medium">Nombre:</span> {selectedProperty.ownerName}</p>
-                  <p><span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}</p>
-                  <p><span className="font-medium">Propiedad:</span> {selectedProperty.address}</p>
+                  <p>
+                    <span className="font-medium">Nombre:</span> {selectedProperty.ownerName}
+                  </p>
+                  <p>
+                    <span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}
+                  </p>
+                  <p>
+                    <span className="font-medium">Propiedad:</span> {selectedProperty.address}
+                  </p>
                 </div>
               </div>
 
@@ -1326,7 +1385,9 @@ Equipo de Mantenimiento Rent360`;
                       <Phone className="w-5 h-5 text-green-600" />
                       <div className="text-left">
                         <div className="font-medium">Llamada Telefónica</div>
-                        <div className="text-sm text-gray-600">Llamar directamente al propietario</div>
+                        <div className="text-sm text-gray-600">
+                          Llamar directamente al propietario
+                        </div>
                       </div>
                     </div>
                   </Button>
@@ -1334,7 +1395,9 @@ Equipo de Mantenimiento Rent360`;
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
-                    onClick={() => contactOwnerViaWhatsApp(selectedProperty.ownerPhone, selectedProperty)}
+                    onClick={() =>
+                      contactOwnerViaWhatsApp(selectedProperty.ownerPhone, selectedProperty)
+                    }
                   >
                     <div className="flex items-center gap-3 w-full">
                       <MessageCircle className="w-5 h-5 text-green-600" />
@@ -1348,7 +1411,12 @@ Equipo de Mantenimiento Rent360`;
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
-                    onClick={() => contactOwnerViaEmail(selectedProperty.ownerEmail || 'contacto@rent360.cl', selectedProperty)}
+                    onClick={() =>
+                      contactOwnerViaEmail(
+                        selectedProperty.ownerEmail || 'contacto@rent360.cl',
+                        selectedProperty
+                      )
+                    }
                   >
                     <div className="flex items-center gap-3 w-full">
                       <Mail className="w-5 h-5 text-blue-600" />
