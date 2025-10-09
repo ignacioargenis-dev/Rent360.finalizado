@@ -877,9 +877,7 @@ export default function TenantSettingsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </UnifiedDashboardLayout>
-
-    {/* Certificado de Cotizaciones Guide Modal */}
+      {/* Certificado de Cotizaciones Guide Modal */}
     <Dialog open={showCotizacionesGuide} onOpenChange={setShowCotizacionesGuide}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -940,7 +938,7 @@ export default function TenantSettingsPage() {
                   <h5 className="font-medium text-blue-900">Solicítalo en línea</h5>
                   <p className="text-blue-800 text-sm">
                     Ingresa al sitio web de tu AFC y solicita el certificado en la sección de
-                    "Certificados" o "Documentos". La mayoría ofrece solicitud gratuita en línea.
+                    &quot;Certificados&quot; o &quot;Documentos&quot;. La mayoría ofrece solicitud gratuita en línea.
                   </p>
                   <div className="mt-2">
                     <Button size="sm" variant="outline" className="text-xs">
@@ -1136,5 +1134,6 @@ export default function TenantSettingsPage() {
         </div>
       </DialogContent>
     </Dialog>
+    </UnifiedDashboardLayout>
   );
 }

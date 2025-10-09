@@ -430,7 +430,7 @@ export default function ProviderDashboard() {
                         // Navegar a la página de trabajos con modal de creación rápida
                         setShowQuickJobModal(true);
                       }}
-                      variant="primary"
+                      variant="default"
                     />
 
                     <QuickActionButton
@@ -454,7 +454,7 @@ export default function ProviderDashboard() {
                         // Abrir modal de cotización rápida
                         setShowQuickQuoteModal(true);
                       }}
-                      variant="success"
+                      variant="default"
                     />
 
                     <QuickActionButton
@@ -465,7 +465,7 @@ export default function ProviderDashboard() {
                         // Abrir chat de soporte directo
                         window.open('/support/chat', '_blank');
                       }}
-                      variant="info"
+                      variant="outline"
                     />
                   </div>
                 </div>

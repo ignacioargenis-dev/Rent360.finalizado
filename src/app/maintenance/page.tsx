@@ -109,8 +109,7 @@ export default function MaintenanceDashboard() {
   // Estados para formularios de actualización
   const [updateJobData, setUpdateJobData] = useState({
     title: '',
-    description: '',
-    priority: 'normal',
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     estimatedHours: 1,
     scheduledDate: '',
     notes: '',
@@ -261,8 +260,8 @@ El temporizador del trabajo está activo.`);
     alert(`✅ TRABAJO COMPLETADO EXITOSAMENTE
 
 📋 Trabajo: ${completedJob?.title}
-🏠 Propiedad: ${completedJob?.property}
-👤 Cliente: ${completedJob?.client}
+🏠 Propiedad: ${completedJob?.propertyAddress}
+👤 Propietario: ${completedJob?.ownerName}
 🕐 Hora de finalización: ${new Date().toLocaleString('es-CL')}
 
 📝 Próximos pasos recomendados:
@@ -287,18 +286,17 @@ El temporizador del trabajo está activo.`);
 📋 Trabajo: ${selectedJob.title}
 📝 Cambios realizados:
 • Título: ${updateJobData.title || 'Sin cambios'}
-• Descripción: ${updateJobData.description ? 'Actualizada' : 'Sin cambios'}
 • Prioridad: ${updateJobData.priority}
 • Horas estimadas: ${updateJobData.estimatedHours}h
 • Fecha programada: ${updateJobData.scheduledDate || 'Sin cambios'}
+• Notas: ${updateJobData.notes || 'Sin cambios'}
 
-Los cambios han sido guardados y notificados al cliente.`);
+Los cambios han sido guardados y notificados al propietario.`);
 
       setShowUpdateJobModal(false);
       setUpdateJobData({
         title: '',
-        description: '',
-        priority: 'normal',
+        priority: 'medium',
         estimatedHours: 1,
         scheduledDate: '',
         notes: '',
@@ -930,13 +928,12 @@ Los cambios han sido guardados y notificados al cliente.`);
             </div>
 
             <div>
-              <Label htmlFor="update-job-description">Descripción</Label>
-              <Textarea
-                id="update-job-description"
-                placeholder={selectedJob?.description || "Describe el trabajo a realizar..."}
-                value={updateJobData.description}
-                onChange={(e) => setUpdateJobData(prev => ({ ...prev, description: e.target.value }))}
-                rows={3}
+              <Label htmlFor="update-job-title">Título del Trabajo</Label>
+              <Input
+                id="update-job-title"
+                placeholder={selectedJob?.title || "Título del trabajo"}
+                value={updateJobData.title}
+                onChange={(e) => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
 
@@ -945,7 +942,7 @@ Los cambios han sido guardados y notificados al cliente.`);
                 <Label htmlFor="update-job-priority">Prioridad</Label>
                 <Select
                   value={updateJobData.priority}
-                  onValueChange={(value) => setUpdateJobData(prev => ({ ...prev, priority: value }))}
+                  onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setUpdateJobData(prev => ({ ...prev, priority: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -997,8 +994,8 @@ Los cambios han sido guardados y notificados al cliente.`);
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-gray-800 mb-2">📋 Información actual del trabajo</h4>
                 <div className="text-sm space-y-1">
-                  <p><strong>Cliente:</strong> {selectedJob.client}</p>
-                  <p><strong>Propiedad:</strong> {selectedJob.property}</p>
+                  <p><strong>Propietario:</strong> {selectedJob.ownerName}</p>
+                  <p><strong>Dirección:</strong> {selectedJob.propertyAddress}</p>
                   <p><strong>Estado actual:</strong> {getStatusBadge(selectedJob.status)}</p>
                   <p><strong>Prioridad actual:</strong> {selectedJob.priority}</p>
                 </div>

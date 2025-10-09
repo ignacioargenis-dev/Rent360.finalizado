@@ -1107,9 +1107,6 @@ Equipo de Mantenimiento Rent360`;
                       {selectedProperty.bathrooms && (
                         <p><span className="font-medium">Baños:</span> {selectedProperty.bathrooms}</p>
                       )}
-                      {selectedProperty.area && (
-                        <p><span className="font-medium">Área:</span> {selectedProperty.area} m²</p>
-                      )}
                       <p><span className="font-medium">Propietario:</span> {selectedProperty.ownerName}</p>
                       <p><span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}</p>
                     </div>

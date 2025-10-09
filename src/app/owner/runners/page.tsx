@@ -375,7 +375,6 @@ Propietario - Rent360`;
 
     // Prellenar información de contratación
     setHireData({
-      serviceType: runner.services[0] || '',
       estimatedHours: 2,
       preferredDate: '',
       preferredTime: '',
@@ -402,7 +401,6 @@ Propietario - Rent360`;
       const jobData = {
         runnerId: selectedRunner.id,
         ownerId: 'current-user-id', // TODO: Obtener del contexto de autenticación
-        serviceType: hireData.serviceType,
         estimatedHours: hireData.estimatedHours,
         preferredDate: hireData.preferredDate,
         preferredTime: hireData.preferredTime,
@@ -421,7 +419,6 @@ Propietario - Rent360`;
 
       alert(`¡Contratación exitosa!
 
-Servicio: ${hireData.serviceType}
 Runner: ${selectedRunner.name}
 Fecha preferida: ${hireData.preferredDate || 'Por coordinar'}
 Horas estimadas: ${hireData.estimatedHours}
@@ -801,28 +798,6 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
               </div>
 
               <div className="space-y-6">
-                {/* Service Selection */}
-                <div>
-                  <Label htmlFor="serviceType" className="text-sm font-medium">
-                    Tipo de Servicio
-                  </Label>
-                  <Select
-                    value={hireData.serviceType}
-                    onValueChange={value => setHireData(prev => ({ ...prev, serviceType: value }))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Selecciona el servicio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedRunner.services.map(service => (
-                        <SelectItem key={service} value={service}>
-                          {service}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Time Estimation */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -939,9 +914,6 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   <h4 className="font-medium text-blue-900 mb-2">Resumen de Contratación</h4>
                   <div className="text-sm text-blue-800 space-y-1">
                     <p>
-                      <strong>Servicio:</strong> {hireData.serviceType || 'Por seleccionar'}
-                    </p>
-                    <p>
                       <strong>Runner:</strong> {selectedRunner.name}
                     </p>
                     <p>
@@ -972,7 +944,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   <Button
                     onClick={handleSubmitHire}
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
-                    disabled={!hireData.serviceType}
+                    disabled={!hireData.preferredDate || !hireData.estimatedHours}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Confirmar Contratación

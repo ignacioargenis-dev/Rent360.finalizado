@@ -306,7 +306,7 @@ export default function SupportDisputesPage() {
     const subject = `Disputa ${selectedDispute.disputeNumber} - ${getDisputeTypeLabel(selectedDispute.disputeType)}`;
     const body = `Estimado/a ${contactInfo.name},
 
-Le escribo respecto a la disputa ${selectedDispute.disputeNumber} relacionada con el contrato ${selectedDispute.contractNumber} y la propiedad "${selectedDispute.propertyTitle}".
+Le escribo respecto a la disputa ${selectedDispute.disputeNumber} relacionada con el contrato ${selectedDispute.contractNumber} y la propiedad &quot;${selectedDispute.propertyTitle}&quot;.
 
 Como equipo de soporte de Rent360, estamos trabajando para resolver esta situación de manera eficiente y justa.
 
@@ -741,7 +741,7 @@ Equipo de Soporte Rent360`;
                       <h4 className="font-semibold text-gray-900 mb-2">Iniciador</h4>
                       <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                         <p><span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}</p>
-                        <p><span className="font-medium">Rol:</span> {getInitiatorRoleLabel(selectedDispute.initiatorRole)}</p>
+                        <p><span className="font-medium">Rol:</span> {selectedDispute.initiatorRole === 'TENANT' ? 'Inquilino' : selectedDispute.initiatorRole === 'OWNER' ? 'Propietario' : 'Corredor'}</p>
                       </div>
                     </div>
                   </div>
@@ -858,7 +858,7 @@ Equipo de Soporte Rent360`;
                       <p><strong>Asunto:</strong> Disputa {selectedDispute.disputeNumber} - {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
                       <div className="bg-white p-3 rounded text-sm">
                         Estimado/a {contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName},<br/><br/>
-                        Le escribo respecto a la disputa {selectedDispute.disputeNumber} relacionada con el contrato {selectedDispute.contractNumber} y la propiedad "{selectedDispute.propertyTitle}".<br/><br/>
+                        Le escribo respecto a la disputa {selectedDispute.disputeNumber} relacionada con el contrato {selectedDispute.contractNumber} y la propiedad &quot;{selectedDispute.propertyTitle}&quot;.<br/><br/>
                         Como equipo de soporte de Rent360, estamos trabajando para resolver esta situación de manera eficiente y justa.<br/><br/>
                         ¿Podríamos agendar una reunión o llamada para discutir los detalles?<br/><br/>
                         Atentamente,<br/>
@@ -895,6 +895,10 @@ Equipo de Soporte Rent360`;
                       className="justify-start h-auto p-4"
                       onClick={() => {
                         const phone = contactParty === 'tenant' ? selectedDispute.tenantPhone : selectedDispute.ownerPhone;
+                        if (!phone) {
+                          alert('Número de teléfono no disponible para este contacto.');
+                          return;
+                        }
                         const name = contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName;
                         const message = `Hola ${name}, me contacto desde Rent360 Soporte para conversar sobre la disputa ${selectedDispute.disputeNumber}.`;
                         const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
