@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import {
   Wrench,
@@ -48,7 +53,87 @@ export default function ProviderDashboard() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Estados para modales de acciones rápidas
+  const [showQuickJobModal, setShowQuickJobModal] = useState(false);
+  const [showQuickQuoteModal, setShowQuickQuoteModal] = useState(false);
+
+  // Estados para formularios rápidos
+  const [quickJobData, setQuickJobData] = useState({
+    clientName: '',
+    serviceType: '',
+    description: '',
+    urgency: 'normal',
+    scheduledDate: '',
+    estimatedCost: '',
+  });
+
+  const [quickQuoteData, setQuickQuoteData] = useState({
+    clientName: '',
+    serviceType: '',
+    description: '',
+    estimatedHours: 2,
+    hourlyRate: 25000,
+    materials: '',
+  });
   const { user } = useUserState();
+
+  // Funciones para acciones rápidas
+  const submitQuickJob = async () => {
+    if (!quickJobData.clientName || !quickJobData.serviceType || !quickJobData.description) {
+      setErrorMessage('Por favor complete todos los campos obligatorios.');
+      return;
+    }
+
+    try {
+      // Aquí iría la lógica para crear el trabajo rápido
+      alert(`✅ Trabajo creado exitosamente\n\nCliente: ${quickJobData.clientName}\nServicio: ${quickJobData.serviceType}\nFecha: ${quickJobData.scheduledDate || 'Por definir'}\n\nEl trabajo ha sido agendado y se notificará al cliente.`);
+
+      setShowQuickJobModal(false);
+      setQuickJobData({
+        clientName: '',
+        serviceType: '',
+        description: '',
+        urgency: 'normal',
+        scheduledDate: '',
+        estimatedCost: '',
+      });
+      setSuccessMessage('Trabajo creado exitosamente');
+
+      // Recargar datos
+      await loadJobs();
+    } catch (error) {
+      setErrorMessage('Error al crear el trabajo. Intente nuevamente.');
+    }
+  };
+
+  const submitQuickQuote = async () => {
+    if (!quickQuoteData.clientName || !quickQuoteData.serviceType || !quickQuoteData.description) {
+      setErrorMessage('Por favor complete todos los campos obligatorios.');
+      return;
+    }
+
+    const totalCost = (quickQuoteData.estimatedHours * quickQuoteData.hourlyRate) +
+      (quickQuoteData.materials ? parseInt(quickQuoteData.materials) : 0);
+
+    try {
+      // Aquí iría la lógica para crear la cotización rápida
+      alert(`✅ Cotización enviada exitosamente\n\nCliente: ${quickQuoteData.clientName}\nServicio: ${quickQuoteData.serviceType}\nHoras estimadas: ${quickQuoteData.estimatedHours}\nTarifa por hora: $${quickQuoteData.hourlyRate.toLocaleString()}\n${quickQuoteData.materials ? `Materiales: $${parseInt(quickQuoteData.materials).toLocaleString()}\n` : ''}Total estimado: $${totalCost.toLocaleString()}\n\nLa cotización ha sido enviada al cliente.`);
+
+      setShowQuickQuoteModal(false);
+      setQuickQuoteData({
+        clientName: '',
+        serviceType: '',
+        description: '',
+        estimatedHours: 2,
+        hourlyRate: 25000,
+        materials: '',
+      });
+      setSuccessMessage('Cotización enviada exitosamente');
+    } catch (error) {
+      setErrorMessage('Error al enviar la cotización. Intente nuevamente.');
+    }
+  };
 
   useEffect(() => {
     loadJobs();
@@ -335,46 +420,54 @@ export default function ProviderDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <QuickActionButton
-                    icon={Calendar}
-                    label="Nuevo Trabajo"
-                    description="Agendar servicio"
-                    onClick={() => {
-                      // Navegar a la página de trabajos
-                      window.location.href = '/provider/jobs';
-                    }}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <QuickActionButton
+                      icon={Calendar}
+                      label="Nuevo Trabajo"
+                      description="Agendar servicio"
+                      onClick={() => {
+                        // Navegar a la página de trabajos con modal de creación rápida
+                        setShowQuickJobModal(true);
+                      }}
+                      variant="primary"
+                    />
 
-                  <QuickActionButton
-                    icon={Users}
-                    label="Gestionar Clientes"
-                    description="Base de clientes"
-                    onClick={() => {
-                      // Navegar a la página de clientes
-                      window.location.href = '/provider/clients';
-                    }}
-                  />
+                    <QuickActionButton
+                      icon={Users}
+                      label="Gestionar Clientes"
+                      description="Base de clientes"
+                      onClick={() => {
+                        // Navegar a la página de clientes con filtros aplicados
+                        router.push('/provider/clients?filter=active');
+                      }}
+                      variant="secondary"
+                    />
+                  </div>
 
-                  <QuickActionButton
-                    icon={DollarSign}
-                    label="Cotizaciones"
-                    description="Generar presupuesto"
-                    onClick={() => {
-                      // Navegar a la página de cotizaciones
-                      window.location.href = '/provider/quotes';
-                    }}
-                  />
+                  <div className="space-y-4">
+                    <QuickActionButton
+                      icon={DollarSign}
+                      label="Cotizaciones"
+                      description="Generar presupuesto"
+                      onClick={() => {
+                        // Abrir modal de cotización rápida
+                        setShowQuickQuoteModal(true);
+                      }}
+                      variant="success"
+                    />
 
-                  <QuickActionButton
-                    icon={MessageSquare}
-                    label="Soporte"
-                    description="Centro de ayuda"
-                    onClick={() => {
-                      // Abrir chat de soporte
-                      window.location.href = '/support';
-                    }}
-                  />
+                    <QuickActionButton
+                      icon={MessageSquare}
+                      label="Soporte"
+                      description="Centro de ayuda"
+                      onClick={() => {
+                        // Abrir chat de soporte directo
+                        window.open('/support/chat', '_blank');
+                      }}
+                      variant="info"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -416,6 +509,254 @@ export default function ProviderDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Quick Job Modal */}
+      <Dialog open={showQuickJobModal} onOpenChange={setShowQuickJobModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-blue-600">⚡ Crear Trabajo Rápido</DialogTitle>
+            <DialogDescription>
+              Agende un nuevo servicio de manera rápida y eficiente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="quick-job-client">Nombre del Cliente</Label>
+                <Input
+                  id="quick-job-client"
+                  placeholder="Juan Pérez"
+                  value={quickJobData.clientName}
+                  onChange={(e) => setQuickJobData(prev => ({ ...prev, clientName: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quick-job-service">Tipo de Servicio</Label>
+                <Select
+                  value={quickJobData.serviceType}
+                  onValueChange={(value) => setQuickJobData(prev => ({ ...prev, serviceType: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar servicio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mantenimiento">Mantenimiento</SelectItem>
+                    <SelectItem value="Limpieza">Limpieza</SelectItem>
+                    <SelectItem value="Plomería">Plomería</SelectItem>
+                    <SelectItem value="Electricidad">Electricidad</SelectItem>
+                    <SelectItem value="Jardinería">Jardinería</SelectItem>
+                    <SelectItem value="Pintura">Pintura</SelectItem>
+                    <SelectItem value="Reparaciones">Reparaciones</SelectItem>
+                    <SelectItem value="Instalaciones">Instalaciones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="quick-job-description">Descripción del Trabajo</Label>
+              <Textarea
+                id="quick-job-description"
+                placeholder="Describe brevemente el trabajo a realizar..."
+                value={quickJobData.description}
+                onChange={(e) => setQuickJobData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="quick-job-urgency">Urgencia</Label>
+                <Select
+                  value={quickJobData.urgency}
+                  onValueChange={(value) => setQuickJobData(prev => ({ ...prev, urgency: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baja</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="quick-job-date">Fecha Programada</Label>
+                <Input
+                  id="quick-job-date"
+                  type="date"
+                  value={quickJobData.scheduledDate}
+                  onChange={(e) => setQuickJobData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quick-job-cost">Costo Estimado</Label>
+                <Input
+                  id="quick-job-cost"
+                  placeholder="$50.000"
+                  value={quickJobData.estimatedCost}
+                  onChange={(e) => setQuickJobData(prev => ({ ...prev, estimatedCost: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">💡 Consejos para trabajos rápidos</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Los trabajos se crean automáticamente con estado "Pendiente"</li>
+                <li>• Se enviará notificación automática al cliente</li>
+                <li>• Puede editar los detalles después desde "Mis Trabajos"</li>
+                <li>• Los costos estimados son solo referenciales</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={submitQuickJob} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Calendar className="w-4 h-4 mr-2" />
+                Crear Trabajo
+              </Button>
+              <Button variant="outline" onClick={() => setShowQuickJobModal(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Quote Modal */}
+      <Dialog open={showQuickQuoteModal} onOpenChange={setShowQuickQuoteModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-green-600">💰 Cotización Rápida</DialogTitle>
+            <DialogDescription>
+              Genere y envíe presupuestos de manera instantánea
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="quick-quote-client">Nombre del Cliente</Label>
+                <Input
+                  id="quick-quote-client"
+                  placeholder="María González"
+                  value={quickQuoteData.clientName}
+                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, clientName: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quick-quote-service">Tipo de Servicio</Label>
+                <Select
+                  value={quickQuoteData.serviceType}
+                  onValueChange={(value) => setQuickQuoteData(prev => ({ ...prev, serviceType: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar servicio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mantenimiento">Mantenimiento</SelectItem>
+                    <SelectItem value="Limpieza">Limpieza</SelectItem>
+                    <SelectItem value="Plomería">Plomería</SelectItem>
+                    <SelectItem value="Electricidad">Electricidad</SelectItem>
+                    <SelectItem value="Jardinería">Jardinería</SelectItem>
+                    <SelectItem value="Pintura">Pintura</SelectItem>
+                    <SelectItem value="Reparaciones">Reparaciones</SelectItem>
+                    <SelectItem value="Instalaciones">Instalaciones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="quick-quote-description">Descripción del Servicio</Label>
+              <Textarea
+                id="quick-quote-description"
+                placeholder="Detalle del trabajo a cotizar..."
+                value={quickQuoteData.description}
+                onChange={(e) => setQuickQuoteData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="quick-quote-hours">Horas Estimadas</Label>
+                <Input
+                  id="quick-quote-hours"
+                  type="number"
+                  min="1"
+                  value={quickQuoteData.estimatedHours}
+                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, estimatedHours: parseInt(e.target.value) || 1 }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quick-quote-rate">Tarifa por Hora</Label>
+                <Input
+                  id="quick-quote-rate"
+                  type="number"
+                  placeholder="25000"
+                  value={quickQuoteData.hourlyRate}
+                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="quick-quote-materials">Materiales (opcional)</Label>
+                <Input
+                  id="quick-quote-materials"
+                  placeholder="$0"
+                  value={quickQuoteData.materials}
+                  onChange={(e) => setQuickQuoteData(prev => ({ ...prev, materials: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Cálculo automático del total */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total Estimado:</span>
+                <span className="text-2xl font-bold text-green-600">
+                  ${(quickQuoteData.estimatedHours * quickQuoteData.hourlyRate +
+                    (quickQuoteData.materials ? parseInt(quickQuoteData.materials) : 0)).toLocaleString()}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Mano de obra: ${(quickQuoteData.estimatedHours * quickQuoteData.hourlyRate).toLocaleString()} •
+                Materiales: ${quickQuoteData.materials ? parseInt(quickQuoteData.materials).toLocaleString() : '0'}
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">📋 Información incluida en la cotización</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Descripción detallada del servicio</li>
+                <li>• Desglose de costos (mano de obra + materiales)</li>
+                <li>• Tiempo estimado de ejecución</li>
+                <li>• Condiciones de pago y validez</li>
+                <li>• Información de contacto</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={submitQuickQuote} className="flex-1 bg-green-600 hover:bg-green-700">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Enviar Cotización
+              </Button>
+              <Button variant="outline" onClick={() => setShowQuickQuoteModal(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

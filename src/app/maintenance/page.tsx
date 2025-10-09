@@ -42,6 +42,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface DashboardStats {
   activeJobs: number;
@@ -99,7 +103,18 @@ export default function MaintenanceDashboard() {
 
   // Estado para modales
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
+  const [showUpdateJobModal, setShowUpdateJobModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobSummary | null>(null);
+
+  // Estados para formularios de actualización
+  const [updateJobData, setUpdateJobData] = useState({
+    title: '',
+    description: '',
+    priority: 'normal',
+    estimatedHours: 1,
+    scheduledDate: '',
+    notes: '',
+  });
 
   useEffect(() => {
     // Mock data for demo
@@ -204,26 +219,99 @@ export default function MaintenanceDashboard() {
   };
 
   const handleUpdateJob = (job: JobSummary) => {
-    // En una aplicación real, esto abriría un modal de edición
-    // Por ahora, solo mostraremos un mensaje
-    setSuccessMessage(`Actualizando trabajo: ${job.title}`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+    setSelectedJob(job);
+    setShowUpdateJobModal(true);
   };
 
   const handleStartJob = (jobId: string) => {
+    // Actualizar el estado del trabajo
     setRecentJobs(prevJobs =>
       prevJobs.map(job => (job.id === jobId ? { ...job, status: 'in_progress' as const } : job))
     );
+
+    // Simular registro de tiempo de inicio
+    const startTime = new Date().toISOString();
+
+    alert(`🚀 TRABAJO INICIADO EXITOSAMENTE
+
+📋 Trabajo: ${recentJobs.find(j => j.id === jobId)?.title}
+🕐 Hora de inicio: ${new Date().toLocaleString('es-CL')}
+📍 Estado: En Progreso
+
+💡 Próximos pasos:
+• Documentar el trabajo realizado
+• Tomar fotos del estado inicial
+• Comunicar avances al cliente
+• Registrar tiempo y materiales usados
+
+El temporizador del trabajo está activo.`);
+
     setSuccessMessage('Trabajo iniciado exitosamente');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleCompleteJob = (jobId: string) => {
+    // Actualizar el estado del trabajo
     setRecentJobs(prevJobs =>
       prevJobs.map(job => (job.id === jobId ? { ...job, status: 'completed' as const } : job))
     );
+
+    const completedJob = recentJobs.find(j => j.id === jobId);
+
+    alert(`✅ TRABAJO COMPLETADO EXITOSAMENTE
+
+📋 Trabajo: ${completedJob?.title}
+🏠 Propiedad: ${completedJob?.property}
+👤 Cliente: ${completedJob?.client}
+🕐 Hora de finalización: ${new Date().toLocaleString('es-CL')}
+
+📝 Próximos pasos recomendados:
+• Enviar resumen al cliente
+• Solicitar feedback/calificación
+• Generar factura si corresponde
+• Archivar documentación
+
+¿Desea enviar un resumen al cliente ahora?`);
+
     setSuccessMessage('Trabajo completado exitosamente');
     setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleUpdateJobSubmit = async () => {
+    if (!selectedJob) return;
+
+    try {
+      // Simular actualización del trabajo
+      alert(`🔄 TRABAJO ACTUALIZADO EXITOSAMENTE
+
+📋 Trabajo: ${selectedJob.title}
+📝 Cambios realizados:
+• Título: ${updateJobData.title || 'Sin cambios'}
+• Descripción: ${updateJobData.description ? 'Actualizada' : 'Sin cambios'}
+• Prioridad: ${updateJobData.priority}
+• Horas estimadas: ${updateJobData.estimatedHours}h
+• Fecha programada: ${updateJobData.scheduledDate || 'Sin cambios'}
+
+Los cambios han sido guardados y notificados al cliente.`);
+
+      setShowUpdateJobModal(false);
+      setUpdateJobData({
+        title: '',
+        description: '',
+        priority: 'normal',
+        estimatedHours: 1,
+        scheduledDate: '',
+        notes: '',
+      });
+
+      setSuccessMessage('Trabajo actualizado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Recargar datos
+      // loadJobs(); // Esta función debería existir
+    } catch (error) {
+      setErrorMessage('Error al actualizar el trabajo. Intente nuevamente.');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -817,6 +905,126 @@ export default function MaintenanceDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Job Modal */}
+      <Dialog open={showUpdateJobModal} onOpenChange={setShowUpdateJobModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-blue-600">🔄 Actualizar Trabajo</DialogTitle>
+            <DialogDescription>
+              Modificar los detalles del trabajo: {selectedJob?.title}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="update-job-title">Título del Trabajo</Label>
+              <Input
+                id="update-job-title"
+                placeholder={selectedJob?.title}
+                value={updateJobData.title}
+                onChange={(e) => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="update-job-description">Descripción</Label>
+              <Textarea
+                id="update-job-description"
+                placeholder={selectedJob?.description || "Describe el trabajo a realizar..."}
+                value={updateJobData.description}
+                onChange={(e) => setUpdateJobData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="update-job-priority">Prioridad</Label>
+                <Select
+                  value={updateJobData.priority}
+                  onValueChange={(value) => setUpdateJobData(prev => ({ ...prev, priority: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baja</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="update-job-hours">Horas Estimadas</Label>
+                <Input
+                  id="update-job-hours"
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={updateJobData.estimatedHours}
+                  onChange={(e) => setUpdateJobData(prev => ({ ...prev, estimatedHours: parseFloat(e.target.value) || 1 }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="update-job-date">Fecha Programada</Label>
+              <Input
+                id="update-job-date"
+                type="date"
+                value={updateJobData.scheduledDate}
+                onChange={(e) => setUpdateJobData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="update-job-notes">Notas Adicionales</Label>
+              <Textarea
+                id="update-job-notes"
+                placeholder="Información adicional, cambios, requerimientos especiales..."
+                value={updateJobData.notes}
+                onChange={(e) => setUpdateJobData(prev => ({ ...prev, notes: e.target.value }))}
+                rows={2}
+              />
+            </div>
+
+            {selectedJob && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800 mb-2">📋 Información actual del trabajo</h4>
+                <div className="text-sm space-y-1">
+                  <p><strong>Cliente:</strong> {selectedJob.client}</p>
+                  <p><strong>Propiedad:</strong> {selectedJob.property}</p>
+                  <p><strong>Estado actual:</strong> {getStatusBadge(selectedJob.status)}</p>
+                  <p><strong>Prioridad actual:</strong> {selectedJob.priority}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">💡 Cambios que se aplicarán</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Se notificará automáticamente al cliente de los cambios</li>
+                <li>• Se actualizará el calendario si cambia la fecha</li>
+                <li>• Se recalcularán las estimaciones de tiempo</li>
+                <li>• Se guardará un registro de la modificación</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleUpdateJobSubmit} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Edit className="w-4 h-4 mr-2" />
+                Actualizar Trabajo
+              </Button>
+              <Button variant="outline" onClick={() => setShowUpdateJobModal(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>

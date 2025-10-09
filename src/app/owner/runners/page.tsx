@@ -57,11 +57,11 @@ interface Runner {
 }
 
 interface RunnerFilters {
-  service: string;
   location: string;
   rating: string;
   availability: string;
   maxRate: string;
+  locationSearch: string;
 }
 
 export default function OwnerRunnersPage() {
@@ -72,17 +72,46 @@ export default function OwnerRunnersPage() {
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [filters, setFilters] = useState<RunnerFilters>({
-    service: 'all',
     location: 'all',
     rating: 'all',
     availability: 'all',
     maxRate: 'all',
+    locationSearch: '',
   });
+
+  // Lista completa de comunas chilenas
+  const allCommunes = [
+    // Región Metropolitana de Santiago
+    'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central', 'Huechuraba', 'Independencia',
+    'La Cisterna', 'La Florida', 'La Granja', 'La Pintana', 'La Reina', 'Las Condes', 'Lo Barnechea',
+    'Lo Espejo', 'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa', 'Pedro Aguirre Cerda', 'Peñaflor', 'Peñalolén',
+    'Providencia', 'Pudahuel', 'Quilicura', 'Quinta Normal', 'Recoleta', 'Renca', 'San Bernardo',
+    'San Joaquín', 'San Miguel', 'San Ramón', 'Santiago Centro', 'Vitacura',
+    // Región de Valparaíso
+    'Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio', 'San Felipe', 'Los Andes', 'Villa Alemana',
+    'Quilpué', 'Concón', 'Limache', 'Olmué', 'Llaillay', 'Putaendo', 'Santa María', 'Catemu', 'Panquehue',
+    'Llay-Llay', 'Nogales', 'La Ligua', 'Petorca', 'Cabildo', 'Papudo', 'Zapallar', 'Puchuncaví', 'Calera',
+    'Hijuelas', 'La Cruz', 'Casablanca', 'Juan Fernández', 'Isla de Pascua',
+    // Región del Biobío
+    'Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Coronel', 'Hualpén', 'Penco', 'Tomé',
+    'Lota', 'Hualqui', 'Florida', 'Cabrero', 'Yumbel', 'Mulchén', 'Nacimiento', 'Laja', 'San Rosendo',
+    'Quilleco', 'Antuco', 'Santa Bárbara', 'Quirihue', 'Cobquecura', 'Treguaco', 'Coihueco', 'Ñiquén',
+    'San Carlos', 'San Nicolás', 'San Fabián', 'Alto Biobío', 'Arauco', 'Cañete', 'Contulmo', 'Curanilahue',
+    'Lebu', 'Los Álamos', 'Tirúa', 'Los Ángeles', 'Chillán', 'Chillán Viejo',
+    // Región de la Araucanía
+    'Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Valdivia', 'Osorno', 'Puerto Montt', 'Puerto Varas',
+    'Frutillar', 'Punta Arenas', 'Coyhaique', 'Iquique', 'Antofagasta', 'Calama', 'Copiapó', 'La Serena',
+    'Coquimbo', 'Ovalle', 'Illapel', 'Rancagua', 'Talca', 'Curicó', 'Linares', 'Parral', 'Cauquenes'
+  ];
+
+  // Filtrar comunas basado en la búsqueda
+  const filteredCommunes = allCommunes.filter(commune =>
+    commune.toLowerCase().includes(filters.locationSearch.toLowerCase())
+  );
 
   // Estados para contratación
   const [showHireModal, setShowHireModal] = useState(false);
   const [hireData, setHireData] = useState({
-    serviceType: '',
     estimatedHours: 2,
     preferredDate: '',
     preferredTime: '',
@@ -254,15 +283,6 @@ export default function OwnerRunnersPage() {
 
   const applyFilters = () => {
     let filtered = runners;
-
-    // Service filter
-    if (filters.service !== 'all') {
-      filtered = filtered.filter(runner =>
-        runner.services.some(service =>
-          service.toLowerCase().includes(filters.service.toLowerCase())
-        )
-      );
-    }
 
     // Location filter
     if (filters.location !== 'all') {
@@ -447,26 +467,16 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="service-filter">Servicio</Label>
-                <Select
-                  value={filters.service}
-                  onValueChange={value => setFilters(prev => ({ ...prev, service: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los servicios" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los servicios</SelectItem>
-                    <SelectItem value="Mantenimiento">Mantenimiento</SelectItem>
-                    <SelectItem value="Limpieza">Limpieza</SelectItem>
-                    <SelectItem value="Plomería">Plomería</SelectItem>
-                    <SelectItem value="Electricidad">Electricidad</SelectItem>
-                    <SelectItem value="Jardinería">Jardinería</SelectItem>
-                    <SelectItem value="Pintura">Pintura</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="location-search">Buscar Ubicación</Label>
+                <Input
+                  id="location-search"
+                  placeholder="Escribe para buscar comuna..."
+                  value={filters.locationSearch}
+                  onChange={(e) => setFilters(prev => ({ ...prev, locationSearch: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
 
               <div>
@@ -480,141 +490,16 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas las ubicaciones</SelectItem>
-                    {/* Región Metropolitana de Santiago */}
-                    <SelectItem value="Cerrillos">Cerrillos</SelectItem>
-                    <SelectItem value="Cerro Navia">Cerro Navia</SelectItem>
-                    <SelectItem value="Conchalí">Conchalí</SelectItem>
-                    <SelectItem value="El Bosque">El Bosque</SelectItem>
-                    <SelectItem value="Estación Central">Estación Central</SelectItem>
-                    <SelectItem value="Huechuraba">Huechuraba</SelectItem>
-                    <SelectItem value="Independencia">Independencia</SelectItem>
-                    <SelectItem value="La Cisterna">La Cisterna</SelectItem>
-                    <SelectItem value="La Florida">La Florida</SelectItem>
-                    <SelectItem value="La Granja">La Granja</SelectItem>
-                    <SelectItem value="La Pintana">La Pintana</SelectItem>
-                    <SelectItem value="La Reina">La Reina</SelectItem>
-                    <SelectItem value="Las Condes">Las Condes</SelectItem>
-                    <SelectItem value="Lo Barnechea">Lo Barnechea</SelectItem>
-                    <SelectItem value="Lo Espejo">Lo Espejo</SelectItem>
-                    <SelectItem value="Lo Prado">Lo Prado</SelectItem>
-                    <SelectItem value="Macul">Macul</SelectItem>
-                    <SelectItem value="Maipú">Maipú</SelectItem>
-                    <SelectItem value="Ñuñoa">Ñuñoa</SelectItem>
-                    <SelectItem value="Pedro Aguirre Cerda">Pedro Aguirre Cerda</SelectItem>
-                    <SelectItem value="Peñaflor">Peñaflor</SelectItem>
-                    <SelectItem value="Peñalolén">Peñalolén</SelectItem>
-                    <SelectItem value="Providencia">Providencia</SelectItem>
-                    <SelectItem value="Pudahuel">Pudahuel</SelectItem>
-                    <SelectItem value="Quilicura">Quilicura</SelectItem>
-                    <SelectItem value="Quinta Normal">Quinta Normal</SelectItem>
-                    <SelectItem value="Recoleta">Recoleta</SelectItem>
-                    <SelectItem value="Renca">Renca</SelectItem>
-                    <SelectItem value="San Bernardo">San Bernardo</SelectItem>
-                    <SelectItem value="San Joaquín">San Joaquín</SelectItem>
-                    <SelectItem value="San Miguel">San Miguel</SelectItem>
-                    <SelectItem value="San Ramón">San Ramón</SelectItem>
-                    <SelectItem value="Santiago Centro">Santiago Centro</SelectItem>
-                    <SelectItem value="Vitacura">Vitacura</SelectItem>
-
-                    {/* Región de Valparaíso */}
-                    <SelectItem value="Valparaíso">Valparaíso</SelectItem>
-                    <SelectItem value="Viña del Mar">Viña del Mar</SelectItem>
-                    <SelectItem value="Quillota">Quillota</SelectItem>
-                    <SelectItem value="San Antonio">San Antonio</SelectItem>
-                    <SelectItem value="San Felipe">San Felipe</SelectItem>
-                    <SelectItem value="Los Andes">Los Andes</SelectItem>
-                    <SelectItem value="Villa Alemana">Villa Alemana</SelectItem>
-                    <SelectItem value="Quilpué">Quilpué</SelectItem>
-                    <SelectItem value="Concón">Concón</SelectItem>
-                    <SelectItem value="Limache">Limache</SelectItem>
-                    <SelectItem value="Olmué">Olmué</SelectItem>
-                    <SelectItem value="Llaillay">Llaillay</SelectItem>
-                    <SelectItem value="Putaendo">Putaendo</SelectItem>
-                    <SelectItem value="Santa María">Santa María</SelectItem>
-                    <SelectItem value="Catemu">Catemu</SelectItem>
-                    <SelectItem value="Panquehue">Panquehue</SelectItem>
-                    <SelectItem value="Llay-Llay">Llay-Llay</SelectItem>
-                    <SelectItem value="Nogales">Nogales</SelectItem>
-                    <SelectItem value="La Ligua">La Ligua</SelectItem>
-                    <SelectItem value="Petorca">Petorca</SelectItem>
-                    <SelectItem value="Cabildo">Cabildo</SelectItem>
-                    <SelectItem value="Papudo">Papudo</SelectItem>
-                    <SelectItem value="Zapallar">Zapallar</SelectItem>
-                    <SelectItem value="Puchuncaví">Puchuncaví</SelectItem>
-                    <SelectItem value="Calera">Calera</SelectItem>
-                    <SelectItem value="Hijuelas">Hijuelas</SelectItem>
-                    <SelectItem value="La Cruz">La Cruz</SelectItem>
-                    <SelectItem value="Casablanca">Casablanca</SelectItem>
-                    <SelectItem value="Juan Fernández">Juan Fernández</SelectItem>
-                    <SelectItem value="Isla de Pascua">Isla de Pascua</SelectItem>
-
-                    {/* Región del Biobío */}
-                    <SelectItem value="Concepción">Concepción</SelectItem>
-                    <SelectItem value="Talcahuano">Talcahuano</SelectItem>
-                    <SelectItem value="San Pedro de la Paz">San Pedro de la Paz</SelectItem>
-                    <SelectItem value="Chiguayante">Chiguayante</SelectItem>
-                    <SelectItem value="Coronel">Coronel</SelectItem>
-                    <SelectItem value="Hualpén">Hualpén</SelectItem>
-                    <SelectItem value="Penco">Penco</SelectItem>
-                    <SelectItem value="Tomé">Tomé</SelectItem>
-                    <SelectItem value="Lota">Lota</SelectItem>
-                    <SelectItem value="Hualqui">Hualqui</SelectItem>
-                    <SelectItem value="Florida">Florida</SelectItem>
-                    <SelectItem value="Cabrero">Cabrero</SelectItem>
-                    <SelectItem value="Yumbel">Yumbel</SelectItem>
-                    <SelectItem value="Mulchén">Mulchén</SelectItem>
-                    <SelectItem value="Nacimiento">Nacimiento</SelectItem>
-                    <SelectItem value="Laja">Laja</SelectItem>
-                    <SelectItem value="San Rosendo">San Rosendo</SelectItem>
-                    <SelectItem value="Quilleco">Quilleco</SelectItem>
-                    <SelectItem value="Antuco">Antuco</SelectItem>
-                    <SelectItem value="Santa Bárbara">Santa Bárbara</SelectItem>
-                    <SelectItem value="Quirihue">Quirihue</SelectItem>
-                    <SelectItem value="Cobquecura">Cobquecura</SelectItem>
-                    <SelectItem value="Treguaco">Treguaco</SelectItem>
-                    <SelectItem value="Coihueco">Coihueco</SelectItem>
-                    <SelectItem value="Ñiquén">Ñiquén</SelectItem>
-                    <SelectItem value="San Carlos">San Carlos</SelectItem>
-                    <SelectItem value="San Nicolás">San Nicolás</SelectItem>
-                    <SelectItem value="San Fabián">San Fabián</SelectItem>
-                    <SelectItem value="Alto Biobío">Alto Biobío</SelectItem>
-                    <SelectItem value="Arauco">Arauco</SelectItem>
-                    <SelectItem value="Cañete">Cañete</SelectItem>
-                    <SelectItem value="Contulmo">Contulmo</SelectItem>
-                    <SelectItem value="Curanilahue">Curanilahue</SelectItem>
-                    <SelectItem value="Lebu">Lebu</SelectItem>
-                    <SelectItem value="Los Álamos">Los Álamos</SelectItem>
-                    <SelectItem value="Tirúa">Tirúa</SelectItem>
-                    <SelectItem value="Los Ángeles">Los Ángeles</SelectItem>
-                    <SelectItem value="Chillán">Chillán</SelectItem>
-                    <SelectItem value="Chillán Viejo">Chillán Viejo</SelectItem>
-
-                    {/* Región de la Araucanía */}
-                    <SelectItem value="Temuco">Temuco</SelectItem>
-                    <SelectItem value="Padre Las Casas">Padre Las Casas</SelectItem>
-                    <SelectItem value="Villarrica">Villarrica</SelectItem>
-                    <SelectItem value="Pucón">Pucón</SelectItem>
-                    <SelectItem value="Valdivia">Valdivia</SelectItem>
-                    <SelectItem value="Osorno">Osorno</SelectItem>
-                    <SelectItem value="Puerto Montt">Puerto Montt</SelectItem>
-                    <SelectItem value="Puerto Varas">Puerto Varas</SelectItem>
-                    <SelectItem value="Frutillar">Frutillar</SelectItem>
-                    <SelectItem value="Punta Arenas">Punta Arenas</SelectItem>
-                    <SelectItem value="Coyhaique">Coyhaique</SelectItem>
-                    <SelectItem value="Iquique">Iquique</SelectItem>
-                    <SelectItem value="Antofagasta">Antofagasta</SelectItem>
-                    <SelectItem value="Calama">Calama</SelectItem>
-                    <SelectItem value="Copiapó">Copiapó</SelectItem>
-                    <SelectItem value="La Serena">La Serena</SelectItem>
-                    <SelectItem value="Coquimbo">Coquimbo</SelectItem>
-                    <SelectItem value="Ovalle">Ovalle</SelectItem>
-                    <SelectItem value="Illapel">Illapel</SelectItem>
-                    <SelectItem value="Rancagua">Rancagua</SelectItem>
-                    <SelectItem value="Talca">Talca</SelectItem>
-                    <SelectItem value="Curicó">Curicó</SelectItem>
-                    <SelectItem value="Linares">Linares</SelectItem>
-                    <SelectItem value="Parral">Parral</SelectItem>
-                    <SelectItem value="Cauquenes">Cauquenes</SelectItem>
+                    {filteredCommunes.slice(0, 50).map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
+                      </SelectItem>
+                    ))}
+                    {filteredCommunes.length > 50 && (
+                      <div className="px-2 py-1 text-sm text-gray-500 border-t">
+                        Y {filteredCommunes.length - 50} comunas más...
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -882,7 +767,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
 
         {/* Hire Modal */}
         {showHireModal && selectedRunner && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold">Contratar Servicio</h3>

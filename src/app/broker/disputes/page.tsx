@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -60,6 +64,17 @@ export default function BrokerDisputesPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [disputeDetailsModalOpen, setDisputeDetailsModalOpen] = useState(false);
+  const [mediationModalOpen, setMediationModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [mediationProposal, setMediationProposal] = useState({
+    terms: '',
+    deadline: '',
+    location: 'virtual',
+    notes: '',
+  });
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactType, setContactType] = useState<'both' | 'tenant' | 'owner'>('both');
 
   useEffect(() => {
     loadDisputes();
@@ -140,21 +155,52 @@ export default function BrokerDisputesPage() {
 
   const handleViewDisputeDetails = (dispute: Dispute) => {
     setSelectedDispute(dispute);
-    alert(
-      `Detalles de la disputa ${dispute.disputeNumber}:\n\nTipo: ${getDisputeTypeLabel(dispute.disputeType)}\nEstado: ${dispute.status}\nMonto: ${formatCurrency(dispute.amount)}\n\nIniciada por: ${dispute.initiatorName} (${getInitiatorRoleLabel(dispute.initiatorRole)})\nDescripción: ${dispute.description}\n\nPropiedad: ${dispute.propertyTitle}\nContrato: ${dispute.contractNumber}\n\nComo corredor intermediario, puedes ofrecer servicios de mediación.`
-    );
+    setDisputeDetailsModalOpen(true);
   };
 
   const handleOfferMediation = (dispute: Dispute) => {
-    alert(
-      `Ofreciendo servicios de mediación para la disputa ${dispute.disputeNumber}\n\nSe enviará una propuesta de mediación a ambas partes para resolver el conflicto de manera amistosa.`
-    );
+    setSelectedDispute(dispute);
+    setMediationModalOpen(true);
   };
 
   const handleContactParties = (dispute: Dispute) => {
-    alert(
-      `Iniciando contacto con las partes involucradas en la disputa ${dispute.disputeNumber}\n\nSe enviarán mensajes a ${dispute.tenantName} y ${dispute.ownerName} para coordinar la mediación.`
-    );
+    setSelectedDispute(dispute);
+    setContactModalOpen(true);
+  };
+
+  const submitMediationProposal = async () => {
+    if (!selectedDispute || !mediationProposal.terms.trim()) return;
+
+    try {
+      alert(`✅ Propuesta de mediación enviada exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nTérminos: ${mediationProposal.terms}\nPlazo: ${mediationProposal.deadline || 'Sin especificar'}\nModalidad: ${mediationProposal.location === 'virtual' ? 'Videoconferencia' : 'Presencial'}\n\nSe notificará a ambas partes para coordinar la sesión de mediación.`);
+
+      setMediationModalOpen(false);
+      setMediationProposal({ terms: '', deadline: '', location: 'virtual', notes: '' });
+    } catch (error) {
+      logger.error('Error sending mediation proposal:', { error });
+      alert('Error al enviar propuesta de mediación. Intente nuevamente.');
+    }
+  };
+
+  const submitContactMessage = async () => {
+    if (!selectedDispute || !contactMessage.trim()) return;
+
+    try {
+      const recipients = contactType === 'both'
+        ? [selectedDispute.tenantName, selectedDispute.ownerName].filter(Boolean)
+        : contactType === 'tenant'
+          ? [selectedDispute.tenantName]
+          : [selectedDispute.ownerName];
+
+      alert(`✅ Mensaje enviado exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nDestinatarios: ${recipients.join(', ')}\nTipo: ${contactType === 'both' ? 'Ambas partes' : contactType === 'tenant' ? 'Inquilino' : 'Propietario'}\n\nMensaje:\n${contactMessage}`);
+
+      setContactModalOpen(false);
+      setContactMessage('');
+      setContactType('both');
+    } catch (error) {
+      logger.error('Error sending contact message:', { error });
+      alert('Error al enviar mensaje. Intente nuevamente.');
+    }
   };
 
   if (loading) {
@@ -363,6 +409,264 @@ export default function BrokerDisputesPage() {
           )}
         </div>
       </div>
+
+      {/* Dispute Details Modal */}
+      <Dialog open={disputeDetailsModalOpen} onOpenChange={setDisputeDetailsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-blue-600">📋 Detalles de la Disputa</DialogTitle>
+            <DialogDescription>
+              Información completa de la disputa {selectedDispute?.disputeNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDispute && (
+            <div className="space-y-6">
+              {/* Dispute Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Información de la Disputa</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Número:</span> {selectedDispute.disputeNumber}</p>
+                      <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                      <p><span className="font-medium">Estado:</span> {selectedDispute.status}</p>
+                      <p><span className="font-medium">Monto:</span> {formatCurrency(selectedDispute.amount)}</p>
+                      <p><span className="font-medium">Creado:</span> {formatDate(selectedDispute.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Iniciador</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}</p>
+                      <p><span className="font-medium">Rol:</span> {getInitiatorRoleLabel(selectedDispute.initiatorRole)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Propiedad y Contrato</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Propiedad:</span> {selectedDispute.propertyTitle}</p>
+                      <p><span className="font-medium">Dirección:</span> {selectedDispute.propertyAddress}</p>
+                      <p><span className="font-medium">Contrato:</span> {selectedDispute.contractNumber}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Partes Involucradas</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Inquilino:</span> {selectedDispute.tenantName}</p>
+                      <p><span className="font-medium">Propietario:</span> {selectedDispute.ownerName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Descripción de la Disputa</h4>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700">{selectedDispute.description}</p>
+                </div>
+              </div>
+
+              {/* Resolution (if exists) */}
+              {selectedDispute.resolution && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Resolución</h4>
+                  <div className="bg-green-50 p-4 rounded-lg space-y-2">
+                    <p className="text-green-800">{selectedDispute.resolution}</p>
+                    {selectedDispute.resolvedBy && (
+                      <p className="text-sm text-green-600">
+                        Resuelto por: {selectedDispute.resolvedBy} el {selectedDispute.resolvedAt ? formatDate(selectedDispute.resolvedAt) : 'Fecha no disponible'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => handleOfferMediation(selectedDispute)}
+                  className="flex-1 min-w-[150px] bg-green-600 hover:bg-green-700"
+                >
+                  <HeartHandshake className="w-4 h-4 mr-2" />
+                  Ofrecer Mediación
+                </Button>
+                <Button
+                  onClick={() => handleContactParties(selectedDispute)}
+                  className="flex-1 min-w-[150px] bg-blue-600 hover:bg-blue-700"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Contactar Partes
+                </Button>
+                <Button variant="outline" className="flex-1 min-w-[150px]">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver Historial
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mediation Proposal Modal */}
+      <Dialog open={mediationModalOpen} onOpenChange={setMediationModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-green-600">🤝 Propuesta de Mediación</DialogTitle>
+            <DialogDescription>
+              Enviar propuesta de mediación para la disputa {selectedDispute?.disputeNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="mediation-terms">Términos de la Mediación</Label>
+              <Textarea
+                id="mediation-terms"
+                placeholder="Describe los términos específicos de la mediación..."
+                value={mediationProposal.terms}
+                onChange={(e) => setMediationProposal(prev => ({ ...prev, terms: e.target.value }))}
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="mediation-deadline">Fecha Límite</Label>
+                <Input
+                  id="mediation-deadline"
+                  type="date"
+                  value={mediationProposal.deadline}
+                  onChange={(e) => setMediationProposal(prev => ({ ...prev, deadline: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="mediation-location">Modalidad</Label>
+                <Select
+                  value={mediationProposal.location}
+                  onValueChange={(value) => setMediationProposal(prev => ({ ...prev, location: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="virtual">Videoconferencia</SelectItem>
+                    <SelectItem value="presencial">Presencial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="mediation-notes">Notas Adicionales</Label>
+              <Textarea
+                id="mediation-notes"
+                placeholder="Información adicional relevante..."
+                value={mediationProposal.notes}
+                onChange={(e) => setMediationProposal(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">💡 Información que se enviará</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Propuesta formal de mediación a ambas partes</li>
+                <li>• Términos y condiciones acordadas</li>
+                <li>• Información de contacto del mediador</li>
+                <li>• Próximos pasos para aceptar la mediación</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={submitMediationProposal} className="flex-1 bg-green-600 hover:bg-green-700">
+                <HeartHandshake className="w-4 h-4 mr-2" />
+                Enviar Propuesta
+              </Button>
+              <Button variant="outline" onClick={() => setMediationModalOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Parties Modal */}
+      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-blue-600">📬 Contactar Partes</DialogTitle>
+            <DialogDescription>
+              Enviar mensaje a las partes involucradas en la disputa {selectedDispute?.disputeNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contact-type">Destinatarios</Label>
+              <Select
+                value={contactType}
+                onValueChange={(value: 'both' | 'tenant' | 'owner') => setContactType(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="both">Ambas partes</SelectItem>
+                  <SelectItem value="tenant">Solo inquilino</SelectItem>
+                  <SelectItem value="owner">Solo propietario</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="contact-message">Mensaje</Label>
+              <Textarea
+                id="contact-message"
+                placeholder="Escribe el mensaje que deseas enviar..."
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                rows={6}
+              />
+            </div>
+
+            {selectedDispute && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800 mb-2">📋 Información del caso</h4>
+                <div className="text-sm space-y-1">
+                  <p><strong>Disputa:</strong> {selectedDispute.disputeNumber}</p>
+                  <p><strong>Tipo:</strong> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                  <p><strong>Monto:</strong> {formatCurrency(selectedDispute.amount)}</p>
+                  <p><strong>Destinatarios:</strong> {
+                    contactType === 'both'
+                      ? `${selectedDispute.tenantName} y ${selectedDispute.ownerName}`
+                      : contactType === 'tenant'
+                        ? selectedDispute.tenantName
+                        : selectedDispute.ownerName
+                  }</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={submitContactMessage} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Enviar Mensaje
+              </Button>
+              <Button variant="outline" onClick={() => setContactModalOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

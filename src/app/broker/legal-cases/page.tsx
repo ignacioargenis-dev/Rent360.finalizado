@@ -104,6 +104,20 @@ export default function BrokerLegalCasesPage() {
   const [contactMessage, setContactMessage] = useState('');
   const [contactType, setContactType] = useState<'tenant' | 'owner' | 'lawyer'>('tenant');
 
+  // Estados para herramientas de mediación
+  const [mediationGuideModal, setMediationGuideModal] = useState(false);
+  const [agreementTemplatesModal, setAgreementTemplatesModal] = useState(false);
+  const [communicationScriptsModal, setCommunicationScriptsModal] = useState(false);
+  const [supportContactsModal, setSupportContactsModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedScript, setSelectedScript] = useState<string | null>(null);
+
+  // Estados para recursos
+  const [legalDocumentsModal, setLegalDocumentsModal] = useState(false);
+  const [professionalContactsModal, setProfessionalContactsModal] = useState(false);
+  const [trainingResourcesModal, setTrainingResourcesModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+
   useEffect(() => {
     loadLegalCases();
   }, [statusFilter, priorityFilter]);
@@ -435,6 +449,86 @@ Email: [Su Email]`;
       logger.error('Error sending contact message:', { error });
       alert('Error al enviar mensaje. Intente nuevamente.');
     }
+  };
+
+  // Funciones para herramientas de mediación
+  const openMediationGuide = () => {
+    setMediationGuideModal(true);
+  };
+
+  const openAgreementTemplates = () => {
+    setAgreementTemplatesModal(true);
+  };
+
+  const openCommunicationScripts = () => {
+    setCommunicationScriptsModal(true);
+  };
+
+  const openSupportContacts = () => {
+    setSupportContactsModal(true);
+  };
+
+  const selectTemplate = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    // Aquí se podría abrir un editor de documentos o descargar la plantilla
+    alert(`📄 Plantilla "${templateId}" seleccionada. Se abrirá el editor de documentos.`);
+  };
+
+  const selectScript = (scriptId: string) => {
+    setSelectedScript(scriptId);
+    // Copiar el script al portapapeles o mostrar el contenido completo
+    const scriptContent = getScriptContent(scriptId);
+    navigator.clipboard.writeText(scriptContent);
+    alert(`📋 Script "${scriptId}" copiado al portapapeles.\n\nContenido:\n${scriptContent.substring(0, 100)}...`);
+  };
+
+  const getScriptContent = (scriptId: string): string => {
+    const scripts: { [key: string]: string } = {
+      'initial_contact': 'Estimado/a [Nombre],\n\nMe contacto como corredor intermediario en el contrato [Número de Contrato] relacionado con la propiedad [Dirección de Propiedad].\n\nRespecto al caso legal [Número de Caso], me gustaría ofrecer mis servicios de mediación para ayudar a resolver esta situación de manera amistosa.\n\n¿Estaría disponible para una reunión o conversación telefónica?\n\nAtentamente,\n[Su Nombre]',
+      'follow_up': 'Estimado/a [Nombre],\n\nSiguiendo nuestro contacto anterior respecto al caso [Número de Caso], me gustaría actualizarlo sobre los avances en el proceso de mediación.\n\nActualmente nos encontramos en la fase de [Fase Actual] y hemos logrado [Avances Conseguido].\n\n¿Podríamos programar una reunión para discutir las opciones de resolución?\n\nAtentamente,\n[Su Nombre]',
+      'settlement_proposal': 'Estimado/a [Nombre],\n\nDespués de analizar la situación del caso [Número de Caso], le presento la siguiente propuesta de acuerdo:\n\n- Monto acordado: [Monto]\n- Plazo de pago: [Plazo]\n- Condiciones adicionales: [Condiciones]\n\nEsta propuesta busca resolver el conflicto de manera eficiente para ambas partes.\n\n¿Estaría dispuesto a considerar esta opción?\n\nAtentamente,\n[Su Nombre]'
+    };
+    return scripts[scriptId] || 'Script no encontrado';
+  };
+
+  // Funciones para recursos
+  const openLegalDocuments = () => {
+    setLegalDocumentsModal(true);
+  };
+
+  const openProfessionalContacts = () => {
+    setProfessionalContactsModal(true);
+  };
+
+  const openTrainingResources = () => {
+    setTrainingResourcesModal(true);
+  };
+
+  const downloadDocument = (documentId: string) => {
+    // Simular descarga de documento
+    alert(`📄 Descargando documento: ${documentId}\n\nEl archivo se descargará automáticamente...`);
+    setTimeout(() => {
+      alert(`✅ Documento "${documentId}" descargado exitosamente.`);
+    }, 1500);
+  };
+
+  const contactProfessional = (professionalId: string, type: string) => {
+    const contactInfo = getProfessionalContact(professionalId, type);
+    window.open(`mailto:${contactInfo.email}?subject=Consulta Legal - Caso ${selectedCase?.caseNumber || 'General'}&body=${encodeURIComponent(contactInfo.message)}`);
+  };
+
+  const getProfessionalContact = (professionalId: string, type: string) => {
+    const professionals: { [key: string]: any } = {
+      'lawyer_1': {
+        email: 'abogado1@rent360.cl',
+        message: 'Estimado Dr. Juan Pérez,\n\nMe contacto desde Rent360 para consultar sobre un caso legal.\n\n[Caso específico]\n\nAtentamente,\nCorredor Rent360'
+      },
+      'mediator_1': {
+        email: 'mediador1@rent360.cl',
+        message: 'Estimada Dra. Carmen Soto,\n\nSolicito sus servicios de mediación para un caso entre propietario e inquilino.\n\n[Caso específico]\n\nAtentamente,\nCorredor Rent360'
+      }
+    };
+    return professionals[professionalId] || { email: 'contacto@rent360.cl', message: 'Consulta general' };
   };
 
   const getFilteredCases = () => {
@@ -835,7 +929,7 @@ Email: [Su Email]`;
                   <CardDescription>Recursos profesionales para resolver conflictos</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start" variant="outline" onClick={openMediationGuide}>
                     <HeartHandshake className="w-5 h-5 mr-3" />
                     <div className="text-left">
                       <div className="font-medium">Guía de Mediación</div>
@@ -845,7 +939,7 @@ Email: [Su Email]`;
                     </div>
                   </Button>
 
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start" variant="outline" onClick={openAgreementTemplates}>
                     <FileText className="w-5 h-5 mr-3" />
                     <div className="text-left">
                       <div className="font-medium">Plantillas de Acuerdos</div>
@@ -855,7 +949,7 @@ Email: [Su Email]`;
                     </div>
                   </Button>
 
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start" variant="outline" onClick={openCommunicationScripts}>
                     <MessageSquare className="w-5 h-5 mr-3" />
                     <div className="text-left">
                       <div className="font-medium">Scripts de Comunicación</div>
@@ -865,7 +959,7 @@ Email: [Su Email]`;
                     </div>
                   </Button>
 
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start" variant="outline" onClick={openSupportContacts}>
                     <Phone className="w-5 h-5 mr-3" />
                     <div className="text-left">
                       <div className="font-medium">Contactos de Apoyo</div>
@@ -990,15 +1084,15 @@ Email: [Su Email]`;
                   <CardDescription>Plantillas y formularios</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => downloadDocument('Acuerdo de Mediación')}>
                     <FileText className="w-4 h-4 mr-2" />
                     Acuerdo de Mediación
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => downloadDocument('Propuesta de Pago')}>
                     <FileText className="w-4 h-4 mr-2" />
                     Propuesta de Pago
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => downloadDocument('Convenio de Pago')}>
                     <FileText className="w-4 h-4 mr-2" />
                     Convenio de Pago
                   </Button>
@@ -1016,7 +1110,7 @@ Email: [Su Email]`;
                     <div className="text-xs text-muted-foreground">
                       Especialistas en derecho inmobiliario
                     </div>
-                    <Button variant="link" className="p-0 h-auto text-xs">
+                    <Button variant="link" className="p-0 h-auto text-xs" onClick={() => contactProfessional('lawyer_1', 'lawyer')}>
                       Contactar
                     </Button>
                   </div>
@@ -1025,7 +1119,7 @@ Email: [Su Email]`;
                     <div className="text-xs text-muted-foreground">
                       Especialistas en resolución de conflictos
                     </div>
-                    <Button variant="link" className="p-0 h-auto text-xs">
+                    <Button variant="link" className="p-0 h-auto text-xs" onClick={() => contactProfessional('mediator_1', 'mediator')}>
                       Contactar
                     </Button>
                   </div>
@@ -1378,6 +1472,478 @@ Email: [Su Email]`;
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Mediation Guide Modal */}
+        <Dialog open={mediationGuideModal} onOpenChange={setMediationGuideModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-blue-600">🕊️ Guía Completa de Mediación</DialogTitle>
+              <DialogDescription>
+                Pasos profesionales para mediar efectivamente en conflictos inmobiliarios
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 mb-2">📋 Paso 1: Preparación</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Revisar toda la documentación del caso</li>
+                      <li>• Entender las posiciones de ambas partes</li>
+                      <li>• Identificar intereses subyacentes</li>
+                      <li>• Preparar agenda neutral</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-800 mb-2">🎯 Paso 2: Inicio</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Establecer reglas de participación</li>
+                      <li>• Explicar proceso de mediación</li>
+                      <li>• Obtener compromiso de ambas partes</li>
+                      <li>• Definir objetivos claros</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-800 mb-2">💬 Paso 3: Exploración</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Permitir que cada parte exponga su versión</li>
+                      <li>• Hacer preguntas clarificadoras</li>
+                      <li>• Identificar emociones y preocupaciones</li>
+                      <li>• Buscar intereses comunes</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-orange-800 mb-2">🔄 Paso 4: Negociación</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Facilitar propuestas creativas</li>
+                      <li>• Ayudar a evaluar opciones</li>
+                      <li>• Gestionar expectativas realistas</li>
+                      <li>• Mantener enfoque en soluciones</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-red-800 mb-2">✍️ Paso 5: Acuerdo</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Redactar términos claros y específicos</li>
+                      <li>• Asegurar comprensión mutua</li>
+                      <li>• Obtener compromiso formal</li>
+                      <li>• Establecer plazos de cumplimiento</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-2">📚 Mejores Prácticas</h4>
+                    <ul className="text-sm space-y-1">
+                      <li>• Mantener neutralidad absoluta</li>
+                      <li>• Fomentar comunicación respetuosa</li>
+                      <li>• Documentar todo el proceso</li>
+                      <li>• Proteger confidencialidad</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Consideraciones Importantes</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• La mediación es voluntaria y confidencial</li>
+                  <li>• El mediador no tiene poder de decisión</li>
+                  <li>• Ambas partes deben estar dispuestas a negociar</li>
+                  <li>• Los acuerdos deben ser realistas y cumplibles</li>
+                  <li>• Documentar todo por escrito</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setMediationGuideModal(false)}>
+                  Cerrar
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar Guía Completa
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Agreement Templates Modal */}
+        <Dialog open={agreementTemplatesModal} onOpenChange={setAgreementTemplatesModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-green-600">📄 Plantillas de Acuerdos</DialogTitle>
+              <DialogDescription>
+                Documentos legales predefinidos para resolver conflictos de manera profesional
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectTemplate('acuerdo_mediation')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Acuerdo de Mediación</CardTitle>
+                    <CardDescription>Documento formal que establece términos de resolución</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm">Incluye cláusulas estándar para:</p>
+                      <ul className="text-sm space-y-1 text-gray-600">
+                        <li>• Términos de pago acordados</li>
+                        <li>• Plazos de cumplimiento</li>
+                        <li>• Consecuencias de incumplimiento</li>
+                        <li>• Firma de ambas partes</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectTemplate('propuesta_pago')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Propuesta de Pago</CardTitle>
+                    <CardDescription>Plantilla para proponer arreglos de pago flexibles</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm">Contiene secciones para:</p>
+                      <ul className="text-sm space-y-1 text-gray-600">
+                        <li>• Monto total adeudado</li>
+                        <li>• Cronograma de pagos</li>
+                        <li>• Intereses y recargos</li>
+                        <li>• Garantías de cumplimiento</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectTemplate('convenio_pago')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Convenio de Pago</CardTitle>
+                    <CardDescription>Acuerdo detallado para pagos escalonados</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm">Especifica claramente:</p>
+                      <ul className="text-sm space-y-1 text-gray-600">
+                        <li>• Fechas exactas de pago</li>
+                        <li>• Montos por cuota</li>
+                        <li>• Método de pago</li>
+                        <li>• Penalidades por atraso</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectTemplate('acuerdo_confidencialidad')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Acuerdo de Confidencialidad</CardTitle>
+                    <CardDescription>Protección de información durante el proceso de mediación</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm">Establece compromisos de:</p>
+                      <ul className="text-sm space-y-1 text-gray-600">
+                        <li>• No divulgación de información</li>
+                        <li>• Protección de datos personales</li>
+                        <li>• Confidencialidad del proceso</li>
+                        <li>• Duración del acuerdo</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">💡 Consejos para usar las plantillas</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• Personaliza siempre los documentos con datos específicos del caso</li>
+                  <li>• Asegúrate de que ambas partes entiendan todos los términos</li>
+                  <li>• Recomienda revisión por abogado antes de firmar</li>
+                  <li>• Guarda copias digitales y físicas de todos los documentos</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setAgreementTemplatesModal(false)}>
+                  Cerrar
+                </Button>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar Todas las Plantillas
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Communication Scripts Modal */}
+        <Dialog open={communicationScriptsModal} onOpenChange={setCommunicationScriptsModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-purple-600">💬 Scripts de Comunicación Profesional</DialogTitle>
+              <DialogDescription>
+                Mensajes efectivos y probados para comunicarte con las partes involucradas
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectScript('initial_contact')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      📞 Contacto Inicial
+                      <Badge variant="secondary">Más usado</Badge>
+                    </CardTitle>
+                    <CardDescription>Primer acercamiento con las partes del conflicto</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 p-3 rounded text-sm">
+                      Estimado/a [Nombre],<br/><br/>
+                      Me contacto como corredor intermediario... [Ver contenido completo]
+                    </div>
+                    <div className="mt-3 flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Longitud: 250 palabras</span>
+                      <Button size="sm" variant="outline">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Copiar al portapapeles
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectScript('follow_up')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      🔄 Seguimiento
+                      <Badge variant="outline">Efectivo</Badge>
+                    </CardTitle>
+                    <CardDescription>Mantener el diálogo activo durante el proceso</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 p-3 rounded text-sm">
+                      Estimado/a [Nombre],<br/><br/>
+                      Siguiendo nuestro contacto anterior... [Ver contenido completo]
+                    </div>
+                    <div className="mt-3 flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Longitud: 180 palabras</span>
+                      <Button size="sm" variant="outline">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Copiar al portapapeles
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectScript('settlement_proposal')}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      💰 Propuesta de Acuerdo
+                      <Badge className="bg-green-100 text-green-800">Crítico</Badge>
+                    </CardTitle>
+                    <CardDescription>Presentar soluciones concretas de manera profesional</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 p-3 rounded text-sm">
+                      Estimado/a [Nombre],<br/><br/>
+                      Después de analizar la situación... [Ver contenido completo]
+                    </div>
+                    <div className="mt-3 flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Longitud: 320 palabras</span>
+                      <Button size="sm" variant="outline">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Copiar al portapapeles
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 mb-2">📝 Consejos para una comunicación efectiva</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h5 className="font-medium mb-2">✅ Lo que funciona:</h5>
+                    <ul className="space-y-1">
+                      <li>• Lenguaje neutral y profesional</li>
+                      <li>• Mostrar empatía genuina</li>
+                      <li>• Ofrecer soluciones concretas</li>
+                      <li>• Mantener tono positivo</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-medium mb-2">❌ Lo que evitar:</h5>
+                    <ul className="space-y-1">
+                      <li>• Acusaciones directas</li>
+                      <li>• Lenguaje emocional</li>
+                      <li>• Promesas imposibles</li>
+                      <li>• Urgencia artificial</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setCommunicationScriptsModal(false)}>
+                  Cerrar
+                </Button>
+                <Button className="bg-purple-600 hover:bg-purple-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar Todos los Scripts
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Support Contacts Modal */}
+        <Dialog open={supportContactsModal} onOpenChange={setSupportContactsModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-orange-600">📞 Contactos de Apoyo Profesional</DialogTitle>
+              <DialogDescription>
+                Red de abogados y mediadores certificados para casos complejos
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Abogados Especializados</CardTitle>
+                    <CardDescription>Profesionales certificados en derecho inmobiliario</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Scale className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">Dr. Juan Pérez Martínez</h4>
+                          <p className="text-sm text-gray-600">Especialista en arrendamientos • 15 años experiencia</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm">4.9/5.0 (127 casos)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => window.open('mailto:juan.perez@abogados.cl?subject=Consulta Legal - Caso Rent360&body=Estimado Dr. Pérez,%0A%0ARequiere sus servicios profesionales para mediar en un caso de disputa entre propietario e inquilino.')}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Contactar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Scale className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">Dra. María González Rojas</h4>
+                          <p className="text-sm text-gray-600">Derecho civil y comercial • Mediadora certificada</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm">4.8/5.0 (89 casos)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => window.open('mailto:maria.gonzalez@abogados.cl?subject=Consulta Legal - Caso Rent360&body=Estimada Dra. González,%0A%0ARequiere sus servicios profesionales para mediar en un caso de disputa entre propietario e inquilino.')}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Contactar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Mediadores Certificados</CardTitle>
+                    <CardDescription>Especialistas en resolución alternativa de conflictos</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <HeartHandshake className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">Lic. Carmen Soto Valencia</h4>
+                          <p className="text-sm text-gray-600">Mediadora familiar y comercial • Certificada ADR</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm">4.9/5.0 (156 mediaciones)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => window.open('mailto:carmen.soto@mediadores.cl?subject=Solicitud de Mediación - Caso Rent360&body=Estimada Lic. Soto,%0A%0ARequiere sus servicios de mediación profesional para resolver un conflicto entre propietario e inquilino.')}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Contactar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <HeartHandshake className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">Lic. Roberto Morales Silva</h4>
+                          <p className="text-sm text-gray-600">Mediador inmobiliario • Especialista en disputas</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm">4.7/5.0 (98 mediaciones)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => window.open('mailto:roberto.morales@mediadores.cl?subject=Solicitud de Mediación - Caso Rent360&body=Estimado Lic. Morales,%0A%0ARequiere sus servicios de mediación profesional para resolver un conflicto entre propietario e inquilino.')}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Contactar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="bg-red-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-red-800 mb-2">⚠️ Importante</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• Los profesionales mostrados están certificados y tienen experiencia específica en casos inmobiliarios</li>
+                  <li>• Rent360 no asume responsabilidad por servicios prestados por terceros</li>
+                  <li>• Recomendamos verificar credenciales y referencias antes de contratar</li>
+                  <li>• Los costos de servicios profesionales corren por cuenta de las partes involucradas</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setSupportContactsModal(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -79,6 +79,52 @@ export default function MaintenancePropertiesPage() {
   const [showAgendaModal, setShowAgendaModal] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
 
+  // Estados para funcionalidades de propiedades
+  const [showPropertyDetailsModal, setShowPropertyDetailsModal] = useState(false);
+  const [showPropertyJobsModal, setShowPropertyJobsModal] = useState(false);
+  const [showContactOwnerModal, setShowContactOwnerModal] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+
+  // Funciones para botones de propiedades
+  const handleViewPropertyDetails = (property: Property) => {
+    setSelectedProperty(property);
+    setShowPropertyDetailsModal(true);
+  };
+
+  const handleViewPropertyJobs = (property: Property) => {
+    setSelectedProperty(property);
+    setShowPropertyJobsModal(true);
+  };
+
+  const handleContactOwner = (property: Property) => {
+    setSelectedProperty(property);
+    setShowContactOwnerModal(true);
+  };
+
+  const contactOwnerViaPhone = (phone: string) => {
+    window.open(`tel:${phone}`);
+    alert(`📞 Llamando a ${phone}...`);
+  };
+
+  const contactOwnerViaEmail = (email: string, property: Property) => {
+    const subject = `Consulta sobre mantenimiento - ${property.address}`;
+    const body = `Estimado/a ${property.ownerName},
+
+Me contacto desde Rent360 Mantenimiento para consultar sobre la propiedad ubicada en ${property.address}.
+
+[Cuerpo del mensaje]
+
+Atentamente,
+Equipo de Mantenimiento Rent360`;
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const contactOwnerViaWhatsApp = (phone: string, property: Property) => {
+    const message = `Hola ${property.ownerName}, me contacto desde Rent360 Mantenimiento para consultar sobre la propiedad en ${property.address}.`;
+    const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   useEffect(() => {
     loadProperties();
   }, []);
@@ -978,15 +1024,27 @@ export default function MaintenancePropertiesPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewPropertyDetails(property)}
+                        >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewPropertyJobs(property)}
+                        >
                           <Wrench className="w-4 h-4 mr-2" />
                           Ver Trabajos
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleContactOwner(property)}
+                        >
                           <User className="w-4 h-4 mr-2" />
                           Contactar
                         </Button>
@@ -1013,6 +1071,324 @@ export default function MaintenancePropertiesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Property Details Modal */}
+      <Dialog open={showPropertyDetailsModal} onOpenChange={setShowPropertyDetailsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-blue-600">🏠 Detalles de la Propiedad</DialogTitle>
+            <DialogDescription>
+              Información completa de {selectedProperty?.address}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProperty && (
+            <div className="space-y-6">
+              {/* Property Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Información General</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Dirección:</span> {selectedProperty.address}</p>
+                      <p><span className="font-medium">Comuna:</span> {selectedProperty.commune}</p>
+                      <p><span className="font-medium">Región:</span> {selectedProperty.region}</p>
+                      <p><span className="font-medium">Tipo:</span> {selectedProperty.propertyType}</p>
+                      <p><span className="font-medium">Estado:</span> {getStatusBadge(selectedProperty.status)}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Características</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      {selectedProperty.bedrooms && (
+                        <p><span className="font-medium">Dormitorios:</span> {selectedProperty.bedrooms}</p>
+                      )}
+                      {selectedProperty.bathrooms && (
+                        <p><span className="font-medium">Baños:</span> {selectedProperty.bathrooms}</p>
+                      )}
+                      {selectedProperty.area && (
+                        <p><span className="font-medium">Área:</span> {selectedProperty.area} m²</p>
+                      )}
+                      <p><span className="font-medium">Propietario:</span> {selectedProperty.ownerName}</p>
+                      <p><span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Estadísticas de Mantenimiento</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <p><span className="font-medium">Trabajos Totales:</span> {selectedProperty.totalJobs}</p>
+                      <p><span className="font-medium">Trabajos Activos:</span> {selectedProperty.activeJobs}</p>
+                      <p><span className="font-medium">Ingresos Totales:</span> {formatCurrency(selectedProperty.totalRevenue)}</p>
+                      {selectedProperty.lastJobDate && (
+                        <p><span className="font-medium">Último Trabajo:</span> {new Date(selectedProperty.lastJobDate).toLocaleDateString('es-CL')}</p>
+                      )}
+                      {selectedProperty.nextJobDate && (
+                        <p><span className="font-medium">Próximo Trabajo:</span> {new Date(selectedProperty.nextJobDate).toLocaleDateString('es-CL')}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Acciones Rápidas</h4>
+                    <div className="space-y-2">
+                      <Button
+                        className="w-full justify-start"
+                        onClick={() => handleViewPropertyJobs(selectedProperty)}
+                      >
+                        <Wrench className="w-4 h-4 mr-2" />
+                        Ver Historial de Trabajos
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleContactOwner(selectedProperty)}
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Contactar Propietario
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Agendar Nuevo Trabajo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Maintenance Notes */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Notas de Mantenimiento</h4>
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <p className="text-yellow-800">
+                    Esta propiedad tiene un historial de mantenimiento regular. Se recomienda inspeccionar
+                    el sistema eléctrico cada 6 meses y el sistema de plomería cada 3 meses.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Property Jobs Modal */}
+      <Dialog open={showPropertyJobsModal} onOpenChange={setShowPropertyJobsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-green-600">🔧 Historial de Trabajos</DialogTitle>
+            <DialogDescription>
+              Trabajos realizados en {selectedProperty?.address}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProperty && (
+            <div className="space-y-6">
+              {/* Jobs List */}
+              <div className="space-y-4">
+                {[
+                  {
+                    id: '1',
+                    title: 'Revisión sistema eléctrico',
+                    description: 'Inspección completa del sistema eléctrico, cambio de breakers defectuosos',
+                    status: 'completed',
+                    priority: 'high',
+                    completedDate: '2024-01-15',
+                    cost: 85000,
+                    technician: 'Juan Carlos Morales',
+                  },
+                  {
+                    id: '2',
+                    title: 'Mantenimiento aire acondicionado',
+                    description: 'Limpieza de filtros y revisión de funcionamiento',
+                    status: 'completed',
+                    priority: 'medium',
+                    completedDate: '2024-01-08',
+                    cost: 45000,
+                    technician: 'María González',
+                  },
+                  {
+                    id: '3',
+                    title: 'Reparación grifería baño principal',
+                    description: 'Cambio de grifería defectuosa y revisión de tuberías',
+                    status: 'in_progress',
+                    priority: 'medium',
+                    completedDate: null,
+                    cost: 35000,
+                    technician: 'Pedro Sánchez',
+                  },
+                ].map((job) => (
+                  <Card key={job.id} className="border-l-4 border-l-green-500">
+                    <CardContent className="pt-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{job.title}</h4>
+                          <p className="text-sm text-gray-600">{job.description}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {job.status === 'completed' ? (
+                            <Badge className="bg-green-100 text-green-800">Completado</Badge>
+                          ) : (
+                            <Badge className="bg-blue-100 text-blue-800">En Progreso</Badge>
+                          )}
+                          {job.priority === 'high' && (
+                            <Badge variant="destructive">Alta Prioridad</Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Técnico:</span> {job.technician}
+                        </div>
+                        <div>
+                          <span className="font-medium">Costo:</span> {formatCurrency(job.cost)}
+                        </div>
+                        <div>
+                          <span className="font-medium">
+                            {job.status === 'completed' ? 'Completado:' : 'Iniciado:'}
+                          </span>{' '}
+                          {job.completedDate ? new Date(job.completedDate).toLocaleDateString('es-CL') : 'En curso'}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3">Resumen de Mantenimiento</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{selectedProperty.totalJobs}</div>
+                    <div className="text-gray-600">Trabajos Totales</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(selectedProperty.totalRevenue)}</div>
+                    <div className="text-gray-600">Ingresos Totales</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{selectedProperty.activeJobs}</div>
+                    <div className="text-gray-600">Trabajos Activos</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowPropertyJobsModal(false)}>
+                  Cerrar
+                </Button>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Agendar Nuevo Trabajo
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Owner Modal */}
+      <Dialog open={showContactOwnerModal} onOpenChange={setShowContactOwnerModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-purple-600">📞 Contactar Propietario</DialogTitle>
+            <DialogDescription>
+              Establecer contacto con el propietario de {selectedProperty?.address}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProperty && (
+            <div className="space-y-6">
+              {/* Owner Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3">Información del Propietario</h4>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Nombre:</span> {selectedProperty.ownerName}</p>
+                  <p><span className="font-medium">Teléfono:</span> {selectedProperty.ownerPhone}</p>
+                  <p><span className="font-medium">Propiedad:</span> {selectedProperty.address}</p>
+                </div>
+              </div>
+
+              {/* Contact Methods */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Métodos de Contacto</h4>
+                <div className="grid grid-cols-1 gap-3">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => contactOwnerViaPhone(selectedProperty.ownerPhone)}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <Phone className="w-5 h-5 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Llamada Telefónica</div>
+                        <div className="text-sm text-gray-600">Llamar directamente al propietario</div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => contactOwnerViaWhatsApp(selectedProperty.ownerPhone, selectedProperty)}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <MessageCircle className="w-5 h-5 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">WhatsApp</div>
+                        <div className="text-sm text-gray-600">Enviar mensaje por WhatsApp</div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => contactOwnerViaEmail(selectedProperty.ownerEmail || 'contacto@rent360.cl', selectedProperty)}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <Mail className="w-5 h-5 text-blue-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Correo Electrónico</div>
+                        <div className="text-sm text-gray-600">Enviar email formal</div>
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">💡 Acciones Rápidas</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button variant="link" className="justify-start p-0 h-auto text-blue-600">
+                    📝 Enviar presupuesto pendiente
+                  </Button>
+                  <Button variant="link" className="justify-start p-0 h-auto text-blue-600">
+                    📅 Recordar próxima inspección
+                  </Button>
+                  <Button variant="link" className="justify-start p-0 h-auto text-blue-600">
+                    📊 Enviar reporte de mantenimiento
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setShowContactOwnerModal(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }
