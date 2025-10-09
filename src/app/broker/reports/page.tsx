@@ -300,8 +300,8 @@ export default function BrokerReportsPage() {
   };
 
   const handleViewOpportunities = () => {
-    // Navigate to properties search or new property creation
-    router.push('/broker/properties/new');
+    // Navigate to market analysis to find expansion opportunities
+    router.push('/broker/analytics/market-analysis');
   };
 
   const handleSendSurveys = async () => {
