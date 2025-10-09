@@ -161,27 +161,75 @@ export default function OwnerPaymentRemindersPage() {
       setLoading(true);
       logger.info('Enviando recordatorios masivos de pago');
 
-      // Simular envío de recordatorios masivos
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Obtener recordatorios pendientes para enviar masivamente
+      const pendingReminders = reminders.filter(r => r.status === 'sent');
 
-      const sentCount = reminders.filter(r => r.status === 'pending').length;
+      if (pendingReminders.length === 0) {
+        showNotification(
+          'Sin Recordatorios Pendientes',
+          'No hay recordatorios pendientes para enviar.',
+          'error'
+        );
+        return;
+      }
 
-      showNotification(
-        'Recordatorios Masivos Enviados',
-        `Se han enviado ${sentCount} recordatorios de pago exitosamente a los inquilinos con pagos pendientes.`,
-        'success'
-      );
+      let sentCount = 0;
+      let failedCount = 0;
 
-      // Actualizar estado de recordatorios
-      setReminders(prevReminders =>
-        prevReminders.map(reminder =>
-          reminder.status === 'pending'
-            ? { ...reminder, status: 'sent', sentAt: new Date().toISOString() }
-            : reminder
-        )
-      );
+      // Enviar cada recordatorio individualmente
+      for (const reminder of pendingReminders) {
+        try {
+          const response = await fetch('/api/owner/payment-reminders/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              reminderId: reminder.id,
+              tenantId: reminder.tenantId,
+              propertyId: reminder.propertyId,
+              amount: reminder.amount,
+              dueDate: reminder.dueDate,
+              reminderType: reminder.reminderType,
+              channel: reminder.channel,
+            }),
+          });
 
-      // TODO: Implement API call to send bulk reminders
+          if (response.ok) {
+            sentCount++;
+            // Actualizar estado local
+            setReminders(prevReminders =>
+              prevReminders.map(r =>
+                r.id === reminder.id
+                  ? { ...r, status: 'sent' as any, sentAt: new Date().toISOString() }
+                  : r
+              )
+            );
+          } else {
+            failedCount++;
+            logger.error(`Error enviando recordatorio ${reminder.id}:`, {
+              error: await response.text(),
+            });
+          }
+        } catch (reminderError) {
+          failedCount++;
+          logger.error(`Error enviando recordatorio ${reminder.id}:`, { error: reminderError });
+        }
+      }
+
+      if (sentCount > 0) {
+        showNotification(
+          'Recordatorios Masivos Enviados',
+          `Se enviaron ${sentCount} recordatorios exitosamente${failedCount > 0 ? ` (${failedCount} fallaron)` : ''}.`,
+          sentCount === pendingReminders.length ? 'success' : 'error'
+        );
+      } else {
+        showNotification(
+          'Error en Envío Masivo',
+          'No se pudo enviar ningún recordatorio. Por favor, inténtalo nuevamente.',
+          'error'
+        );
+      }
     } catch (error) {
       logger.error('Error enviando recordatorios masivos:', {
         error: error instanceof Error ? error.message : String(error),
@@ -224,16 +272,49 @@ export default function OwnerPaymentRemindersPage() {
 
       logger.info('Reenviando recordatorio:', { reminderId });
 
-      // Simular reenvío
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Enviar recordatorio usando la API
+      const response = await fetch('/api/owner/payment-reminders/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reminderId: reminder.id,
+          tenantId: reminder.tenantId,
+          propertyId: reminder.propertyId,
+          amount: reminder.amount,
+          dueDate: reminder.dueDate,
+          reminderType: 'urgent', // Reenvío es urgente
+          channel: reminder.channel,
+          customMessage: 'Reenvío de recordatorio de pago pendiente.',
+        }),
+      });
 
-      showNotification(
-        'Recordatorio Reenviado',
-        `El recordatorio para ${reminder.tenantName} ha sido reenviado exitosamente.`,
-        'success'
-      );
+      if (response.ok) {
+        const data = await response.json();
 
-      // TODO: Implement API call to resend reminder
+        // Actualizar estado local
+        setReminders(prevReminders =>
+          prevReminders.map(r =>
+            r.id === reminderId
+              ? { ...r, status: 'sent' as any, sentAt: new Date().toISOString() }
+              : r
+          )
+        );
+
+        showNotification(
+          'Recordatorio Reenviado',
+          `El recordatorio para ${reminder.tenantName} ha sido reenviado exitosamente.`,
+          'success'
+        );
+      } else {
+        const errorData = await response.json();
+        showNotification(
+          'Error al Reenviar',
+          errorData.error || 'Ha ocurrido un error al reenviar el recordatorio.',
+          'error'
+        );
+      }
     } catch (error) {
       logger.error('Error reenviando recordatorio:', {
         error: error instanceof Error ? error.message : String(error),
@@ -260,21 +341,35 @@ export default function OwnerPaymentRemindersPage() {
 
       logger.info('Cancelando recordatorio:', { reminderId });
 
-      // Simular cancelación
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Cancelar recordatorio usando la API
+      const response = await fetch(`/api/owner/payment-reminders/${reminderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Actualizar estado del recordatorio
-      setReminders(prevReminders =>
-        prevReminders.map(r => (r.id === reminderId ? { ...r, status: 'cancelled' as any } : r))
-      );
+      if (response.ok) {
+        const data = await response.json();
 
-      showNotification(
-        'Recordatorio Cancelado',
-        `El recordatorio para ${reminder.tenantName} ha sido cancelado exitosamente.`,
-        'success'
-      );
+        // Actualizar estado local
+        setReminders(prevReminders =>
+          prevReminders.map(r => (r.id === reminderId ? { ...r, status: 'cancelled' as any } : r))
+        );
 
-      // TODO: Implement API call to cancel reminder
+        showNotification(
+          'Recordatorio Cancelado',
+          `El recordatorio para ${reminder.tenantName} ha sido cancelado exitosamente.`,
+          'success'
+        );
+      } else {
+        const errorData = await response.json();
+        showNotification(
+          'Error al Cancelar',
+          errorData.error || 'Ha ocurrido un error al cancelar el recordatorio.',
+          'error'
+        );
+      }
     } catch (error) {
       logger.error('Error cancelando recordatorio:', {
         error: error instanceof Error ? error.message : String(error),
@@ -760,7 +855,7 @@ export default function OwnerPaymentRemindersPage() {
                         <Send className="w-4 h-4 mr-2" />
                         Reenviar
                       </Button>
-                      {reminder.status !== 'completed' && reminder.status !== 'cancelled' && (
+                      {reminder.status !== 'delivered' && reminder.status !== 'failed' && (
                         <Button
                           variant="outline"
                           size="sm"

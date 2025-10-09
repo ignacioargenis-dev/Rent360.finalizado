@@ -41,6 +41,7 @@ import {
   Camera,
   Target,
   Activity,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -215,6 +216,11 @@ const menuItems: RoleMenuItems = {
       icon: FileText,
     },
     {
+      title: 'Casos Legales',
+      url: '/owner/legal-cases',
+      icon: Shield,
+    },
+    {
       title: 'Pagos',
       url: '/owner/payments',
       icon: CreditCard,
@@ -292,6 +298,16 @@ const menuItems: RoleMenuItems = {
       title: 'Contratos',
       url: '/broker/contracts',
       icon: FileText,
+    },
+    {
+      title: 'Casos Legales',
+      url: '/broker/legal-cases',
+      icon: Shield,
+    },
+    {
+      title: 'Disputas',
+      url: '/broker/disputes',
+      icon: AlertTriangle,
     },
     {
       title: 'Mantenimiento',

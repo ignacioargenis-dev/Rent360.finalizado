@@ -80,10 +80,10 @@ export default function OwnerContractsPage() {
         // Fallback to mock data filtered by current user
         const mockContracts = [
           {
-            id: 'pending-1',
-            contractNumber: 'CTR-2024-004',
-            propertyId: '4',
-            tenantId: '5',
+            id: `contract-${user.id}-1`,
+            contractNumber: `CTR-2024-00${user.id.slice(-1)}`,
+            propertyId: `prop-${user.id}-1`,
+            tenantId: `tenant-${user.id}-1`,
             ownerId: user.id, // Use current user ID
             startDate: new Date('2024-03-01'),
             endDate: new Date('2025-02-28'),
@@ -97,7 +97,7 @@ export default function OwnerContractsPage() {
             createdAt: new Date('2024-02-15'),
             updatedAt: new Date('2024-02-15'),
             property: {
-              id: '4',
+              id: `prop-${user.id}-1`,
               title: 'Casa Ñuñoa',
               description: 'Casa familiar moderna en Ñuñoa',
               address: 'Av. Irarrázaval 2345, Ñuñoa',
@@ -125,10 +125,10 @@ export default function OwnerContractsPage() {
             tenantEmail: 'maria@ejemplo.com',
           },
           {
-            id: '1',
-            contractNumber: 'CTR-2024-001',
-            propertyId: '1',
-            tenantId: '2',
+            id: `contract-${user.id}-2`,
+            contractNumber: `CTR-2024-00${parseInt(user.id.slice(-1)) + 1}`,
+            propertyId: `prop-${user.id}-2`,
+            tenantId: `tenant-${user.id}-2`,
             ownerId: user.id, // Use current user ID
             startDate: new Date('2024-01-01'),
             endDate: new Date('2024-12-31'),
@@ -142,7 +142,7 @@ export default function OwnerContractsPage() {
             createdAt: new Date('2023-12-15'),
             updatedAt: new Date('2024-01-01'),
             property: {
-              id: '1',
+              id: `prop-${user.id}-2`,
               title: 'Departamento Las Condes',
               description: 'Hermoso departamento en el corazón de Las Condes',
               address: 'Av. Apoquindo 3400, Las Condes',
@@ -170,10 +170,10 @@ export default function OwnerContractsPage() {
             tenantEmail: 'carlos@ejemplo.com',
           },
           {
-            id: '2',
-            contractNumber: 'CTR-2023-002',
-            propertyId: '2',
-            tenantId: '3',
+            id: `contract-${user.id}-3`,
+            contractNumber: `CTR-2023-00${parseInt(user.id.slice(-1)) + 2}`,
+            propertyId: `prop-${user.id}-3`,
+            tenantId: `tenant-${user.id}-3`,
             ownerId: user.id, // Use current user ID
             startDate: new Date('2023-06-01'),
             endDate: new Date('2024-05-31'),
@@ -187,7 +187,7 @@ export default function OwnerContractsPage() {
             createdAt: new Date('2023-05-15'),
             updatedAt: new Date('2023-06-01'),
             property: {
-              id: '2',
+              id: `prop-${user.id}-3`,
               title: 'Oficina Providencia',
               description: 'Oficina comercial en sector empresarial',
               address: 'Av. Providencia 1245, Providencia',
@@ -215,10 +215,10 @@ export default function OwnerContractsPage() {
             tenantEmail: 'contacto@soluciones.cl',
           },
           {
-            id: '3',
-            contractNumber: 'CTR-2023-003',
-            propertyId: '3',
-            tenantId: '4',
+            id: `contract-${user.id}-4`,
+            contractNumber: `CTR-2023-00${parseInt(user.id.slice(-1)) + 3}`,
+            propertyId: `prop-${user.id}-4`,
+            tenantId: `tenant-${user.id}-4`,
             ownerId: user.id, // Use current user ID
             startDate: new Date('2023-03-01'),
             endDate: new Date('2024-02-29'),
@@ -232,7 +232,7 @@ export default function OwnerContractsPage() {
             createdAt: new Date('2023-02-15'),
             updatedAt: new Date('2023-03-01'),
             property: {
-              id: '3',
+              id: `prop-${user.id}-4`,
               title: 'Casa Vitacura',
               description: 'Casa familiar en sector residencial exclusivo',
               address: 'Av. Vitacura 8900, Vitacura',
@@ -379,21 +379,156 @@ export default function OwnerContractsPage() {
     );
   };
 
-  const handleStartLegalCase = (contract: ContractWithDetails) => {
-    logger.info('Iniciando caso legal para contrato:', { contractId: contract.id });
-    alert(
-      `Caso legal iniciado para el contrato ${contract.contractNumber}.\n\nSe ha enviado la solicitud al equipo legal para proceder con las acciones correspondientes por mora o incumplimiento del contrato.`
-    );
-    // TODO: Implement API call to start legal case
-    // const response = await fetch('/api/owner/contracts/start-legal-case', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     contractId: contract.id,
-    //     reason: 'Mora en el pago de arriendos',
-    //     requestedBy: user?.id
-    //   })
-    // });
+  const handleDisputeDeposit = async (contract: ContractWithDetails) => {
+    try {
+      logger.info('Iniciando disputa de depósito para contrato:', { contractId: contract.id });
+
+      const reason = prompt(
+        'Describa el motivo de la disputa del depósito de garantía:',
+        'Daños en la propiedad, limpieza pendiente, etc.'
+      );
+
+      if (!reason || reason.length < 10) {
+        alert('La descripción del motivo debe tener al menos 10 caracteres');
+        return;
+      }
+
+      const amount = prompt('Monto en disputa (CLP):', contract.deposit?.toString() || '0');
+
+      if (!amount || isNaN(Number(amount))) {
+        alert('Debe ingresar un monto válido');
+        return;
+      }
+
+      // Llamar a la API
+      const response = await fetch('/api/owner/contracts/dispute-deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: contract.id,
+          reason: reason,
+          disputedAmount: Number(amount),
+          evidenceFiles: [], // TODO: Implementar subida de archivos de evidencia
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(
+          `Disputa de depósito iniciada exitosamente!\n\nNúmero de disputa: ${data.dispute.disputeNumber}\nMonto en disputa: $${Number(amount).toLocaleString()}\nEstado: ${data.dispute.status}\n\nSe ha notificado al inquilino y corredor. El proceso de mediación comenzará pronto.`
+        );
+
+        // Recargar contratos para actualizar el estado
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(`Error al iniciar disputa: ${errorData.error}`);
+      }
+    } catch (error) {
+      logger.error('Error iniciando disputa de depósito:', { error });
+      alert('Error al iniciar disputa de depósito. Por favor, inténtelo nuevamente.');
+    }
+  };
+
+  const handleStartLegalCase = async (contract: ContractWithDetails) => {
+    try {
+      logger.info('Iniciando caso legal para contrato:', { contractId: contract.id });
+
+      // Mostrar modal para seleccionar tipo de caso
+      const caseType = prompt(
+        'Seleccione el tipo de caso legal:\n\n1. NON_PAYMENT - Incumplimiento de pago\n2. CONTRACT_BREACH - Incumplimiento contractual\n3. PROPERTY_DAMAGE - Daño a la propiedad\n4. OTHER - Otro\n\nIngrese el número correspondiente:',
+        '1'
+      );
+
+      if (!caseType) {
+        return;
+      }
+
+      let caseTypeValue: string;
+      switch (caseType) {
+        case '1':
+          caseTypeValue = 'NON_PAYMENT';
+          break;
+        case '2':
+          caseTypeValue = 'CONTRACT_BREACH';
+          break;
+        case '3':
+          caseTypeValue = 'PROPERTY_DAMAGE';
+          break;
+        case '4':
+          caseTypeValue = 'OTHER';
+          break;
+        default:
+          alert('Tipo de caso no válido');
+          return;
+      }
+
+      const description = prompt(
+        'Describa brevemente el motivo del caso legal:',
+        'Incumplimiento en pagos de arriendo'
+      );
+
+      if (!description || description.length < 10) {
+        alert('La descripción debe tener al menos 10 caracteres');
+        return;
+      }
+
+      const priority = prompt(
+        'Seleccione la prioridad:\n\n1. LOW - Baja\n2. MEDIUM - Media\n3. HIGH - Alta\n4. URGENT - Urgente\n\nIngrese el número correspondiente:',
+        '3'
+      );
+
+      if (!priority) {
+        return;
+      }
+
+      let priorityValue: string;
+      switch (priority) {
+        case '1':
+          priorityValue = 'LOW';
+          break;
+        case '2':
+          priorityValue = 'MEDIUM';
+          break;
+        case '3':
+          priorityValue = 'HIGH';
+          break;
+        case '4':
+          priorityValue = 'URGENT';
+          break;
+        default:
+          alert('Prioridad no válida');
+          return;
+      }
+
+      // Llamar a la API
+      const response = await fetch('/api/owner/contracts/start-legal-case', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: contract.id,
+          caseType: caseTypeValue,
+          description: description,
+          priority: priorityValue,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(
+          `Caso legal iniciado exitosamente!\n\nNúmero de caso: ${data.legalCase.caseNumber}\nTipo: ${caseTypeValue}\nEstado: ${data.legalCase.status}\n\nSe ha enviado una notificación por email con los detalles.`
+        );
+
+        // Recargar contratos para actualizar el estado
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(`Error al iniciar caso legal: ${errorData.error}`);
+      }
+    } catch (error) {
+      logger.error('Error iniciando caso legal:', { error });
+      alert('Error al iniciar caso legal. Por favor, inténtelo nuevamente.');
+    }
   };
 
   const handleNewContract = () => {
@@ -695,6 +830,19 @@ export default function OwnerContractsPage() {
                         >
                           <AlertTriangle className="w-4 h-4 mr-2" />
                           Caso Legal
+                        </Button>
+                      )}
+                      {(contract.status === 'TERMINATED' ||
+                        contract.status === 'COMPLETED' ||
+                        daysUntilExpiry <= 30) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                          onClick={() => handleDisputeDeposit(contract)}
+                        >
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Disputar Depósito
                         </Button>
                       )}
                     </div>

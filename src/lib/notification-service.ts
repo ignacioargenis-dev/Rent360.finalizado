@@ -449,6 +449,129 @@ Equipo Rent360`,
       type: 'sms',
       variables: ['netAmount'],
     });
+
+    // Template para recordatorios de pago
+    this.templates.set('payment_reminder', {
+      id: 'payment_reminder',
+      name: 'Recordatorio de Pago',
+      subject: 'Recordatorio de Pago - {{propertyTitle}}',
+      body: `Estimado/a {{tenantName}},
+
+Le recordamos que tiene un pago pendiente por {{amount}} correspondiente a la propiedad "{{propertyTitle}}".
+
+Fecha de vencimiento: {{dueDate}}
+Tipo de recordatorio: {{reminderType}}
+
+{{#if customMessage}}
+Mensaje adicional: {{customMessage}}
+{{/if}}
+
+Por favor, realice el pago a la brevedad posible para evitar inconvenientes.
+
+Atentamente,
+{{ownerName}}
+Propietario`,
+      type: 'email',
+      variables: [
+        'tenantName',
+        'propertyTitle',
+        'amount',
+        'dueDate',
+        'reminderType',
+        'customMessage',
+        'ownerName',
+      ],
+    });
+
+    // Template para caso legal iniciado
+    this.templates.set('legal_case_initiated', {
+      id: 'legal_case_initiated',
+      name: 'Caso Legal Iniciado',
+      subject: 'Caso Legal Iniciado - {{caseNumber}}',
+      body: `Estimado/a propietario,
+
+Se ha iniciado exitosamente un caso legal en Rent360.
+
+Detalles del caso:
+- Número de caso: {{caseNumber}}
+- Tipo de caso: {{caseType}}
+- Contrato: {{contractNumber}}
+- Propiedad: {{propertyTitle}}
+- Descripción: {{description}}
+
+Nuestro equipo legal revisará el caso y se pondrá en contacto con usted para los siguientes pasos. El proceso puede tomar entre 3-5 días hábiles para la revisión inicial.
+
+Si tiene alguna pregunta o necesita proporcionar información adicional, puede contactar a nuestro equipo legal a través del sistema.
+
+Atentamente,
+Equipo Legal Rent360`,
+      type: 'email',
+      variables: ['caseNumber', 'caseType', 'contractNumber', 'propertyTitle', 'description'],
+    });
+
+    // Template para disputa de depósito iniciada (al inquilino)
+    this.templates.set('deposit_dispute_initiated', {
+      id: 'deposit_dispute_initiated',
+      name: 'Disputa de Depósito Iniciada',
+      subject: 'Disputa de Depósito de Garantía - {{contractNumber}}',
+      body: `Estimado/a {{tenantName}},
+
+El propietario {{ownerName}} ha iniciado una disputa sobre el depósito de garantía correspondiente al contrato de arriendo de la propiedad "{{propertyTitle}}".
+
+Detalles de la disputa:
+- Contrato: {{contractNumber}}
+- Monto: Pendiente de determinar
+- Motivo: {{reason}}
+
+Esto significa que el propietario reclama deducciones del depósito de garantía. Tendrás 10 días hábiles para responder a esta disputa presentando tu versión de los hechos y evidencia correspondiente.
+
+Para responder a esta disputa:
+1. Accede a tu panel de Rent360
+2. Ve a la sección "Mis Contratos"
+3. Selecciona el contrato correspondiente
+4. Haz clic en "Responder Disputa"
+
+Si no respondes dentro del plazo establecido, la disputa podrá resolverse en favor del propietario.
+
+Si tienes alguna pregunta, puedes contactar a nuestro equipo de mediación.
+
+Atentamente,
+Equipo de Mediación Rent360`,
+      type: 'email',
+      variables: [
+        'tenantName',
+        'ownerName',
+        'propertyTitle',
+        'contractNumber',
+        'disputedAmount',
+        'reason',
+      ],
+    });
+
+    // Template para notificación al corredor sobre disputa de depósito
+    this.templates.set('deposit_dispute_broker_notification', {
+      id: 'deposit_dispute_broker_notification',
+      name: 'Notificación de Disputa de Depósito al Corredor',
+      subject: 'Disputa de Depósito - {{contractNumber}}',
+      body: `Estimado/a corredor {{brokerName}},
+
+Se ha iniciado una disputa sobre el depósito de garantía en uno de los contratos que gestionas.
+
+Detalles:
+- Contrato: {{contractNumber}}
+- Propiedad: {{propertyTitle}}
+- Inquilino: {{tenantName}}
+- Propietario: {{ownerName}}
+
+Como corredor intermediario, puedes ofrecer tus servicios de mediación para ayudar a resolver esta disputa de manera amistosa.
+
+Para más información, accede al panel de administración de Rent360.
+
+Atentamente,
+Equipo Rent360`,
+      type: 'email',
+      variables: ['brokerName', 'contractNumber', 'propertyTitle', 'tenantName', 'ownerName'],
+    });
   }
 
   /**

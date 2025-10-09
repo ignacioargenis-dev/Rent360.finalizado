@@ -117,6 +117,10 @@ model User {
   legalNotificationsSent LegalNotification[] @relation("LegalNotificationUser")
   legalAuditLogs      LegalAuditLog[] @relation("LegalAuditLogUser")
 
+  // Relaciones de recordatorios de pago
+  paymentRemindersSent PaymentReminder[] @relation("PaymentReminderTenant") // Recordatorios enviados al usuario
+  paymentRemindersOwned PaymentReminder[] @relation("PaymentReminderOwner") // Recordatorios creados por el propietario
+
   // Relaciones de incentivos para runners
   runnerIncentives RunnerIncentive[]
 
@@ -169,6 +173,7 @@ model Property {
   messages          Message[]          // Mensajes relacionados con esta propiedad
   propertyImages    PropertyImage[]    // Imágenes de la propiedad
   documents         Document[]         // Documentos asociados a la propiedad
+  paymentReminders  PaymentReminder[]  // Recordatorios de pago para esta propiedad
 
   @@map("properties")
   @@index([ownerId])
@@ -237,6 +242,9 @@ model Contract {
 
   // Relaciones para casos legales
   legalCases     LegalCase[]
+
+  // Relaciones de recordatorios de pago
+  paymentReminders PaymentReminder[]
 
   @@map("contracts")
   @@index([propertyId])
@@ -1416,6 +1424,46 @@ enum RatingContextType {
   PROPERTY_VISIT // Calificación por visita a propiedad
   GENERAL      // Calificación general
   OTHER        // Otro contexto
+}
+
+// ============================================================================
+// Payment Reminder model
+model PaymentReminder {
+  id           String   @id @default(cuid())
+  tenantId     String
+  propertyId   String
+  contractId   String
+  ownerId      String
+  amount       Float
+  dueDate      DateTime
+  reminderType String   // 'first' | 'second' | 'final' | 'urgent'
+  channel      String   // 'email' | 'sms' | 'both'
+  status       String   @default("SENT") // 'SENT' | 'DELIVERED' | 'OPENED' | 'FAILED' | 'CANCELLED'
+  sentAt       DateTime @default(now())
+  deliveredAt  DateTime?
+  openedAt     DateTime?
+  respondedAt  DateTime?
+  response     String?  // 'paid' | 'contacted' | 'ignored' | 'pending'
+  customMessage String?
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant   User     @relation("PaymentReminderTenant", fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  owner    User     @relation("PaymentReminderOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([contractId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([reminderType])
+  @@index([sentAt])
+  @@map("payment_reminders")
 }
 
 // ============================================================================
