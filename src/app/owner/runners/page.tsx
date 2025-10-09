@@ -79,6 +79,17 @@ export default function OwnerRunnersPage() {
     maxRate: 'all',
   });
 
+  // Estados para contratación
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [hireData, setHireData] = useState({
+    serviceType: '',
+    estimatedHours: 2,
+    preferredDate: '',
+    preferredTime: '',
+    specialInstructions: '',
+    urgency: 'normal',
+  });
+
   useEffect(() => {
     loadRunners();
   }, []);
@@ -308,18 +319,102 @@ export default function OwnerRunnersPage() {
 
   const handleSendMessage = (runner: Runner) => {
     logger.info('Enviando mensaje a runner:', { runnerId: runner.id });
-    // Navegar a la página de mensajes con el runner seleccionado
+
+    // Crear mensaje prellenado con información contextual
+    const propertyContext = 'Propiedad en [Dirección de tu propiedad]'; // TODO: Obtener de propiedades del usuario
+    const serviceContext = runner.services[0] || 'servicio solicitado'; // Usar el primer servicio como ejemplo
+
+    const prefilledMessage = `Hola ${runner.name},
+
+Me interesa contratar tus servicios de ${serviceContext} para ${propertyContext}.
+
+¿Podrías por favor proporcionarme:
+• Disponibilidad para esta semana
+• Cotización detallada del servicio
+• Referencias de trabajos similares realizados
+
+Estoy disponible para coordinar los detalles.
+
+Saludos,
+[Tu Nombre]
+Propietario - Rent360`;
+
+    // Navegar a la página de mensajes con mensaje prellenado
+    const messageParam = encodeURIComponent(prefilledMessage);
     router.push(
-      `/owner/messages?recipientId=${runner.id}&recipientType=runner&recipientName=${encodeURIComponent(runner.name)}`
+      `/owner/messages?recipientId=${runner.id}&recipientType=runner&recipientName=${encodeURIComponent(runner.name)}&prefillMessage=${messageParam}`
     );
   };
 
   const handleHireRunner = (runner: Runner) => {
-    logger.info('Contratando runner:', { runnerId: runner.id });
-    // Implementar navegación a creación de trabajo
-    alert(
-      `Función próximamente disponible: Contratar a ${runner.name}. Por ahora puedes contactarlo para coordinar el trabajo.`
-    );
+    logger.info('Iniciando contratación de runner:', { runnerId: runner.id });
+
+    // Abrir modal de contratación con información prellenada
+    setSelectedRunner(runner);
+    setShowHireModal(true);
+
+    // Prellenar información de contratación
+    setHireData({
+      serviceType: runner.services[0] || '',
+      estimatedHours: 2,
+      preferredDate: '',
+      preferredTime: '',
+      specialInstructions: '',
+      urgency: 'normal',
+    });
+  };
+
+  const handleSubmitHire = async () => {
+    if (!selectedRunner) {
+      return;
+    }
+
+    try {
+      logger.info('Procesando contratación:', {
+        runnerId: selectedRunner.id,
+        hireData,
+      });
+
+      // Calcular costo estimado
+      const estimatedCost = selectedRunner.hourlyRate * hireData.estimatedHours;
+
+      // Crear trabajo en la plataforma
+      const jobData = {
+        runnerId: selectedRunner.id,
+        ownerId: 'current-user-id', // TODO: Obtener del contexto de autenticación
+        serviceType: hireData.serviceType,
+        estimatedHours: hireData.estimatedHours,
+        preferredDate: hireData.preferredDate,
+        preferredTime: hireData.preferredTime,
+        specialInstructions: hireData.specialInstructions,
+        urgency: hireData.urgency,
+        estimatedCost,
+        status: 'PENDING',
+      };
+
+      // TODO: Implementar API call para crear trabajo
+      // const response = await fetch('/api/jobs', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(jobData),
+      // });
+
+      alert(`¡Contratación exitosa!
+
+Servicio: ${hireData.serviceType}
+Runner: ${selectedRunner.name}
+Fecha preferida: ${hireData.preferredDate || 'Por coordinar'}
+Horas estimadas: ${hireData.estimatedHours}
+Costo estimado: $${estimatedCost.toLocaleString()}
+
+Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
+
+      setShowHireModal(false);
+      setSelectedRunner(null);
+    } catch (error) {
+      logger.error('Error en contratación:', { error });
+      alert('Error al procesar la contratación. Intente nuevamente.');
+    }
   };
 
   if (loading) {
@@ -532,37 +627,29 @@ export default function OwnerRunnersPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleContactRunner(runner)}
-                  >
-                    <Phone className="w-4 h-4 mr-1" />
-                    Contactar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleSendMessage(runner)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    Mensaje
-                  </Button>
+                <div className="mt-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleContactRunner(runner)}>
+                      <Phone className="w-4 h-4 mr-1" />
+                      Contactar
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleSendMessage(runner)}>
+                      <MessageSquare className="w-4 h-4 mr-1" />
+                      Mensaje
+                    </Button>
+                  </div>
                   <Button
                     size="sm"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                     onClick={() => handleHireRunner(runner)}
                   >
                     <UserPlus className="w-4 h-4 mr-1" />
-                    Contratar
+                    Contratar Servicio
                   </Button>
                 </div>
 
                 {/* Last Active */}
-                <div className="mt-3 text-xs text-gray-500 text-center">
+                <div className="mt-3 text-xs text-gray-500 text-center border-t pt-3">
                   Última actividad: {new Date(runner.lastActive).toLocaleDateString('es-CL')}
                 </div>
               </CardContent>
@@ -657,6 +744,224 @@ export default function OwnerRunnersPage() {
                       </ul>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hire Modal */}
+        {showHireModal && selectedRunner && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold">Contratar Servicio</h3>
+                <button
+                  onClick={() => setShowHireModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Runner Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold">{selectedRunner.name}</h4>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span>
+                        {selectedRunner.rating} ({selectedRunner.totalJobs} trabajos)
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {formatCurrency(selectedRunner.hourlyRate)} por hora
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Service Selection */}
+                <div>
+                  <Label htmlFor="serviceType" className="text-sm font-medium">
+                    Tipo de Servicio
+                  </Label>
+                  <Select
+                    value={hireData.serviceType}
+                    onValueChange={value => setHireData(prev => ({ ...prev, serviceType: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecciona el servicio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedRunner.services.map(service => (
+                        <SelectItem key={service} value={service}>
+                          {service}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Time Estimation */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="estimatedHours" className="text-sm font-medium">
+                      Horas Estimadas
+                    </Label>
+                    <Input
+                      id="estimatedHours"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={hireData.estimatedHours}
+                      onChange={e =>
+                        setHireData(prev => ({
+                          ...prev,
+                          estimatedHours: parseInt(e.target.value) || 2,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Costo Estimado</Label>
+                    <div className="mt-1 p-2 bg-gray-100 rounded-md text-center font-semibold">
+                      {formatCurrency(selectedRunner.hourlyRate * hireData.estimatedHours)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scheduling */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="preferredDate" className="text-sm font-medium">
+                      Fecha Preferida
+                    </Label>
+                    <Input
+                      id="preferredDate"
+                      type="date"
+                      value={hireData.preferredDate}
+                      onChange={e =>
+                        setHireData(prev => ({ ...prev, preferredDate: e.target.value }))
+                      }
+                      className="mt-1"
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="preferredTime" className="text-sm font-medium">
+                      Hora Preferida
+                    </Label>
+                    <Select
+                      value={hireData.preferredTime}
+                      onValueChange={value =>
+                        setHireData(prev => ({ ...prev, preferredTime: value }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecciona hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="09:00">9:00 AM</SelectItem>
+                        <SelectItem value="10:00">10:00 AM</SelectItem>
+                        <SelectItem value="11:00">11:00 AM</SelectItem>
+                        <SelectItem value="12:00">12:00 PM</SelectItem>
+                        <SelectItem value="13:00">1:00 PM</SelectItem>
+                        <SelectItem value="14:00">2:00 PM</SelectItem>
+                        <SelectItem value="15:00">3:00 PM</SelectItem>
+                        <SelectItem value="16:00">4:00 PM</SelectItem>
+                        <SelectItem value="17:00">5:00 PM</SelectItem>
+                        <SelectItem value="18:00">6:00 PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Urgency */}
+                <div>
+                  <Label className="text-sm font-medium">Urgencia</Label>
+                  <Select
+                    value={hireData.urgency}
+                    onValueChange={value => setHireData(prev => ({ ...prev, urgency: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja - Programar con anticipación</SelectItem>
+                      <SelectItem value="normal">Normal - Esta semana</SelectItem>
+                      <SelectItem value="high">Alta - Esta semana o antes</SelectItem>
+                      <SelectItem value="urgent">Urgente - Hoy o mañana</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Special Instructions */}
+                <div>
+                  <Label htmlFor="specialInstructions" className="text-sm font-medium">
+                    Instrucciones Especiales
+                  </Label>
+                  <textarea
+                    id="specialInstructions"
+                    placeholder="Describe detalles específicos del trabajo, requisitos especiales, o cualquier información adicional..."
+                    value={hireData.specialInstructions}
+                    onChange={e =>
+                      setHireData(prev => ({ ...prev, specialInstructions: e.target.value }))
+                    }
+                    className="mt-1 w-full p-3 border border-gray-300 rounded-md resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Summary */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Resumen de Contratación</h4>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p>
+                      <strong>Servicio:</strong> {hireData.serviceType || 'Por seleccionar'}
+                    </p>
+                    <p>
+                      <strong>Runner:</strong> {selectedRunner.name}
+                    </p>
+                    <p>
+                      <strong>Fecha:</strong> {hireData.preferredDate || 'Por coordinar'}
+                    </p>
+                    <p>
+                      <strong>Hora:</strong> {hireData.preferredTime || 'Por coordinar'}
+                    </p>
+                    <p>
+                      <strong>Horas:</strong> {hireData.estimatedHours}
+                    </p>
+                    <p>
+                      <strong>Total estimado:</strong>{' '}
+                      {formatCurrency(selectedRunner.hourlyRate * hireData.estimatedHours)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowHireModal(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSubmitHire}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    disabled={!hireData.serviceType}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Confirmar Contratación
+                  </Button>
                 </div>
               </div>
             </div>

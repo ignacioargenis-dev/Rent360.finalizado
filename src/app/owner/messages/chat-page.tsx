@@ -91,8 +91,14 @@ export default function ChatPage() {
         // Check for new message from URL params
         const recipientId = searchParams.get('recipientId');
         const propertyId = searchParams.get('propertyId');
+        const prefillMessage = searchParams.get('prefillMessage');
+
         if (recipientId) {
-          await startNewConversation(recipientId, propertyId);
+          await startNewConversation(
+            recipientId,
+            propertyId,
+            prefillMessage ? decodeURIComponent(prefillMessage) : undefined
+          );
         }
       } catch (error) {
         logger.error('Error loading data:', { error });
@@ -184,7 +190,11 @@ export default function ChatPage() {
   };
 
   // Start new conversation
-  const startNewConversation = async (recipientId: string, propertyId?: string | null) => {
+  const startNewConversation = async (
+    recipientId: string,
+    propertyId?: string | null,
+    prefillMessage?: string
+  ) => {
     // Check if conversation already exists
     const existingConv = conversations.find(conv => conv.participant.id === recipientId);
     if (existingConv) {
@@ -208,7 +218,7 @@ export default function ChatPage() {
         id: `msg_${Date.now()}`,
         senderId: user?.id || 'owner1',
         receiverId: recipientId,
-        content: 'Hola, me gustaría contactarte',
+        content: prefillMessage || 'Hola, me gustaría contactarte',
         timestamp: new Date().toISOString(),
         read: true,
         messageType: 'text',
@@ -220,6 +230,12 @@ export default function ChatPage() {
 
     setConversations(prev => [newConversation, ...prev]);
     setSelectedConversation(newConversation);
+
+    // Set prefilled message if provided
+    if (prefillMessage) {
+      setNewMessage(prefillMessage);
+    }
+
     await loadChatMessages(newConversation.id);
   };
 
