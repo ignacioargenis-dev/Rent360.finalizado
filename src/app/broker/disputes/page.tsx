@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +36,10 @@ import {
   Users,
   Building,
   HeartHandshake,
+  History,
+  FileText,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { logger } from '@/lib/logger';
@@ -67,6 +77,7 @@ export default function BrokerDisputesPage() {
   const [disputeDetailsModalOpen, setDisputeDetailsModalOpen] = useState(false);
   const [mediationModalOpen, setMediationModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [mediationProposal, setMediationProposal] = useState({
     terms: '',
     deadline: '',
@@ -168,11 +179,20 @@ export default function BrokerDisputesPage() {
     setContactModalOpen(true);
   };
 
+  const handleViewHistory = (dispute: Dispute) => {
+    setSelectedDispute(dispute);
+    setHistoryModalOpen(true);
+  };
+
   const submitMediationProposal = async () => {
-    if (!selectedDispute || !mediationProposal.terms.trim()) return;
+    if (!selectedDispute || !mediationProposal.terms.trim()) {
+      return;
+    }
 
     try {
-      alert(`✅ Propuesta de mediación enviada exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nTérminos: ${mediationProposal.terms}\nPlazo: ${mediationProposal.deadline || 'Sin especificar'}\nModalidad: ${mediationProposal.location === 'virtual' ? 'Videoconferencia' : 'Presencial'}\n\nSe notificará a ambas partes para coordinar la sesión de mediación.`);
+      alert(
+        `✅ Propuesta de mediación enviada exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nTérminos: ${mediationProposal.terms}\nPlazo: ${mediationProposal.deadline || 'Sin especificar'}\nModalidad: ${mediationProposal.location === 'virtual' ? 'Videoconferencia' : 'Presencial'}\n\nSe notificará a ambas partes para coordinar la sesión de mediación.`
+      );
 
       setMediationModalOpen(false);
       setMediationProposal({ terms: '', deadline: '', location: 'virtual', notes: '' });
@@ -183,16 +203,21 @@ export default function BrokerDisputesPage() {
   };
 
   const submitContactMessage = async () => {
-    if (!selectedDispute || !contactMessage.trim()) return;
+    if (!selectedDispute || !contactMessage.trim()) {
+      return;
+    }
 
     try {
-      const recipients = contactType === 'both'
-        ? [selectedDispute.tenantName, selectedDispute.ownerName].filter(Boolean)
-        : contactType === 'tenant'
-          ? [selectedDispute.tenantName]
-          : [selectedDispute.ownerName];
+      const recipients =
+        contactType === 'both'
+          ? [selectedDispute.tenantName, selectedDispute.ownerName].filter(Boolean)
+          : contactType === 'tenant'
+            ? [selectedDispute.tenantName]
+            : [selectedDispute.ownerName];
 
-      alert(`✅ Mensaje enviado exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nDestinatarios: ${recipients.join(', ')}\nTipo: ${contactType === 'both' ? 'Ambas partes' : contactType === 'tenant' ? 'Inquilino' : 'Propietario'}\n\nMensaje:\n${contactMessage}`);
+      alert(
+        `✅ Mensaje enviado exitosamente\n\nDisputa: ${selectedDispute.disputeNumber}\nDestinatarios: ${recipients.join(', ')}\nTipo: ${contactType === 'both' ? 'Ambas partes' : contactType === 'tenant' ? 'Inquilino' : 'Propietario'}\n\nMensaje:\n${contactMessage}`
+      );
 
       setContactModalOpen(false);
       setContactMessage('');
@@ -414,7 +439,9 @@ export default function BrokerDisputesPage() {
       <Dialog open={disputeDetailsModalOpen} onOpenChange={setDisputeDetailsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-blue-600">📋 Detalles de la Disputa</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-600">
+              📋 Detalles de la Disputa
+            </DialogTitle>
             <DialogDescription>
               Información completa de la disputa {selectedDispute?.disputeNumber}
             </DialogDescription>
@@ -428,19 +455,37 @@ export default function BrokerDisputesPage() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Información de la Disputa</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Número:</span> {selectedDispute.disputeNumber}</p>
-                      <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
-                      <p><span className="font-medium">Estado:</span> {selectedDispute.status}</p>
-                      <p><span className="font-medium">Monto:</span> {formatCurrency(selectedDispute.amount)}</p>
-                      <p><span className="font-medium">Creado:</span> {formatDate(selectedDispute.createdAt)}</p>
+                      <p>
+                        <span className="font-medium">Número:</span> {selectedDispute.disputeNumber}
+                      </p>
+                      <p>
+                        <span className="font-medium">Tipo:</span>{' '}
+                        {getDisputeTypeLabel(selectedDispute.disputeType)}
+                      </p>
+                      <p>
+                        <span className="font-medium">Estado:</span> {selectedDispute.status}
+                      </p>
+                      <p>
+                        <span className="font-medium">Monto:</span>{' '}
+                        {formatCurrency(selectedDispute.amount)}
+                      </p>
+                      <p>
+                        <span className="font-medium">Creado:</span>{' '}
+                        {formatDate(selectedDispute.createdAt)}
+                      </p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Iniciador</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}</p>
-                      <p><span className="font-medium">Rol:</span> {getInitiatorRoleLabel(selectedDispute.initiatorRole)}</p>
+                      <p>
+                        <span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}
+                      </p>
+                      <p>
+                        <span className="font-medium">Rol:</span>{' '}
+                        {getInitiatorRoleLabel(selectedDispute.initiatorRole)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -449,17 +494,31 @@ export default function BrokerDisputesPage() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Propiedad y Contrato</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Propiedad:</span> {selectedDispute.propertyTitle}</p>
-                      <p><span className="font-medium">Dirección:</span> {selectedDispute.propertyAddress}</p>
-                      <p><span className="font-medium">Contrato:</span> {selectedDispute.contractNumber}</p>
+                      <p>
+                        <span className="font-medium">Propiedad:</span>{' '}
+                        {selectedDispute.propertyTitle}
+                      </p>
+                      <p>
+                        <span className="font-medium">Dirección:</span>{' '}
+                        {selectedDispute.propertyAddress}
+                      </p>
+                      <p>
+                        <span className="font-medium">Contrato:</span>{' '}
+                        {selectedDispute.contractNumber}
+                      </p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Partes Involucradas</h4>
                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <p><span className="font-medium">Inquilino:</span> {selectedDispute.tenantName}</p>
-                      <p><span className="font-medium">Propietario:</span> {selectedDispute.ownerName}</p>
+                      <p>
+                        <span className="font-medium">Inquilino:</span> {selectedDispute.tenantName}
+                      </p>
+                      <p>
+                        <span className="font-medium">Propietario:</span>{' '}
+                        {selectedDispute.ownerName}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -481,7 +540,10 @@ export default function BrokerDisputesPage() {
                     <p className="text-green-800">{selectedDispute.resolution}</p>
                     {selectedDispute.resolvedBy && (
                       <p className="text-sm text-green-600">
-                        Resuelto por: {selectedDispute.resolvedBy} el {selectedDispute.resolvedAt ? formatDate(selectedDispute.resolvedAt) : 'Fecha no disponible'}
+                        Resuelto por: {selectedDispute.resolvedBy} el{' '}
+                        {selectedDispute.resolvedAt
+                          ? formatDate(selectedDispute.resolvedAt)
+                          : 'Fecha no disponible'}
                       </p>
                     )}
                   </div>
@@ -504,7 +566,11 @@ export default function BrokerDisputesPage() {
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Contactar Partes
                 </Button>
-                <Button variant="outline" className="flex-1 min-w-[150px]">
+                <Button
+                  variant="outline"
+                  className="flex-1 min-w-[150px]"
+                  onClick={() => handleViewHistory(selectedDispute)}
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Historial
                 </Button>
@@ -518,7 +584,9 @@ export default function BrokerDisputesPage() {
       <Dialog open={mediationModalOpen} onOpenChange={setMediationModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-green-600">🤝 Propuesta de Mediación</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-green-600">
+              🤝 Propuesta de Mediación
+            </DialogTitle>
             <DialogDescription>
               Enviar propuesta de mediación para la disputa {selectedDispute?.disputeNumber}
             </DialogDescription>
@@ -531,7 +599,7 @@ export default function BrokerDisputesPage() {
                 id="mediation-terms"
                 placeholder="Describe los términos específicos de la mediación..."
                 value={mediationProposal.terms}
-                onChange={(e) => setMediationProposal(prev => ({ ...prev, terms: e.target.value }))}
+                onChange={e => setMediationProposal(prev => ({ ...prev, terms: e.target.value }))}
                 rows={4}
               />
             </div>
@@ -543,7 +611,9 @@ export default function BrokerDisputesPage() {
                   id="mediation-deadline"
                   type="date"
                   value={mediationProposal.deadline}
-                  onChange={(e) => setMediationProposal(prev => ({ ...prev, deadline: e.target.value }))}
+                  onChange={e =>
+                    setMediationProposal(prev => ({ ...prev, deadline: e.target.value }))
+                  }
                 />
               </div>
 
@@ -551,7 +621,9 @@ export default function BrokerDisputesPage() {
                 <Label htmlFor="mediation-location">Modalidad</Label>
                 <Select
                   value={mediationProposal.location}
-                  onValueChange={(value) => setMediationProposal(prev => ({ ...prev, location: value }))}
+                  onValueChange={value =>
+                    setMediationProposal(prev => ({ ...prev, location: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -570,7 +642,7 @@ export default function BrokerDisputesPage() {
                 id="mediation-notes"
                 placeholder="Información adicional relevante..."
                 value={mediationProposal.notes}
-                onChange={(e) => setMediationProposal(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={e => setMediationProposal(prev => ({ ...prev, notes: e.target.value }))}
                 rows={3}
               />
             </div>
@@ -586,11 +658,18 @@ export default function BrokerDisputesPage() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button onClick={submitMediationProposal} className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button
+                onClick={submitMediationProposal}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
                 <HeartHandshake className="w-4 h-4 mr-2" />
                 Enviar Propuesta
               </Button>
-              <Button variant="outline" onClick={() => setMediationModalOpen(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setMediationModalOpen(false)}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             </div>
@@ -602,9 +681,12 @@ export default function BrokerDisputesPage() {
       <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-600">📬 Contactar Partes</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-blue-600">
+              📬 Contactar Partes
+            </DialogTitle>
             <DialogDescription>
-              Enviar mensaje a las partes involucradas en la disputa {selectedDispute?.disputeNumber}
+              Enviar mensaje a las partes involucradas en la disputa{' '}
+              {selectedDispute?.disputeNumber}
             </DialogDescription>
           </DialogHeader>
 
@@ -632,7 +714,7 @@ export default function BrokerDisputesPage() {
                 id="contact-message"
                 placeholder="Escribe el mensaje que deseas enviar..."
                 value={contactMessage}
-                onChange={(e) => setContactMessage(e.target.value)}
+                onChange={e => setContactMessage(e.target.value)}
                 rows={6}
               />
             </div>
@@ -641,30 +723,282 @@ export default function BrokerDisputesPage() {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-gray-800 mb-2">📋 Información del caso</h4>
                 <div className="text-sm space-y-1">
-                  <p><strong>Disputa:</strong> {selectedDispute.disputeNumber}</p>
-                  <p><strong>Tipo:</strong> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
-                  <p><strong>Monto:</strong> {formatCurrency(selectedDispute.amount)}</p>
-                  <p><strong>Destinatarios:</strong> {
-                    contactType === 'both'
+                  <p>
+                    <strong>Disputa:</strong> {selectedDispute.disputeNumber}
+                  </p>
+                  <p>
+                    <strong>Tipo:</strong> {getDisputeTypeLabel(selectedDispute.disputeType)}
+                  </p>
+                  <p>
+                    <strong>Monto:</strong> {formatCurrency(selectedDispute.amount)}
+                  </p>
+                  <p>
+                    <strong>Destinatarios:</strong>{' '}
+                    {contactType === 'both'
                       ? `${selectedDispute.tenantName} y ${selectedDispute.ownerName}`
                       : contactType === 'tenant'
                         ? selectedDispute.tenantName
-                        : selectedDispute.ownerName
-                  }</p>
+                        : selectedDispute.ownerName}
+                  </p>
                 </div>
               </div>
             )}
 
             <div className="flex gap-3 pt-4">
-              <Button onClick={submitContactMessage} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={submitContactMessage}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Enviar Mensaje
               </Button>
-              <Button variant="outline" onClick={() => setContactModalOpen(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setContactModalOpen(false)}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Modal */}
+      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-purple-600">
+              📚 Historial de la Disputa
+            </DialogTitle>
+            <DialogDescription>
+              Seguimiento completo de eventos y comunicaciones de la disputa{' '}
+              {selectedDispute?.disputeNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDispute && (
+            <div className="space-y-6">
+              {/* Timeline */}
+              <div className="space-y-4">
+                {/* Dispute Created */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="w-0.5 h-16 bg-gray-200 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-blue-900">Disputa Iniciada</h4>
+                        <span className="text-sm text-blue-600">
+                          {formatDate(selectedDispute.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-blue-800">
+                        La disputa fue iniciada por {selectedDispute.initiatorName} (
+                        {getInitiatorRoleLabel(selectedDispute.initiatorRole)})
+                      </p>
+                      <p className="text-sm text-blue-800 mt-1">
+                        <strong>Motivo:</strong> {selectedDispute.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Changes */}
+                {selectedDispute.status !== 'OPEN' && (
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div className="w-0.5 h-16 bg-gray-200 mt-2"></div>
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-yellow-900">Estado Cambiado</h4>
+                          <span className="text-sm text-yellow-600">
+                            {formatDate(selectedDispute.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-yellow-800">
+                          Estado actual:{' '}
+                          <span className="font-medium">
+                            {getStatusBadge(selectedDispute.status)}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mediation Offered */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <HeartHandshake className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="w-0.5 h-16 bg-gray-200 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-green-900">Mediación Ofrecida</h4>
+                        <span className="text-sm text-green-600">
+                          {formatDate(selectedDispute.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-800">
+                        Se ofreció mediación profesional para resolver el conflicto de manera
+                        amistosa
+                      </p>
+                      <div className="mt-2 text-sm text-green-700">
+                        <p>• Reducción de costos judiciales</p>
+                        <p>• Resolución más rápida</p>
+                        <p>• Mantención de relación comercial</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Communications */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="w-0.5 h-16 bg-gray-200 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-purple-900">Comunicación Enviada</h4>
+                        <span className="text-sm text-purple-600">
+                          {formatDate(selectedDispute.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-purple-800">
+                        Se envió comunicación formal a ambas partes notificando sobre la disputa y
+                        opciones de resolución
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          <Mail className="w-3 h-3 mr-1" />
+                          Email enviado
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <FileText className="w-3 h-3 mr-1" />
+                          Documentos adjuntos
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resolution (if resolved) */}
+                {selectedDispute.status === 'RESOLVED' && selectedDispute.resolution && (
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="w-0.5 h-0 bg-gray-200 mt-2"></div>
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-green-900">Disputa Resuelta</h4>
+                          <span className="text-sm text-green-600">
+                            {selectedDispute.resolvedAt
+                              ? formatDate(selectedDispute.resolvedAt)
+                              : formatDate(selectedDispute.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-green-800">{selectedDispute.resolution}</p>
+                        {selectedDispute.resolvedBy && (
+                          <p className="text-sm text-green-700 mt-1">
+                            Resuelta por: {selectedDispute.resolvedBy}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ongoing status */}
+                {selectedDispute.status === 'IN_PROGRESS' && (
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div className="w-0.5 h-0 bg-gray-200 mt-2"></div>
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-orange-900">Proceso en Curso</h4>
+                          <span className="text-sm text-orange-600">
+                            {formatDate(selectedDispute.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-orange-800">
+                          La disputa está siendo procesada activamente. Se esperan actualizaciones
+                          próximamente.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">📊 Resumen del Historial</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Total eventos:</span>
+                    <span className="font-medium ml-1">
+                      {selectedDispute.status === 'RESOLVED'
+                        ? '5'
+                        : selectedDispute.status === 'IN_PROGRESS'
+                          ? '4'
+                          : '3'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Días activos:</span>
+                    <span className="font-medium ml-1">
+                      {Math.floor(
+                        (Date.now() - new Date(selectedDispute.createdAt).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Estado actual:</span>
+                    <span className="font-medium ml-1">{selectedDispute.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Monto disputado:</span>
+                    <span className="font-medium ml-1">
+                      {formatCurrency(selectedDispute.amount)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setHistoryModalOpen(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>

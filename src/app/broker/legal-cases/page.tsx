@@ -1365,93 +1365,333 @@ El documento está listo para su revisión y uso en el proceso de mediación.
           </TabsContent>
 
           <TabsContent value="resources">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
+              {/* Herramientas Legales Principales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      📄 Documentos Legales
+                    </CardTitle>
+                    <CardDescription>Plantillas y formularios profesionales</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadDocument('Acuerdo de Mediación')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Acuerdo de Mediación
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadDocument('Propuesta de Pago')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Propuesta de Pago
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadDocument('Convenio de Pago')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Convenio de Pago
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadDocument('Carta de Terminación')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Carta de Terminación
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadDocument('Acuerdo Confidencialidad')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Acuerdo de Confidencialidad
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      👥 Contactos Profesionales
+                    </CardTitle>
+                    <CardDescription>Red de abogados y mediadores certificados</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Scale className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">Dr. Juan Pérez Martínez</h4>
+                          <p className="text-xs text-gray-600">
+                            Especialista en arrendamientos • 15 años experiencia
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-xs">4.9/5.0 (127 casos)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full text-xs"
+                            onClick={() => contactProfessional('lawyer_1', 'lawyer')}
+                          >
+                            Contactar Abogado
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <HeartHandshake className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">Lic. Carmen Soto Valencia</h4>
+                          <p className="text-xs text-gray-600">
+                            Mediadora certificada • Especialista en disputas
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-xs">4.9/5.0 (156 mediaciones)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full text-xs"
+                            onClick={() => contactProfessional('mediator_1', 'mediator')}
+                          >
+                            Contactar Mediador
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      🎓 Capacitación y Cursos
+                    </CardTitle>
+                    <CardDescription>Recursos de aprendizaje especializados</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start">
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Mediación Básica - 2h
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Scale className="w-4 h-4 mr-2" />
+                      Derecho Inmobiliario - 4h
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Users className="w-4 h-4 mr-2" />
+                      Comunicación Efectiva - 1.5h
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileCheck className="w-4 h-4 mr-2" />
+                      Gestión de Conflictos - 3h
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recursos Adicionales */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      🛠️ Herramientas Prácticas
+                    </CardTitle>
+                    <CardDescription>Utilidades para el día a día del corredor</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="p-3 bg-purple-50 rounded-lg">
+                        <h4 className="font-medium text-sm text-purple-900 mb-2">
+                          📊 Calculadora de Intereses
+                        </h4>
+                        <p className="text-xs text-purple-800 mb-2">
+                          Calcula intereses moratorios y costos legales automáticamente
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Abrir Calculadora
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-orange-50 rounded-lg">
+                        <h4 className="font-medium text-sm text-orange-900 mb-2">
+                          📅 Planificador de Plazos
+                        </h4>
+                        <p className="text-xs text-orange-800 mb-2">
+                          Gestiona fechas límite y recordatorios automáticos
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Abrir Planificador
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <h4 className="font-medium text-sm text-blue-900 mb-2">
+                          📋 Checklist Legal
+                        </h4>
+                        <p className="text-xs text-blue-800 mb-2">
+                          Lista de verificación para procesos judiciales
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Ver Checklist
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      📚 Biblioteca Legal
+                    </CardTitle>
+                    <CardDescription>Artículos, leyes y jurisprudencia relevante</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium text-sm mb-2">📖 Ley de Arrendamiento</h4>
+                        <p className="text-xs text-gray-600 mb-2">
+                          Texto completo de la ley 18.101 y sus modificaciones
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Leer Documento
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium text-sm mb-2">⚖️ Jurisprudencia Relevante</h4>
+                        <p className="text-xs text-gray-600 mb-2">
+                          Fallos judiciales relacionados con disputas inmobiliarias
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Ver Jurisprudencia
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium text-sm mb-2">📰 Actualizaciones Legales</h4>
+                        <p className="text-xs text-gray-600 mb-2">
+                          Newsletter mensual con cambios normativos
+                        </p>
+                        <Button size="sm" variant="outline" className="w-full">
+                          Ver Actualizaciones
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Consejos y Mejores Prácticas */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Documentos Legales</CardTitle>
-                  <CardDescription>Plantillas y formularios</CardDescription>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    💡 Consejos para Corredores
+                  </CardTitle>
+                  <CardDescription>
+                    Mejores prácticas para el manejo profesional de disputas
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => downloadDocument('Acuerdo de Mediación')}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Acuerdo de Mediación
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => downloadDocument('Propuesta de Pago')}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Propuesta de Pago
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => downloadDocument('Convenio de Pago')}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Convenio de Pago
-                  </Button>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <h4 className="font-semibold text-green-900 mb-2">✅ Comunicación Clara</h4>
+                      <ul className="text-sm space-y-1 text-green-800">
+                        <li>• Documenta toda comunicación</li>
+                        <li>• Usa lenguaje profesional</li>
+                        <li>• Confirma recepción de mensajes</li>
+                        <li>• Mantén registro cronológico</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">
+                        🎯 Prevención de Conflictos
+                      </h4>
+                      <ul className="text-sm space-y-1 text-blue-800">
+                        <li>• Contratos claros y detallados</li>
+                        <li>• Inspecciones regulares</li>
+                        <li>• Comunicación proactiva</li>
+                        <li>• Documentación fotográfica</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <h4 className="font-semibold text-orange-900 mb-2">⚖️ Manejo de Disputas</h4>
+                      <ul className="text-sm space-y-1 text-orange-800">
+                        <li>• Ofrece mediación primero</li>
+                        <li>• Mantén neutralidad</li>
+                        <li>• Protege intereses de ambas partes</li>
+                        <li>• Busca soluciones win-win</li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
+              {/* Contacto de Soporte */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Contactos Útiles</CardTitle>
-                  <CardDescription>Profesionales del derecho</CardDescription>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    🆘 Soporte Rent360
+                  </CardTitle>
+                  <CardDescription>Equipo de soporte especializado para corredores</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">Abogados Asociados</div>
-                    <div className="text-xs text-muted-foreground">
-                      Especialistas en derecho inmobiliario
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <MessageSquare className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <h4 className="font-medium mb-2">Chat en Vivo</h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Respuesta inmediata para consultas urgentes
+                      </p>
+                      <Button size="sm" className="w-full">
+                        Iniciar Chat
+                      </Button>
                     </div>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-xs"
-                      onClick={() => contactProfessional('lawyer_1', 'lawyer')}
-                    >
-                      Contactar
-                    </Button>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">Mediadores Certificados</div>
-                    <div className="text-xs text-muted-foreground">
-                      Especialistas en resolución de conflictos
-                    </div>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-xs"
-                      onClick={() => contactProfessional('mediator_1', 'mediator')}
-                    >
-                      Contactar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Capacitación</CardTitle>
-                  <CardDescription>Recursos de aprendizaje</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Mediación Básica
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Scale className="w-4 h-4 mr-2" />
-                    Derecho Inmobiliario
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="w-4 h-4 mr-2" />
-                    Comunicación Efectiva
-                  </Button>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Mail className="w-6 h-6 text-green-600" />
+                      </div>
+                      <h4 className="font-medium mb-2">Email de Soporte</h4>
+                      <p className="text-sm text-gray-600 mb-3">Respuesta en menos de 24 horas</p>
+                      <Button size="sm" variant="outline" className="w-full">
+                        soporte@rent360.cl
+                      </Button>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Phone className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <h4 className="font-medium mb-2">Línea Directa</h4>
+                      <p className="text-sm text-gray-600 mb-3">Para casos críticos y urgentes</p>
+                      <Button size="sm" variant="outline" className="w-full">
+                        +56 9 1234 5678
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
