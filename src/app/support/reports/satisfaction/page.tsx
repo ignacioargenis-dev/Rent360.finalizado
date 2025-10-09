@@ -156,10 +156,15 @@ export default function SatisfactionReportsPage() {
       let baseRating = 4; // rating base
       const resolutionTime = Math.random() * 48 + 1; // 1-49 horas
 
-      if (resolutionTime < 4) baseRating += 0.5;
-      else if (resolutionTime > 24) baseRating -= 0.5;
+      if (resolutionTime < 4) {
+        baseRating += 0.5;
+      } else if (resolutionTime > 24) {
+        baseRating -= 0.5;
+      }
 
-      if (priority === 'HIGH' || priority === 'URGENT') baseRating += 0.3;
+      if (priority === 'HIGH' || priority === 'URGENT') {
+        baseRating += 0.3;
+      }
 
       // Añadir variabilidad
       let satisfactionRating = Math.max(1, Math.min(5, baseRating + (Math.random() - 0.5) * 1.5));
@@ -192,19 +197,25 @@ export default function SatisfactionReportsPage() {
       });
     }
 
-    return tickets.sort((a, b) => new Date(b.resolutionDate).getTime() - new Date(a.resolutionDate).getTime());
+    return tickets.sort(
+      (a, b) => new Date(b.resolutionDate).getTime() - new Date(a.resolutionDate).getTime()
+    );
   };
 
   const calculateSatisfactionStats = (data: SatisfactionData[]): SatisfactionStats => {
     const totalResponses = data.length;
-    const overallRating = data.reduce((sum, item) => sum + item.satisfactionRating, 0) / totalResponses;
+    const overallRating =
+      data.reduce((sum, item) => sum + item.satisfactionRating, 0) / totalResponses;
 
     // NPS Calculation
     const npsResponses = data.filter(item => item.npsScore !== undefined);
     const promoters = npsResponses.filter(item => (item.npsScore || 0) >= 9).length;
-    const passives = npsResponses.filter(item => (item.npsScore || 0) >= 7 && (item.npsScore || 0) <= 8).length;
+    const passives = npsResponses.filter(
+      item => (item.npsScore || 0) >= 7 && (item.npsScore || 0) <= 8
+    ).length;
     const detractors = npsResponses.filter(item => (item.npsScore || 0) <= 6).length;
-    const npsScore = npsResponses.length > 0 ? ((promoters - detractors) / npsResponses.length) * 100 : 0;
+    const npsScore =
+      npsResponses.length > 0 ? ((promoters - detractors) / npsResponses.length) * 100 : 0;
 
     // Response rate (simulado)
     const responseRate = 78; // 78% de tickets reciben respuesta de satisfacción
@@ -215,7 +226,7 @@ export default function SatisfactionReportsPage() {
       return {
         rating,
         count,
-        percentage: Math.round((count / totalResponses) * 100)
+        percentage: Math.round((count / totalResponses) * 100),
       };
     });
 
@@ -264,9 +275,10 @@ export default function SatisfactionReportsPage() {
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
       const monthData = data.filter(item => item.resolutionDate.startsWith(monthKey));
-      const avgRating = monthData.length > 0
-        ? monthData.reduce((sum, item) => sum + item.satisfactionRating, 0) / monthData.length
-        : 0;
+      const avgRating =
+        monthData.length > 0
+          ? monthData.reduce((sum, item) => sum + item.satisfactionRating, 0) / monthData.length
+          : 0;
 
       return {
         month: date.toLocaleDateString('es-CL', { month: 'short', year: 'numeric' }),
@@ -314,14 +326,22 @@ export default function SatisfactionReportsPage() {
   };
 
   const getRatingIcon = (rating: number) => {
-    if (rating >= 4.5) return <Smile className="w-5 h-5 text-green-500" />;
-    if (rating >= 3.5) return <Meh className="w-5 h-5 text-yellow-500" />;
+    if (rating >= 4.5) {
+      return <Smile className="w-5 h-5 text-green-500" />;
+    }
+    if (rating >= 3.5) {
+      return <Meh className="w-5 h-5 text-yellow-500" />;
+    }
     return <Frown className="w-5 h-5 text-red-500" />;
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 4.5) return 'text-green-600';
-    if (rating >= 3.5) return 'text-yellow-600';
+    if (rating >= 4.5) {
+      return 'text-green-600';
+    }
+    if (rating >= 3.5) {
+      return 'text-yellow-600';
+    }
     return 'text-red-600';
   };
 
@@ -342,28 +362,37 @@ export default function SatisfactionReportsPage() {
   const handleExportReport = () => {
     const csvData = satisfactionData.map(item => ({
       'ID Ticket': item.ticketId,
-      'Categoría': item.category,
-      'Prioridad': item.priority,
+      Categoría: item.category,
+      Prioridad: item.priority,
       'Tiempo Resolución (hrs)': item.resolutionTime,
-      'Satisfacción': item.satisfactionRating,
-      'Feedback': item.feedbackText || '',
+      Satisfacción: item.satisfactionRating,
+      Feedback: item.feedbackText || '',
       'Tipo Usuario': item.userType,
-      'Agente': item.agent,
+      Agente: item.agent,
       'Fecha Resolución': formatDate(item.resolutionDate),
       'Requiere Seguimiento': item.followUpRequired ? 'Sí' : 'No',
-      'NPS': item.npsScore || '',
+      NPS: item.npsScore || '',
     }));
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
       Object.keys(csvData[0]!).join(',') +
       '\n' +
-      csvData.map(row => Object.values(row).map(val => `"${val}"`).join(',')).join('\n');
+      csvData
+        .map(row =>
+          Object.values(row)
+            .map(val => `"${val}"`)
+            .join(',')
+        )
+        .join('\n');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `satisfaccion-clientes-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `satisfaccion-clientes-${new Date().toISOString().split('T')[0]}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -468,7 +497,9 @@ export default function SatisfactionReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{stats.totalResponses}</div>
-                <p className="text-xs text-muted-foreground">{stats.responseRate}% tasa de respuesta</p>
+                <p className="text-xs text-muted-foreground">
+                  {stats.responseRate}% tasa de respuesta
+                </p>
               </CardContent>
             </Card>
 
@@ -501,24 +532,32 @@ export default function SatisfactionReportsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Net Promoter Score (NPS)</CardTitle>
-                    <CardDescription>Distribución de promotores, pasivos y detractores</CardDescription>
+                    <CardDescription>
+                      Distribución de promotores, pasivos y detractores
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-3xl font-bold text-green-600 mb-2">{stats.promoters}</div>
+                        <div className="text-3xl font-bold text-green-600 mb-2">
+                          {stats.promoters}
+                        </div>
                         <p className="text-sm text-gray-600">Promotores</p>
                         <p className="text-xs text-gray-500">(9-10)</p>
                       </div>
 
                       <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                        <div className="text-3xl font-bold text-yellow-600 mb-2">{stats.passives}</div>
+                        <div className="text-3xl font-bold text-yellow-600 mb-2">
+                          {stats.passives}
+                        </div>
                         <p className="text-sm text-gray-600">Pasivos</p>
                         <p className="text-xs text-gray-500">(7-8)</p>
                       </div>
 
                       <div className="text-center p-4 bg-red-50 rounded-lg">
-                        <div className="text-3xl font-bold text-red-600 mb-2">{stats.detractors}</div>
+                        <div className="text-3xl font-bold text-red-600 mb-2">
+                          {stats.detractors}
+                        </div>
                         <p className="text-sm text-gray-600">Detractores</p>
                         <p className="text-xs text-gray-500">(0-6)</p>
                       </div>
@@ -543,9 +582,7 @@ export default function SatisfactionReportsPage() {
                               <span className="font-bold">{month.avgRating}</span>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">
-                            {month.responseCount} respuestas
-                          </p>
+                          <p className="text-sm text-gray-600">{month.responseCount} respuestas</p>
                         </div>
                       ))}
                     </div>
@@ -562,12 +599,17 @@ export default function SatisfactionReportsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Distribución de Calificaciones</CardTitle>
-                    <CardDescription>Porcentaje de respuestas por cada nivel de satisfacción</CardDescription>
+                    <CardDescription>
+                      Porcentaje de respuestas por cada nivel de satisfacción
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {stats.ratingDistribution.map((rating, index) => (
-                        <div key={rating.rating} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div
+                          key={rating.rating}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <div className="flex">
                               {[...Array(5)].map((_, i) => (
@@ -581,7 +623,9 @@ export default function SatisfactionReportsPage() {
                                 />
                               ))}
                             </div>
-                            <span className="font-medium">{rating.rating} estrella{rating.rating !== 1 ? 's' : ''}</span>
+                            <span className="font-medium">
+                              {rating.rating} estrella{rating.rating !== 1 ? 's' : ''}
+                            </span>
                           </div>
                           <div className="text-right">
                             <span className="font-bold">{rating.count}</span>
@@ -597,17 +641,26 @@ export default function SatisfactionReportsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Satisfacción por Prioridad</CardTitle>
-                    <CardDescription>Rating promedio según nivel de urgencia del ticket</CardDescription>
+                    <CardDescription>
+                      Rating promedio según nivel de urgencia del ticket
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       {stats.prioritySatisfaction.map((priority, index) => (
-                        <div key={priority.priority} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div
+                          key={priority.priority}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <Badge className={getPriorityBadge(priority.priority)}>
-                              {priority.priority === 'LOW' ? 'Baja' :
-                               priority.priority === 'MEDIUM' ? 'Media' :
-                               priority.priority === 'HIGH' ? 'Alta' : 'Urgente'}
+                              {priority.priority === 'LOW'
+                                ? 'Baja'
+                                : priority.priority === 'MEDIUM'
+                                  ? 'Media'
+                                  : priority.priority === 'HIGH'
+                                    ? 'Alta'
+                                    : 'Urgente'}
                             </Badge>
                             <span className="font-medium">{priority.count} tickets</span>
                           </div>
@@ -633,18 +686,25 @@ export default function SatisfactionReportsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Satisfacción por Categoría</CardTitle>
-                    <CardDescription>Rating promedio por tipo de problema reportado</CardDescription>
+                    <CardDescription>
+                      Rating promedio por tipo de problema reportado
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       {stats.categorySatisfaction.map((category, index) => (
-                        <div key={category.category} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div
+                          key={category.category}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
                           <div className="flex-1">
                             <h4 className="font-medium">{category.category}</h4>
                             <div className="flex items-center gap-4 mt-2">
                               <div className="text-sm">
                                 <span className="text-gray-600">Rating promedio:</span>
-                                <span className={`font-medium ml-1 ${getRatingColor(category.avgRating)}`}>
+                                <span
+                                  className={`font-medium ml-1 ${getRatingColor(category.avgRating)}`}
+                                >
                                   {category.avgRating}/5.0
                                 </span>
                               </div>
@@ -670,12 +730,17 @@ export default function SatisfactionReportsPage() {
                   <CardContent>
                     <div className="space-y-3">
                       {stats.agentPerformance.map((agent, index) => (
-                        <div key={agent.agent} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div
+                          key={agent.agent}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <Users className="w-5 h-5 text-blue-500" />
                             <div>
                               <h4 className="font-medium">{agent.agent}</h4>
-                              <p className="text-sm text-gray-600">{agent.ticketCount} tickets atendidos</p>
+                              <p className="text-sm text-gray-600">
+                                {agent.ticketCount} tickets atendidos
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -713,13 +778,19 @@ export default function SatisfactionReportsPage() {
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="font-medium text-gray-900">{item.ticketId}</span>
                                 <Badge className={getPriorityBadge(item.priority)}>
-                                  {item.priority === 'LOW' ? 'Baja' :
-                                   item.priority === 'MEDIUM' ? 'Media' :
-                                   item.priority === 'HIGH' ? 'Alta' : 'Urgente'}
+                                  {item.priority === 'LOW'
+                                    ? 'Baja'
+                                    : item.priority === 'MEDIUM'
+                                      ? 'Media'
+                                      : item.priority === 'HIGH'
+                                        ? 'Alta'
+                                        : 'Urgente'}
                                 </Badge>
                                 <Badge variant="outline">{item.category}</Badge>
                               </div>
-                              <p className="text-gray-700 mb-2">"{item.feedbackText}"</p>
+                              <p className="text-gray-700 mb-2">
+                                &ldquo;{item.feedbackText}&rdquo;
+                              </p>
                               <div className="flex items-center gap-4 text-sm text-gray-600">
                                 <span>Agente: {item.agent}</span>
                                 <span>Tiempo: {item.resolutionTime}h</span>
