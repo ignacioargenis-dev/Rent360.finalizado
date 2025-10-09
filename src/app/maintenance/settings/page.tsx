@@ -134,6 +134,47 @@ export default function MaintenanceSettingsPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showBillingModal, setShowBillingModal] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<string>('');
+
+  // Funciones para documentos fiscales
+  const handleViewDocument = (documentType: string) => {
+    setSelectedDocument(documentType);
+    setShowDocumentViewer(true);
+    // Aquí se podría abrir un visor de PDF o imagen
+    setTimeout(() => {
+      alert(`📄 Abriendo visor de documento: ${documentType}\n\nEn una implementación real, aquí se mostraría el documento PDF o imagen.`);
+    }, 500);
+  };
+
+  const handleUpdateDocument = (documentType: string) => {
+    setSelectedDocument(documentType);
+    setShowUploadModal(true);
+  };
+
+  const handleUploadDocument = async () => {
+    try {
+      // Simular subida de documento
+      setSuccessMessage(`✅ Documento "${selectedDocument}" actualizado exitosamente`);
+      setShowUploadModal(false);
+      setSelectedDocument('');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Error al subir el documento. Intente nuevamente.');
+    }
+  };
+
+  const handleSaveBillingInfo = async () => {
+    try {
+      // Simular guardado de información fiscal
+      setSuccessMessage('✅ Información fiscal guardada exitosamente');
+      setShowBillingModal(false);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Error al guardar la información fiscal. Intente nuevamente.');
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -1125,10 +1166,10 @@ export default function MaintenanceSettingsPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleViewDocument('Certificado de Situación Tributaria')}>
                               Ver
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleUpdateDocument('Certificado de Situación Tributaria')}>
                               Actualizar
                             </Button>
                           </div>
@@ -1144,7 +1185,7 @@ export default function MaintenanceSettingsPage() {
                           </div>
                           <div className="flex gap-2">
                             <Badge className="bg-red-100 text-red-800">Vencido</Badge>
-                            <Button size="sm">Subir Nuevo</Button>
+                            <Button size="sm" onClick={() => handleUpdateDocument('Certificado de Vigencia SII')}>Subir Nuevo</Button>
                           </div>
                         </div>
                       </div>
@@ -1154,7 +1195,7 @@ export default function MaintenanceSettingsPage() {
                       <Button variant="outline" onClick={() => setShowBillingModal(false)}>
                         Cancelar
                       </Button>
-                      <Button onClick={() => setShowBillingModal(false)}>
+                      <Button onClick={handleSaveBillingInfo}>
                         Guardar Información Fiscal
                       </Button>
                     </div>
@@ -1165,6 +1206,113 @@ export default function MaintenanceSettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Document Viewer Modal */}
+      <Dialog open={showDocumentViewer} onOpenChange={setShowDocumentViewer}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Visor de Documento - {selectedDocument}
+            </DialogTitle>
+            <DialogDescription>
+              Vista previa del documento fiscal
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-8 flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Vista Previa del Documento</h3>
+                <p className="text-gray-600 mb-4">
+                  {selectedDocument === 'Certificado de Situación Tributaria'
+                    ? 'Certificado emitido por el SII con vigencia hasta 31/12/2024'
+                    : 'Certificado de vigencia tributaria emitido por el Servicio de Impuestos Internos'}
+                </p>
+                <div className="bg-white rounded-lg p-4 border border-gray-200 max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 mb-2">📄 Información del documento:</p>
+                  <ul className="text-sm text-left space-y-1">
+                    <li>• <strong>Tipo:</strong> PDF</li>
+                    <li>• <strong>Tamaño:</strong> 245 KB</li>
+                    <li>• <strong>Fecha de subida:</strong> 15/01/2024</li>
+                    <li>• <strong>Estado:</strong> Vigente</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDocumentViewer(false)}>
+                Cerrar
+              </Button>
+              <Button>
+                <FileText className="w-4 h-4 mr-2" />
+                Descargar PDF
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Modal */}
+      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Subir Documento - {selectedDocument}
+            </DialogTitle>
+            <DialogDescription>
+              Sube el documento fiscal actualizado
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Arrastra y suelta tu archivo aquí
+              </h3>
+              <p className="text-gray-600 mb-4">
+                O haz clic para seleccionar un archivo
+              </p>
+              <Button variant="outline">
+                Seleccionar Archivo
+              </Button>
+              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">📋 Requisitos del documento</h4>
+              <ul className="text-sm space-y-1">
+                <li>• <strong>Formatos aceptados:</strong> PDF, JPG, JPEG, PNG</li>
+                <li>• <strong>Tamaño máximo:</strong> 5 MB</li>
+                <li>• <strong>Estado:</strong> Debe estar vigente</li>
+                <li>• <strong>Calidad:</strong> Texto legible y completo</li>
+              </ul>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información importante</h4>
+              <p className="text-sm text-yellow-700">
+                Al subir este documento, reemplazarás el archivo anterior. Asegúrate de que el nuevo documento
+                esté actualizado y sea válido. El sistema verificará automáticamente la vigencia del documento.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowUploadModal(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleUploadDocument}>
+                <FileText className="w-4 h-4 mr-2" />
+                Subir Documento
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

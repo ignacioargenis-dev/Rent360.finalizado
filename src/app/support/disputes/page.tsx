@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -94,6 +96,9 @@ export default function SupportDisputesPage() {
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [mediationDialogOpen, setMediationDialogOpen] = useState(false);
   const [resolutionDialogOpen, setResolutionDialogOpen] = useState(false);
+  const [disputeDetailsModalOpen, setDisputeDetailsModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactParty, setContactParty] = useState<'tenant' | 'owner'>('tenant');
   const [mediationNotes, setMediationNotes] = useState('');
   const [resolutionType, setResolutionType] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
@@ -221,6 +226,7 @@ export default function SupportDisputesPage() {
 
   const handleViewDisputeDetails = (dispute: Dispute) => {
     setSelectedDispute(dispute);
+    setDisputeDetailsModalOpen(true);
   };
 
   const handleStartMediation = (dispute: Dispute) => {
@@ -284,15 +290,23 @@ export default function SupportDisputesPage() {
   };
 
   const handleContactParty = (dispute: Dispute, party: 'tenant' | 'owner') => {
-    const contactInfo =
-      party === 'tenant'
-        ? { name: dispute.tenantName, email: dispute.tenantEmail, phone: dispute.tenantPhone }
-        : { name: dispute.ownerName, email: dispute.ownerEmail, phone: dispute.ownerPhone };
+    setSelectedDispute(dispute);
+    setContactParty(party);
+    setContactModalOpen(true);
+  };
 
-    const subject = `Disputa ${dispute.disputeNumber} - ${getDisputeTypeLabel(dispute.disputeType)}`;
+  const submitContactMessage = async () => {
+    if (!selectedDispute) return;
+
+    const contactInfo =
+      contactParty === 'tenant'
+        ? { name: selectedDispute.tenantName, email: selectedDispute.tenantEmail, phone: selectedDispute.tenantPhone }
+        : { name: selectedDispute.ownerName, email: selectedDispute.ownerEmail, phone: selectedDispute.ownerPhone };
+
+    const subject = `Disputa ${selectedDispute.disputeNumber} - ${getDisputeTypeLabel(selectedDispute.disputeType)}`;
     const body = `Estimado/a ${contactInfo.name},
 
-Le escribo respecto a la disputa ${dispute.disputeNumber} relacionada con el contrato ${dispute.contractNumber} y la propiedad "${dispute.propertyTitle}".
+Le escribo respecto a la disputa ${selectedDispute.disputeNumber} relacionada con el contrato ${selectedDispute.contractNumber} y la propiedad "${selectedDispute.propertyTitle}".
 
 Como equipo de soporte de Rent360, estamos trabajando para resolver esta situación de manera eficiente y justa.
 
@@ -301,10 +315,19 @@ Como equipo de soporte de Rent360, estamos trabajando para resolver esta situaci
 Atentamente,
 Equipo de Soporte Rent360`;
 
-    // Open email client
-    window.open(
-      `mailto:${contactInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    );
+    try {
+      // Abrir cliente de email con mensaje pre-llenado
+      window.open(`mailto:${contactInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+
+      // Mostrar confirmación
+      alert(`📧 Mensaje preparado para ${contactInfo.name}\n\nCliente de email abierto con mensaje pre-llenado.`);
+
+      setContactModalOpen(false);
+      setSelectedDispute(null);
+    } catch (error) {
+      logger.error('Error sending contact message:', { error });
+      alert('Error al preparar mensaje de contacto. Intente nuevamente.');
+    }
   };
 
   if (loading) {
@@ -684,6 +707,241 @@ Equipo de Soporte Rent360`;
                 Aplicar Resolución
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dispute Details Modal */}
+        <Dialog open={disputeDetailsModalOpen} onOpenChange={setDisputeDetailsModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-blue-600">📋 Detalles Completos de la Disputa</DialogTitle>
+              <DialogDescription>
+                Información detallada y acciones disponibles para la disputa {selectedDispute?.disputeNumber}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedDispute && (
+              <div className="space-y-6">
+                {/* Dispute Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Información de la Disputa</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p><span className="font-medium">Número:</span> {selectedDispute.disputeNumber}</p>
+                        <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                        <p><span className="font-medium">Estado:</span> {selectedDispute.status}</p>
+                        <p><span className="font-medium">Monto Disputado:</span> {formatCurrency(selectedDispute.amount)}</p>
+                        <p><span className="font-medium">Fecha de Inicio:</span> {formatDate(selectedDispute.createdAt)}</p>
+                        <p><span className="font-medium">Días Abierta:</span> {getDaysOpen(selectedDispute.createdAt)} días</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Iniciador</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p><span className="font-medium">Nombre:</span> {selectedDispute.initiatorName}</p>
+                        <p><span className="font-medium">Rol:</span> {getInitiatorRoleLabel(selectedDispute.initiatorRole)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Propiedad y Contrato</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p><span className="font-medium">Propiedad:</span> {selectedDispute.propertyTitle}</p>
+                        <p><span className="font-medium">Dirección:</span> {selectedDispute.propertyAddress}</p>
+                        <p><span className="font-medium">Contrato:</span> {selectedDispute.contractNumber}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Partes Involucradas</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p><span className="font-medium">Inquilino:</span> {selectedDispute.tenantName}</p>
+                        <p><span className="font-medium">Email Inquilino:</span> {selectedDispute.tenantEmail}</p>
+                        <p><span className="font-medium">Propietario:</span> {selectedDispute.ownerName}</p>
+                        <p><span className="font-medium">Email Propietario:</span> {selectedDispute.ownerEmail}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Descripción de la Disputa</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700">{selectedDispute.description}</p>
+                  </div>
+                </div>
+
+                {/* Mediation Status */}
+                {selectedDispute.mediationStatus && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Estado de Mediación</h4>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-blue-800">
+                        <span className="font-medium">Estado:</span> {selectedDispute.mediationStatus === 'IN_PROGRESS' ? 'En Progreso' : 'Completada'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => handleContactParty(selectedDispute, 'tenant')}
+                    className="flex-1 min-w-[150px] bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Contactar Inquilino
+                  </Button>
+                  <Button
+                    onClick={() => handleContactParty(selectedDispute, 'owner')}
+                    className="flex-1 min-w-[150px] bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Contactar Propietario
+                  </Button>
+                  {selectedDispute.status === 'OPEN' && (
+                    <Button
+                      onClick={() => handleStartMediation(selectedDispute)}
+                      className="flex-1 min-w-[150px] bg-green-600 hover:bg-green-700"
+                    >
+                      <HeartHandshake className="w-4 h-4 mr-2" />
+                      Iniciar Mediación
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => handleResolveDispute(selectedDispute)}
+                    variant="outline"
+                    className="flex-1 min-w-[150px]"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Resolver Disputa
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Contact Party Modal */}
+        <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-purple-600">📬 Contactar Parte Involucrada</DialogTitle>
+              <DialogDescription>
+                Enviar mensaje a {contactParty === 'tenant' ? 'inquilino' : 'propietario'} de la disputa {selectedDispute?.disputeNumber}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedDispute && (
+              <div className="space-y-6">
+                {/* Contact Information */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3">Información de Contacto</h4>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Nombre:</span> {contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName}</p>
+                    <p><span className="font-medium">Email:</span> {contactParty === 'tenant' ? selectedDispute.tenantEmail : selectedDispute.ownerEmail}</p>
+                    <p><span className="font-medium">Disputa:</span> {selectedDispute.disputeNumber}</p>
+                    <p><span className="font-medium">Tipo:</span> {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                  </div>
+                </div>
+
+                {/* Message Preview */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Mensaje que se enviará</h4>
+                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                    <div className="text-sm space-y-2">
+                      <p><strong>Asunto:</strong> Disputa {selectedDispute.disputeNumber} - {getDisputeTypeLabel(selectedDispute.disputeType)}</p>
+                      <div className="bg-white p-3 rounded text-sm">
+                        Estimado/a {contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName},<br/><br/>
+                        Le escribo respecto a la disputa {selectedDispute.disputeNumber} relacionada con el contrato {selectedDispute.contractNumber} y la propiedad "{selectedDispute.propertyTitle}".<br/><br/>
+                        Como equipo de soporte de Rent360, estamos trabajando para resolver esta situación de manera eficiente y justa.<br/><br/>
+                        ¿Podríamos agendar una reunión o llamada para discutir los detalles?<br/><br/>
+                        Atentamente,<br/>
+                        Equipo de Soporte Rent360
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Options */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Opciones de Contacto</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button
+                      variant="outline"
+                      className="justify-start h-auto p-4"
+                      onClick={() => {
+                        const phone = contactParty === 'tenant' ? selectedDispute.tenantPhone : selectedDispute.ownerPhone;
+                        window.open(`tel:${phone}`);
+                        alert(`📞 Llamando a ${phone}...`);
+                      }}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <Phone className="w-5 h-5 text-green-600" />
+                        <div className="text-left">
+                          <div className="font-medium">Llamada Telefónica</div>
+                          <div className="text-sm text-gray-600">Llamar directamente</div>
+                        </div>
+                      </div>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="justify-start h-auto p-4"
+                      onClick={() => {
+                        const phone = contactParty === 'tenant' ? selectedDispute.tenantPhone : selectedDispute.ownerPhone;
+                        const name = contactParty === 'tenant' ? selectedDispute.tenantName : selectedDispute.ownerName;
+                        const message = `Hola ${name}, me contacto desde Rent360 Soporte para conversar sobre la disputa ${selectedDispute.disputeNumber}.`;
+                        const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                        window.open(whatsappUrl, '_blank');
+                      }}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <MessageSquare className="w-5 h-5 text-green-600" />
+                        <div className="text-left">
+                          <div className="font-medium">WhatsApp</div>
+                          <div className="text-sm text-gray-600">Enviar mensaje por WhatsApp</div>
+                        </div>
+                      </div>
+                    </Button>
+
+                    <Button
+                      className="justify-start h-auto p-4 bg-blue-600 hover:bg-blue-700"
+                      onClick={submitContactMessage}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <Mail className="w-5 h-5 text-white" />
+                        <div className="text-left">
+                          <div className="font-medium">Correo Electrónico</div>
+                          <div className="text-sm text-blue-100">Abrir cliente de email con mensaje preparado</div>
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-yellow-800 mb-2">💡 Recomendaciones</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>• Mantenga un tono profesional y neutral en todas las comunicaciones</li>
+                    <li>• Documente todas las conversaciones y acuerdos</li>
+                    <li>• Ofrezca soluciones constructivas para resolver el conflicto</li>
+                    <li>• Si es necesario, involucre a mediadores certificados</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setContactModalOpen(false)}>
+                    Cerrar
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

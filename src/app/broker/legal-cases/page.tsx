@@ -51,6 +51,7 @@ import {
   Search,
   Filter,
   RefreshCw,
+  Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { logger } from '@/lib/logger';

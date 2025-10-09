@@ -609,9 +609,9 @@ export default function ProviderDashboard() {
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-800 mb-2">💡 Consejos para trabajos rápidos</h4>
               <ul className="text-sm space-y-1">
-                <li>• Los trabajos se crean automáticamente con estado "Pendiente"</li>
+                <li>• Los trabajos se crean automáticamente con estado &quot;Pendiente&quot;</li>
                 <li>• Se enviará notificación automática al cliente</li>
-                <li>• Puede editar los detalles después desde "Mis Trabajos"</li>
+                <li>• Puede editar los detalles después desde &quot;Mis Trabajos&quot;</li>
                 <li>• Los costos estimados son solo referenciales</li>
               </ul>
             </div>
