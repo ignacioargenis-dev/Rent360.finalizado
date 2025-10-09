@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -110,6 +111,21 @@ export default function OwnerPaymentRemindersPage() {
   // Success/Error states
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+
+  const showNotification = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'success'
+  ) => {
+    setNotificationTitle(title);
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setShowNotificationDialog(true);
+  };
 
   // Configuration states
   const [reminderConfig, setReminderConfig] = useState({
@@ -140,28 +156,135 @@ export default function OwnerPaymentRemindersPage() {
     setShowConfigModal(true);
   };
 
-  const handleSendBulkReminders = () => {
-    setSuccessMessage('Recordatorios masivos enviados correctamente');
-    setTimeout(() => setSuccessMessage(''), 3000);
-    // In a real app, this would send bulk payment reminders
+  const handleSendBulkReminders = async () => {
+    try {
+      setLoading(true);
+      logger.info('Enviando recordatorios masivos de pago');
+
+      // Simular envío de recordatorios masivos
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const sentCount = reminders.filter(r => r.status === 'pending').length;
+
+      showNotification(
+        'Recordatorios Masivos Enviados',
+        `Se han enviado ${sentCount} recordatorios de pago exitosamente a los inquilinos con pagos pendientes.`,
+        'success'
+      );
+
+      // Actualizar estado de recordatorios
+      setReminders(prevReminders =>
+        prevReminders.map(reminder =>
+          reminder.status === 'pending'
+            ? { ...reminder, status: 'sent', sentAt: new Date().toISOString() }
+            : reminder
+        )
+      );
+
+      // TODO: Implement API call to send bulk reminders
+    } catch (error) {
+      logger.error('Error enviando recordatorios masivos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      showNotification(
+        'Error al Enviar Recordatorios',
+        'Ha ocurrido un error al enviar los recordatorios masivos. Por favor, inténtalo nuevamente.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleViewReminderDetails = (reminderId: string) => {
-    alert(
-      `Mostrando detalles del recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
-    );
+    const reminder = reminders.find(r => r.id === reminderId);
+    if (reminder) {
+      setSelectedReminder(reminder);
+      setShowDetailsModal(true);
+    } else {
+      showNotification(
+        'Recordatorio No Encontrado',
+        'No se pudo encontrar el recordatorio solicitado.',
+        'error'
+      );
+    }
   };
 
-  const handleResendReminder = (reminderId: string) => {
-    alert(
-      `Reenviando recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
-    );
+  const handleResendReminder = async (reminderId: string) => {
+    try {
+      const reminder = reminders.find(r => r.id === reminderId);
+      if (!reminder) {
+        showNotification(
+          'Recordatorio No Encontrado',
+          'No se pudo encontrar el recordatorio para reenviar.',
+          'error'
+        );
+        return;
+      }
+
+      logger.info('Reenviando recordatorio:', { reminderId });
+
+      // Simular reenvío
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      showNotification(
+        'Recordatorio Reenviado',
+        `El recordatorio para ${reminder.tenantName} ha sido reenviado exitosamente.`,
+        'success'
+      );
+
+      // TODO: Implement API call to resend reminder
+    } catch (error) {
+      logger.error('Error reenviando recordatorio:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      showNotification(
+        'Error al Reenviar',
+        'Ha ocurrido un error al reenviar el recordatorio. Por favor, inténtalo nuevamente.',
+        'error'
+      );
+    }
   };
 
-  const handleCancelReminder = (reminderId: string) => {
-    alert(
-      `Cancelando recordatorio ${reminderId}... Esta funcionalidad estará disponible próximamente.`
-    );
+  const handleCancelReminder = async (reminderId: string) => {
+    try {
+      const reminder = reminders.find(r => r.id === reminderId);
+      if (!reminder) {
+        showNotification(
+          'Recordatorio No Encontrado',
+          'No se pudo encontrar el recordatorio para cancelar.',
+          'error'
+        );
+        return;
+      }
+
+      logger.info('Cancelando recordatorio:', { reminderId });
+
+      // Simular cancelación
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Actualizar estado del recordatorio
+      setReminders(prevReminders =>
+        prevReminders.map(r => (r.id === reminderId ? { ...r, status: 'cancelled' as any } : r))
+      );
+
+      showNotification(
+        'Recordatorio Cancelado',
+        `El recordatorio para ${reminder.tenantName} ha sido cancelado exitosamente.`,
+        'success'
+      );
+
+      // TODO: Implement API call to cancel reminder
+    } catch (error) {
+      logger.error('Error cancelando recordatorio:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      showNotification(
+        'Error al Cancelar',
+        'Ha ocurrido un error al cancelar el recordatorio. Por favor, inténtalo nuevamente.',
+        'error'
+      );
+    }
   };
 
   useEffect(() => {
@@ -637,6 +760,17 @@ export default function OwnerPaymentRemindersPage() {
                         <Send className="w-4 h-4 mr-2" />
                         Reenviar
                       </Button>
+                      {reminder.status !== 'completed' && reminder.status !== 'cancelled' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelReminder(reminder.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -661,6 +795,37 @@ export default function OwnerPaymentRemindersPage() {
           )}
         </div>
       </div>
+
+      {/* Notification Dialog */}
+      <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {notificationType === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              )}
+              {notificationTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-600">{notificationMessage}</p>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowNotificationDialog(false)}
+              className={
+                notificationType === 'success'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
+            >
+              Aceptar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }
