@@ -127,6 +127,29 @@ Equipo de Mantenimiento Rent360`;
     window.open(whatsappUrl, '_blank');
   };
 
+  const filterProperties = useCallback(() => {
+    let filtered = properties;
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        property =>
+          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.commune.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(property => property.status === statusFilter);
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(property => property.propertyType === typeFilter);
+    }
+
+    setFilteredProperties(filtered);
+  }, [properties, searchTerm, statusFilter, typeFilter]);
+
   useEffect(() => {
     loadProperties();
   }, []);
@@ -212,29 +235,6 @@ Equipo de Mantenimiento Rent360`;
       setLoading(false);
     }
   };
-
-  const filterProperties = useCallback(() => {
-    let filtered = properties;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        property =>
-          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          property.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          property.commune.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(property => property.status === statusFilter);
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(property => property.propertyType === typeFilter);
-    }
-
-    setFilteredProperties(filtered);
-  }, [properties, searchTerm, statusFilter, typeFilter]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {

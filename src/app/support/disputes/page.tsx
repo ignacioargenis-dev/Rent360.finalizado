@@ -103,10 +103,6 @@ export default function SupportDisputesPage() {
   const [resolutionType, setResolutionType] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
 
-  useEffect(() => {
-    loadDisputes();
-  }, [loadDisputes]);
-
   const loadDisputes = useCallback(async () => {
     try {
       setLoading(true);
@@ -124,6 +120,10 @@ export default function SupportDisputesPage() {
       setLoading(false);
     }
   }, [statusFilter]);
+
+  useEffect(() => {
+    loadDisputes();
+  }, [loadDisputes]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

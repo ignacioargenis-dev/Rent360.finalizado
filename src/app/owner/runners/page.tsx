@@ -230,6 +230,36 @@ export default function OwnerRunnersPage() {
     urgency: 'normal',
   });
 
+  const applyFilters = useCallback(() => {
+    let filtered = runners;
+
+    // Location filter
+    if (filters.location !== 'all') {
+      filtered = filtered.filter(runner =>
+        runner.location.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
+
+    // Rating filter
+    if (filters.rating !== 'all') {
+      const minRating = parseFloat(filters.rating);
+      filtered = filtered.filter(runner => runner.rating >= minRating);
+    }
+
+    // Availability filter
+    if (filters.availability !== 'all') {
+      filtered = filtered.filter(runner => runner.availability === filters.availability);
+    }
+
+    // Max rate filter
+    if (filters.maxRate !== 'all') {
+      const maxRate = parseInt(filters.maxRate);
+      filtered = filtered.filter(runner => runner.hourlyRate <= maxRate);
+    }
+
+    setFilteredRunners(filtered);
+  }, [runners, filters]);
+
   useEffect(() => {
     loadRunners();
   }, []);
@@ -391,36 +421,6 @@ export default function OwnerRunnersPage() {
       setLoading(false);
     }
   };
-
-  const applyFilters = useCallback(() => {
-    let filtered = runners;
-
-    // Location filter
-    if (filters.location !== 'all') {
-      filtered = filtered.filter(runner =>
-        runner.location.toLowerCase().includes(filters.location.toLowerCase())
-      );
-    }
-
-    // Rating filter
-    if (filters.rating !== 'all') {
-      const minRating = parseFloat(filters.rating);
-      filtered = filtered.filter(runner => runner.rating >= minRating);
-    }
-
-    // Availability filter
-    if (filters.availability !== 'all') {
-      filtered = filtered.filter(runner => runner.availability === filters.availability);
-    }
-
-    // Max rate filter
-    if (filters.maxRate !== 'all') {
-      const maxRate = parseInt(filters.maxRate);
-      filtered = filtered.filter(runner => runner.hourlyRate <= maxRate);
-    }
-
-    setFilteredRunners(filtered);
-  }, [runners, filters]);
 
   const getAvailabilityBadge = (availability: string) => {
     switch (availability) {
