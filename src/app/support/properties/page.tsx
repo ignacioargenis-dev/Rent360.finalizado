@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -31,7 +32,9 @@ import {
   Home,
   DollarSign,
   Calendar,
+  Mail,
   User,
+  Users,
   AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -74,75 +77,77 @@ export default function SupportPropertiesPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState<PropertyReport | null>(null);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     loadPageData();
-  }, []);
+  }, [statusFilter, priorityFilter, searchTerm]);
 
   const loadPageData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Mock data for support properties
-      const mockProperties: PropertyReport[] = [
-        {
-          id: '1',
-          propertyTitle: 'Casa en Las Condes',
-          propertyAddress: 'Av. Las Condes 1234, Las Condes',
-          ownerName: 'María González',
-          ownerEmail: 'maria@example.com',
-          reportedIssues: ['Fuga de agua', 'Puerta dañada'],
-          status: 'reported',
-          lastReportedDate: '2024-01-15',
-          priority: 'high',
-          tenantCount: 1,
-        },
-        {
-          id: '2',
-          propertyTitle: 'Departamento Vitacura',
-          propertyAddress: 'Calle Vitacura 567, Vitacura',
-          ownerName: 'Carlos Rodríguez',
-          ownerEmail: 'carlos@example.com',
-          reportedIssues: [],
-          status: 'active',
-          priority: 'low',
-          tenantCount: 2,
-        },
-        {
-          id: '3',
-          propertyTitle: 'Oficina Providencia',
-          propertyAddress: 'Providencia 890, Providencia',
-          ownerName: 'Ana López',
-          ownerEmail: 'ana@example.com',
-          reportedIssues: ['Sistema eléctrico defectuoso'],
-          status: 'maintenance',
-          lastReportedDate: '2024-01-20',
-          priority: 'urgent',
-          tenantCount: 0,
-        },
-        {
-          id: '4',
-          propertyTitle: 'Local Santiago Centro',
-          propertyAddress: 'Centro 456, Santiago',
-          ownerName: 'Pedro Sánchez',
-          ownerEmail: 'pedro@example.com',
-          reportedIssues: ['Techo con filtraciones'],
-          status: 'reported',
-          lastReportedDate: '2024-01-10',
-          priority: 'medium',
-          tenantCount: 1,
-        },
-      ];
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (statusFilter !== 'all') params.append('status', statusFilter);
+        if (priorityFilter !== 'all') params.append('priority', priorityFilter);
+        if (searchTerm) params.append('search', searchTerm);
+
+        const response = await fetch(`/api/support/properties?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setProperties(data.data.properties || []);
+            setStats(data.data.stats || {
+              totalProperties: 0,
+              activeProperties: 0,
+              reportedIssues: 0,
+              underMaintenance: 0
+            });
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Usar datos simulados si la API no está disponible
+      const mockProperties: PropertyReport[] = generateMockProperties();
 
       const mockStats: PropertyStats = {
-        totalProperties: 1250,
-        activeProperties: 1180,
-        reportedIssues: 45,
-        underMaintenance: 25,
+        totalProperties: mockProperties.length,
+        activeProperties: mockProperties.filter(p => p.status === 'active').length,
+        reportedIssues: mockProperties.filter(p => p.reportedIssues.length > 0).length,
+        underMaintenance: mockProperties.filter(p => p.status === 'maintenance').length,
       };
 
-      setProperties(mockProperties);
+      // Filter properties based on search and filters
+      let filteredProperties = mockProperties;
+
+      if (searchTerm) {
+        filteredProperties = filteredProperties.filter(
+          property =>
+            property.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            property.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            property.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            property.ownerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      if (statusFilter !== 'all') {
+        filteredProperties = filteredProperties.filter(property => property.status === statusFilter);
+      }
+
+      if (priorityFilter !== 'all') {
+        filteredProperties = filteredProperties.filter(property => property.priority === priorityFilter);
+      }
+
+      setProperties(filteredProperties);
       setStats(mockStats);
 
       // Simular carga
@@ -154,6 +159,170 @@ export default function SupportPropertiesPage() {
       setError('Error al cargar las propiedades');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateMockProperties = (): PropertyReport[] => {
+    const properties: PropertyReport[] = [];
+    const propertyTypes = ['Casa', 'Departamento', 'Oficina', 'Local comercial', 'Bodega'];
+    const communes = ['Las Condes', 'Vitacura', 'Providencia', 'Ñuñoa', 'La Reina', 'Santiago Centro', 'Maipú', 'Pudahuel'];
+    const issues = [
+      'Fuga de agua', 'Puerta dañada', 'Sistema eléctrico defectuoso', 'Techo con filtraciones',
+      'Calefacción no funciona', 'Puerta de garage atascada', 'Ventanas rotas', 'Paredes agrietadas',
+      'Problemas de plomería', 'Sistema de alarma defectuoso'
+    ];
+    const statuses: PropertyReport['status'][] = ['active', 'inactive', 'reported', 'maintenance'];
+    const priorities: PropertyReport['priority'][] = ['low', 'medium', 'high', 'urgent'];
+
+    for (let i = 0; i < 150; i++) {
+      const propertyType = propertyTypes[Math.floor(Math.random() * propertyTypes.length)];
+      const commune = communes[Math.floor(Math.random() * communes.length)];
+      const status = statuses[Math.floor(Math.random() * statuses.length)] || 'active';
+      const priority = priorities[Math.floor(Math.random() * priorities.length)] || 'low';
+
+      // Generate random issues based on status
+      const reportedIssues: string[] = [];
+      if (status === 'reported' || status === 'maintenance') {
+        const numIssues = Math.floor(Math.random() * 3) + 1;
+        for (let j = 0; j < numIssues; j++) {
+          const issue = issues[Math.floor(Math.random() * issues.length)];
+          if (issue && !reportedIssues.includes(issue)) {
+            reportedIssues.push(issue);
+          }
+        }
+      }
+
+      const lastReportedDate = reportedIssues.length > 0
+        ? new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : undefined;
+
+      const propertyData: PropertyReport = {
+        id: String(i + 1),
+        propertyTitle: `${propertyType} en ${commune}`,
+        propertyAddress: `Calle ${Math.floor(Math.random() * 1000) + 1}, ${commune}`,
+        ownerName: `Propietario ${i + 1}`,
+        ownerEmail: `propietario${i + 1}@example.com`,
+        reportedIssues,
+        status,
+        priority,
+        tenantCount: Math.floor(Math.random() * 5),
+      };
+
+      if (lastReportedDate) {
+        propertyData.lastReportedDate = lastReportedDate;
+      }
+
+      properties.push(propertyData);
+    }
+
+    return properties;
+  };
+
+  const handleViewProperty = (propertyId: string) => {
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      setSelectedProperty(property);
+      setShowPropertyModal(true);
+    }
+  };
+
+  const handleCreateIssue = (propertyId: string) => {
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      setSelectedProperty(property);
+      setShowCreateIssueModal(true);
+    }
+  };
+
+  const handleExportProperties = async () => {
+    await handleExportData();
+  };
+
+  const handleResolveIssue = async (property: PropertyReport, issue: string) => {
+    try {
+      // Simular API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setProperties(prevProperties =>
+        prevProperties.map(p =>
+          p.id === property.id
+            ? { ...p, reportedIssues: p.reportedIssues.filter(i => i !== issue) }
+            : p
+        )
+      );
+
+      setSuccessMessage(`Problema "${issue}" resuelto exitosamente`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error resolving issue:', { error });
+      setErrorMessage('Error al resolver el problema');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  };
+
+  const handleResolveAllIssues = async (property: PropertyReport) => {
+    try {
+      if (property.reportedIssues.length === 0) return;
+
+      // Simular API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      setProperties(prevProperties =>
+        prevProperties.map(p =>
+          p.id === property.id
+            ? { ...p, reportedIssues: [], status: 'active' as const }
+            : p
+        )
+      );
+
+      setSuccessMessage(`Todos los problemas de "${property.propertyTitle}" han sido resueltos`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error resolving all issues:', { error });
+      setErrorMessage('Error al resolver todos los problemas');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setExporting(true);
+
+      // Simular exportación
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const csvContent = [
+        ['ID', 'Título', 'Dirección', 'Propietario', 'Email', 'Estado', 'Prioridad', 'Problemas Reportados'].join(','),
+        ...properties.map(p => [
+          p.id,
+          p.propertyTitle,
+          p.propertyAddress,
+          p.ownerName,
+          p.ownerEmail,
+          p.status,
+          p.priority,
+          p.reportedIssues.join('; ')
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `propiedades-soporte-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setSuccessMessage('Datos exportados exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error exporting data:', { error });
+      setErrorMessage('Error al exportar los datos');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -189,11 +358,6 @@ export default function SupportPropertiesPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const handleViewProperty = (propertyId: string) => {
-    // Navigate to property detail view
-    window.open(`/support/properties/${propertyId}`, '_blank');
-  };
-
   const handleContactOwner = (ownerEmail: string, propertyTitle: string) => {
     // Open email client
     const subject = encodeURIComponent(`Soporte - Propiedad: ${propertyTitle}`);
@@ -201,52 +365,6 @@ export default function SupportPropertiesPage() {
       `Hola,\n\nMe comunico respecto a la propiedad: ${propertyTitle}\n\nAtentamente,\nEquipo de Soporte Rent360`
     );
     window.open(`mailto:${ownerEmail}?subject=${subject}&body=${body}`);
-  };
-
-  const handleExportProperties = () => {
-    // Export properties data to CSV
-    if (filteredProperties.length === 0) {
-      setErrorMessage('No hay propiedades para exportar');
-      setTimeout(() => setErrorMessage(''), 5000);
-      return;
-    }
-
-    const csvData = filteredProperties.map(property => ({
-      ID: property.id,
-      Propiedad: property.propertyTitle,
-      Dirección: property.propertyAddress,
-      Propietario: property.ownerName,
-      Email: property.ownerEmail,
-      Estado:
-        property.status === 'active'
-          ? 'Activa'
-          : property.status === 'inactive'
-            ? 'Inactiva'
-            : property.status === 'reported'
-              ? 'Reportada'
-              : 'Mantenimiento',
-      Prioridad: property.priority,
-      'Problemas Reportados': property.reportedIssues.length,
-      'Último Reporte': property.lastReportedDate || 'N/A',
-      Inquilinos: property.tenantCount,
-    }));
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]!).join(',') +
-      '\n' +
-      csvData.map(row => Object.values(row).join(',')).join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `propiedades_soporte_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -545,6 +663,26 @@ export default function SupportPropertiesPage() {
                             <User className="w-4 h-4 mr-1" />
                             Contactar Propietario
                           </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCreateIssue(property.id)}
+                          >
+                            <AlertCircle className="w-4 h-4 mr-1" />
+                            Crear Problema
+                          </Button>
+
+                          {property.reportedIssues.length > 0 && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleResolveAllIssues(property)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Resolver Todos
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -554,6 +692,228 @@ export default function SupportPropertiesPage() {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        {/* Mensajes de éxito y error */}
+        {successMessage && (
+          <div className="fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
+            <div className="flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              <span>{successMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              <span>{errorMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Detalles de Propiedad */}
+        {showPropertyModal && selectedProperty && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto mx-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Detalles de Propiedad
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPropertyModal(false)}
+                >
+                  <XCircle className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Home className="w-6 h-6 text-blue-600" />
+                  <h3 className="text-xl font-semibold">{selectedProperty.propertyTitle}</h3>
+                  <div className="flex gap-2">
+                    {getStatusBadge(selectedProperty.status)}
+                    {getPriorityBadge(selectedProperty.priority)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Información General</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span>{selectedProperty.propertyAddress}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span>Propietario: {selectedProperty.ownerName}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-gray-500" />
+                        <span>Email: {selectedProperty.ownerEmail}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span>Inquilinos activos: {selectedProperty.tenantCount}</span>
+                      </div>
+                      {selectedProperty.lastReportedDate && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <span>Último reporte: {new Date(selectedProperty.lastReportedDate).toLocaleDateString('es-CL')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Problemas Reportados</h4>
+                    {selectedProperty.reportedIssues.length === 0 ? (
+                      <p className="text-sm text-gray-500">No hay problemas reportados</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedProperty.reportedIssues.map((issue, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded">
+                            <span className="text-sm text-red-700">{issue}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResolveIssue(selectedProperty, issue)}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => handleContactOwner(selectedProperty.ownerEmail, selectedProperty.propertyTitle)}
+                    className="flex-1"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Contactar Propietario
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleCreateIssue(selectedProperty.id)}
+                    className="flex-1"
+                  >
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Crear Problema
+                  </Button>
+                  {selectedProperty.reportedIssues.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleResolveAllIssues(selectedProperty)}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Resolver Todos
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Crear Problema */}
+        {showCreateIssueModal && selectedProperty && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">
+                  Crear Nuevo Problema
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCreateIssueModal(false)}
+                >
+                  <XCircle className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Propiedad
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    <div className="font-medium">{selectedProperty.propertyTitle}</div>
+                    <div className="text-sm text-gray-600">{selectedProperty.propertyAddress}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo de Problema
+                  </label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tipo de problema" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plumbing">Problemas de Plomería</SelectItem>
+                      <SelectItem value="electrical">Problemas Eléctricos</SelectItem>
+                      <SelectItem value="structural">Problemas Estructurales</SelectItem>
+                      <SelectItem value="maintenance">Mantenimiento General</SelectItem>
+                      <SelectItem value="security">Problemas de Seguridad</SelectItem>
+                      <SelectItem value="other">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción
+                  </label>
+                  <Textarea
+                    placeholder="Describe el problema en detalle..."
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Prioridad
+                  </label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar prioridad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateIssueModal(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button className="flex-1">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Crear Problema
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -28,6 +29,20 @@ import {
   User,
   Plus,
   Filter,
+  Heart,
+  ThumbsUp,
+  ThumbsDown,
+  Share2,
+  Edit,
+  Trash2,
+  Bookmark,
+  BookmarkCheck,
+  MessageSquare,
+  TrendingUp,
+  Award,
+  X,
+  ChevronRight,
+  Pin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
@@ -71,6 +86,14 @@ export default function SupportKnowledgePage() {
     query: '',
   });
   const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null);
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [recentViews, setRecentViews] = useState<KnowledgeArticle[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [votedArticles, setVotedArticles] = useState<{ [key: string]: 'up' | 'down' | undefined }>({});
+  const [creatingArticle, setCreatingArticle] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<KnowledgeArticle | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -264,6 +287,139 @@ export default function SupportKnowledgePage() {
     });
   };
 
+  const handleViewArticle = (article: KnowledgeArticle) => {
+    // Increment view count
+    setArticles(prev => prev.map(a =>
+      a.id === article.id ? { ...a, views: a.views + 1 } : a
+    ));
+
+    // Add to recent views
+    setRecentViews(prev => {
+      const filtered = prev.filter(a => a.id !== article.id);
+      return [article, ...filtered].slice(0, 5);
+    });
+
+    setSelectedArticle(article);
+    setShowArticleModal(true);
+  };
+
+  const handleVoteArticle = (articleId: string, vote: 'up' | 'down') => {
+    const currentVote = votedArticles[articleId];
+    let helpfulChange = 0;
+
+    if (currentVote === vote) {
+      // Remove vote
+      delete votedArticles[articleId];
+      helpfulChange = vote === 'up' ? -1 : 0; // Only decrease if it was an upvote
+    } else if (currentVote) {
+      // Change vote
+      helpfulChange = vote === 'up' ? 2 : -1; // up: +2 (remove down, add up), down: -1 (remove up)
+    } else {
+      // New vote
+      helpfulChange = vote === 'up' ? 1 : 0; // Only increase for upvotes
+    }
+
+    setVotedArticles(prev => ({
+      ...prev,
+      [articleId]: currentVote === vote ? undefined : vote
+    }));
+
+    setArticles(prev => prev.map(a =>
+      a.id === articleId ? { ...a, helpful: Math.max(0, a.helpful + helpfulChange) } : a
+    ));
+  };
+
+  const handleToggleFavorite = (articleId: string) => {
+    setFavorites(prev =>
+      prev.includes(articleId)
+        ? prev.filter(id => id !== articleId)
+        : [...prev, articleId]
+    );
+  };
+
+  const handleCreateArticle = () => {
+    setEditingArticle(null);
+    setShowCreateModal(true);
+  };
+
+  const handleEditArticle = (article: KnowledgeArticle) => {
+    setEditingArticle(article);
+    setShowCreateModal(true);
+  };
+
+  const handleSaveArticle = async (articleData: Partial<KnowledgeArticle>) => {
+    try {
+      setCreatingArticle(true);
+
+      if (editingArticle) {
+        // Update existing article
+        setArticles(prev => prev.map(a =>
+          a.id === editingArticle.id
+            ? { ...a, ...articleData, updatedAt: new Date().toISOString() }
+            : a
+        ));
+      } else {
+        // Create new article
+        const newArticle: KnowledgeArticle = {
+          id: String(Date.now()),
+          title: articleData.title || '',
+          content: articleData.content || '',
+          category: articleData.category || '',
+          tags: articleData.tags || [],
+          author: user?.name || 'Usuario',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          views: 0,
+          helpful: 0,
+          isPublished: true,
+        };
+        setArticles(prev => [newArticle, ...prev]);
+      }
+
+      setShowCreateModal(false);
+      setEditingArticle(null);
+    } catch (error) {
+      logger.error('Error saving article:', { error });
+    } finally {
+      setCreatingArticle(false);
+    }
+  };
+
+  const handleShareArticle = (article: KnowledgeArticle) => {
+    if (navigator.share) {
+      navigator.share({
+        title: article.title,
+        text: `Artículo de conocimiento: ${article.title}`,
+        url: window.location.href,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${window.location.origin}/support/knowledge/${article.id}`);
+    }
+  };
+
+  const getFeaturedArticles = () => {
+    return articles
+      .filter(a => a.isPublished)
+      .sort((a, b) => (b.helpful + b.views / 10) - (a.helpful + a.views / 10))
+      .slice(0, 3);
+  };
+
+  const getArticleStats = () => {
+    const totalArticles = articles.length;
+    const publishedArticles = articles.filter(a => a.isPublished).length;
+    const totalViews = articles.reduce((sum, a) => sum + a.views, 0);
+    const totalHelpful = articles.reduce((sum, a) => sum + a.helpful, 0);
+
+    return {
+      totalArticles,
+      publishedArticles,
+      totalViews,
+      totalHelpful,
+      averageRating: totalArticles > 0 ? (totalHelpful / totalArticles).toFixed(1) : '0',
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -297,7 +453,7 @@ export default function SupportKnowledgePage() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleCreateArticle}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Artículo
             </Button>
@@ -333,50 +489,233 @@ export default function SupportKnowledgePage() {
           </Select>
         </div>
 
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {(() => {
+            const stats = getArticleStats();
+            return (
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Artículos</CardTitle>
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.totalArticles}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.publishedArticles} publicados
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Vistas</CardTitle>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">
+                      En todos los artículos
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Calificación Promedio</CardTitle>
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.averageRating}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Votos positivos
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Artículos Útiles</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.totalHelpful}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Votos positivos totales
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
+            );
+          })()}
+        </div>
+
+        {/* Featured Articles */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Pin className="w-5 h-5 text-blue-600" />
+              Artículos Destacados
+            </CardTitle>
+            <CardDescription>
+              Los artículos más útiles y populares de la base de conocimientos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {getFeaturedArticles().map(article => (
+                <div
+                  key={article.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => handleViewArticle(article)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 line-clamp-2">
+                      {article.title}
+                    </h4>
+                    <div className="flex items-center gap-1 ml-2">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="text-sm text-gray-600">{article.helpful}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    {article.content.substring(0, 100)}...
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{article.category}</span>
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-3 h-3" />
+                      <span>{article.views}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Categories Sidebar */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderOpen className="w-5 h-5" />
-                  Categorías
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {categories.map(category => (
+            <div className="space-y-6">
+              {/* Categories */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderOpen className="w-5 h-5" />
+                    Categorías
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
                     <div
-                      key={category.id}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        filters.category === category.name
+                        filters.category === 'all'
                           ? 'bg-blue-50 border border-blue-200'
                           : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => handleCategoryFilter(category.name)}
+                      onClick={() => handleCategoryFilter('all')}
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <div
-                          className={`p-1 rounded ${
-                            category.color === 'blue'
-                              ? 'bg-blue-100 text-blue-600'
-                              : category.color === 'green'
-                                ? 'bg-green-100 text-green-600'
-                                : category.color === 'purple'
-                                  ? 'bg-purple-100 text-purple-600'
-                                  : 'bg-orange-100 text-orange-600'
-                          }`}
-                        >
-                          {getCategoryIcon(category.icon)}
-                        </div>
-                        <span className="font-medium text-sm">{category.name}</span>
+                        <BookOpen className="w-4 h-4 text-gray-600" />
+                        <span className="font-medium text-sm">Todas las categorías</span>
                       </div>
-                      <p className="text-xs text-gray-600">{category.articleCount} artículos</p>
+                      <p className="text-xs text-gray-600">{articles.length} artículos</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    {categories.map(category => (
+                      <div
+                        key={category.id}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          filters.category === category.name
+                            ? 'bg-blue-50 border border-blue-200'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleCategoryFilter(category.name)}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div
+                            className={`p-1 rounded ${
+                              category.color === 'blue'
+                                ? 'bg-blue-100 text-blue-600'
+                                : category.color === 'green'
+                                  ? 'bg-green-100 text-green-600'
+                                  : category.color === 'purple'
+                                    ? 'bg-purple-100 text-purple-600'
+                                    : 'bg-orange-100 text-orange-600'
+                            }`}
+                          >
+                            {getCategoryIcon(category.icon)}
+                          </div>
+                          <span className="font-medium text-sm">{category.name}</span>
+                        </div>
+                        <p className="text-xs text-gray-600">{category.articleCount} artículos</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Views */}
+              {recentViews.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      Vistos Recientemente
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {recentViews.map(article => (
+                        <div
+                          key={article.id}
+                          className="p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleViewArticle(article)}
+                        >
+                          <h5 className="font-medium text-sm text-gray-900 line-clamp-1">
+                            {article.title}
+                          </h5>
+                          <p className="text-xs text-gray-600">{article.category}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Favorites */}
+              {favorites.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookmarkCheck className="w-5 h-5 text-red-500" />
+                      Favoritos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {favorites.slice(0, 5).map(articleId => {
+                        const article = articles.find(a => a.id === articleId);
+                        if (!article) return null;
+                        return (
+                          <div
+                            key={article.id}
+                            className="p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => handleViewArticle(article)}
+                          >
+                            <h5 className="font-medium text-sm text-gray-900 line-clamp-1">
+                              {article.title}
+                            </h5>
+                            <p className="text-xs text-gray-600">{article.category}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
 
           {/* Articles List */}
@@ -405,7 +744,10 @@ export default function SupportKnowledgePage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
+                            <h3
+                              className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer flex-1"
+                              onClick={() => handleViewArticle(article)}
+                            >
                               {article.title}
                             </h3>
                             <Badge variant="outline" className="text-xs">
@@ -454,9 +796,48 @@ export default function SupportKnowledgePage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4" />
+                        <div className="flex items-center gap-1 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleVoteArticle(article.id, 'up')}
+                            className={votedArticles[article.id] === 'up' ? 'bg-green-50 border-green-200' : ''}
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleVoteArticle(article.id, 'down')}
+                            className={votedArticles[article.id] === 'down' ? 'bg-red-50 border-red-200' : ''}
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleFavorite(article.id)}
+                            className={favorites.includes(article.id) ? 'bg-red-50 border-red-200' : ''}
+                          >
+                            {favorites.includes(article.id) ? (
+                              <BookmarkCheck className="w-4 h-4 text-red-500" />
+                            ) : (
+                              <Bookmark className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleShareArticle(article)}
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditArticle(article)}
+                          >
+                            <Edit className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
@@ -467,6 +848,229 @@ export default function SupportKnowledgePage() {
             </div>
           </div>
         </div>
+
+        {/* Modal para ver artículo completo */}
+        {showArticleModal && selectedArticle && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">{selectedArticle.title}</h2>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      {selectedArticle.author}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {formatDate(selectedArticle.updatedAt)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {selectedArticle.views} vistas
+                    </span>
+                    <Badge variant="outline">{selectedArticle.category}</Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleVoteArticle(selectedArticle.id, 'up')}
+                    className={votedArticles[selectedArticle.id] === 'up' ? 'bg-green-50 border-green-200' : ''}
+                  >
+                    <ThumbsUp className="w-4 h-4 mr-1" />
+                    {selectedArticle.helpful}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleToggleFavorite(selectedArticle.id)}
+                    className={favorites.includes(selectedArticle.id) ? 'bg-red-50 border-red-200' : ''}
+                  >
+                    {favorites.includes(selectedArticle.id) ? (
+                      <BookmarkCheck className="w-4 h-4 text-red-500" />
+                    ) : (
+                      <Bookmark className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleShareArticle(selectedArticle)}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditArticle(selectedArticle)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowArticleModal(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                <div className="prose prose-gray max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                    {selectedArticle.content}
+                  </div>
+                </div>
+
+                {selectedArticle.tags.length > 0 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <h4 className="font-medium text-gray-700 mb-2">Etiquetas:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedArticle.tags.map(tag => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-medium text-gray-700 mb-4">¿Te resultó útil este artículo?</h4>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleVoteArticle(selectedArticle.id, 'up')}
+                      className={votedArticles[selectedArticle.id] === 'up' ? 'bg-green-50 border-green-200' : ''}
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-2" />
+                      Sí, muy útil
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleVoteArticle(selectedArticle.id, 'down')}
+                      className={votedArticles[selectedArticle.id] === 'down' ? 'bg-red-50 border-red-200' : ''}
+                    >
+                      <ThumbsDown className="w-4 h-4 mr-2" />
+                      No, necesita mejoras
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para crear/editar artículo */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {editingArticle ? 'Editar Artículo' : 'Crear Nuevo Artículo'}
+                </h2>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target as HTMLFormElement);
+                  const articleData = {
+                    title: formData.get('title') as string,
+                    content: formData.get('content') as string,
+                    category: formData.get('category') as string,
+                    tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()) || [],
+                  };
+                  handleSaveArticle(articleData);
+                }}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Título *
+                      </label>
+                      <Input
+                        name="title"
+                        defaultValue={editingArticle?.title || ''}
+                        placeholder="Título del artículo"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Categoría *
+                      </label>
+                      <Select name="category" defaultValue={editingArticle?.category || ''}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(category => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Contenido *
+                      </label>
+                      <Textarea
+                        name="content"
+                        defaultValue={editingArticle?.content || ''}
+                        placeholder="Contenido del artículo..."
+                        rows={15}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Etiquetas (separadas por comas)
+                      </label>
+                      <Input
+                        name="tags"
+                        defaultValue={editingArticle?.tags?.join(', ') || ''}
+                        placeholder="ej: base de datos, configuración, api"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCreateModal(false)}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={creatingArticle}
+                      >
+                        {creatingArticle ? 'Guardando...' : (editingArticle ? 'Actualizar Artículo' : 'Crear Artículo')}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );

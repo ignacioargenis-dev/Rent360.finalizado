@@ -81,81 +81,38 @@ export default function TicketsPage() {
 
   useEffect(() => {
     loadTickets();
-  }, [statusFilter, priorityFilter, categoryFilter]);
+  }, [statusFilter, priorityFilter, categoryFilter, searchTerm]);
 
   const loadTickets = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Mock data for demo - in production this would come from API
-      const mockTickets: Ticket[] = [
-        {
-          id: '1',
-          title: 'Problema con pago en línea',
-          description: 'El cliente no puede realizar el pago de su arriendo mensual',
-          clientName: 'Carlos Ramírez',
-          clientEmail: 'carlos@ejemplo.com',
-          category: 'Pagos',
-          priority: 'HIGH',
-          status: 'OPEN',
-          assignedTo: 'María González',
-          createdAt: '2024-03-15 09:30',
-          updatedAt: '2024-03-15 10:15',
-          estimatedResolution: '2024-03-15 18:00',
-        },
-        {
-          id: '2',
-          title: 'Error en sistema de calificaciones',
-          description: 'No puedo calificar a mi inquilino después del contrato',
-          clientName: 'Ana Martínez',
-          clientEmail: 'ana@ejemplo.com',
-          category: 'Sistema',
-          priority: 'MEDIUM',
-          status: 'IN_PROGRESS',
-          assignedTo: 'Juan Pérez',
-          createdAt: '2024-03-15 08:45',
-          updatedAt: '2024-03-15 11:30',
-        },
-        {
-          id: '3',
-          title: 'Solicitud de devolución de depósito',
-          description: 'Cliente solicita devolución de depósito por terminación de contrato',
-          clientName: 'Pedro Silva',
-          clientEmail: 'pedro@ejemplo.com',
-          category: 'Contratos',
-          priority: 'MEDIUM',
-          status: 'OPEN',
-          createdAt: '2024-03-14 16:20',
-          updatedAt: '2024-03-14 16:20',
-        },
-        {
-          id: '4',
-          title: 'Problema de acceso a propiedad',
-          description: 'Inquilino reporta que no puede acceder a la propiedad arrendada',
-          clientName: 'María López',
-          clientEmail: 'maria@ejemplo.com',
-          category: 'Propiedades',
-          priority: 'CRITICAL',
-          status: 'ESCALATED',
-          assignedTo: 'Soporte Senior',
-          createdAt: '2024-03-14 14:10',
-          updatedAt: '2024-03-14 15:45',
-        },
-        {
-          id: '5',
-          title: 'Actualización de información de contacto',
-          description: 'Cliente necesita actualizar su información de contacto',
-          clientName: 'Roberto Díaz',
-          clientEmail: 'roberto@ejemplo.com',
-          category: 'Cuenta',
-          priority: 'LOW',
-          status: 'RESOLVED',
-          assignedTo: 'Ana Martínez',
-          createdAt: '2024-03-13 11:20',
-          updatedAt: '2024-03-13 12:15',
-        },
-      ];
+      // Intentar obtener datos reales de la API
+      try {
+        const params = new URLSearchParams();
+        if (statusFilter !== 'all') params.append('status', statusFilter);
+        if (priorityFilter !== 'all') params.append('priority', priorityFilter);
+        if (categoryFilter !== 'all') params.append('category', categoryFilter);
+        if (searchTerm) params.append('search', searchTerm);
+
+        const response = await fetch(`/api/tickets?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setTickets(data.data.tickets || []);
+            setStats(data.data.stats || {
+              total: 0, open: 0, inProgress: 0, resolved: 0, closed: 0, escalated: 0
+            });
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.warn('API no disponible, usando datos simulados:', apiError);
+      }
+
+      // Usar datos simulados si la API no está disponible
+      const mockTickets: Ticket[] = generateMockTickets();
 
       // Filter tickets based on search and filters
       let filteredTickets = mockTickets;
@@ -165,7 +122,8 @@ export default function TicketsPage() {
           ticket =>
             ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+            ticket.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.clientEmail.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
@@ -196,7 +154,7 @@ export default function TicketsPage() {
       setStats(newStats);
 
       // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error) {
       logger.error('Error loading tickets:', {
         error: error instanceof Error ? error.message : String(error),
@@ -205,6 +163,89 @@ export default function TicketsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateMockTickets = (): Ticket[] => {
+    const categories = ['Pagos', 'Sistema', 'Contratos', 'Propiedades', 'Cuenta', 'Mantenimiento', 'Legal', 'General'];
+    const statuses: Ticket['status'][] = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'ESCALATED'];
+    const priorities: Ticket['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+    const agents = ['María González', 'Juan Pérez', 'Ana Martínez', 'Carlos Rodríguez', 'Soporte Senior', 'Luis Torres'];
+
+    const tickets: Ticket[] = [];
+
+    for (let i = 0; i < 85; i++) {
+      const category = categories[Math.floor(Math.random() * categories.length)] || 'GENERAL';
+      const status = statuses[Math.floor(Math.random() * statuses.length)] || 'OPEN';
+      const priority = priorities[Math.floor(Math.random() * priorities.length)] || 'MEDIUM';
+      const assignedTo = Math.random() > 0.2 ? agents[Math.floor(Math.random() * agents.length)] : undefined;
+
+      const createdDate = new Date();
+      createdDate.setDate(createdDate.getDate() - Math.floor(Math.random() * 30));
+
+      const updatedDate = new Date(createdDate);
+      updatedDate.setHours(updatedDate.getHours() + Math.floor(Math.random() * 48) + 1);
+
+      const estimatedResolution = status !== 'RESOLVED' && status !== 'CLOSED'
+        ? new Date(updatedDate.getTime() + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000)
+        : undefined;
+
+      const ticketData: Ticket = {
+        id: String(i + 1),
+        title: generateTicketTitle(category),
+        description: generateTicketDescription(category),
+        clientName: `Cliente ${i + 1}`,
+        clientEmail: `cliente${i + 1}@ejemplo.com`,
+        category,
+        priority,
+        status,
+        createdAt: createdDate.toISOString(),
+        updatedAt: updatedDate.toISOString(),
+      };
+
+      if (assignedTo) {
+        ticketData.assignedTo = assignedTo;
+      }
+
+      if (estimatedResolution) {
+        ticketData.estimatedResolution = estimatedResolution.toISOString();
+      }
+
+      tickets.push(ticketData);
+    }
+
+    return tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
+  const generateTicketTitle = (category: string): string => {
+    const titles: Record<string, string[]> = {
+      'Pagos': ['Problema con pago en línea', 'Error en transacción', 'Pago no procesado', 'Reembolso pendiente', 'Problema con tarjeta'],
+      'Sistema': ['Error en sistema de calificaciones', 'No puedo acceder a mi cuenta', 'Aplicación se congela', 'Error al cargar página', 'Notificaciones no llegan'],
+      'Contratos': ['Solicitud de devolución de depósito', 'Modificación de contrato', 'Problema con firma digital', 'Acuerdo de terminación', 'Actualización de términos'],
+      'Propiedades': ['Problema de acceso a propiedad', 'Daños reportados', 'Llaves perdidas', 'Inspección requerida', 'Mantenimiento urgente'],
+      'Cuenta': ['Actualización de información de contacto', 'Cambio de contraseña', 'Verificación de identidad', 'Perfil incompleto', 'Preferencias no guardan'],
+      'Mantenimiento': ['Reparación de grifería', 'Problema eléctrico', 'Puerta atascada', 'Calefacción no funciona', 'Filtración de agua'],
+      'Legal': ['Disputa contractual', 'Problemas legales', 'Reclamo formal', 'Mediación requerida', 'Consulta legal'],
+      'General': ['Consulta general', 'Sugerencia de mejora', 'Pregunta frecuente', 'Comentarios', 'Soporte adicional']
+    };
+
+    const categoryTitles = titles[category] || titles['General'] || ['Consulta general'];
+    return categoryTitles[Math.floor(Math.random() * categoryTitles.length)] || 'Consulta general';
+  };
+
+  const generateTicketDescription = (category: string): string => {
+    const descriptions: Record<string, string[]> = {
+      'Pagos': ['El cliente no puede realizar el pago de su arriendo mensual', 'La transacción fue rechazada por el banco', 'El sistema muestra error al procesar el pago', 'Necesito recuperar un pago fallido', 'La tarjeta fue rechazada sin motivo aparente'],
+      'Sistema': ['No puedo calificar a mi inquilino después del contrato', 'La aplicación se cierra inesperadamente', 'Los cambios no se guardan correctamente', 'No recibo las notificaciones por email', 'El sitio web carga muy lentamente'],
+      'Contratos': ['Cliente solicita devolución de depósito por terminación de contrato', 'Necesito modificar las condiciones del contrato actual', 'La firma digital no se está procesando correctamente', 'Solicito acuerdo mutuo para terminación anticipada', 'Los términos del contrato necesitan actualización'],
+      'Propiedades': ['Inquilino reporta que no puede acceder a la propiedad arrendada', 'Se detectaron daños que no estaban en el inventario inicial', 'Las llaves de repuesto se perdieron y necesito duplicados', 'Se requiere inspección urgente por daños en el techo', 'La propiedad necesita mantenimiento inmediato'],
+      'Cuenta': ['Cliente necesita actualizar su información de contacto', 'No puedo cambiar mi contraseña por problemas técnicos', 'El proceso de verificación de identidad falló', 'Mi perfil muestra información incorrecta', 'Las preferencias de notificación no se guardan'],
+      'Mantenimiento': ['La grifería del baño principal está goteando constantemente', 'Los interruptores eléctricos no funcionan correctamente', 'La puerta principal se atasca y no cierra bien', 'El sistema de calefacción no enciende en las mañanas', 'Hay una filtración de agua en el techo del living'],
+      'Legal': ['Hay una disputa contractual que requiere resolución legal', 'Necesito asistencia legal para un problema contractual', 'El inquilino presentó un reclamo formal por daños', 'Se requiere mediación para resolver diferencias', 'Consulta legal sobre términos contractuales'],
+      'General': ['Tengo una consulta general sobre el funcionamiento de la plataforma', 'Quisiera sugerir una mejora en la interfaz de usuario', 'Tengo una pregunta frecuente sobre los servicios', 'Me gustaría dejar un comentario sobre la atención', 'Necesito soporte adicional para entender una funcionalidad']
+    };
+
+    const categoryDescriptions = descriptions[category] || descriptions['General'] || ['Consulta general del usuario'];
+    return categoryDescriptions[Math.floor(Math.random() * categoryDescriptions.length)] || 'Consulta general del usuario';
   };
 
   // Funciones handle para los botones
@@ -218,18 +259,109 @@ export default function TicketsPage() {
     window.location.href = `/support/tickets/${ticketId}`;
   };
 
-  const handleUpdateStatus = (ticketId: string, newStatus: string) => {
-    // Update ticket status
-    setSuccessMessage(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+  const handleUpdateStatus = async (ticketId: string, newStatus: Ticket['status']) => {
+    try {
+      // Update local state first for immediate UI feedback
+      setTickets(prevTickets =>
+        prevTickets.map(ticket =>
+          ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
+        )
+      );
+
+      // Update stats
+      setStats(prevStats => ({
+        ...prevStats,
+        [newStatus.toLowerCase()]: prevStats[newStatus.toLowerCase() as keyof TicketStats] as number + 1,
+        [tickets.find(t => t.id === ticketId)?.status?.toLowerCase() || 'total']: (prevStats[tickets.find(t => t.id === ticketId)?.status?.toLowerCase() as keyof TicketStats] as number) - 1
+      }));
+
+      // Try to update via API
+      try {
+        const response = await fetch(`/api/tickets/${ticketId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.ok) {
+          setSuccessMessage(`Estado del ticket ${ticketId} actualizado a: ${newStatus}`);
+        } else {
+          throw new Error('Error en la API');
+        }
+      } catch (apiError) {
+        console.warn('API no disponible, cambio aplicado localmente:', apiError);
+        setSuccessMessage(`Estado del ticket ${ticketId} actualizado localmente a: ${newStatus}`);
+      }
+
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Error al actualizar el estado del ticket');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
   };
 
-  const handleAssignTicket = (ticketId: string) => {
-    // Assign ticket to support agent
-    const agent = prompt('Asignar ticket a:', 'soporte@rent360.cl');
-    if (agent) {
-      setSuccessMessage(`Ticket asignado exitosamente a: ${agent}`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+  const handleAssignTicket = async (ticketId: string) => {
+    const agents = ['María González', 'Juan Pérez', 'Ana Martínez', 'Carlos Rodríguez', 'Soporte Senior', 'Luis Torres'];
+    const currentAgent = tickets.find(t => t.id === ticketId)?.assignedTo;
+
+    // Create a simple dropdown selection
+    const agentOptions = agents.map((agent, index) =>
+      `${index + 1}. ${agent}${currentAgent === agent ? ' (actual)' : ''}`
+    ).join('\n');
+
+    const selection = prompt(
+      `Seleccionar agente para asignar el ticket:\n\n${agentOptions}\n\nIngrese el número (1-${agents.length}):`
+    );
+
+    if (selection) {
+      const agentIndex = parseInt(selection) - 1;
+      if (agentIndex >= 0 && agentIndex < agents.length) {
+        const selectedAgent = agents[agentIndex];
+
+        try {
+          // Update local state first
+          setTickets(prevTickets =>
+            prevTickets.map(ticket => {
+              if (ticket.id === ticketId) {
+                const updatedTicket = { ...ticket };
+                if (selectedAgent) {
+                  updatedTicket.assignedTo = selectedAgent;
+                } else {
+                  delete updatedTicket.assignedTo;
+                }
+                return updatedTicket;
+              }
+              return ticket;
+            })
+          );
+
+          // Try to update via API
+          try {
+            const response = await fetch(`/api/tickets/${ticketId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ assignedTo: selectedAgent })
+            });
+
+            if (response.ok) {
+              setSuccessMessage(`Ticket asignado exitosamente a: ${selectedAgent}`);
+            } else {
+              throw new Error('Error en la API');
+            }
+          } catch (apiError) {
+            console.warn('API no disponible, cambio aplicado localmente:', apiError);
+            setSuccessMessage(`Ticket asignado localmente a: ${selectedAgent}`);
+          }
+
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (error) {
+          setErrorMessage('Error al asignar el ticket');
+          setTimeout(() => setErrorMessage(''), 5000);
+        }
+      } else {
+        setErrorMessage('Selección inválida');
+        setTimeout(() => setErrorMessage(''), 3000);
+      }
     }
   };
 
@@ -502,6 +634,9 @@ export default function TicketsPage() {
                 <option value="Contratos">Contratos</option>
                 <option value="Propiedades">Propiedades</option>
                 <option value="Cuenta">Cuenta</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+                <option value="Legal">Legal</option>
+                <option value="General">General</option>
               </select>
             </div>
 
@@ -533,28 +668,37 @@ export default function TicketsPage() {
           </CardContent>
         </Card>
 
-        {/* Lista de tickets */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Tickets ({tickets.length})</CardTitle>
-                <CardDescription>Lista de tickets filtrados según tus criterios</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar
-                </Button>
-                <Link href="/support/tickets/new">
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Ticket
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardHeader>
+        {/* Tabs para diferentes vistas */}
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="list">Lista de Tickets</TabsTrigger>
+            <TabsTrigger value="board">Vista Tablero</TabsTrigger>
+            <TabsTrigger value="analytics">Análisis</TabsTrigger>
+          </TabsList>
+
+          {/* Vista de Lista */}
+          <TabsContent value="list" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Tickets ({tickets.length})</CardTitle>
+                    <CardDescription>Lista de tickets filtrados según tus criterios</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportTickets}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar
+                    </Button>
+                    <Link href="/support/tickets/new">
+                      <Button size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nuevo Ticket
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardHeader>
           <CardContent>
             <ScrollArea className="h-[600px]">
               <div className="space-y-4">
@@ -659,6 +803,231 @@ export default function TicketsPage() {
             </ScrollArea>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* Vista de Tablero Kanban */}
+          <TabsContent value="board" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Columna ABIERTOS */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    Abiertos ({tickets.filter(t => t.status === 'OPEN').length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <ScrollArea className="h-[400px]">
+                    {tickets.filter(t => t.status === 'OPEN').slice(0, 10).map(ticket => (
+                      <div key={ticket.id} className="p-3 bg-gray-50 rounded-lg border mb-2 hover:shadow-sm transition-shadow">
+                        <h4 className="font-medium text-sm mb-1 truncate">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{ticket.clientName}</span>
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Columna EN PROGRESO */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    En Progreso ({tickets.filter(t => t.status === 'IN_PROGRESS').length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <ScrollArea className="h-[400px]">
+                    {tickets.filter(t => t.status === 'IN_PROGRESS').slice(0, 10).map(ticket => (
+                      <div key={ticket.id} className="p-3 bg-gray-50 rounded-lg border mb-2 hover:shadow-sm transition-shadow">
+                        <h4 className="font-medium text-sm mb-1 truncate">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{ticket.clientName}</span>
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Columna RESUELTOS */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    Resueltos ({tickets.filter(t => t.status === 'RESOLVED').length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <ScrollArea className="h-[400px]">
+                    {tickets.filter(t => t.status === 'RESOLVED').slice(0, 10).map(ticket => (
+                      <div key={ticket.id} className="p-3 bg-gray-50 rounded-lg border mb-2 hover:shadow-sm transition-shadow">
+                        <h4 className="font-medium text-sm mb-1 truncate">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{ticket.clientName}</span>
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Columna ESCALADOS */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    Escalados ({tickets.filter(t => t.status === 'ESCALATED').length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <ScrollArea className="h-[400px]">
+                    {tickets.filter(t => t.status === 'ESCALATED').slice(0, 10).map(ticket => (
+                      <div key={ticket.id} className="p-3 bg-gray-50 rounded-lg border mb-2 hover:shadow-sm transition-shadow">
+                        <h4 className="font-medium text-sm mb-1 truncate">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{ticket.clientName}</span>
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Columna CERRADOS */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                    Cerrados ({tickets.filter(t => t.status === 'CLOSED').length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <ScrollArea className="h-[400px]">
+                    {tickets.filter(t => t.status === 'CLOSED').slice(0, 10).map(ticket => (
+                      <div key={ticket.id} className="p-3 bg-gray-50 rounded-lg border mb-2 hover:shadow-sm transition-shadow">
+                        <h4 className="font-medium text-sm mb-1 truncate">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{ticket.clientName}</span>
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Vista de Análisis */}
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Tasa de Resolución */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Tasa de Resolución</CardTitle>
+                  <CardDescription>Eficiencia del equipo de soporte</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    {stats.total > 0 ? Math.round(((stats.resolved + stats.closed) / stats.total) * 100) : 0}%
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {stats.resolved + stats.closed} de {stats.total} tickets resueltos
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Tiempo Promedio de Respuesta */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Tiempo Promedio</CardTitle>
+                  <CardDescription>Respuesta inicial</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    {Math.round(tickets.reduce((sum, t) => {
+                      const created = new Date(t.createdAt);
+                      const updated = new Date(t.updatedAt);
+                      return sum + (updated.getTime() - created.getTime()) / (1000 * 60 * 60);
+                    }, 0) / Math.max(tickets.length, 1))}h
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Tiempo promedio de primera respuesta
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Tickets por Categoría */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Categorías Más Comunes</CardTitle>
+                  <CardDescription>Distribución por tipo de problema</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Object.entries(
+                      tickets.reduce((acc, ticket) => {
+                        acc[ticket.category] = (acc[ticket.category] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)
+                    )
+                      .sort(([,a], [,b]) => b - a)
+                      .slice(0, 3)
+                      .map(([category, count]) => (
+                        <div key={category} className="flex justify-between items-center">
+                          <span className="text-sm">{category}</span>
+                          <Badge variant="secondary">{count}</Badge>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráfico de Tendencias */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tendencias de los Últimos 7 Días</CardTitle>
+                <CardDescription>Volumen de tickets por día</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (6 - i));
+                    const dayTickets = tickets.filter(t => {
+                      const ticketDate = new Date(t.createdAt);
+                      return ticketDate.toDateString() === date.toDateString();
+                    });
+
+                    return (
+                      <div key={i} className="text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">
+                          {dayTickets.length}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {date.toLocaleDateString('es-CL', { weekday: 'short' })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Acciones rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

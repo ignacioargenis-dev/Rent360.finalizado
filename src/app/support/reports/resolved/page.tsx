@@ -48,7 +48,7 @@ interface ResolvedTicket {
   resolutionTime: number; // en horas
   resolutionDate: string;
   assignedTo: string;
-  satisfactionRating?: number;
+  satisfactionRating: number | undefined;
   userType: 'TENANT' | 'OWNER' | 'BROKER' | 'SUPPORT' | 'ADMIN';
   resolutionMethod: 'DIRECT' | 'ESCALATED' | 'EXTERNAL';
   complexity: 'SIMPLE' | 'MEDIUM' | 'COMPLEX';
@@ -128,11 +128,17 @@ export default function TicketsResueltosPage() {
       const resolutionDate = new Date();
       resolutionDate.setDate(resolutionDate.getDate() - daysAgo);
 
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      const priority = priorities[Math.floor(Math.random() * priorities.length)];
-      const userType = userTypes[Math.floor(Math.random() * userTypes.length)];
-      const method = methods[Math.floor(Math.random() * methods.length)];
-      const complexity = complexities[Math.floor(Math.random() * complexities.length)];
+      const categoryIndex = Math.floor(Math.random() * categories.length);
+      const priorityIndex = Math.floor(Math.random() * priorities.length);
+      const userTypeIndex = Math.floor(Math.random() * userTypes.length);
+      const methodIndex = Math.floor(Math.random() * methods.length);
+      const complexityIndex = Math.floor(Math.random() * complexities.length);
+
+      const category = categories[categoryIndex]!;
+      const priority = priorities[priorityIndex]!;
+      const userType = userTypes[userTypeIndex]!;
+      const method = methods[methodIndex]!;
+      const complexity = complexities[complexityIndex]!;
 
       // Calcular tiempo de resolución basado en complejidad y prioridad
       let baseTime = 2; // horas mínimas

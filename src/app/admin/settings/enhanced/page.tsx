@@ -54,6 +54,7 @@ import { Settings,
   Image,
   File,
   Folder,
+  FolderOpen,
   Trash2,
   Archive,
   Share2,
@@ -84,10 +85,23 @@ import { Settings,
   ToggleRight,
   User,
   Truck,
-  Wrench } from 'lucide-react';
+  Wrench,
+  X } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { User as UserType } from '@/types';
 
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  variables: string[];
+  category: 'welcome' | 'notification' | 'marketing' | 'transaction' | 'support' | 'custom';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface SystemSettings {
   // Configuración General
@@ -293,6 +307,12 @@ interface SystemSettings {
 export default function EnhancedAdminSettingsPage() {
 
   const [user, setUser] = useState<UserType | null>(null);
+
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState('');
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('all');
 
   const [settings, setSettings] = useState<SystemSettings>({
     // Configuración General
@@ -517,6 +537,156 @@ export default function EnhancedAdminSettingsPage() {
           // Merge with default settings
           setSettings(prev => ({...prev, ...settingsData.settings}));
         }
+
+        // Load email templates
+        const templatesResponse = await fetch('/api/admin/email-templates');
+        if (templatesResponse.ok) {
+          const templatesData = await templatesResponse.json();
+          setEmailTemplates(templatesData.templates || []);
+        } else {
+          // Initialize with default templates
+          const defaultTemplates: EmailTemplate[] = [
+            {
+              id: '1',
+              name: 'Bienvenida de Usuario',
+              subject: '¡Bienvenido a Rent360!',
+              content: `¡Hola {{userName}}!
+
+Bienvenido a Rent360, tu plataforma de alquiler de propiedades en Chile.
+
+Estamos emocionados de tenerte con nosotros. Aquí podrás:
+- Encontrar la propiedad perfecta para ti
+- Gestionar tus contratos de manera segura
+- Recibir soporte personalizado
+
+Tu cuenta ha sido activada exitosamente.
+
+¡Comienza explorando propiedades disponibles!
+
+Saludos cordiales,
+El equipo de Rent360`,
+              variables: ['userName'],
+              category: 'welcome',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: '2',
+              name: 'Confirmación de Contrato',
+              subject: 'Contrato confirmado - {{propertyTitle}}',
+              content: `¡Hola {{userName}}!
+
+Tu contrato para la propiedad "{{propertyTitle}}" ha sido confirmado exitosamente.
+
+Detalles del contrato:
+- Propiedad: {{propertyTitle}}
+- Dirección: {{propertyAddress}}
+- Monto mensual: {{monthlyRent}}
+- Fecha de inicio: {{startDate}}
+- Fecha de término: {{endDate}}
+
+Puedes revisar todos los detalles en tu panel de usuario.
+
+Si tienes alguna pregunta, no dudes en contactarnos.
+
+¡Felicitaciones por tu nueva propiedad!
+
+Saludos cordiales,
+El equipo de Rent360`,
+              variables: ['userName', 'propertyTitle', 'propertyAddress', 'monthlyRent', 'startDate', 'endDate'],
+              category: 'transaction',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: '3',
+              name: 'Recordatorio de Pago',
+              subject: 'Recordatorio: Pago pendiente - {{propertyTitle}}',
+              content: `Hola {{userName}},
+
+Te recordamos que tienes un pago pendiente para tu propiedad "{{propertyTitle}}".
+
+Detalles del pago:
+- Monto: {{amount}}
+- Fecha límite: {{dueDate}}
+- Propiedad: {{propertyTitle}}
+
+Por favor, realiza el pago a tiempo para evitar cargos adicionales.
+
+Si ya realizaste el pago, puedes ignorar este mensaje.
+
+¿Necesitas ayuda? Contáctanos.
+
+Saludos cordiales,
+El equipo de Rent360`,
+              variables: ['userName', 'propertyTitle', 'amount', 'dueDate'],
+              category: 'notification',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: '4',
+              name: 'Solicitud de Mantenimiento Recibida',
+              subject: 'Solicitud de mantenimiento recibida - {{propertyTitle}}',
+              content: `Hola {{userName}},
+
+Hemos recibido tu solicitud de mantenimiento para la propiedad "{{propertyTitle}}".
+
+Detalles de la solicitud:
+- Tipo: {{maintenanceType}}
+- Descripción: {{description}}
+- Prioridad: {{priority}}
+- ID de solicitud: {{requestId}}
+
+Un proveedor de servicios será asignado pronto y se pondrá en contacto contigo para programar la visita.
+
+Tiempo estimado de respuesta: 24-48 horas.
+
+Si tienes alguna urgencia adicional, por favor contáctanos directamente.
+
+Gracias por mantener tu propiedad en óptimas condiciones.
+
+Saludos cordiales,
+El equipo de Rent360`,
+              variables: ['userName', 'propertyTitle', 'maintenanceType', 'description', 'priority', 'requestId'],
+              category: 'support',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: '5',
+              name: 'Nueva Propiedad Disponible',
+              subject: '¡Nueva propiedad disponible en tu zona!',
+              content: `¡Hola {{userName}}!
+
+Tenemos una nueva propiedad que podría interesarte:
+
+🏠 {{propertyTitle}}
+📍 {{propertyAddress}}
+💰 {{monthlyRent}} mensual
+🛏️ {{bedrooms}} dormitorio(s), 🛁 {{bathrooms}} baño(s)
+
+Esta propiedad cumple con tus criterios de búsqueda y está disponible ahora mismo.
+
+¿Te interesa conocer más detalles? Visita nuestra plataforma y agenda una visita virtual.
+
+¡No pierdas la oportunidad!
+
+Saludos cordiales,
+El equipo de Rent360`,
+              variables: ['userName', 'propertyTitle', 'propertyAddress', 'monthlyRent', 'bedrooms', 'bathrooms'],
+              category: 'marketing',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ];
+          setEmailTemplates(defaultTemplates);
+        }
       } catch (error) {
         logger.error('Error loading data:', { error: error instanceof Error ? error.message : String(error) });
       }
@@ -560,6 +730,7 @@ export default function EnhancedAdminSettingsPage() {
     { id: 'notifications', label: 'Notificaciones', icon: Bell },
     { id: 'security', label: 'Seguridad', icon: Shield },
     { id: 'email', label: 'Email', icon: Mail },
+    { id: 'email-templates', label: 'Plantillas Email', icon: FileText },
     { id: 'payments', label: 'Pagos', icon: CreditCard },
     { id: 'integrations', label: 'Integraciones', icon: Link },
     { id: 'footer', label: 'Footer', icon: FileText },
@@ -568,6 +739,110 @@ export default function EnhancedAdminSettingsPage() {
     { id: 'performance', label: 'Rendimiento', icon: BarChart3 },
     { id: 'legal', label: 'Legal', icon: FileText },
   ];
+
+  // Email Templates functions
+  const handleCreateTemplate = () => {
+    setSelectedTemplate(null);
+    setShowTemplateModal(true);
+  };
+
+  const handleEditTemplate = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setShowTemplateModal(true);
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return;
+
+    try {
+      setEmailTemplates(prev => prev.filter(t => t.id !== templateId));
+      // Here you would make an API call to delete the template
+    } catch (error) {
+      logger.error('Error deleting template:', { error });
+    }
+  };
+
+  const handleSaveTemplate = async (templateData: Partial<EmailTemplate>) => {
+    try {
+      if (selectedTemplate) {
+        // Update existing template
+        setEmailTemplates(prev => prev.map(t =>
+          t.id === selectedTemplate.id
+            ? { ...t, ...templateData, updatedAt: new Date().toISOString() }
+            : t
+        ));
+      } else {
+        // Create new template
+        const newTemplate: EmailTemplate = {
+          id: String(Date.now()),
+          name: templateData.name || '',
+          subject: templateData.subject || '',
+          content: templateData.content || '',
+          variables: templateData.variables || [],
+          category: templateData.category || 'custom',
+          isActive: templateData.isActive ?? true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setEmailTemplates(prev => [...prev, newTemplate]);
+      }
+
+      setShowTemplateModal(false);
+      setSelectedTemplate(null);
+    } catch (error) {
+      logger.error('Error saving template:', { error });
+    }
+  };
+
+  const handleToggleTemplateStatus = (templateId: string) => {
+    setEmailTemplates(prev => prev.map(t =>
+      t.id === templateId
+        ? { ...t, isActive: !t.isActive, updatedAt: new Date().toISOString() }
+        : t
+    ));
+  };
+
+  const getFilteredTemplates = () => {
+    let filtered = emailTemplates;
+
+    if (templateCategoryFilter !== 'all') {
+      filtered = filtered.filter(t => t.category === templateCategoryFilter);
+    }
+
+    if (templateSearch) {
+      filtered = filtered.filter(t =>
+        t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+        t.subject.toLowerCase().includes(templateSearch.toLowerCase()) ||
+        t.content.toLowerCase().includes(templateSearch.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const getCategoryLabel = (category: EmailTemplate['category']) => {
+    const labels = {
+      welcome: 'Bienvenida',
+      notification: 'Notificación',
+      marketing: 'Marketing',
+      transaction: 'Transacción',
+      support: 'Soporte',
+      custom: 'Personalizado'
+    };
+    return labels[category];
+  };
+
+  const getCategoryColor = (category: EmailTemplate['category']) => {
+    const colors = {
+      welcome: 'bg-green-100 text-green-800',
+      notification: 'bg-blue-100 text-blue-800',
+      marketing: 'bg-purple-100 text-purple-800',
+      transaction: 'bg-orange-100 text-orange-800',
+      support: 'bg-red-100 text-red-800',
+      custom: 'bg-gray-100 text-gray-800'
+    };
+    return colors[category];
+  };
 
   const renderGeneralSettings = () => (
     <div className="grid lg:grid-cols-2 gap-8">
@@ -3408,6 +3683,222 @@ export default function EnhancedAdminSettingsPage() {
     );
   }
 
+  const renderEmailTemplatesSettings = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Plantillas de Email</h2>
+          <p className="text-gray-600 mt-1">Gestiona las plantillas de correos electrónicos del sistema</p>
+        </div>
+        <Button onClick={handleCreateTemplate}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva Plantilla
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Plantillas</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{emailTemplates.length}</div>
+            <p className="text-xs text-muted-foreground">En el sistema</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Activas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {emailTemplates.filter(t => t.isActive).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Plantillas activas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Por Categoría</CardTitle>
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {new Set(emailTemplates.map(t => t.category)).size}
+            </div>
+            <p className="text-xs text-muted-foreground">Categorías distintas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Variables Totales</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {emailTemplates.reduce((sum, t) => sum + t.variables.length, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">Variables definidas</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters and Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar plantillas..."
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <Select value={templateCategoryFilter} onValueChange={setTemplateCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas las categorías" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las categorías</SelectItem>
+                <SelectItem value="welcome">Bienvenida</SelectItem>
+                <SelectItem value="notification">Notificación</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+                <SelectItem value="transaction">Transacción</SelectItem>
+                <SelectItem value="support">Soporte</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setTemplateSearch('');
+                  setTemplateCategoryFilter('all');
+                }}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Limpiar Filtros
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Templates List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {getFilteredTemplates().map(template => (
+          <Card key={template.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                  <CardDescription className="mt-1">
+                    Asunto: {template.subject}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={getCategoryColor(template.category)}>
+                    {getCategoryLabel(template.category)}
+                  </Badge>
+                  <Switch
+                    checked={template.isActive}
+                    onCheckedChange={() => handleToggleTemplateStatus(template.id)}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600 line-clamp-3">
+                    {template.content.substring(0, 150)}...
+                  </p>
+                </div>
+
+                {template.variables.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Variables disponibles:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {template.variables.slice(0, 4).map(variable => (
+                        <Badge key={variable} variant="outline" className="text-xs">
+                          {variable}
+                        </Badge>
+                      ))}
+                      {template.variables.length > 4 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{template.variables.length - 4}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    {new Date(template.updatedAt).toLocaleDateString('es-CL')}
+                  </div>
+
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditTemplate(template)}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {getFilteredTemplates().length === 0 && (
+        <Card>
+          <CardContent className="pt-8 pb-8 text-center">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {templateSearch || templateCategoryFilter !== 'all'
+                ? 'No se encontraron plantillas'
+                : 'No hay plantillas de email'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {templateSearch || templateCategoryFilter !== 'all'
+                ? 'Intenta con otros criterios de búsqueda'
+                : 'Crea tu primera plantilla de email para comenzar'}
+            </p>
+            <Button onClick={handleCreateTemplate}>
+              <Plus className="w-4 h-4 mr-2" />
+              Crear Plantilla
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   return (
     <UnifiedDashboardLayout title="Configuración Avanzada" subtitle="Gestiona toda la configuración del sistema Rent360">
       <div className="container mx-auto px-4 py-6 space-y-6">
@@ -3460,6 +3951,7 @@ export default function EnhancedAdminSettingsPage() {
           {activeTab === 'notifications' && renderNotificationSettings()}
           {activeTab === 'security' && renderSecuritySettings()}
           {activeTab === 'email' && renderEmailSettings()}
+          {activeTab === 'email-templates' && renderEmailTemplatesSettings()}
           {activeTab === 'payments' && renderPaymentSettings()}
           {activeTab === 'integrations' && renderIntegrationSettings()}
           {activeTab === 'advanced' && renderAdvancedSettings()}
@@ -3468,6 +3960,165 @@ export default function EnhancedAdminSettingsPage() {
           {activeTab === 'footer' && renderFooterSettings()}
           {activeTab === 'legal' && renderLegalSettings()}
         </div>
+
+        {/* Email Template Modal */}
+        {showTemplateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {selectedTemplate ? 'Editar Plantilla' : 'Crear Nueva Plantilla'}
+                </h2>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowTemplateModal(false)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target as HTMLFormElement);
+                  const templateData = {
+                    name: formData.get('name') as string,
+                    subject: formData.get('subject') as string,
+                    content: formData.get('content') as string,
+                    category: formData.get('category') as EmailTemplate['category'],
+                    variables: (formData.get('variables') as string)?.split(',').map(v => v.trim()).filter(v => v) || [],
+                    isActive: formData.get('isActive') === 'true',
+                  };
+                  handleSaveTemplate(templateData);
+                }}>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nombre de la Plantilla *
+                        </label>
+                        <Input
+                          name="name"
+                          defaultValue={selectedTemplate?.name || ''}
+                          placeholder="Ej: Bienvenida de Usuario"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Categoría *
+                        </label>
+                        <Select name="category" defaultValue={selectedTemplate?.category || 'custom'}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar categoría" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="welcome">Bienvenida</SelectItem>
+                            <SelectItem value="notification">Notificación</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                            <SelectItem value="transaction">Transacción</SelectItem>
+                            <SelectItem value="support">Soporte</SelectItem>
+                            <SelectItem value="custom">Personalizado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Asunto del Email *
+                      </label>
+                      <Input
+                        name="subject"
+                        defaultValue={selectedTemplate?.subject || ''}
+                        placeholder="Ej: ¡Bienvenido a Rent360!"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Puedes usar variables como {'{{userName}}'}, {'{{propertyTitle}}'}, etc.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Variables Disponibles
+                      </label>
+                      <Input
+                        name="variables"
+                        defaultValue={selectedTemplate?.variables?.join(', ') || ''}
+                        placeholder="Ej: userName, propertyTitle, monthlyRent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Separa las variables con comas. Estas estarán disponibles para usar en el asunto y contenido.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contenido del Email *
+                      </label>
+                      <Textarea
+                        name="content"
+                        defaultValue={selectedTemplate?.content || ''}
+                        placeholder="Escribe el contenido del email..."
+                        rows={15}
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Usa las variables definidas arriba con el formato {'{{variableName}}'}.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        id="isActive"
+                        defaultChecked={selectedTemplate?.isActive ?? true}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                        Plantilla activa
+                      </label>
+                    </div>
+
+                    {selectedTemplate && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-700 mb-2">Información de la Plantilla</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium">Creada:</span>{' '}
+                            {new Date(selectedTemplate.createdAt).toLocaleDateString('es-CL')}
+                          </div>
+                          <div>
+                            <span className="font-medium">Última actualización:</span>{' '}
+                            {new Date(selectedTemplate.updatedAt).toLocaleDateString('es-CL')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 pt-4 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowTemplateModal(false)}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button type="submit" className="flex-1">
+                        {selectedTemplate ? 'Actualizar Plantilla' : 'Crear Plantilla'}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );

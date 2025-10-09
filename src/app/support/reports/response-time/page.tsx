@@ -116,14 +116,18 @@ export default function TiempodeRespuestaPage() {
     const tickets: ResponseTimeData[] = [];
 
     // Generar 200 tickets de los últimos 30 días
-    for (let i = 0; (i = 200); i++) {
+    for (let i = 0; i < 200; i++) {
       const daysAgo = Math.floor(Math.random() * 30);
       const createdAt = new Date();
       createdAt.setDate(createdAt.getDate() - daysAgo);
 
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      const priority = priorities[Math.floor(Math.random() * priorities.length)];
-      const userType = userTypes[Math.floor(Math.random() * userTypes.length)];
+      const categoryIndex = Math.floor(Math.random() * categories.length);
+      const priorityIndex = Math.floor(Math.random() * priorities.length);
+      const userTypeIndex = Math.floor(Math.random() * userTypes.length);
+
+      const category = categories[categoryIndex]!;
+      const priority = priorities[priorityIndex]!;
+      const userType = userTypes[userTypeIndex]!;
 
       // Calcular tiempo de primera respuesta basado en prioridad y carga
       let baseFirstResponseTime = 30; // minutos base
@@ -262,9 +266,12 @@ export default function TiempodeRespuestaPage() {
     const dailyTrends = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = date.toISOString().split('T')[0]!;
 
-      const dayTickets = tickets.filter(t => t.createdAt.startsWith(dateStr));
+      const dayTickets = tickets.filter(t => {
+        const ticketDate = t.createdAt;
+        return ticketDate && ticketDate.startsWith(dateStr);
+      });
       const avgResponse =
         dayTickets.length > 0
           ? dayTickets.reduce((sum, t) => sum + t.firstResponseTime, 0) / dayTickets.length
