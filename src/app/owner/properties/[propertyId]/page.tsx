@@ -311,6 +311,35 @@ export default function OwnerPropertyDetailPage() {
     router.push(`/owner/maintenance/new?propertyId=${propertyId}`);
   };
 
+  const handleViewContract = () => {
+    if (property?.currentTenant) {
+      // Buscar el contrato activo para esta propiedad
+      router.push(`/owner/contracts?propertyId=${propertyId}`);
+    } else {
+      alert('Esta propiedad no tiene un contrato activo.');
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (property?.currentTenant) {
+      router.push(
+        `/owner/messages/new?recipientEmail=${encodeURIComponent(property.currentTenant.email)}&propertyId=${propertyId}`
+      );
+    } else {
+      alert('Esta propiedad no tiene un inquilino asignado.');
+    }
+  };
+
+  const handleViewPayments = () => {
+    if (property?.currentTenant) {
+      router.push(
+        `/owner/payments?propertyId=${propertyId}&tenantEmail=${encodeURIComponent(property.currentTenant.email)}`
+      );
+    } else {
+      alert('Esta propiedad no tiene un inquilino asignado.');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'available':
@@ -724,15 +753,15 @@ export default function OwnerPropertyDetailPage() {
                         <Phone className="w-4 h-4 mr-2" />
                         Llamar por Teléfono
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={handleViewContract}>
                         <FileText className="w-4 h-4 mr-2" />
                         Ver Contrato
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={handleSendMessage}>
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Enviar Mensaje
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={handleViewPayments}>
                         <DollarSign className="w-4 h-4 mr-2" />
                         Ver Pagos
                       </Button>

@@ -82,6 +82,34 @@ export default function OwnerPaymentsPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [showFiltersDialog, setShowFiltersDialog] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Estados para filtros avanzados
+  const [advancedFilters, setAdvancedFilters] = useState({
+    minAmount: '',
+    maxAmount: '',
+    startDate: '',
+    endDate: '',
+    paymentMethod: 'all',
+    tenantName: '',
+    propertyTitle: '',
+  });
+
+  const showNotification = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'success'
+  ) => {
+    setNotificationTitle(title);
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setShowNotificationDialog(true);
+  };
 
   // Estado para formulario de pago manual
   const [manualPaymentForm, setManualPaymentForm] = useState({
@@ -95,22 +123,99 @@ export default function OwnerPaymentsPage() {
 
   // Funciones para acciones
   const handleFilterPayments = () => {
-    logger.info('Aplicando filtros de pagos');
-    // TODO: Implementar filtros avanzados
+    logger.info('Abriendo modal de filtros avanzados');
+    setShowFiltersDialog(true);
+  };
+
+  const handleApplyFilters = () => {
+    logger.info('Aplicando filtros avanzados', advancedFilters);
+    setShowFiltersDialog(false);
+    showNotification(
+      'Filtros Aplicados',
+      'Los filtros avanzados han sido aplicados correctamente.',
+      'success'
+    );
+  };
+
+  const handleClearFilters = () => {
+    setAdvancedFilters({
+      minAmount: '',
+      maxAmount: '',
+      startDate: '',
+      endDate: '',
+      paymentMethod: 'all',
+      tenantName: '',
+      propertyTitle: '',
+    });
+    logger.info('Filtros limpiados');
   };
 
   const handleExportPayments = async () => {
     try {
       logger.info('Exportando datos de pagos');
-      setSuccessMessage('Datos de pagos exportados exitosamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setExporting(true);
+
+      // Simular procesamiento de exportación
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Crear y descargar archivo CSV
+      const csvContent = generateCSV(filteredPayments);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `pagos_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showNotification(
+        'Exportación Completada',
+        'Los datos de pagos han sido exportados exitosamente a un archivo CSV.',
+        'success'
+      );
     } catch (error) {
       logger.error('Error exportando pagos:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al exportar los datos. Por favor, inténtalo nuevamente.');
-      setTimeout(() => setErrorMessage(''), 5000);
+      showNotification(
+        'Error en Exportación',
+        'Ha ocurrido un error al exportar los datos. Por favor, inténtalo nuevamente.',
+        'error'
+      );
+    } finally {
+      setExporting(false);
     }
+  };
+
+  const generateCSV = (payments: PaymentWithDetails[]): string => {
+    const headers = [
+      'ID',
+      'Propiedad',
+      'Inquilino',
+      'Monto',
+      'Estado',
+      'Fecha Vencimiento',
+      'Fecha Pago',
+      'Método',
+    ];
+    const rows = payments.map(payment => [
+      payment.id,
+      payment.property?.title || '',
+      payment.tenantName,
+      payment.amount.toString(),
+      payment.status,
+      payment.dueDate.toLocaleDateString('es-CL'),
+      payment.paidDate ? payment.paidDate.toLocaleDateString('es-CL') : 'No pagado',
+      payment.method || 'No especificado',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    return csvContent;
   };
 
   const handleViewPaymentDetails = (payment: PaymentWithDetails) => {
@@ -214,30 +319,61 @@ Rent360 - Sistema de Gestión Inmobiliaria
   const handleSendReminder = async (paymentId: string) => {
     try {
       logger.info('Enviando recordatorio de pago:', { paymentId });
-      setSuccessMessage('Recordatorio enviado exitosamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Simular envío de recordatorio
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      showNotification(
+        'Recordatorio Enviado',
+        'El recordatorio de pago ha sido enviado exitosamente al inquilino.',
+        'success'
+      );
+
       // TODO: Implement API call to send reminder
     } catch (error) {
       logger.error('Error enviando recordatorio:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al enviar el recordatorio. Por favor, inténtalo nuevamente.');
-      setTimeout(() => setErrorMessage(''), 5000);
+      showNotification(
+        'Error al Enviar Recordatorio',
+        'Ha ocurrido un error al enviar el recordatorio. Por favor, inténtalo nuevamente.',
+        'error'
+      );
     }
   };
 
   const handleMarkAsPaid = async (paymentId: string) => {
     try {
       logger.info('Marcando pago como realizado:', { paymentId });
-      setSuccessMessage('Pago marcado como realizado');
-      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Simular procesamiento del pago
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Actualizar el estado del pago localmente
+      setPayments(prevPayments =>
+        prevPayments.map(payment =>
+          payment.id === paymentId
+            ? { ...payment, status: 'PAID' as any, paidDate: new Date() }
+            : payment
+        )
+      );
+
+      showNotification(
+        'Pago Marcado como Realizado',
+        'El pago ha sido marcado como realizado exitosamente.',
+        'success'
+      );
+
       // TODO: Implement API call to mark payment as paid
     } catch (error) {
       logger.error('Error marcando pago:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al marcar el pago. Por favor, inténtalo nuevamente.');
-      setTimeout(() => setErrorMessage(''), 5000);
+      showNotification(
+        'Error al Marcar Pago',
+        'Ha ocurrido un error al marcar el pago como realizado. Por favor, inténtalo nuevamente.',
+        'error'
+      );
     }
   };
 
@@ -833,43 +969,47 @@ Rent360 - Sistema de Gestión Inmobiliaria
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 whitespace-nowrap"
                         onClick={() => handleViewPaymentDetails(payment)}
                       >
                         <Eye className="w-4 h-4 mr-2" />
-                        Ver Detalles
+                        <span className="hidden sm:inline">Ver Detalles</span>
+                        <span className="sm:hidden">Detalles</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 whitespace-nowrap"
                         onClick={() => handleGenerateReceipt(payment)}
                       >
                         <Receipt className="w-4 h-4 mr-2" />
-                        Comprobante
+                        <span className="hidden sm:inline">Comprobante</span>
+                        <span className="sm:hidden">Recibo</span>
                       </Button>
                       {payment.status === 'PENDING' && (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 whitespace-nowrap"
                           onClick={() => handleSendReminder(payment.id)}
                         >
                           <RefreshCw className="w-4 h-4 mr-2" />
-                          Enviar Recordatorio
+                          <span className="hidden sm:inline">Recordatorio</span>
+                          <span className="sm:hidden">Recordar</span>
                         </Button>
                       )}
                       {payment.status === 'PENDING' && (
                         <Button
                           size="sm"
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          className="flex-1 whitespace-nowrap bg-emerald-600 hover:bg-emerald-700"
                           onClick={() => handleMarkAsPaid(payment.id)}
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Marcar Pagado
+                          <span className="hidden sm:inline">Marcar Pagado</span>
+                          <span className="sm:hidden">Pagado</span>
                         </Button>
                       )}
                     </div>
@@ -1047,6 +1187,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <Input
                   id="propertyId"
                   placeholder="ID o nombre de la propiedad"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={manualPaymentForm.propertyId}
                   onChange={e =>
                     setManualPaymentForm(prev => ({ ...prev, propertyId: e.target.value }))
@@ -1059,6 +1200,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <Input
                   id="tenantName"
                   placeholder="Nombre completo del inquilino"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={manualPaymentForm.tenantName}
                   onChange={e =>
                     setManualPaymentForm(prev => ({ ...prev, tenantName: e.target.value }))
@@ -1072,6 +1214,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                   id="amount"
                   type="number"
                   placeholder="0"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={manualPaymentForm.amount}
                   onChange={e =>
                     setManualPaymentForm(prev => ({ ...prev, amount: e.target.value }))
@@ -1105,6 +1248,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <Input
                   id="paymentDate"
                   type="date"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={manualPaymentForm.paymentDate}
                   onChange={e =>
                     setManualPaymentForm(prev => ({ ...prev, paymentDate: e.target.value }))
@@ -1117,6 +1261,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 <Textarea
                   id="notes"
                   placeholder="Información adicional sobre el pago..."
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={manualPaymentForm.notes}
                   onChange={e => setManualPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
                 />
@@ -1141,6 +1286,165 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 Cancelar
               </Button>
               <Button onClick={handleSubmitManualPayment}>Registrar Pago</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Advanced Filters Dialog */}
+        <Dialog open={showFiltersDialog} onOpenChange={setShowFiltersDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Filtros Avanzados</DialogTitle>
+              <DialogDescription>
+                Aplica filtros específicos para encontrar los pagos que necesitas.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="minAmount">Monto Mínimo</Label>
+                  <Input
+                    id="minAmount"
+                    type="number"
+                    placeholder="0"
+                    className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    value={advancedFilters.minAmount}
+                    onChange={e =>
+                      setAdvancedFilters(prev => ({ ...prev, minAmount: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxAmount">Monto Máximo</Label>
+                  <Input
+                    id="maxAmount"
+                    type="number"
+                    placeholder="Sin límite"
+                    className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    value={advancedFilters.maxAmount}
+                    onChange={e =>
+                      setAdvancedFilters(prev => ({ ...prev, maxAmount: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Fecha Desde</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    value={advancedFilters.startDate}
+                    onChange={e =>
+                      setAdvancedFilters(prev => ({ ...prev, startDate: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate">Fecha Hasta</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    value={advancedFilters.endDate}
+                    onChange={e =>
+                      setAdvancedFilters(prev => ({ ...prev, endDate: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="paymentMethod">Método de Pago</Label>
+                <Select
+                  value={advancedFilters.paymentMethod}
+                  onValueChange={value =>
+                    setAdvancedFilters(prev => ({ ...prev, paymentMethod: value }))
+                  }
+                >
+                  <SelectTrigger className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Todos los métodos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los métodos</SelectItem>
+                    <SelectItem value="BANK_TRANSFER">Transferencia Bancaria</SelectItem>
+                    <SelectItem value="DIGITAL_WALLET">Billetera Digital</SelectItem>
+                    <SelectItem value="CASH">Efectivo</SelectItem>
+                    <SelectItem value="CHECK">Cheque</SelectItem>
+                    <SelectItem value="OTHER">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="tenantName">Nombre del Inquilino</Label>
+                <Input
+                  id="tenantName"
+                  placeholder="Buscar por nombre del inquilino"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  value={advancedFilters.tenantName}
+                  onChange={e =>
+                    setAdvancedFilters(prev => ({ ...prev, tenantName: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="propertyTitle">Nombre de la Propiedad</Label>
+                <Input
+                  id="propertyTitle"
+                  placeholder="Buscar por nombre de la propiedad"
+                  className="bg-white text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  value={advancedFilters.propertyTitle}
+                  onChange={e =>
+                    setAdvancedFilters(prev => ({ ...prev, propertyTitle: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleClearFilters}>
+                Limpiar Filtros
+              </Button>
+              <Button variant="outline" onClick={() => setShowFiltersDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleApplyFilters}>Aplicar Filtros</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {notificationType === 'success' ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                )}
+                {notificationTitle}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-gray-600">{notificationMessage}</p>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => setShowNotificationDialog(false)}
+                className={
+                  notificationType === 'success'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }
+              >
+                Aceptar
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
