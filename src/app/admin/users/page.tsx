@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
         throw new Error('Error al cargar usuarios');
       }
       const data = await response.json();
-      const usersArray = data.users || data || [];
+      const usersArray = data.users || [];
       setUsers(usersArray);
     } catch (error) {
       logger.error('Error fetching users:', {

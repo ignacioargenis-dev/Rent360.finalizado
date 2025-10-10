@@ -112,7 +112,12 @@ export async function GET(request: NextRequest) {
         }))
       : result;
 
-    return NextResponse.json(processedResult);
+    return NextResponse.json({
+      users: processedResult,
+      total: Array.isArray(processedResult) ? processedResult.length : 0,
+      page,
+      limit,
+    });
   } catch (error) {
     logger.error('Error en consulta optimizada de usuarios', {
       error: error instanceof Error ? error.message : String(error),
