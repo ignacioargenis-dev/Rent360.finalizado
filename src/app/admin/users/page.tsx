@@ -108,12 +108,12 @@ export default function AdminUsersPage() {
     }
 
     // Apply role filter
-    if (roleFilter) {
+    if (roleFilter && roleFilter !== 'all') {
       filtered = filtered.filter(user => user.role === roleFilter);
     }
 
     // Apply status filter
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== 'all') {
       filtered = filtered.filter(user =>
         statusFilter === 'active' ? user.isActive : !user.isActive
       );
