@@ -601,7 +601,9 @@ export default function EnhancedAdminSettingsPage() {
         });
       }
     } catch (error) {
-      logger.error('Error loading settings:', error);
+      logger.error('Error loading settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
