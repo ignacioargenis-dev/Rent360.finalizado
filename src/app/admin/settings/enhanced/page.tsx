@@ -8,10 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings,
+import {
+  Settings,
   Save,
   RefreshCw,
   Shield,
@@ -26,7 +33,9 @@ import { Settings,
   Key,
   CheckCircle,
   AlertTriangle,
-  Info, Building, Zap,
+  Info,
+  Building,
+  Zap,
   Link,
   Palette,
   Camera,
@@ -86,10 +95,10 @@ import { Settings,
   User,
   Truck,
   Wrench,
-  X } from 'lucide-react';
+  X,
+} from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { User as UserType } from '@/types';
-
 
 interface EmailTemplate {
   id: string;
@@ -117,7 +126,7 @@ interface SystemSettings {
   currency: string;
   timezone: string;
   language: string;
-  
+
   // Configuración de Propiedades
   defaultPropertyStatus: string;
   autoApproveProperties: boolean;
@@ -127,7 +136,7 @@ interface SystemSettings {
   maxPropertyVideos: number;
   virtualTourEnabled: boolean;
   propertyMapEnabled: boolean;
-  
+
   // Configuración de Usuarios
   defaultUserRole: string;
   userApprovalRequired: boolean;
@@ -137,14 +146,14 @@ interface SystemSettings {
   sessionTimeout: number;
   allowSocialLogin: boolean;
   socialProviders: string[];
-  
+
   // Configuración de Comisiones
   defaultCommissionRate: number;
   commissionStructure: 'fixed' | 'percentage' | 'tiered';
   minimumCommissionAmount: number;
   commissionPaymentMethod: string;
   commissionSchedule: 'immediate' | 'weekly' | 'monthly';
-  
+
   // Configuración de Notificaciones
   emailNotifications: boolean;
   smsNotifications: boolean;
@@ -155,7 +164,7 @@ interface SystemSettings {
   maintenanceAlerts: boolean;
   supportAlerts: boolean;
   commissionAlerts: boolean;
-  
+
   // Configuración de Seguridad
   twoFactorAuth: boolean;
   passwordMinLength: number;
@@ -167,7 +176,7 @@ interface SystemSettings {
   loginNotifications: boolean;
   ipRestrictionEnabled: boolean;
   allowedIPs: string[];
-  
+
   // Configuración de Email
   smtpHost: string;
   smtpPort: number;
@@ -177,7 +186,7 @@ interface SystemSettings {
   fromName: string;
   encryption: 'none' | 'ssl' | 'tls';
   emailTemplatesEnabled: boolean;
-  
+
   // Configuración de Pagos
   paymentsEnabled: boolean;
   paymentProviders: string[];
@@ -186,7 +195,7 @@ interface SystemSettings {
   paymentRetryAttempts: number;
   latePaymentFee: number;
   latePaymentGracePeriod: number;
-  
+
   // Configuración de Khipu
   khipuEnabled: boolean;
   khipuReceiverId: string;
@@ -238,7 +247,7 @@ interface SystemSettings {
   serviceProviderPayoutSchedule: 'immediate' | 'weekly' | 'monthly';
   serviceProviderSupportedPaymentMethods: string[];
   serviceProviderRequireBankVerification: boolean;
-  
+
   // Configuración de Integraciones
   googleMapsEnabled: boolean;
   googleAnalyticsEnabled: boolean;
@@ -249,7 +258,7 @@ interface SystemSettings {
   apiKey: string;
   crmIntegration: boolean;
   crmProvider: string;
-  
+
   // Configuración Avanzada
   debugMode: boolean;
   logLevel: 'error' | 'warn' | 'info' | 'debug';
@@ -260,7 +269,7 @@ interface SystemSettings {
   backupRetention: number;
   theme: 'light' | 'dark' | 'auto';
   customCSS: string;
-  
+
   // Configuración de UI/UX
   primaryColor: string;
   secondaryColor: string;
@@ -270,7 +279,7 @@ interface SystemSettings {
   animationsEnabled: boolean;
   darkModeEnabled: boolean;
   mobileResponsive: boolean;
-  
+
   // Configuración de Rendimiento
   imageCompressionEnabled: boolean;
   imageQuality: number;
@@ -279,7 +288,7 @@ interface SystemSettings {
   minificationEnabled: boolean;
   cdnEnabled: boolean;
   cdnUrl: string;
-  
+
   // Configuración Legal
   termsOfServiceRequired: boolean;
   privacyPolicyRequired: boolean;
@@ -305,7 +314,6 @@ interface SystemSettings {
 }
 
 export default function EnhancedAdminSettingsPage() {
-
   const [user, setUser] = useState<UserType | null>(null);
 
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
@@ -328,7 +336,7 @@ export default function EnhancedAdminSettingsPage() {
     currency: 'CLP',
     timezone: 'America/Santiago',
     language: 'es',
-    
+
     // Configuración de Propiedades
     defaultPropertyStatus: 'AVAILABLE',
     autoApproveProperties: false,
@@ -338,7 +346,7 @@ export default function EnhancedAdminSettingsPage() {
     maxPropertyVideos: 3,
     virtualTourEnabled: true,
     propertyMapEnabled: true,
-    
+
     // Configuración de Usuarios
     defaultUserRole: 'tenant',
     userApprovalRequired: false,
@@ -348,14 +356,14 @@ export default function EnhancedAdminSettingsPage() {
     sessionTimeout: 60,
     allowSocialLogin: false,
     socialProviders: [],
-    
+
     // Configuración de Comisiones
     defaultCommissionRate: 5.0,
     commissionStructure: 'percentage',
     minimumCommissionAmount: 10000,
     commissionPaymentMethod: 'bank_transfer',
     commissionSchedule: 'monthly',
-    
+
     // Configuración de Notificaciones
     emailNotifications: true,
     smsNotifications: false,
@@ -366,7 +374,7 @@ export default function EnhancedAdminSettingsPage() {
     maintenanceAlerts: true,
     supportAlerts: true,
     commissionAlerts: true,
-    
+
     // Configuración de Seguridad
     twoFactorAuth: false,
     passwordMinLength: 8,
@@ -378,7 +386,7 @@ export default function EnhancedAdminSettingsPage() {
     loginNotifications: true,
     ipRestrictionEnabled: false,
     allowedIPs: [],
-    
+
     // Configuración de Email
     smtpHost: 'smtp.gmail.com',
     smtpPort: 587,
@@ -388,7 +396,7 @@ export default function EnhancedAdminSettingsPage() {
     fromName: 'Rent360',
     encryption: 'tls',
     emailTemplatesEnabled: true,
-    
+
     // Configuración de Pagos
     paymentsEnabled: false,
     paymentProviders: [],
@@ -397,7 +405,7 @@ export default function EnhancedAdminSettingsPage() {
     paymentRetryAttempts: 3,
     latePaymentFee: 5000,
     latePaymentGracePeriod: 5,
-    
+
     // Configuración de Khipu
     khipuEnabled: false,
     khipuReceiverId: '',
@@ -413,7 +421,7 @@ export default function EnhancedAdminSettingsPage() {
     runnerVisitTypeMultipliers: {
       regular: 1.0,
       premium: 1.5,
-      express: 1.2
+      express: 1.2,
     },
     runnerMinimumPayout: 5000,
     runnerMaximumDailyPayout: 500000,
@@ -450,7 +458,7 @@ export default function EnhancedAdminSettingsPage() {
     serviceProviderPayoutSchedule: 'weekly',
     serviceProviderSupportedPaymentMethods: ['bank_transfer', 'cash'],
     serviceProviderRequireBankVerification: true,
-    
+
     // Configuración de Integraciones
     googleMapsEnabled: true,
     googleAnalyticsEnabled: false,
@@ -461,7 +469,7 @@ export default function EnhancedAdminSettingsPage() {
     apiKey: '',
     crmIntegration: false,
     crmProvider: '',
-    
+
     // Configuración Avanzada
     debugMode: false,
     logLevel: 'error',
@@ -472,7 +480,7 @@ export default function EnhancedAdminSettingsPage() {
     backupRetention: 30,
     theme: 'light',
     customCSS: '',
-    
+
     // Configuración de UI/UX
     primaryColor: '#3B82F6',
     secondaryColor: '#6B7280',
@@ -482,7 +490,7 @@ export default function EnhancedAdminSettingsPage() {
     animationsEnabled: true,
     darkModeEnabled: false,
     mobileResponsive: true,
-    
+
     // Configuración de Rendimiento
     imageCompressionEnabled: true,
     imageQuality: 80,
@@ -491,7 +499,7 @@ export default function EnhancedAdminSettingsPage() {
     minificationEnabled: true,
     cdnEnabled: false,
     cdnUrl: '',
-    
+
     // Configuración Legal
     termsOfServiceRequired: true,
     privacyPolicyRequired: true,
@@ -502,17 +510,17 @@ export default function EnhancedAdminSettingsPage() {
     inactiveUserDays: 180,
 
     // Configuración del Footer
-    footerDescription: "Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.",
-    footerEmail: "contacto@rent360.cl",
-    footerPhone: "+56 9 1234 5678",
-    footerAddress: "Santiago, Chile",
-    footerCopyright: "Desarrollado con ❤️ para el sector inmobiliario chileno",
-    termsUrl: "/terms",
-    privacyUrl: "/privacy",
-    cookiesUrl: "/cookies",
+    footerDescription:
+      'Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.',
+    footerEmail: 'contacto@rent360.cl',
+    footerPhone: '+56 9 1234 5678',
+    footerAddress: 'Santiago, Chile',
+    footerCopyright: 'Desarrollado con ❤️ para el sector inmobiliario chileno',
+    termsUrl: '/terms',
+    privacyUrl: '/privacy',
+    cookiesUrl: '/cookies',
     footerEnabled: true,
   });
-  
 
   const [loading, setLoading] = useState(true);
 
@@ -529,13 +537,81 @@ export default function EnhancedAdminSettingsPage() {
           const data = await response.json();
           setUser(data.user);
         }
-        
+
         // Load settings
         const settingsResponse = await fetch('/api/settings');
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
-          // Merge with default settings
-          setSettings(prev => ({...prev, ...settingsData.settings}));
+
+          // Function to safely convert settings, filtering out null/undefined values
+          const processSettingsData = (apiSettings: any) => {
+            const processed: any = {};
+
+            // Helper function to safely get numeric values
+            const safeNumber = (value: any, defaultValue: number): number => {
+              if (value === null || value === undefined || value === '') {
+                return defaultValue;
+              }
+              const num = Number(value);
+              return isNaN(num) ? defaultValue : num;
+            };
+
+            // Helper function to safely get string values
+            const safeString = (value: any, defaultValue: string): string => {
+              return value === null || value === undefined ? defaultValue : String(value);
+            };
+
+            // Helper function to safely get boolean values
+            const safeBoolean = (value: any, defaultValue: boolean): boolean => {
+              return value === null || value === undefined ? defaultValue : Boolean(value);
+            };
+
+            // Process each category
+            Object.keys(apiSettings).forEach(category => {
+              if (!processed[category]) {
+                processed[category] = {};
+              }
+
+              Object.keys(apiSettings[category]).forEach(key => {
+                const settingData = apiSettings[category][key];
+                if (settingData && settingData.value !== null && settingData.value !== undefined) {
+                  // Convert based on expected type
+                  if (typeof settingData.value === 'number' || !isNaN(Number(settingData.value))) {
+                    processed[category][key] = Number(settingData.value);
+                  } else if (
+                    typeof settingData.value === 'boolean' ||
+                    settingData.value === 'true' ||
+                    settingData.value === 'false'
+                  ) {
+                    processed[category][key] =
+                      settingData.value === 'true' || settingData.value === true;
+                  } else {
+                    processed[category][key] = settingData.value;
+                  }
+                }
+              });
+            });
+
+            return processed;
+          };
+
+          const processedSettings = processSettingsData(settingsData.settings);
+          // Merge with default settings, but only override with valid values
+          setSettings(prev => {
+            const merged = { ...prev } as any;
+            Object.keys(processedSettings).forEach(category => {
+              if (!merged[category]) {
+                merged[category] = {};
+              }
+              Object.keys(processedSettings[category]).forEach(key => {
+                const value = processedSettings[category][key];
+                if (value !== null && value !== undefined && !isNaN(value)) {
+                  merged[category] = { ...merged[category], [key]: value };
+                }
+              });
+            });
+            return merged;
+          });
         }
 
         // Load email templates
@@ -594,7 +670,14 @@ Si tienes alguna pregunta, no dudes en contactarnos.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: ['userName', 'propertyTitle', 'propertyAddress', 'monthlyRent', 'startDate', 'endDate'],
+              variables: [
+                'userName',
+                'propertyTitle',
+                'propertyAddress',
+                'monthlyRent',
+                'startDate',
+                'endDate',
+              ],
               category: 'transaction',
               isActive: true,
               createdAt: new Date().toISOString(),
@@ -651,7 +734,14 @@ Gracias por mantener tu propiedad en óptimas condiciones.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: ['userName', 'propertyTitle', 'maintenanceType', 'description', 'priority', 'requestId'],
+              variables: [
+                'userName',
+                'propertyTitle',
+                'maintenanceType',
+                'description',
+                'priority',
+                'requestId',
+              ],
               category: 'support',
               isActive: true,
               createdAt: new Date().toISOString(),
@@ -678,7 +768,14 @@ Esta propiedad cumple con tus criterios de búsqueda y está disponible ahora mi
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: ['userName', 'propertyTitle', 'propertyAddress', 'monthlyRent', 'bedrooms', 'bathrooms'],
+              variables: [
+                'userName',
+                'propertyTitle',
+                'propertyAddress',
+                'monthlyRent',
+                'bedrooms',
+                'bathrooms',
+              ],
               category: 'marketing',
               isActive: true,
               createdAt: new Date().toISOString(),
@@ -688,7 +785,9 @@ El equipo de Rent360`,
           setEmailTemplates(defaultTemplates);
         }
       } catch (error) {
-        logger.error('Error loading data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
       setLoading(false);
     };
@@ -713,7 +812,9 @@ El equipo de Rent360`,
         alert('Error al guardar la configuración');
       }
     } catch (error) {
-      logger.error('Error saving settings:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error saving settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al guardar la configuración');
     } finally {
       setSaving(false);
@@ -752,7 +853,9 @@ El equipo de Rent360`,
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return;
+    if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) {
+      return;
+    }
 
     try {
       setEmailTemplates(prev => prev.filter(t => t.id !== templateId));
@@ -766,11 +869,13 @@ El equipo de Rent360`,
     try {
       if (selectedTemplate) {
         // Update existing template
-        setEmailTemplates(prev => prev.map(t =>
-          t.id === selectedTemplate.id
-            ? { ...t, ...templateData, updatedAt: new Date().toISOString() }
-            : t
-        ));
+        setEmailTemplates(prev =>
+          prev.map(t =>
+            t.id === selectedTemplate.id
+              ? { ...t, ...templateData, updatedAt: new Date().toISOString() }
+              : t
+          )
+        );
       } else {
         // Create new template
         const newTemplate: EmailTemplate = {
@@ -795,11 +900,13 @@ El equipo de Rent360`,
   };
 
   const handleToggleTemplateStatus = (templateId: string) => {
-    setEmailTemplates(prev => prev.map(t =>
-      t.id === templateId
-        ? { ...t, isActive: !t.isActive, updatedAt: new Date().toISOString() }
-        : t
-    ));
+    setEmailTemplates(prev =>
+      prev.map(t =>
+        t.id === templateId
+          ? { ...t, isActive: !t.isActive, updatedAt: new Date().toISOString() }
+          : t
+      )
+    );
   };
 
   const getFilteredTemplates = () => {
@@ -810,10 +917,11 @@ El equipo de Rent360`,
     }
 
     if (templateSearch) {
-      filtered = filtered.filter(t =>
-        t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
-        t.subject.toLowerCase().includes(templateSearch.toLowerCase()) ||
-        t.content.toLowerCase().includes(templateSearch.toLowerCase())
+      filtered = filtered.filter(
+        t =>
+          t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+          t.subject.toLowerCase().includes(templateSearch.toLowerCase()) ||
+          t.content.toLowerCase().includes(templateSearch.toLowerCase())
       );
     }
 
@@ -827,7 +935,7 @@ El equipo de Rent360`,
       marketing: 'Marketing',
       transaction: 'Transacción',
       support: 'Soporte',
-      custom: 'Personalizado'
+      custom: 'Personalizado',
     };
     return labels[category];
   };
@@ -839,7 +947,7 @@ El equipo de Rent360`,
       marketing: 'bg-purple-100 text-purple-800',
       transaction: 'bg-orange-100 text-orange-800',
       support: 'bg-red-100 text-red-800',
-      custom: 'bg-gray-100 text-gray-800'
+      custom: 'bg-gray-100 text-gray-800',
     };
     return colors[category];
   };
@@ -852,31 +960,25 @@ El equipo de Rent360`,
             <Globe className="w-5 h-5" />
             Información del Sitio
           </CardTitle>
-          <CardDescription>
-            Configuración básica del sitio
-          </CardDescription>
+          <CardDescription>Configuración básica del sitio</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre del Sitio
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Sitio</label>
             <Input
               value={settings.siteName}
-              onChange={(e) => setSettings({...settings, siteName: e.target.value})}
+              onChange={e => setSettings({ ...settings, siteName: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL del Sitio
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">URL del Sitio</label>
             <Input
               value={settings.siteUrl}
-              onChange={(e) => setSettings({...settings, siteUrl: e.target.value})}
+              onChange={e => setSettings({ ...settings, siteUrl: e.target.value })}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email de Administración
@@ -884,18 +986,16 @@ El equipo de Rent360`,
             <Input
               type="email"
               value={settings.adminEmail}
-              onChange={(e) => setSettings({...settings, adminEmail: e.target.value})}
+              onChange={e => setSettings({ ...settings, adminEmail: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email de Soporte
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email de Soporte</label>
             <Input
               type="email"
               value={settings.supportEmail}
-              onChange={(e) => setSettings({...settings, supportEmail: e.target.value})}
+              onChange={e => setSettings({ ...settings, supportEmail: e.target.value })}
             />
           </div>
         </CardContent>
@@ -907,50 +1007,44 @@ El equipo de Rent360`,
             <Settings className="w-5 h-5" />
             Configuración del Sistema
           </CardTitle>
-          <CardDescription>
-            Opciones de funcionamiento del sistema
-          </CardDescription>
+          <CardDescription>Opciones de funcionamiento del sistema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Modo Mantenimiento</div>
-              <div className="text-sm text-gray-600">
-                Desactiva el sitio para mantenimiento
-              </div>
+              <div className="text-sm text-gray-600">Desactiva el sitio para mantenimiento</div>
             </div>
             <Switch
               checked={settings.maintenanceMode}
-              onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, maintenanceMode: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Permitir Registros</div>
-              <div className="text-sm text-gray-600">
-                Permite que nuevos usuarios se registren
-              </div>
+              <div className="text-sm text-gray-600">Permite que nuevos usuarios se registren</div>
             </div>
             <Switch
               checked={settings.allowRegistrations}
-              onCheckedChange={(checked) => setSettings({...settings, allowRegistrations: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, allowRegistrations: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Verificación de Email Requerida</div>
-              <div className="text-sm text-gray-600">
-                Los usuarios deben verificar su email
-              </div>
+              <div className="text-sm text-gray-600">Los usuarios deben verificar su email</div>
             </div>
             <Switch
               checked={settings.requireEmailVerification}
-              onCheckedChange={(checked) => setSettings({...settings, requireEmailVerification: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, requireEmailVerification: checked })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Máximo de Imágenes por Propiedad
@@ -958,10 +1052,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.maxPropertyImages}
-              onChange={(e) => setSettings({...settings, maxPropertyImages: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, maxPropertyImages: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tamaño Máximo de Archivo (MB)
@@ -969,7 +1065,7 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.maxFileSize}
-              onChange={(e) => setSettings({...settings, maxFileSize: parseInt(e.target.value)})}
+              onChange={e => setSettings({ ...settings, maxFileSize: parseInt(e.target.value) })}
             />
           </div>
         </CardContent>
@@ -981,16 +1077,15 @@ El equipo de Rent360`,
             <Globe className="w-5 h-5" />
             Configuración Regional
           </CardTitle>
-          <CardDescription>
-            Preferencias de idioma y moneda
-          </CardDescription>
+          <CardDescription>Preferencias de idioma y moneda</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Moneda
-            </label>
-            <Select value={settings.currency} onValueChange={(value) => setSettings({...settings, currency: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Moneda</label>
+            <Select
+              value={settings.currency}
+              onValueChange={value => setSettings({ ...settings, currency: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1001,12 +1096,13 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Zona Horaria
-            </label>
-            <Select value={settings.timezone} onValueChange={(value) => setSettings({...settings, timezone: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Zona Horaria</label>
+            <Select
+              value={settings.timezone}
+              onValueChange={value => setSettings({ ...settings, timezone: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1017,12 +1113,13 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Idioma
-            </label>
-            <Select value={settings.language} onValueChange={(value) => setSettings({...settings, language: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
+            <Select
+              value={settings.language}
+              onValueChange={value => setSettings({ ...settings, language: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1045,16 +1142,17 @@ El equipo de Rent360`,
             <Building className="w-5 h-5" />
             Configuración de Propiedades
           </CardTitle>
-          <CardDescription>
-            Opciones para el manejo de propiedades
-          </CardDescription>
+          <CardDescription>Opciones para el manejo de propiedades</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Estado Predeterminado
             </label>
-            <Select value={settings.defaultPropertyStatus} onValueChange={(value) => setSettings({...settings, defaultPropertyStatus: value})}>
+            <Select
+              value={settings.defaultPropertyStatus}
+              onValueChange={value => setSettings({ ...settings, defaultPropertyStatus: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1065,20 +1163,20 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Aprobar Propiedades Automáticamente</div>
-              <div className="text-sm text-gray-600">
-                Las propiedades se publican sin revisión
-              </div>
+              <div className="text-sm text-gray-600">Las propiedades se publican sin revisión</div>
             </div>
             <Switch
               checked={settings.autoApproveProperties}
-              onCheckedChange={(checked) => setSettings({...settings, autoApproveProperties: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, autoApproveProperties: checked })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Días de Expiración de Propiedades
@@ -1086,10 +1184,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.propertyExpiryDays}
-              onChange={(e) => setSettings({...settings, propertyExpiryDays: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, propertyExpiryDays: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Límite de Propiedades Destacadas
@@ -1097,7 +1197,9 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.featuredPropertyLimit}
-              onChange={(e) => setSettings({...settings, featuredPropertyLimit: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, featuredPropertyLimit: parseInt(e.target.value) })
+              }
             />
           </div>
         </CardContent>
@@ -1109,24 +1211,22 @@ El equipo de Rent360`,
             <Camera className="w-5 h-5" />
             Medios y Tours Virtuales
           </CardTitle>
-          <CardDescription>
-            Configuración de imágenes, videos y tours virtuales
-          </CardDescription>
+          <CardDescription>Configuración de imágenes, videos y tours virtuales</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Permitir Videos en Propiedades</div>
-              <div className="text-sm text-gray-600">
-                Los usuarios pueden subir videos
-              </div>
+              <div className="text-sm text-gray-600">Los usuarios pueden subir videos</div>
             </div>
             <Switch
               checked={settings.allowPropertyVideos}
-              onCheckedChange={(checked) => setSettings({...settings, allowPropertyVideos: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, allowPropertyVideos: checked })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Máximo de Videos por Propiedad
@@ -1134,33 +1234,31 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.maxPropertyVideos}
-              onChange={(e) => setSettings({...settings, maxPropertyVideos: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, maxPropertyVideos: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Tours Virtuales Habilitados</div>
-              <div className="text-sm text-gray-600">
-                Permitir tours virtuales 360°
-              </div>
+              <div className="text-sm text-gray-600">Permitir tours virtuales 360°</div>
             </div>
             <Switch
               checked={settings.virtualTourEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, virtualTourEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, virtualTourEnabled: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Mapa de Propiedades Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Mostrar propiedades en mapa
-              </div>
+              <div className="text-sm text-gray-600">Mostrar propiedades en mapa</div>
             </div>
             <Switch
               checked={settings.propertyMapEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, propertyMapEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, propertyMapEnabled: checked })}
             />
           </div>
         </CardContent>
@@ -1176,16 +1274,17 @@ El equipo de Rent360`,
             <Users className="w-5 h-5" />
             Configuración de Usuarios
           </CardTitle>
-          <CardDescription>
-            Opciones para el manejo de usuarios
-          </CardDescription>
+          <CardDescription>Opciones para el manejo de usuarios</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Rol Predeterminado
             </label>
-            <Select value={settings.defaultUserRole} onValueChange={(value) => setSettings({...settings, defaultUserRole: value})}>
+            <Select
+              value={settings.defaultUserRole}
+              onValueChange={value => setSettings({ ...settings, defaultUserRole: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1197,20 +1296,20 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Aprobación de Usuarios Requerida</div>
-              <div className="text-sm text-gray-600">
-                Los usuarios requieren aprobación manual
-              </div>
+              <div className="text-sm text-gray-600">Los usuarios requieren aprobación manual</div>
             </div>
             <Switch
               checked={settings.userApprovalRequired}
-              onCheckedChange={(checked) => setSettings({...settings, userApprovalRequired: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, userApprovalRequired: checked })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Máximo de Intentos de Login
@@ -1218,10 +1317,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.maxLoginAttempts}
-              onChange={(e) => setSettings({...settings, maxLoginAttempts: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, maxLoginAttempts: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Duración de Bloqueo (minutos)
@@ -1229,7 +1330,9 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.accountLockoutDuration}
-              onChange={(e) => setSettings({...settings, accountLockoutDuration: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, accountLockoutDuration: parseInt(e.target.value) })
+              }
             />
           </div>
         </CardContent>
@@ -1241,9 +1344,7 @@ El equipo de Rent360`,
             <Key className="w-5 h-5" />
             Contraseñas y Sesiones
           </CardTitle>
-          <CardDescription>
-            Configuración de seguridad de contraseñas y sesiones
-          </CardDescription>
+          <CardDescription>Configuración de seguridad de contraseñas y sesiones</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -1253,10 +1354,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.passwordExpiryDays}
-              onChange={(e) => setSettings({...settings, passwordExpiryDays: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, passwordExpiryDays: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tiempo de Sesión (minutos)
@@ -1264,20 +1367,18 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.sessionTimeout}
-              onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value)})}
+              onChange={e => setSettings({ ...settings, sessionTimeout: parseInt(e.target.value) })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Permitir Login Social</div>
-              <div className="text-sm text-gray-600">
-                Login con redes sociales
-              </div>
+              <div className="text-sm text-gray-600">Login con redes sociales</div>
             </div>
             <Switch
               checked={settings.allowSocialLogin}
-              onCheckedChange={(checked) => setSettings({...settings, allowSocialLogin: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, allowSocialLogin: checked })}
             />
           </div>
         </CardContent>
@@ -1293,9 +1394,7 @@ El equipo de Rent360`,
             <CreditCard className="w-5 h-5" />
             Configuración de Comisiones
           </CardTitle>
-          <CardDescription>
-            Opciones para el cálculo de comisiones
-          </CardDescription>
+          <CardDescription>Opciones para el cálculo de comisiones</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -1306,15 +1405,22 @@ El equipo de Rent360`,
               type="number"
               step="0.1"
               value={settings.defaultCommissionRate}
-              onChange={(e) => setSettings({...settings, defaultCommissionRate: parseFloat(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, defaultCommissionRate: parseFloat(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Estructura de Comisión
             </label>
-            <Select value={settings.commissionStructure} onValueChange={(value: any) => setSettings({...settings, commissionStructure: value})}>
+            <Select
+              value={settings.commissionStructure}
+              onValueChange={(value: any) =>
+                setSettings({ ...settings, commissionStructure: value })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1325,7 +1431,7 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Monto Mínimo de Comisión
@@ -1333,7 +1439,9 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.minimumCommissionAmount}
-              onChange={(e) => setSettings({...settings, minimumCommissionAmount: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, minimumCommissionAmount: parseInt(e.target.value) })
+              }
             />
           </div>
         </CardContent>
@@ -1345,16 +1453,15 @@ El equipo de Rent360`,
             <Clock className="w-5 h-5" />
             Pagos de Comisiones
           </CardTitle>
-          <CardDescription>
-            Configuración de pagos a corredores
-          </CardDescription>
+          <CardDescription>Configuración de pagos a corredores</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Método de Pago
-            </label>
-            <Select value={settings.commissionPaymentMethod} onValueChange={(value) => setSettings({...settings, commissionPaymentMethod: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
+            <Select
+              value={settings.commissionPaymentMethod}
+              onValueChange={value => setSettings({ ...settings, commissionPaymentMethod: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1365,12 +1472,17 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Programa de Pagos
             </label>
-            <Select value={settings.commissionSchedule} onValueChange={(value: any) => setSettings({...settings, commissionSchedule: value})}>
+            <Select
+              value={settings.commissionSchedule}
+              onValueChange={(value: any) =>
+                setSettings({ ...settings, commissionSchedule: value })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -1394,9 +1506,7 @@ El equipo de Rent360`,
             <Bell className="w-5 h-5" />
             Canales de Notificación
           </CardTitle>
-          <CardDescription>
-            Configura los métodos de notificación
-          </CardDescription>
+          <CardDescription>Configura los métodos de notificación</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
@@ -1411,7 +1521,7 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.emailNotifications}
-              onCheckedChange={(checked) => setSettings({...settings, emailNotifications: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, emailNotifications: checked })}
             />
           </div>
 
@@ -1427,7 +1537,7 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.smsNotifications}
-              onCheckedChange={(checked) => setSettings({...settings, smsNotifications: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, smsNotifications: checked })}
             />
           </div>
 
@@ -1436,14 +1546,12 @@ El equipo de Rent360`,
               <Bell className="w-5 h-5 text-gray-600" />
               <div>
                 <div className="font-medium">Notificaciones Push</div>
-                <div className="text-sm text-gray-600">
-                  Notificaciones en tiempo real
-                </div>
+                <div className="text-sm text-gray-600">Notificaciones en tiempo real</div>
               </div>
             </div>
             <Switch
               checked={settings.pushNotifications}
-              onCheckedChange={(checked) => setSettings({...settings, pushNotifications: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, pushNotifications: checked })}
             />
           </div>
 
@@ -1452,14 +1560,12 @@ El equipo de Rent360`,
               <MessageSquare className="w-5 h-5 text-gray-600" />
               <div>
                 <div className="font-medium">Notificaciones en App</div>
-                <div className="text-sm text-gray-600">
-                  Notificaciones dentro de la plataforma
-                </div>
+                <div className="text-sm text-gray-600">Notificaciones dentro de la plataforma</div>
               </div>
             </div>
             <Switch
               checked={settings.inAppNotifications}
-              onCheckedChange={(checked) => setSettings({...settings, inAppNotifications: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, inAppNotifications: checked })}
             />
           </div>
         </CardContent>
@@ -1471,9 +1577,7 @@ El equipo de Rent360`,
             <Bell className="w-5 h-5" />
             Tipos de Notificaciones
           </CardTitle>
-          <CardDescription>
-            Selecciona qué eventos generan notificaciones
-          </CardDescription>
+          <CardDescription>Selecciona qué eventos generan notificaciones</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
@@ -1481,14 +1585,12 @@ El equipo de Rent360`,
               <Building className="w-5 h-5 text-gray-600" />
               <div>
                 <div className="font-medium">Alertas de Nuevas Propiedades</div>
-                <div className="text-sm text-gray-600">
-                  Notificar sobre nuevas propiedades
-                </div>
+                <div className="text-sm text-gray-600">Notificar sobre nuevas propiedades</div>
               </div>
             </div>
             <Switch
               checked={settings.newPropertyAlerts}
-              onCheckedChange={(checked) => setSettings({...settings, newPropertyAlerts: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, newPropertyAlerts: checked })}
             />
           </div>
 
@@ -1497,14 +1599,12 @@ El equipo de Rent360`,
               <CreditCard className="w-5 h-5 text-gray-600" />
               <div>
                 <div className="font-medium">Recordatorios de Pago</div>
-                <div className="text-sm text-gray-600">
-                  Notificar sobre pagos pendientes
-                </div>
+                <div className="text-sm text-gray-600">Notificar sobre pagos pendientes</div>
               </div>
             </div>
             <Switch
               checked={settings.paymentReminders}
-              onCheckedChange={(checked) => setSettings({...settings, paymentReminders: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, paymentReminders: checked })}
             />
           </div>
 
@@ -1520,7 +1620,7 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.maintenanceAlerts}
-              onCheckedChange={(checked) => setSettings({...settings, maintenanceAlerts: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, maintenanceAlerts: checked })}
             />
           </div>
 
@@ -1536,7 +1636,7 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.supportAlerts}
-              onCheckedChange={(checked) => setSettings({...settings, supportAlerts: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, supportAlerts: checked })}
             />
           </div>
 
@@ -1545,14 +1645,12 @@ El equipo de Rent360`,
               <CreditCard className="w-5 h-5 text-gray-600" />
               <div>
                 <div className="font-medium">Alertas de Comisiones</div>
-                <div className="text-sm text-gray-600">
-                  Notificar sobre pagos de comisiones
-                </div>
+                <div className="text-sm text-gray-600">Notificar sobre pagos de comisiones</div>
               </div>
             </div>
             <Switch
               checked={settings.commissionAlerts}
-              onCheckedChange={(checked) => setSettings({...settings, commissionAlerts: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, commissionAlerts: checked })}
             />
           </div>
         </CardContent>
@@ -1584,7 +1682,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.runnerPayoutsEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, runnerPayoutsEnabled: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, runnerPayoutsEnabled: checked })
+                }
               />
             </div>
 
@@ -1595,12 +1695,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerBaseRatePerMinute}
-                onChange={(e) => setSettings({...settings, runnerBaseRatePerMinute: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerBaseRatePerMinute: Number(e.target.value) })
+                }
                 placeholder="500"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Monto base pagado por minuto de visita
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Monto base pagado por minuto de visita</p>
             </div>
 
             <div>
@@ -1610,12 +1710,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerPremiumPropertyBonus}
-                onChange={(e) => setSettings({...settings, runnerPremiumPropertyBonus: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerPremiumPropertyBonus: Number(e.target.value) })
+                }
                 placeholder="200"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Bono adicional por propiedades premium
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Bono adicional por propiedades premium</p>
             </div>
 
             <div>
@@ -1625,7 +1725,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerPremiumPropertyThreshold}
-                onChange={(e) => setSettings({...settings, runnerPremiumPropertyThreshold: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    runnerPremiumPropertyThreshold: Number(e.target.value),
+                  })
+                }
                 placeholder="1000000"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -1642,9 +1747,7 @@ El equipo de Rent360`,
               <BarChart3 className="w-5 h-5" />
               Multiplicadores por Tipo de Visita
             </CardTitle>
-            <CardDescription>
-              Factores de multiplicación según el tipo de visita
-            </CardDescription>
+            <CardDescription>Factores de multiplicación según el tipo de visita</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -1655,13 +1758,15 @@ El equipo de Rent360`,
                 type="number"
                 step="0.1"
                 value={settings.runnerVisitTypeMultipliers.regular}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  runnerVisitTypeMultipliers: {
-                    ...settings.runnerVisitTypeMultipliers,
-                    regular: Number(e.target.value)
-                  }
-                })}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    runnerVisitTypeMultipliers: {
+                      ...settings.runnerVisitTypeMultipliers,
+                      regular: Number(e.target.value),
+                    },
+                  })
+                }
                 placeholder="1.0"
               />
             </div>
@@ -1674,13 +1779,15 @@ El equipo de Rent360`,
                 type="number"
                 step="0.1"
                 value={settings.runnerVisitTypeMultipliers.premium}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  runnerVisitTypeMultipliers: {
-                    ...settings.runnerVisitTypeMultipliers,
-                    premium: Number(e.target.value)
-                  }
-                })}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    runnerVisitTypeMultipliers: {
+                      ...settings.runnerVisitTypeMultipliers,
+                      premium: Number(e.target.value),
+                    },
+                  })
+                }
                 placeholder="1.5"
               />
             </div>
@@ -1693,13 +1800,15 @@ El equipo de Rent360`,
                 type="number"
                 step="0.1"
                 value={settings.runnerVisitTypeMultipliers.express}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  runnerVisitTypeMultipliers: {
-                    ...settings.runnerVisitTypeMultipliers,
-                    express: Number(e.target.value)
-                  }
-                })}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    runnerVisitTypeMultipliers: {
+                      ...settings.runnerVisitTypeMultipliers,
+                      express: Number(e.target.value),
+                    },
+                  })
+                }
                 placeholder="1.2"
               />
             </div>
@@ -1715,9 +1824,7 @@ El equipo de Rent360`,
               <Shield className="w-5 h-5" />
               Límites y Validaciones
             </CardTitle>
-            <CardDescription>
-              Configuración de límites de pago y validaciones
-            </CardDescription>
+            <CardDescription>Configuración de límites de pago y validaciones</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -1727,7 +1834,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerMinimumPayout}
-                onChange={(e) => setSettings({...settings, runnerMinimumPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerMinimumPayout: Number(e.target.value) })
+                }
                 placeholder="5000"
               />
             </div>
@@ -1739,7 +1848,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerMaximumDailyPayout}
-                onChange={(e) => setSettings({...settings, runnerMaximumDailyPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerMaximumDailyPayout: Number(e.target.value) })
+                }
                 placeholder="500000"
               />
             </div>
@@ -1751,7 +1862,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.runnerApprovalThreshold}
-                onChange={(e) => setSettings({...settings, runnerApprovalThreshold: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerApprovalThreshold: Number(e.target.value) })
+                }
                 placeholder="50000"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -1768,7 +1881,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.runnerRequireManualApproval}
-                onCheckedChange={(checked) => setSettings({...settings, runnerRequireManualApproval: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, runnerRequireManualApproval: checked })
+                }
               />
             </div>
           </CardContent>
@@ -1792,7 +1907,9 @@ El equipo de Rent360`,
               </label>
               <Select
                 value={settings.runnerPayoutSchedule}
-                onValueChange={(value: any) => setSettings({...settings, runnerPayoutSchedule: value})}
+                onValueChange={(value: any) =>
+                  setSettings({ ...settings, runnerPayoutSchedule: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1815,7 +1932,9 @@ El equipo de Rent360`,
                   min="1"
                   max="31"
                   value={settings.runnerCutoffDay}
-                  onChange={(e) => setSettings({...settings, runnerCutoffDay: Number(e.target.value)})}
+                  onChange={e =>
+                    setSettings({ ...settings, runnerCutoffDay: Number(e.target.value) })
+                  }
                   placeholder="5"
                 />
               </div>
@@ -1828,18 +1947,18 @@ El equipo de Rent360`,
               <div className="space-y-2">
                 {[
                   { value: 'bank_transfer', label: 'Transferencia Bancaria' },
-                  { value: 'paypal', label: 'PayPal' }
+                  { value: 'paypal', label: 'PayPal' },
                 ].map(method => (
                   <div key={method.value} className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id={`runner-${method.value}`}
                       checked={settings.runnerSupportedPaymentMethods.includes(method.value)}
-                      onChange={(e) => {
+                      onChange={e => {
                         const methods = e.target.checked
                           ? [...settings.runnerSupportedPaymentMethods, method.value]
                           : settings.runnerSupportedPaymentMethods.filter(m => m !== method.value);
-                        setSettings({...settings, runnerSupportedPaymentMethods: methods});
+                        setSettings({ ...settings, runnerSupportedPaymentMethods: methods });
                       }}
                     />
                     <label htmlFor={`runner-${method.value}`} className="text-sm">
@@ -1875,7 +1994,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.runnerRequireBankVerification}
-                onCheckedChange={(checked) => setSettings({...settings, runnerRequireBankVerification: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, runnerRequireBankVerification: checked })
+                }
               />
             </div>
 
@@ -1888,7 +2009,7 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.runnerRequireKYC}
-                onCheckedChange={(checked) => setSettings({...settings, runnerRequireKYC: checked})}
+                onCheckedChange={checked => setSettings({ ...settings, runnerRequireKYC: checked })}
               />
             </div>
 
@@ -1901,7 +2022,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.runnerFraudDetectionEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, runnerFraudDetectionEnabled: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, runnerFraudDetectionEnabled: checked })
+                }
               />
             </div>
           </CardContent>
@@ -1929,7 +2052,9 @@ El equipo de Rent360`,
                 min="0"
                 max="50"
                 value={settings.runnerPlatformFeePercentage}
-                onChange={(e) => setSettings({...settings, runnerPlatformFeePercentage: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, runnerPlatformFeePercentage: Number(e.target.value) })
+                }
                 placeholder="5"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -1941,8 +2066,16 @@ El equipo de Rent360`,
               <h4 className="font-medium text-gray-900 mb-2">Ejemplo de Cálculo</h4>
               <div className="text-sm text-gray-600 space-y-1">
                 <div>Ganancia Bruta: $15.000</div>
-                <div>Comisión ({settings.runnerPlatformFeePercentage}%): ${(15000 * settings.runnerPlatformFeePercentage / 100).toLocaleString()}</div>
-                <div><strong>Pago Neto: ${(15000 * (1 - settings.runnerPlatformFeePercentage / 100)).toLocaleString()}</strong></div>
+                <div>
+                  Comisión ({settings.runnerPlatformFeePercentage}%): $
+                  {((15000 * settings.runnerPlatformFeePercentage) / 100).toLocaleString()}
+                </div>
+                <div>
+                  <strong>
+                    Pago Neto: $
+                    {(15000 * (1 - settings.runnerPlatformFeePercentage / 100)).toLocaleString()}
+                  </strong>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -1975,7 +2108,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.maintenanceProviderPayoutsEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, maintenanceProviderPayoutsEnabled: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, maintenanceProviderPayoutsEnabled: checked })
+                }
               />
             </div>
 
@@ -1989,12 +2124,15 @@ El equipo de Rent360`,
                 min="0"
                 max="50"
                 value={settings.maintenanceProviderCommissionPercentage}
-                onChange={(e) => setSettings({...settings, maintenanceProviderCommissionPercentage: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    maintenanceProviderCommissionPercentage: Number(e.target.value),
+                  })
+                }
                 placeholder="10"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Porcentaje retenido por la plataforma
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Porcentaje retenido por la plataforma</p>
             </div>
 
             <div>
@@ -2006,7 +2144,12 @@ El equipo de Rent360`,
                 min="0"
                 max="90"
                 value={settings.maintenanceProviderGracePeriodDays}
-                onChange={(e) => setSettings({...settings, maintenanceProviderGracePeriodDays: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    maintenanceProviderGracePeriodDays: Number(e.target.value),
+                  })
+                }
                 placeholder="15"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -2021,7 +2164,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.maintenanceProviderMinimumPayout}
-                onChange={(e) => setSettings({...settings, maintenanceProviderMinimumPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    maintenanceProviderMinimumPayout: Number(e.target.value),
+                  })
+                }
                 placeholder="10000"
               />
             </div>
@@ -2033,7 +2181,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.maintenanceProviderMaximumDailyPayout}
-                onChange={(e) => setSettings({...settings, maintenanceProviderMaximumDailyPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    maintenanceProviderMaximumDailyPayout: Number(e.target.value),
+                  })
+                }
                 placeholder="1000000"
               />
             </div>
@@ -2047,7 +2200,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.maintenanceProviderRequireManualApproval}
-                onCheckedChange={(checked) => setSettings({...settings, maintenanceProviderRequireManualApproval: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, maintenanceProviderRequireManualApproval: checked })
+                }
               />
             </div>
 
@@ -2058,7 +2213,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.maintenanceProviderApprovalThreshold}
-                onChange={(e) => setSettings({...settings, maintenanceProviderApprovalThreshold: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    maintenanceProviderApprovalThreshold: Number(e.target.value),
+                  })
+                }
                 placeholder="100000"
               />
             </div>
@@ -2086,7 +2246,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.serviceProviderPayoutsEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, serviceProviderPayoutsEnabled: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, serviceProviderPayoutsEnabled: checked })
+                }
               />
             </div>
 
@@ -2100,12 +2262,15 @@ El equipo de Rent360`,
                 min="0"
                 max="50"
                 value={settings.serviceProviderCommissionPercentage}
-                onChange={(e) => setSettings({...settings, serviceProviderCommissionPercentage: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    serviceProviderCommissionPercentage: Number(e.target.value),
+                  })
+                }
                 placeholder="8"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Porcentaje retenido por la plataforma
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Porcentaje retenido por la plataforma</p>
             </div>
 
             <div>
@@ -2117,7 +2282,12 @@ El equipo de Rent360`,
                 min="0"
                 max="90"
                 value={settings.serviceProviderGracePeriodDays}
-                onChange={(e) => setSettings({...settings, serviceProviderGracePeriodDays: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    serviceProviderGracePeriodDays: Number(e.target.value),
+                  })
+                }
                 placeholder="7"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -2132,7 +2302,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.serviceProviderMinimumPayout}
-                onChange={(e) => setSettings({...settings, serviceProviderMinimumPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, serviceProviderMinimumPayout: Number(e.target.value) })
+                }
                 placeholder="5000"
               />
             </div>
@@ -2144,7 +2316,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.serviceProviderMaximumDailyPayout}
-                onChange={(e) => setSettings({...settings, serviceProviderMaximumDailyPayout: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    serviceProviderMaximumDailyPayout: Number(e.target.value),
+                  })
+                }
                 placeholder="500000"
               />
             </div>
@@ -2158,7 +2335,9 @@ El equipo de Rent360`,
               </div>
               <Switch
                 checked={settings.serviceProviderRequireManualApproval}
-                onCheckedChange={(checked) => setSettings({...settings, serviceProviderRequireManualApproval: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, serviceProviderRequireManualApproval: checked })
+                }
               />
             </div>
 
@@ -2169,7 +2348,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.serviceProviderApprovalThreshold}
-                onChange={(e) => setSettings({...settings, serviceProviderApprovalThreshold: Number(e.target.value)})}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    serviceProviderApprovalThreshold: Number(e.target.value),
+                  })
+                }
                 placeholder="50000"
               />
             </div>
@@ -2199,7 +2383,9 @@ El equipo de Rent360`,
                   </label>
                   <Select
                     value={settings.maintenanceProviderPayoutSchedule}
-                    onValueChange={(value: any) => setSettings({...settings, maintenanceProviderPayoutSchedule: value})}
+                    onValueChange={(value: any) =>
+                      setSettings({ ...settings, maintenanceProviderPayoutSchedule: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -2220,18 +2406,28 @@ El equipo de Rent360`,
                     {[
                       { value: 'bank_transfer', label: 'Transferencia Bancaria' },
                       { value: 'cash', label: 'Efectivo' },
-                      { value: 'check', label: 'Cheque' }
+                      { value: 'check', label: 'Cheque' },
                     ].map(method => (
                       <div key={method.value} className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           id={`maintenance-${method.value}`}
-                          checked={settings.maintenanceProviderSupportedPaymentMethods.includes(method.value)}
-                          onChange={(e) => {
+                          checked={settings.maintenanceProviderSupportedPaymentMethods.includes(
+                            method.value
+                          )}
+                          onChange={e => {
                             const methods = e.target.checked
-                              ? [...settings.maintenanceProviderSupportedPaymentMethods, method.value]
-                              : settings.maintenanceProviderSupportedPaymentMethods.filter(m => m !== method.value);
-                            setSettings({...settings, maintenanceProviderSupportedPaymentMethods: methods});
+                              ? [
+                                  ...settings.maintenanceProviderSupportedPaymentMethods,
+                                  method.value,
+                                ]
+                              : settings.maintenanceProviderSupportedPaymentMethods.filter(
+                                  m => m !== method.value
+                                );
+                            setSettings({
+                              ...settings,
+                              maintenanceProviderSupportedPaymentMethods: methods,
+                            });
                           }}
                         />
                         <label htmlFor={`maintenance-${method.value}`} className="text-sm">
@@ -2253,7 +2449,9 @@ El equipo de Rent360`,
                   </label>
                   <Select
                     value={settings.serviceProviderPayoutSchedule}
-                    onValueChange={(value: any) => setSettings({...settings, serviceProviderPayoutSchedule: value})}
+                    onValueChange={(value: any) =>
+                      setSettings({ ...settings, serviceProviderPayoutSchedule: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -2274,18 +2472,25 @@ El equipo de Rent360`,
                     {[
                       { value: 'bank_transfer', label: 'Transferencia Bancaria' },
                       { value: 'cash', label: 'Efectivo' },
-                      { value: 'check', label: 'Cheque' }
+                      { value: 'check', label: 'Cheque' },
                     ].map(method => (
                       <div key={method.value} className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           id={`service-${method.value}`}
-                          checked={settings.serviceProviderSupportedPaymentMethods.includes(method.value)}
-                          onChange={(e) => {
+                          checked={settings.serviceProviderSupportedPaymentMethods.includes(
+                            method.value
+                          )}
+                          onChange={e => {
                             const methods = e.target.checked
                               ? [...settings.serviceProviderSupportedPaymentMethods, method.value]
-                              : settings.serviceProviderSupportedPaymentMethods.filter(m => m !== method.value);
-                            setSettings({...settings, serviceProviderSupportedPaymentMethods: methods});
+                              : settings.serviceProviderSupportedPaymentMethods.filter(
+                                  m => m !== method.value
+                                );
+                            setSettings({
+                              ...settings,
+                              serviceProviderSupportedPaymentMethods: methods,
+                            });
                           }}
                         />
                         <label htmlFor={`service-${method.value}`} className="text-sm">
@@ -2315,26 +2520,26 @@ El equipo de Rent360`,
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Verificación Bancaria (Mantenimiento)</div>
-                <div className="text-sm text-gray-600">
-                  Requiere cuenta bancaria verificada
-                </div>
+                <div className="text-sm text-gray-600">Requiere cuenta bancaria verificada</div>
               </div>
               <Switch
                 checked={settings.maintenanceProviderRequireBankVerification}
-                onCheckedChange={(checked) => setSettings({...settings, maintenanceProviderRequireBankVerification: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, maintenanceProviderRequireBankVerification: checked })
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Verificación Bancaria (Servicios)</div>
-                <div className="text-sm text-gray-600">
-                  Requiere cuenta bancaria verificada
-                </div>
+                <div className="text-sm text-gray-600">Requiere cuenta bancaria verificada</div>
               </div>
               <Switch
                 checked={settings.serviceProviderRequireBankVerification}
-                onCheckedChange={(checked) => setSettings({...settings, serviceProviderRequireBankVerification: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, serviceProviderRequireBankVerification: checked })
+                }
               />
             </div>
 
@@ -2360,24 +2565,20 @@ El equipo de Rent360`,
             <Shield className="w-5 h-5" />
             Configuración de Seguridad
           </CardTitle>
-          <CardDescription>
-            Opciones de seguridad y protección
-          </CardDescription>
+          <CardDescription>Opciones de seguridad y protección</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Autenticación de Dos Factores</div>
-              <div className="text-sm text-gray-600">
-                Requerir 2FA para todos los usuarios
-              </div>
+              <div className="text-sm text-gray-600">Requerir 2FA para todos los usuarios</div>
             </div>
             <Switch
               checked={settings.twoFactorAuth}
-              onCheckedChange={(checked) => setSettings({...settings, twoFactorAuth: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, twoFactorAuth: checked })}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Longitud Mínima de Contraseña
@@ -2385,36 +2586,38 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.passwordMinLength}
-              onChange={(e) => setSettings({...settings, passwordMinLength: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, passwordMinLength: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Requerir Mayúsculas</div>
-              <div className="text-sm text-gray-600">
-                Las contraseñas deben tener mayúsculas
-              </div>
+              <div className="text-sm text-gray-600">Las contraseñas deben tener mayúsculas</div>
             </div>
             <Switch
               checked={settings.passwordRequireUppercase}
-              onCheckedChange={(checked) => setSettings({...settings, passwordRequireUppercase: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, passwordRequireUppercase: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Requerir Números</div>
-              <div className="text-sm text-gray-600">
-                Las contraseñas deben tener números
-              </div>
+              <div className="text-sm text-gray-600">Las contraseñas deben tener números</div>
             </div>
             <Switch
               checked={settings.passwordRequireNumbers}
-              onCheckedChange={(checked) => setSettings({...settings, passwordRequireNumbers: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, passwordRequireNumbers: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Requerir Caracteres Especiales</div>
@@ -2424,7 +2627,9 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.passwordRequireSpecial}
-              onCheckedChange={(checked) => setSettings({...settings, passwordRequireSpecial: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, passwordRequireSpecial: checked })
+              }
             />
           </div>
         </CardContent>
@@ -2436,9 +2641,7 @@ El equipo de Rent360`,
             <Lock className="w-5 h-5" />
             Sesiones y Acceso
           </CardTitle>
-          <CardDescription>
-            Configuración de sesiones y control de acceso
-          </CardDescription>
+          <CardDescription>Configuración de sesiones y control de acceso</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -2448,10 +2651,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.passwordHistoryCount}
-              onChange={(e) => setSettings({...settings, passwordHistoryCount: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, passwordHistoryCount: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tiempo de Sesión (minutos)
@@ -2459,33 +2664,33 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.sessionTimeoutMinutes}
-              onChange={(e) => setSettings({...settings, sessionTimeoutMinutes: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, sessionTimeoutMinutes: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Notificaciones de Login</div>
-              <div className="text-sm text-gray-600">
-                Notificar sobre inicios de sesión
-              </div>
+              <div className="text-sm text-gray-600">Notificar sobre inicios de sesión</div>
             </div>
             <Switch
               checked={settings.loginNotifications}
-              onCheckedChange={(checked) => setSettings({...settings, loginNotifications: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, loginNotifications: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Restricción por IP</div>
-              <div className="text-sm text-gray-600">
-                Limitar acceso por direcciones IP
-              </div>
+              <div className="text-sm text-gray-600">Limitar acceso por direcciones IP</div>
             </div>
             <Switch
               checked={settings.ipRestrictionEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, ipRestrictionEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, ipRestrictionEnabled: checked })
+              }
             />
           </div>
         </CardContent>
@@ -2501,50 +2706,40 @@ El equipo de Rent360`,
             <Mail className="w-5 h-5" />
             Configuración SMTP
           </CardTitle>
-          <CardDescription>
-            Configuración del servidor de correo
-          </CardDescription>
+          <CardDescription>Configuración del servidor de correo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Servidor SMTP
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Servidor SMTP</label>
             <Input
               value={settings.smtpHost}
-              onChange={(e) => setSettings({...settings, smtpHost: e.target.value})}
+              onChange={e => setSettings({ ...settings, smtpHost: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Puerto SMTP
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Puerto SMTP</label>
             <Input
               type="number"
               value={settings.smtpPort}
-              onChange={(e) => setSettings({...settings, smtpPort: parseInt(e.target.value)})}
+              onChange={e => setSettings({ ...settings, smtpPort: parseInt(e.target.value) })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Usuario SMTP
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Usuario SMTP</label>
             <Input
               value={settings.smtpUsername}
-              onChange={(e) => setSettings({...settings, smtpUsername: e.target.value})}
+              onChange={e => setSettings({ ...settings, smtpUsername: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña SMTP
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña SMTP</label>
             <Input
               type="password"
               value={settings.smtpPassword}
-              onChange={(e) => setSettings({...settings, smtpPassword: e.target.value})}
+              onChange={e => setSettings({ ...settings, smtpPassword: e.target.value })}
             />
           </div>
         </CardContent>
@@ -2556,36 +2751,31 @@ El equipo de Rent360`,
             <Mail className="w-5 h-5" />
             Configuración de Envío
           </CardTitle>
-          <CardDescription>
-            Opciones de envío de correos
-          </CardDescription>
+          <CardDescription>Opciones de envío de correos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email de Origen
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email de Origen</label>
             <Input
               value={settings.fromEmail}
-              onChange={(e) => setSettings({...settings, fromEmail: e.target.value})}
+              onChange={e => setSettings({ ...settings, fromEmail: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre de Origen
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre de Origen</label>
             <Input
               value={settings.fromName}
-              onChange={(e) => setSettings({...settings, fromName: e.target.value})}
+              onChange={e => setSettings({ ...settings, fromName: e.target.value })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Encriptación
-            </label>
-            <Select value={settings.encryption} onValueChange={(value: any) => setSettings({...settings, encryption: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Encriptación</label>
+            <Select
+              value={settings.encryption}
+              onValueChange={(value: any) => setSettings({ ...settings, encryption: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -2596,17 +2786,17 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Plantillas de Email Habilitadas</div>
-              <div className="text-sm text-gray-600">
-                Usar plantillas personalizadas
-              </div>
+              <div className="text-sm text-gray-600">Usar plantillas personalizadas</div>
             </div>
             <Switch
               checked={settings.emailTemplatesEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, emailTemplatesEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, emailTemplatesEnabled: checked })
+              }
             />
           </div>
         </CardContent>
@@ -2623,29 +2813,28 @@ El equipo de Rent360`,
               <CreditCard className="w-5 h-5" />
               Configuración de Pagos
             </CardTitle>
-            <CardDescription>
-              Opciones generales de pagos
-            </CardDescription>
+            <CardDescription>Opciones generales de pagos</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Pagos Habilitados</div>
-                <div className="text-sm text-gray-600">
-                  Permitir procesamiento de pagos
-                </div>
+                <div className="text-sm text-gray-600">Permitir procesamiento de pagos</div>
               </div>
               <Switch
                 checked={settings.paymentsEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, paymentsEnabled: checked})}
+                onCheckedChange={checked => setSettings({ ...settings, paymentsEnabled: checked })}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Método de Pago Predeterminado
               </label>
-              <Select value={settings.defaultPaymentMethod} onValueChange={(value) => setSettings({...settings, defaultPaymentMethod: value})}>
+              <Select
+                value={settings.defaultPaymentMethod}
+                onValueChange={value => setSettings({ ...settings, defaultPaymentMethod: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -2658,20 +2847,20 @@ El equipo de Rent360`,
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Procesamiento Automático</div>
-                <div className="text-sm text-gray-600">
-                  Procesar pagos automáticamente
-                </div>
+                <div className="text-sm text-gray-600">Procesar pagos automáticamente</div>
               </div>
               <Switch
                 checked={settings.autoPaymentProcessing}
-                onCheckedChange={(checked) => setSettings({...settings, autoPaymentProcessing: checked})}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, autoPaymentProcessing: checked })
+                }
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Intentos de Reintento
@@ -2679,7 +2868,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.paymentRetryAttempts}
-                onChange={(e) => setSettings({...settings, paymentRetryAttempts: parseInt(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, paymentRetryAttempts: parseInt(e.target.value) })
+                }
               />
             </div>
           </CardContent>
@@ -2691,9 +2882,7 @@ El equipo de Rent360`,
               <AlertTriangle className="w-5 h-5" />
               Pagos Tardíos
             </CardTitle>
-            <CardDescription>
-              Configuración de penalizaciones por pagos tardíos
-            </CardDescription>
+            <CardDescription>Configuración de penalizaciones por pagos tardíos</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -2703,10 +2892,12 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.latePaymentFee}
-                onChange={(e) => setSettings({...settings, latePaymentFee: parseInt(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, latePaymentFee: parseInt(e.target.value) })
+                }
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Período de Gracia (días)
@@ -2714,7 +2905,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.latePaymentGracePeriod}
-                onChange={(e) => setSettings({...settings, latePaymentGracePeriod: parseInt(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, latePaymentGracePeriod: parseInt(e.target.value) })
+                }
               />
             </div>
           </CardContent>
@@ -2736,23 +2929,24 @@ El equipo de Rent360`,
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Habilitar Khipu</div>
-              <div className="text-sm text-gray-600">
-                Activar pagos a través de Khipu
-              </div>
+              <div className="text-sm text-gray-600">Activar pagos a través de Khipu</div>
             </div>
             <Switch
               checked={settings.khipuEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, khipuEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, khipuEnabled: checked })}
             />
           </div>
 
           {settings.khipuEnabled && (
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Entorno
-                </label>
-                <Select value={settings.khipuEnvironment} onValueChange={(value: any) => setSettings({...settings, khipuEnvironment: value})}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Entorno</label>
+                <Select
+                  value={settings.khipuEnvironment}
+                  onValueChange={(value: any) =>
+                    setSettings({ ...settings, khipuEnvironment: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -2762,10 +2956,9 @@ El equipo de Rent360`,
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  {settings.khipuEnvironment === 'test' 
-                    ? 'Usa el entorno de pruebas para desarrollo' 
-                    : 'Usa el entorno de producción para pagos reales'
-                  }
+                  {settings.khipuEnvironment === 'test'
+                    ? 'Usa el entorno de pruebas para desarrollo'
+                    : 'Usa el entorno de producción para pagos reales'}
                 </p>
               </div>
 
@@ -2775,12 +2968,10 @@ El equipo de Rent360`,
                 </label>
                 <Input
                   value={settings.khipuReceiverId}
-                  onChange={(e) => setSettings({...settings, khipuReceiverId: e.target.value})}
+                  onChange={e => setSettings({ ...settings, khipuReceiverId: e.target.value })}
                   placeholder="Ej: 123456789"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  ID de cuenta de Khipu
-                </p>
+                <p className="text-xs text-gray-500 mt-1">ID de cuenta de Khipu</p>
               </div>
 
               <div>
@@ -2790,12 +2981,10 @@ El equipo de Rent360`,
                 <Input
                   type="password"
                   value={settings.khipuSecretKey}
-                  onChange={(e) => setSettings({...settings, khipuSecretKey: e.target.value})}
+                  onChange={e => setSettings({ ...settings, khipuSecretKey: e.target.value })}
                   placeholder="Ingresa tu llave secreta"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Mantén esta información segura
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Mantén esta información segura</p>
               </div>
 
               <div>
@@ -2805,7 +2994,9 @@ El equipo de Rent360`,
                 <Input
                   type="password"
                   value={settings.khipuNotificationToken}
-                  onChange={(e) => setSettings({...settings, khipuNotificationToken: e.target.value})}
+                  onChange={e =>
+                    setSettings({ ...settings, khipuNotificationToken: e.target.value })
+                  }
                   placeholder="Token para notificaciones webhook"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -2825,7 +3016,10 @@ El equipo de Rent360`,
                     <li>• Las credenciales se guardan de forma segura en el sistema</li>
                     <li>• Usa el entorno de pruebas para desarrollo y pruebas</li>
                     <li>• Configura las URLs de webhook en tu cuenta de Khipu</li>
-                    <li>• La URL de notificación es: <code className="bg-blue-100 px-1 rounded">/api/payments/khipu/notify</code></li>
+                    <li>
+                      • La URL de notificación es:{' '}
+                      <code className="bg-blue-100 px-1 rounded">/api/payments/khipu/notify</code>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -2839,7 +3033,8 @@ El equipo de Rent360`,
                 <div>
                   <h4 className="font-medium text-orange-800 mb-1">Modo Producción</h4>
                   <p className="text-sm text-orange-700">
-                    Estás utilizando el entorno de producción. Todos los pagos procesados serán reales y se cobrarán según las tarifas de Khipu.
+                    Estás utilizando el entorno de producción. Todos los pagos procesados serán
+                    reales y se cobrarán según las tarifas de Khipu.
                   </p>
                 </div>
               </div>
@@ -2858,71 +3053,63 @@ El equipo de Rent360`,
             <Link className="w-5 h-5" />
             Integraciones Externas
           </CardTitle>
-          <CardDescription>
-            Servicios de terceros integrados
-          </CardDescription>
+          <CardDescription>Servicios de terceros integrados</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Google Maps Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Mostrar mapas de Google
-              </div>
+              <div className="text-sm text-gray-600">Mostrar mapas de Google</div>
             </div>
             <Switch
               checked={settings.googleMapsEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, googleMapsEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, googleMapsEnabled: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Google Analytics Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Seguimiento de analíticas
-              </div>
+              <div className="text-sm text-gray-600">Seguimiento de analíticas</div>
             </div>
             <Switch
               checked={settings.googleAnalyticsEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, googleAnalyticsEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, googleAnalyticsEnabled: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Facebook Pixel Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Seguimiento de conversiones
-              </div>
+              <div className="text-sm text-gray-600">Seguimiento de conversiones</div>
             </div>
             <Switch
               checked={settings.facebookPixelEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, facebookPixelEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, facebookPixelEnabled: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Integración CRM</div>
-              <div className="text-sm text-gray-600">
-                Conectar con sistema CRM
-              </div>
+              <div className="text-sm text-gray-600">Conectar con sistema CRM</div>
             </div>
             <Switch
               checked={settings.crmIntegration}
-              onCheckedChange={(checked) => setSettings({...settings, crmIntegration: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, crmIntegration: checked })}
             />
           </div>
-          
+
           {settings.crmIntegration && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Proveedor CRM
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor CRM</label>
               <Input
                 value={settings.crmProvider}
-                onChange={(e) => setSettings({...settings, crmProvider: e.target.value})}
+                onChange={e => setSettings({ ...settings, crmProvider: e.target.value })}
               />
             </div>
           )}
@@ -2935,57 +3122,47 @@ El equipo de Rent360`,
             <Server className="w-5 h-5" />
             API y Webhooks
           </CardTitle>
-          <CardDescription>
-            Configuración de API y webhooks
-          </CardDescription>
+          <CardDescription>Configuración de API y webhooks</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">API Habilitada</div>
-              <div className="text-sm text-gray-600">
-                Permitir acceso a la API
-              </div>
+              <div className="text-sm text-gray-600">Permitir acceso a la API</div>
             </div>
             <Switch
               checked={settings.apiEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, apiEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, apiEnabled: checked })}
             />
           </div>
-          
+
           {settings.apiEnabled && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Clave de API
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Clave de API</label>
               <Input
                 value={settings.apiKey}
-                onChange={(e) => setSettings({...settings, apiKey: e.target.value})}
+                onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
               />
             </div>
           )}
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Webhooks Habilitados</div>
-              <div className="text-sm text-gray-600">
-                Enviar notificaciones a webhooks
-              </div>
+              <div className="text-sm text-gray-600">Enviar notificaciones a webhooks</div>
             </div>
             <Switch
               checked={settings.webhookEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, webhookEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, webhookEnabled: checked })}
             />
           </div>
-          
+
           {settings.webhookEnabled && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL de Webhook
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">URL de Webhook</label>
               <Input
                 value={settings.webhookUrl}
-                onChange={(e) => setSettings({...settings, webhookUrl: e.target.value})}
+                onChange={e => setSettings({ ...settings, webhookUrl: e.target.value })}
               />
             </div>
           )}
@@ -3002,29 +3179,26 @@ El equipo de Rent360`,
             <Zap className="w-5 h-5" />
             Configuración Avanzada
           </CardTitle>
-          <CardDescription>
-            Opciones avanzadas del sistema
-          </CardDescription>
+          <CardDescription>Opciones avanzadas del sistema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Modo Depuración</div>
-              <div className="text-sm text-gray-600">
-                Habilitar mensajes de depuración
-              </div>
+              <div className="text-sm text-gray-600">Habilitar mensajes de depuración</div>
             </div>
             <Switch
               checked={settings.debugMode}
-              onCheckedChange={(checked) => setSettings({...settings, debugMode: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, debugMode: checked })}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nivel de Log
-            </label>
-            <Select value={settings.logLevel} onValueChange={(value: any) => setSettings({...settings, logLevel: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nivel de Log</label>
+            <Select
+              value={settings.logLevel}
+              onValueChange={(value: any) => setSettings({ ...settings, logLevel: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -3036,20 +3210,18 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Caché Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Habilitar caché del sistema
-              </div>
+              <div className="text-sm text-gray-600">Habilitar caché del sistema</div>
             </div>
             <Switch
               checked={settings.cacheEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, cacheEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, cacheEnabled: checked })}
             />
           </div>
-          
+
           {settings.cacheEnabled && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3058,7 +3230,7 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.cacheTimeout}
-                onChange={(e) => setSettings({...settings, cacheTimeout: parseInt(e.target.value)})}
+                onChange={e => setSettings({ ...settings, cacheTimeout: parseInt(e.target.value) })}
               />
             </div>
           )}
@@ -3071,31 +3243,32 @@ El equipo de Rent360`,
             <Database className="w-5 h-5" />
             Respaldo y Mantenimiento
           </CardTitle>
-          <CardDescription>
-            Configuración de respaldos automáticos
-          </CardDescription>
+          <CardDescription>Configuración de respaldos automáticos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Respaldo Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Realizar respaldos automáticos
-              </div>
+              <div className="text-sm text-gray-600">Realizar respaldos automáticos</div>
             </div>
             <Switch
               checked={settings.backupEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, backupEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, backupEnabled: checked })}
             />
           </div>
-          
+
           {settings.backupEnabled && (
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Frecuencia de Respaldo
                 </label>
-                <Select value={settings.backupFrequency} onValueChange={(value: any) => setSettings({...settings, backupFrequency: value})}>
+                <Select
+                  value={settings.backupFrequency}
+                  onValueChange={(value: any) =>
+                    setSettings({ ...settings, backupFrequency: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -3106,7 +3279,7 @@ El equipo de Rent360`,
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Retención de Respaldos (días)
@@ -3114,17 +3287,20 @@ El equipo de Rent360`,
                 <Input
                   type="number"
                   value={settings.backupRetention}
-                  onChange={(e) => setSettings({...settings, backupRetention: parseInt(e.target.value)})}
+                  onChange={e =>
+                    setSettings({ ...settings, backupRetention: parseInt(e.target.value) })
+                  }
                 />
               </div>
             </>
           )}
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tema
-            </label>
-            <Select value={settings.theme} onValueChange={(value: any) => setSettings({...settings, theme: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tema</label>
+            <Select
+              value={settings.theme}
+              onValueChange={(value: any) => setSettings({ ...settings, theme: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -3148,68 +3324,60 @@ El equipo de Rent360`,
             <Palette className="w-5 h-5" />
             Colores y Estilos
           </CardTitle>
-          <CardDescription>
-            Personalización de la interfaz
-          </CardDescription>
+          <CardDescription>Personalización de la interfaz</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color Primario
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color Primario</label>
             <div className="flex gap-2">
               <Input
                 type="color"
                 value={settings.primaryColor}
-                onChange={(e) => setSettings({...settings, primaryColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, primaryColor: e.target.value })}
                 className="w-16 h-10"
               />
               <Input
                 value={settings.primaryColor}
-                onChange={(e) => setSettings({...settings, primaryColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, primaryColor: e.target.value })}
                 className="flex-1"
               />
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color Secundario
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color Secundario</label>
             <div className="flex gap-2">
               <Input
                 type="color"
                 value={settings.secondaryColor}
-                onChange={(e) => setSettings({...settings, secondaryColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, secondaryColor: e.target.value })}
                 className="w-16 h-10"
               />
               <Input
                 value={settings.secondaryColor}
-                onChange={(e) => setSettings({...settings, secondaryColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, secondaryColor: e.target.value })}
                 className="flex-1"
               />
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color de Acento
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color de Acento</label>
             <div className="flex gap-2">
               <Input
                 type="color"
                 value={settings.accentColor}
-                onChange={(e) => setSettings({...settings, accentColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, accentColor: e.target.value })}
                 className="w-16 h-10"
               />
               <Input
                 value={settings.accentColor}
-                onChange={(e) => setSettings({...settings, accentColor: e.target.value})}
+                onChange={e => setSettings({ ...settings, accentColor: e.target.value })}
                 className="flex-1"
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Radio de Bordes (px)
@@ -3217,7 +3385,7 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.borderRadius}
-              onChange={(e) => setSettings({...settings, borderRadius: parseInt(e.target.value)})}
+              onChange={e => setSettings({ ...settings, borderRadius: parseInt(e.target.value) })}
             />
           </div>
         </CardContent>
@@ -3229,16 +3397,15 @@ El equipo de Rent360`,
             <Monitor className="w-5 h-5" />
             Comportamiento de la Interfaz
           </CardTitle>
-          <CardDescription>
-            Opciones de comportamiento y diseño
-          </CardDescription>
+          <CardDescription>Opciones de comportamiento y diseño</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tamaño de Fuente
-            </label>
-            <Select value={settings.fontSize} onValueChange={(value: any) => setSettings({...settings, fontSize: value})}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tamaño de Fuente</label>
+            <Select
+              value={settings.fontSize}
+              onValueChange={(value: any) => setSettings({ ...settings, fontSize: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -3249,43 +3416,37 @@ El equipo de Rent360`,
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Animaciones Habilitadas</div>
-              <div className="text-sm text-gray-600">
-                Mostrar animaciones y transiciones
-              </div>
+              <div className="text-sm text-gray-600">Mostrar animaciones y transiciones</div>
             </div>
             <Switch
               checked={settings.animationsEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, animationsEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, animationsEnabled: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Modo Oscuro Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Permitir tema oscuro
-              </div>
+              <div className="text-sm text-gray-600">Permitir tema oscuro</div>
             </div>
             <Switch
               checked={settings.darkModeEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, darkModeEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, darkModeEnabled: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Diseño Responsivo</div>
-              <div className="text-sm text-gray-600">
-                Optimizado para móviles
-              </div>
+              <div className="text-sm text-gray-600">Optimizado para móviles</div>
             </div>
             <Switch
               checked={settings.mobileResponsive}
-              onCheckedChange={(checked) => setSettings({...settings, mobileResponsive: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, mobileResponsive: checked })}
             />
           </div>
         </CardContent>
@@ -3301,24 +3462,22 @@ El equipo de Rent360`,
             <BarChart3 className="w-5 h-5" />
             Optimización de Imágenes
           </CardTitle>
-          <CardDescription>
-            Configuración de compresión y manejo de imágenes
-          </CardDescription>
+          <CardDescription>Configuración de compresión y manejo de imágenes</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Compresión de Imágenes Habilitada</div>
-              <div className="text-sm text-gray-600">
-                Comprimir imágenes automáticamente
-              </div>
+              <div className="text-sm text-gray-600">Comprimir imágenes automáticamente</div>
             </div>
             <Switch
               checked={settings.imageCompressionEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, imageCompressionEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, imageCompressionEnabled: checked })
+              }
             />
           </div>
-          
+
           {settings.imageCompressionEnabled && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3329,21 +3488,19 @@ El equipo de Rent360`,
                 min="1"
                 max="100"
                 value={settings.imageQuality}
-                onChange={(e) => setSettings({...settings, imageQuality: parseInt(e.target.value)})}
+                onChange={e => setSettings({ ...settings, imageQuality: parseInt(e.target.value) })}
               />
             </div>
           )}
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Carga Perezosa Habilitada</div>
-              <div className="text-sm text-gray-600">
-                Cargar imágenes bajo demanda
-              </div>
+              <div className="text-sm text-gray-600">Cargar imágenes bajo demanda</div>
             </div>
             <Switch
               checked={settings.lazyLoadingEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, lazyLoadingEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, lazyLoadingEnabled: checked })}
             />
           </div>
         </CardContent>
@@ -3355,58 +3512,50 @@ El equipo de Rent360`,
             <Server className="w-5 h-5" />
             Caché y Optimización
           </CardTitle>
-          <CardDescription>
-            Configuración de rendimiento del servidor
-          </CardDescription>
+          <CardDescription>Configuración de rendimiento del servidor</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Caché Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Habilitar caché del navegador
-              </div>
+              <div className="text-sm text-gray-600">Habilitar caché del navegador</div>
             </div>
             <Switch
               checked={settings.cachingEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, cachingEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, cachingEnabled: checked })}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Minificación Habilitada</div>
-              <div className="text-sm text-gray-600">
-                Minificar CSS y JavaScript
-              </div>
+              <div className="text-sm text-gray-600">Minificar CSS y JavaScript</div>
             </div>
             <Switch
               checked={settings.minificationEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, minificationEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, minificationEnabled: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">CDN Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Usar Red de Entrega de Contenido
-              </div>
+              <div className="text-sm text-gray-600">Usar Red de Entrega de Contenido</div>
             </div>
             <Switch
               checked={settings.cdnEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, cdnEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, cdnEnabled: checked })}
             />
           </div>
-          
+
           {settings.cdnEnabled && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL del CDN
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">URL del CDN</label>
               <Input
                 value={settings.cdnUrl}
-                onChange={(e) => setSettings({...settings, cdnUrl: e.target.value})}
+                onChange={e => setSettings({ ...settings, cdnUrl: e.target.value })}
               />
             </div>
           )}
@@ -3423,9 +3572,7 @@ El equipo de Rent360`,
             <FileText className="w-5 h-5" />
             Contenido del Footer
           </CardTitle>
-          <CardDescription>
-            Personaliza los textos y enlaces del footer
-          </CardDescription>
+          <CardDescription>Personaliza los textos y enlaces del footer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -3433,8 +3580,11 @@ El equipo de Rent360`,
               Descripción de la Empresa
             </label>
             <Textarea
-              value={settings.footerDescription || "Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario."}
-              onChange={(e) => setSettings({...settings, footerDescription: e.target.value})}
+              value={
+                settings.footerDescription ||
+                'Plataforma integral de gestión inmobiliaria que conecta propietarios, inquilinos y profesionales del sector inmobiliario.'
+              }
+              onChange={e => setSettings({ ...settings, footerDescription: e.target.value })}
               rows={3}
               placeholder="Descripción de Rent360..."
             />
@@ -3447,8 +3597,8 @@ El equipo de Rent360`,
               </label>
               <Input
                 type="email"
-                value={settings.footerEmail || "contacto@rent360.cl"}
-                onChange={(e) => setSettings({...settings, footerEmail: e.target.value})}
+                value={settings.footerEmail || 'contacto@rent360.cl'}
+                onChange={e => setSettings({ ...settings, footerEmail: e.target.value })}
                 placeholder="contacto@rent360.cl"
               />
             </div>
@@ -3459,20 +3609,18 @@ El equipo de Rent360`,
               </label>
               <Input
                 type="tel"
-                value={settings.footerPhone || "+56 9 1234 5678"}
-                onChange={(e) => setSettings({...settings, footerPhone: e.target.value})}
+                value={settings.footerPhone || '+56 9 1234 5678'}
+                onChange={e => setSettings({ ...settings, footerPhone: e.target.value })}
                 placeholder="+56 9 1234 5678"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Dirección
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
             <Input
-              value={settings.footerAddress || "Santiago, Chile"}
-              onChange={(e) => setSettings({...settings, footerAddress: e.target.value})}
+              value={settings.footerAddress || 'Santiago, Chile'}
+              onChange={e => setSettings({ ...settings, footerAddress: e.target.value })}
               placeholder="Santiago, Chile"
             />
           </div>
@@ -3482,8 +3630,11 @@ El equipo de Rent360`,
               Texto de Copyright
             </label>
             <Input
-              value={settings.footerCopyright || "Desarrollado con ❤️ para el sector inmobiliario chileno"}
-              onChange={(e) => setSettings({...settings, footerCopyright: e.target.value})}
+              value={
+                settings.footerCopyright ||
+                'Desarrollado con ❤️ para el sector inmobiliario chileno'
+              }
+              onChange={e => setSettings({ ...settings, footerCopyright: e.target.value })}
               placeholder="Texto de copyright..."
             />
           </div>
@@ -3496,9 +3647,7 @@ El equipo de Rent360`,
             <FileText className="w-5 h-5" />
             Páginas Legales
           </CardTitle>
-          <CardDescription>
-            Configura las páginas de términos, privacidad y cookies
-          </CardDescription>
+          <CardDescription>Configura las páginas de términos, privacidad y cookies</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
@@ -3507,8 +3656,8 @@ El equipo de Rent360`,
                 URL de Términos y Condiciones
               </label>
               <Input
-                value={settings.termsUrl || "/terms"}
-                onChange={(e) => setSettings({...settings, termsUrl: e.target.value})}
+                value={settings.termsUrl || '/terms'}
+                onChange={e => setSettings({ ...settings, termsUrl: e.target.value })}
                 placeholder="/terms"
               />
             </div>
@@ -3518,8 +3667,8 @@ El equipo de Rent360`,
                 URL de Política de Privacidad
               </label>
               <Input
-                value={settings.privacyUrl || "/privacy"}
-                onChange={(e) => setSettings({...settings, privacyUrl: e.target.value})}
+                value={settings.privacyUrl || '/privacy'}
+                onChange={e => setSettings({ ...settings, privacyUrl: e.target.value })}
                 placeholder="/privacy"
               />
             </div>
@@ -3529,8 +3678,8 @@ El equipo de Rent360`,
                 URL de Política de Cookies
               </label>
               <Input
-                value={settings.cookiesUrl || "/cookies"}
-                onChange={(e) => setSettings({...settings, cookiesUrl: e.target.value})}
+                value={settings.cookiesUrl || '/cookies'}
+                onChange={e => setSettings({ ...settings, cookiesUrl: e.target.value })}
                 placeholder="/cookies"
               />
             </div>
@@ -3539,13 +3688,11 @@ El equipo de Rent360`,
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <div className="font-medium">Footer Habilitado</div>
-              <div className="text-sm text-gray-600">
-                Mostrar footer en todas las páginas
-              </div>
+              <div className="text-sm text-gray-600">Mostrar footer en todas las páginas</div>
             </div>
             <Switch
               checked={settings.footerEnabled !== false}
-              onCheckedChange={(checked) => setSettings({...settings, footerEnabled: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, footerEnabled: checked })}
             />
           </div>
         </CardContent>
@@ -3561,60 +3708,56 @@ El equipo de Rent360`,
             <FileText className="w-5 h-5" />
             Documentos Legales
           </CardTitle>
-          <CardDescription>
-            Configuración de documentos legales requeridos
-          </CardDescription>
+          <CardDescription>Configuración de documentos legales requeridos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Términos de Servicio Requeridos</div>
-              <div className="text-sm text-gray-600">
-                Los usuarios deben aceptar los términos
-              </div>
+              <div className="text-sm text-gray-600">Los usuarios deben aceptar los términos</div>
             </div>
             <Switch
               checked={settings.termsOfServiceRequired}
-              onCheckedChange={(checked) => setSettings({...settings, termsOfServiceRequired: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, termsOfServiceRequired: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Política de Privacidad Requerida</div>
-              <div className="text-sm text-gray-600">
-                Los usuarios deben aceptar la política
-              </div>
+              <div className="text-sm text-gray-600">Los usuarios deben aceptar la política</div>
             </div>
             <Switch
               checked={settings.privacyPolicyRequired}
-              onCheckedChange={(checked) => setSettings({...settings, privacyPolicyRequired: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, privacyPolicyRequired: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Consentimiento de Cookies</div>
-              <div className="text-sm text-gray-600">
-                Mostrar banner de cookies
-              </div>
+              <div className="text-sm text-gray-600">Mostrar banner de cookies</div>
             </div>
             <Switch
               checked={settings.cookieConsentEnabled}
-              onCheckedChange={(checked) => setSettings({...settings, cookieConsentEnabled: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, cookieConsentEnabled: checked })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Cumplimiento GDPR</div>
-              <div className="text-sm text-gray-600">
-                Cumplir con regulaciones GDPR
-              </div>
+              <div className="text-sm text-gray-600">Cumplir con regulaciones GDPR</div>
             </div>
             <Switch
               checked={settings.gdprCompliance}
-              onCheckedChange={(checked) => setSettings({...settings, gdprCompliance: checked})}
+              onCheckedChange={checked => setSettings({ ...settings, gdprCompliance: checked })}
             />
           </div>
         </CardContent>
@@ -3626,9 +3769,7 @@ El equipo de Rent360`,
             <Trash2 className="w-5 h-5" />
             Retención y Limpieza de Datos
           </CardTitle>
-          <CardDescription>
-            Configuración de gestión de datos
-          </CardDescription>
+          <CardDescription>Configuración de gestión de datos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -3638,10 +3779,12 @@ El equipo de Rent360`,
             <Input
               type="number"
               value={settings.dataRetentionDays}
-              onChange={(e) => setSettings({...settings, dataRetentionDays: parseInt(e.target.value)})}
+              onChange={e =>
+                setSettings({ ...settings, dataRetentionDays: parseInt(e.target.value) })
+              }
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Eliminación Automática de Usuarios Inactivos</div>
@@ -3651,10 +3794,12 @@ El equipo de Rent360`,
             </div>
             <Switch
               checked={settings.autoDeleteInactiveUsers}
-              onCheckedChange={(checked) => setSettings({...settings, autoDeleteInactiveUsers: checked})}
+              onCheckedChange={checked =>
+                setSettings({ ...settings, autoDeleteInactiveUsers: checked })
+              }
             />
           </div>
-          
+
           {settings.autoDeleteInactiveUsers && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3663,7 +3808,9 @@ El equipo de Rent360`,
               <Input
                 type="number"
                 value={settings.inactiveUserDays}
-                onChange={(e) => setSettings({...settings, inactiveUserDays: parseInt(e.target.value)})}
+                onChange={e =>
+                  setSettings({ ...settings, inactiveUserDays: parseInt(e.target.value) })
+                }
               />
             </div>
           )}
@@ -3689,7 +3836,9 @@ El equipo de Rent360`,
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Plantillas de Email</h2>
-          <p className="text-gray-600 mt-1">Gestiona las plantillas de correos electrónicos del sistema</p>
+          <p className="text-gray-600 mt-1">
+            Gestiona las plantillas de correos electrónicos del sistema
+          </p>
         </div>
         <Button onClick={handleCreateTemplate}>
           <Plus className="w-4 h-4 mr-2" />
@@ -3759,7 +3908,7 @@ El equipo de Rent360`,
               <Input
                 placeholder="Buscar plantillas..."
                 value={templateSearch}
-                onChange={(e) => setTemplateSearch(e.target.value)}
+                onChange={e => setTemplateSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -3803,9 +3952,7 @@ El equipo de Rent360`,
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <CardDescription className="mt-1">
-                    Asunto: {template.subject}
-                  </CardDescription>
+                  <CardDescription className="mt-1">Asunto: {template.subject}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={getCategoryColor(template.category)}>
@@ -3900,13 +4047,18 @@ El equipo de Rent360`,
   );
 
   return (
-    <UnifiedDashboardLayout title="Configuración Avanzada" subtitle="Gestiona toda la configuración del sistema Rent360">
+    <UnifiedDashboardLayout
+      title="Configuración Avanzada"
+      subtitle="Gestiona toda la configuración del sistema Rent360"
+    >
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Configuración Avanzada</h1>
-            <p className="text-gray-600 mt-2">Gestiona todas las preferencias y opciones del sistema</p>
+            <p className="text-gray-600 mt-2">
+              Gestiona todas las preferencias y opciones del sistema
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline">
@@ -3923,7 +4075,7 @@ El equipo de Rent360`,
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-1 overflow-x-auto">
-            {tabs.map((tab) => (
+            {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -3969,29 +4121,31 @@ El equipo de Rent360`,
                 <h2 className="text-2xl font-bold text-gray-800">
                   {selectedTemplate ? 'Editar Plantilla' : 'Crear Nueva Plantilla'}
                 </h2>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowTemplateModal(false)}
-                >
+                <Button size="sm" variant="ghost" onClick={() => setShowTemplateModal(false)}>
                   <X className="w-5 h-5" />
                 </Button>
               </div>
 
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.target as HTMLFormElement);
-                  const templateData = {
-                    name: formData.get('name') as string,
-                    subject: formData.get('subject') as string,
-                    content: formData.get('content') as string,
-                    category: formData.get('category') as EmailTemplate['category'],
-                    variables: (formData.get('variables') as string)?.split(',').map(v => v.trim()).filter(v => v) || [],
-                    isActive: formData.get('isActive') === 'true',
-                  };
-                  handleSaveTemplate(templateData);
-                }}>
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target as HTMLFormElement);
+                    const templateData = {
+                      name: formData.get('name') as string,
+                      subject: formData.get('subject') as string,
+                      content: formData.get('content') as string,
+                      category: formData.get('category') as EmailTemplate['category'],
+                      variables:
+                        (formData.get('variables') as string)
+                          ?.split(',')
+                          .map(v => v.trim())
+                          .filter(v => v) || [],
+                      isActive: formData.get('isActive') === 'true',
+                    };
+                    handleSaveTemplate(templateData);
+                  }}
+                >
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
@@ -4010,7 +4164,10 @@ El equipo de Rent360`,
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Categoría *
                         </label>
-                        <Select name="category" defaultValue={selectedTemplate?.category || 'custom'}>
+                        <Select
+                          name="category"
+                          defaultValue={selectedTemplate?.category || 'custom'}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar categoría" />
                           </SelectTrigger>
@@ -4051,7 +4208,8 @@ El equipo de Rent360`,
                         placeholder="Ej: userName, propertyTitle, monthlyRent"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Separa las variables con comas. Estas estarán disponibles para usar en el asunto y contenido.
+                        Separa las variables con comas. Estas estarán disponibles para usar en el
+                        asunto y contenido.
                       </p>
                     </div>
 
@@ -4086,7 +4244,9 @@ El equipo de Rent360`,
 
                     {selectedTemplate && (
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-700 mb-2">Información de la Plantilla</h4>
+                        <h4 className="font-medium text-gray-700 mb-2">
+                          Información de la Plantilla
+                        </h4>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <span className="font-medium">Creada:</span>{' '}
@@ -4123,5 +4283,3 @@ El equipo de Rent360`,
     </UnifiedDashboardLayout>
   );
 }
-
-
