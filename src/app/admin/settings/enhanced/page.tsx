@@ -522,6 +522,89 @@ export default function EnhancedAdminSettingsPage() {
     footerEnabled: true,
   });
 
+  // Función para cargar settings desde la API
+  const loadSettings = async () => {
+    try {
+      const settingsResponse = await fetch('/api/settings');
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+
+        // Function to safely convert settings, filtering out null/undefined values
+        const processSettingsData = (apiSettings: any) => {
+          const processed: any = {};
+
+          // Helper function to safely get numeric values
+          const safeNumber = (value: any, defaultValue: number): number => {
+            if (value === null || value === undefined || value === '') {
+              return defaultValue;
+            }
+            const num = Number(value);
+            return isNaN(num) ? defaultValue : num;
+          };
+
+          // Helper function to safely get string values
+          const safeString = (value: any, defaultValue: string): string => {
+            return value === null || value === undefined ? defaultValue : String(value);
+          };
+
+          // Helper function to safely get boolean values
+          const safeBoolean = (value: any, defaultValue: boolean): boolean => {
+            return value === null || value === undefined ? defaultValue : Boolean(value);
+          };
+
+          // Process each category
+          Object.keys(apiSettings).forEach(category => {
+            if (!processed[category]) {
+              processed[category] = {};
+            }
+
+            Object.keys(apiSettings[category]).forEach(key => {
+              const settingData = apiSettings[category][key];
+              if (settingData && settingData.value !== null && settingData.value !== undefined) {
+                // Convert based on expected type
+                if (typeof settingData.value === 'number' || !isNaN(Number(settingData.value))) {
+                  processed[category][key] = Number(settingData.value);
+                } else if (
+                  typeof settingData.value === 'boolean' ||
+                  settingData.value === 'true' ||
+                  settingData.value === 'false'
+                ) {
+                  processed[category][key] =
+                    settingData.value === 'true' || settingData.value === true;
+                } else {
+                  processed[category][key] = settingData.value;
+                }
+              }
+            });
+          });
+
+          return processed;
+        };
+
+        const processedSettings = processSettingsData(settingsData.settings);
+        // Merge with default settings, but only override with valid values
+        setSettings(prev => {
+          const merged = { ...prev } as any;
+          Object.keys(processedSettings).forEach(category => {
+            if (!merged[category]) {
+              merged[category] = {};
+            }
+            Object.keys(processedSettings[category]).forEach(key => {
+              const value = processedSettings[category][key];
+              // Solo excluir valores null/undefined, permitir strings, números y booleanos
+              if (value !== null && value !== undefined) {
+                merged[category] = { ...merged[category], [key]: value };
+              }
+            });
+          });
+          return merged;
+        });
+      }
+    } catch (error) {
+      logger.error('Error loading settings:', error);
+    }
+  };
+
   const [loading, setLoading] = useState(true);
 
   const [saving, setSaving] = useState(false);
@@ -539,81 +622,7 @@ export default function EnhancedAdminSettingsPage() {
         }
 
         // Load settings
-        const settingsResponse = await fetch('/api/settings');
-        if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json();
-
-          // Function to safely convert settings, filtering out null/undefined values
-          const processSettingsData = (apiSettings: any) => {
-            const processed: any = {};
-
-            // Helper function to safely get numeric values
-            const safeNumber = (value: any, defaultValue: number): number => {
-              if (value === null || value === undefined || value === '') {
-                return defaultValue;
-              }
-              const num = Number(value);
-              return isNaN(num) ? defaultValue : num;
-            };
-
-            // Helper function to safely get string values
-            const safeString = (value: any, defaultValue: string): string => {
-              return value === null || value === undefined ? defaultValue : String(value);
-            };
-
-            // Helper function to safely get boolean values
-            const safeBoolean = (value: any, defaultValue: boolean): boolean => {
-              return value === null || value === undefined ? defaultValue : Boolean(value);
-            };
-
-            // Process each category
-            Object.keys(apiSettings).forEach(category => {
-              if (!processed[category]) {
-                processed[category] = {};
-              }
-
-              Object.keys(apiSettings[category]).forEach(key => {
-                const settingData = apiSettings[category][key];
-                if (settingData && settingData.value !== null && settingData.value !== undefined) {
-                  // Convert based on expected type
-                  if (typeof settingData.value === 'number' || !isNaN(Number(settingData.value))) {
-                    processed[category][key] = Number(settingData.value);
-                  } else if (
-                    typeof settingData.value === 'boolean' ||
-                    settingData.value === 'true' ||
-                    settingData.value === 'false'
-                  ) {
-                    processed[category][key] =
-                      settingData.value === 'true' || settingData.value === true;
-                  } else {
-                    processed[category][key] = settingData.value;
-                  }
-                }
-              });
-            });
-
-            return processed;
-          };
-
-          const processedSettings = processSettingsData(settingsData.settings);
-          // Merge with default settings, but only override with valid values
-          setSettings(prev => {
-            const merged = { ...prev } as any;
-            Object.keys(processedSettings).forEach(category => {
-              if (!merged[category]) {
-                merged[category] = {};
-              }
-              Object.keys(processedSettings[category]).forEach(key => {
-                const value = processedSettings[category][key];
-                // Solo excluir valores null/undefined, permitir strings, números y booleanos
-                if (value !== null && value !== undefined) {
-                  merged[category] = { ...merged[category], [key]: value };
-                }
-              });
-            });
-            return merged;
-          });
-        }
+        await loadSettings();
 
         // Load email templates
         const templatesResponse = await fetch('/api/admin/email-templates');
@@ -911,6 +920,8 @@ El equipo de Rent360`,
       });
 
       if (response.ok) {
+        // Recargar settings desde la base de datos para asegurar que se reflejen los cambios
+        await loadSettings();
         alert('Configuración guardada exitosamente');
       } else {
         const errorData = await response.json();
