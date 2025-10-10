@@ -605,7 +605,8 @@ export default function EnhancedAdminSettingsPage() {
               }
               Object.keys(processedSettings[category]).forEach(key => {
                 const value = processedSettings[category][key];
-                if (value !== null && value !== undefined && !isNaN(value)) {
+                // Solo excluir valores null/undefined, permitir strings, números y booleanos
+                if (value !== null && value !== undefined) {
                   merged[category] = { ...merged[category], [key]: value };
                 }
               });
@@ -798,18 +799,122 @@ El equipo de Rent360`,
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
+      // Transformar settings plano a estructura anidada por categorías
+      const categorizedSettings: any = {};
+
+      // Definir categorías y sus campos
+      const categories = {
+        general: [
+          'siteName',
+          'siteUrl',
+          'adminEmail',
+          'supportEmail',
+          'maintenanceMode',
+          'allowRegistrations',
+          'requireEmailVerification',
+          'maxPropertyImages',
+          'maxFileSize',
+          'currency',
+          'timezone',
+          'language',
+        ],
+        properties: [
+          'defaultPropertyStatus',
+          'autoApproveProperties',
+          'propertyExpiryDays',
+          'featuredPropertyLimit',
+          'allowPropertyVideos',
+          'maxPropertyVideos',
+          'virtualTourEnabled',
+          'propertyMapEnabled',
+        ],
+        users: [
+          'defaultUserRole',
+          'userApprovalRequired',
+          'maxLoginAttempts',
+          'accountLockoutDuration',
+          'passwordExpiryDays',
+          'sessionTimeout',
+          'allowSocialLogin',
+          'socialProviders',
+        ],
+        commissions: [
+          'defaultCommissionRate',
+          'commissionStructure',
+          'minimumCommissionAmount',
+          'commissionPaymentMethod',
+          'commissionSchedule',
+        ],
+        notifications: [
+          'emailNotifications',
+          'smsNotifications',
+          'pushNotifications',
+          'inAppNotifications',
+          'newPropertyAlerts',
+          'paymentReminders',
+          'maintenanceAlerts',
+        ],
+        security: [
+          'twoFactorAuth',
+          'passwordPolicy',
+          'sessionTimeout',
+          'ipWhitelist',
+          'auditLogging',
+          'dataEncryption',
+        ],
+        payments: [
+          'paymentGateway',
+          'supportedCurrencies',
+          'minPaymentAmount',
+          'maxPaymentAmount',
+          'paymentTimeout',
+          'autoRefundPolicy',
+        ],
+        integrations: [
+          'googleMapsApiKey',
+          'emailServiceProvider',
+          'smsServiceProvider',
+          'socialLoginProviders',
+          'analyticsProvider',
+          'cdnProvider',
+        ],
+        advanced: [
+          'debugMode',
+          'cacheEnabled',
+          'compressionEnabled',
+          'cdnEnabled',
+          'backupFrequency',
+          'logRetention',
+        ],
+      };
+
+      // Agrupar settings por categorías
+      Object.entries(categories).forEach(([category, fields]) => {
+        categorizedSettings[category] = {};
+        fields.forEach(field => {
+          if (settings[field as keyof SystemSettings] !== undefined) {
+            categorizedSettings[category][field] = {
+              value: settings[field as keyof SystemSettings],
+              isActive: true,
+              description: `${field} setting`,
+            };
+          }
+        });
+      });
+
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ settings }),
+        body: JSON.stringify({ settings: categorizedSettings }),
       });
 
       if (response.ok) {
         alert('Configuración guardada exitosamente');
       } else {
-        alert('Error al guardar la configuración');
+        const errorData = await response.json();
+        alert(`Error al guardar la configuración: ${errorData.error || 'Error desconocido'}`);
       }
     } catch (error) {
       logger.error('Error saving settings:', {

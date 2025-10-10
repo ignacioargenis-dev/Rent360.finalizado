@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
     const startTime = Date.now();
 
+    // Debug: verificar autenticación
+    console.log('User authenticated:', { id: user.id, email: user.email, role: user.role });
+
     // Obtener parámetros de consulta
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -45,6 +48,9 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get('isActive');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+
+    // Debug: mostrar parámetros
+    console.log('Query params:', { page, limit, role, search, isActive, sortBy, sortOrder });
 
     const skip = (page - 1) * limit;
 
@@ -71,14 +77,14 @@ export async function GET(request: NextRequest) {
     // isActive=all: mostrar todos los usuarios
     // isActive=true: mostrar solo activos
     // isActive=false: mostrar solo inactivos
-    // No especificado: mostrar solo activos por defecto
+    // No especificado: mostrar todos por defecto (temporal para debug)
     if (isActive === 'true') {
       where.isActive = true;
     } else if (isActive === 'false') {
       where.isActive = false;
     } else if (isActive !== 'all') {
-      // Por defecto mostrar solo activos
-      where.isActive = true;
+      // Por defecto mostrar todos los usuarios (cambiado temporalmente)
+      // where.isActive = true;
     }
     // Si isActive === 'all', no aplicar filtro de isActive
 
@@ -101,7 +107,11 @@ export async function GET(request: NextRequest) {
       role: user.role,
       duration,
       filters: { role, search, isActive },
+      whereClause: where,
       resultCount: Array.isArray(result) ? result.length : 0,
+      result: Array.isArray(result)
+        ? result.map(u => ({ id: u.id, email: u.email, role: u.role, isActive: u.isActive }))
+        : result,
     });
 
     // Convertir roles a minúscula para el frontend
