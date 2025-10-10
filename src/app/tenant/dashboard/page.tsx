@@ -109,78 +109,97 @@ export default function TenantDashboardPage() {
 
     const loadTenantData = async () => {
       try {
-        // Mock tenant data
-        const mockContracts: RentalContract[] = [
-          {
-            id: '1',
-            propertyTitle: 'Departamento Moderno Las Condes',
-            propertyAddress: 'Las Condes 123, Las Condes, Santiago',
-            landlordName: 'María González',
-            landlordEmail: 'maria.gonzalez@email.com',
-            landlordPhone: '+56912345678',
-            monthlyRent: 450000,
-            startDate: '2024-01-01',
-            endDate: '2025-01-01',
-            status: 'active',
-            nextPaymentDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), // En 5 días
-            securityDeposit: 900000,
-          },
-        ];
+        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000; // 5 minutos
 
-        const mockPayments: Payment[] = [
-          {
-            id: '1',
-            contractId: '1',
-            amount: 450000,
-            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
-            status: 'pending',
-            description: 'Arriendo Enero 2025',
-          },
-          {
-            id: '2',
-            contractId: '1',
-            amount: 450000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-            status: 'paid',
-            description: 'Arriendo Diciembre 2024',
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
-          },
-        ];
+        if (isNewUser) {
+          // Usuario nuevo - mostrar dashboard vacío con bienvenida
+          setContracts([]);
+          setPayments([]);
+          setMaintenanceRequests([]);
+          setStats({
+            activeContracts: 0,
+            pendingPayments: 0,
+            overduePayments: 0,
+            maintenanceRequests: 0,
+            unreadMessages: 0,
+            totalMonthlyRent: 0,
+          });
+        } else {
+          // Usuario existente - mostrar datos de ejemplo (temporal hasta implementar API real)
+          const mockContracts: RentalContract[] = [
+            {
+              id: '1',
+              propertyTitle: 'Departamento Moderno Las Condes',
+              propertyAddress: 'Las Condes 123, Las Condes, Santiago',
+              landlordName: 'María González',
+              landlordEmail: 'maria.gonzalez@email.com',
+              landlordPhone: '+56912345678',
+              monthlyRent: 450000,
+              startDate: '2024-01-01',
+              endDate: '2025-01-01',
+              status: 'active',
+              nextPaymentDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
+              securityDeposit: 900000,
+            },
+          ];
 
-        const mockMaintenance: MaintenanceRequest[] = [
-          {
-            id: '1',
-            contractId: '1',
-            propertyTitle: 'Departamento Moderno Las Condes',
-            title: 'Fuga en grifería de cocina',
-            description: 'La grifería de la cocina tiene una fuga constante',
-            status: 'in_progress',
-            priority: 'medium',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            estimatedCost: 25000,
-          },
-        ];
+          const mockPayments: Payment[] = [
+            {
+              id: '1',
+              contractId: '1',
+              amount: 450000,
+              dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
+              status: 'pending',
+              description: 'Arriendo Enero 2025',
+            },
+            {
+              id: '2',
+              contractId: '1',
+              amount: 450000,
+              dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+              status: 'paid',
+              description: 'Arriendo Diciembre 2024',
+              paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
+            },
+          ];
 
-        setContracts(mockContracts);
-        setPayments(mockPayments);
-        setMaintenanceRequests(mockMaintenance);
+          const mockMaintenance: MaintenanceRequest[] = [
+            {
+              id: '1',
+              contractId: '1',
+              propertyTitle: 'Departamento Moderno Las Condes',
+              title: 'Fuga en grifería de cocina',
+              description: 'La grifería de la cocina tiene una fuga constante',
+              status: 'in_progress',
+              priority: 'medium',
+              createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+              estimatedCost: 25000,
+            },
+          ];
 
-        // Calculate stats
-        const activeContracts = mockContracts.filter(c => c.status === 'active').length;
-        const pendingPayments = mockPayments.filter(p => p.status === 'pending').length;
-        const overduePayments = mockPayments.filter(
-          p => p.status === 'pending' && new Date(p.dueDate) < new Date()
-        ).length;
-        const totalMonthlyRent = mockContracts.reduce((sum, c) => sum + c.monthlyRent, 0);
+          setContracts(mockContracts);
+          setPayments(mockPayments);
+          setMaintenanceRequests(mockMaintenance);
 
-        setStats({
-          activeContracts,
-          pendingPayments,
-          overduePayments,
-          maintenanceRequests: mockMaintenance.length,
-          unreadMessages: 2, // Mock
-          totalMonthlyRent,
-        });
+          // Calculate stats
+          const activeContracts = mockContracts.filter(c => c.status === 'active').length;
+          const pendingPayments = mockPayments.filter(p => p.status === 'pending').length;
+          const overduePayments = mockPayments.filter(
+            p => p.status === 'pending' && new Date(p.dueDate) < new Date()
+          ).length;
+          const totalMonthlyRent = mockContracts.reduce((sum, c) => sum + c.monthlyRent, 0);
+
+          setStats({
+            activeContracts,
+            pendingPayments,
+            overduePayments,
+            maintenanceRequests: mockMaintenance.length,
+            unreadMessages: 2, // Mock
+            totalMonthlyRent,
+          });
+        }
 
         setLoading(false);
       } catch (error) {
@@ -322,6 +341,58 @@ export default function TenantDashboardPage() {
             </Button>
           </div>
         </div>
+
+        {/* Welcome message for new users */}
+        {(() => {
+          const isNewUser =
+            !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000; // 5 minutos
+          return isNewUser ? (
+            <Card className="mb-6 border-blue-200 bg-blue-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                      ¡Bienvenido a Rent360, {user?.name}!
+                    </h3>
+                    <p className="text-blue-700 mb-4">
+                      Tu cuenta ha sido creada exitosamente. Comienza explorando la plataforma y
+                      gestionando tus contratos de arriendo.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Explorar Contratos
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Ver Pagos
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Contactar Soporte
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null;
+        })()}
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
