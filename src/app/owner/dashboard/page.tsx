@@ -81,7 +81,8 @@ export default function OwnerDashboard() {
 
       // Intentar cargar datos reales del usuario
       // Por ahora, si es un usuario nuevo, mostrar datos vacíos
-      const isNewUser = !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 60000; // Menos de 1 minuto desde creación
+      const isNewUser =
+        !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000; // Menos de 5 minutos desde creación
 
       if (isNewUser) {
         // Usuario nuevo - mostrar dashboard vacío con bienvenida

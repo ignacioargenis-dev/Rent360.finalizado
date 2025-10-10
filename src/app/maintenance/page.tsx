@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +46,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DashboardStats {
   activeJobs: number;
@@ -116,79 +123,108 @@ export default function MaintenanceDashboard() {
   });
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      setStats({
-        activeJobs: 8,
-        totalJobs: 156,
-        monthlyRevenue: 3100000,
-        completedJobs: 47,
-        averageRating: 4.9,
-        pendingJobs: 5,
-      });
+    const loadMaintenanceData = async () => {
+      try {
+        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000;
 
-      setRecentJobs([
-        {
-          id: '1',
-          title: 'Reparación de cañería',
-          propertyAddress: 'Av. Apoquindo 3400, Las Condes',
-          ownerName: 'María González',
-          status: 'in_progress',
-          priority: 'high',
-          scheduledDate: '2024-01-15',
-          estimatedCost: 45000,
-        },
-        {
-          id: '2',
-          title: 'Mantenimiento eléctrico',
-          propertyAddress: 'Av. Providencia 1245, Providencia',
-          ownerName: 'Carlos Rodríguez',
-          status: 'pending',
-          priority: 'medium',
-          scheduledDate: '2024-01-18',
-          estimatedCost: 80000,
-        },
-        {
-          id: '3',
-          title: 'Limpieza general',
-          propertyAddress: 'Av. Vitacura 8900, Vitacura',
-          ownerName: 'Ana López',
-          status: 'completed',
-          priority: 'low',
-          scheduledDate: '2024-01-10',
-          estimatedCost: 30000,
-        },
-      ]);
+        if (isNewUser) {
+          // Usuario nuevo - mostrar dashboard vacío
+          setStats({
+            activeJobs: 0,
+            totalJobs: 0,
+            monthlyRevenue: 0,
+            completedJobs: 0,
+            averageRating: 0,
+            pendingJobs: 0,
+          });
+          setRecentJobs([]);
+          setRecentActivity([]);
+          setLoading(false);
+          return;
+        }
 
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'job_completed',
-          title: 'Trabajo completado',
-          description: 'Reparación de cañería en Av. Las Condes terminada exitosamente',
-          date: '2024-01-15',
-          status: 'COMPLETED',
-        },
-        {
-          id: '2',
-          type: 'payment_received',
-          title: 'Pago recibido',
-          description: 'María González pagó $45.000 por reparación de plomería',
-          date: '2024-01-15',
-          status: 'COMPLETED',
-        },
-        {
-          id: '3',
-          type: 'job_started',
-          title: 'Trabajo iniciado',
-          description: 'Mantenimiento eléctrico en Providencia ha comenzado',
-          date: '2024-01-14',
-        },
-      ]);
+        // Usuario existente - mostrar datos de ejemplo (temporal)
+        setStats({
+          activeJobs: 8,
+          totalJobs: 156,
+          monthlyRevenue: 3100000,
+          completedJobs: 47,
+          averageRating: 4.9,
+          pendingJobs: 5,
+        });
 
-      setLoading(false);
-    }, 1000);
-  }, []);
+        setRecentJobs([
+          {
+            id: '1',
+            title: 'Reparación de cañería',
+            propertyAddress: 'Av. Apoquindo 3400, Las Condes',
+            ownerName: 'María González',
+            status: 'in_progress',
+            priority: 'high',
+            scheduledDate: '2024-01-15',
+            estimatedCost: 45000,
+          },
+          {
+            id: '2',
+            title: 'Mantenimiento eléctrico',
+            propertyAddress: 'Av. Providencia 1245, Providencia',
+            ownerName: 'Carlos Rodríguez',
+            status: 'pending',
+            priority: 'medium',
+            scheduledDate: '2024-01-18',
+            estimatedCost: 80000,
+          },
+          {
+            id: '3',
+            title: 'Limpieza general',
+            propertyAddress: 'Av. Vitacura 8900, Vitacura',
+            ownerName: 'Ana López',
+            status: 'completed',
+            priority: 'low',
+            scheduledDate: '2024-01-10',
+            estimatedCost: 30000,
+          },
+        ]);
+
+        setRecentActivity([
+          {
+            id: '1',
+            type: 'job_completed',
+            title: 'Trabajo completado',
+            description: 'Reparación de cañería en Av. Las Condes terminada exitosamente',
+            date: '2024-01-15',
+            status: 'COMPLETED',
+          },
+          {
+            id: '2',
+            type: 'payment_received',
+            title: 'Pago recibido',
+            description: 'María González pagó $45.000 por reparación de plomería',
+            date: '2024-01-15',
+            status: 'COMPLETED',
+          },
+          {
+            id: '3',
+            type: 'job_started',
+            title: 'Trabajo iniciado',
+            description: 'Mantenimiento eléctrico en Providencia ha comenzado',
+            date: '2024-01-14',
+          },
+        ]);
+
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading maintenance data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        setLoading(false);
+      }
+    };
+
+    loadMaintenanceData();
+  }, [user]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -277,7 +313,9 @@ El temporizador del trabajo está activo.`);
   };
 
   const handleUpdateJobSubmit = async () => {
-    if (!selectedJob) return;
+    if (!selectedJob) {
+      return;
+    }
 
     try {
       // Simular actualización del trabajo
@@ -910,7 +948,9 @@ Los cambios han sido guardados y notificados al propietario.`);
       <Dialog open={showUpdateJobModal} onOpenChange={setShowUpdateJobModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-blue-600">🔄 Actualizar Trabajo</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-blue-600">
+              🔄 Actualizar Trabajo
+            </DialogTitle>
             <DialogDescription>
               Modificar los detalles del trabajo: {selectedJob?.title}
             </DialogDescription>
@@ -923,7 +963,7 @@ Los cambios han sido guardados y notificados al propietario.`);
                 id="update-job-title"
                 placeholder={selectedJob?.title}
                 value={updateJobData.title}
-                onChange={(e) => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={e => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
 
@@ -931,9 +971,9 @@ Los cambios han sido guardados y notificados al propietario.`);
               <Label htmlFor="update-job-title">Título del Trabajo</Label>
               <Input
                 id="update-job-title"
-                placeholder={selectedJob?.title || "Título del trabajo"}
+                placeholder={selectedJob?.title || 'Título del trabajo'}
                 value={updateJobData.title}
-                onChange={(e) => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={e => setUpdateJobData(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
 
@@ -942,7 +982,9 @@ Los cambios han sido guardados y notificados al propietario.`);
                 <Label htmlFor="update-job-priority">Prioridad</Label>
                 <Select
                   value={updateJobData.priority}
-                  onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setUpdateJobData(prev => ({ ...prev, priority: value }))}
+                  onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') =>
+                    setUpdateJobData(prev => ({ ...prev, priority: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -964,7 +1006,12 @@ Los cambios han sido guardados y notificados al propietario.`);
                   min="0.5"
                   step="0.5"
                   value={updateJobData.estimatedHours}
-                  onChange={(e) => setUpdateJobData(prev => ({ ...prev, estimatedHours: parseFloat(e.target.value) || 1 }))}
+                  onChange={e =>
+                    setUpdateJobData(prev => ({
+                      ...prev,
+                      estimatedHours: parseFloat(e.target.value) || 1,
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -975,7 +1022,9 @@ Los cambios han sido guardados y notificados al propietario.`);
                 id="update-job-date"
                 type="date"
                 value={updateJobData.scheduledDate}
-                onChange={(e) => setUpdateJobData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                onChange={e =>
+                  setUpdateJobData(prev => ({ ...prev, scheduledDate: e.target.value }))
+                }
               />
             </div>
 
@@ -985,19 +1034,29 @@ Los cambios han sido guardados y notificados al propietario.`);
                 id="update-job-notes"
                 placeholder="Información adicional, cambios, requerimientos especiales..."
                 value={updateJobData.notes}
-                onChange={(e) => setUpdateJobData(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={e => setUpdateJobData(prev => ({ ...prev, notes: e.target.value }))}
                 rows={2}
               />
             </div>
 
             {selectedJob && (
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-800 mb-2">📋 Información actual del trabajo</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">
+                  📋 Información actual del trabajo
+                </h4>
                 <div className="text-sm space-y-1">
-                  <p><strong>Propietario:</strong> {selectedJob.ownerName}</p>
-                  <p><strong>Dirección:</strong> {selectedJob.propertyAddress}</p>
-                  <p><strong>Estado actual:</strong> {getStatusBadge(selectedJob.status)}</p>
-                  <p><strong>Prioridad actual:</strong> {selectedJob.priority}</p>
+                  <p>
+                    <strong>Propietario:</strong> {selectedJob.ownerName}
+                  </p>
+                  <p>
+                    <strong>Dirección:</strong> {selectedJob.propertyAddress}
+                  </p>
+                  <p>
+                    <strong>Estado actual:</strong> {getStatusBadge(selectedJob.status)}
+                  </p>
+                  <p>
+                    <strong>Prioridad actual:</strong> {selectedJob.priority}
+                  </p>
                 </div>
               </div>
             )}
@@ -1013,11 +1072,18 @@ Los cambios han sido guardados y notificados al propietario.`);
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button onClick={handleUpdateJobSubmit} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={handleUpdateJobSubmit}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
                 <Edit className="w-4 h-4 mr-2" />
                 Actualizar Trabajo
               </Button>
-              <Button variant="outline" onClick={() => setShowUpdateJobModal(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setShowUpdateJobModal(false)}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             </div>

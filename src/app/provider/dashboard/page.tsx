@@ -154,9 +154,31 @@ export default function ProviderDashboard() {
   };
 
   useEffect(() => {
-    loadJobs();
-    loadServiceRequests();
-  }, []);
+    const loadProviderData = async () => {
+      try {
+        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000;
+
+        if (isNewUser) {
+          // Usuario nuevo - mostrar dashboard vacío
+          setJobs([]);
+          setServiceRequests([]);
+          setLoading(false);
+          return;
+        }
+
+        // Usuario existente - cargar datos reales
+        await loadJobs();
+        await loadServiceRequests();
+      } catch (error) {
+        logger.error('Error loading provider data:', { error });
+        setLoading(false);
+      }
+    };
+
+    loadProviderData();
+  }, [user]);
 
   const loadJobs = async () => {
     try {

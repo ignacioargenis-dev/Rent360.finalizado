@@ -107,6 +107,37 @@ export default function BrokerDashboardPage() {
 
     const loadBrokerData = async () => {
       try {
+        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000;
+
+        if (isNewUser) {
+          // Usuario nuevo - mostrar dashboard vacío con bienvenida
+          setProperties([]);
+          setClients([]);
+          setRecentActivities([
+            {
+              id: 'welcome',
+              type: 'commission',
+              description:
+                '¡Bienvenido a Rent360! Tu cuenta de corredor ha sido creada exitosamente.',
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+          setStats({
+            totalProperties: 0,
+            activeClients: 0,
+            totalCommissions: 0,
+            monthlyRevenue: 0,
+            pendingAppointments: 0,
+            newInquiries: 0,
+            conversionRate: 0,
+            averageCommission: 0,
+          });
+          setLoading(false);
+          return;
+        }
+
         // Intentar cargar datos reales del dashboard del corredor
         const response = await fetch('/api/broker/dashboard');
         if (response.ok) {

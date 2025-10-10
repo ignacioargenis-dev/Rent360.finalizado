@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,119 +89,148 @@ export default function RunnerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      setStats({
-        totalVisits: 156,
-        completedVisits: 142,
-        pendingVisits: 4,
-        monthlyEarnings: 450000,
-        averageRating: 4.9,
-        responseTime: 15,
-      });
+    const loadRunnerData = async () => {
+      try {
+        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        const isNewUser =
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000;
 
-      setTodayVisits([
-        {
-          id: '1',
-          propertyTitle: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          clientName: 'Carlos Ramírez',
-          clientPhone: '+56 9 1234 5678',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '10:00',
-          status: 'PENDING',
-          priority: 'HIGH',
-          estimatedDuration: 30,
-          notes: 'Cliente necesita ver estacionamiento y bodega',
-        },
-        {
-          id: '2',
-          propertyTitle: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          clientName: 'Ana Martínez',
-          clientPhone: '+56 9 8765 4321',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '14:30',
-          status: 'PENDING',
-          priority: 'MEDIUM',
-          estimatedDuration: 45,
-        },
-        {
-          id: '3',
-          propertyTitle: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          clientName: 'Pedro Silva',
-          clientPhone: '+56 9 2345 6789',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '16:00',
-          status: 'COMPLETED',
-          priority: 'LOW',
-          estimatedDuration: 60,
-        },
-      ]);
+        if (isNewUser) {
+          // Usuario nuevo - mostrar dashboard vacío con bienvenida
+          setStats({
+            totalVisits: 0,
+            completedVisits: 0,
+            pendingVisits: 0,
+            monthlyEarnings: 0,
+            averageRating: 0,
+            responseTime: 0,
+          });
+          setTodayVisits([]);
+          setPerformanceMetrics([]);
+          setLoading(false);
+          return;
+        } else {
+          // Usuario existente - mostrar datos de ejemplo (temporal)
+          setStats({
+            totalVisits: 156,
+            completedVisits: 142,
+            pendingVisits: 4,
+            monthlyEarnings: 450000,
+            averageRating: 4.9,
+            responseTime: 15,
+          });
 
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'visit',
-          title: 'Visita completada',
-          description: 'Visita a Casa Vitacura finalizada exitosamente',
-          date: '2024-03-15 16:45',
-          status: 'COMPLETED',
-        },
-        {
-          id: '2',
-          type: 'rating',
-          title: 'Excelente calificación',
-          description: 'Pedro Silva te calificó con 5 estrellas',
-          date: '2024-03-15 17:00',
-        },
-        {
-          id: '3',
-          type: 'payment',
-          title: 'Pago recibido',
-          description: 'Pago por visita a Casa Vitacura: $15.000',
-          date: '2024-03-15 17:30',
-          status: 'COMPLETED',
-        },
-        {
-          id: '4',
-          type: 'message',
-          title: 'Nuevo mensaje',
-          description: 'Mensaje de Ana Martínez sobre visita de mañana',
-          date: '2024-03-15 18:00',
-        },
-      ]);
+          setTodayVisits([
+            {
+              id: '1',
+              propertyTitle: 'Departamento Las Condes',
+              address: 'Av. Apoquindo 3400, Las Condes',
+              clientName: 'Carlos Ramírez',
+              clientPhone: '+56 9 1234 5678',
+              scheduledDate: '2024-03-15',
+              scheduledTime: '10:00',
+              status: 'PENDING',
+              priority: 'HIGH',
+              estimatedDuration: 30,
+              notes: 'Cliente necesita ver estacionamiento y bodega',
+            },
+            {
+              id: '2',
+              propertyTitle: 'Oficina Providencia',
+              address: 'Av. Providencia 1245, Providencia',
+              clientName: 'Ana Martínez',
+              clientPhone: '+56 9 8765 4321',
+              scheduledDate: '2024-03-15',
+              scheduledTime: '14:30',
+              status: 'PENDING',
+              priority: 'MEDIUM',
+              estimatedDuration: 45,
+            },
+            {
+              id: '3',
+              propertyTitle: 'Casa Vitacura',
+              address: 'Av. Vitacura 8900, Vitacura',
+              clientName: 'Pedro Silva',
+              clientPhone: '+56 9 2345 6789',
+              scheduledDate: '2024-03-15',
+              scheduledTime: '16:00',
+              status: 'COMPLETED',
+              priority: 'LOW',
+              estimatedDuration: 60,
+            },
+          ]);
 
-      setPerformanceMetrics([
-        {
-          label: 'Tasa de Completitud',
-          value: '91%',
-          change: '+3%',
-          trend: 'up',
-        },
-        {
-          label: 'Tiempo Promedio',
-          value: '42 min',
-          change: '-5 min',
-          trend: 'up',
-        },
-        {
-          label: 'Satisfacción',
-          value: '4.9/5',
-          change: '+0.2',
-          trend: 'up',
-        },
-        {
-          label: 'Ingresos Mensuales',
-          value: '$450.000',
-          change: '+12%',
-          trend: 'up',
-        },
-      ]);
+          setRecentActivity([
+            {
+              id: '1',
+              type: 'visit',
+              title: 'Visita completada',
+              description: 'Visita a Casa Vitacura finalizada exitosamente',
+              date: '2024-03-15 16:45',
+              status: 'COMPLETED',
+            },
+            {
+              id: '2',
+              type: 'rating',
+              title: 'Excelente calificación',
+              description: 'Pedro Silva te calificó con 5 estrellas',
+              date: '2024-03-15 17:00',
+            },
+            {
+              id: '3',
+              type: 'payment',
+              title: 'Pago recibido',
+              description: 'Pago por visita a Casa Vitacura: $15.000',
+              date: '2024-03-15 17:30',
+              status: 'COMPLETED',
+            },
+            {
+              id: '4',
+              type: 'message',
+              title: 'Nuevo mensaje',
+              description: 'Mensaje de Ana Martínez sobre visita de mañana',
+              date: '2024-03-15 18:00',
+            },
+          ]);
 
-      setLoading(false);
-    }, 1000);
+          setPerformanceMetrics([
+            {
+              label: 'Tasa de Completitud',
+              value: '91%',
+              change: '+3%',
+              trend: 'up',
+            },
+            {
+              label: 'Tiempo Promedio',
+              value: '42 min',
+              change: '-5 min',
+              trend: 'up',
+            },
+            {
+              label: 'Satisfacción',
+              value: '4.9/5',
+              change: '+0.2',
+              trend: 'up',
+            },
+            {
+              label: 'Ingresos Mensuales',
+              value: '$450.000',
+              change: '+12%',
+              trend: 'up',
+            },
+          ]);
+
+          setLoading(false);
+        }
+      } catch (error) {
+        logger.error('Error loading runner data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        setLoading(false);
+      }
+    };
+
+    loadRunnerData();
   }, []);
 
   const router = useRouter();
