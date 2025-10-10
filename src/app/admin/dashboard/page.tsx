@@ -8,14 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Users, 
-  Building, 
-  DollarSign, 
-  TrendingUp, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  Users,
+  Building,
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   Calendar,
   FileText,
   CreditCard,
@@ -65,7 +65,7 @@ import {
   ChevronLeft,
   SkipForward,
   SkipBack,
-  Pause
+  Pause,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import Link from 'next/link';
@@ -147,7 +147,9 @@ export default function AdminDashboard() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -158,21 +160,27 @@ export default function AdminDashboard() {
         const usersResponse = await fetch('/api/users?limit=1000');
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          const totalUsers = usersData.users.length;
-          
+          const totalUsers = usersData.users
+            ? usersData.users.length
+            : Array.isArray(usersData)
+              ? usersData.length
+              : 0;
+
           // Load properties
           const propertiesResponse = await fetch('/api/properties?limit=1000');
           if (propertiesResponse.ok) {
             const propertiesData = await propertiesResponse.json();
             const totalProperties = propertiesData.properties.length;
-                          const activeContracts = propertiesData.properties.filter((p: Property) => p.status === 'RENTED').length;
-            
+            const activeContracts = propertiesData.properties.filter(
+              (p: Property) => p.status === 'RENTED'
+            ).length;
+
             // Load tickets
             const ticketsResponse = await fetch('/api/tickets?status=open&limit=1000');
             if (ticketsResponse.ok) {
               const ticketsData = await ticketsResponse.json();
               const pendingTickets = ticketsData.tickets.length;
-              
+
               // Calculate actual monthly revenue from payments
               const paymentsResponse = await fetch('/api/payments?status=completed&limit=1000');
               let monthlyRevenue = 0;
@@ -180,17 +188,21 @@ export default function AdminDashboard() {
                 const paymentsData = await paymentsResponse.json();
                 const currentMonth = new Date().getMonth();
                 const currentYear = new Date().getFullYear();
-                
+
                 monthlyRevenue = paymentsData.payments
                   .filter((payment: Payment) => {
-                    if (!payment.paidDate) return false;
+                    if (!payment.paidDate) {
+                      return false;
+                    }
                     const paymentDate = new Date(payment.paidDate);
-                    return paymentDate.getMonth() === currentMonth && 
-                           paymentDate.getFullYear() === currentYear;
+                    return (
+                      paymentDate.getMonth() === currentMonth &&
+                      paymentDate.getFullYear() === currentYear
+                    );
                   })
                   .reduce((sum: number, payment: Payment) => sum + (payment.amount || 0), 0);
               }
-              
+
               setStats({
                 totalUsers,
                 totalProperties,
@@ -199,20 +211,23 @@ export default function AdminDashboard() {
                 pendingTickets,
                 systemHealth: 'good',
               });
-              
+
               // Set recent users (last 4)
-              setRecentUsers(usersData.users.slice(0, 4).map((user: User) => ({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: getRoleDisplayName(user.role),
-                status: 'Activo',
-                lastActivity: formatRelativeTime(new Date(user.createdAt)),
-              })));
-              
+              const usersArray = usersData.users || usersData;
+              setRecentUsers(
+                usersArray.slice(0, 4).map((user: User) => ({
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: getRoleDisplayName(user.role),
+                  status: 'Activo',
+                  lastActivity: formatRelativeTime(new Date(user.createdAt)),
+                }))
+              );
+
               // Set recent activity based on actual data
               const activities: RecentActivity[] = [];
-              
+
               // Add user creation activities
               usersData.users.slice(0, 3).forEach((user: User) => {
                 activities.push({
@@ -224,7 +239,7 @@ export default function AdminDashboard() {
                   severity: 'low' as const,
                 });
               });
-              
+
               // Add property creation activities
               propertiesData.properties.slice(0, 3).forEach((property: Property) => {
                 activities.push({
@@ -236,7 +251,7 @@ export default function AdminDashboard() {
                   severity: 'low' as const,
                 });
               });
-              
+
               // Add high priority tickets
               ticketsData.tickets
                 .filter((ticket: any) => ticket.priority === 'HIGH')
@@ -251,20 +266,20 @@ export default function AdminDashboard() {
                     severity: 'high' as const,
                   });
                 });
-              
+
               // Sort activities by date
               activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
               setRecentActivity(activities.slice(0, 10));
             }
           }
         }
-        
+
         setLoading(false);
       } catch (error) {
-        logger.error('Error loading dashboard data:', { 
+        logger.error('Error loading dashboard data:', {
           error: error instanceof Error ? error.message : String(error),
           context: 'admin_dashboard',
-          userId: user?.id 
+          userId: user?.id,
         });
         setLoading(false);
       }
@@ -276,13 +291,20 @@ export default function AdminDashboard() {
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'admin': return 'Administrador';
-      case 'tenant': return 'Inquilino';
-      case 'owner': return 'Propietario';
-      case 'broker': return 'Corredor';
-      case 'runner': return 'Runner360';
-      case 'support': return 'Soporte';
-      default: return role;
+      case 'admin':
+        return 'Administrador';
+      case 'tenant':
+        return 'Inquilino';
+      case 'owner':
+        return 'Propietario';
+      case 'broker':
+        return 'Corredor';
+      case 'runner':
+        return 'Runner360';
+      case 'support':
+        return 'Soporte';
+      default:
+        return role;
     }
   };
 
@@ -293,8 +315,12 @@ export default function AdminDashboard() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
+    if (minutes < 60) {
+      return `${minutes}m ago`;
+    }
+    if (hours < 24) {
+      return `${hours}h ago`;
+    }
     return `${days}d ago`;
   };
 
@@ -343,7 +369,7 @@ export default function AdminDashboard() {
     if (severity === 'medium') {
       return 'text-yellow-600 bg-yellow-50';
     }
-    
+
     switch (type) {
       case 'user':
         return 'text-blue-600 bg-blue-50';
@@ -400,7 +426,7 @@ export default function AdminDashboard() {
         return <Badge>Desconocido</Badge>;
     }
   };
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -423,12 +449,17 @@ export default function AdminDashboard() {
         {systemAlerts.length > 0 && (
           <div className="mb-6">
             <div className="grid md:grid-cols-2 gap-4">
-              {systemAlerts.map((alert) => (
-                <Card key={alert.id} className={`border-l-4 ${
-                  alert.type === 'error' ? 'border-red-500 bg-red-50' : 
-                  alert.type === 'warning' ? 'border-yellow-500 bg-yellow-50' : 
-                  'border-blue-500 bg-blue-50'
-                }`}>
+              {systemAlerts.map(alert => (
+                <Card
+                  key={alert.id}
+                  className={`border-l-4 ${
+                    alert.type === 'error'
+                      ? 'border-red-500 bg-red-50'
+                      : alert.type === 'warning'
+                        ? 'border-yellow-500 bg-yellow-50'
+                        : 'border-blue-500 bg-blue-50'
+                  }`}
+                >
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
                       {getAlertIcon(alert.type)}
@@ -497,7 +528,9 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.monthlyRevenue)}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatPrice(stats.monthlyRevenue)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-orange-600" />
@@ -561,15 +594,15 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Actividad Reciente</CardTitle>
-              <CardDescription>
-                Últimas actividades en el sistema
-              </CardDescription>
+              <CardDescription>Últimas actividades en el sistema</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {recentActivity.map((activity) => (
+                {recentActivity.map(activity => (
                   <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                    <div className={`p-2 rounded-lg ${getActivityColor(activity.type, activity.severity)}`}>
+                    <div
+                      className={`p-2 rounded-lg ${getActivityColor(activity.type, activity.severity)}`}
+                    >
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1">
@@ -588,17 +621,20 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Usuarios Recientes</CardTitle>
-                <CardDescription>
-                  Últimos usuarios registrados
-                </CardDescription>
+                <CardDescription>Últimos usuarios registrados</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  {recentUsers.map(user => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-3 rounded-lg border"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">{user.name.charAt(0)}</span>
+                          <span className="text-sm font-medium text-blue-600">
+                            {user.name.charAt(0)}
+                          </span>
                         </div>
                         <div>
                           <p className="font-medium text-sm">{user.name}</p>
@@ -606,7 +642,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge variant="outline" className="text-xs">{user.role}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {user.role}
+                        </Badge>
                         <p className="text-xs text-gray-500 mt-1">{user.lastActivity}</p>
                       </div>
                     </div>
@@ -618,9 +656,7 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Información del Sistema</CardTitle>
-                <CardDescription>
-                  Estado y métricas del sistema
-                </CardDescription>
+                <CardDescription>Estado y métricas del sistema</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -644,7 +680,10 @@ export default function AdminDashboard() {
                     <span className="text-sm text-gray-600">Uso de CPU</span>
                     <div className="flex items-center gap-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{ width: '45%' }}
+                        ></div>
                       </div>
                       <span className="text-sm font-medium">45%</span>
                     </div>
@@ -653,7 +692,10 @@ export default function AdminDashboard() {
                     <span className="text-sm text-gray-600">Memoria</span>
                     <div className="flex items-center gap-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '68%' }}></div>
+                        <div
+                          className="bg-yellow-500 h-2 rounded-full"
+                          style={{ width: '68%' }}
+                        ></div>
                       </div>
                       <span className="text-sm font-medium">68%</span>
                     </div>
@@ -667,5 +709,3 @@ export default function AdminDashboard() {
     </UnifiedDashboardLayout>
   );
 }
-
-

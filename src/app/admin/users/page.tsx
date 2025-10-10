@@ -55,6 +55,8 @@ export default function AdminUsersPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
   const [creatingUser, setCreatingUser] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState('');
@@ -165,18 +167,26 @@ export default function AdminUsersPage() {
 
       if (response.ok) {
         await fetchUsers(); // Refresh the list
+        setSuccessMessage(`Usuario ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || 'Error al cambiar el estado del usuario');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error toggling user status:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setErrorMessage('Error al cambiar el estado del usuario. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
   const deleteUser = async (userId: string) => {
     if (
       !confirm(
-        '�Est�s seguro de que deseas eliminar este usuario? Esta acci�n no se puede deshacer.'
+        '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.'
       )
     ) {
       return;
@@ -189,16 +199,35 @@ export default function AdminUsersPage() {
 
       if (response.ok) {
         await fetchUsers(); // Refresh the list
+        setSuccessMessage('Usuario eliminado exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || 'Error al eliminar el usuario');
+        setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
       logger.error('Error deleting user:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setErrorMessage('Error al eliminar el usuario. Por favor, inténtalo nuevamente.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
+  const openEditModal = (user: User) => {
+    setEditingUser(user);
+    setNewUser({
+      name: user.name,
+      email: user.email,
+      password: '', // No mostrar contraseña
+      role: user.role,
+    });
+    setShowCreateModal(true);
+  };
+
   const createUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.password || !newUser.role) {
+    if (!newUser.name || !newUser.email || (!editingUser && !newUser.password) || !newUser.role) {
       setErrorMessage('Por favor completa todos los campos requeridos');
       setTimeout(() => setErrorMessage(''), 5000);
       return;
@@ -206,35 +235,74 @@ export default function AdminUsersPage() {
 
     try {
       setCreatingUser(true);
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newUser),
-      });
 
-      if (response.ok) {
-        await fetchUsers(); // Refresh the list
-        setShowCreateModal(false);
-        setNewUser({
-          name: '',
-          email: '',
-          password: '',
-          role: 'tenant',
+      if (editingUser) {
+        // Edit existing user
+        const updateData = {
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+        };
+
+        const response = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updateData),
         });
-        setSuccessMessage('Usuario creado exitosamente');
-        setTimeout(() => setSuccessMessage(''), 3000);
+
+        if (response.ok) {
+          await fetchUsers(); // Refresh the list
+          setShowCreateModal(false);
+          setEditingUser(null);
+          setNewUser({
+            name: '',
+            email: '',
+            password: '',
+            role: 'tenant',
+          });
+          setSuccessMessage('Usuario actualizado exitosamente');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Error al actualizar usuario');
+          setTimeout(() => setErrorMessage(''), 5000);
+        }
       } else {
-        const error = await response.json();
-        setErrorMessage(error.error || 'Error al crear usuario');
-        setTimeout(() => setErrorMessage(''), 5000);
+        // Create new user
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newUser),
+        });
+
+        if (response.ok) {
+          await fetchUsers(); // Refresh the list
+          setShowCreateModal(false);
+          setNewUser({
+            name: '',
+            email: '',
+            password: '',
+            role: 'tenant',
+          });
+          setSuccessMessage('Usuario creado exitosamente');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Error al crear usuario');
+          setTimeout(() => setErrorMessage(''), 5000);
+        }
       }
     } catch (error) {
-      logger.error('Error creating user:', {
+      logger.error('Error saving user:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al crear usuario. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        `Error al ${editingUser ? 'actualizar' : 'crear'} usuario. Por favor, inténtalo nuevamente.`
+      );
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setCreatingUser(false);
@@ -499,7 +567,7 @@ export default function AdminUsersPage() {
                               <CheckCircle className="w-4 h-4" />
                             )}
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => openEditModal(user)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
@@ -562,7 +630,9 @@ export default function AdminUsersPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Crear Nuevo Usuario</h3>
+                <h3 className="text-lg font-semibold">
+                  {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+                </h3>
                 <Button variant="ghost" size="sm" onClick={() => setShowCreateModal(false)}>
                   <X className="w-4 h-4" />
                 </Button>
@@ -590,15 +660,19 @@ export default function AdminUsersPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contrase�a</label>
-                  <Input
-                    type="password"
-                    value={newUser.password}
-                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                    placeholder="��������"
-                  />
-                </div>
+                {!editingUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contraseña
+                    </label>
+                    <Input
+                      type="password"
+                      value={newUser.password}
+                      onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                      placeholder="Ingresa la contraseña"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
@@ -626,7 +700,16 @@ export default function AdminUsersPage() {
               <div className="flex gap-3 mt-6">
                 <Button
                   variant="outline"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingUser(null);
+                    setNewUser({
+                      name: '',
+                      email: '',
+                      password: '',
+                      role: 'tenant',
+                    });
+                  }}
                   disabled={creatingUser}
                 >
                   Cancelar
@@ -635,12 +718,12 @@ export default function AdminUsersPage() {
                   {creatingUser ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creando...
+                      {editingUser ? 'Actualizando...' : 'Creando...'}
                     </>
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Crear Usuario
+                      {editingUser ? 'Actualizar Usuario' : 'Crear Usuario'}
                     </>
                   )}
                 </Button>
