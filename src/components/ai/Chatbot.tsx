@@ -22,6 +22,7 @@ import {
   DollarSign,
   Settings,
   Search,
+  Scale,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { aiChatbotService } from '@/lib/ai-chatbot-service';
@@ -106,13 +107,16 @@ const QUICK_ACTIONS = [
   { text: 'Ver mis contratos', icon: FileText, intent: 'contracts' },
   { text: 'Realizar pago', icon: DollarSign, intent: 'payment' },
   { text: 'Reportar problema', icon: HelpCircle, intent: 'maintenance' },
-  { text: 'Configuración', icon: Settings, intent: 'settings' },
+  { text: 'Casos legales', icon: Scale, intent: 'legal_cases' },
+  { text: 'Ayuda navegación', icon: Building, intent: 'navigation' },
+  { text: 'Cómo hacer...', icon: User, intent: 'how_to' },
 ];
 
 const GREETING_MESSAGES = [
-  '¡Hola! Soy tu asistente virtual de Rent360. ¿En qué puedo ayudarte hoy?',
-  '¡Bienvenido a Rent360! Estoy aquí para ayudarte con cualquier consulta sobre propiedades, contratos o pagos.',
-  'Hola, soy tu asistente inteligente. Puedo ayudarte a buscar propiedades, gestionar contratos y mucho más.',
+  '¡Hola! Soy tu asistente completo de Rent360. ¿En qué puedo ayudarte hoy? Puedo explicarte cómo usar todas las funciones del sistema, guiarte en procesos legales, pagos, contratos, mantenimiento y cualquier funcionalidad.',
+  '¡Bienvenido! Soy un experto en el sistema Rent360 y derecho habitacional chileno. ¿Necesitas ayuda para navegar, aprender a usar alguna función, o tienes preguntas sobre contratos, casos legales, o mora en pagos?',
+  'Hola, soy tu asistente especializado en Rent360. Puedo ayudarte con: navegación del sistema, procesos legales, gestión de contratos, casos de mora, mantenimiento, pagos, Runner360, y cualquier funcionalidad de la plataforma.',
+  '¡Hola! ¿En qué puedo ayudarte? Soy un asistente completo de Rent360 que puede guiarte paso a paso en todos los procesos: desde buscar propiedades hasta manejar casos legales, pasando por pagos, contratos y mantenimiento.',
 ];
 
 export default function Chatbot({
@@ -262,12 +266,12 @@ export default function Chatbot({
     memoryContext?: MemoryContext | undefined;
     learningInsights?: LearningInsight[] | undefined;
   }> => {
-    try {
-      // Obtener información del usuario autenticado
-      const user = auth?.user;
-      const userRole = user?.role?.toLowerCase() || 'guest';
-      const userId = user?.id || 'anonymous';
+    // Obtener información del usuario autenticado al inicio
+    const user = auth?.user;
+    const userRole = user?.role?.toLowerCase() || 'guest';
+    const userId = user?.id || 'anonymous';
 
+    try {
       // 🚀 Usar el servicio de IA revolucionario 10.000% mejorado
       const result = await aiChatbotService.processMessageRevolutionary(
         userInput,
@@ -364,27 +368,321 @@ export default function Chatbot({
         };
       }
 
+      // Consultas legales específicas
+      if (
+        input.includes('caso legal') ||
+        input.includes('proceso legal') ||
+        input.includes('demanda') ||
+        input.includes('tribunal')
+      ) {
+        if (userRole === 'owner') {
+          return {
+            content:
+              'Para iniciar un caso legal, accede a "Casos Legales" en tu panel. Puedes crear casos por mora en pagos, daños a la propiedad, u ocupación ilegal. El sistema te guía paso a paso por todo el proceso legal chileno.',
+            context: { intent: 'legal_cases' },
+            suggestions: ['Crear caso legal', 'Ver casos activos', 'Consultar abogado'],
+            actions: ['Iniciar caso por mora', 'Ver estado legal', 'Contactar apoyo legal'],
+          };
+        }
+        if (userRole === 'broker') {
+          return {
+            content:
+              'Como corredor, puedes gestionar casos legales de tus clientes propietarios. Crea el caso especificando el tipo (mora, daños, desahucio) y el sistema maneja automáticamente las notificaciones y seguimiento judicial.',
+            context: { intent: 'legal_cases' },
+            suggestions: ['Ver casos legales', 'Crear nuevo caso', 'Gestionar clientes'],
+          };
+        }
+        return {
+          content:
+            'Para consultas legales, puedes acceder a la sección de disputas o casos legales según tu rol. Te recomiendo consultar la documentación legal o contactar a un abogado especializado.',
+          context: { intent: 'legal_cases' },
+          suggestions: ['Ver disputas', 'Contactar soporte legal', 'Ver derechos'],
+        };
+      }
+
+      // Consultas sobre mora específicamente
+      if (
+        input.includes('mora') ||
+        input.includes('atraso') ||
+        input.includes('no pago') ||
+        input.includes('impago') ||
+        input.includes('deuda') ||
+        input.includes('atrasado')
+      ) {
+        if (userRole === 'owner') {
+          return {
+            content:
+              '¡Claro! Te explico paso a paso cómo iniciar un caso legal por mora en pagos:\n\n1️⃣ **Verifica el atraso**: Confirma que el inquilino tenga más de 30 días de impago\n2️⃣ **Crea el caso**: Ve a "Casos Legales" → "Crear Caso" → Selecciona "Mora en pagos"\n3️⃣ **Sistema automático**: Calcula intereses (3% mensual según ley chilena) y genera notificación extrajudicial\n4️⃣ **Seguimiento**: Si no paga en 10 días hábiles, puedes escalar a proceso judicial\n\n¿Tu inquilino tiene más de 30 días de atraso? ¿Necesitas ayuda para crear el caso ahora mismo?',
+            context: { intent: 'payment_default' },
+            suggestions: [
+              'Crear caso por mora',
+              'Calcular intereses',
+              'Ver garantías',
+              'Enviar notificación',
+            ],
+            actions: ['Iniciar proceso legal', 'Calcular monto total', 'Ver estado de pagos'],
+            followUp: [
+              '¿Cuánto debe el inquilino?',
+              '¿Desde cuándo está atrasado?',
+              '¿Quieres que te guíe paso a paso?',
+            ],
+          };
+        }
+        if (userRole === 'tenant') {
+          return {
+            content:
+              'Si tienes dificultades con pagos, puedes: 1) Configurar pagos automáticos, 2) Negociar un plan de pagos con tu propietario, 3) Si la mora es por problemas de la propiedad, puedes retener pagos legalmente. Recuerda que la ley te protege contra desalojos inmediatos.',
+            context: { intent: 'payment_default' },
+            suggestions: [
+              'Configurar pagos automáticos',
+              'Ver historial',
+              'Contactar propietario',
+              'Negociar plan',
+            ],
+          };
+        }
+        return {
+          content:
+            'Para temas de mora en pagos, el propietario puede iniciar un proceso legal siguiendo los pasos establecidos en la Ley 18.101. Los inquilinos tienen derechos de protección contra desalojos inmediatos.',
+          context: { intent: 'payment_default' },
+          suggestions: ['Ver contratos', 'Contactar propietario', 'Ver derechos legales'],
+        };
+      }
+
+      // Consulta específica del usuario sobre iniciar caso legal por mora
+      if (
+        (input.includes('iniciar') || input.includes('empezar') || input.includes('comenzar')) &&
+        (input.includes('caso') || input.includes('proceso') || input.includes('demanda')) &&
+        (input.includes('mora') || input.includes('pago') || input.includes('atraso'))
+      ) {
+        if (userRole === 'owner') {
+          return {
+            content:
+              '¡Excelente pregunta! Como propietario, iniciar un caso legal por mora se hace desde tus contratos específicos. Te guío paso a paso:\n\n🚀 **Proceso en 4 pasos:**\n\n1️⃣ **Ve a tus contratos** → "Mis Contratos" → Selecciona el contrato moroso\n2️⃣ **Inicia caso legal** → Dentro del contrato, busca "Iniciar Caso Legal"\n3️⃣ **Selecciona tipo** → Elige "Incumplimiento de pago" (NON_PAYMENT)\n4️⃣ **Completa información** → El sistema calcula automáticamente:\n   • Monto adeudado\n   • Intereses legales (3% mensual)\n   • Gastos administrativos\n\n⚖️ **Lo que sucede después:**\n• Caso aparece en "Casos Legales" con estado "Pre-judicial"\n• Se genera notificación extrajudicial automáticamente\n• Inquilino tiene 10 días hábiles para pagar\n• Si paga: caso cerrado automáticamente\n• Si no paga: puedes escalar a demanda judicial\n\n¿Quieres que te lleve a ver tus contratos activos? ¿O tienes alguna duda específica sobre el proceso?',
+            context: { intent: 'payment_default' },
+            suggestions: [
+              'Ver mis contratos',
+              'Ver contratos activos',
+              'Casos legales existentes',
+              'Tutorial paso a paso',
+            ],
+            actions: ['Ir a Mis Contratos', 'Ver contratos morosos', 'Ver tutorial'],
+            followUp: [
+              '¿Qué contrato específico?',
+              '¿Cuántos meses de atraso?',
+              '¿Quieres ver un ejemplo?',
+              '¿Necesitas ayuda con algún paso?',
+            ],
+          };
+        }
+        return {
+          content:
+            'Entiendo tu consulta sobre iniciar casos legales por mora. Solo los propietarios pueden iniciar estos procesos según la legislación chilena. \n\nSi eres **inquilino** con dificultades de pago:\n• Contacta a tu propietario para negociar un plan de pagos\n• Configura pagos automáticos para evitar futuras moras\n• La ley te protege contra desalojos inmediatos\n\nSi eres **corredor**:\n• Puedes ayudar a tus clientes propietarios con el proceso completo\n• Gestiona casos legales en nombre de ellos\n\n¿Eres propietario, inquilino o corredor? Puedo darte información específica para tu situación.',
+          context: { intent: 'payment_default' },
+          suggestions: ['Soy propietario', 'Soy inquilino', 'Soy corredor', 'Información general'],
+          followUp: [
+            '¿Cuál es tu rol en Rent360?',
+            '¿Necesitas ayuda con contratos?',
+            '¿Quieres información legal general?',
+          ],
+        };
+      }
+
       if (input.includes('hola') || input.includes('buenos días') || input.includes('buenas')) {
         return {
           content:
-            '¡Hola! ¿En qué puedo ayudarte hoy? Puedo asistirte con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento y más.',
-          suggestions: QUICK_ACTIONS.map(action => action.text),
+            '¡Hola! Soy tu asistente legal inteligente de Rent360. ¿En qué puedo ayudarte hoy? Puedo asistirte con búsqueda de propiedades, gestión de contratos, pagos, casos legales, mantenimiento y más.',
+          suggestions: [
+            ...QUICK_ACTIONS.map(action => action.text),
+            'Casos legales',
+            'Información sobre mora',
+          ],
         };
       }
 
       if (input.includes('gracias') || input.includes('thanks')) {
         return {
           content:
-            '¡De nada! Estoy aquí para ayudarte. Si tienes más preguntas, no dudes en preguntarme.',
-          suggestions: ['Buscar propiedades', 'Ver contratos', 'Realizar pago'],
+            '¡De nada! Estoy aquí para ayudarte con cualquier consulta legal o administrativa. Si tienes más preguntas sobre casos legales, contratos o pagos, no dudes en preguntarme.',
+          suggestions: [
+            'Buscar propiedades',
+            'Ver contratos',
+            'Casos legales',
+            'Información legal',
+          ],
         };
       }
 
-      // Respuesta por defecto
+      // Consultas sobre navegación y uso del sistema
+      if (
+        input.includes('como') &&
+        (input.includes('acceder') ||
+          input.includes('entrar') ||
+          input.includes('ir') ||
+          input.includes('llegar') ||
+          input.includes('usar') ||
+          input.includes('funciona') ||
+          input.includes('navegar'))
+      ) {
+        if (userRole === 'tenant') {
+          return {
+            content:
+              '¡Te ayudo con la navegación! Como inquilino, estas son tus secciones principales:\n\n🏠 **Dashboard**: Resumen de tus contratos, pagos y notificaciones\n🏢 **Buscar Propiedades**: Encuentra arriendos con filtros avanzados\n📄 **Mis Contratos**: Documentos legales y renovaciones\n💳 **Pagos**: Configura rentas y métodos de pago\n🔧 **Mantenimiento**: Reporta problemas de la propiedad\n💬 **Mensajes**: Comunicación con propietarios/corredores\n⭐ **Calificaciones**: Evalúa servicios recibidos\n\n📍 **¿Dónde encontrar cada sección?** Usa la barra lateral izquierda o el menú superior. ¿Qué sección específica necesitas?',
+            context: { intent: 'navigation' },
+            suggestions: [
+              'Ir al dashboard',
+              'Buscar propiedades',
+              'Ver contratos',
+              'Configurar pagos',
+            ],
+            followUp: [
+              '¿Qué sección buscas?',
+              '¿Necesitas ayuda con algo específico?',
+              '¿Dónde no encuentras algo?',
+            ],
+          };
+        }
+        if (userRole === 'owner') {
+          return {
+            content:
+              '¡Hola propietario! Tu panel está organizado así:\n\n📊 **Dashboard**: Ingresos, contratos activos, alertas\n🏢 **Mis Propiedades**: Gestiona tus inmuebles\n👥 **Mis Inquilinos**: Información de arrendatarios\n📄 **Mis Contratos**: Documentos legales y firmas\n⚖️ **Casos Legales**: Seguimiento de procesos judiciales y mora\n💰 **Pagos**: Ingresos y métodos de cobro\n🔧 **Mantenimiento**: Solicitudes de reparaciones\n📈 **Analytics**: Reportes y métricas financieras\n\n💡 **Tip**: Los casos legales se inician desde contratos específicos, no desde la sección "Casos Legales". ¿Qué necesitas gestionar hoy?',
+            context: { intent: 'navigation' },
+            suggestions: [
+              'Ver propiedades',
+              'Gestionar contratos',
+              'Ver ingresos',
+              'Casos legales',
+            ],
+            followUp: [
+              '¿Qué sección te interesa?',
+              '¿Necesitas ayuda con alguna función?',
+              '¿Dónde está... ?',
+            ],
+          };
+        }
+        if (userRole === 'broker') {
+          return {
+            content:
+              'Como corredor certificado, tienes acceso a estas herramientas:\n\n📊 **Dashboard**: Rendimiento y comisiones\n🏢 **Propiedades**: Publica ofertas y busca inmuebles\n👥 **Clientes**: Gestiona prospectos y clientes activos\n📅 **Citas**: Programa visitas con Runner360\n📄 **Contratos**: Cierra negocios y firma documentos\n⚖️ **Casos Legales**: Apoya procesos judiciales\n💰 **Comisiones**: Seguimiento de ganancias\n📈 **Analytics**: Métricas comerciales\n\n🎯 **Función clave**: Usa "Nueva Propiedad" para publicar ofertas exclusivas. ¿Qué herramienta necesitas?',
+            context: { intent: 'navigation' },
+            suggestions: [
+              'Publicar propiedad',
+              'Ver clientes',
+              'Programar citas',
+              'Ver comisiones',
+            ],
+            followUp: [
+              '¿Qué función buscas?',
+              '¿Necesitas ayuda con ventas?',
+              '¿Dónde gestionar...?',
+            ],
+          };
+        }
+        return {
+          content:
+            'Para navegar en Rent360: usa la barra lateral izquierda para acceder a todas las secciones. Cada rol tiene funciones específicas adaptadas a sus necesidades. ¿Me puedes decir qué rol tienes (inquilino, propietario, corredor, etc.) y qué necesitas hacer?',
+          context: { intent: 'navigation' },
+          suggestions: ['Soy inquilino', 'Soy propietario', 'Soy corredor', 'Ayuda general'],
+          followUp: ['¿Qué rol tienes?', '¿Qué necesitas hacer?', '¿Dónde no encuentras algo?'],
+        };
+      }
+
+      // Preguntas "cómo hacer" específicas
+      if (
+        (input.includes('como') || input.includes('cómo')) &&
+        (input.includes('hacer') ||
+          input.includes('funciona') ||
+          input.includes('usar') ||
+          input.includes('pasos'))
+      ) {
+        if (userRole === 'tenant') {
+          return {
+            content:
+              '**Guías prácticas para inquilinos:**\n\n🔍 **Buscar propiedades:**\n1. Ve a "Buscar Propiedades"\n2. Aplica filtros (zona, precio, habitaciones)\n3. Contacta propietarios o corredores\n4. Runner360 puede hacer visitas por ti\n\n💳 **Pagar rentas:**\n1. En "Pagos" configura débito automático\n2. O paga online con Khipu\n3. Recibes recordatorios y comprobantes\n\n🔧 **Reportar mantenimiento:**\n1. "Mantenimiento" → "Nuevo Ticket"\n2. Sube fotos/videos del problema\n3. El sistema asigna proveedor automáticamente\n\n⭐ **Calificar servicios:**\nDespués de cada trabajo, ve a "Calificaciones"\n\n¿Qué proceso específico necesitas que te explique paso a paso?',
+            context: { intent: 'how_to' },
+            suggestions: [
+              'Buscar propiedades',
+              'Pagar renta',
+              'Reportar problema',
+              'Calificar servicio',
+            ],
+            followUp: [
+              '¿Qué necesitas hacer?',
+              '¿Qué paso no entiendes?',
+              '¿Necesitas más detalles?',
+            ],
+          };
+        }
+        if (userRole === 'owner') {
+          return {
+            content:
+              '**Guías prácticas para propietarios:**\n\n🏢 **Publicar propiedades:**\n1. "Mis Propiedades" → "Agregar Propiedad"\n2. Sube fotos profesionales\n3. Completa detalles y precio\n4. Los corredores la promocionarán\n\n💰 **Cobrar rentas:**\n1. "Pagos" → configura cobros automáticos\n2. Khipu procesa pagos directamente\n3. Recibe alertas de mora automática\n\n⚖️ **Manejar casos legales:**\n1. "Mis Contratos" → selecciona contrato específico\n2. Busca "Iniciar Caso Legal" dentro del contrato\n3. Selecciona tipo (incumplimiento, daños, etc.)\n4. Ve a "Casos Legales" para seguimiento\n\n📊 **Ver reportes:**\n"Analytics" → ingresos, ocupación, rendimiento\n\n¿Cuál de estos procesos te interesa que detalle más?',
+            context: { intent: 'how_to' },
+            suggestions: [
+              'Publicar propiedad',
+              'Configurar cobros',
+              'Crear caso legal',
+              'Ver reportes',
+            ],
+            followUp: [
+              '¿Qué necesitas aprender?',
+              '¿Qué proceso es nuevo para ti?',
+              '¿Necesitas tutorial?',
+            ],
+          };
+        }
+        return {
+          content:
+            '¡Claro! Puedo explicarte cómo hacer cualquier cosa en Rent360. Dependiendo de tu rol (inquilino, propietario, corredor, etc.), los procesos son diferentes. ¿Me puedes decir qué rol tienes y qué específicamente quieres aprender a hacer?',
+          context: { intent: 'how_to' },
+          suggestions: [
+            'Procesos para inquilinos',
+            'Procesos para propietarios',
+            'Procesos para corredores',
+            'Ayuda general',
+          ],
+          followUp: ['¿Qué rol tienes?', '¿Qué quieres aprender?', '¿Qué no sabes cómo hacer?'],
+        };
+      }
+
+      // Consultas sobre legislación chilena
+      if (
+        input.includes('ley') ||
+        input.includes('legal') ||
+        input.includes('chile') ||
+        input.includes('codigo') ||
+        input.includes('18.101') ||
+        input.includes('21.461') ||
+        input.includes('devuelveme')
+      ) {
+        return {
+          content:
+            '¡Excelente consulta! El sistema Rent360 está completamente alineado con la legislación chilena:\n\n📋 **Leyes principales aplicables:**\n\n🏠 **Ley N° 18.101 (Arrendamientos Urbanos):**\n• Regula contratos de arriendo urbano\n• Intereses por mora: 3% mensual (Art. 47)\n• Plazos de notificación: 10 días hábiles\n• Garantías: hasta 2 meses de arriendo\n\n⚖️ **Ley N° 21.461 ("Devuélveme Mi Casa"):**\n• Protege contra desalojos irregulares\n• Requiere notificación judicial previa\n• Prohíbe desalojos nocturnos o festivos\n• Establece procedimientos transparentes\n\n📖 **Código Civil:**\n• Aplica para obligaciones contractuales\n• Prescripción de acciones: 3 años\n• Responsabilidad civil por daños\n\n¿Sobre qué aspecto legal específico necesitas información? Puedo explicarte cómo aplicar estas leyes en casos concretos.',
+          context: { intent: 'legal_info' },
+          suggestions: [
+            'Intereses por mora',
+            'Proceso de desahucio',
+            'Derechos inquilinos',
+            'Garantías legales',
+          ],
+          followUp: [
+            '¿Qué ley específica?',
+            '¿Tienes un caso concreto?',
+            '¿Necesitas procedimiento paso a paso?',
+          ],
+        };
+      }
+
+      // Respuesta por defecto mejorada
       return {
         content:
-          'Entiendo tu consulta. Te puedo ayudar con búsqueda de propiedades, gestión de contratos, pagos, mantenimiento y configuración de tu cuenta. ¿Qué te gustaría hacer?',
-        suggestions: QUICK_ACTIONS.map(action => action.text),
+          'Entiendo tu consulta. Soy un asistente especializado en Rent360 y puedo ayudarte con: búsqueda de propiedades, gestión de contratos, pagos, casos legales, mantenimiento y procesos judiciales conforme a la legislación chilena. ¿Qué te gustaría hacer?',
+        suggestions: [
+          ...QUICK_ACTIONS.map(action => action.text),
+          'Casos legales',
+          'Información sobre mora',
+          'Leyes chilenas',
+        ],
       };
     }
   };
@@ -409,14 +707,14 @@ export default function Chatbot({
   };
 
   const handleQuickAction = async (action: string) => {
-    setIsLoading(true);
-    try {
-      await processUserMessage(action);
-    } catch (error) {
-      console.error('Error procesando acción rápida:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    // No bloquear el input, permitir conversaciones continuas
+    setInputValue(action);
+    // Opcional: auto-enviar después de un breve delay para mejor UX
+    setTimeout(() => {
+      if (inputValue === action) {
+        handleSendMessage();
+      }
+    }, 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -604,6 +902,35 @@ export default function Chatbot({
                               ⚠️ {message.securityNote}
                             </div>
                           )}
+
+                          {/* 🚀 PREGUNTAS DE SEGUIMIENTO */}
+                          {message.followUp && message.followUp.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <div className="text-xs font-semibold text-blue-700 mb-1">
+                                💭 Puedes preguntarme:
+                              </div>
+                              {message.followUp.slice(0, 2).map((question, index) => (
+                                <Button
+                                  key={index}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-start text-xs h-7 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                  onClick={() => setInputValue(question)}
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  {question}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* 🚀 INDICADOR DE CONVERSACIÓN CONTINUA */}
+                          {message.type === 'bot' && !message.securityNote && (
+                            <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
+                              Puedes seguir preguntando, estoy aquí para ayudarte
+                            </div>
+                          )}
                         </div>
 
                         {message.type === 'user' && (
@@ -640,7 +967,7 @@ export default function Chatbot({
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Escribe tu mensaje..."
+                    placeholder="Pregúntame sobre casos legales, contratos, mora en pagos..."
                     className="flex-1"
                     disabled={isLoading}
                   />

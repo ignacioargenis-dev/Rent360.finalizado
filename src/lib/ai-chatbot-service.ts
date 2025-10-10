@@ -717,15 +717,254 @@ export class AIChatbotService {
       },
     },
 
+    // Casos legales y procesos jurídicos
+    legal_cases: {
+      tenant: {
+        responses: [
+          'Como inquilino, si enfrentas problemas legales relacionados con tu contrato de arriendo, puedes: 1) Revisar tu contrato digital, 2) Contactar al propietario o corredor directamente, 3) Si hay mora injustificada, puedes iniciar un proceso de mediación o demanda por vicios ocultos. Recuerda que según la Ley 18.101, tienes derechos específicos de protección.',
+          'Para casos legales como inquilino: puedes reportar problemas de habitabilidad, reclamar por vicios ocultos, o defenderte de demandas de desahucio. Te recomiendo consultar la documentación legal en tu panel o contactar a un abogado especializado en derecho habitacional.',
+        ],
+        suggestions: [
+          'Ver mi contrato',
+          'Contactar propietario',
+          'Buscar abogado',
+          'Ver derechos inquilino',
+        ],
+        links: ['/tenant/contracts', '/tenant/disputes', '/help/legal'],
+      },
+      owner: {
+        responses: [
+          'Como propietario, puedes iniciar casos legales por mora en pagos siguiendo estos pasos: 1) Verifica que el inquilino tenga más de 30 días de atraso, 2) Crea un caso legal en el sistema especificando "Mora en pagos", 3) El sistema generará automáticamente la notificación extrajudicial, 4) Si no hay respuesta en 10 días, puedes proceder a demanda judicial.',
+          'Proceso completo para casos por mora: 1) Detección automática de impagos, 2) Notificación extrajudicial automática, 3) Procedimiento monitorio si supera $500.000, 4) Ejecución de garantías, 5) Lanzamiento si es necesario. Todo gestionado desde tu dashboard con asistencia legal integrada.',
+        ],
+        suggestions: [
+          'Crear caso legal',
+          'Ver casos activos',
+          'Configurar alertas',
+          'Calcular intereses',
+        ],
+        links: ['/owner/legal-cases', '/owner/contracts', '/owner/legal-cases/new'],
+        actions: ['Iniciar caso por mora', 'Ver estado de cobranzas', 'Contactar abogado'],
+      },
+      broker: {
+        responses: [
+          'Como corredor, puedes gestionar casos legales por cuenta de tus clientes propietarios: 1) Accede a "Casos Legales" en tu panel, 2) Crea un nuevo caso especificando el tipo (mora, daños, ocupación ilegal), 3) El sistema guía automáticamente por las fases legales, 4) Puedes coordinar con abogados y tribunales.',
+          'Gestión legal para corredores: casos por mora con cálculo automático de intereses, notificaciones extrajudiciales, seguimiento judicial, y comisiones por recuperación de deudas. Todo integrado con tu flujo de trabajo habitual.',
+        ],
+        suggestions: [
+          'Ver casos legales',
+          'Crear nuevo caso',
+          'Gestionar clientes',
+          'Ver comisiones',
+        ],
+        links: ['/broker/legal-cases', '/broker/clients', '/broker/legal-cases/new'],
+      },
+    },
+
+    // Mora en pagos específicamente
+    payment_default: {
+      tenant: {
+        responses: [
+          'Si tienes atrasos en pagos, puedes: 1) Configurar pagos automáticos para evitar futuras moras, 2) Negociar planes de pago con tu propietario, 3) Si la mora es por problemas del propietario, puedes retener pagos legalmente (artículo 21 de la Ley 18.101).',
+          'Para problemas de mora: revisa las fechas de vencimiento en tu contrato, configura recordatorios automáticos, y si hay dificultades económicas temporales, contacta a tu propietario para acordar un plan de pagos. La ley te protege contra desalojos inmediatos.',
+        ],
+        suggestions: [
+          'Configurar pagos automáticos',
+          'Ver historial de pagos',
+          'Contactar propietario',
+          'Negociar plan de pagos',
+        ],
+        links: ['/tenant/payments', '/tenant/contracts', '/tenant/disputes'],
+      },
+      owner: {
+        responses: [
+          'Para iniciar proceso legal por mora en pagos: 1) Verifica que el atraso supere 30 días, 2) Crea caso legal en el sistema con tipo "Mora en pagos", 3) El sistema calcula automáticamente intereses (3% mensual según ley chilena), 4) Genera notificación extrajudicial automática.',
+          'Pasos detallados para mora: 1) Confirmar impago >30 días, 2) Crear caso con monto exacto adeudado, 3) Notificación extrajudicial (10 días de plazo), 4) Si no pago: demanda monitoria si >$500.000 o juicio ordinario, 5) Ejecución con retención de garantías.',
+          'Información clave sobre mora: - Intereses legales: 3% mensual (Art. 47 Ley 18.101), - Plazo notificación: 10 días hábiles, - Procedimiento monitorio: para deudas >$500.000, - Gastos legales: recuperables del deudor, - Garantías: pueden aplicarse parcialmente.',
+        ],
+        suggestions: [
+          'Crear caso por mora',
+          'Calcular intereses',
+          'Generar notificación',
+          'Ver garantías disponibles',
+        ],
+        links: ['/owner/legal-cases', '/owner/payments', '/owner/legal-cases/new'],
+        actions: ['Iniciar proceso legal', 'Calcular monto total', 'Enviar notificación'],
+      },
+      broker: {
+        responses: [
+          'Como corredor, para casos de mora: 1) Crea el caso legal en nombre del propietario, 2) Especifica tipo "Mora en pagos" con monto exacto, 3) El sistema maneja automáticamente intereses y notificaciones, 4) Coordina con propietario y abogado si es necesario.',
+          'Proceso de mora para corredores: - Crear caso con datos del contrato, - Sistema calcula intereses automáticamente, - Notificación extrajudicial programada, - Seguimiento de respuestas, - Coordinación con tribunales si escala.',
+        ],
+        suggestions: [
+          'Crear caso legal',
+          'Ver contratos morosos',
+          'Coordinar con propietario',
+          'Gestionar abogados',
+        ],
+        links: ['/broker/legal-cases', '/broker/contracts', '/broker/legal-cases/new'],
+      },
+    },
+
+    // Información legal chilena específica
+    legal_info: {
+      general: {
+        responses: [
+          'El sistema Rent360 está diseñado conforme a la legislación chilena, específicamente la **Ley N° 21.461 "Devuélveme Mi Casa"** y la **Ley N° 18.101 de Arrendamientos Urbanos**. Puedo explicarte cómo aplicar estas leyes en casos concretos de mora, desahucio, o disputas contractuales.',
+          'Información legal específica de Chile: - **Ley 18.101**: Regula arrendamientos urbanos, intereses por mora (3% mensual), plazos de notificación, garantías. - **Ley 21.461**: Protege derechos de inquilinos contra desalojos irregulares. - **Código Civil**: Aplica para contratos y obligaciones.',
+        ],
+        suggestions: [
+          'Ley de arrendamientos',
+          'Intereses por mora',
+          'Derechos inquilinos',
+          'Proceso desahucio',
+        ],
+        links: ['/legal-info', '/ley-18101', '/ley-21461', '/derechos-inquilinos'],
+      },
+    },
+
+    // Navegación y uso del sistema
+    navigation: {
+      tenant: {
+        responses: [
+          'Como inquilino, tu panel principal tiene estas secciones principales: **Dashboard** (resumen general), **Buscar Propiedades** (encuentra arriendo), **Mis Contratos** (documentos legales), **Pagos** (renta y métodos), **Mantenimiento** (reportar problemas), **Mensajes** (comunicación), **Calificaciones** (valorar servicios).',
+          'Navegación para inquilinos: Usa la barra lateral izquierda para acceder a todas las funciones. El dashboard te muestra un resumen de tus contratos activos, pagos pendientes y notificaciones importantes.',
+        ],
+        suggestions: ['Ver dashboard', 'Buscar propiedades', 'Ver contratos', 'Realizar pago'],
+        links: ['/tenant/dashboard', '/properties/search', '/tenant/contracts', '/tenant/payments'],
+      },
+      owner: {
+        responses: [
+          'Como propietario, gestionas: **Propiedades** (tus inmuebles), **Inquilinos** (tus arrendatarios), **Contratos** (documentos legales), **Casos Legales** (mora y disputas), **Pagos** (ingresos por arriendo), **Mantenimiento** (reparaciones), **Analytics** (reportes y métricas).',
+          'Panel de propietario: Desde tu dashboard puedes ver ingresos mensuales, contratos activos, pagos pendientes de inquilinos, y casos legales en curso. La barra lateral te da acceso rápido a todas las funciones.',
+        ],
+        suggestions: ['Ver propiedades', 'Gestionar contratos', 'Ver ingresos', 'Casos legales'],
+        links: ['/owner/dashboard', '/owner/properties', '/owner/contracts', '/owner/payments'],
+      },
+      broker: {
+        responses: [
+          'Como corredor, administras: **Propiedades** (ofertas disponibles), **Clientes** (inquilinos y propietarios), **Citas** (visitas programadas), **Contratos** (cierres de negocio), **Comisiones** (ganancias), **Casos Legales** (apoyo a clientes), **Analytics** (rendimiento comercial).',
+          'Herramientas de corredor: Publica propiedades, gestiona clientes potenciales, programa citas con Runner360, cierra contratos, cobra comisiones automáticamente, y accede a reportes detallados de tu rendimiento.',
+        ],
+        suggestions: ['Ver propiedades', 'Gestionar clientes', 'Programar citas', 'Ver comisiones'],
+        links: [
+          '/broker/dashboard',
+          '/broker/properties',
+          '/broker/clients',
+          '/broker/commissions',
+        ],
+      },
+      provider: {
+        responses: [
+          'Como proveedor de servicios, manejas: **Dashboard** (trabajos disponibles), **Trabajos** (reparaciones asignadas), **Calendario** (horarios), **Ganancias** (pagos por servicios), **Perfil** (servicios ofrecidos), **Calificaciones** (reputación).',
+          'Plataforma para proveedores: Recibe trabajos automáticamente según tu especialidad, coordina horarios con clientes, recibe pagos seguros, construye tu reputación con calificaciones, y accede a estadísticas de tu rendimiento.',
+        ],
+        suggestions: [
+          'Ver trabajos disponibles',
+          'Gestionar calendario',
+          'Ver ganancias',
+          'Actualizar perfil',
+        ],
+        links: [
+          '/provider/dashboard',
+          '/maintenance/jobs',
+          '/provider/earnings',
+          '/provider/profile',
+        ],
+      },
+      runner: {
+        responses: [
+          'Como Runner360, controlas: **Dashboard** (tareas pendientes), **Visitas** (propiedades que inspeccionar), **Fotos** (galería de trabajos), **Horario** (disponibilidad), **Ganancias** (pagos por visita), **Incentivos** (bonos especiales), **Reportes** (estadísticas).',
+          'Sistema Runner360: Acepta tareas de inspección, toma fotos profesionales de propiedades, genera reportes detallados, cobra por visita completada, gana incentivos por rendimiento, y administra tu disponibilidad horaria.',
+        ],
+        suggestions: ['Ver tareas pendientes', 'Gestionar visitas', 'Ver ganancias', 'Subir fotos'],
+        links: ['/runner/dashboard', '/runner/tasks', '/runner/earnings', '/runner/photos'],
+      },
+    },
+
+    // Preguntas "cómo hacer" específicas
+    how_to: {
+      tenant: {
+        responses: [
+          '**Cómo buscar propiedades:** Ve a "Buscar Propiedades", aplica filtros por zona, precio, habitaciones. Contacta directamente propietarios o corredores. Runner360 puede hacer visitas por ti.',
+          '**Cómo pagar la renta:** En "Pagos" configura débito automático o paga online con Khipu. Recibes recordatorios automáticos y comprobantes digitales.',
+          '**Cómo reportar problemas:** En "Mantenimiento" crea un ticket con fotos/videos. El sistema asigna automáticamente el proveedor más cercano.',
+          '**Cómo calificar servicios:** Después de cada servicio completado, accede a "Calificaciones" para evaluar proveedores y propietarios.',
+        ],
+        suggestions: [
+          'Buscar propiedades',
+          'Configurar pagos',
+          'Reportar mantenimiento',
+          'Dejar calificación',
+        ],
+      },
+      owner: {
+        responses: [
+          '**Cómo publicar propiedades:** Ve a "Mis Propiedades" → "Agregar Propiedad". Sube fotos, detalla características, establece precio. Los corredores podrán promocionarla.',
+          '**Cómo cobrar rentas:** Configura pagos automáticos en "Pagos". El sistema envía recordatorios y procesa cobros. Khipu transfiere directamente a tu cuenta.',
+          '**Cómo gestionar mantenimiento:** En "Mantenimiento" recibe solicitudes de inquilinos, aprueba presupuestos, supervisa trabajos, paga automáticamente.',
+          '**Cómo ver reportes:** Accede a "Analytics" para ingresos mensuales, ocupación de propiedades, rendimiento de corredores, y métricas financieras.',
+        ],
+        suggestions: [
+          'Publicar propiedad',
+          'Configurar cobros',
+          'Gestionar mantenimiento',
+          'Ver reportes',
+        ],
+      },
+      broker: {
+        responses: [
+          '**Cómo publicar ofertas:** En "Propiedades" → "Nueva Propiedad". Completa detalles, sube fotos profesionales, establece comisiones. Aparecerá en búsquedas de inquilinos.',
+          '**Cómo gestionar clientes:** Usa "Clientes" para organizar prospectos y clientes activos. Programa citas, envía propuestas, cierra contratos.',
+          '**Cómo coordinar visitas:** En "Citas" programa inspecciones con Runner360. El sistema genera reportes automáticos con fotos y videos.',
+          '**Cómo cobrar comisiones:** Las comisiones se calculan automáticamente al cerrar contratos. Ve a "Comisiones" para ver pagos pendientes y transferencias.',
+        ],
+        suggestions: [
+          'Publicar propiedad',
+          'Gestionar clientes',
+          'Programar visitas',
+          'Ver comisiones',
+        ],
+      },
+      provider: {
+        responses: [
+          '**Cómo recibir trabajos:** Mantén tu perfil actualizado con servicios ofrecidos y zona de cobertura. Los trabajos llegan automáticamente por email y notificaciones.',
+          '**Cómo gestionar trabajos:** En "Trabajos" acepta solicitudes, coordina horarios con clientes, actualiza estado del trabajo, sube evidencia fotográfica.',
+          '**Cómo cobrar servicios:** Los pagos se procesan automáticamente al completar trabajos. Ve a "Ganancias" para ver transferencias pendientes.',
+          '**Cómo mejorar calificaciones:** Entrega trabajos de calidad, responde rápido, comunica bien con clientes. Las buenas calificaciones atraen más trabajo.',
+        ],
+        suggestions: [
+          'Actualizar perfil',
+          'Gestionar trabajos',
+          'Ver ganancias',
+          'Mejorar calificaciones',
+        ],
+      },
+      runner: {
+        responses: [
+          '**Cómo aceptar tareas:** En "Tareas" revisa inspecciones disponibles. Acepta las que puedas completar en tu zona y horario.',
+          '**Cómo hacer inspecciones:** Ve a la propiedad indicada, toma mínimo 15 fotos profesionales (exterior, interior, detalles), mide ambientes, verifica servicios.',
+          '**Cómo subir reportes:** Después de la visita, sube fotos y completa el formulario con medidas, estado de la propiedad y observaciones.',
+          '**Cómo ganar más:** Completa más visitas semanales, mantén alta calidad en fotos, responde rápido a solicitudes. Los incentivos se activan automáticamente.',
+        ],
+        suggestions: [
+          'Ver tareas disponibles',
+          'Hacer inspección',
+          'Subir reporte',
+          'Ver incentivos',
+        ],
+      },
+    },
+
     // Soporte y ayuda
     support: {
       general: {
         responses: [
-          '¿Necesitas ayuda? Estoy aquí 24/7. Puedo ayudarte con: registro, propiedades, contratos, pagos, Runner360, mantenimiento, seguridad, y cualquier proceso de la plataforma. También puedes contactar soporte humano.',
-          'Centro de ayuda completo: documentación detallada, tutoriales paso a paso, soporte por chat, teléfono y email, comunidad de usuarios, base de conocimientos actualizada.',
+          '¿Necesitas ayuda? Estoy aquí 24/7. Puedo ayudarte con: registro, propiedades, contratos, pagos, casos legales, Runner360, mantenimiento, seguridad, y cualquier proceso de la plataforma. También puedes contactar soporte humano.',
+          'Centro de ayuda completo: documentación detallada, tutoriales paso a paso, soporte por chat, teléfono y email, comunidad de usuarios, base de conocimientos actualizada. Para consultas legales específicas, te recomiendo consultar un abogado.',
         ],
-        suggestions: ['Buscar en ayuda', 'Contactar soporte', 'Ver tutoriales'],
-        links: ['/help', '/support', '/contact'],
+        suggestions: ['Buscar en ayuda', 'Contactar soporte', 'Ver tutoriales', 'Casos legales'],
+        links: ['/help', '/support', '/contact', '/legal-help'],
       },
     },
   };
@@ -821,6 +1060,80 @@ export class AIChatbotService {
         context: ['security', 'verification', 'trust'],
       },
       {
+        intent: 'legal_cases',
+        patterns: [
+          /(?:caso legal|casos legales|proceso legal|judicial|demanda|tribunal)/i,
+          /(?:desahucio|lanzamiento|expulsión|desalojo)/i,
+          /(?:ley|legal|jurídico|abogado|juez)/i,
+          /(?:contrato|arriendo|arrendamiento)\s+(?:problema|conflicto|disputa)/i,
+          /(?:iniciar|empezar|comenzar)\s+(?:proceso|caso|demanda)\s+legal/i,
+          /(?:problemas?\s+(?:habitabilidad|contrato|inquilino|propietario))/i,
+          /(?:derechos?\s+(?:inquilino|propietario|arrendador|arrendatario))/i,
+        ],
+        weight: 0.95,
+        context: ['legal', 'court', 'law', 'dispute', 'conflict'],
+      },
+      {
+        intent: 'payment_default',
+        patterns: [
+          /(?:mora|atraso|impago|no pago|deuda|adeudo|pendiente)/i,
+          /(?:no\s+(?:pago|paga|ha pagado)|atrasado\s+(?:en\s+)?pago)/i,
+          /(?:inquilino\s+(?:no\s+)?paga|no\s+(?:me\s+)?paga\s+(?:el\s+)?alquiler)/i,
+          /(?:retraso\s+(?:en\s+)?pago|pagos?\s+(?:atrasado|retrasado|pendiente))/i,
+          /(?:cobrar|recuperar|cobranza)\s+(?:deuda|renta|alquiler)/i,
+          /(?:intereses?\s+(?:por\s+)?mora|intereses?\s+legales)/i,
+          /(?:garantía|depósito|caución)\s+(?:retener|aplicar|usar)/i,
+          /(?:notificación|requerimiento)\s+(?:extrajudicial|de\s+pago)/i,
+        ],
+        weight: 0.9,
+        context: ['payment', 'debt', 'default', 'overdue', 'legal'],
+      },
+      {
+        intent: 'legal_info',
+        patterns: [
+          /(?:ley|legislación|normativa|codigo civil|codigo de procedimiento)/i,
+          /(?:ley\s+(?:18\.?101|21\.?461)|devuelveme mi casa|arrendamientos urbanos)/i,
+          /(?:informacion legal|información jurídica|derechos|obligaciones)/i,
+          /(?:que dice la ley|según la ley|ley chilena|legislación chilena)/i,
+          /(?:contrato de arriendo|arriendo urbano|locación|alquiler)/i,
+          /(?:desalojo|desahucio|lanzamiento|expulsión)/i,
+          /(?:garantías|caución|depósito|aval)/i,
+          /(?:tribunal|juzgado|juez|procedimiento judicial)/i,
+        ],
+        weight: 0.85,
+        context: ['legal', 'law', 'legislation', 'chile', 'rights', 'court'],
+      },
+      {
+        intent: 'navigation',
+        patterns: [
+          /(?:como|dónde|donde)\s+(?:acceder|entrar|ir|ir a|llegar)/i,
+          /(?:dónde|donde)\s+(?:está|esta|encuentro|veo|veo el|la)\s+(?:panel|dashboard|menú|sección)/i,
+          /(?:cómo|como)\s+(?:navegar|usar|funciona|manejar)\s+(?:el\s+)?sistema/i,
+          /(?:qué|que)\s+(?:secciones|apartados|páginas|opciones)\s+(?:tengo|hay)/i,
+          /(?:dónde|donde)\s+(?:buscar|encontrar|ver)\s+(?:propiedad|contrato|pago)/i,
+          /(?:cómo|como)\s+(?:llegar|llegar a|acceder a)\s+(?:mi|mis)\s+(?:contrato|pago|propiedad)/i,
+          /(?:menú|menu|barra lateral|navegación|navegacion|sidebar)/i,
+          /(?:no\s+encuentro|no\s+veo|no\s+sé|no se)\s+(?:dónde|donde|como|cómo)/i,
+        ],
+        weight: 0.8,
+        context: ['navigation', 'menu', 'interface', 'ui', 'access', 'find'],
+      },
+      {
+        intent: 'how_to',
+        patterns: [
+          /(?:cómo|como)\s+(?:se\s+)?(?:hace|hacer|funciona|uso|usar)/i,
+          /(?:cómo|como)\s+(?:puedo|podría|debo)\s+(?:hacer|realizar|ejecutar)/i,
+          /(?:qué|que)\s+(?:pasos|proceso|procedimiento)\s+(?:sigo|debo seguir)/i,
+          /(?:dime|explícame|enséñame|guíame|ayúdame)\s+(?:a|como|cómo)/i,
+          /(?:no\s+sé|no se)\s+(?:cómo|como)\s+(?:hacer|usar|funciona)/i,
+          /(?:instrucciones|tutorial|guía|ayuda)\s+(?:para|de)/i,
+          /(?:paso\s+a\s+paso|paso por paso)/i,
+          /(?:primera\s+vez|por\s+primera\s+vez|nuevo|principiante)/i,
+        ],
+        weight: 0.75,
+        context: ['tutorial', 'guide', 'help', 'instructions', 'how', 'steps'],
+      },
+      {
         intent: 'support',
         patterns: [
           /(?:ayuda|ayudame|problema|soporte|duda|no entiendo)/,
@@ -876,11 +1189,44 @@ export class AIChatbotService {
    */
   private isIntentRelevantForRole(intent: string, role: string): boolean {
     const roleRelevance: Record<string, string[]> = {
-      tenant: ['property_search', 'contracts', 'payments', 'maintenance', 'runner360'],
-      owner: ['property_search', 'contracts', 'payments', 'maintenance', 'runner360'],
-      broker: ['property_search', 'contracts', 'payments', 'runner360'],
-      provider: ['register', 'maintenance', 'payments'],
-      admin: ['security', 'support'],
+      tenant: [
+        'property_search',
+        'contracts',
+        'payments',
+        'maintenance',
+        'runner360',
+        'legal_cases',
+        'payment_default',
+        'legal_info',
+        'navigation',
+        'how_to',
+      ],
+      owner: [
+        'property_search',
+        'contracts',
+        'payments',
+        'maintenance',
+        'runner360',
+        'legal_cases',
+        'payment_default',
+        'legal_info',
+        'navigation',
+        'how_to',
+      ],
+      broker: [
+        'property_search',
+        'contracts',
+        'payments',
+        'runner360',
+        'legal_cases',
+        'payment_default',
+        'legal_info',
+        'navigation',
+        'how_to',
+      ],
+      provider: ['register', 'maintenance', 'payments', 'navigation', 'how_to'],
+      runner: ['navigation', 'how_to'],
+      admin: ['security', 'support', 'legal_cases', 'legal_info', 'navigation', 'how_to'],
     };
 
     return roleRelevance[role]?.includes(intent) || false;
@@ -1046,6 +1392,15 @@ export class AIChatbotService {
         selectedResponse += '\n\n' + subIntentContext;
         suggestions = [...suggestions, ...subIntentContext.suggestions];
       }
+    }
+
+    // Agregar guía paso a paso para casos legales complejos
+    if (mainIntent === 'payment_default' && userRole === 'owner') {
+      selectedResponse += '\n\n' + this.getDetailedLegalGuide('payment_default_owner');
+    } else if (mainIntent === 'legal_cases' && userRole === 'owner') {
+      selectedResponse += '\n\n' + this.getDetailedLegalGuide('legal_cases_owner');
+    } else if (mainIntent === 'legal_cases' && userRole === 'tenant') {
+      selectedResponse += '\n\n' + this.getDetailedLegalGuide('legal_cases_tenant');
     }
 
     // Generar preguntas de seguimiento inteligentes
@@ -2397,6 +2752,109 @@ Respuesta:
       local: true,
       current: this.config?.provider || 'local',
     };
+  }
+
+  /**
+   * Genera guías detalladas paso a paso para procesos legales complejos
+   */
+  private getDetailedLegalGuide(guideType: string): string {
+    const guides: Record<string, string> = {
+      payment_default_owner: `
+🚨 **GUÍA PASO A PASO: Proceso completo por mora en pagos**
+
+**FASE 1: Verificación y preparación**
+• Confirma atraso >30 días (requisito legal)
+• Calcula deuda total: renta + intereses (3% mensual) + gastos administrativos
+• Revisa contrato: plazos, garantías, cláusulas especiales
+
+**FASE 2: Iniciar caso legal desde contrato**
+• Ve a "Mis Contratos" → selecciona contrato moroso
+• Busca opción "Iniciar Caso Legal"
+• Selecciona tipo "Incumplimiento de pago" (NON_PAYMENT)
+• Sistema genera notificación extrajudicial automáticamente
+
+**FASE 3: Espera y seguimiento**
+• Inquilino tiene 10 días hábiles para pagar
+• Si paga: caso cerrado automáticamente
+• Si no paga: puedes escalar a judicial
+
+**FASE 4: Procedimiento judicial (opcional)**
+• Demanda monitoria (si deuda >$500.000)
+• Juicio ordinario (si deuda menor)
+• Aplicación de garantías durante proceso
+
+**💰 Costos aproximados:**
+• Notificación extrajudicial: $15.000-25.000
+• Demanda monitoria: $50.000-80.000
+• Gastos judiciales: 5-10% de deuda recuperada
+
+**⚖️ Marco legal:** Artículos 47 y 55 de la Ley 18.101`,
+
+      legal_cases_owner: `
+📋 **FLUJO COMPLETO DE CASOS LEGALES EN RENT360**
+
+**1. CREACIÓN DEL CASO**
+• Accede a "Mis Contratos" → selecciona contrato específico
+• Busca opción "Iniciar Caso Legal" dentro del contrato
+• Selecciona tipo: Incumplimiento de pago, Incumplimiento contractual, Daño a propiedad, Otro
+• Sistema valida automáticamente requisitos legales
+
+**2. DOCUMENTACIÓN AUTOMÁTICA**
+• Genera contratos, facturas impagas, reportes de daños
+• Calcula intereses y montos legalmente
+• Prepara antecedentes para tribunal
+
+**3. FASE EXTRAJUDICIAL**
+• Notificación automática por carta certificada
+• Seguimiento de plazos (10 días hábiles)
+• Registro de respuestas y pagos parciales
+
+**4. ESCALAMIENTO JUDICIAL**
+• Si no hay respuesta: preparación de demanda
+• Coordinación con abogados (si contratados)
+• Seguimiento de expediente judicial
+
+**5. EJECUCIÓN Y CIERRE**
+• Lanzamiento efectivo (con protección policial)
+• Cobro de garantías y deudas
+• Cierre del caso con documentación completa
+
+**🎯 TIP: El 70% de casos se resuelven en fase extrajudicial**`,
+
+      legal_cases_tenant: `
+🛡️ **GUÍA DE PROTECCIÓN PARA INQUILINOS**
+
+**TUS DERECHOS PRINCIPALES (Ley 18.101 y 21.461):**
+
+**1. CONTRA DESALOJOS IRREGULARES**
+• Desalojo requiere notificación judicial previa
+• Prohibidos desalojos nocturnos o en días festivos
+• No pueden cortarte servicios básicos
+
+**2. EN CASOS DE MORA**
+• Protección contra desalojos inmediatos
+• Derecho a plan de pagos razonable
+• 30 días de gracia antes de intereses de mora
+
+**3. ANTE VICIOS OCULTOS**
+• Puedes suspender pagos si propiedad inhabitable
+• Derecho a reparaciones urgentes
+• Posible resolución o reducción de renta
+
+**4. DURANTE EL CONTRATO**
+• Aumento máximo anual (IPC + 3%)
+• Protección contra cambios unilaterales
+• Derecho a prórroga automática (si no avisado)
+
+**5. AL TERMINAR CONTRATO**
+• Inventario de entrega obligatorio
+• Devolución de garantías en 60 días
+• Derecho a reparaciones por deterioro normal
+
+**📞 ¿Problemas? Contacta inmediatamente a tu propietario**`,
+    };
+
+    return guides[guideType] || '';
   }
 
   /**
