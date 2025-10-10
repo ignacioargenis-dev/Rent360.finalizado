@@ -34,13 +34,13 @@ import {
   Activity,
   AlertTriangle,
 } from 'lucide-react';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 
 interface UserReport {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'OWNER' | 'TENANT' | 'BROKER' | 'PROVIDER' | 'MAINTENANCE' | 'RUNNER' | 'SUPPORT';
+  role: UserRole;
   status: 'active' | 'inactive' | 'suspended';
   createdAt: string;
   lastLogin: string;
@@ -103,7 +103,7 @@ export default function AdminUsersReportsPage() {
             id: '1',
             name: 'Carlos Rodríguez',
             email: 'admin@rent360.cl',
-            role: 'ADMIN',
+            role: 'admin',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
@@ -117,7 +117,7 @@ export default function AdminUsersReportsPage() {
             id: '2',
             name: 'María González',
             email: 'propietario@rent360.cl',
-            role: 'OWNER',
+            role: 'owner',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 300).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
@@ -131,7 +131,7 @@ export default function AdminUsersReportsPage() {
             id: '3',
             name: 'Pedro Sánchez',
             email: 'inquilino@rent360.cl',
-            role: 'TENANT',
+            role: 'tenant',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 200).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
@@ -145,7 +145,7 @@ export default function AdminUsersReportsPage() {
             id: '4',
             name: 'Ana Martínez',
             email: 'corredor@rent360.cl',
-            role: 'BROKER',
+            role: 'broker',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 150).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
@@ -159,7 +159,7 @@ export default function AdminUsersReportsPage() {
             id: '5',
             name: 'Diego López',
             email: 'runner@rent360.cl',
-            role: 'RUNNER',
+            role: 'runner',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 100).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
@@ -173,7 +173,7 @@ export default function AdminUsersReportsPage() {
             id: '6',
             name: 'Soporte Rent360',
             email: 'soporte@rent360.cl',
-            role: 'SUPPORT',
+            role: 'support',
             status: 'active',
             createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 350).toISOString(),
             lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 24 * 0.5).toISOString(),

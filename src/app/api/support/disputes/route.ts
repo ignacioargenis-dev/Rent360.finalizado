@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'SUPPORT') {
+    if (user.role !== 'support') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requiere rol de soporte.' },
         { status: 403 }

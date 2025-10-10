@@ -42,15 +42,15 @@ export async function GET(request: NextRequest) {
     // Construir filtros basados en el rol del usuario
     const where: any = {};
 
-    if (user.role === 'TENANT') {
+    if (user.role === 'tenant') {
       // Inquilinos solo ven sus propias solicitudes
       where.requestedBy = user.id;
-    } else if (user.role === 'OWNER') {
+    } else if (user.role === 'owner') {
       // Propietarios ven solicitudes de sus propiedades
       where.property = {
         ownerId: user.id,
       };
-    } else if (user.role === 'BROKER') {
+    } else if (user.role === 'broker') {
       // Brokers ven solicitudes de propiedades que manejan
       where.property = {
         brokerId: user.id,
@@ -172,16 +172,16 @@ export async function POST(request: NextRequest) {
     let hasPermission = false;
     let requesterRole = 'USER';
 
-    if (user.role === 'ADMIN') {
+    if (user.role === 'admin') {
       hasPermission = true;
-      requesterRole = 'ADMIN';
-    } else if (user.role === 'OWNER' && property.ownerId === user.id) {
+      requesterRole = 'admin';
+    } else if (user.role === 'owner' && property.ownerId === user.id) {
       hasPermission = true;
-      requesterRole = 'OWNER';
-    } else if (user.role === 'BROKER' && property.brokerId === user.id) {
+      requesterRole = 'owner';
+    } else if (user.role === 'broker' && property.brokerId === user.id) {
       hasPermission = true;
-      requesterRole = 'BROKER';
-    } else if (user.role === 'TENANT') {
+      requesterRole = 'broker';
+    } else if (user.role === 'tenant') {
       // Verificar si el inquilino tiene un contrato activo con esta propiedad
       const activeContract = await db.contract.findFirst({
         where: {
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       });
       hasPermission = !!activeContract;
       if (hasPermission) {
-        requesterRole = 'TENANT';
+        requesterRole = 'tenant';
       }
     }
 

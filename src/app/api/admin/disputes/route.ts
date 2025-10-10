@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
         brokerEmail: 'corredor@empresa.cl',
         brokerPhone: '+56955556666',
         initiatorName: 'Propietario Corporativo',
-        initiatorRole: 'OWNER',
+        initiatorRole: 'owner',
         supportPriority: 'HIGH',
         mediationStatus: 'AVAILABLE',
         resolutionOptions: ['PARTIAL_REFUND', 'MAINTENANCE_DEDUCTION', 'LEGAL_MEDIATION'],

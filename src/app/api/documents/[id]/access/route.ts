@@ -110,7 +110,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  */
 async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
   // Admins tienen acceso a todo
-  if (user.role === 'ADMIN') {
+  if (user.role === 'admin') {
     return true;
   }
 
@@ -124,17 +124,17 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     const property = document.property;
 
     // Propietarios tienen acceso a documentos de sus propiedades
-    if (user.role === 'OWNER' && property.ownerId === user.id) {
+    if (user.role === 'owner' && property.ownerId === user.id) {
       return true;
     }
 
     // Corredores tienen acceso a documentos de propiedades que manejan
-    if (user.role === 'BROKER' && property.brokerId === user.id) {
+    if (user.role === 'broker' && property.brokerId === user.id) {
       return true;
     }
 
     // Inquilinos tienen acceso limitado a documentos relacionados con contratos activos
-    if (user.role === 'TENANT') {
+    if (user.role === 'tenant') {
       const activeContracts = await db.contract.findFirst({
         where: {
           propertyId: document.propertyId,
@@ -150,7 +150,7 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
     }
 
     // Prestadores de servicios de mantenimiento pueden acceder a documentos relacionados
-    if (user.role === 'SERVICE_PROVIDER' || user.role === 'MAINTENANCE_PROVIDER') {
+    if (user.role === 'provider') {
       const relatedMaintenance = await db.maintenance.findFirst({
         where: {
           propertyId: document.propertyId,
@@ -166,7 +166,7 @@ async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
   }
 
   // Soporte técnico tiene acceso limitado para resolución de problemas
-  if (user.role === 'SUPPORT') {
+  if (user.role === 'support') {
     // Los usuarios de soporte solo pueden acceder a documentos de propiedades que están resolviendo tickets
     // Por ahora, denegar acceso hasta implementar lógica más específica
     return false;

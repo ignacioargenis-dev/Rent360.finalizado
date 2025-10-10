@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     let user = null;
     try {
       user = await requireAuth(request);
-      if (user.role !== 'ADMIN') {
+      if (user.role !== 'admin') {
         return NextResponse.json(
           { error: 'Acceso denegado. Se requieren permisos de administrador.' },
           { status: 403 }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'ADMIN') {
+    if (user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'OWNER') {
+    if (user.role !== 'owner') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requiere rol de propietario.' },
         { status: 403 }

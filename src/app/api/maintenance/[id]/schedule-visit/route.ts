@@ -93,8 +93,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Verificar permisos de acceso
     const hasPermission =
       user.role === 'admin' ||
-      (user.role === 'BROKER' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'OWNER' && maintenance.property.ownerId === user.id);
+      (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
+      (user.role === 'owner' && maintenance.property.ownerId === user.id);
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -268,8 +268,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const hasPermission =
       user.role === 'admin' ||
-      (user.role === 'BROKER' && maintenance.property.brokerId === user.id) ||
-      (user.role === 'OWNER' && maintenance.property.ownerId === user.id);
+      (user.role === 'broker' && maintenance.property.brokerId === user.id) ||
+      (user.role === 'owner' && maintenance.property.ownerId === user.id);
 
     if (!hasPermission) {
       return NextResponse.json(

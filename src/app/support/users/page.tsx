@@ -45,11 +45,13 @@ import {
 import Link from 'next/link';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
+import { UserRole } from '@/types';
+
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'TENANT' | 'OWNER' | 'BROKER' | 'RUNNER' | 'SUPPORT' | 'PROVIDER' | 'MAINTENANCE';
+  role: UserRole;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED';
   phone?: string;
   createdAt: string;
@@ -565,19 +567,19 @@ export default function SupportUsersPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-bold text-lg text-gray-800">{user.name}</h3>
                             <Badge className={getRoleBadge(user.role)}>
-                              {user.role === 'TENANT'
+                              {user.role === 'tenant'
                                 ? 'Inquilino'
-                                : user.role === 'OWNER'
+                                : user.role === 'owner'
                                   ? 'Propietario'
-                                  : user.role === 'BROKER'
+                                  : user.role === 'broker'
                                     ? 'Corredor'
-                                    : user.role === 'RUNNER'
+                                    : user.role === 'runner'
                                       ? 'Runner'
-                                      : user.role === 'SUPPORT'
+                                      : user.role === 'support'
                                         ? 'Soporte'
-                                        : user.role === 'PROVIDER'
+                                        : user.role === 'provider'
                                           ? 'Proveedor'
-                                          : user.role === 'MAINTENANCE'
+                                          : user.role === 'maintenance'
                                             ? 'Mantenimiento'
                                             : user.role}
                             </Badge>

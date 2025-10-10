@@ -140,9 +140,9 @@ export default function BrokerDisputesPage() {
 
   const getInitiatorRoleLabel = (role?: string) => {
     switch (role) {
-      case 'OWNER':
+      case 'owner':
         return 'Propietario';
-      case 'TENANT':
+      case 'tenant':
         return 'Inquilino';
       default:
         return role || 'Desconocido';
