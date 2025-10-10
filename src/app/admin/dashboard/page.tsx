@@ -2,7 +2,6 @@
 
 import { logger } from '@/lib/logger';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
-import { useConnectionManager } from '@/hooks/useConnectionManager';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,6 +116,8 @@ interface SystemAlert {
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
+  const [user, setUser] = useState<User | null>(null);
+
   const router = useRouter();
 
   // Sistema de sincronización en tiempo real
@@ -132,48 +133,44 @@ export default function AdminDashboard() {
     invalidateUserData,
   } = useAdminDashboardSync();
 
-  // Gestión de conexiones
-  const connectionManager = useConnectionManager('websocket', {
-    maxRetries: 3,
-    retryDelay: 5000,
-    heartbeatInterval: 30000,
-  });
-
   // Mapeo de datos del nuevo sistema
-  const stats = statsData.data
-    ? {
-        totalUsers: statsData.data.totalUsers || 0,
-        totalProperties: statsData.data.totalProperties || 0,
-        activeContracts: statsData.data.activeContracts || 0,
-        monthlyRevenue: statsData.data.monthlyRevenue || 0,
-        pendingTickets: statsData.data.pendingTickets || 0,
-        systemHealth: statsData.data.systemHealth || 'good',
-      }
-    : {
-        totalUsers: 0,
-        totalProperties: 0,
-        activeContracts: 0,
-        monthlyRevenue: 0,
-        pendingTickets: 0,
-        systemHealth: 'good',
-      };
+  const statsDataObj = statsData.data || {};
+  const stats = {
+    totalUsers: (statsDataObj as any).totalUsers || 0,
+    totalProperties: (statsDataObj as any).totalProperties || 0,
+    activeContracts: (statsDataObj as any).activeContracts || 0,
+    monthlyRevenue: (statsDataObj as any).monthlyRevenue || 0,
+    pendingTickets: (statsDataObj as any).pendingTickets || 0,
+    systemHealth: (statsDataObj as any).systemHealth || 'good',
+  };
 
-  const recentUsers = recentUsersData.data || [];
-  const recentActivity = recentActivityData.data || [];
+  const recentUsers = (recentUsersData.data || []) as UserSummary[];
+  const recentActivity = (recentActivityData.data || []) as RecentActivity[];
   const systemAlerts: SystemAlert[] = []; // Se pueden agregar alertas del sistema aquí
-
-  // Efecto para manejar errores
-  useEffect(() => {
-    if (hasError) {
-      console.warn('Dashboard data loading error:', hasError);
-    }
-  }, [hasError]);
 
   // Función para refrescar manualmente
   const handleRefresh = () => {
     refreshDashboard();
-    invalidateUserData();
   };
+
+  useEffect(() => {
+    // Load user data from API
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
@@ -198,7 +195,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const getActivityColor = (type: string, severity: string) => {
+  const getActivityColor = (type: string, severity?: string) => {
     if (severity === 'high') {
       return 'bg-red-100 text-red-600';
     }
@@ -226,7 +223,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
+  const getSeverityBadge = (severity?: string) => {
     const colors = {
       high: 'bg-red-100 text-red-800',
       medium: 'bg-yellow-100 text-yellow-800',
@@ -235,7 +232,7 @@ export default function AdminDashboard() {
 
     return (
       <Badge className={`text-xs ${colors[severity as keyof typeof colors] || colors.low}`}>
-        {severity.toUpperCase()}
+        {(severity || 'low').toUpperCase()}
       </Badge>
     );
   };
@@ -276,13 +273,13 @@ export default function AdminDashboard() {
         {/* Connection Status & Refresh */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            {connectionManager.isConnected ? (
+            {isConnected ? (
               <Wifi className="w-4 h-4 text-green-500" />
             ) : (
               <WifiOff className="w-4 h-4 text-red-500" />
             )}
             <span className="text-sm text-gray-600">
-              {connectionManager.isConnected ? 'Conectado' : 'Desconectado'}
+              {isConnected ? 'Conectado' : 'Desconectado'}
             </span>
             {lastUpdated && (
               <span className="text-xs text-gray-500">
@@ -535,9 +532,9 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Estado de Conexión</span>
                     <span
-                      className={`font-medium ${connectionManager.isConnected ? 'text-green-600' : 'text-red-600'}`}
+                      className={`font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}
                     >
-                      {connectionManager.isConnected ? 'En línea' : 'Fuera de línea'}
+                      {isConnected ? 'En línea' : 'Fuera de línea'}
                     </span>
                   </div>
                 </div>

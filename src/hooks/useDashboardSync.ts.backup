@@ -1,0 +1,489 @@
+import { useCallback, useState, useEffect } from 'react';
+
+// Hook específico para dashboard de administrador
+export const useAdminDashboardSync = (userId?: string) => {
+  const [stats, setStats] = useState({
+    data: null,
+    isLoading: true,
+    error: null,
+    lastUpdated: null,
+  });
+
+  const [recentUsers, setRecentUsers] = useState({
+    data: [],
+    isLoading: true,
+    error: null,
+    lastUpdated: null,
+  });
+
+  const [recentActivity, setRecentActivity] = useState({
+    data: [],
+    isLoading: true,
+    error: null,
+    lastUpdated: null,
+  });
+
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Función para cargar estadísticas
+  const loadStats = useCallback(async () => {
+    try {
+      setStats(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/admin/dashboard-stats', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
+      }
+
+      const data = await response.json();
+      setStats({
+        data,
+        isLoading: false,
+        error: null,
+        lastUpdated: Date.now(),
+      });
+    } catch (error) {
+      setStats(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+      }));
+    }
+  }, []);
+
+  // Función para cargar usuarios recientes
+  const loadRecentUsers = useCallback(async () => {
+    try {
+      setRecentUsers(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/users?limit=10&sortBy=createdAt&sortOrder=desc', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch recent users');
+      }
+
+      const data = await response.json();
+      setRecentUsers({
+        data: data.users || data,
+        isLoading: false,
+        error: null,
+        lastUpdated: Date.now(),
+      });
+    } catch (error) {
+      setRecentUsers(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+      }));
+    }
+  }, []);
+
+  // Función para cargar actividad reciente
+  const loadRecentActivity = useCallback(async () => {
+    try {
+      setRecentActivity(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/admin/recent-activity?limit=20', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        // Fallback a datos simulados si la API no existe aún
+        setRecentActivity({
+          data: generateMockActivity(),
+          isLoading: false,
+          error: null,
+          lastUpdated: Date.now(),
+        });
+        return;
+      }
+
+      const data = await response.json();
+      setRecentActivity({
+        data: data.activities || [],
+        isLoading: false,
+        error: null,
+        lastUpdated: Date.now(),
+      });
+    } catch (error) {
+      setRecentActivity(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+      }));
+    }
+  }, []);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadStats();
+    loadRecentUsers();
+    loadRecentActivity();
+
+    // Simular conexión (en producción esto vendría de un WebSocket real)
+    setIsConnected(true);
+  }, [loadStats, loadRecentUsers, loadRecentActivity]);
+
+  // Función para refrescar todo el dashboard
+  const refreshDashboard = useCallback(async () => {
+    await Promise.all([
+      loadStats(),
+      loadRecentUsers(),
+      loadRecentActivity(),
+    ]);
+  }, [loadStats, loadRecentUsers, loadRecentActivity]);
+
+  // Función para invalidar datos relacionados con usuarios
+  const invalidateUserData = useCallback(() => {
+    loadRecentUsers();
+    loadStats();
+    loadRecentActivity();
+  }, [loadRecentUsers, loadStats, loadRecentActivity]);
+
+  // Función para invalidar todos los datos
+  const invalidateAll = useCallback(() => {
+    refreshDashboard();
+  }, [refreshDashboard]);
+
+  const isLoading = stats.isLoading || recentUsers.isLoading || recentActivity.isLoading;
+  const hasError = stats.error || recentUsers.error || recentActivity.error;
+  const lastUpdated = Math.max(
+    stats.lastUpdated || 0,
+    recentUsers.lastUpdated || 0,
+    recentActivity.lastUpdated || 0
+  ) || null;
+
+  return {
+    // Datos
+    stats,
+    recentUsers,
+    recentActivity,
+
+    // Estados
+    isLoading,
+    hasError,
+    lastUpdated,
+    isConnected,
+
+    // Acciones
+    refreshDashboard,
+    invalidateUserData,
+    invalidateAll,
+  };
+};
+
+// Función auxiliar para generar actividad simulada (hasta que se implemente la API)
+function generateMockActivity() {
+  return [
+    {
+      id: '1',
+      type: 'user',
+      title: 'Nuevo usuario registrado',
+      description: 'Juan Pérez se registró como propietario',
+      date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      severity: 'low',
+    },
+    {
+      id: '2',
+      type: 'contract',
+      title: 'Contrato firmado',
+      description: 'Contrato entre Propietario García e Inquilino López',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      severity: 'medium',
+    },
+    {
+      id: '3',
+      type: 'payment',
+      title: 'Pago recibido',
+      description: 'Pago mensual de $500.000 recibido',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+      severity: 'high',
+    },
+    {
+      id: '4',
+      type: 'maintenance',
+      title: 'Solicitud de mantenimiento',
+      description: 'Reparación de grifería en departamento 3B',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      severity: 'medium',
+    },
+  ];
+}
+    `owner-${ownerId}-contracts`,
+    `owner-${ownerId}-payments`,
+    `owner-${ownerId}-tenants`,
+  ]);
+
+  const dashboardCache = useSmartCache(
+    `owner-${ownerId}-dashboard`,
+    async () => {
+      const response = await fetch(`/api/owner/${ownerId}/dashboard`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch owner dashboard');
+      }
+
+      return response.json();
+    },
+    {
+      ttl: 3 * 60 * 1000, // 3 minutos
+      staleWhileRevalidate: true,
+      backgroundSync: true,
+      dependencies: [
+        `owner-${ownerId}-properties`,
+        `owner-${ownerId}-contracts`,
+        `owner-${ownerId}-payments`,
+        `owner-${ownerId}-tenants`,
+      ],
+    }
+  );
+
+  const propertiesCache = useSmartCache(
+    `owner-${ownerId}-properties`,
+    async () => {
+      const response = await fetch(`/api/owner/${ownerId}/properties?limit=50`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch owner properties');
+      }
+
+      const data = await response.json();
+      return data.properties || data;
+    },
+    {
+      ttl: 5 * 60 * 1000,
+      staleWhileRevalidate: true,
+      dependencies: [`owner-${ownerId}-contracts`],
+    }
+  );
+
+  const contractsCache = useSmartCache(
+    `owner-${ownerId}-contracts`,
+    async () => {
+      const response = await fetch(`/api/owner/${ownerId}/contracts?limit=50`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch owner contracts');
+      }
+
+      const data = await response.json();
+      return data.contracts || data;
+    },
+    {
+      ttl: 5 * 60 * 1000,
+      staleWhileRevalidate: true,
+      dependencies: [`owner-${ownerId}-payments`, `owner-${ownerId}-tenants`],
+    }
+  );
+
+  const multiCache = useMultiCache({
+    dashboard: dashboardCache,
+    properties: propertiesCache,
+    contracts: contractsCache,
+  });
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([
+      dashboardCache.refetch(),
+      propertiesCache.refetch(),
+      contractsCache.refetch(),
+    ]);
+  }, [dashboardCache, propertiesCache, contractsCache]);
+
+  const invalidatePropertyData = useCallback(() => {
+    forceUpdate(`owner-${ownerId}-properties`);
+    propertiesCache.invalidate();
+    dashboardCache.invalidate();
+  }, [forceUpdate, ownerId, propertiesCache, dashboardCache]);
+
+  return {
+    dashboard: multiCache.dashboard,
+    properties: multiCache.properties,
+    contracts: multiCache.contracts,
+    isLoading: multiCache.isAnyLoading,
+    hasError: multiCache.hasAnyError,
+    lastUpdated: multiCache.lastUpdated,
+    isConnected,
+    refreshAll,
+    invalidatePropertyData,
+    invalidateAll: multiCache.invalidateAll,
+  };
+};
+
+// Hook específico para dashboard de inquilino
+export const useTenantDashboardSync = (tenantId: string) => {
+  const { isConnected, forceUpdate } = useRealtimeSync([
+    `tenant-${tenantId}-dashboard`,
+    `tenant-${tenantId}-contracts`,
+    `tenant-${tenantId}-payments`,
+    `tenant-${tenantId}-maintenance`,
+  ]);
+
+  const dashboardCache = useSmartCache(
+    `tenant-${tenantId}-dashboard`,
+    async () => {
+      const response = await fetch(`/api/tenant/${tenantId}/dashboard`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant dashboard');
+      }
+
+      return response.json();
+    },
+    {
+      ttl: 3 * 60 * 1000,
+      staleWhileRevalidate: true,
+      backgroundSync: true,
+      dependencies: [
+        `tenant-${tenantId}-contracts`,
+        `tenant-${tenantId}-payments`,
+        `tenant-${tenantId}-maintenance`,
+      ],
+    }
+  );
+
+  const contractsCache = useSmartCache(
+    `tenant-${tenantId}-contracts`,
+    async () => {
+      const response = await fetch(`/api/tenant/${tenantId}/contracts`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant contracts');
+      }
+
+      const data = await response.json();
+      return data.contracts || data;
+    },
+    {
+      ttl: 5 * 60 * 1000,
+      staleWhileRevalidate: true,
+      dependencies: [`tenant-${tenantId}-payments`],
+    }
+  );
+
+  const maintenanceCache = useSmartCache(
+    `tenant-${tenantId}-maintenance`,
+    async () => {
+      const response = await fetch(`/api/tenant/${tenantId}/maintenance?limit=20`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant maintenance');
+      }
+
+      const data = await response.json();
+      return data.requests || data;
+    },
+    {
+      ttl: 10 * 60 * 1000,
+      staleWhileRevalidate: true,
+    }
+  );
+
+  const multiCache = useMultiCache({
+    dashboard: dashboardCache,
+    contracts: contractsCache,
+    maintenance: maintenanceCache,
+  });
+
+  return {
+    dashboard: multiCache.dashboard,
+    contracts: multiCache.contracts,
+    maintenance: multiCache.maintenance,
+    isLoading: multiCache.isAnyLoading,
+    hasError: multiCache.hasAnyError,
+    lastUpdated: multiCache.lastUpdated,
+    isConnected,
+    refreshAll: async () => {
+      await Promise.all([
+        dashboardCache.refetch(),
+        contractsCache.refetch(),
+        maintenanceCache.refetch(),
+      ]);
+    },
+    invalidateAll: multiCache.invalidateAll,
+  };
+};
+
+// Función auxiliar para generar actividad simulada (hasta que se implemente la API)
+function generateMockActivity() {
+  const activities = [
+    {
+      id: '1',
+      type: 'user',
+      title: 'Nuevo usuario registrado',
+      description: 'Juan Pérez se registró como propietario',
+      date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      severity: 'low',
+    },
+    {
+      id: '2',
+      type: 'contract',
+      title: 'Contrato firmado',
+      description: 'Contrato entre Propietario García y Inquilino López',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      severity: 'medium',
+    },
+    {
+      id: '3',
+      type: 'payment',
+      title: 'Pago recibido',
+      description: 'Pago mensual de $500.000 recibido',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+      severity: 'high',
+    },
+    {
+      id: '4',
+      type: 'maintenance',
+      title: 'Solicitud de mantenimiento',
+      description: 'Reparación de grifería en departamento 3B',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      severity: 'medium',
+    },
+  ];
+
+  return activities;
+}
