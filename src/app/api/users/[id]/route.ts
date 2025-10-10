@@ -36,7 +36,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
-    return NextResponse.json({ user: targetUser });
+    return NextResponse.json({
+      user: {
+        ...targetUser,
+        role: targetUser.role.toLowerCase(),
+      },
+    });
   } catch (error) {
     logger.error('Error al obtener usuario:', {
       error: error instanceof Error ? error.message : String(error),
@@ -150,7 +155,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       updateData.email = data.email;
     }
     if (data.role !== undefined) {
-      updateData.role = data.role;
+      // Convertir role a mayúscula para Prisma enum
+      updateData.role = data.role.toUpperCase();
     }
     if (data.isActive !== undefined) {
       updateData.isActive = data.isActive;
@@ -176,7 +182,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     return NextResponse.json({
       message: 'Usuario actualizado exitosamente',
-      user: updatedUser,
+      user: {
+        ...updatedUser,
+        role: updatedUser.role.toLowerCase(),
+      },
     });
   } catch (error) {
     logger.error('Error al actualizar usuario:', {
