@@ -24,7 +24,6 @@ import {
   Bell,
   UserPlus,
   Eye,
-  RefreshCw,
   Edit,
   Trash2,
   MessageSquare,
@@ -137,13 +136,6 @@ export default function AdminDashboard() {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
 
   const router = useRouter();
-
-  // Función para refrescar datos del dashboard
-  const refreshDashboard = async () => {
-    setLoading(true);
-    await loadDashboardData();
-    setLoading(false);
-  };
 
   useEffect(() => {
     // Load user data from API
@@ -473,20 +465,6 @@ export default function AdminDashboard() {
       notificationCount={stats.pendingTickets}
     >
       <div className="container mx-auto px-4 py-6">
-        {/* Refresh Button */}
-        <div className="flex justify-end mb-4">
-          <Button
-            onClick={refreshDashboard}
-            disabled={loading}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar Datos
-          </Button>
-        </div>
-
         {/* System Alerts */}
         {systemAlerts.length > 0 && (
           <div className="mb-6">
