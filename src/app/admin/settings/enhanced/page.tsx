@@ -894,7 +894,7 @@ El equipo de Rent360`,
         fields.forEach(field => {
           if (settings[field as keyof SystemSettings] !== undefined) {
             categorizedSettings[category][field] = {
-              value: settings[field as keyof SystemSettings],
+              value: String(settings[field as keyof SystemSettings]), // Convertir a string
               isActive: true,
               description: `${field} setting`,
             };

@@ -132,6 +132,17 @@ export async function GET(request: NextRequest) {
     logger.error('Error en consulta optimizada de usuarios', {
       error: error instanceof Error ? error.message : String(error),
     });
+
+    // Manejar errores de autenticación específicamente
+    if (error instanceof Error) {
+      if (error.message.includes('No autorizado') || error.message.includes('Unauthorized')) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      }
+      if (error.message.includes('Acceso denegado') || error.message.includes('Access denied')) {
+        return NextResponse.json({ error: error.message }, { status: 403 });
+      }
+    }
+
     return handleApiError(error, 'GET /api/users');
   }
 }

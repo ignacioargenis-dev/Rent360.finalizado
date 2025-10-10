@@ -74,16 +74,19 @@ export async function POST(request: NextRequest) {
     // Procesar cada configuración
     const updatePromises = Object.entries(settings).map(([category, categorySettings]) => {
       return Object.entries(categorySettings as Record<string, any>).map(([key, settingData]) => {
+        // Convertir valor a string si no lo es
+        const stringValue = String(settingData.value);
+
         return db.systemSetting.upsert({
           where: { key },
           update: {
-            value: settingData.value,
+            value: stringValue,
             isActive: settingData.isActive,
             category,
           },
           create: {
             key,
-            value: settingData.value,
+            value: stringValue,
             category,
             description: settingData.description || '',
             isActive: settingData.isActive,

@@ -21,6 +21,9 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith('/static') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/test-users') ||
+    pathname.startsWith('/api/test-settings') ||
+    pathname.startsWith('/api/debug') ||
     pathname.startsWith('/manifest.json') ||
     pathname.startsWith('/sw.js') ||
     pathname.includes('.')
@@ -37,12 +40,16 @@ export default function middleware(request: NextRequest) {
 
     // Verificar si es mismo origen
     const isSameOrigin = origin !== '' && origin === requestOrigin;
-    
+
     // Verificar si es un host de preview (desarrollo/staging)
-    const isPreviewHost = host.endsWith('.pages.dev') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
-    
+    const isPreviewHost =
+      host.endsWith('.pages.dev') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
+
     // Verificar si está en la lista de orígenes permitidos del entorno
-    const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+    const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean);
     const isEnvAllowed = origin !== '' && envAllowedOrigins.includes(origin);
 
     // Permitir si es mismo origen, si el host es de preview conocido o si está en la lista de env
@@ -54,7 +61,8 @@ export default function middleware(request: NextRequest) {
         origin,
         host,
         pathname,
-        clientIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+        clientIP:
+          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       });
 
       return new NextResponse('CORS policy violation', {
@@ -71,7 +79,7 @@ export default function middleware(request: NextRequest) {
     logger.error('CORS evaluation error', {
       context: 'middleware.cors',
       error: error instanceof Error ? error.message : String(error),
-      pathname
+      pathname,
     });
     // En caso de fallo al evaluar CORS, continuar para no bloquear el preview
   }
@@ -82,14 +90,15 @@ export default function middleware(request: NextRequest) {
     logger.warn('Rate limit exceeded', {
       context: 'middleware.rate-limit',
       pathname,
-      clientIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      clientIP:
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
 
     return NextResponse.json(
       {
         error: 'Rate limit exceeded',
         message: rateLimitResult.message,
-        retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+        retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
       },
       {
         status: rateLimitResult.statusCode || 429,
@@ -97,8 +106,8 @@ export default function middleware(request: NextRequest) {
           'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
           'X-RateLimit-Limit': '100',
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
-        }
+          'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+        },
       }
     );
   }
@@ -109,7 +118,7 @@ export default function middleware(request: NextRequest) {
     logger.warn('Security validation failed', {
       warnings: securityValidation.warnings,
       pathname,
-      context: 'middleware.security'
+      context: 'middleware.security',
     });
   }
 
@@ -120,7 +129,7 @@ export default function middleware(request: NextRequest) {
       logger.warn('Query parameter validation failed', {
         error: queryValidation.error,
         pathname,
-        context: 'middleware.query_validation'
+        context: 'middleware.query_validation',
       });
 
       return NextResponse.json(
@@ -138,7 +147,10 @@ export default function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), magnetometer=(), gyroscope=()');
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), magnetometer=(), gyroscope=()'
+  );
   response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -160,8 +172,8 @@ export default function middleware(request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-    "block-all-mixed-content"
+    'upgrade-insecure-requests',
+    'block-all-mixed-content',
   ].join('; ');
 
   response.headers.set('Content-Security-Policy', csp);
@@ -180,7 +192,8 @@ export default function middleware(request: NextRequest) {
       method: request.method,
       responseTime,
       userAgent: request.headers.get('user-agent') || 'unknown',
-      clientIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+      clientIP:
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
   }
 
@@ -188,9 +201,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/',
-    '/(es|en)/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
+  matcher: ['/', '/(es|en)/:path*', '/((?!_next/static|_next/image|favicon.ico|public/).*)'],
 };
