@@ -149,17 +149,67 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // Preparar datos de actualización
     const updateData: any = {};
     if (data.name !== undefined) {
-      updateData.name = data.name;
+      if (typeof data.name !== 'string' || data.name.trim().length < 2) {
+        return NextResponse.json(
+          { error: 'El nombre debe tener al menos 2 caracteres' },
+          { status: 400 }
+        );
+      }
+      updateData.name = data.name.trim();
     }
     if (data.email !== undefined) {
-      updateData.email = data.email;
+      if (typeof data.email !== 'string' || !data.email.includes('@')) {
+        return NextResponse.json({ error: 'Email inválido' }, { status: 400 });
+      }
+      updateData.email = data.email.trim().toLowerCase();
     }
     if (data.role !== undefined) {
-      // Convertir role a mayúscula para Prisma enum
-      updateData.role = data.role.toUpperCase();
+      if (typeof data.role !== 'string') {
+        return NextResponse.json({ error: 'Rol inválido' }, { status: 400 });
+      }
+
+      // Validar que el role sea válido y convertir a mayúscula
+      const validRoles = [
+        'admin',
+        'owner',
+        'tenant',
+        'broker',
+        'runner',
+        'support',
+        'provider',
+        'maintenance_provider',
+        'service_provider',
+      ];
+      const normalizedRole = data.role.toLowerCase().trim();
+
+      if (!validRoles.includes(normalizedRole)) {
+        return NextResponse.json(
+          {
+            error: 'Rol inválido. Los roles válidos son: ' + validRoles.join(', '),
+          },
+          { status: 400 }
+        );
+      }
+
+      // Convertir a mayúscula para Prisma enum
+      updateData.role = normalizedRole.toUpperCase();
     }
     if (data.isActive !== undefined) {
+      if (typeof data.isActive !== 'boolean') {
+        return NextResponse.json(
+          { error: 'El campo isActive debe ser un booleano' },
+          { status: 400 }
+        );
+      }
       updateData.isActive = data.isActive;
+    }
+
+    // Verificar que al menos un campo se va a actualizar
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: 'No se proporcionaron datos para actualizar' },
+        { status: 400 }
+      );
     }
 
     // Actualizar usuario
