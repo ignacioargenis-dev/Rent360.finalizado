@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
       duration,
       filters: { role, search, isActive },
       resultCount: Array.isArray(result) ? result.length : 0,
+      result: result, // Debug: mostrar resultado
     });
 
     // Convertir roles a minúscula para el frontend

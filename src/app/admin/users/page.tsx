@@ -95,13 +95,16 @@ export default function AdminUsersPage() {
       }
 
       const url = `/api/users${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'include', // Incluir cookies de autenticación
+      });
 
       if (!response.ok) {
         throw new Error('Error al cargar usuarios');
       }
       const data = await response.json();
-      setUsers(data.users || data || []); // API devuelve directamente el array o en data.users
+      const usersArray = data.users || data || [];
+      setUsers(usersArray);
     } catch (error) {
       logger.error('Error fetching users:', {
         error: error instanceof Error ? error.message : String(error),
