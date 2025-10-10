@@ -45,7 +45,7 @@ export const useAdminDashboardSync = (userId?: string) => {
     try {
       setStats(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch('/api/admin/dashboard-stats', {
+      const response = await fetch('/api/admin/system-metrics', {
         headers: {
           'Cache-Control': 'no-cache',
           Pragma: 'no-cache',
@@ -53,10 +53,12 @@ export const useAdminDashboardSync = (userId?: string) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch dashboard stats');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+      const data = responseData.data || responseData; // El endpoint puede devolver { success: true, data: ... } o directamente los datos
+
       setStats({
         data,
         isLoading: false,
@@ -198,7 +200,7 @@ export const useAdminDashboardSync = (userId?: string) => {
   };
 };
 
-// Función auxiliar para generar actividad simulada (hasta que se implemente la API)
+// Función auxiliar para generar actividad simulada (solo como fallback)
 function generateMockActivity() {
   return [
     {
