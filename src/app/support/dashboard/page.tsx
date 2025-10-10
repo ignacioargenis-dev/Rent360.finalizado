@@ -115,8 +115,10 @@ export default function SupportDashboard() {
         const isNewUser =
           !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
 
-        if (isNewUser) {
-          // Usuario nuevo - mostrar dashboard vacío
+        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
+        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
+        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
+          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío
           setStats({
             totalTickets: 0,
             openTickets: 0,
@@ -131,7 +133,7 @@ export default function SupportDashboard() {
           return;
         }
 
-        // Usuario existente - mostrar datos de ejemplo (temporal)
+        // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
         setStats({
           totalTickets: 1247,
           openTickets: 23,

@@ -111,8 +111,10 @@ export default function BrokerDashboardPage() {
         const isNewUser =
           !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
 
-        if (isNewUser) {
-          // Usuario nuevo - mostrar dashboard vacío con bienvenida
+        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
+        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
+        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
+          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
           setProperties([]);
           setClients([]);
           setRecentActivities([
@@ -200,7 +202,7 @@ export default function BrokerDashboardPage() {
             averageCommission: data.stats.averageCommission,
           });
         } else {
-          // Fallback a datos mock si la API falla
+          // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
           logger.warn('API dashboard failed, using mock data');
           await loadMockData();
         }

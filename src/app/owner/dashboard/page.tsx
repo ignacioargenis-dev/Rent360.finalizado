@@ -80,12 +80,14 @@ export default function OwnerDashboard() {
       setLoading(true);
 
       // Intentar cargar datos reales del usuario
-      // Por ahora, si es un usuario nuevo, mostrar datos vacíos
+      // Usuarios nuevos SIEMPRE ven dashboards vacíos - nunca datos mock
       const isNewUser =
         !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000; // Menos de 1 hora desde creación
 
-      if (isNewUser) {
-        // Usuario nuevo - mostrar dashboard vacío con bienvenida
+      // SIEMPRE mostrar dashboard vacío para usuarios nuevos
+      // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
+      if (isNewUser || !user?.email?.includes('@rent360.cl')) {
+        // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
         setStats({
           totalProperties: 0,
           activeContracts: 0,
@@ -107,7 +109,7 @@ export default function OwnerDashboard() {
           },
         ]);
       } else {
-        // Usuario existente - mostrar datos de ejemplo (temporal hasta implementar API real)
+        // Solo usuarios seed con @rent360.cl ven datos mock (para testing/marketing)
         setStats({
           totalProperties: 3,
           activeContracts: 2,
