@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
     // Verificar si hay token en las cookies
     const token = request.cookies.get('auth-token')?.value;
-    logger.info('Auth token present:', !!token);
+    logger.info('Auth token check', { tokenPresent: !!token });
 
     if (!token) {
       return NextResponse.json(
