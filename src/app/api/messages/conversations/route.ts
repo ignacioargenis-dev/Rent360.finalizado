@@ -16,102 +16,134 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Obtener todos los mensajes del usuario (enviados y recibidos)
-    // Agrupados por el otro participante
-    const conversations = await db.$queryRaw`
-      SELECT
-        CASE
-          WHEN m."senderId" = ${user.id} THEN m."receiverId"
-          ELSE m."senderId"
-        END as participant_id,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.name
-          ELSE s.name
-        END as participant_name,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.email
-          ELSE s.email
-        END as participant_email,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.role
-          ELSE s.role
-        END as participant_role,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.avatar
-          ELSE s.avatar
-        END as participant_avatar,
-        m.content as last_message,
-        m."createdAt" as last_message_at,
-        m.subject as last_subject,
-        m.type as last_message_type,
-        COUNT(CASE WHEN m."receiverId" = ${user.id} AND m."isRead" = false THEN 1 END) as unread_count,
-        COUNT(*) as total_messages
-      FROM "Message" m
-      LEFT JOIN "User" s ON s.id = m."senderId"
-      LEFT JOIN "User" r ON r.id = m."receiverId"
-      WHERE (m."senderId" = ${user.id} OR m."receiverId" = ${user.id})
-        AND m.status != 'DELETED'
-      GROUP BY
-        CASE
-          WHEN m."senderId" = ${user.id} THEN m."receiverId"
-          ELSE m."senderId"
-        END,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.name
-          ELSE s.name
-        END,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.email
-          ELSE s.email
-        END,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.role
-          ELSE s.role
-        END,
-        CASE
-          WHEN m."senderId" = ${user.id} THEN r.avatar
-          ELSE s.avatar
-        END,
-        m.content,
-        m."createdAt",
-        m.subject,
-        m.type
-      ORDER BY m."createdAt" DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-
-    // Procesar las conversaciones para obtener la información más reciente por participante
-    const processedConversations = new Map();
-
-    for (const conv of conversations as any[]) {
-      const participantId = conv.participant_id;
-
-      if (!processedConversations.has(participantId)) {
-        processedConversations.set(participantId, {
-          participant: {
-            id: participantId,
-            name: conv.participant_name,
-            email: conv.participant_email,
-            role: conv.participant_role,
-            avatar: conv.participant_avatar,
+    // Obtener todos los participantes únicos con los que el usuario ha conversado
+    const sentMessages = await db.message.findMany({
+      where: {
+        senderId: user.id,
+        status: { not: 'DELETED' },
+      },
+      select: {
+        receiverId: true,
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            avatar: true,
           },
+        },
+      },
+      distinct: ['receiverId'],
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const receivedMessages = await db.message.findMany({
+      where: {
+        receiverId: user.id,
+        status: { not: 'DELETED' },
+      },
+      select: {
+        senderId: true,
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            avatar: true,
+          },
+        },
+      },
+      distinct: ['senderId'],
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Crear un mapa de participantes únicos
+    const participantsMap = new Map();
+
+    // Agregar receptores de mensajes enviados
+    sentMessages.forEach(msg => {
+      if (msg.receiver) {
+        participantsMap.set(msg.receiver.id, msg.receiver);
+      }
+    });
+
+    // Agregar emisores de mensajes recibidos
+    receivedMessages.forEach(msg => {
+      if (msg.sender) {
+        participantsMap.set(msg.sender.id, msg.sender);
+      }
+    });
+
+    // Para cada participante, obtener la información de la conversación
+    const conversations = [];
+
+    for (const [participantId, participant] of participantsMap.entries()) {
+      // Obtener el último mensaje entre el usuario y este participante
+      const lastMessage = await db.message.findFirst({
+        where: {
+          OR: [
+            { senderId: user.id, receiverId: participantId },
+            { senderId: participantId, receiverId: user.id },
+          ],
+          status: { not: 'DELETED' },
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          content: true,
+          createdAt: true,
+          subject: true,
+          type: true,
+          isRead: true,
+          receiverId: true,
+        },
+      });
+
+      if (lastMessage) {
+        // Contar mensajes no leídos (solo los que recibió el usuario actual)
+        const unreadCount = await db.message.count({
+          where: {
+            senderId: participantId,
+            receiverId: user.id,
+            isRead: false,
+            status: { not: 'DELETED' },
+          },
+        });
+
+        // Contar total de mensajes
+        const totalMessages = await db.message.count({
+          where: {
+            OR: [
+              { senderId: user.id, receiverId: participantId },
+              { senderId: participantId, receiverId: user.id },
+            ],
+            status: { not: 'DELETED' },
+          },
+        });
+
+        conversations.push({
+          participant,
           lastMessage: {
-            content: conv.last_message,
-            timestamp: conv.last_message_at,
-            subject: conv.last_subject,
-            type: conv.last_message_type,
+            content: lastMessage.content,
+            timestamp: lastMessage.createdAt,
+            subject: lastMessage.subject,
+            type: lastMessage.type,
           },
-          unreadCount: parseInt(conv.unread_count),
-          totalMessages: parseInt(conv.total_messages),
-          lastActivity: conv.last_message_at,
+          unreadCount,
+          totalMessages,
+          lastActivity: lastMessage.createdAt,
         });
       }
     }
 
-    const result = Array.from(processedConversations.values());
+    // Ordenar por fecha del último mensaje (más reciente primero)
+    conversations.sort(
+      (a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
+    );
 
-    // Ordenar por última actividad (más reciente primero)
-    result.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+    // Aplicar paginación
+    const result = conversations.slice(offset, offset + limit);
 
     return NextResponse.json({
       success: true,

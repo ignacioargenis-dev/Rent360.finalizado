@@ -3,21 +3,25 @@ import { db } from '@/lib/db';
 import { handleApiError } from '@/lib/api-error-handler';
 import { hash } from 'bcryptjs';
 import { z } from 'zod';
-import { validateRut, validateEmail, validatePhone, validatePassword  } from '@/lib/validations';
+import { validateRut, validateEmail, validatePhone, validatePassword } from '@/lib/validations';
 
 // Schema de validación para registro de maintenance provider
 const maintenanceProviderSchema = z.object({
   // Datos del usuario
   email: z.string().email('Email inválido').refine(validateEmail, 'Email inválido'),
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .refine(
-      (password) => validatePassword(password).isValid,
-      'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial',
+      password => validatePassword(password).isValid,
+      'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial'
     ),
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  phone: z.string().min(8, 'El teléfono debe tener al menos 8 dígitos').refine(validatePhone, 'Teléfono inválido'),
-  
+  phone: z
+    .string()
+    .min(8, 'El teléfono debe tener al menos 8 dígitos')
+    .refine(validatePhone, 'Teléfono inválido'),
+
   // Datos del negocio
   businessName: z.string().min(2, 'El nombre del negocio es requerido'),
   rut: z.string().min(8, 'RUT inválido').refine(validateRut, 'RUT inválido'),
@@ -28,7 +32,7 @@ const maintenanceProviderSchema = z.object({
   city: z.string().optional(),
   region: z.string().optional(),
   description: z.string().optional(),
-  
+
   // Datos bancarios
   bankAccount: z.object({
     bank: z.string().min(1, 'El banco es requerido'),
@@ -37,7 +41,7 @@ const maintenanceProviderSchema = z.object({
     holderName: z.string().min(1, 'El nombre del titular es requerido'),
     rut: z.string().min(8, 'RUT inválido'),
   }),
-  
+
   // Documentos (URLs)
   documents: z.object({
     criminalRecord: z.string().url('URL de antecedentes penales inválida'),
@@ -51,15 +55,19 @@ const maintenanceProviderSchema = z.object({
 const serviceProviderSchema = z.object({
   // Datos del usuario
   email: z.string().email('Email inválido').refine(validateEmail, 'Email inválido'),
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .refine(
-      (password) => validatePassword(password).isValid,
-      'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial',
+      password => validatePassword(password).isValid,
+      'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial'
     ),
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  phone: z.string().min(8, 'El teléfono debe tener al menos 8 dígitos').refine(validatePhone, 'Teléfono inválido'),
-  
+  phone: z
+    .string()
+    .min(8, 'El teléfono debe tener al menos 8 dígitos')
+    .refine(validatePhone, 'Teléfono inválido'),
+
   // Datos del negocio
   businessName: z.string().min(2, 'El nombre del negocio es requerido'),
   rut: z.string().min(8, 'RUT inválido').refine(validateRut, 'RUT inválido'),
@@ -70,7 +78,7 @@ const serviceProviderSchema = z.object({
   city: z.string().optional(),
   region: z.string().optional(),
   description: z.string().optional(),
-  
+
   // Datos bancarios
   bankAccount: z.object({
     bank: z.string().min(1, 'El banco es requerido'),
@@ -79,7 +87,7 @@ const serviceProviderSchema = z.object({
     holderName: z.string().min(1, 'El nombre del titular es requerido'),
     rut: z.string().min(8, 'RUT inválido'),
   }),
-  
+
   // Documentos (URLs)
   documents: z.object({
     criminalRecord: z.string().url('URL de antecedentes penales inválida'),
@@ -97,7 +105,7 @@ export async function POST(request: NextRequest) {
     if (!providerType || !['maintenance', 'service'].includes(providerType)) {
       return NextResponse.json(
         { error: 'Tipo de proveedor inválido. Debe ser "maintenance" o "service"' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -110,33 +118,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el email ya existe
-         const existingUser = await db.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email: validatedData.email },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'Ya existe un usuario con este email' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Ya existe un usuario con este email' }, { status: 400 });
     }
 
     // Verificar si el RUT ya está registrado
-         const existingProvider = await db.$queryRaw`
-      SELECT id FROM maintenance_providers WHERE rut = ${validatedData.rut}
-      UNION
-      SELECT id FROM service_providers WHERE rut = ${validatedData.rut}
-    `;
+    const existingMaintenanceProvider = await db.maintenanceProvider.findFirst({
+      where: { rut: validatedData.rut },
+      select: { id: true },
+    });
 
-    if (Array.isArray(existingProvider) && existingProvider.length > 0) {
+    const existingServiceProvider = await db.serviceProvider.findFirst({
+      where: { rut: validatedData.rut },
+      select: { id: true },
+    });
+
+    if (existingMaintenanceProvider || existingServiceProvider) {
       return NextResponse.json(
         { error: 'Ya existe un proveedor registrado con este RUT' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     // Crear usuario y proveedor en una transacción
-         const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async tx => {
       // Crear usuario
       const hashedPassword = await hash(validatedData.password, 12);
       const user = await tx.user.create({
@@ -233,17 +242,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({
-      message: 'Proveedor registrado exitosamente. Pendiente de verificación.',
-      provider: {
-        id: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-        role: result.user.role,
-        status: 'PENDING_VERIFICATION',
+    return NextResponse.json(
+      {
+        message: 'Proveedor registrado exitosamente. Pendiente de verificación.',
+        provider: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          role: result.user.role,
+          status: 'PENDING_VERIFICATION',
+        },
       },
-    }, { status: 201 });
-
+      { status: 201 }
+    );
   } catch (error) {
     return handleApiError(error);
   }
