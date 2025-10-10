@@ -91,9 +91,9 @@ export default function RunnerDashboard() {
   useEffect(() => {
     const loadRunnerData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 5 minutos desde creación)
+        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
         const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 300000;
+          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
 
         if (isNewUser) {
           // Usuario nuevo - mostrar dashboard vacío con bienvenida
