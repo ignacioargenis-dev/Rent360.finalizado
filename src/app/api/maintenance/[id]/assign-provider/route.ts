@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Verificar permisos de acceso
     const hasPermission =
-      user.role === 'ADMIN' ||
+      user.role === 'admin' ||
       (user.role === 'BROKER' && maintenance.property.brokerId === user.id) ||
       (user.role === 'OWNER' && maintenance.property.ownerId === user.id);
 
