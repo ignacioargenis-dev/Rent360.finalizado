@@ -45,13 +45,13 @@ import {
 import Link from 'next/link';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
-import { UserRole } from '@/types';
+import { UserRole as UserRoleEnum } from '@/types';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRoleEnum;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED';
   phone?: string;
   createdAt: string;
@@ -96,7 +96,7 @@ export default function SupportUsersPage() {
     name: '',
     email: '',
     phone: '',
-    role: 'TENANT' as User['role'],
+    role: UserRoleEnum.TENANT,
     city: '',
   });
 
@@ -130,7 +130,7 @@ export default function SupportUsersPage() {
         name: '',
         email: '',
         phone: '',
-        role: 'TENANT',
+        role: UserRoleEnum.TENANT,
         city: '',
       });
       setShowCreateModal(false);
@@ -162,7 +162,7 @@ export default function SupportUsersPage() {
           id: '1',
           name: 'Carlos Ramírez',
           email: 'carlos.ramirez@email.com',
-          role: 'TENANT',
+          role: UserRoleEnum.TENANT,
           status: 'ACTIVE',
           phone: '+56 9 1234 5678',
           createdAt: '2024-01-15T10:30:00Z',
@@ -176,7 +176,7 @@ export default function SupportUsersPage() {
           id: '2',
           name: 'Ana Martínez',
           email: 'ana.martinez@email.com',
-          role: 'OWNER',
+          role: UserRoleEnum.OWNER,
           status: 'ACTIVE',
           phone: '+56 9 8765 4321',
           createdAt: '2024-02-10T09:15:00Z',
@@ -190,7 +190,7 @@ export default function SupportUsersPage() {
           id: '3',
           name: 'Pedro Silva',
           email: 'pedro.silva@email.com',
-          role: 'BROKER',
+          role: UserRoleEnum.BROKER,
           status: 'PENDING',
           phone: '+56 9 5555 1234',
           createdAt: '2024-03-01T11:20:00Z',
@@ -203,7 +203,7 @@ export default function SupportUsersPage() {
           id: '4',
           name: 'María González',
           email: 'maria.gonzalez@email.com',
-          role: 'SUPPORT',
+          role: UserRoleEnum.SUPPORT,
           status: 'ACTIVE',
           phone: '+56 9 7777 8888',
           createdAt: '2024-01-01T08:00:00Z',
@@ -217,7 +217,7 @@ export default function SupportUsersPage() {
           id: '5',
           name: 'Roberto Díaz',
           email: 'roberto.diaz@email.com',
-          role: 'TENANT',
+          role: UserRoleEnum.TENANT,
           status: 'SUSPENDED',
           phone: '+56 9 9999 0000',
           createdAt: '2024-02-20T13:45:00Z',
@@ -567,19 +567,19 @@ export default function SupportUsersPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-bold text-lg text-gray-800">{user.name}</h3>
                             <Badge className={getRoleBadge(user.role)}>
-                              {user.role === 'tenant'
+                              {user.role === UserRoleEnum.TENANT
                                 ? 'Inquilino'
-                                : user.role === 'owner'
+                                : user.role === UserRoleEnum.OWNER
                                   ? 'Propietario'
-                                  : user.role === 'broker'
+                                  : user.role === UserRoleEnum.BROKER
                                     ? 'Corredor'
-                                    : user.role === 'runner'
+                                    : user.role === UserRoleEnum.RUNNER
                                       ? 'Runner'
-                                      : user.role === 'support'
+                                      : user.role === UserRoleEnum.SUPPORT
                                         ? 'Soporte'
-                                        : user.role === 'provider'
+                                        : user.role === UserRoleEnum.PROVIDER
                                           ? 'Proveedor'
-                                          : user.role === 'maintenance'
+                                          : user.role === UserRoleEnum.MAINTENANCE_PROVIDER
                                             ? 'Mantenimiento'
                                             : user.role}
                             </Badge>
