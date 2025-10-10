@@ -67,11 +67,20 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Filtrar usuarios activos por defecto para todos los usuarios
-    // Los admins pueden ver usuarios inactivos si especifican isActive=false
-    if (isActive === null || isActive === undefined) {
+    // Lógica de filtrado por estado de usuario
+    // isActive=all: mostrar todos los usuarios
+    // isActive=true: mostrar solo activos
+    // isActive=false: mostrar solo inactivos
+    // No especificado: mostrar solo activos por defecto
+    if (isActive === 'true') {
+      where.isActive = true;
+    } else if (isActive === 'false') {
+      where.isActive = false;
+    } else if (isActive !== 'all') {
+      // Por defecto mostrar solo activos
       where.isActive = true;
     }
+    // Si isActive === 'all', no aplicar filtro de isActive
 
     // Construir orderBy
     const orderBy: any = {};

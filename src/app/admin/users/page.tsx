@@ -83,8 +83,12 @@ export default function AdminUsersPage() {
       if (roleFilter && roleFilter !== 'all') {
         params.append('role', roleFilter);
       }
-      if (statusFilter !== 'all') {
-        params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      if (statusFilter === 'active') {
+        params.append('isActive', 'true');
+      } else if (statusFilter === 'inactive') {
+        params.append('isActive', 'false');
+      } else if (statusFilter === 'all') {
+        params.append('isActive', 'all');
       }
       if (searchQuery) {
         params.append('search', searchQuery);
