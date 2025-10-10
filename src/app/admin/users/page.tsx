@@ -140,12 +140,17 @@ export default function AdminUsersPage() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const formatDate = (date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
   };
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
@@ -479,7 +484,7 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-sm">{user.createdAt.toLocaleDateString('es-CL')}</div>
+                        <div className="text-sm">{formatDate(user.createdAt)}</div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
