@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
 
   const [roleFilter, setRoleFilter] = useState<string>('');
 
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all'); // 'all', 'active', 'inactive'
 
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
@@ -72,16 +72,27 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchQuery, roleFilter, statusFilter]);
+  }, [roleFilter, statusFilter, searchQuery]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/users');
+
+      // Construir parámetros de consulta
+      const params = new URLSearchParams();
+      if (roleFilter && roleFilter !== 'all') {
+        params.append('role', roleFilter);
+      }
+      if (statusFilter !== 'all') {
+        params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      }
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      const url = `/api/users${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url);
+
       if (!response.ok) {
         throw new Error('Error al cargar usuarios');
       }
@@ -478,8 +489,8 @@ export default function AdminUsersPage() {
                 variant="outline"
                 onClick={() => {
                   setSearchQuery('');
-                  setRoleFilter('');
-                  setStatusFilter('');
+                  setRoleFilter('all');
+                  setStatusFilter('all');
                 }}
               >
                 <Filter className="w-4 h-4 mr-2" />

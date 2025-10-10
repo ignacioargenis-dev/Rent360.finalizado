@@ -215,9 +215,9 @@ async function getDatabaseStats() {
     await db.$queryRaw`SELECT 1`;
     const responseTime = Date.now() - startTime;
 
-    // Obtener estadísticas básicas
+    // Obtener estadísticas básicas - solo contar usuarios activos
     const [usersCount, propertiesCount, contractsCount, paymentsCount] = await Promise.all([
-      db.user.count(),
+      db.user.count({ where: { isActive: true } }),
       db.property.count(),
       db.contract.count(),
       db.payment.count(),

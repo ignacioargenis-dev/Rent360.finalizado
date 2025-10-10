@@ -67,8 +67,9 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Si no es admin, solo puede ver usuarios activos
-    if (user.role !== UserRole.ADMIN) {
+    // Filtrar usuarios activos por defecto para todos los usuarios
+    // Los admins pueden ver usuarios inactivos si especifican isActive=false
+    if (isActive === null || isActive === undefined) {
       where.isActive = true;
     }
 
