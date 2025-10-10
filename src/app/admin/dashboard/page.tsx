@@ -1,6 +1,8 @@
 'use client';
 
 import { logger } from '@/lib/logger';
+import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
+import { useConnectionManager } from '@/hooks/useConnectionManager';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +68,9 @@ import {
   SkipForward,
   SkipBack,
   Pause,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import Link from 'next/link';
@@ -111,343 +116,146 @@ interface SystemAlert {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [_aiEnabled, setAiEnabled] = useState(true);
-  const [_automationEnabled, setAutomationEnabled] = useState(true);
-
-  const [user, setUser] = useState<User | null>(null);
-
-  const [stats, setStats] = useState<SystemStats>({
-    totalUsers: 0,
-    totalProperties: 0,
-    activeContracts: 0,
-    monthlyRevenue: 0,
-    pendingTickets: 0,
-    systemHealth: 'good',
-  });
-
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-
-  const [recentUsers, setRecentUsers] = useState<UserSummary[]>([]);
-
-  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const [activities, setActivities] = useState<RecentActivity[]>([]);
 
   const router = useRouter();
 
+  // Sistema de sincronización en tiempo real
+  const {
+    stats: statsData,
+    recentUsers: recentUsersData,
+    recentActivity: recentActivityData,
+    isLoading,
+    hasError,
+    lastUpdated,
+    isConnected,
+    refreshDashboard,
+    invalidateUserData,
+  } = useAdminDashboardSync();
+
+  // Gestión de conexiones
+  const connectionManager = useConnectionManager('websocket', {
+    maxRetries: 3,
+    retryDelay: 5000,
+    heartbeatInterval: 30000,
+  });
+
+  // Mapeo de datos del nuevo sistema
+  const stats = statsData.data
+    ? {
+        totalUsers: statsData.data.totalUsers || 0,
+        totalProperties: statsData.data.totalProperties || 0,
+        activeContracts: statsData.data.activeContracts || 0,
+        monthlyRevenue: statsData.data.monthlyRevenue || 0,
+        pendingTickets: statsData.data.pendingTickets || 0,
+        systemHealth: statsData.data.systemHealth || 'good',
+      }
+    : {
+        totalUsers: 0,
+        totalProperties: 0,
+        activeContracts: 0,
+        monthlyRevenue: 0,
+        pendingTickets: 0,
+        systemHealth: 'good',
+      };
+
+  const recentUsers = recentUsersData.data || [];
+  const recentActivity = recentActivityData.data || [];
+  const systemAlerts: SystemAlert[] = []; // Se pueden agregar alertas del sistema aquí
+
+  // Efecto para manejar errores
   useEffect(() => {
-    // Load user data from API
-    const loadUserData = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        }
-      } catch (error) {
-        logger.error('Error loading user data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
+    if (hasError) {
+      console.warn('Dashboard data loading error:', hasError);
+    }
+  }, [hasError]);
 
-    // Load dashboard data from APIs
-    const loadDashboardData = async () => {
-      try {
-        // Load users
-        const usersResponse = await fetch('/api/users?limit=1000', {
-          headers: {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-          },
-        });
-        if (usersResponse.ok) {
-          const usersData = await usersResponse.json();
-          const totalUsers = usersData.users
-            ? usersData.users.length
-            : Array.isArray(usersData)
-              ? usersData.length
-              : 0;
-
-          // Load properties
-          const propertiesResponse = await fetch('/api/properties?limit=1000', {
-            headers: {
-              'Cache-Control': 'no-cache',
-              Pragma: 'no-cache',
-            },
-          });
-          if (propertiesResponse.ok) {
-            const propertiesData = await propertiesResponse.json();
-            const totalProperties = propertiesData.properties.length;
-            const activeContracts = propertiesData.properties.filter(
-              (p: Property) => p.status === 'RENTED'
-            ).length;
-
-            // Load tickets
-            const ticketsResponse = await fetch('/api/tickets?status=open&limit=1000', {
-              headers: {
-                'Cache-Control': 'no-cache',
-                Pragma: 'no-cache',
-              },
-            });
-            if (ticketsResponse.ok) {
-              const ticketsData = await ticketsResponse.json();
-              const pendingTickets = ticketsData.tickets.length;
-
-              // Calculate actual monthly revenue from payments
-              const paymentsResponse = await fetch('/api/payments?status=completed&limit=1000', {
-                headers: {
-                  'Cache-Control': 'no-cache',
-                  Pragma: 'no-cache',
-                },
-              });
-              let monthlyRevenue = 0;
-              if (paymentsResponse.ok) {
-                const paymentsData = await paymentsResponse.json();
-                const currentMonth = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
-
-                monthlyRevenue = paymentsData.payments
-                  .filter((payment: Payment) => {
-                    if (!payment.paidDate) {
-                      return false;
-                    }
-                    const paymentDate = new Date(payment.paidDate);
-                    return (
-                      paymentDate.getMonth() === currentMonth &&
-                      paymentDate.getFullYear() === currentYear
-                    );
-                  })
-                  .reduce((sum: number, payment: Payment) => sum + (payment.amount || 0), 0);
-              }
-
-              setStats({
-                totalUsers,
-                totalProperties,
-                activeContracts,
-                monthlyRevenue,
-                pendingTickets,
-                systemHealth: 'good',
-              });
-
-              // Set recent users (last 4)
-              const usersArray = usersData.users || usersData;
-              setRecentUsers(
-                usersArray.slice(0, 4).map((user: User) => ({
-                  id: user.id,
-                  name: user.name,
-                  email: user.email,
-                  role: getRoleDisplayName(user.role),
-                  status: 'Activo',
-                  lastActivity: formatRelativeTime(new Date(user.createdAt)),
-                }))
-              );
-
-              // Set recent activity based on actual data
-              const activities: RecentActivity[] = [];
-
-              // Add user creation activities
-              usersData.users.slice(0, 3).forEach((user: User) => {
-                activities.push({
-                  id: `user-${user.id}`,
-                  type: 'user' as const,
-                  title: 'Nuevo usuario registrado',
-                  description: user.email,
-                  date: user.createdAt.toISOString(),
-                  severity: 'low' as const,
-                });
-              });
-
-              // Add property creation activities
-              propertiesData.properties.slice(0, 3).forEach((property: Property) => {
-                activities.push({
-                  id: `property-${property.id}`,
-                  type: 'property' as const,
-                  title: 'Nueva propiedad agregada',
-                  description: property.title,
-                  date: property.createdAt.toISOString(),
-                  severity: 'low' as const,
-                });
-              });
-
-              // Add high priority tickets
-              ticketsData.tickets
-                .filter((ticket: any) => ticket.priority === 'HIGH')
-                .slice(0, 2)
-                .forEach((ticket: any) => {
-                  activities.push({
-                    id: `ticket-${ticket.id}`,
-                    type: 'ticket' as const,
-                    title: 'Nuevo ticket creado',
-                    description: ticket.title,
-                    date: ticket.createdAt,
-                    severity: 'high' as const,
-                  });
-                });
-
-              // Sort activities by date
-              activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-              setRecentActivity(activities.slice(0, 10));
-            }
-          }
-        }
-
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error loading dashboard data:', {
-          error: error instanceof Error ? error.message : String(error),
-          context: 'admin_dashboard',
-          userId: user?.id,
-        });
-        setLoading(false);
-      }
-    };
-
-    loadUserData();
-    loadDashboardData();
-  }, []);
+  // Función para refrescar manualmente
+  const handleRefresh = () => {
+    refreshDashboard();
+    invalidateUserData();
+  };
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'admin':
         return 'Administrador';
-      case 'tenant':
-        return 'Inquilino';
       case 'owner':
         return 'Propietario';
+      case 'tenant':
+        return 'Inquilino';
       case 'broker':
         return 'Corredor';
       case 'runner':
         return 'Runner360';
       case 'support':
         return 'Soporte';
+      case 'maintenance':
+        return 'Servicio de Mantenimiento';
+      case 'provider':
+        return 'Proveedor de Servicios';
       default:
         return role;
     }
   };
 
-  const formatRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 60) {
-      return `${minutes}m ago`;
+  const getActivityColor = (type: string, severity: string) => {
+    if (severity === 'high') {
+      return 'bg-red-100 text-red-600';
     }
-    if (hours < 24) {
-      return `${hours}h ago`;
+    if (severity === 'medium') {
+      return 'bg-yellow-100 text-yellow-600';
     }
-    return `${days}d ago`;
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (severity === 'low') {
+      return 'bg-blue-100 text-blue-600';
+    }
+    return 'bg-gray-100 text-gray-600';
   };
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'user':
-        return <Users className="w-5 h-5" />;
-      case 'property':
-        return <Building className="w-5 h-5" />;
+        return <UserPlus className="w-4 h-4" />;
       case 'contract':
-        return <FileText className="w-5 h-5" />;
+        return <FileText className="w-4 h-4" />;
       case 'payment':
-        return <CreditCard className="w-5 h-5" />;
-      case 'ticket':
-        return <Ticket className="w-5 h-5" />;
-      case 'system':
-        return <Database className="w-5 h-5" />;
+        return <DollarSign className="w-4 h-4" />;
+      case 'maintenance':
+        return <Wrench className="w-4 h-4" />;
       default:
-        return <Bell className="w-5 h-5" />;
+        return <Activity className="w-4 h-4" />;
     }
   };
 
-  const getActivityColor = (type: string, severity?: string) => {
-    if (severity === 'high') {
-      return 'text-red-600 bg-red-50';
-    }
-    if (severity === 'medium') {
-      return 'text-yellow-600 bg-yellow-50';
-    }
+  const getSeverityBadge = (severity: string) => {
+    const colors = {
+      high: 'bg-red-100 text-red-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      low: 'bg-blue-100 text-blue-800',
+    };
 
-    switch (type) {
-      case 'user':
-        return 'text-blue-600 bg-blue-50';
-      case 'property':
-        return 'text-green-600 bg-green-50';
-      case 'contract':
-        return 'text-purple-600 bg-purple-50';
-      case 'payment':
-        return 'text-orange-600 bg-orange-50';
-      case 'ticket':
-        return 'text-red-600 bg-red-50';
-      case 'system':
-        return 'text-gray-600 bg-gray-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
+    return (
+      <Badge className={`text-xs ${colors[severity as keyof typeof colors] || colors.low}`}>
+        {severity.toUpperCase()}
+      </Badge>
+    );
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
     }
   };
 
-  const getSeverityBadge = (severity?: string) => {
-    switch (severity) {
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800">Alta</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Media</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800">Baja</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case 'info':
-        return <CheckCircle className="w-5 h-5 text-blue-600" />;
-      default:
-        return <Bell className="w-5 h-5" />;
-    }
-  };
-
-  const getHealthBadge = (health: string) => {
-    switch (health) {
-      case 'good':
-        return <Badge className="bg-green-100 text-green-800">Bueno</Badge>;
-      case 'warning':
-        return <Badge className="bg-yellow-100 text-yellow-800">Advertencia</Badge>;
-      case 'error':
-        return <Badge className="bg-red-100 text-red-800">Error</Badge>;
-      default:
-        return <Badge>Desconocido</Badge>;
-    }
-  };
-
-  if (loading) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -465,6 +273,35 @@ export default function AdminDashboard() {
       notificationCount={stats.pendingTickets}
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Connection Status & Refresh */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            {connectionManager.isConnected ? (
+              <Wifi className="w-4 h-4 text-green-500" />
+            ) : (
+              <WifiOff className="w-4 h-4 text-red-500" />
+            )}
+            <span className="text-sm text-gray-600">
+              {connectionManager.isConnected ? 'Conectado' : 'Desconectado'}
+            </span>
+            {lastUpdated && (
+              <span className="text-xs text-gray-500">
+                Última actualización: {new Date(lastUpdated).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Actualizar Datos
+          </Button>
+        </div>
+
         {/* System Alerts */}
         {systemAlerts.length > 0 && (
           <div className="mb-6">
@@ -482,7 +319,6 @@ export default function AdminDashboard() {
                 >
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
-                      {getAlertIcon(alert.type)}
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">{alert.title}</h4>
                         <p className="text-xs text-gray-600 mt-1">{alert.description}</p>
@@ -549,7 +385,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(stats.monthlyRevenue)}
+                    ${stats.monthlyRevenue?.toLocaleString() || '0'}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -663,7 +499,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-right">
                         <Badge variant="outline" className="text-xs">
-                          {user.role}
+                          {getRoleDisplayName(user.role)}
                         </Badge>
                         <p className="text-xs text-gray-500 mt-1">{user.lastActivity}</p>
                       </div>
@@ -697,28 +533,12 @@ export default function AdminDashboard() {
                     <span className="font-medium text-green-600">Operativo</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Uso de CPU</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: '45%' }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-medium">45%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Memoria</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-yellow-500 h-2 rounded-full"
-                          style={{ width: '68%' }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-medium">68%</span>
-                    </div>
+                    <span className="text-sm text-gray-600">Estado de Conexión</span>
+                    <span
+                      className={`font-medium ${connectionManager.isConnected ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {connectionManager.isConnected ? 'En línea' : 'Fuera de línea'}
+                    </span>
                   </div>
                 </div>
               </CardContent>

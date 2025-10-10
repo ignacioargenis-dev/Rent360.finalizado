@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
+import { DataSyncProvider } from '@/components/providers/DataSyncProvider';
 import dynamic from 'next/dynamic';
 
 // Lazy loading de componentes pesados
@@ -104,15 +105,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <NotificationProvider>
               <AuthProvider>
-                {children}
+                <DataSyncProvider>
+                  {children}
 
-                {/* Componentes de la Fase 1 */}
-                <Chatbot position="bottom-right" initialOpen={false} />
+                  {/* Componentes de la Fase 1 */}
+                  <Chatbot position="bottom-right" initialOpen={false} />
 
-                <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
-
-              <Toaster />
-            </AuthProvider>
+                  <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
+                </DataSyncProvider>
+                <Toaster />
+              </AuthProvider>
             </NotificationProvider>
           </ThemeProvider>
         </ErrorBoundary>
