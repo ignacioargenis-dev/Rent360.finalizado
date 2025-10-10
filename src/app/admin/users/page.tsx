@@ -245,7 +245,7 @@ export default function AdminUsersPage() {
         };
 
         const response = await fetch(`/api/users/${editingUser.id}`, {
-          method: 'PUT',
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -644,15 +644,19 @@ export default function AdminUsersPage() {
                     Nombre Completo
                   </label>
                   <Input
+                    id="user-name"
+                    name="name"
                     value={newUser.name}
                     onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                    placeholder="Juan P�rez"
+                    placeholder="Juan Pérez"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <Input
+                    id="user-email"
+                    name="email"
                     type="email"
                     value={newUser.email}
                     onChange={e => setNewUser({ ...newUser, email: e.target.value })}
@@ -666,6 +670,8 @@ export default function AdminUsersPage() {
                       Contraseña
                     </label>
                     <Input
+                      id="user-password"
+                      name="password"
                       type="password"
                       value={newUser.password}
                       onChange={e => setNewUser({ ...newUser, password: e.target.value })}
@@ -677,6 +683,7 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
                   <Select
+                    name="role"
                     value={newUser.role}
                     onValueChange={value => setNewUser({ ...newUser, role: value })}
                   >

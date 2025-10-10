@@ -24,6 +24,7 @@ import {
   Bell,
   UserPlus,
   Eye,
+  RefreshCw,
   Edit,
   Trash2,
   MessageSquare,
@@ -137,6 +138,13 @@ export default function AdminDashboard() {
 
   const router = useRouter();
 
+  // Función para refrescar datos del dashboard
+  const refreshDashboard = async () => {
+    setLoading(true);
+    await loadDashboardData();
+    setLoading(false);
+  };
+
   useEffect(() => {
     // Load user data from API
     const loadUserData = async () => {
@@ -157,7 +165,12 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         // Load users
-        const usersResponse = await fetch('/api/users?limit=1000');
+        const usersResponse = await fetch('/api/users?limit=1000', {
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+        });
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
           const totalUsers = usersData.users
@@ -167,7 +180,12 @@ export default function AdminDashboard() {
               : 0;
 
           // Load properties
-          const propertiesResponse = await fetch('/api/properties?limit=1000');
+          const propertiesResponse = await fetch('/api/properties?limit=1000', {
+            headers: {
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache',
+            },
+          });
           if (propertiesResponse.ok) {
             const propertiesData = await propertiesResponse.json();
             const totalProperties = propertiesData.properties.length;
@@ -176,13 +194,23 @@ export default function AdminDashboard() {
             ).length;
 
             // Load tickets
-            const ticketsResponse = await fetch('/api/tickets?status=open&limit=1000');
+            const ticketsResponse = await fetch('/api/tickets?status=open&limit=1000', {
+              headers: {
+                'Cache-Control': 'no-cache',
+                Pragma: 'no-cache',
+              },
+            });
             if (ticketsResponse.ok) {
               const ticketsData = await ticketsResponse.json();
               const pendingTickets = ticketsData.tickets.length;
 
               // Calculate actual monthly revenue from payments
-              const paymentsResponse = await fetch('/api/payments?status=completed&limit=1000');
+              const paymentsResponse = await fetch('/api/payments?status=completed&limit=1000', {
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  Pragma: 'no-cache',
+                },
+              });
               let monthlyRevenue = 0;
               if (paymentsResponse.ok) {
                 const paymentsData = await paymentsResponse.json();
@@ -445,6 +473,20 @@ export default function AdminDashboard() {
       notificationCount={stats.pendingTickets}
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Refresh Button */}
+        <div className="flex justify-end mb-4">
+          <Button
+            onClick={refreshDashboard}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar Datos
+          </Button>
+        </div>
+
         {/* System Alerts */}
         {systemAlerts.length > 0 && (
           <div className="mb-6">
