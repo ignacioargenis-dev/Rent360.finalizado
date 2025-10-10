@@ -84,7 +84,7 @@ export default function AdminUsersPage() {
         throw new Error('Error al cargar usuarios');
       }
       const data = await response.json();
-      setUsers(data.users || []);
+      setUsers(data.users || data || []); // API devuelve directamente el array o en data.users
     } catch (error) {
       logger.error('Error fetching users:', {
         error: error instanceof Error ? error.message : String(error),
