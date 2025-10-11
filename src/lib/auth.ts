@@ -157,43 +157,56 @@ export function generateTokens(userId: string, email: string, role: string, name
 }
 
 export function setAuthCookies(response: any, accessToken: string, refreshToken: string) {
-  // Establecer cookie de acceso (HTTP-only, secure, SameSite=strict)
+  // Configuración de cookies optimizada para producción
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
+
+  // En desarrollo local, usamos 'lax' para compatibilidad con localhost
+  // En producción, usamos 'strict' para máxima seguridad
+  const sameSitePolicy = isProduction ? 'strict' : 'lax';
+
+  // Establecer cookie de acceso
   response.cookies.set('auth-token', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isSecure,
+    sameSite: sameSitePolicy,
     maxAge: 60 * 60, // 1 hora
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? process.env.DOMAIN : undefined,
+    // En producción usar dominio específico, en desarrollo dejar undefined
+    domain: isProduction ? process.env.DOMAIN : undefined,
   });
 
-  // Establecer cookie de refresh (HTTP-only, secure, SameSite=strict)
+  // Establecer cookie de refresh
   response.cookies.set('refresh-token', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isSecure,
+    sameSite: sameSitePolicy,
     maxAge: 7 * 24 * 60 * 60, // 7 días
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? process.env.DOMAIN : undefined,
+    domain: isProduction ? process.env.DOMAIN : undefined,
   });
 }
 
 export function clearAuthCookies(response: any) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
+  const sameSitePolicy = isProduction ? 'strict' : 'lax';
+
   response.cookies.set('auth-token', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isSecure,
+    sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? process.env.DOMAIN : undefined,
+    domain: isProduction ? process.env.DOMAIN : undefined,
   });
 
   response.cookies.set('refresh-token', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isSecure,
+    sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? process.env.DOMAIN : undefined,
+    domain: isProduction ? process.env.DOMAIN : undefined,
   });
 }
