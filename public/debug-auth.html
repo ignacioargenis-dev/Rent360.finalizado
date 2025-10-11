@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Autenticación Rent360</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-left: 4px solid #0070f3;
+            background: #f8f9fa;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Autenticación Rent360</h1>
+        <p>Esta herramienta diagnostica problemas de autenticación en producción.</p>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>🍪 Análisis de Cookies</h2>
+            <button onclick="analyzeCookies()">Analizar Cookies</button>
+            <div id="cookie-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>🌐 Prueba de API /api/auth/me</h2>
+            <button onclick="testAuthMe()">Probar /api/auth/me</button>
+            <div id="auth-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>📡 Prueba de API /api/users</h2>
+            <button onclick="testUsersAPI()">Probar /api/users</button>
+            <div id="users-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Diagnóstico Completo</h2>
+            <button onclick="runFullDiagnostic()">Ejecutar Diagnóstico Completo</button>
+            <div id="diagnostic-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧹 Limpiar Cookies</h2>
+            <button class="danger" onclick="clearAllCookies()">Limpiar Todas las Cookies</button>
+            <div id="clear-results" class="test-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Función para obtener todas las cookies
+        function getAllCookies() {
+            const cookies = document.cookie.split(';');
+            const cookieObj = {};
+            cookies.forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name) cookieObj[name] = value || '';
+            });
+            return cookieObj;
+        }
+
+        // Función para analizar cookies
+        function analyzeCookies() {
+            const results = document.getElementById('cookie-results');
+            const cookies = getAllCookies();
+
+            let html = '<h3>Cookies encontradas:</h3>';
+            html += `<p><strong>Total de cookies:</strong> ${Object.keys(cookies).length}</p>`;
+
+            const authCookies = Object.keys(cookies).filter(name =>
+                name.includes('auth') || name.includes('token')
+            );
+
+            html += `<p><strong>Cookies de auth encontradas:</strong> ${authCookies.length}</p>`;
+
+            if (authCookies.length > 0) {
+                html += '<ul>';
+                authCookies.forEach(name => {
+                    const value = cookies[name];
+                    const truncatedValue = value ? value.substring(0, 50) + '...' : 'vacío';
+                    html += `<li><strong>${name}:</strong> ${truncatedValue}</li>`;
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="error">❌ No hay cookies de autenticación</p>';
+            }
+
+            // Verificar cookies específicas
+            const authToken = cookies['auth-token'];
+            const refreshToken = cookies['refresh-token'];
+
+            html += '<h4>Cookies específicas:</h4>';
+            html += `<p><strong>auth-token:</strong> ${authToken ? '✅ Presente' : '❌ Ausente'}</p>`;
+            html += `<p><strong>refresh-token:</strong> ${refreshToken ? '✅ Presente' : '❌ Ausente'}</p>`;
+
+            results.innerHTML = html;
+            results.className = 'test-result success';
+        }
+
+        // Función para probar /api/auth/me
+        async function testAuthMe() {
+            const results = document.getElementById('auth-results');
+            results.innerHTML = '<p>🔄 Probando /api/auth/me...</p>';
+            results.className = 'test-result';
+
+            try {
+                const response = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                let html = `<h3>Respuesta de /api/auth/me:</h3>`;
+                html += `<p><strong>Status:</strong> ${response.status} ${response.statusText}</p>`;
+                html += `<p><strong>OK:</strong> ${response.ok ? '✅' : '❌'}</p>`;
+
+                if (response.ok) {
+                    html += '<p class="success">✅ API responde correctamente</p>';
+                    html += `<pre class="code">${JSON.stringify(data, null, 2)}</pre>`;
+                    results.className = 'test-result success';
+                } else {
+                    html += '<p class="error">❌ Error en la autenticación</p>';
+                    html += `<pre class="code">${JSON.stringify(data, null, 2)}</pre>`;
+                    results.className = 'test-result error';
+                }
+
+                results.innerHTML = html;
+
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error de red: ${error.message}</p>`;
+                results.className = 'test-result error';
+            }
+        }
+
+        // Función para probar /api/users
+        async function testUsersAPI() {
+            const results = document.getElementById('users-results');
+            results.innerHTML = '<p>🔄 Probando /api/users...</p>';
+            results.className = 'test-result';
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                let html = `<h3>Respuesta de /api/users:</h3>`;
+                html += `<p><strong>Status:</strong> ${response.status} ${response.statusText}</p>`;
+                html += `<p><strong>OK:</strong> ${response.ok ? '✅' : '❌'}</p>`;
+
+                if (response.ok) {
+                    html += '<p class="success">✅ API responde correctamente</p>';
+                    if (data.users && Array.isArray(data.users)) {
+                        html += `<p><strong>Usuarios encontrados:</strong> ${data.users.length}</p>`;
+                        if (data.users.length > 0) {
+                            html += '<h4>Primeros 3 usuarios:</h4><ul>';
+                            data.users.slice(0, 3).forEach(user => {
+                                html += `<li>${user.email} (${user.role})</li>`;
+                            });
+                            html += '</ul>';
+                        }
+                    }
+                    results.className = 'test-result success';
+                } else {
+                    html += '<p class="error">❌ Error al obtener usuarios</p>';
+                    html += `<pre class="code">${JSON.stringify(data, null, 2)}</pre>`;
+                    results.className = 'test-result error';
+                }
+
+                results.innerHTML = html;
+
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error de red: ${error.message}</p>`;
+                results.className = 'test-result error';
+            }
+        }
+
+        // Función para ejecutar diagnóstico completo
+        async function runFullDiagnostic() {
+            const results = document.getElementById('diagnostic-results');
+            results.innerHTML = '<p>🔄 Ejecutando diagnóstico completo...</p>';
+            results.className = 'test-result';
+
+            let html = '<h3>Diagnóstico Completo de Autenticación</h3>';
+
+            // 1. Analizar cookies
+            html += '<h4>1. 🍪 Análisis de Cookies</h4>';
+            const cookies = getAllCookies();
+            const authCookies = Object.keys(cookies).filter(name =>
+                name.includes('auth') || name.includes('token')
+            );
+
+            html += `<p>Cookies totales: ${Object.keys(cookies).length}</p>`;
+            html += `<p>Cookies de auth: ${authCookies.length}</p>`;
+
+            if (authCookies.length === 0) {
+                html += '<p class="error">❌ CRÍTICO: No hay cookies de autenticación. Necesitas hacer login primero.</p>';
+                html += '<p><strong>Solución:</strong> Ve a <a href="/auth/login" target="_blank">/auth/login</a> e inicia sesión.</p>';
+            }
+
+            // 2. Probar /api/auth/me
+            html += '<h4>2. 🌐 Prueba /api/auth/me</h4>';
+            try {
+                const authResponse = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const authData = await authResponse.json();
+
+                html += `<p>Status: ${authResponse.status}</p>`;
+                if (authResponse.ok) {
+                    html += '<p class="success">✅ Autenticación exitosa</p>';
+                    html += `<p>Usuario: ${authData.user?.email || 'N/A'}</p>`;
+                    html += `<p>Rol: ${authData.user?.role || 'N/A'}</p>`;
+                } else {
+                    html += '<p class="error">❌ Falló autenticación</p>';
+                    html += `<p>Error: ${authData.error || 'Desconocido'}</p>`;
+                }
+            } catch (error) {
+                html += `<p class="error">❌ Error de red: ${error.message}</p>`;
+            }
+
+            // 3. Probar /api/users
+            html += '<h4>3. 📡 Prueba /api/users</h4>';
+            try {
+                const usersResponse = await fetch('/api/users', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const usersData = await usersResponse.json();
+
+                html += `<p>Status: ${usersResponse.status}</p>`;
+                if (usersResponse.ok) {
+                    html += '<p class="success">✅ API de usuarios funciona</p>';
+                    if (usersData.users && Array.isArray(usersData.users)) {
+                        html += `<p>Usuarios encontrados: ${usersData.users.length}</p>`;
+                    }
+                } else {
+                    html += '<p class="error">❌ Falló API de usuarios</p>';
+                    html += `<p>Error: ${usersData.error || 'Desconocido'}</p>`;
+                }
+            } catch (error) {
+                html += `<p class="error">❌ Error de red: ${error.message}</p>`;
+            }
+
+            // 4. Recomendaciones
+            html += '<h4>4. 💡 Recomendaciones</h4>';
+            if (authCookies.length === 0) {
+                html += '<p class="warning">⚠️ <strong>Paso 1:</strong> Inicia sesión en el sistema</p>';
+                html += '<p class="info">Ve a <a href="/auth/login" target="_blank">/auth/login</a> y usa las credenciales de admin.</p>';
+            } else if (authCookies.length > 0) {
+                html += '<p class="success">✅ Cookies presentes - el problema puede estar en el servidor</p>';
+                html += '<p class="info">Verifica que el servidor esté ejecutándose correctamente.</p>';
+            }
+
+            results.innerHTML = html;
+            results.className = 'test-result info';
+        }
+
+        // Función para limpiar cookies
+        function clearAllCookies() {
+            const results = document.getElementById('clear-results');
+            const cookies = getAllCookies();
+
+            let clearedCount = 0;
+            Object.keys(cookies).forEach(name => {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                clearedCount++;
+            });
+
+            results.innerHTML = `<p class="success">✅ Limpiadas ${clearedCount} cookies. Recarga la página para ver los cambios.</p>`;
+            results.className = 'test-result success';
+        }
+
+        // Ejecutar análisis inicial
+        window.onload = function() {
+            analyzeCookies();
+        };
+    </script>
+</body>
+</html>
