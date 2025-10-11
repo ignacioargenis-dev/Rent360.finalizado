@@ -4,6 +4,39 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { logger } from '@/lib/logger';
 import { User } from '@/types';
 
+// Función helper para convertir datos básicos de API a User completo
+function convertApiUserToUser(apiUser: any): User {
+  return {
+    id: apiUser.id,
+    name: apiUser.name,
+    email: apiUser.email,
+    role: apiUser.role as any, // La API devuelve string, User espera UserRole
+    avatar: apiUser.avatar,
+    phone: null, // No disponible en auth básico
+    isActive: true, // Asumir activo para usuarios autenticados
+    emailVerified: true, // Asumir verificado para usuarios autenticados
+    createdAt: new Date(apiUser.createdAt),
+    updatedAt: new Date(apiUser.createdAt), // Usar createdAt como fallback
+    // Campos requeridos por Prisma User model
+    password: '', // No disponible en auth básico
+    rut: null,
+    rutVerified: false,
+    dateOfBirth: null,
+    gender: null,
+    nationality: null,
+    address: null,
+    emergencyContactName: null,
+    emergencyContactPhone: null,
+    bankAccountNumber: null,
+    bankName: null,
+    accountType: null,
+    verificationStatus: 'PENDING',
+    lastLoginAt: null,
+    loginAttempts: 0,
+    lockedUntil: null,
+  } as unknown as User;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -38,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData.user);
+        const user = convertApiUserToUser(userData.user);
+        setUser(user);
       } else if (response.status === 401) {
         // User not authenticated - this is normal
         setUser(null);
@@ -87,7 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      setUser(data.user);
+      const user = convertApiUserToUser(data.user);
+      setUser(user);
     } catch (error) {
       logger.error('Login error:', {
         error: error instanceof Error ? error.message : String(error),
@@ -125,7 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      setUser(data.user);
+      const user = convertApiUserToUser(data.user);
+      setUser(user);
     } catch (error) {
       logger.error('Register error:', {
         error: error instanceof Error ? error.message : String(error),

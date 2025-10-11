@@ -36,17 +36,22 @@ export type RatingContextType =
   | 'GENERAL'
   | 'OTHER';
 
-export interface User {
+// Tipo base para usuarios en contextos de UI (dashboards, layouts, etc.)
+export interface BaseUser {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
-  phone?: string;
+  role: string; // Usar string en lugar de UserRole para evitar dependencias circulares
   avatar?: string;
+  createdAt: Date;
+}
+
+export interface User extends Omit<BaseUser, 'role'> {
+  role: UserRole; // Override role to use UserRole type
+  phone?: string;
   bio?: string;
   isActive: boolean;
   emailVerified: boolean;
-  createdAt: Date;
   updatedAt: Date;
 }
 
