@@ -21,10 +21,12 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith('/static') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/ping') ||
     pathname.startsWith('/api/test-users') ||
     pathname.startsWith('/api/test-settings') ||
     pathname.startsWith('/api/test-auth') ||
     pathname.startsWith('/api/debug') ||
+    pathname.startsWith('/api/debug-simple') ||
     pathname.startsWith('/manifest.json') ||
     pathname.startsWith('/sw.js') ||
     pathname.includes('.')

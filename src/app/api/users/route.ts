@@ -57,14 +57,24 @@ export async function GET(request: NextRequest) {
     // Construir where clause optimizado
     const where: any = {};
 
-    if (role) {
+    // Filtrar por rol si se especifica
+    if (role && role !== 'all') {
       where.role = role as UserRole;
     }
 
-    if (isActive !== null && isActive !== undefined) {
-      where.isActive = isActive === 'true';
+    // Filtrar por estado de usuario
+    // isActive=all: mostrar todos los usuarios
+    // isActive=true: mostrar solo usuarios activos
+    // isActive=false: mostrar solo usuarios inactivos
+    // No especificado: mostrar todos los usuarios (por defecto)
+    if (isActive === 'true') {
+      where.isActive = true;
+    } else if (isActive === 'false') {
+      where.isActive = false;
     }
+    // Si isActive es 'all' o no está especificado, no aplicar filtro de isActive
 
+    // Filtrar por búsqueda si se especifica
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -72,21 +82,6 @@ export async function GET(request: NextRequest) {
         { phone: { contains: search, mode: 'insensitive' } },
       ];
     }
-
-    // Lógica de filtrado por estado de usuario
-    // isActive=all: mostrar todos los usuarios
-    // isActive=true: mostrar solo activos
-    // isActive=false: mostrar solo inactivos
-    // No especificado: mostrar todos por defecto (temporal para debug)
-    if (isActive === 'true') {
-      where.isActive = true;
-    } else if (isActive === 'false') {
-      where.isActive = false;
-    } else if (isActive !== 'all') {
-      // Por defecto mostrar todos los usuarios (cambiado temporalmente)
-      // where.isActive = true;
-    }
-    // Si isActive === 'all', no aplicar filtro de isActive
 
     // Construir orderBy
     const orderBy: any = {};
