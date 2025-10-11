@@ -2,14 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { logger } from '@/lib/logger';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-}
+import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
