@@ -15,7 +15,7 @@ export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const startTime = Date.now();
 
-  // Skip middleware for static files and API routes
+  // Skip middleware for static files and API routes - versión simplificada para producción
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
@@ -35,59 +35,33 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // CORS: Configuración de seguridad mejorada para producción
-  try {
-    const origin = request.headers.get('origin') || '';
-    const host = request.headers.get('host') || '';
-    const protocol = request.nextUrl.protocol || 'https:';
-    const requestOrigin = `${protocol}//${host}`;
+  // CORS simplificado para producción
+  const response = NextResponse.next();
 
-    // Verificar si es mismo origen
-    const isSameOrigin = origin !== '' && origin === requestOrigin;
+  // Configuración CORS básica
+  const origin = request.headers.get('origin') || '';
+  const host = request.headers.get('host') || '';
 
-    // Verificar si es un host de preview (desarrollo/staging)
-    const isPreviewHost =
-      host.endsWith('.pages.dev') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
-
-    // Verificar si está en la lista de orígenes permitidos del entorno
-    const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-      .split(',')
-      .map(o => o.trim())
-      .filter(Boolean);
-    const isEnvAllowed = origin !== '' && envAllowedOrigins.includes(origin);
-
-    // Permitir si es mismo origen, si el host es de preview conocido o si está en la lista de env
-    const isCorsAllowed = !origin || isSameOrigin || isPreviewHost || isEnvAllowed;
-
-    if (!isCorsAllowed) {
-      logger.warn('CORS policy violation blocked', {
-        context: 'middleware.cors',
-        origin,
-        host,
-        pathname,
-        clientIP:
-          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-      });
-
-      return new NextResponse('CORS policy violation', {
-        status: 403,
-        headers: {
-          'Content-Type': 'text/plain',
-          'Access-Control-Allow-Origin': 'null',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      });
-    }
-  } catch (error) {
-    logger.error('CORS evaluation error', {
-      context: 'middleware.cors',
-      error: error instanceof Error ? error.message : String(error),
-      pathname,
-    });
-    // En caso de fallo al evaluar CORS, continuar para no bloquear el preview
+  if (origin && (origin.includes(host) || host.includes('ondigitalocean.app'))) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-Requested-With'
+    );
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
 
+  // Manejar preflight requests
+  if (request.method === 'OPTIONS') {
+    return response;
+  }
+
+  // Validaciones simplificadas para resolver problemas en producción
+  // Rate limiting y validaciones de seguridad desactivadas temporalmente
+  // TODO: Reactivar después de resolver problemas iniciales de autenticación
+
+  /*
   // Rate limiting
   const rateLimitResult = rateLimiter.checkLimit(request, 'default');
   if (!rateLimitResult.allowed) {
@@ -142,6 +116,7 @@ export default function middleware(request: NextRequest) {
       );
     }
   }
+  */
 
   // Apply internationalization middleware
   const response = intlMiddleware(request);
