@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/components/auth/AuthProvider';
+import { AuthProvider } from '@/components/auth/AuthProviderSimple';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
