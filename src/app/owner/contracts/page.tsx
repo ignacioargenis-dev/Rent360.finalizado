@@ -29,7 +29,7 @@ import {
 import { User, Contract, Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
@@ -47,7 +47,7 @@ interface ContractWithDetails extends Contract {
 }
 
 export default function OwnerContractsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const router = useRouter();
   const [contracts, setContracts] = useState<ContractWithDetails[]>([]);
   const [loading, setLoading] = useState(true);

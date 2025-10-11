@@ -32,7 +32,7 @@ import {
   Filter,
   Eye,
 } from 'lucide-react';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface EarningsData {
   totalEarnings: number;
@@ -64,7 +64,7 @@ interface EarningsStats {
 }
 
 export default function RunnerEarningsPage() {
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [earnings, setEarnings] = useState<EarningsData>({
     totalEarnings: 0,
     thisMonthEarnings: 0,

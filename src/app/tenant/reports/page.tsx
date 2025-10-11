@@ -36,7 +36,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface PaymentReport {
@@ -73,7 +73,7 @@ interface ReportSummary {
 }
 
 export default function TenantReportsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1)

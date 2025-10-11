@@ -17,7 +17,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   ArrowLeft,
   User,
@@ -365,7 +365,7 @@ const communesByRegion: Record<string, string[]> = {
 
 export default function NewClientPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [formData, setFormData] = useState<NewClientForm>({
     firstName: '',

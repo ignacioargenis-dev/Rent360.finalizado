@@ -29,7 +29,7 @@ import {
   Bell,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface DashboardStats {
@@ -83,7 +83,7 @@ interface TeamMember {
 
 export default function SupportDashboard() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [stats, setStats] = useState<DashboardStats>({
     totalTickets: 0,

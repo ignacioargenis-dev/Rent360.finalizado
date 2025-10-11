@@ -23,7 +23,7 @@ import {
   Lock,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PaymentData {
   id: string;
@@ -45,7 +45,7 @@ interface PaymentMethod {
 export default function TenantPaymentProcessPage() {
   const { paymentId } = useParams();
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [payment, setPayment] = useState<PaymentData | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>('');

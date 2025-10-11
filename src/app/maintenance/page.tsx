@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -90,7 +90,7 @@ interface JobSummary {
 }
 
 export default function MaintenanceDashboard() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 8,

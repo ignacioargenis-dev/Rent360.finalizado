@@ -33,7 +33,7 @@ import {
 import { Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PropertyFormData {
   title: string;
@@ -94,7 +94,7 @@ const regions = [
 
 export default function NewPropertyPage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   // Define empty arrays with explicit types
   const emptyFeatures: string[] = [];

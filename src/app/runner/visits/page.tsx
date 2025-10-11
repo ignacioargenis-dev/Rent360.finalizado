@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface Visit {
   id: string;
@@ -75,7 +75,7 @@ interface VisitStats {
 
 export default function RunnerVisitsPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [visits, setVisits] = useState<Visit[]>([]);
 

@@ -35,7 +35,7 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface Message {
   id: string;
@@ -78,7 +78,7 @@ interface Conversation {
 export default function TenantMessagesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);

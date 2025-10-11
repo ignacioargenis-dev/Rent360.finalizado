@@ -30,7 +30,7 @@ import {
   Clock,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface JobFormData {
@@ -49,7 +49,7 @@ interface JobFormData {
 }
 
 export default function NewMaintenanceJobPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [formData, setFormData] = useState<JobFormData>({

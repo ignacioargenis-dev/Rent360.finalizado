@@ -26,7 +26,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ServiceRequest {
@@ -66,7 +66,7 @@ interface QuoteData {
 export default function ServiceRequestDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const requestId = params.id as string;
 
   const [request, setRequest] = useState<ServiceRequest | null>(null);

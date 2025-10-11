@@ -27,7 +27,7 @@ import {
   FileText,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ReportData {
@@ -56,7 +56,7 @@ interface ReportData {
 
 export default function NewRunnerReportPage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [reportData, setReportData] = useState<ReportData>({
     propertyId: '',

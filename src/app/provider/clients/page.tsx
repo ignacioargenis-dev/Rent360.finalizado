@@ -38,7 +38,7 @@ import {
   Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ProviderClient {
@@ -68,7 +68,7 @@ interface ClientStats {
 }
 
 export default function ProviderClientsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

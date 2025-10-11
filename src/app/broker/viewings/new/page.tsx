@@ -62,7 +62,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface Property {
@@ -93,7 +93,7 @@ interface ViewingFormData {
 export default function NewViewingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const propertyId = searchParams.get('propertyId');
 
   const [formData, setFormData] = useState<ViewingFormData>({

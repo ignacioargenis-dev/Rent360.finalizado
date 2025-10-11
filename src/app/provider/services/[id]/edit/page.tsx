@@ -29,7 +29,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ServiceData {
@@ -62,7 +62,7 @@ interface ServiceData {
 export default function EditServicePage() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const serviceId = params.id as string;
 
   const [serviceData, setServiceData] = useState<ServiceData>({

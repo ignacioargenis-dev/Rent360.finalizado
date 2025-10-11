@@ -21,7 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Save, MapPin, Search, Building, UserIcon, CheckCircle } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface VisitFormData {
   propertyId: string;
@@ -72,7 +72,7 @@ const priorityOptions = [
 
 export default function NewVisitPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [formData, setFormData] = useState<VisitFormData>({
     propertyId: '',

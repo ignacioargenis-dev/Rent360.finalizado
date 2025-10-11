@@ -36,7 +36,7 @@ import {
   TrendingUp,
   MessageSquare,
 } from 'lucide-react';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface ServiceRequest {
@@ -89,7 +89,7 @@ export default function ProviderDashboard() {
     hourlyRate: 25000,
     materials: '',
   });
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   // Funciones para acciones rápidas
   const submitQuickJob = async () => {

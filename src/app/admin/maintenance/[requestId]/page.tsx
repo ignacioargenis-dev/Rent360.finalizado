@@ -38,7 +38,7 @@ import {
   FileText,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface MaintenanceRequest {
@@ -91,7 +91,7 @@ export default function MaintenanceRequestDetailPage() {
   const router = useRouter();
   const params = useParams();
   const requestId = params.requestId as string;
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [request, setRequest] = useState<MaintenanceRequest | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);

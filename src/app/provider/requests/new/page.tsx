@@ -30,7 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ServiceRequestData {
@@ -58,7 +58,7 @@ interface ServiceRequestData {
 
 export default function NewServiceRequestPage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [requestData, setRequestData] = useState<ServiceRequestData>({
     propertyId: '',

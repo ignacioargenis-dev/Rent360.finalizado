@@ -31,7 +31,7 @@ import {
   Upload,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ProviderProfile {
@@ -103,7 +103,7 @@ interface ProviderProfile {
 }
 
 export default function ProviderProfilePage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');

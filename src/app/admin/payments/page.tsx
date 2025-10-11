@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
 
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PaymentProvider {
   name: string;
@@ -52,7 +52,7 @@ interface PaymentProvider {
 }
 
 export default function PaymentsAdminPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [providers, setProviders] = useState<PaymentProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

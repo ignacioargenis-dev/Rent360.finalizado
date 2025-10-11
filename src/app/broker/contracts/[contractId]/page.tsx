@@ -31,7 +31,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ContractDetail {
@@ -87,7 +87,7 @@ interface Note {
 export default function BrokerContractDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const contractId = params.contractId as string;
 
   const [contract, setContract] = useState<ContractDetail | null>(null);

@@ -28,12 +28,12 @@ import {
   MapPin,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 export default function NewMaintenanceRequestPage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     propertyId: '',

@@ -37,7 +37,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface PropertyDetail {
@@ -111,7 +111,7 @@ interface Note {
 export default function OwnerPropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const propertyId = params.propertyId as string;
 
   const [property, setProperty] = useState<PropertyDetail | null>(null);

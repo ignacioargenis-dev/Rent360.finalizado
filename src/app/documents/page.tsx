@@ -42,7 +42,7 @@ import {
 import DocumentUpload from '@/components/documents/DocumentUpload';
 import DigitalSignature from '@/components/documents/DigitalSignature';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   Dialog,
   DialogContent,
@@ -79,7 +79,7 @@ interface DocumentStats {
 }
 
 export default function DocumentsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [stats, setStats] = useState<DocumentStats>({
     total_documents: 0,

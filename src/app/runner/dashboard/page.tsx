@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface DashboardStats {
@@ -69,7 +69,7 @@ interface PerformanceMetric {
 }
 
 export default function RunnerDashboard() {
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [stats, setStats] = useState<DashboardStats>({
     totalVisits: 0,

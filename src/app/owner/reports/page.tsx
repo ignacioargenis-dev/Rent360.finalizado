@@ -25,7 +25,7 @@ import {
   Activity,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { User } from '@/types';
 
 interface ReportMetric {
@@ -68,7 +68,7 @@ interface TenantAnalysis {
 }
 
 export default function OwnerReportsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [metrics, setMetrics] = useState<ReportMetric[]>([]);
   const [propertyPerformance, setPropertyPerformance] = useState<PropertyPerformance[]>([]);
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary>({

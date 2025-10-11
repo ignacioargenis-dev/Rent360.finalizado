@@ -18,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Save, Upload, X, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface PropertyData {
@@ -62,7 +62,7 @@ const AVAILABLE_FEATURES = [
 export default function OwnerPropertyEditPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const propertyId = params.propertyId as string;
 
   const [isLoading, setIsLoading] = useState(true);

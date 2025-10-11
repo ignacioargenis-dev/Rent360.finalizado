@@ -22,7 +22,7 @@ import {
   Clock,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PaymentDetail {
   id: string;
@@ -42,7 +42,7 @@ interface PaymentDetail {
 export default function TenantPaymentDetailPage() {
   const { paymentId } = useParams();
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

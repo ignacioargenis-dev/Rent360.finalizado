@@ -27,7 +27,7 @@ import {
 import { Payment, Property, Contract } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ interface PaymentStats {
 }
 
 export default function OwnerPaymentsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
   const [stats, setStats] = useState<PaymentStats>({
     totalReceived: 0,

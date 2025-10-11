@@ -23,7 +23,7 @@ import {
   Send,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface TaskDetails {
@@ -60,7 +60,7 @@ export default function TaskDetailPage() {
   const router = useRouter();
   const params = useParams();
   const taskId = params.taskId as string;
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [task, setTask] = useState<TaskDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -30,7 +30,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface TenantData {
@@ -51,7 +51,7 @@ interface TenantData {
 export default function OwnerTenantEditPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const tenantId = params.tenantId as string;
 
   const [isLoading, setIsLoading] = useState(true);

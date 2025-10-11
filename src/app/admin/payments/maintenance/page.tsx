@@ -32,7 +32,7 @@ import {
   Filter,
   Search,
 } from 'lucide-react';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface MaintenancePayout {
   id: string;
@@ -62,7 +62,7 @@ interface PayoutStats {
 }
 
 export default function MaintenancePayoutsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [payouts, setPayouts] = useState<MaintenancePayout[]>([]);
   const [stats, setStats] = useState<PayoutStats>({
     totalPending: 0,

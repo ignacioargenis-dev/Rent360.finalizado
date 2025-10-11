@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Plus, X, Wrench, Clock, DollarSign, Image, Tag } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ServiceData {
@@ -49,7 +49,7 @@ interface ServiceData {
 
 export default function NewServicePage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [serviceData, setServiceData] = useState<ServiceData>({
     name: '',

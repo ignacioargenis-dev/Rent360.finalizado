@@ -36,7 +36,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface TenantDetail {
@@ -108,7 +108,7 @@ interface Note {
 export default function OwnerTenantDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
   const tenantId = params.tenantId as string;
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);

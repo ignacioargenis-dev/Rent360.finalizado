@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ArrowLeft, Send, User, Building, MapPin, Search, CheckCircle } from 'lucide-react';
 
 interface Client {
@@ -46,7 +46,7 @@ interface Property {
 export default function NewRunnerMessagePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [formData, setFormData] = useState({
     recipientId: '',

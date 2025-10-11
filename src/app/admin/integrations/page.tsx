@@ -43,7 +43,7 @@ import {
   Plus,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface Integration {
@@ -66,7 +66,7 @@ interface IntegrationStats {
 }
 
 export default function AdminIntegrationsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);

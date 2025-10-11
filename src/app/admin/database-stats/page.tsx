@@ -25,7 +25,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface DatabaseStats {
@@ -55,7 +55,7 @@ interface PerformanceMetric {
 }
 
 export default function AdminDatabaseStatsPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DatabaseStats>({

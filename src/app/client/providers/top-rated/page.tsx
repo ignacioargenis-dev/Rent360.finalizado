@@ -19,7 +19,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface TopProvider {
@@ -53,7 +53,7 @@ interface TopProvider {
 }
 
 export default function TopRatedProvidersPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [providers, setProviders] = useState<TopProvider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<TopProvider | null>(null);
   const [isLoading, setIsLoading] = useState(false);

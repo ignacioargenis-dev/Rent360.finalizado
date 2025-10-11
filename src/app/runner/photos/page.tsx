@@ -47,7 +47,7 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PhotoReport {
   id: string;
@@ -88,7 +88,7 @@ interface PhotoStats {
 
 export default function RunnerPhotosPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
 
   const [photoReports, setPhotoReports] = useState<PhotoReport[]>([]);
 

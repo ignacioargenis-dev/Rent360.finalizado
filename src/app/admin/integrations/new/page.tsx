@@ -18,12 +18,12 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, TestTube, Zap, Settings, Key, Webhook, Shield } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 export default function NewIntegrationPage() {
   const router = useRouter();
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',

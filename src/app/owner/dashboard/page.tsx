@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface DashboardStats {
@@ -61,7 +61,7 @@ interface PropertySummary {
 }
 
 export default function OwnerDashboard() {
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,

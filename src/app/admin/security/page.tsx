@@ -53,7 +53,7 @@ import {
   Server,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface SecuritySettings {
@@ -105,7 +105,7 @@ interface SecurityMetrics {
 }
 
 export default function SecurityPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('settings');
   const [settings, setSettings] = useState<SecuritySettings>({
     twoFactorEnabled: true,

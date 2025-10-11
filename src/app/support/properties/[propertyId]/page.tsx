@@ -26,7 +26,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PropertyDetail {
   id: string;
@@ -60,7 +60,7 @@ interface PropertyDetail {
 export default function SupportPropertyDetailPage() {
   const { propertyId } = useParams();
   const router = useRouter();
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

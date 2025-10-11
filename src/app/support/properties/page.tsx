@@ -38,7 +38,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface PropertyReport {
   id: string;
@@ -61,7 +61,7 @@ interface PropertyStats {
 }
 
 export default function SupportPropertiesPage() {
-  const { user, loading: userLoading } = useUserState();
+  const { user, loading: userLoading } = useAuth();
   const [properties, setProperties] = useState<PropertyReport[]>([]);
   const [stats, setStats] = useState<PropertyStats>({
     totalProperties: 0,

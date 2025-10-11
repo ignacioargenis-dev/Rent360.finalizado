@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   Building,
   Users,
@@ -91,7 +91,7 @@ interface MaintenanceStats {
 }
 
 export default function MantenimientoPage() {
-  const { user } = useUserState();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
   const [stats, setStats] = useState<MaintenanceStats>({

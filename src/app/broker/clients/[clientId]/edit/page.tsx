@@ -29,7 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { logger } from '@/lib/logger';
 
 interface ClientData {
@@ -60,7 +60,7 @@ export default function EditClientPage() {
   const router = useRouter();
   const params = useParams();
   const clientId = params.clientId as string;
-  const { user } = useUserState();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState<ClientData>({
     id: '',
