@@ -122,7 +122,16 @@ export default function middleware(request: NextRequest) {
   */
 
   // Apply internationalization middleware
-  const response = intlMiddleware(request);
+  const intlResult = intlMiddleware(request);
+
+  // El intlMiddleware puede devolver NextResponse o el request original
+  // Si devuelve NextResponse, usamos esa respuesta, si no, creamos una nueva
+  let response: NextResponse;
+  if (intlResult instanceof NextResponse) {
+    response = intlResult;
+  } else {
+    response = NextResponse.next();
+  }
 
   // Add security headers - Configuración de seguridad mejorada
   response.headers.set('X-Content-Type-Options', 'nosniff');
