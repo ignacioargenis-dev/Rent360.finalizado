@@ -6,35 +6,67 @@ import { User } from '@/types';
 
 // Función helper para convertir datos básicos de API a User completo
 function convertApiUserToUser(apiUser: any): User {
-  return {
-    id: apiUser.id,
-    name: apiUser.name,
-    email: apiUser.email,
-    role: apiUser.role as any, // La API devuelve string, User espera UserRole
-    avatar: apiUser.avatar,
-    phone: null, // No disponible en auth básico
-    isActive: true, // Asumir activo para usuarios autenticados
-    emailVerified: true, // Asumir verificado para usuarios autenticados
-    createdAt: new Date(apiUser.createdAt),
-    updatedAt: new Date(apiUser.createdAt), // Usar createdAt como fallback
-    // Campos requeridos por Prisma User model
-    password: '', // No disponible en auth básico
-    rut: null,
-    rutVerified: false,
-    dateOfBirth: null,
-    gender: null,
-    nationality: null,
-    address: null,
-    emergencyContactName: null,
-    emergencyContactPhone: null,
-    bankAccountNumber: null,
-    bankName: null,
-    accountType: null,
-    verificationStatus: 'PENDING',
-    lastLoginAt: null,
-    loginAttempts: 0,
-    lockedUntil: null,
-  } as unknown as User;
+  try {
+    return {
+      id: String(apiUser.id || ''),
+      name: String(apiUser.name || ''),
+      email: String(apiUser.email || ''),
+      role: String(apiUser.role || 'tenant') as any,
+      avatar: apiUser.avatar ? String(apiUser.avatar) : undefined,
+      phone: null,
+      isActive: true,
+      emailVerified: true,
+      createdAt: apiUser.createdAt ? new Date(apiUser.createdAt) : new Date(),
+      updatedAt: apiUser.createdAt ? new Date(apiUser.createdAt) : new Date(),
+      // Campos requeridos por Prisma User model - valores por defecto
+      password: '',
+      rut: null,
+      rutVerified: false,
+      dateOfBirth: null,
+      gender: null,
+      nationality: null,
+      address: null,
+      emergencyContactName: null,
+      emergencyContactPhone: null,
+      bankAccountNumber: null,
+      bankName: null,
+      accountType: null,
+      verificationStatus: 'PENDING',
+      lastLoginAt: null,
+      loginAttempts: 0,
+      lockedUntil: null,
+    };
+  } catch (error) {
+    console.error('Error converting API user:', error);
+    // Retornar un usuario básico si hay error
+    return {
+      id: 'error',
+      name: 'Error',
+      email: 'error@example.com',
+      role: 'tenant' as any,
+      phone: null,
+      isActive: false,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      password: '',
+      rut: null,
+      rutVerified: false,
+      dateOfBirth: null,
+      gender: null,
+      nationality: null,
+      address: null,
+      emergencyContactName: null,
+      emergencyContactPhone: null,
+      bankAccountNumber: null,
+      bankName: null,
+      accountType: null,
+      verificationStatus: 'PENDING',
+      lastLoginAt: null,
+      loginAttempts: 0,
+      lockedUntil: null,
+    };
+  }
 }
 
 interface AuthContextType {
@@ -50,10 +82,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Verificar si hay un usuario autenticado al cargar la aplicación
-    checkAuth();
+    const initAuth = async () => {
+      try {
+        await checkAuth();
+      } catch (err) {
+        // Si hay un error crítico, al menos permitir que la app se renderice
+        console.error('Auth initialization error:', err);
+        setLoading(false);
+        setError('Error de autenticación');
+      }
+    };
+
+    initAuth();
   }, []);
 
   const checkAuth = async () => {
