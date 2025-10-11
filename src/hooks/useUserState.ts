@@ -70,8 +70,15 @@ export function useUserState(options: UseUserStateOptions = {}) {
           // User not authenticated - clear localStorage and redirect if required
           setUser(null);
           localStorage.removeItem('user');
-          if (requireAuth) {
-            window.location.href = redirectUrl;
+          if (requireAuth && typeof window !== 'undefined') {
+            // Only redirect if we're not already on the login page
+            const currentPath = window.location.pathname;
+            if (!currentPath.includes('/auth/login') && !currentPath.includes(redirectUrl)) {
+              // Add a small delay to prevent redirect during initial render
+              setTimeout(() => {
+                window.location.href = redirectUrl;
+              }, 100);
+            }
           }
         } else if (response && (response.status === 503 || response.status === 500)) {
           // Server errors - don't redirect, try localStorage fallback
