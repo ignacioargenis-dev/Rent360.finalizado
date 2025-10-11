@@ -161,9 +161,21 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   const isProduction = process.env.NODE_ENV === 'production';
   const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
 
-  // En desarrollo local, usamos 'lax' para compatibilidad con localhost
-  // En producción, usamos 'strict' para máxima seguridad
-  const sameSitePolicy = isProduction ? 'strict' : 'lax';
+  // Para DigitalOcean App Platform, usar 'lax' en lugar de 'strict' para mejor compatibilidad
+  // 'strict' puede causar problemas con redirecciones y navegación
+  const sameSitePolicy = 'lax'; // Más compatible que 'strict'
+
+  // Detectar dominio automáticamente para producción
+  let domain: string | undefined;
+  if (isProduction) {
+    // Intentar obtener el dominio de las variables de entorno o del host
+    domain = process.env.DOMAIN || process.env.VERCEL_URL || undefined;
+
+    // Si no hay dominio específico, dejar undefined para usar el dominio actual
+    if (!domain) {
+      domain = undefined;
+    }
+  }
 
   // Establecer cookie de acceso
   response.cookies.set('auth-token', accessToken, {
@@ -172,8 +184,7 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: sameSitePolicy,
     maxAge: 60 * 60, // 1 hora
     path: '/',
-    // En producción usar dominio específico, en desarrollo dejar undefined
-    domain: isProduction ? process.env.DOMAIN : undefined,
+    domain: domain,
   });
 
   // Establecer cookie de refresh
@@ -183,14 +194,23 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: sameSitePolicy,
     maxAge: 7 * 24 * 60 * 60, // 7 días
     path: '/',
-    domain: isProduction ? process.env.DOMAIN : undefined,
+    domain: domain,
   });
 }
 
 export function clearAuthCookies(response: any) {
   const isProduction = process.env.NODE_ENV === 'production';
   const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
-  const sameSitePolicy = isProduction ? 'strict' : 'lax';
+  const sameSitePolicy = 'lax'; // Usar 'lax' para mejor compatibilidad
+
+  // Detectar dominio automáticamente para producción
+  let domain: string | undefined;
+  if (isProduction) {
+    domain = process.env.DOMAIN || process.env.VERCEL_URL || undefined;
+    if (!domain) {
+      domain = undefined;
+    }
+  }
 
   response.cookies.set('auth-token', '', {
     httpOnly: true,
@@ -198,7 +218,7 @@ export function clearAuthCookies(response: any) {
     sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: isProduction ? process.env.DOMAIN : undefined,
+    domain: domain,
   });
 
   response.cookies.set('refresh-token', '', {
@@ -207,6 +227,6 @@ export function clearAuthCookies(response: any) {
     sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: isProduction ? process.env.DOMAIN : undefined,
+    domain: domain,
   });
 }
