@@ -107,6 +107,12 @@
         </div>
 
         <div class="section">
+            <h2>🔄 Service Worker</h2>
+            <button onclick="updateServiceWorker()">Actualizar Service Worker</button>
+            <div id="sw-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
             <h2>🧹 Limpiar y Reiniciar</h2>
             <button class="danger" onclick="clearEverything()">Limpiar Todo y Reiniciar</button>
             <div id="clear-results" class="test-result"></div>
@@ -235,6 +241,42 @@
         // Función para ir al debug avanzado
         function goToAdvancedDebug() {
             window.location.href = '/debug-auth.html';
+        }
+
+        // Función para actualizar service worker
+        async function updateServiceWorker() {
+            const results = document.getElementById('sw-results');
+            results.innerHTML = '<p>🔄 Actualizando Service Worker...</p>';
+            results.className = 'test-result';
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+
+                    // Forzar actualización
+                    await registration.update();
+
+                    // Limpiar caches antiguos
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => {
+                            if (cacheName.startsWith('rent360-') && !cacheName.includes('v1.0.1')) {
+                                console.log('Eliminando cache antiguo:', cacheName);
+                                return caches.delete(cacheName);
+                            }
+                        })
+                    );
+
+                    results.innerHTML = `<p class="success">✅ Service Worker actualizado y caches limpiados. Recarga la página para activar los cambios.</p>`;
+                    results.className = 'test-result success';
+                } else {
+                    results.innerHTML = `<p class="warning">⚠️ Service Worker no soportado en este navegador.</p>`;
+                    results.className = 'test-result warning';
+                }
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error actualizando Service Worker: ${error.message}</p>`;
+                results.className = 'test-result error';
+            }
         }
 
         // Función para limpiar todo
