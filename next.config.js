@@ -11,7 +11,7 @@ const nextConfig = {
   // Optimizaciones de performance
   swcMinify: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: false, // Temporalmente desactivado en producción para debugging
   },
   // Configuración experimental
   experimental: {

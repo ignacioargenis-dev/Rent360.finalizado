@@ -237,7 +237,7 @@ class Logger {
 
   private addToBuffer(entry: LogEntry): void {
     this.logBuffer.push(entry);
-    
+
     // Mantener el buffer dentro del límite
     if (this.logBuffer.length > this.maxBufferSize) {
       this.logBuffer = this.logBuffer.slice(-this.maxBufferSize);
@@ -246,13 +246,15 @@ class Logger {
 
   private outputToConsole(entry: LogEntry): void {
     const { timestamp, level, message, data, error } = entry;
-    
+
     const logMessage = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
-    
+
     switch (level) {
       case 'ERROR':
         console.error(logMessage, data || '');
-        if (error) console.error('Error details:', error);
+        if (error) {
+          console.error('Error details:', error);
+        }
         break;
       case 'WARN':
         console.warn(logMessage, data || '');
@@ -279,13 +281,15 @@ class Logger {
   }
 
   private async log(level: LogLevel, message: string, data?: Record<string, any>): Promise<void> {
-    if (!this.shouldLog(level)) return;
+    if (!this.shouldLog(level)) {
+      return;
+    }
 
     const entry = this.formatLogEntry(level, message, data);
-    
+
     this.addToBuffer(entry);
     this.outputToConsole(entry);
-    
+
     if (process.env.NODE_ENV === 'production') {
       await this.persistLog(entry);
     }
@@ -293,7 +297,18 @@ class Logger {
 
   // Métodos públicos de logging
   async error(message: string, data?: Record<string, any>): Promise<void> {
-    await this.log('ERROR', message, data);
+    // Log simple sin dependencias complejas
+    const simpleLog = `[${new Date().toISOString()}] ERROR: ${message}`;
+    console.error(simpleLog, data || '');
+
+    // Solo intentar logging avanzado si no hay errores críticos
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        await this.log('ERROR', message, data);
+      } catch (logError) {
+        console.error('Logging failed:', logError);
+      }
+    }
   }
 
   async warn(message: string, data?: Record<string, any>): Promise<void> {
@@ -311,13 +326,17 @@ class Logger {
   // MÉTODOS DE PERFORMANCE
 
   // Iniciar medición de performance
-  startPerformanceMeasurement(name: string, metadata?: Record<string, any>, tags?: string[]): string {
+  startPerformanceMeasurement(
+    name: string,
+    metadata?: Record<string, any>,
+    tags?: string[]
+  ): string {
     const id = this.generateRequestId();
     const metric: PerformanceMetric = {
       name,
       startTime: Date.now(),
       metadata,
-      tags
+      tags,
     };
 
     this.performanceMetrics.set(id, metric);
@@ -348,7 +367,7 @@ class Logger {
       name: metric.name,
       duration: metric.duration,
       tags: metric.tags,
-      metadata: metric.metadata
+      metadata: metric.metadata,
     });
 
     // Verificar umbrales de performance
@@ -374,7 +393,7 @@ class Logger {
     } catch (error) {
       await this.endPerformanceMeasurement(id, {
         error: error instanceof Error ? error.message : String(error),
-        success: false
+        success: false,
       });
       throw error;
     }
@@ -382,33 +401,36 @@ class Logger {
 
   // Verificar umbrales de performance
   private async checkPerformanceThresholds(metric: PerformanceMetric): Promise<void> {
-    if (!metric.duration) return;
+    if (!metric.duration) {
+      return;
+    }
 
     const thresholds = {
       database: 1000, // 1 segundo para consultas DB
-      api: 500,       // 500ms para llamadas API
-      cache: 50,      // 50ms para operaciones de cache
-      general: 200    // 200ms para operaciones generales
+      api: 500, // 500ms para llamadas API
+      cache: 50, // 50ms para operaciones de cache
+      general: 200, // 200ms para operaciones generales
     };
 
     let threshold = thresholds.general;
-    if (metric.tags?.includes('database')) threshold = thresholds.database;
-    if (metric.tags?.includes('api')) threshold = thresholds.api;
-    if (metric.tags?.includes('cache')) threshold = thresholds.cache;
+    if (metric.tags?.includes('database')) {
+      threshold = thresholds.database;
+    }
+    if (metric.tags?.includes('api')) {
+      threshold = thresholds.api;
+    }
+    if (metric.tags?.includes('cache')) {
+      threshold = thresholds.cache;
+    }
 
     if (metric.duration > threshold) {
-      await this.logEvent(
-        'warning',
-        `Performance threshold exceeded: ${metric.name}`,
-        'medium',
-        {
-          name: metric.name,
-          duration: metric.duration,
-          threshold,
-          tags: metric.tags,
-          metadata: metric.metadata
-        }
-      );
+      await this.logEvent('warning', `Performance threshold exceeded: ${metric.name}`, 'medium', {
+        name: metric.name,
+        duration: metric.duration,
+        threshold,
+        tags: metric.tags,
+        metadata: metric.metadata,
+      });
     }
   }
 
@@ -493,7 +515,10 @@ class Logger {
 
   // Obtener métricas del sistema
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const memoryUsage = typeof process !== 'undefined' && process.memoryUsage ? process.memoryUsage() : { heapUsed: 0, heapTotal: 0, external: 0, rss: 0, arrayBuffers: 0 };
+    const memoryUsage =
+      typeof process !== 'undefined' && process.memoryUsage
+        ? process.memoryUsage()
+        : { heapUsed: 0, heapTotal: 0, external: 0, rss: 0, arrayBuffers: 0 };
     const cacheMgr = await getCacheManager();
     const rateLimiterInstance = await getRateLimiter();
     const cacheStats = await cacheMgr.cacheManager.getStats();
@@ -562,7 +587,9 @@ class Logger {
 
       return { status, checks, uptime };
     } catch (error) {
-      await this.error('Error checking system health', { error: error instanceof Error ? error.message : String(error) });
+      await this.error('Error checking system health', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { status: 'unhealthy', checks: {}, uptime: 0 };
     }
   }
@@ -580,10 +607,13 @@ class Logger {
 
   private async checkAPI(): Promise<boolean> {
     try {
-      const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/health`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000),
-      });
+      const response = await fetch(
+        `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/health`,
+        {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000),
+        }
+      );
       return response.ok;
     } catch (error) {
       return false;
@@ -592,7 +622,10 @@ class Logger {
 
   private async checkMemory(): Promise<boolean> {
     try {
-      const memoryUsage = typeof process !== 'undefined' && process.memoryUsage ? process.memoryUsage() : { heapUsed: 0, heapTotal: 1 };
+      const memoryUsage =
+        typeof process !== 'undefined' && process.memoryUsage
+          ? process.memoryUsage()
+          : { heapUsed: 0, heapTotal: 1 };
       const usagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
       return usagePercent < 80;
     } catch (error) {
@@ -610,20 +643,30 @@ class Logger {
     }
   }
 
-  private determineHealthStatus(checks: Record<string, boolean>): 'healthy' | 'degraded' | 'unhealthy' {
+  private determineHealthStatus(
+    checks: Record<string, boolean>
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     const failedChecks = Object.values(checks).filter(check => !check).length;
 
-    if (failedChecks === 0) return 'healthy';
-    if (failedChecks <= 1) return 'degraded';
+    if (failedChecks === 0) {
+      return 'healthy';
+    }
+    if (failedChecks <= 1) {
+      return 'degraded';
+    }
     return 'unhealthy';
   }
 
   // Iniciar monitoreo automático
   startMonitoring(intervalMs: number = 30000): void {
-    if (this.checkInterval) return;
+    if (this.checkInterval) {
+      return;
+    }
 
     this.checkInterval = setInterval(async () => {
-      if (!this.monitoringEnabled) return;
+      if (!this.monitoringEnabled) {
+        return;
+      }
 
       try {
         const metrics = await this.getSystemMetrics();
@@ -636,9 +679,10 @@ class Logger {
 
         // Verificar umbrales
         await this.checkThresholds(metrics);
-
       } catch (error) {
-        await this.error('Error in monitoring cycle', { error: error instanceof Error ? error.message : String(error) });
+        await this.error('Error in monitoring cycle', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }, intervalMs);
 
@@ -703,7 +747,7 @@ class Logger {
       info: this.events.filter(e => e.type === 'info').length,
       warn: this.events.filter(e => e.type === 'warning').length,
       error: this.events.filter(e => e.type === 'error').length + this.alerts.length,
-      debug: this.events.filter(e => e.type === 'success').length
+      debug: this.events.filter(e => e.type === 'success').length,
     };
   }
 
@@ -727,22 +771,31 @@ class Logger {
     return {
       events: {
         total: this.events.length,
-        byType: this.events.reduce((acc, event) => {
-          acc[event.type] = (acc[event.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
-        bySeverity: this.events.reduce((acc, event) => {
-          acc[event.severity] = (acc[event.severity] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
+        byType: this.events.reduce(
+          (acc, event) => {
+            acc[event.type] = (acc[event.type] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
+        bySeverity: this.events.reduce(
+          (acc, event) => {
+            acc[event.severity] = (acc[event.severity] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       },
       alerts: {
         total: this.alerts.length,
         active: this.alerts.filter(a => !a.resolved).length,
-        byType: this.alerts.reduce((acc, alert) => {
-          acc[alert.type] = (acc[alert.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
+        byType: this.alerts.reduce(
+          (acc, alert) => {
+            acc[alert.type] = (acc[alert.type] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       },
       health: {
         current: this.metrics.length > 0 ? this.metrics[this.metrics.length - 1] : null,
@@ -834,18 +887,16 @@ class Logger {
   // Métodos para obtener logs
   getLogs(level?: LogLevel, limit: number = 100): LogEntry[] {
     let logs = this.logBuffer;
-    
+
     if (level) {
       logs = logs.filter(log => log.level === level);
     }
-    
+
     return logs.slice(-limit);
   }
 
   getRecentErrors(limit: number = 50): LogEntry[] {
-    return this.logBuffer
-      .filter(log => log.level === 'ERROR')
-      .slice(-limit);
+    return this.logBuffer.filter(log => log.level === 'ERROR').slice(-limit);
   }
 
   getStats(): { total: number; byLevel: Record<LogLevel, number> } {
@@ -887,10 +938,10 @@ class Logger {
         JSON.stringify(log.data || ''),
         log.error || '',
       ]);
-      
+
       return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     }
-    
+
     return JSON.stringify(this.logBuffer, null, 2);
   }
 }
@@ -898,23 +949,30 @@ class Logger {
 // Instancia singleton
 export const logger = new Logger();
 
-// Inicializar monitoreo automáticamente
-logger.startMonitoring(30000); // 30 segundos
+// Inicializar monitoreo automáticamente - DESACTIVADO para evitar dependencias circulares
+// logger.startMonitoring(30000); // 30 segundos
 
 // Funciones de conveniencia para uso directo
-export const logError = (message: string, data?: Record<string, any>) => logger.error(message, data);
+export const logError = (message: string, data?: Record<string, any>) =>
+  logger.error(message, data);
 export const logWarn = (message: string, data?: Record<string, any>) => logger.warn(message, data);
 export const logInfo = (message: string, data?: Record<string, any>) => logger.info(message, data);
-export const logDebug = (message: string, data?: Record<string, any>) => logger.debug(message, data);
+export const logDebug = (message: string, data?: Record<string, any>) =>
+  logger.debug(message, data);
 
 // Funciones de monitoreo para uso directo
-export const logEvent = (type: MonitoringEvent['type'], message: string, severity?: MonitoringEvent['severity'], metadata?: Record<string, any>) =>
-  logger.logEvent(type, message, severity, metadata);
+export const logEvent = (
+  type: MonitoringEvent['type'],
+  message: string,
+  severity?: MonitoringEvent['severity'],
+  metadata?: Record<string, any>
+) => logger.logEvent(type, message, severity, metadata);
 export const getSystemMetrics = () => logger.getSystemMetrics();
 export const checkSystemHealth = () => logger.checkSystemHealth();
 export const getMonitoringStats = () => logger.getMonitoringStats();
 export const getLogStats = () => logger.getLogStats();
-export const resolveAlert = (alertId: string, resolvedBy: string) => logger.resolveAlert(alertId, resolvedBy);
+export const resolveAlert = (alertId: string, resolvedBy: string) =>
+  logger.resolveAlert(alertId, resolvedBy);
 
 // Tipos para exportar
 export type { SystemMetrics, Alert, MonitoringEvent };

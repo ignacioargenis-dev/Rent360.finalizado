@@ -1,11 +1,15 @@
-export default function DebugMinimalPage() {
+// Página ultra-mínima para diagnosticar problemas críticos
+export default function DebugMinimal() {
   return (
-    <div style={{ fontFamily: 'Arial', padding: '20px' }}>
-      <h1>🚀 Debug Minimal Page</h1>
-      <p>Esta página NO usa layout ni providers.</p>
-      <p>Si ves este mensaje, Next.js básico funciona.</p>
-      <p>Hora del servidor: {new Date().toISOString()}</p>
-      <p>✅ Página cargada exitosamente</p>
-    </div>
+    <html lang="es">
+      <head>
+        <title>Debug Minimal</title>
+      </head>
+      <body>
+        <h1>Debug Minimal - Sin dependencias externas</h1>
+        <p>Esta página no usa layout ni providers</p>
+        <p>Si esta página falla, el problema está en el núcleo de Next.js</p>
+      </body>
+    </html>
   );
 }

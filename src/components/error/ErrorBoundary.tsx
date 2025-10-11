@@ -31,13 +31,27 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
 
-    // Log del error
-    logger.error('React Error Boundary caught an error', {
-      error: error.message,
+    // Log simple sin dependencias complejas
+    console.error('ErrorBoundary caught error:', {
+      message: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
-      context: 'error_boundary'
+      timestamp: new Date().toISOString(),
     });
+
+    // Solo usar logger avanzado si está disponible
+    try {
+      if (logger && typeof logger.error === 'function') {
+        logger.error('React Error Boundary caught an error', {
+          error: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+          context: 'error_boundary',
+        });
+      }
+    } catch (logError) {
+      console.error('Advanced logging failed:', logError);
+    }
 
     // Callback opcional para manejo personalizado
     if (this.props.onError) {
@@ -68,9 +82,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="h-12 w-12 text-red-500" />
             </div>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              ¡Ups! Algo salió mal
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">¡Ups! Algo salió mal</h2>
 
             <p className="text-gray-600 mb-6">
               Ha ocurrido un error inesperado. Nuestros desarrolladores han sido notificados.
@@ -143,7 +155,7 @@ export function useErrorHandler() {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo?.componentStack,
-      context: 'error_handler_hook'
+      context: 'error_handler_hook',
     });
 
     // Aquí se podría mostrar una notificación al usuario

@@ -1,0 +1,32 @@
+// Sistema de fallback para errores críticos
+export class ErrorFallback {
+  static logError(error: Error, context?: string) {
+    // Log básico siempre funcional
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      level: 'ERROR',
+      message: error.message,
+      stack: error.stack,
+      context: context || 'unknown',
+    };
+
+    console.error('FALLBACK LOG:', JSON.stringify(logEntry));
+
+    // Intentar enviar a servicio externo si está disponible
+    this.sendToExternalService(logEntry).catch(() => {
+      // Silenciar errores de logging externo
+    });
+  }
+
+  static async sendToExternalService(logEntry: any) {
+    // Implementar envío a servicio de logging externo
+    // como Sentry, LogRocket, etc.
+    try {
+      // Aquí iría la lógica para enviar a servicios externos
+      // Por ahora solo log local
+      console.log('External logging service not configured');
+    } catch (error) {
+      // Silenciar errores de logging externo completamente
+    }
+  }
+}
