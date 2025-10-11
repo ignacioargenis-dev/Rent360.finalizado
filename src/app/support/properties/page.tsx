@@ -38,7 +38,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface PropertyReport {
   id: string;
@@ -94,21 +94,29 @@ export default function SupportPropertiesPage() {
       // Intentar obtener datos reales de la API
       try {
         const params = new URLSearchParams();
-        if (statusFilter !== 'all') params.append('status', statusFilter);
-        if (priorityFilter !== 'all') params.append('priority', priorityFilter);
-        if (searchTerm) params.append('search', searchTerm);
+        if (statusFilter !== 'all') {
+          params.append('status', statusFilter);
+        }
+        if (priorityFilter !== 'all') {
+          params.append('priority', priorityFilter);
+        }
+        if (searchTerm) {
+          params.append('search', searchTerm);
+        }
 
         const response = await fetch(`/api/support/properties?${params}`);
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
             setProperties(data.data.properties || []);
-            setStats(data.data.stats || {
-              totalProperties: 0,
-              activeProperties: 0,
-              reportedIssues: 0,
-              underMaintenance: 0
-            });
+            setStats(
+              data.data.stats || {
+                totalProperties: 0,
+                activeProperties: 0,
+                reportedIssues: 0,
+                underMaintenance: 0,
+              }
+            );
             return;
           }
         }
@@ -140,11 +148,15 @@ export default function SupportPropertiesPage() {
       }
 
       if (statusFilter !== 'all') {
-        filteredProperties = filteredProperties.filter(property => property.status === statusFilter);
+        filteredProperties = filteredProperties.filter(
+          property => property.status === statusFilter
+        );
       }
 
       if (priorityFilter !== 'all') {
-        filteredProperties = filteredProperties.filter(property => property.priority === priorityFilter);
+        filteredProperties = filteredProperties.filter(
+          property => property.priority === priorityFilter
+        );
       }
 
       setProperties(filteredProperties);
@@ -165,11 +177,27 @@ export default function SupportPropertiesPage() {
   const generateMockProperties = (): PropertyReport[] => {
     const properties: PropertyReport[] = [];
     const propertyTypes = ['Casa', 'Departamento', 'Oficina', 'Local comercial', 'Bodega'];
-    const communes = ['Las Condes', 'Vitacura', 'Providencia', 'Ñuñoa', 'La Reina', 'Santiago Centro', 'Maipú', 'Pudahuel'];
+    const communes = [
+      'Las Condes',
+      'Vitacura',
+      'Providencia',
+      'Ñuñoa',
+      'La Reina',
+      'Santiago Centro',
+      'Maipú',
+      'Pudahuel',
+    ];
     const issues = [
-      'Fuga de agua', 'Puerta dañada', 'Sistema eléctrico defectuoso', 'Techo con filtraciones',
-      'Calefacción no funciona', 'Puerta de garage atascada', 'Ventanas rotas', 'Paredes agrietadas',
-      'Problemas de plomería', 'Sistema de alarma defectuoso'
+      'Fuga de agua',
+      'Puerta dañada',
+      'Sistema eléctrico defectuoso',
+      'Techo con filtraciones',
+      'Calefacción no funciona',
+      'Puerta de garage atascada',
+      'Ventanas rotas',
+      'Paredes agrietadas',
+      'Problemas de plomería',
+      'Sistema de alarma defectuoso',
     ];
     const statuses: PropertyReport['status'][] = ['active', 'inactive', 'reported', 'maintenance'];
     const priorities: PropertyReport['priority'][] = ['low', 'medium', 'high', 'urgent'];
@@ -192,9 +220,12 @@ export default function SupportPropertiesPage() {
         }
       }
 
-      const lastReportedDate = reportedIssues.length > 0
-        ? new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        : undefined;
+      const lastReportedDate =
+        reportedIssues.length > 0
+          ? new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0]
+          : undefined;
 
       const propertyData: PropertyReport = {
         id: String(i + 1),
@@ -262,16 +293,16 @@ export default function SupportPropertiesPage() {
 
   const handleResolveAllIssues = async (property: PropertyReport) => {
     try {
-      if (property.reportedIssues.length === 0) return;
+      if (property.reportedIssues.length === 0) {
+        return;
+      }
 
       // Simular API call
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       setProperties(prevProperties =>
         prevProperties.map(p =>
-          p.id === property.id
-            ? { ...p, reportedIssues: [], status: 'active' as const }
-            : p
+          p.id === property.id ? { ...p, reportedIssues: [], status: 'active' as const } : p
         )
       );
 
@@ -292,24 +323,38 @@ export default function SupportPropertiesPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const csvContent = [
-        ['ID', 'Título', 'Dirección', 'Propietario', 'Email', 'Estado', 'Prioridad', 'Problemas Reportados'].join(','),
-        ...properties.map(p => [
-          p.id,
-          p.propertyTitle,
-          p.propertyAddress,
-          p.ownerName,
-          p.ownerEmail,
-          p.status,
-          p.priority,
-          p.reportedIssues.join('; ')
-        ].join(','))
+        [
+          'ID',
+          'Título',
+          'Dirección',
+          'Propietario',
+          'Email',
+          'Estado',
+          'Prioridad',
+          'Problemas Reportados',
+        ].join(','),
+        ...properties.map(p =>
+          [
+            p.id,
+            p.propertyTitle,
+            p.propertyAddress,
+            p.ownerName,
+            p.ownerEmail,
+            p.status,
+            p.priority,
+            p.reportedIssues.join('; '),
+          ].join(',')
+        ),
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `propiedades-soporte-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute(
+        'download',
+        `propiedades-soporte-${new Date().toISOString().split('T')[0]}.csv`
+      );
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -717,14 +762,8 @@ export default function SupportPropertiesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto mx-4">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Detalles de Propiedad
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPropertyModal(false)}
-                >
+                <h2 className="text-2xl font-bold text-gray-800">Detalles de Propiedad</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowPropertyModal(false)}>
                   <XCircle className="w-5 h-5" />
                 </Button>
               </div>
@@ -762,7 +801,12 @@ export default function SupportPropertiesPage() {
                       {selectedProperty.lastReportedDate && (
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-500" />
-                          <span>Último reporte: {new Date(selectedProperty.lastReportedDate).toLocaleDateString('es-CL')}</span>
+                          <span>
+                            Último reporte:{' '}
+                            {new Date(selectedProperty.lastReportedDate).toLocaleDateString(
+                              'es-CL'
+                            )}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -775,7 +819,10 @@ export default function SupportPropertiesPage() {
                     ) : (
                       <div className="space-y-2">
                         {selectedProperty.reportedIssues.map((issue, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded">
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-red-50 rounded"
+                          >
                             <span className="text-sm text-red-700">{issue}</span>
                             <Button
                               size="sm"
@@ -793,7 +840,12 @@ export default function SupportPropertiesPage() {
 
                 <div className="flex gap-3 pt-4 border-t">
                   <Button
-                    onClick={() => handleContactOwner(selectedProperty.ownerEmail, selectedProperty.propertyTitle)}
+                    onClick={() =>
+                      handleContactOwner(
+                        selectedProperty.ownerEmail,
+                        selectedProperty.propertyTitle
+                      )
+                    }
                     className="flex-1"
                   >
                     <User className="w-4 h-4 mr-2" />
@@ -828,23 +880,15 @@ export default function SupportPropertiesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">
-                  Crear Nuevo Problema
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCreateIssueModal(false)}
-                >
+                <h2 className="text-xl font-bold text-gray-800">Crear Nuevo Problema</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowCreateIssueModal(false)}>
                   <XCircle className="w-5 h-5" />
                 </Button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Propiedad
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Propiedad</label>
                   <div className="p-3 bg-gray-50 rounded-md">
                     <div className="font-medium">{selectedProperty.propertyTitle}</div>
                     <div className="text-sm text-gray-600">{selectedProperty.propertyAddress}</div>
@@ -874,16 +918,11 @@ export default function SupportPropertiesPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descripción
                   </label>
-                  <Textarea
-                    placeholder="Describe el problema en detalle..."
-                    rows={4}
-                  />
+                  <Textarea placeholder="Describe el problema en detalle..." rows={4} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prioridad
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar prioridad" />

@@ -29,7 +29,7 @@ import {
 import { User, Contract, Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { useRouter } from 'next/navigation';
 import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {

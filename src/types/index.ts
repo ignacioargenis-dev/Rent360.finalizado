@@ -39,15 +39,68 @@ export type RatingContextType =
 export interface User {
   id: string;
   email: string;
+  password: string;
   name: string;
+  phone?: string | null;
+  phoneSecondary?: string | null;
+  emergencyContact?: string | null;
+  emergencyPhone?: string | null;
+
+  // Campos obligatorios en Chile
+  rut?: string | null;
+  rutVerified: boolean;
+
+  // Campos opcionales de perfil
+  dateOfBirth?: Date | null;
+  gender?: string | null;
+  nationality?: string | null;
+  address?: string | null;
+  city?: string | null;
+  commune?: string | null;
+  region?: string | null;
+
   role: UserRole;
-  phone?: string;
-  avatar?: string;
-  bio?: string;
+  avatar?: string | null;
+  bio?: string | null;
   isActive: boolean;
   emailVerified: boolean;
+  phoneVerified?: boolean;
+  lastLogin?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+
+  // Campos adicionales del modelo Prisma (opcionales para compatibilidad)
+  bankAccount?: any;
+  properties?: any[];
+  propertyFavorites?: any[];
+  contractsAsOwner?: any[];
+  contractsAsTenant?: any[];
+  contractsAsBroker?: any[];
+  brokerProperties?: any[];
+  createdProperties?: any[];
+  payments?: any[];
+  reviewsGiven?: any[];
+  reviewsReceived?: any[];
+  messagesSent?: any[];
+  messagesReceived?: any[];
+  tickets?: any[];
+  assignedTickets?: any[];
+  ticketComments?: any[];
+  visitsAsRunner?: any[];
+  visitsAsTenant?: any[];
+  notifications?: any[];
+  auditLogs?: any[];
+  signatures?: any[];
+  documents?: any[];
+  maintenanceRequests?: any[];
+  serviceJobRequests?: any[];
+  scheduledVisits?: any[];
+  maintenanceProvider?: any;
+  serviceProvider?: any;
+  runnerRatingsGiven?: any[];
+  clientRatingsGiven?: any[];
+  ratingsGiven?: any[];
+  ratingsReceived?: any[];
 }
 
 export interface Property {

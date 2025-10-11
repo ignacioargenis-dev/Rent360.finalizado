@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { ArrowLeft, Send, User, Building, MapPin, Search, CheckCircle } from 'lucide-react';
 
 interface Client {

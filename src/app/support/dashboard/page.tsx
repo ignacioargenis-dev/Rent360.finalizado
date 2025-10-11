@@ -29,7 +29,7 @@ import {
   Bell,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface DashboardStats {

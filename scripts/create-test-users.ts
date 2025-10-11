@@ -11,43 +11,43 @@ async function createTestUsers() {
       password: 'admin123',
       name: 'Administrador Sistema',
       role: UserRole.ADMIN,
-      phone: '+56 2 2345 6789'
+      phone: '+56 2 2345 6789',
     },
     {
       email: 'propietario@rent360.cl',
       password: 'prop123',
       name: 'María González',
       role: UserRole.OWNER,
-      phone: '+56 9 1234 5678'
+      phone: '+56 9 1234 5678',
     },
     {
       email: 'inquilino@rent360.cl',
       password: 'inq123',
       name: 'Carlos Ramírez',
       role: UserRole.TENANT,
-      phone: '+56 9 8765 4321'
+      phone: '+56 9 8765 4321',
     },
     {
       email: 'corredor@rent360.cl',
       password: 'corr123',
       name: 'Ana Martínez',
       role: UserRole.BROKER,
-      phone: '+56 9 2345 6789'
+      phone: '+56 9 2345 6789',
     },
     {
       email: 'runner@rent360.cl',
       password: 'run123',
       name: 'Pedro Silva',
       role: UserRole.RUNNER,
-      phone: '+56 9 3456 7890'
-    }
+      phone: '+56 9 3456 7890',
+    },
   ];
 
   try {
     for (const userData of testUsers) {
       // Check if user already exists
       const existingUser = await db.user.findUnique({
-        where: { email: userData.email }
+        where: { email: userData.email },
       });
 
       if (existingUser) {
@@ -66,8 +66,8 @@ async function createTestUsers() {
           name: userData.name,
           role: userData.role,
           phone: userData.phone,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`
-        }
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`,
+        },
       });
 
       console.log(`✅ Usuario creado: ${user.name} (${user.email}) - Rol: ${user.role}`);
@@ -84,7 +84,6 @@ async function createTestUsers() {
     console.log('   - Login: http://localhost:3000/auth/login');
     console.log('   - Registro: http://localhost:3000/auth/register');
     console.log('   - Home: http://localhost:3000');
-
   } catch (error) {
     console.error('❌ Error al crear usuarios de prueba:', error);
   } finally {
@@ -93,5 +92,4 @@ async function createTestUsers() {
 }
 
 // Run the script
-createTestUsers()
-  .catch(console.error);
+createTestUsers().catch(console.error);

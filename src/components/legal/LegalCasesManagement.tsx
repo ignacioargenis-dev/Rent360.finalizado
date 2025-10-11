@@ -7,18 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Gavel, 
-  FileText, 
-  Building, 
-  User, 
-  Calendar, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  Gavel,
+  FileText,
+  Building,
+  User,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   XCircle,
   Plus,
   Edit,
@@ -28,10 +34,10 @@ import {
   Send,
   Scale,
   AlertTriangle,
-  Shield
+  Shield,
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface LegalCase {
   id: string;
@@ -47,7 +53,14 @@ interface LegalCase {
   legalBasis: string;
   requestedActions: string[];
   notes?: string;
-  status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'in_review'
+    | 'approved'
+    | 'rejected'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled';
   adminNotes?: string;
   rejectionReason?: string;
   nextHearingDate?: string;
@@ -106,7 +119,7 @@ const STATUS_COLORS = {
   rejected: 'bg-red-100 text-red-800',
   in_progress: 'bg-purple-100 text-purple-800',
   completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800'
+  cancelled: 'bg-gray-100 text-gray-800',
 };
 
 const STATUS_LABELS = {
@@ -116,21 +129,21 @@ const STATUS_LABELS = {
   rejected: 'Rechazada',
   in_progress: 'En Progreso',
   completed: 'Completada',
-  cancelled: 'Cancelada'
+  cancelled: 'Cancelada',
 };
 
 const PRIORITY_COLORS = {
   low: 'bg-gray-100 text-gray-800',
   medium: 'bg-blue-100 text-blue-800',
   high: 'bg-orange-100 text-orange-800',
-  urgent: 'bg-red-100 text-red-800'
+  urgent: 'bg-red-100 text-red-800',
 };
 
 const PRIORITY_LABELS = {
   low: 'Baja',
   medium: 'Media',
   high: 'Alta',
-  urgent: 'Urgente'
+  urgent: 'Urgente',
 };
 
 const CASE_TYPE_LABELS = {
@@ -138,7 +151,7 @@ const CASE_TYPE_LABELS = {
   property_damage: 'Daños a la Propiedad',
   contract_breach: 'Incumplimiento de Contrato',
   eviction: 'Desalojo',
-  other: 'Otro'
+  other: 'Otro',
 };
 
 export default function LegalCasesManagement() {
@@ -157,14 +170,14 @@ export default function LegalCasesManagement() {
     estimatedDuration: 30,
     legalBasis: '',
     requestedActions: [],
-    notes: ''
+    notes: '',
   });
   const [activeTab, setActiveTab] = useState('all');
   const [contracts, setContracts] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { user } = useAuth();
   const { success, error } = useToast();
 
@@ -179,11 +192,15 @@ export default function LegalCasesManagement() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filterStatus) params.append('status', filterStatus);
-      if (filterPriority) params.append('priority', filterPriority);
-      
+      if (filterStatus) {
+        params.append('status', filterStatus);
+      }
+      if (filterPriority) {
+        params.append('priority', filterPriority);
+      }
+
       const response = await fetch(`/api/legal/cases?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('Error obteniendo causas legales');
       }
@@ -191,7 +208,10 @@ export default function LegalCasesManagement() {
       const data = await response.json();
       setLegalCases(data.data || []);
     } catch (err) {
-      error('Error', 'Error cargando causas legales: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error cargando causas legales: ' + (err instanceof Error ? err.message : String(err))
+      );
     } finally {
       setLoading(false);
     }
@@ -205,13 +225,21 @@ export default function LegalCasesManagement() {
         setContracts(data.data || []);
       }
     } catch (err) {
-      logger.error('Error obteniendo contratos:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error obteniendo contratos:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
   const handleSubmit = async () => {
     try {
-      if (!formData.contractId || !formData.description || !formData.amount || !formData.legalBasis || formData.requestedActions.length === 0) {
+      if (
+        !formData.contractId ||
+        !formData.description ||
+        !formData.amount ||
+        !formData.legalBasis ||
+        formData.requestedActions.length === 0
+      ) {
         error('Error', 'Por favor completa todos los campos requeridos');
         return;
       }
@@ -219,7 +247,7 @@ export default function LegalCasesManagement() {
       const response = await fetch('/api/legal/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -243,13 +271,16 @@ export default function LegalCasesManagement() {
         estimatedDuration: 30,
         legalBasis: '',
         requestedActions: [],
-        notes: ''
+        notes: '',
       });
 
       // Recargar la lista de casos legales
       await fetchLegalCases();
     } catch (err) {
-      error('Error', 'Error creando causa legal: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error creando causa legal: ' + (err instanceof Error ? err.message : String(err))
+      );
     }
   };
 
@@ -261,8 +292,8 @@ export default function LegalCasesManagement() {
         body: JSON.stringify({
           legalCaseId: caseId,
           status: newStatus,
-          adminNotes: notes
-        })
+          adminNotes: notes,
+        }),
       });
 
       if (!response.ok) {
@@ -272,12 +303,17 @@ export default function LegalCasesManagement() {
       success('Éxito', 'Estado de causa legal actualizado exitosamente');
       await fetchLegalCases();
     } catch (err) {
-      error('Error', 'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err))
+      );
     }
   };
 
   const filteredLegalCases = legalCases.filter(legalCase => {
-    if (activeTab !== 'all' && legalCase.status !== activeTab) return false;
+    if (activeTab !== 'all' && legalCase.status !== activeTab) {
+      return false;
+    }
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -292,24 +328,37 @@ export default function LegalCasesManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'in_review': return <Eye className="h-4 w-4" />;
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <XCircle className="h-4 w-4" />;
-      case 'in_progress': return <Loader2 className="h-4 w-4 animate-spin" />;
-      case 'completed': return <CheckCircle className="h-4 w-4" />;
-      case 'cancelled': return <XCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'in_review':
+        return <Eye className="h-4 w-4" />;
+      case 'approved':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4" />;
+      case 'in_progress':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <AlertCircle className="h-4 w-4" />;
     }
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'low': return <Shield className="h-4 w-4" />;
-      case 'medium': return <AlertCircle className="h-4 w-4" />;
-      case 'high': return <AlertTriangle className="h-4 w-4" />;
-      case 'urgent': return <AlertTriangle className="h-4 w-4" />;
-      default: return <Shield className="h-4 w-4" />;
+      case 'low':
+        return <Shield className="h-4 w-4" />;
+      case 'medium':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'high':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'urgent':
+        return <AlertTriangle className="h-4 w-4" />;
+      default:
+        return <Shield className="h-4 w-4" />;
     }
   };
 
@@ -347,9 +396,7 @@ export default function LegalCasesManagement() {
         <Card>
           <CardHeader>
             <CardTitle>Nueva Causa Legal</CardTitle>
-            <CardDescription>
-              Completa los datos para iniciar una nueva causa legal
-            </CardDescription>
+            <CardDescription>Completa los datos para iniciar una nueva causa legal</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -357,13 +404,13 @@ export default function LegalCasesManagement() {
                 <Label htmlFor="contractId">Contrato</Label>
                 <Select
                   value={formData.contractId}
-                  onValueChange={(value) => setFormData({ ...formData, contractId: value })}
+                  onValueChange={value => setFormData({ ...formData, contractId: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un contrato" />
                   </SelectTrigger>
                   <SelectContent>
-                    {contracts.map((contract) => (
+                    {contracts.map(contract => (
                       <SelectItem key={contract.id} value={contract.id}>
                         {contract.property.address} - {contract.property.city}
                       </SelectItem>
@@ -398,7 +445,9 @@ export default function LegalCasesManagement() {
                   id="amount"
                   type="number"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  onChange={e =>
+                    setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                  }
                   placeholder="0"
                 />
               </div>
@@ -426,7 +475,7 @@ export default function LegalCasesManagement() {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe detalladamente el caso legal..."
                 rows={3}
               />
@@ -437,7 +486,7 @@ export default function LegalCasesManagement() {
               <Textarea
                 id="legalBasis"
                 value={formData.legalBasis}
-                onChange={(e) => setFormData({ ...formData, legalBasis: e.target.value })}
+                onChange={e => setFormData({ ...formData, legalBasis: e.target.value })}
                 placeholder="Cita las leyes y artículos que fundamentan la causa..."
                 rows={2}
               />
@@ -446,27 +495,35 @@ export default function LegalCasesManagement() {
             <div>
               <Label htmlFor="requestedActions">Acciones Solicitadas</Label>
               <div className="space-y-2">
-                {['Pago de deuda', 'Reparación de daños', 'Cumplimiento de contrato', 'Desalojo', 'Indemnización'].map((action) => (
+                {[
+                  'Pago de deuda',
+                  'Reparación de daños',
+                  'Cumplimiento de contrato',
+                  'Desalojo',
+                  'Indemnización',
+                ].map(action => (
                   <div key={action} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       id={action}
                       checked={formData.requestedActions.includes(action)}
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.checked) {
                           setFormData({
                             ...formData,
-                            requestedActions: [...formData.requestedActions, action]
+                            requestedActions: [...formData.requestedActions, action],
                           });
                         } else {
                           setFormData({
                             ...formData,
-                            requestedActions: formData.requestedActions.filter(a => a !== action)
+                            requestedActions: formData.requestedActions.filter(a => a !== action),
                           });
                         }
                       }}
                     />
-                    <Label htmlFor={action} className="text-sm">{action}</Label>
+                    <Label htmlFor={action} className="text-sm">
+                      {action}
+                    </Label>
                   </div>
                 ))}
               </div>
@@ -479,7 +536,9 @@ export default function LegalCasesManagement() {
                   id="estimatedDuration"
                   type="number"
                   value={formData.estimatedDuration}
-                  onChange={(e) => setFormData({ ...formData, estimatedDuration: parseInt(e.target.value) || 30 })}
+                  onChange={e =>
+                    setFormData({ ...formData, estimatedDuration: parseInt(e.target.value) || 30 })
+                  }
                   placeholder="30"
                 />
               </div>
@@ -488,7 +547,7 @@ export default function LegalCasesManagement() {
                 <Input
                   id="notes"
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Notas opcionales..."
                 />
               </div>
@@ -513,7 +572,7 @@ export default function LegalCasesManagement() {
           <Input
             placeholder="Buscar por dirección, inquilino, solicitante o descripción..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -567,7 +626,7 @@ export default function LegalCasesManagement() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {filteredLegalCases.map((legalCase) => (
+              {filteredLegalCases.map(legalCase => (
                 <Card key={legalCase.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -580,7 +639,8 @@ export default function LegalCasesManagement() {
                             {CASE_TYPE_LABELS[legalCase.caseType]}
                           </CardTitle>
                           <CardDescription>
-                            {legalCase.contract.property.address}, {legalCase.contract.property.city}
+                            {legalCase.contract.property.address},{' '}
+                            {legalCase.contract.property.city}
                           </CardDescription>
                         </div>
                       </div>
@@ -610,7 +670,9 @@ export default function LegalCasesManagement() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Solicitante</Label>
                         <p className="text-sm">{legalCase.requester.name}</p>
-                        <p className="text-xs text-gray-500">{legalCase.requester.email} ({legalCase.requester.role})</p>
+                        <p className="text-xs text-gray-500">
+                          {legalCase.requester.email} ({legalCase.requester.role})
+                        </p>
                       </div>
                     </div>
 
@@ -622,14 +684,20 @@ export default function LegalCasesManagement() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Monto Reclamado</Label>
-                        <p className="text-sm font-semibold">${legalCase.amount.toLocaleString()}</p>
+                        <p className="text-sm font-semibold">
+                          ${legalCase.amount.toLocaleString()}
+                        </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Duración Estimada</Label>
+                        <Label className="text-sm font-medium text-gray-600">
+                          Duración Estimada
+                        </Label>
                         <p className="text-sm">{legalCase.estimatedDuration} días</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Acciones Solicitadas</Label>
+                        <Label className="text-sm font-medium text-gray-600">
+                          Acciones Solicitadas
+                        </Label>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {legalCase.requestedActions.map((action, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -659,62 +727,65 @@ export default function LegalCasesManagement() {
 
                     {/* Acciones según rol y estado */}
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                      {user?.role === 'ADMIN' && ['pending', 'in_review'].includes(legalCase.status) && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleStatusUpdate(legalCase.id, 'approved')}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Aprobar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleStatusUpdate(legalCase.id, 'rejected')}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rechazar
-                          </Button>
-                          {legalCase.status === 'pending' && (
+                      {user?.role === 'ADMIN' &&
+                        ['pending', 'in_review'].includes(legalCase.status) && (
+                          <>
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => handleStatusUpdate(legalCase.id, 'in_review')}
+                              onClick={() => handleStatusUpdate(legalCase.id, 'approved')}
                             >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Enviar a Revisión
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Aprobar
                             </Button>
-                          )}
-                        </>
-                      )}
-                      
-                      {['OWNER', 'BROKER'].includes(user?.role || '') && legalCase.requesterId === user?.id && ['pending', 'in_review'].includes(legalCase.status) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingCase(legalCase);
-                            setFormData({
-                              contractId: legalCase.contractId,
-                              caseType: legalCase.caseType,
-                              description: legalCase.description,
-                              amount: legalCase.amount,
-                              documents: legalCase.documents || [],
-                              evidence: legalCase.evidence || [],
-                              priority: legalCase.priority,
-                              estimatedDuration: legalCase.estimatedDuration,
-                              legalBasis: legalCase.legalBasis,
-                              requestedActions: legalCase.requestedActions,
-                              notes: legalCase.notes || ''
-                            });
-                            setShowForm(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Editar
-                        </Button>
-                      )}
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleStatusUpdate(legalCase.id, 'rejected')}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Rechazar
+                            </Button>
+                            {legalCase.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStatusUpdate(legalCase.id, 'in_review')}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Enviar a Revisión
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                      {['OWNER', 'BROKER'].includes(user?.role || '') &&
+                        legalCase.requesterId === user?.id &&
+                        ['pending', 'in_review'].includes(legalCase.status) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingCase(legalCase);
+                              setFormData({
+                                contractId: legalCase.contractId,
+                                caseType: legalCase.caseType,
+                                description: legalCase.description,
+                                amount: legalCase.amount,
+                                documents: legalCase.documents || [],
+                                evidence: legalCase.evidence || [],
+                                priority: legalCase.priority,
+                                estimatedDuration: legalCase.estimatedDuration,
+                                legalBasis: legalCase.legalBasis,
+                                requestedActions: legalCase.requestedActions,
+                                notes: legalCase.notes || '',
+                              });
+                              setShowForm(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                        )}
 
                       <Button size="sm" variant="outline">
                         <Eye className="h-4 w-4 mr-1" />

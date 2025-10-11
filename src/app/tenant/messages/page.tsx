@@ -35,7 +35,7 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface Message {
   id: string;
@@ -87,7 +87,8 @@ export default function TenantMessagesPage() {
   const [filter, setFilter] = useState<string>('all');
   const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
     const isNewMessage = searchParams.get('new') === 'true';
 
@@ -106,13 +107,15 @@ export default function TenantMessagesPage() {
               name: recipient.name,
               role: recipient.type === 'provider' ? 'provider' : recipient.role || 'unknown',
             },
-            property: recipient.propertyId ? {
-              id: recipient.propertyId,
-              title: recipient.propertyTitle || 'Servicio Profesional',
-            } : {
-              id: 'service_1',
-              title: 'Servicio Profesional',
-            },
+            property: recipient.propertyId
+              ? {
+                  id: recipient.propertyId,
+                  title: recipient.propertyTitle || 'Servicio Profesional',
+                }
+              : {
+                  id: 'service_1',
+                  title: 'Servicio Profesional',
+                },
             lastMessage: {
               content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
               timestamp: new Date().toLocaleString('es-CL'),
@@ -133,7 +136,6 @@ export default function TenantMessagesPage() {
           const url = new URL(window.location.href);
           url.searchParams.delete('new');
           window.history.replaceState({}, '', url.toString());
-
         } catch (error) {
           logger.error('Error parsing recipient data:', { error });
         }
@@ -668,8 +670,8 @@ export default function TenantMessagesPage() {
                           placeholder="Escribe un mensaje..."
                           className="flex-1"
                           value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                          onChange={e => setNewMessage(e.target.value)}
+                          onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                         />
                         <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                           <Send className="w-4 h-4 mr-2" />

@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface Visit {
   id: string;

@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { User } from '@/types';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface UseUserStateOptions {
   requireAuth?: boolean;

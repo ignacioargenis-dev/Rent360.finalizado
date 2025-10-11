@@ -36,7 +36,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger';
 
 interface PaymentReport {

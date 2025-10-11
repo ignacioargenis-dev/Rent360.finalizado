@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
 import { User, LogOut, LogIn, X, Menu, Building } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

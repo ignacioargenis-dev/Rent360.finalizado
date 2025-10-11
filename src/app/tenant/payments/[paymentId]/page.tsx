@@ -22,7 +22,7 @@ import {
   Clock,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface PaymentDetail {
   id: string;

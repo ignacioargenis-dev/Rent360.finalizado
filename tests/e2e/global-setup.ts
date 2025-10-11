@@ -16,7 +16,7 @@ async function globalSetup(config: FullConfig) {
         name: 'Test Broker',
         role: 'BROKER',
         isActive: true,
-        emailVerified: true
+        emailVerified: true,
       },
       {
         id: 'test_user_tenant',
@@ -25,7 +25,7 @@ async function globalSetup(config: FullConfig) {
         name: 'Test Tenant',
         role: 'TENANT',
         isActive: true,
-        emailVerified: true
+        emailVerified: true,
       },
       {
         id: 'test_user_owner',
@@ -34,8 +34,8 @@ async function globalSetup(config: FullConfig) {
         name: 'Test Owner',
         role: 'OWNER',
         isActive: true,
-        emailVerified: true
-      }
+        emailVerified: true,
+      },
     ];
 
     // Note: In a real setup, you would use the actual database operations
@@ -55,12 +55,11 @@ async function globalSetup(config: FullConfig) {
         bedrooms: 2,
         bathrooms: 1,
         status: 'AVAILABLE',
-        type: 'APARTMENT'
-      }
+        type: 'APARTMENT',
+      },
     ];
 
     console.log('Test properties created:', testProperties.length);
-
   } catch (error) {
     console.error('Error in global setup:', error);
     throw error;

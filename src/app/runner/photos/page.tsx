@@ -47,7 +47,7 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface PhotoReport {
   id: string;

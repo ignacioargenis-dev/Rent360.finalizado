@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { aiChatbotService } from '@/lib/ai-chatbot-service';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger';
 
 interface SpecializedAgent {

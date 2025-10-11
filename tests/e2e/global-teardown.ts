@@ -9,7 +9,6 @@ async function globalTeardown() {
     // Note: In a real scenario, you would clean up the test data
     // For now, this is just a placeholder
     console.log('Test data cleaned up successfully');
-
   } catch (error) {
     console.error('Error in global teardown:', error);
     // Don't throw error in teardown to avoid masking test failures

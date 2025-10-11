@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: PrismaClient | undefined;
 };
 
 // Validar que DATABASE_URL esté configurada
@@ -11,7 +11,8 @@ if (!process.env.DATABASE_URL) {
 
 // Configuración optimizada para producción
 const prismaConfig: any = {
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+  log:
+    process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
   datasources: {
     db: {
       url: process.env.DATABASE_URL,
@@ -33,9 +34,7 @@ const createPrismaClient = () => {
   return new PrismaClient(prismaConfig);
 };
 
-export const db =
-  globalForPrisma.prisma ??
-  createPrismaClient();
+export const db = globalForPrisma.prisma ?? createPrismaClient();
 
 // Función para verificar y reconectar la base de datos
 export async function ensureDatabaseConnection(): Promise<boolean> {
@@ -74,7 +73,7 @@ export async function checkDatabaseHealth(): Promise<{ status: string; responseT
 }
 
 if (process.env.NODE_ENV !== 'production') {
-globalForPrisma.prisma = db;
+  globalForPrisma.prisma = db;
 }
 
 // Note: process.on is not available in Edge Runtime, so we skip this in production builds

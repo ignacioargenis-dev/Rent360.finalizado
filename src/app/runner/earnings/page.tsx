@@ -32,7 +32,7 @@ import {
   Filter,
   Eye,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface EarningsData {
   totalEarnings: number;

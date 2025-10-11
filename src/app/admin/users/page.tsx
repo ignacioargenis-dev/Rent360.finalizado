@@ -33,7 +33,7 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();

@@ -1,6 +1,5 @@
 'use client';
 
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,11 +20,11 @@ import {
   DollarSign,
   Globe,
   Shield,
-  Zap
+  Zap,
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
 
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface PaymentProvider {
   name: string;
@@ -70,14 +69,14 @@ export default function PaymentsAdminPage() {
         digitalWallet: true,
         recurringPayments: true,
         refunds: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         apiSecret: '',
         webhookSecret: '',
-        environment: 'test'
-      }
+        environment: 'test',
+      },
     },
     {
       name: 'PayPal',
@@ -90,13 +89,13 @@ export default function PaymentsAdminPage() {
         digitalWallet: true,
         recurringPayments: true,
         refunds: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         apiSecret: '',
-        environment: 'sandbox'
-      }
+        environment: 'sandbox',
+      },
     },
     {
       name: 'Khipu',
@@ -109,14 +108,14 @@ export default function PaymentsAdminPage() {
         digitalWallet: false,
         recurringPayments: false,
         refunds: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         apiSecret: '',
         receiverId: '',
-        environment: 'test'
-      }
+        environment: 'test',
+      },
     },
     {
       name: 'WebPay',
@@ -129,14 +128,14 @@ export default function PaymentsAdminPage() {
         digitalWallet: false,
         recurringPayments: false,
         refunds: true,
-        webhooks: true
+        webhooks: true,
       },
       config: {
         apiKey: '',
         commerceCode: '',
-        environment: 'integration'
-      }
-    }
+        environment: 'integration',
+      },
+    },
   ];
 
   useEffect(() => {
@@ -155,51 +154,56 @@ export default function PaymentsAdminPage() {
           ...provider,
           enabled: !!process.env[`${envPrefix}_API_KEY`],
           configured: !!(
-            process.env[`${envPrefix}_API_KEY`] &&
-            process.env[`${envPrefix}_API_SECRET`]
+            process.env[`${envPrefix}_API_KEY`] && process.env[`${envPrefix}_API_SECRET`]
           ),
           config: {
             ...provider.config,
             apiKey: process.env[`${envPrefix}_API_KEY`] || '',
             apiSecret: process.env[`${envPrefix}_API_SECRET`] || '',
             webhookSecret: process.env[`${envPrefix}_WEBHOOK_SECRET`] || '',
-            environment: process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test',
+            environment:
+              process.env[`${envPrefix}_ENVIRONMENT`] || provider.config.environment || 'test',
             receiverId: process.env[`${envPrefix}_RECEIVER_ID`] || '',
-            commerceCode: process.env[`${envPrefix}_COMMERCE_CODE`] || ''
-          }
+            commerceCode: process.env[`${envPrefix}_COMMERCE_CODE`] || '',
+          },
         };
       });
 
       setProviders(loadedProviders);
     } catch (err) {
-      error('Error al cargar configuración', 'No se pudo cargar la configuración de proveedores de pago');
+      error(
+        'Error al cargar configuración',
+        'No se pudo cargar la configuración de proveedores de pago'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const updateProviderConfig = (providerName: string, field: string, value: any) => {
-    setProviders(prev => prev.map(provider =>
-      provider.name === providerName
-        ? {
-            ...provider,
-            config: { ...provider.config, [field]: value },
-            configured: !!(
-              provider.config.apiKey && 
-              provider.config.apiSecret &&
-              (provider.name === 'WebPay' ? provider.config.commerceCode : true)
-            )
-          }
-        : provider
-    ));
+    setProviders(prev =>
+      prev.map(provider =>
+        provider.name === providerName
+          ? {
+              ...provider,
+              config: { ...provider.config, [field]: value },
+              configured: !!(
+                provider.config.apiKey &&
+                provider.config.apiSecret &&
+                (provider.name === 'WebPay' ? provider.config.commerceCode : true)
+              ),
+            }
+          : provider
+      )
+    );
   };
 
   const toggleProvider = (providerName: string) => {
-    setProviders(prev => prev.map(provider =>
-      provider.name === providerName
-        ? { ...provider, enabled: !provider.enabled }
-        : provider
-    ));
+    setProviders(prev =>
+      prev.map(provider =>
+        provider.name === providerName ? { ...provider, enabled: !provider.enabled } : provider
+      )
+    );
   };
 
   const saveConfiguration = async () => {
@@ -212,30 +216,33 @@ export default function PaymentsAdminPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          settings: providers.map(provider => ({
-            key: `${provider.name.toUpperCase()}_API_KEY`,
-            value: provider.config.apiKey || '',
-            category: 'payment',
-            isEncrypted: true,
-            isPublic: false
-          })).concat(
-            providers.map(provider => ({
-              key: `${provider.name.toUpperCase()}_API_SECRET`,
-              value: provider.config.apiSecret || '',
+          settings: providers
+            .map(provider => ({
+              key: `${provider.name.toUpperCase()}_API_KEY`,
+              value: provider.config.apiKey || '',
               category: 'payment',
               isEncrypted: true,
-              isPublic: false
+              isPublic: false,
             }))
-          ).concat(
-            providers.map(provider => ({
-              key: `${provider.name.toUpperCase()}_ENVIRONMENT`,
-              value: provider.config.environment || 'test',
-              category: 'payment',
-              isEncrypted: false,
-              isPublic: false
-            }))
-          )
-        })
+            .concat(
+              providers.map(provider => ({
+                key: `${provider.name.toUpperCase()}_API_SECRET`,
+                value: provider.config.apiSecret || '',
+                category: 'payment',
+                isEncrypted: true,
+                isPublic: false,
+              }))
+            )
+            .concat(
+              providers.map(provider => ({
+                key: `${provider.name.toUpperCase()}_ENVIRONMENT`,
+                value: provider.config.environment || 'test',
+                category: 'payment',
+                isEncrypted: false,
+                isPublic: false,
+              }))
+            ),
+        }),
       });
 
       if (!response.ok) {
@@ -244,7 +251,10 @@ export default function PaymentsAdminPage() {
 
       success('Configuración guardada', 'Los proveedores de pago se han configurado correctamente');
     } catch (err) {
-      error('Error guardando configuración', 'No se pudo guardar la configuración de proveedores de pago');
+      error(
+        'Error guardando configuración',
+        'No se pudo guardar la configuración de proveedores de pago'
+      );
     } finally {
       setSaving(false);
     }
@@ -253,7 +263,7 @@ export default function PaymentsAdminPage() {
   const testProvider = async (providerName: string) => {
     try {
       const response = await fetch(`/api/admin/payments/test/${providerName.toLowerCase()}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (response.ok) {
@@ -284,11 +294,23 @@ export default function PaymentsAdminPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'international':
-        return <Badge variant="outline" className="text-blue-600">Internacional</Badge>;
+        return (
+          <Badge variant="outline" className="text-blue-600">
+            Internacional
+          </Badge>
+        );
       case 'chilean':
-        return <Badge variant="outline" className="text-green-600">Chileno</Badge>;
+        return (
+          <Badge variant="outline" className="text-green-600">
+            Chileno
+          </Badge>
+        );
       case 'crypto':
-        return <Badge variant="outline" className="text-purple-600">Cripto</Badge>;
+        return (
+          <Badge variant="outline" className="text-purple-600">
+            Cripto
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -303,7 +325,10 @@ export default function PaymentsAdminPage() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Configuración de Pagos" subtitle="Administra proveedores de pago y configuraciones">
+    <UnifiedDashboardLayout
+      title="Configuración de Pagos"
+      subtitle="Administra proveedores de pago y configuraciones"
+    >
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -319,13 +344,13 @@ export default function PaymentsAdminPage() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Las credenciales de los proveedores de pago se almacenan de forma encriptada en la base de datos.
-            Solo los administradores pueden ver y modificar estas configuraciones.
+            Las credenciales de los proveedores de pago se almacenan de forma encriptada en la base
+            de datos. Solo los administradores pueden ver y modificar estas configuraciones.
           </AlertDescription>
         </Alert>
 
         <div className="grid gap-6">
-          {providers.map((provider) => (
+          {providers.map(provider => (
             <Card key={provider.name} className="overflow-hidden">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -376,7 +401,7 @@ export default function PaymentsAdminPage() {
                       id={`${provider.name}-apiKey`}
                       type="password"
                       value={provider.config.apiKey || ''}
-                      onChange={(e) => updateProviderConfig(provider.name, 'apiKey', e.target.value)}
+                      onChange={e => updateProviderConfig(provider.name, 'apiKey', e.target.value)}
                       placeholder="Ingresa tu API Key"
                     />
                   </div>
@@ -387,7 +412,9 @@ export default function PaymentsAdminPage() {
                       id={`${provider.name}-apiSecret`}
                       type="password"
                       value={provider.config.apiSecret || ''}
-                      onChange={(e) => updateProviderConfig(provider.name, 'apiSecret', e.target.value)}
+                      onChange={e =>
+                        updateProviderConfig(provider.name, 'apiSecret', e.target.value)
+                      }
                       placeholder="Ingresa tu API Secret"
                     />
                   </div>
@@ -399,7 +426,9 @@ export default function PaymentsAdminPage() {
                         id={`${provider.name}-webhookSecret`}
                         type="password"
                         value={provider.config.webhookSecret || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'webhookSecret', e.target.value)}
+                        onChange={e =>
+                          updateProviderConfig(provider.name, 'webhookSecret', e.target.value)
+                        }
                         placeholder="Ingresa tu Webhook Secret"
                       />
                     </div>
@@ -411,7 +440,9 @@ export default function PaymentsAdminPage() {
                       <Input
                         id={`${provider.name}-receiverId`}
                         value={provider.config.receiverId || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'receiverId', e.target.value)}
+                        onChange={e =>
+                          updateProviderConfig(provider.name, 'receiverId', e.target.value)
+                        }
                         placeholder="Ingresa tu Receiver ID"
                       />
                     </div>
@@ -423,7 +454,9 @@ export default function PaymentsAdminPage() {
                       <Input
                         id={`${provider.name}-commerceCode`}
                         value={provider.config.commerceCode || ''}
-                        onChange={(e) => updateProviderConfig(provider.name, 'commerceCode', e.target.value)}
+                        onChange={e =>
+                          updateProviderConfig(provider.name, 'commerceCode', e.target.value)
+                        }
                         placeholder="Ingresa tu Commerce Code"
                       />
                     </div>
@@ -434,7 +467,9 @@ export default function PaymentsAdminPage() {
                     <select
                       id={`${provider.name}-environment`}
                       value={provider.config.environment || 'test'}
-                      onChange={(e) => updateProviderConfig(provider.name, 'environment', e.target.value)}
+                      onChange={e =>
+                        updateProviderConfig(provider.name, 'environment', e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="test">Pruebas</option>
@@ -470,6 +505,3 @@ export default function PaymentsAdminPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-

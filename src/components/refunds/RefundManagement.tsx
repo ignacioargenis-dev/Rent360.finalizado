@@ -7,28 +7,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  DollarSign, 
-  FileText, 
-  Building, 
-  User, 
-  Calendar, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  DollarSign,
+  FileText,
+  Building,
+  User,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   XCircle,
   Plus,
   Edit,
   Eye,
   Loader2,
   Download,
-  Send
+  Send,
 } from 'lucide-react';
 import { useToast } from '@/components/notifications/NotificationSystem';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface Refund {
   id: string;
@@ -96,7 +102,7 @@ const STATUS_COLORS = {
   rejected: 'bg-red-100 text-red-800',
   processing: 'bg-purple-100 text-purple-800',
   completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800'
+  cancelled: 'bg-gray-100 text-gray-800',
 };
 
 const STATUS_LABELS = {
@@ -105,7 +111,7 @@ const STATUS_LABELS = {
   rejected: 'Rechazado',
   processing: 'Procesando',
   completed: 'Completado',
-  cancelled: 'Cancelado'
+  cancelled: 'Cancelado',
 };
 
 export default function RefundManagement() {
@@ -123,14 +129,14 @@ export default function RefundManagement() {
       accountNumber: '',
       accountType: 'checking',
       bankName: '',
-      rut: ''
-    }
+      rut: '',
+    },
   });
   const [activeTab, setActiveTab] = useState('all');
   const [contracts, setContracts] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { user } = useAuth();
   const { success, error } = useToast();
 
@@ -145,10 +151,12 @@ export default function RefundManagement() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filterStatus) params.append('status', filterStatus);
-      
+      if (filterStatus) {
+        params.append('status', filterStatus);
+      }
+
       const response = await fetch(`/api/refunds?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('Error obteniendo reembolsos');
       }
@@ -156,7 +164,10 @@ export default function RefundManagement() {
       const data = await response.json();
       setRefunds(data.data || []);
     } catch (err) {
-      error('Error', 'Error cargando reembolsos: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error cargando reembolsos: ' + (err instanceof Error ? err.message : String(err))
+      );
     } finally {
       setLoading(false);
     }
@@ -170,7 +181,9 @@ export default function RefundManagement() {
         setContracts(data.data || []);
       }
     } catch (err) {
-      logger.error('Error obteniendo contratos:', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Error obteniendo contratos:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
@@ -184,7 +197,7 @@ export default function RefundManagement() {
       const response = await fetch('/api/refunds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -204,12 +217,15 @@ export default function RefundManagement() {
           accountNumber: '',
           accountType: 'checking',
           bankName: '',
-          rut: ''
-        }
+          rut: '',
+        },
       });
       await fetchRefunds();
     } catch (err) {
-      error('Error', 'Error creando solicitud: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error creando solicitud: ' + (err instanceof Error ? err.message : String(err))
+      );
     }
   };
 
@@ -221,8 +237,8 @@ export default function RefundManagement() {
         body: JSON.stringify({
           refundId,
           status: newStatus,
-          adminNotes: notes
-        })
+          adminNotes: notes,
+        }),
       });
 
       if (!response.ok) {
@@ -232,12 +248,17 @@ export default function RefundManagement() {
       success('Éxito', 'Estado de reembolso actualizado exitosamente');
       await fetchRefunds();
     } catch (err) {
-      error('Error', 'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err)));
+      error(
+        'Error',
+        'Error actualizando estado: ' + (err instanceof Error ? err.message : String(err))
+      );
     }
   };
 
   const filteredRefunds = refunds.filter(refund => {
-    if (activeTab !== 'all' && refund.status !== activeTab) return false;
+    if (activeTab !== 'all' && refund.status !== activeTab) {
+      return false;
+    }
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -251,13 +272,20 @@ export default function RefundManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <XCircle className="h-4 w-4" />;
-      case 'processing': return <Loader2 className="h-4 w-4 animate-spin" />;
-      case 'completed': return <CheckCircle className="h-4 w-4" />;
-      case 'cancelled': return <XCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'approved':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4" />;
+      case 'processing':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <AlertCircle className="h-4 w-4" />;
     }
   };
 
@@ -278,9 +306,7 @@ export default function RefundManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Gestión de Reembolsos</h1>
-          <p className="text-gray-600">
-            Gestiona las solicitudes de reembolso de garantías
-          </p>
+          <p className="text-gray-600">Gestiona las solicitudes de reembolso de garantías</p>
         </div>
         {user?.role === 'TENANT' && (
           <Button onClick={() => setShowForm(true)} disabled={showForm}>
@@ -305,13 +331,13 @@ export default function RefundManagement() {
                 <Label htmlFor="contractId">Contrato</Label>
                 <Select
                   value={formData.contractId}
-                  onValueChange={(value) => setFormData({ ...formData, contractId: value })}
+                  onValueChange={value => setFormData({ ...formData, contractId: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un contrato" />
                   </SelectTrigger>
                   <SelectContent>
-                    {contracts.map((contract) => (
+                    {contracts.map(contract => (
                       <SelectItem key={contract.id} value={contract.id}>
                         {contract.property.address} - {contract.property.city}
                       </SelectItem>
@@ -325,7 +351,9 @@ export default function RefundManagement() {
                   id="amount"
                   type="number"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  onChange={e =>
+                    setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                  }
                   placeholder="0"
                 />
               </div>
@@ -335,7 +363,7 @@ export default function RefundManagement() {
               <Label htmlFor="reason">Motivo del Reembolso</Label>
               <Select
                 value={formData.reason}
-                onValueChange={(value) => setFormData({ ...formData, reason: value })}
+                onValueChange={value => setFormData({ ...formData, reason: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un motivo" />
@@ -354,7 +382,7 @@ export default function RefundManagement() {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe el motivo del reembolso..."
                 rows={3}
               />
@@ -366,10 +394,12 @@ export default function RefundManagement() {
                 <Input
                   id="bankName"
                   value={formData.bankAccount.bankName}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    bankAccount: { ...formData.bankAccount, bankName: e.target.value }
-                  })}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      bankAccount: { ...formData.bankAccount, bankName: e.target.value },
+                    })
+                  }
                   placeholder="Nombre del banco"
                 />
               </div>
@@ -377,10 +407,12 @@ export default function RefundManagement() {
                 <Label htmlFor="accountType">Tipo de Cuenta</Label>
                 <Select
                   value={formData.bankAccount.accountType}
-                  onValueChange={(value: 'checking' | 'savings') => setFormData({
-                    ...formData,
-                    bankAccount: { ...formData.bankAccount, accountType: value }
-                  })}
+                  onValueChange={(value: 'checking' | 'savings') =>
+                    setFormData({
+                      ...formData,
+                      bankAccount: { ...formData.bankAccount, accountType: value },
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -399,10 +431,12 @@ export default function RefundManagement() {
                 <Input
                   id="accountNumber"
                   value={formData.bankAccount.accountNumber}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    bankAccount: { ...formData.bankAccount, accountNumber: e.target.value }
-                  })}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      bankAccount: { ...formData.bankAccount, accountNumber: e.target.value },
+                    })
+                  }
                   placeholder="Número de cuenta"
                 />
               </div>
@@ -411,10 +445,12 @@ export default function RefundManagement() {
                 <Input
                   id="rut"
                   value={formData.bankAccount.rut}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    bankAccount: { ...formData.bankAccount, rut: e.target.value }
-                  })}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      bankAccount: { ...formData.bankAccount, rut: e.target.value },
+                    })
+                  }
                   placeholder="RUT del titular"
                 />
               </div>
@@ -439,7 +475,7 @@ export default function RefundManagement() {
           <Input
             placeholder="Buscar por dirección, inquilino o motivo..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -479,7 +515,7 @@ export default function RefundManagement() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {filteredRefunds.map((refund) => (
+              {filteredRefunds.map(refund => (
                 <Card key={refund.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -528,16 +564,21 @@ export default function RefundManagement() {
 
                     {refund.bankAccount && (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <Label className="text-sm font-medium text-gray-600">Información Bancaria</Label>
+                        <Label className="text-sm font-medium text-gray-600">
+                          Información Bancaria
+                        </Label>
                         <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
                           <div>
-                            <span className="font-medium">Banco:</span> {refund.bankAccount.bankName}
+                            <span className="font-medium">Banco:</span>{' '}
+                            {refund.bankAccount.bankName}
                           </div>
                           <div>
-                            <span className="font-medium">Tipo:</span> {refund.bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorro'}
+                            <span className="font-medium">Tipo:</span>{' '}
+                            {refund.bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorro'}
                           </div>
                           <div>
-                            <span className="font-medium">Cuenta:</span> {refund.bankAccount.accountNumber}
+                            <span className="font-medium">Cuenta:</span>{' '}
+                            {refund.bankAccount.accountNumber}
                           </div>
                           <div>
                             <span className="font-medium">RUT:</span> {refund.bankAccount.rut}
@@ -572,7 +613,7 @@ export default function RefundManagement() {
                           </Button>
                         </>
                       )}
-                      
+
                       {user?.role === 'TENANT' && refund.status === 'pending' && (
                         <Button
                           size="sm"
@@ -589,8 +630,8 @@ export default function RefundManagement() {
                                 accountNumber: '',
                                 accountType: 'checking',
                                 bankName: '',
-                                rut: ''
-                              }
+                                rut: '',
+                              },
                             });
                             setShowForm(true);
                           }}

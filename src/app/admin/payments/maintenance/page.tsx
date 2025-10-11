@@ -32,7 +32,7 @@ import {
   Filter,
   Search,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface MaintenancePayout {
   id: string;

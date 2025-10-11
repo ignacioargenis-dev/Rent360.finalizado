@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,

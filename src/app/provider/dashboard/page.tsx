@@ -36,7 +36,7 @@ import {
   TrendingUp,
   MessageSquare,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface ServiceRequest {

@@ -62,7 +62,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger';
 
 interface Property {

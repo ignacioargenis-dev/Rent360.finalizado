@@ -32,7 +32,7 @@ describe('PayoutService', () => {
       paymentProviderFee: 500,
       requireKYC: true,
       requireBankVerification: true,
-      fraudDetection: true
+      fraudDetection: true,
     };
 
     // Mock logger methods
@@ -77,10 +77,12 @@ describe('PayoutService', () => {
         accountType: 'checking',
         accountNumber: '123456789',
         holderName: 'Juan Pérez',
-        isVerified: true
+        isVerified: true,
       };
 
-      (db.bankAccount.findFirst as jest.MockedFunction<typeof db.bankAccount.findFirst>).mockResolvedValue(mockBankAccount);
+      (
+        db.bankAccount.findFirst as jest.MockedFunction<typeof db.bankAccount.findFirst>
+      ).mockResolvedValue(mockBankAccount);
 
       // This would test the bank account validation logic
       expect(mockBankAccount.isVerified).toBe(true);
@@ -98,7 +100,7 @@ describe('PayoutService', () => {
         accountType: 'checking',
         accountNumber: '123456789',
         holderName: 'Juan Pérez',
-        isVerified: false
+        isVerified: false,
       };
 
       expect(mockBankAccount.isVerified).toBe(false);
@@ -135,9 +137,9 @@ describe('PayoutService', () => {
 
   describe('Error Handling', () => {
     it('should handle database connection errors', async () => {
-      (db.bankAccount.findFirst as jest.MockedFunction<typeof db.bankAccount.findFirst>).mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      (
+        db.bankAccount.findFirst as jest.MockedFunction<typeof db.bankAccount.findFirst>
+      ).mockRejectedValue(new Error('Database connection failed'));
 
       // Test that errors are properly logged
       const mockError = new Error('Database connection failed');
@@ -186,7 +188,7 @@ describe('PayoutService', () => {
         riskScore: 25,
         requiresApproval: false,
         blockTransaction: false,
-        recommendations: ['Transaction appears normal']
+        recommendations: ['Transaction appears normal'],
       };
 
       expect(fraudResult.blockTransaction).toBe(false);
@@ -204,8 +206,8 @@ describe('PayoutService', () => {
         premiumPropertyThreshold: 1000000,
         visitTypeMultipliers: {
           regular: 1.0,
-          premium: 1.5
-        }
+          premium: 1.5,
+        },
       };
 
       expect(runnerConfig.baseRatePerMinute).toBeGreaterThan(0);
@@ -240,7 +242,7 @@ describe('PayoutService', () => {
       const queryOptimization = {
         usesIndexes: true,
         hasLimits: true,
-        avoidsNPlusOne: true
+        avoidsNPlusOne: true,
       };
 
       expect(queryOptimization.usesIndexes).toBe(true);

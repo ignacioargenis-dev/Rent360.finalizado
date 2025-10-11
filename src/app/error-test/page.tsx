@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 export default function ErrorTestPage() {
   const { user, loading } = useAuth();

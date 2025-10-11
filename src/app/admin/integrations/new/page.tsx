@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, TestTube, Zap, Settings, Key, Webhook, Shield } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger';
 
 export default function NewIntegrationPage() {

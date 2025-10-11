@@ -42,7 +42,7 @@ import {
 import DocumentUpload from '@/components/documents/DocumentUpload';
 import DigitalSignature from '@/components/documents/DigitalSignature';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 import {
   Dialog,
   DialogContent,
