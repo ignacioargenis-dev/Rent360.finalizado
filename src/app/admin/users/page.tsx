@@ -508,8 +508,12 @@ export default function AdminUsersPage() {
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
+                <label htmlFor="search-users" className="sr-only">
+                  Buscar usuarios
+                </label>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
+                  id="search-users"
                   placeholder="Buscar usuarios..."
                   className="pl-10"
                   value={searchQuery}
@@ -517,31 +521,41 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los roles</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="tenant">Inquilino</SelectItem>
-                  <SelectItem value="owner">Propietario</SelectItem>
-                  <SelectItem value="broker">Corredor</SelectItem>
-                  <SelectItem value="runner">Runner</SelectItem>
-                  <SelectItem value="support">Soporte</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label htmlFor="role-filter" className="sr-only">
+                  Filtrar por rol
+                </label>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger id="role-filter" className="w-40">
+                    <SelectValue placeholder="Rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los roles</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="tenant">Inquilino</SelectItem>
+                    <SelectItem value="owner">Propietario</SelectItem>
+                    <SelectItem value="broker">Corredor</SelectItem>
+                    <SelectItem value="runner">Runner</SelectItem>
+                    <SelectItem value="support">Soporte</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Inactivos</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label htmlFor="status-filter" className="sr-only">
+                  Filtrar por estado
+                </label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status-filter" className="w-40">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="active">Activos</SelectItem>
+                    <SelectItem value="inactive">Inactivos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <Button
                 variant="outline"
