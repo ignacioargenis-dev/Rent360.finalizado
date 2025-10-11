@@ -619,7 +619,7 @@ export default function EnhancedAdminSettingsPage() {
 
   useEffect(() => {
     // Solo cargar datos si el usuario está autenticado
-    if (!authLoading && user && user.role === 'ADMIN') {
+    if (!authLoading && user && user.role === 'admin') {
       // Load user data
       const loadUserData = async () => {
         try {
@@ -3967,7 +3967,7 @@ El equipo de Rent360`,
   }
 
   // Verificar si el usuario tiene permisos de admin
-  if (user.role !== 'ADMIN') {
+  if (user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

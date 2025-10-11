@@ -72,7 +72,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     // Solo hacer la llamada si el usuario está autenticado y cargado
-    if (!authLoading && user && user.role === 'ADMIN') {
+    if (!authLoading && user && user.role === 'admin') {
       fetchUsers();
     }
   }, [roleFilter, statusFilter, searchQuery, user, authLoading]);
@@ -366,7 +366,7 @@ export default function AdminUsersPage() {
   }
 
   // Verificar si el usuario tiene permisos de admin
-  if (user.role !== 'ADMIN') {
+  if (user.role !== 'admin') {
     return (
       <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Acceso restringido">
         <div className="flex items-center justify-center h-64">
