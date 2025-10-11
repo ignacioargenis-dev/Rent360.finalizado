@@ -7,103 +7,53 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
-import {  
-  User, 
-  LogOut, 
-  LogIn, 
-  X, 
-  Menu,
-  Building
-} from 'lucide-react';
-function convertDatesToObjects(user: any): UserType {
-  return {
-    ...user,
-    createdAt: new Date(user.createdAt),
-    updatedAt: new Date(user.updatedAt),
-  };
-}
+import { User, LogOut, LogIn, X, Menu, Building } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function Header() {
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const [user, setUser] = useState<UserType | null>(null);
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
+  // Save user role to localStorage when user changes
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const userWithDates = convertDatesToObjects(data.user);
-        setUser(userWithDates);
-        // Guardar rol en localStorage para navegación
-        localStorage.setItem('user-role', userWithDates.role.toLowerCase());
-      } else if (response.status === 401) {
-        // User not authenticated, this is normal
-        setUser(null);
-        localStorage.removeItem('user-role');
-      } else {
-        setError('Error checking authentication status');
-        setUser(null);
-        localStorage.removeItem('user-role');
-      }
-    } catch (error) {
-      logger.error('Error checking auth:', { error: error instanceof Error ? error.message : String(error) });
-      setError('Network error checking authentication');
-      setUser(null);
+    if (user?.role) {
+      localStorage.setItem('user-role', user.role.toLowerCase());
+    } else {
       localStorage.removeItem('user-role');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        setUser(null);
-        // Clear any stored user data
-        localStorage.removeItem('user');
-        router.push('/');
-      } else {
-        logger.error('Logout failed');
-      }
+      await logout();
+      // Clear any stored user data
+      localStorage.removeItem('user');
+      localStorage.removeItem('user-role');
+      router.push('/');
     } catch (error) {
-      logger.error('Error logging out:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error logging out:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
   const getDashboardUrl = (role: string) => {
     switch (role) {
-      case 'admin': return '/admin/dashboard';
-      case 'tenant': return '/tenant/dashboard';
-      case 'owner': return '/owner/dashboard';
-      case 'broker': return '/broker/dashboard';
-      case 'runner': return '/runner/dashboard';
-      case 'support': return '/support/dashboard';
-      default: return '/';
+      case 'admin':
+        return '/admin/dashboard';
+      case 'tenant':
+        return '/tenant/dashboard';
+      case 'owner':
+        return '/owner/dashboard';
+      case 'broker':
+        return '/broker/dashboard';
+      case 'runner':
+        return '/runner/dashboard';
+      case 'support':
+        return '/support/dashboard';
+      default:
+        return '/';
     }
   };
 
@@ -126,23 +76,27 @@ export default function Header() {
             <Link href="/" className="text-gray-700 hover:text-emerald-600 transition-colors">
               Inicio
             </Link>
-            <Link href="/properties/search" className="text-gray-700 hover:text-emerald-600 transition-colors">
+            <Link
+              href="/properties/search"
+              className="text-gray-700 hover:text-emerald-600 transition-colors"
+            >
               Buscar Propiedades
             </Link>
             <Link href="/about" className="text-gray-700 hover:text-emerald-600 transition-colors">
               Nosotros
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-emerald-600 transition-colors">
+            <Link
+              href="/contact"
+              className="text-gray-700 hover:text-emerald-600 transition-colors"
+            >
               Contacto
             </Link>
           </nav>
 
           {/* Auth Buttons - Always visible */}
           <div className="flex items-center space-x-2">
-            {isLoading ? (
+            {loading ? (
               <div className="w-20 h-10 bg-gray-200 rounded animate-pulse"></div>
-            ) : error ? (
-              <div className="text-sm text-red-600">Error de conexión</div>
             ) : user ? (
               <>
                 <Button asChild variant="outline" size="sm" className="hidden sm:flex">
@@ -151,40 +105,38 @@ export default function Header() {
                     Mi Panel
                   </Link>
                 </Button>
-                <Button onClick={handleLogout} variant="outline" size="sm" className="hidden sm:flex">
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:flex"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Cerrar Sesión
                 </Button>
               </>
             ) : (
               <>
-                <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-700" size="sm">
+                <Button
+                  asChild
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  size="sm"
+                >
                   <Link href="/auth/login">
                     <LogIn className="w-4 h-4 mr-2" />
                     Iniciar Sesión
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="hidden sm:flex">
-                  <Link href="/auth/register">
-                    Registrarse
-                  </Link>
+                  <Link href="/auth/register">Registrarse</Link>
                 </Button>
               </>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={toggleMenu}
-          >
-            {isMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+          <Button variant="ghost" size="sm" className="md:hidden" onClick={toggleMenu}>
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
 
@@ -192,39 +144,37 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="text-gray-700 hover:text-emerald-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Inicio
               </Link>
-              <Link 
-                href="/properties/search" 
+              <Link
+                href="/properties/search"
                 className="text-gray-700 hover:text-emerald-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Buscar Propiedades
               </Link>
-              <Link 
-                href="/about" 
+              <Link
+                href="/about"
                 className="text-gray-700 hover:text-emerald-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Nosotros
               </Link>
-              <Link 
-                href="/contact" 
+              <Link
+                href="/contact"
                 className="text-gray-700 hover:text-emerald-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contacto
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                {isLoading ? (
+                {loading ? (
                   <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
-                ) : error ? (
-                  <div className="text-sm text-red-600 text-center py-2">Error de conexión</div>
                 ) : user ? (
                   <>
                     <Button asChild variant="outline" className="w-full">
@@ -233,16 +183,24 @@ export default function Header() {
                         Mi Panel
                       </Link>
                     </Button>
-                    <Button onClick={() => {
- handleLogout(); setIsMenuOpen(false); 
-}} variant="outline" className="w-full">
+                    <Button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
                       <LogOut className="w-4 h-4 mr-2" />
                       Cerrar Sesión
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button asChild className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
+                    <Button
+                      asChild
+                      className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
                       <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
                         Registrarse
                       </Link>
