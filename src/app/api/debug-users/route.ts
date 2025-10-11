@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { getUsersOptimized } from '@/lib/db-optimizer';
+import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
@@ -126,19 +127,20 @@ export async function GET(request: NextRequest) {
       where: JSON.stringify(where),
     });
 
-    // Obtener usuarios
+    // Obtener usuarios y total
     let users;
     let total;
     try {
-      const result = await getUsersOptimized({
+      // Obtener total de usuarios que coinciden con los filtros
+      total = await db.user.count({ where });
+
+      // Obtener usuarios paginados
+      users = await getUsersOptimized({
         where,
-        page,
-        limit,
+        skip: (page - 1) * limit,
+        take: limit,
         orderBy: { createdAt: 'desc' },
       });
-
-      users = result.users;
-      total = result.total;
 
       logger.info('🔍 Debug Users: Usuarios obtenidos exitosamente', {
         context: 'debug-users',
@@ -146,6 +148,8 @@ export async function GET(request: NextRequest) {
         totalCount: total,
         page,
         limit,
+        skip: (page - 1) * limit,
+        take: limit,
       });
     } catch (error) {
       const dbError = error instanceof Error ? error.message : String(error);
