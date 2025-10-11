@@ -3,6 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
+import { useUserState } from '@/hooks/useUserState';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import {
   Users,
   CreditCard,
   FileText,
+  XCircle,
   Globe,
   Smartphone,
   Key,
@@ -314,7 +316,7 @@ interface SystemSettings {
 }
 
 export default function EnhancedAdminSettingsPage() {
-  const [user, setUser] = useState<UserType | null>(null);
+  const { user, loading: authLoading, error: authError } = useUserState();
 
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
@@ -525,7 +527,9 @@ export default function EnhancedAdminSettingsPage() {
   // Función para cargar settings desde la API
   const loadSettings = async () => {
     try {
-      const settingsResponse = await fetch('/api/settings');
+      const settingsResponse = await fetch('/api/settings', {
+        credentials: 'include', // Incluir cookies de autenticación
+      });
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json();
 
@@ -614,31 +618,29 @@ export default function EnhancedAdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
-    // Load user data
-    const loadUserData = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        }
+    // Solo cargar datos si el usuario está autenticado
+    if (!authLoading && user && user.role === 'ADMIN') {
+      // Load user data
+      const loadUserData = async () => {
+        try {
+          // Load settings
+          await loadSettings();
 
-        // Load settings
-        await loadSettings();
-
-        // Load email templates
-        const templatesResponse = await fetch('/api/admin/email-templates');
-        if (templatesResponse.ok) {
-          const templatesData = await templatesResponse.json();
-          setEmailTemplates(templatesData.templates || []);
-        } else {
-          // Initialize with default templates
-          const defaultTemplates: EmailTemplate[] = [
-            {
-              id: '1',
-              name: 'Bienvenida de Usuario',
-              subject: '¡Bienvenido a Rent360!',
-              content: `¡Hola {{userName}}!
+          // Load email templates
+          const templatesResponse = await fetch('/api/admin/email-templates', {
+            credentials: 'include', // Incluir cookies de autenticación
+          });
+          if (templatesResponse.ok) {
+            const templatesData = await templatesResponse.json();
+            setEmailTemplates(templatesData.templates || []);
+          } else {
+            // Initialize with default templates
+            const defaultTemplates: EmailTemplate[] = [
+              {
+                id: '1',
+                name: 'Bienvenida de Usuario',
+                subject: '¡Bienvenido a Rent360!',
+                content: `¡Hola {{userName}}!
 
 Bienvenido a Rent360, tu plataforma de alquiler de propiedades en Chile.
 
@@ -653,17 +655,17 @@ Tu cuenta ha sido activada exitosamente.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: ['userName'],
-              category: 'welcome',
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: '2',
-              name: 'Confirmación de Contrato',
-              subject: 'Contrato confirmado - {{propertyTitle}}',
-              content: `¡Hola {{userName}}!
+                variables: ['userName'],
+                category: 'welcome',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              {
+                id: '2',
+                name: 'Confirmación de Contrato',
+                subject: 'Contrato confirmado - {{propertyTitle}}',
+                content: `¡Hola {{userName}}!
 
 Tu contrato para la propiedad "{{propertyTitle}}" ha sido confirmado exitosamente.
 
@@ -682,24 +684,24 @@ Si tienes alguna pregunta, no dudes en contactarnos.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: [
-                'userName',
-                'propertyTitle',
-                'propertyAddress',
-                'monthlyRent',
-                'startDate',
-                'endDate',
-              ],
-              category: 'transaction',
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: '3',
-              name: 'Recordatorio de Pago',
-              subject: 'Recordatorio: Pago pendiente - {{propertyTitle}}',
-              content: `Hola {{userName}},
+                variables: [
+                  'userName',
+                  'propertyTitle',
+                  'propertyAddress',
+                  'monthlyRent',
+                  'startDate',
+                  'endDate',
+                ],
+                category: 'transaction',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              {
+                id: '3',
+                name: 'Recordatorio de Pago',
+                subject: 'Recordatorio: Pago pendiente - {{propertyTitle}}',
+                content: `Hola {{userName}},
 
 Te recordamos que tienes un pago pendiente para tu propiedad "{{propertyTitle}}".
 
@@ -716,17 +718,17 @@ Si ya realizaste el pago, puedes ignorar este mensaje.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: ['userName', 'propertyTitle', 'amount', 'dueDate'],
-              category: 'notification',
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: '4',
-              name: 'Solicitud de Mantenimiento Recibida',
-              subject: 'Solicitud de mantenimiento recibida - {{propertyTitle}}',
-              content: `Hola {{userName}},
+                variables: ['userName', 'propertyTitle', 'amount', 'dueDate'],
+                category: 'notification',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              {
+                id: '4',
+                name: 'Solicitud de Mantenimiento Recibida',
+                subject: 'Solicitud de mantenimiento recibida - {{propertyTitle}}',
+                content: `Hola {{userName}},
 
 Hemos recibido tu solicitud de mantenimiento para la propiedad "{{propertyTitle}}".
 
@@ -746,24 +748,24 @@ Gracias por mantener tu propiedad en óptimas condiciones.
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: [
-                'userName',
-                'propertyTitle',
-                'maintenanceType',
-                'description',
-                'priority',
-                'requestId',
-              ],
-              category: 'support',
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: '5',
-              name: 'Nueva Propiedad Disponible',
-              subject: '¡Nueva propiedad disponible en tu zona!',
-              content: `¡Hola {{userName}}!
+                variables: [
+                  'userName',
+                  'propertyTitle',
+                  'maintenanceType',
+                  'description',
+                  'priority',
+                  'requestId',
+                ],
+                category: 'support',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              {
+                id: '5',
+                name: 'Nueva Propiedad Disponible',
+                subject: '¡Nueva propiedad disponible en tu zona!',
+                content: `¡Hola {{userName}}!
 
 Tenemos una nueva propiedad que podría interesarte:
 
@@ -780,32 +782,33 @@ Esta propiedad cumple con tus criterios de búsqueda y está disponible ahora mi
 
 Saludos cordiales,
 El equipo de Rent360`,
-              variables: [
-                'userName',
-                'propertyTitle',
-                'propertyAddress',
-                'monthlyRent',
-                'bedrooms',
-                'bathrooms',
-              ],
-              category: 'marketing',
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ];
-          setEmailTemplates(defaultTemplates);
+                variables: [
+                  'userName',
+                  'propertyTitle',
+                  'propertyAddress',
+                  'monthlyRent',
+                  'bedrooms',
+                  'bathrooms',
+                ],
+                category: 'marketing',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+            ];
+            setEmailTemplates(defaultTemplates);
+          }
+        } catch (error) {
+          logger.error('Error loading data:', {
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-      } catch (error) {
-        logger.error('Error loading data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-      setLoading(false);
-    };
+        setLoading(false);
+      };
 
-    loadUserData();
-  }, []);
+      loadUserData();
+    }
+  }, [user, authLoading]);
 
   const handleSaveSettings = async () => {
     setSaving(true);
@@ -918,6 +921,7 @@ El equipo de Rent360`,
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Incluir cookies de autenticación
         body: JSON.stringify({ settings: categorizedSettings }),
       });
 
@@ -3936,6 +3940,44 @@ El equipo de Rent360`,
       </Card>
     </div>
   );
+
+  // Verificar estado de autenticación primero
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar si el usuario está autenticado
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
+          <p className="text-gray-600">Debes iniciar sesión para acceder a esta página.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar si el usuario tiene permisos de admin
+  if (user.role !== 'ADMIN') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Restringido</h2>
+          <p className="text-gray-600">No tienes permisos para acceder a esta página.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

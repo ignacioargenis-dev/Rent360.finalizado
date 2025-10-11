@@ -36,7 +36,7 @@ import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useUserState } from '@/hooks/useUserState';
 
 export default function AdminUsersPage() {
-  const { user } = useUserState();
+  const { user, loading: authLoading, error: authError } = useUserState();
 
   const [users, setUsers] = useState<User[]>([]);
 
@@ -71,8 +71,11 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, [roleFilter, statusFilter, searchQuery]);
+    // Solo hacer la llamada si el usuario está autenticado y cargado
+    if (!authLoading && user && user.role === 'ADMIN') {
+      fetchUsers();
+    }
+  }, [roleFilter, statusFilter, searchQuery, user, authLoading]);
 
   const fetchUsers = async () => {
     try {
@@ -333,9 +336,53 @@ export default function AdminUsersPage() {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
+  // Verificar estado de autenticación primero
+  if (authLoading) {
+    return (
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Verificando autenticación...">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Verificando permisos...</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  // Verificar si el usuario está autenticado
+  if (!user) {
+    return (
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Acceso denegado">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
+            <p className="text-gray-600">Debes iniciar sesión para acceder a esta página.</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  // Verificar si el usuario tiene permisos de admin
+  if (user.role !== 'ADMIN') {
+    return (
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Acceso restringido">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Shield className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Restringido</h2>
+            <p className="text-gray-600">No tienes permisos para acceder a esta página.</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
   if (loading) {
     return (
-      <UnifiedDashboardLayout title="Gesti�n de Usuarios" subtitle="Cargando usuarios...">
+      <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Cargando usuarios...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
