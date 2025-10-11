@@ -36,16 +36,18 @@ export function useUserState(options: UseUserStateOptions = {}) {
         setError(null);
 
         // First, try to get user from API
-        const response = await fetch('/api/auth/me');
-        
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+
         if (response.ok) {
           const data = await response.json();
-                  const userWithDates = convertDatesToObjects(data.user);
-        setUser(userWithDates);
-        setError(null);
-        
-        // Update localStorage as backup
-        localStorage.setItem('user', JSON.stringify(data.user));
+          const userWithDates = convertDatesToObjects(data.user);
+          setUser(userWithDates);
+          setError(null);
+
+          // Update localStorage as backup
+          localStorage.setItem('user', JSON.stringify(data.user));
         } else if (response.status === 401) {
           // If API fails, try localStorage as fallback
           const userData = localStorage.getItem('user');
@@ -55,7 +57,9 @@ export function useUserState(options: UseUserStateOptions = {}) {
               const userWithDates = convertDatesToObjects(parsedUser);
               setUser(userWithDates);
             } catch (parseErr) {
-              logger.error('Error parsing user data from localStorage:', { error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
+              logger.error('Error parsing user data from localStorage:', {
+                error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+              });
               localStorage.removeItem('user');
               if (requireAuth) {
                 window.location.href = redirectUrl;
@@ -69,8 +73,10 @@ export function useUserState(options: UseUserStateOptions = {}) {
           setError('Failed to load user data');
         }
       } catch (err) {
-        logger.error('Error loading user state:', { error: err instanceof Error ? err.message : String(err) });
-        
+        logger.error('Error loading user state:', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+
         // Fallback to localStorage
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -79,7 +85,9 @@ export function useUserState(options: UseUserStateOptions = {}) {
             const userWithDates = convertDatesToObjects(parsedUser);
             setUser(userWithDates);
           } catch (parseErr) {
-            logger.error('Error parsing user data from localStorage:', { error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
+            logger.error('Error parsing user data from localStorage:', {
+              error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+            });
             setError('Invalid user data');
             localStorage.removeItem('user');
             if (requireAuth) {

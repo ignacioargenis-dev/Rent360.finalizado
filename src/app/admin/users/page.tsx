@@ -183,6 +183,7 @@ export default function AdminUsersPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ isActive: !currentStatus }),
       });
 
@@ -216,6 +217,7 @@ export default function AdminUsersPage() {
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -270,6 +272,7 @@ export default function AdminUsersPage() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify(updateData),
         });
 
@@ -297,6 +300,7 @@ export default function AdminUsersPage() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify(newUser),
         });
 

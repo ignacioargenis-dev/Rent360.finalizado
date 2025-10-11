@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Building, EyeOff, Eye, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
-
   const [email, setEmail] = useState('');
 
   const [password, setPassword] = useState('');
@@ -33,6 +32,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -50,7 +50,9 @@ export default function LoginPage() {
         setError(data.error || 'Error al iniciar sesión');
       }
     } catch (error) {
-      logger.error('Error en login:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error en login:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setError('Error al conectar con el servidor');
     } finally {
       setIsLoading(false);
@@ -59,15 +61,24 @@ export default function LoginPage() {
 
   const getDashboardUrl = (role: string) => {
     switch (role.toLowerCase()) {
-      case 'admin': return '/admin/dashboard';
-      case 'tenant': return '/tenant/dashboard';
-      case 'owner': return '/owner/dashboard';
-      case 'broker': return '/broker/dashboard';
-      case 'runner': return '/runner/dashboard';
-      case 'support': return '/support/dashboard';
-      case 'provider': return '/provider/dashboard';
-      case 'maintenance': return '/maintenance';
-      default: return '/';
+      case 'admin':
+        return '/admin/dashboard';
+      case 'tenant':
+        return '/tenant/dashboard';
+      case 'owner':
+        return '/owner/dashboard';
+      case 'broker':
+        return '/broker/dashboard';
+      case 'runner':
+        return '/runner/dashboard';
+      case 'support':
+        return '/support/dashboard';
+      case 'provider':
+        return '/provider/dashboard';
+      case 'maintenance':
+        return '/maintenance';
+      default:
+        return '/';
     }
   };
 
@@ -78,9 +89,7 @@ export default function LoginPage() {
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary">
             <Building className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
-          </h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Iniciar Sesión</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             ¿No tienes una cuenta?{' '}
             <Link href="/auth/register" className="font-medium text-primary hover:text-primary/80">
@@ -88,7 +97,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -102,7 +111,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="tu@email.com"
               />
             </div>
@@ -119,7 +128,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pr-10"
                 />
@@ -145,11 +154,7 @@ export default function LoginPage() {
           )}
 
           <div>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-            >
+            <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
