@@ -1,7 +1,7 @@
 // Service Worker para Rent360 PWA
-const CACHE_NAME = 'rent360-v1.0.0';
-const STATIC_CACHE_NAME = 'rent360-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'rent360-dynamic-v1.0.0';
+const CACHE_NAME = 'rent360-v1.0.1'; // Incrementado para forzar actualización
+const STATIC_CACHE_NAME = 'rent360-static-v1.0.1';
+const DYNAMIC_CACHE_NAME = 'rent360-dynamic-v1.0.1';
 
 // Recursos críticos que deben cachearse
 const STATIC_ASSETS = [
@@ -27,10 +27,14 @@ const API_CACHE_PATTERNS = [
 
 // Recursos que no deben cachearse
 const NO_CACHE_PATTERNS = [
-  '/api/auth/login',
-  '/api/auth/logout',
-  '/api/payments',
-  '/api/admin',
+  '/api/auth', // Excluir TODAS las APIs de autenticación
+  '/api/users', // Excluir API de usuarios
+  '/api/admin', // Excluir APIs de admin
+  '/api/payments', // Excluir pagos
+  '/api/debug-auth', // Excluir debug
+  '/api/debug-users', // Excluir debug
+  '/api/simple-debug.html', // Excluir herramienta de debug
+  '/debug-auth.html', // Excluir herramienta de debug
 ];
 
 // Configuración de cache
@@ -45,24 +49,21 @@ const CACHE_CONFIG = {
 };
 
 // Instalación del Service Worker
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   console.log('[SW] Installing service worker');
 
   event.waitUntil(
     Promise.all([
       // Cache recursos estáticos
-      caches.open(STATIC_CACHE_NAME).then((cache) => {
+      caches.open(STATIC_CACHE_NAME).then(cache => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS.filter(asset => !asset.includes('/_next/')));
       }),
 
       // Cache recursos dinámicos críticos
-      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+      caches.open(DYNAMIC_CACHE_NAME).then(cache => {
         console.log('[SW] Caching dynamic assets');
-        return cache.addAll([
-          '/offline',
-          '/manifest.json',
-        ]);
+        return cache.addAll(['/offline', '/manifest.json']);
       }),
 
       // Forzar activación inmediata
@@ -72,16 +73,20 @@ self.addEventListener('install', (event) => {
 });
 
 // Activación del Service Worker
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   console.log('[SW] Activating service worker');
 
   event.waitUntil(
     Promise.all([
       // Limpiar caches antiguos
-      caches.keys().then((cacheNames) => {
+      caches.keys().then(cacheNames => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
+          cacheNames.map(cacheName => {
+            if (
+              cacheName !== CACHE_NAME &&
+              cacheName !== STATIC_CACHE_NAME &&
+              cacheName !== DYNAMIC_CACHE_NAME
+            ) {
               console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -96,12 +101,14 @@ self.addEventListener('activate', (event) => {
 });
 
 // Interceptar requests
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Ignorar requests no GET
-  if (request.method !== 'GET') return;
+  if (request.method !== 'GET') {
+    return;
+  }
 
   // Ignorar requests que no deben cachearse
   if (NO_CACHE_PATTERNS.some(pattern => url.pathname.startsWith(pattern))) {
@@ -120,6 +127,31 @@ self.addEventListener('fetch', (event) => {
 
 // Manejar requests de API
 async function handleApiRequest(request) {
+  const url = new URL(request.url);
+
+  // Para APIs críticas que no deben cachearse, hacer fetch directo
+  // sin respuestas offline para evitar interferir con autenticación
+  if (NO_CACHE_PATTERNS.some(pattern => url.pathname.startsWith(pattern))) {
+    console.log('[SW] Skipping cache for critical API:', request.url);
+    try {
+      return await fetch(request);
+    } catch (error) {
+      console.log('[SW] Network failed for critical API:', request.url);
+      // Para APIs críticas, devolver error genérico en lugar de offline
+      return new Response(
+        JSON.stringify({
+          error: 'Network Error',
+          message: 'Error de conexión con el servidor',
+          status: 503,
+        }),
+        {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+  }
+
   const cache = await caches.open(DYNAMIC_CACHE_NAME);
 
   try {
@@ -228,7 +260,7 @@ async function handlePageRequest(request) {
 }
 
 // Sincronización en background
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', event => {
   console.log('[SW] Background sync triggered:', event.tag);
 
   if (event.tag === 'background-sync') {
@@ -237,7 +269,7 @@ self.addEventListener('sync', (event) => {
 });
 
 // Manejar mensajes del cliente
-self.addEventListener('message', (event) => {
+self.addEventListener('message', event => {
   const { type, data } = event.data || {};
 
   switch (type) {
@@ -303,10 +335,7 @@ async function updateCaches() {
   const cache = await caches.open(STATIC_CACHE_NAME);
 
   // Actualizar recursos críticos
-  const criticalResources = [
-    '/manifest.json',
-    '/favicon.ico',
-  ];
+  const criticalResources = ['/manifest.json', '/favicon.ico'];
 
   for (const resource of criticalResources) {
     try {
@@ -367,33 +396,36 @@ async function notifyClients(type, data) {
 }
 
 // Manejar errores no capturados
-self.addEventListener('error', (event) => {
+self.addEventListener('error', event => {
   console.error('[SW] Service Worker error:', event.error);
 });
 
-self.addEventListener('unhandledrejection', (event) => {
+self.addEventListener('unhandledrejection', event => {
   console.error('[SW] Unhandled promise rejection:', event.reason);
 });
 
 // Limpiar caches periódicamente
-setInterval(async () => {
-  try {
-    const cache = await caches.open(DYNAMIC_CACHE_NAME);
-    const keys = await cache.keys();
+setInterval(
+  async () => {
+    try {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      const keys = await cache.keys();
 
-    // Remover entradas antiguas (más de 24 horas)
-    const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+      // Remover entradas antiguas (más de 24 horas)
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
 
-    for (const request of keys) {
-      const response = await cache.match(request);
-      if (response) {
-        const date = response.headers.get('date');
-        if (date && new Date(date).getTime() < cutoff) {
-          await cache.delete(request);
+      for (const request of keys) {
+        const response = await cache.match(request);
+        if (response) {
+          const date = response.headers.get('date');
+          if (date && new Date(date).getTime() < cutoff) {
+            await cache.delete(request);
+          }
         }
       }
+    } catch (error) {
+      console.log('[SW] Cache cleanup error:', error);
     }
-  } catch (error) {
-    console.log('[SW] Cache cleanup error:', error);
-  }
-}, 60 * 60 * 1000); // Cada hora
+  },
+  60 * 60 * 1000
+); // Cada hora
