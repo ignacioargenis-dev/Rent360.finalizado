@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { logger } from '@/lib/logger';
@@ -32,13 +32,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
+      } else if (response.status === 401) {
+        // User not authenticated - this is normal
+        setUser(null);
+      } else if (response.status === 503 || response.status === 500) {
+        // Server error - don't crash, just set loading to false
+        logger.warn('Server error during auth check', {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        setUser(null);
+      } else {
+        // Other errors - log but don't crash
+        logger.warn('Unexpected auth check response', {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        setUser(null);
       }
     } catch (error) {
-      logger.error('Error checking auth:', { error: error instanceof Error ? error.message : String(error) });
+      if (error.name === 'AbortError') {
+        logger.warn('Auth check timed out');
+      } else {
+        logger.error('Error checking auth:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -62,7 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       setUser(data.user);
     } catch (error) {
-      logger.error('Login error:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Login error:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   };
@@ -74,7 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setUser(null);
     } catch (error) {
-      logger.error('Logout error:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Logout error:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -96,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       setUser(data.user);
     } catch (error) {
-      logger.error('Register error:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Register error:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   };
@@ -109,11 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

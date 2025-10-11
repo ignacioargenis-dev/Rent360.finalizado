@@ -73,7 +73,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: false,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // CSP manejado por middleware - removido para evitar conflictos
   },
   // Configuración avanzada de headers de seguridad
   async headers() {
