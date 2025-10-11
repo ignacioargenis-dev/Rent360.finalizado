@@ -36,25 +36,25 @@ export default function middleware(request: NextRequest) {
   }
 
   // CORS simplificado para producción
-  const response = NextResponse.next();
+  const corsResponse = NextResponse.next();
 
   // Configuración CORS básica
   const origin = request.headers.get('origin') || '';
   const host = request.headers.get('host') || '';
 
   if (origin && (origin.includes(host) || host.includes('ondigitalocean.app'))) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set(
+    corsResponse.headers.set('Access-Control-Allow-Origin', origin);
+    corsResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    corsResponse.headers.set(
       'Access-Control-Allow-Headers',
       'Content-Type, Authorization, X-Requested-With'
     );
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    corsResponse.headers.set('Access-Control-Allow-Credentials', 'true');
   }
 
   // Manejar preflight requests
   if (request.method === 'OPTIONS') {
-    return response;
+    return corsResponse;
   }
 
   // Validaciones simplificadas para resolver problemas en producción
@@ -157,10 +157,10 @@ export default function middleware(request: NextRequest) {
 
   response.headers.set('Content-Security-Policy', csp);
 
-  // Add rate limiting headers
-  response.headers.set('X-RateLimit-Limit', '100');
-  response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
-  response.headers.set('X-RateLimit-Reset', rateLimitResult.resetTime.toString());
+  // Rate limiting headers (desactivado temporalmente)
+  // response.headers.set('X-RateLimit-Limit', '100');
+  // response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+  // response.headers.set('X-RateLimit-Reset', rateLimitResult.resetTime.toString());
 
   // Log request for monitoring
   const responseTime = Date.now() - startTime;
