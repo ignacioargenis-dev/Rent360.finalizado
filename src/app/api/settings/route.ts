@@ -1,14 +1,12 @@
-import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth';
 import { SystemSetting } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireRole(request, 'admin');
-
-    logger.info('Obteniendo configuraciones del sistema', { userId: user.id });
 
     // Obtener todas las configuraciones
     let settings: SystemSetting[];
@@ -68,48 +66,94 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Log detallado para debugging
+    console.log('🔍 SETTINGS API POST - Request received');
+    console.log('Headers:', Object.fromEntries(request.headers.entries()));
+    console.log('URL:', request.url);
+    console.log('Method:', request.method);
+
     const user = await requireRole(request, 'admin');
-    const { settings } = await request.json();
+    console.log('✅ User authenticated:', { id: user.id, email: user.email, role: user.role });
+
+    const body = await request.json();
+    console.log('📦 Request body received:', JSON.stringify(body, null, 2));
+
+    const { settings } = body;
+
+    if (!settings) {
+      console.log('❌ No settings provided in request');
+      return NextResponse.json({ error: 'No se proporcionaron configuraciones' }, { status: 400 });
+    }
+
+    console.log('🔄 Processing settings categories:', Object.keys(settings));
 
     // Procesar cada configuración
-    const updatePromises = Object.entries(settings).map(([category, categorySettings]) => {
-      return Object.entries(categorySettings as Record<string, any>).map(([key, settingData]) => {
+    const updatePromises: any[] = [];
+    let processedCount = 0;
+
+    Object.entries(settings).forEach(([category, categorySettings]) => {
+      console.log(`📁 Processing category: ${category}`, {
+        fields: Object.keys(categorySettings as any),
+      });
+
+      Object.entries(categorySettings as Record<string, any>).forEach(([key, settingData]) => {
+        console.log(`⚙️ Processing setting: ${key}`, settingData);
+
         // Convertir valor a string si no lo es
         const stringValue = String(settingData.value);
+        console.log(`🔄 Converted value to string: "${stringValue}"`);
 
-        return db.systemSetting.upsert({
-          where: { key },
-          update: {
-            value: stringValue,
-            isActive: settingData.isActive,
-            category,
-          },
-          create: {
-            key,
-            value: stringValue,
-            category,
-            description: settingData.description || '',
-            isActive: settingData.isActive,
-          },
-        });
+        updatePromises.push(
+          db.systemSetting.upsert({
+            where: { key },
+            update: {
+              value: stringValue,
+              isActive: settingData.isActive,
+              category,
+            },
+            create: {
+              key,
+              value: stringValue,
+              category,
+              description: settingData.description || '',
+              isActive: settingData.isActive,
+            },
+          })
+        );
+        processedCount++;
       });
     });
 
+    console.log(`🚀 Executing ${updatePromises.length} database operations`);
+
     // Ejecutar todas las actualizaciones
-    await Promise.all(updatePromises.flat());
+    const results = await Promise.all(updatePromises);
+
+    console.log(`✅ Settings updated successfully`, {
+      processedCount,
+      resultsCount: results.length,
+      results: results.map(r => ({ key: r.key, value: r.value, category: r.category })),
+    });
 
     return NextResponse.json({
       message: 'Configuraciones guardadas exitosamente',
+      processedCount,
+      savedSettings: results.map(r => ({ key: r.key, value: r.value })),
     });
   } catch (error) {
-    logger.error('Error al guardar configuraciones:', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    console.error('❌ Error al guardar configuraciones:', error);
+
     if (error instanceof Error) {
       if (error.message.includes('No autorizado') || error.message.includes('Acceso denegado')) {
         return NextResponse.json({ error: error.message }, { status: 401 });
       }
     }
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }

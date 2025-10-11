@@ -27,6 +27,7 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith('/api/test-auth') ||
     pathname.startsWith('/api/debug') ||
     pathname.startsWith('/api/debug-simple') ||
+    pathname.startsWith('/api/auth-status') ||
     pathname.startsWith('/manifest.json') ||
     pathname.startsWith('/sw.js') ||
     pathname.includes('.')
