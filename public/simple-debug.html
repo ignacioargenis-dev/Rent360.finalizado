@@ -107,9 +107,19 @@
         </div>
 
         <div class="section">
-            <h2>🔄 Service Worker</h2>
+            <h2>🔒 Content Security Policy (CSP)</h2>
+        <button onclick="checkCSP()">Verificar CSP</button>
+        <div id="csp-results" class="test-result"></div>
+
+        <h2>🔄 Service Worker</h2>
             <button onclick="updateServiceWorker()">Actualizar Service Worker</button>
             <div id="sw-results" class="test-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧹 Limpiar Cache del Navegador</h2>
+            <button onclick="clearBrowserCache()">Forzar Recarga (Hard Refresh)</button>
+            <div id="cache-results" class="test-result"></div>
         </div>
 
         <div class="section">
@@ -243,6 +253,45 @@
             window.location.href = '/debug-auth.html';
         }
 
+        // Función para verificar CSP
+        async function checkCSP() {
+            const results = document.getElementById('csp-results');
+            results.innerHTML = '<p>🔍 Verificando CSP...</p>';
+            results.className = 'test-result';
+
+            try {
+                // Intentar ejecutar eval para ver si está bloqueado
+                let evalBlocked = false;
+                try {
+                    eval('console.log("CSP test")');
+                } catch (e) {
+                    evalBlocked = true;
+                }
+
+                // Verificar headers de respuesta
+                const response = await fetch(window.location.href, { method: 'HEAD' });
+                const cspHeader = response.headers.get('content-security-policy');
+
+                let result = '<p>📋 Estado CSP:</p>';
+                result += `<p>Eval bloqueado: ${evalBlocked ? '❌ SÍ' : '✅ NO'}</p>`;
+                result += `<p>CSP Header presente: ${cspHeader ? '✅ SÍ' : '❌ NO'}</p>`;
+
+                if (cspHeader) {
+                    result += `<p><small>CSP: ${cspHeader.substring(0, 100)}...</small></p>`;
+                }
+
+                if (evalBlocked && cspHeader && cspHeader.includes('unsafe-eval')) {
+                    result += '<p>⚠️ CSP incluye unsafe-eval pero eval sigue bloqueado - posible cache del navegador</p>';
+                }
+
+                results.innerHTML = result;
+                results.className = evalBlocked ? 'test-result error' : 'test-result success';
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error verificando CSP: ${error.message}</p>`;
+                results.className = 'test-result error';
+            }
+        }
+
         // Función para actualizar service worker
         async function updateServiceWorker() {
             const results = document.getElementById('sw-results');
@@ -275,6 +324,33 @@
                 }
             } catch (error) {
                 results.innerHTML = `<p class="error">❌ Error actualizando Service Worker: ${error.message}</p>`;
+                results.className = 'test-result error';
+            }
+        }
+
+        // Función para limpiar cache del navegador
+        function clearBrowserCache() {
+            const results = document.getElementById('cache-results');
+            results.innerHTML = '<p>🔄 Forzando recarga completa...</p>';
+            results.className = 'test-result';
+
+            try {
+                // Limpiar caches del navegador
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            caches.delete(name);
+                        });
+                    });
+                }
+
+                // Forzar recarga hard refresh
+                window.location.reload(true);
+
+                results.innerHTML = '<p class="success">✅ Cache limpiado y recarga forzada iniciada</p>';
+                results.className = 'test-result success';
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error limpiando cache: ${error.message}</p>`;
                 results.className = 'test-result error';
             }
         }

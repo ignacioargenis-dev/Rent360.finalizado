@@ -153,12 +153,12 @@ export default function middleware(request: NextRequest) {
   // Content Security Policy (CSP) - Configuración de seguridad mejorada
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://maps.googleapis.com https://js.stripe.com https://checkout.stripe.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://www.googletagmanager.com https://connect.facebook.net https://platform.twitter.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-    "img-src 'self' data: blob: https://*.googleusercontent.com https://*.stripe.com https://ui-avatars.com https://drive.google.com https://lh3.googleusercontent.com https://images.unsplash.com",
-    "connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://*.adobesign.com https://*.docusign.net https://api.hellosign.com https://api.trustfactory.cl https://api.firmapro.cl https://api.digitalsign.cl",
-    "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.docusign.net https://www.google.com",
+    "img-src 'self' data: blob: https://*.googleusercontent.com https://*.stripe.com https://ui-avatars.com https://drive.google.com https://lh3.googleusercontent.com https://images.unsplash.com https://*.facebook.com https://*.twitter.com",
+    "connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://*.adobesign.com https://*.docusign.net https://api.hellosign.com https://api.trustfactory.cl https://api.firmapro.cl https://api.digitalsign.cl https://*.facebook.com https://*.twitter.com",
+    "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.docusign.net https://www.google.com https://www.facebook.com https://platform.twitter.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -168,6 +168,9 @@ export default function middleware(request: NextRequest) {
   ].join('; ');
 
   response.headers.set('Content-Security-Policy', csp);
+
+  // Debug CSP - temporal
+  console.log('CSP applied:', csp);
 
   // Rate limiting headers (desactivado temporalmente)
   // response.headers.set('X-RateLimit-Limit', '100');

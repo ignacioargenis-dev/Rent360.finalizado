@@ -33,10 +33,10 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
-import { useUserState } from '@/hooks/useUserState';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function AdminUsersPage() {
-  const { user, loading: authLoading, error: authError } = useUserState();
+  const { user, loading: authLoading } = useAuth();
 
   const [users, setUsers] = useState<User[]>([]);
 
