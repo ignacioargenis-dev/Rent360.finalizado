@@ -128,7 +128,7 @@ class PWAService {
           scope: '/',
         });
 
-        logger.info('Service Worker registrado:', { scope: registration.scope });
+        console.log('Service Worker registrado:', { scope: registration.scope });
 
         // Escuchar actualizaciones del service worker
         registration.addEventListener('updatefound', () => {
@@ -142,7 +142,7 @@ class PWAService {
           }
         });
       } catch (error) {
-        logger.error('Error al registrar Service Worker:', {
+        console.warn('Error al registrar Service Worker:', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -170,9 +170,7 @@ class PWAService {
         const cache = await caches.open('rent360-critical-v1');
         await cache.addAll(criticalResources);
       } catch (error) {
-        logger.error('Error al configurar cache offline:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
+        console.warn('Error al configurar cache offline:', error);
       }
     }
   }
@@ -198,7 +196,7 @@ class PWAService {
 
       return outcome === 'accepted';
     } catch (error) {
-      logger.error('Error al mostrar prompt de instalación:', {
+      console.warn('Error al mostrar prompt de instalación:', {
         error: error instanceof Error ? error.message : String(error),
       });
       return false;
@@ -292,7 +290,7 @@ class PWAService {
         await navigator.share(data);
         return true;
       } catch (error) {
-        logger.error('Error al compartir:', {
+        console.warn('Error al compartir:', {
           error: error instanceof Error ? error.message : String(error),
         });
         return false;
@@ -306,7 +304,7 @@ class PWAService {
       try {
         return await (navigator as any).getBattery();
       } catch (error) {
-        logger.error('Error al obtener información de batería:', {
+        console.warn('Error al obtener información de batería:', {
           error: error instanceof Error ? error.message : String(error),
         });
         return null;
@@ -348,7 +346,7 @@ class PWAService {
         new Notification(title, options);
         return true;
       } catch (error) {
-        logger.error('Error al enviar notificación:', {
+        console.warn('Error al enviar notificación:', {
           error: error instanceof Error ? error.message : String(error),
         });
         return false;

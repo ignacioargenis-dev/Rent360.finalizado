@@ -14,14 +14,14 @@ export enum NotificationType {
   SYSTEM_ALERT = 'system_alert',
   MARKET_UPDATE = 'market_update',
   RECOMMENDATION = 'recommendation',
-  REMINDER = 'reminder'
+  REMINDER = 'reminder',
 }
 
 export enum NotificationPriority {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  URGENT = 'urgent'
+  URGENT = 'urgent',
 }
 
 export enum NotificationChannel {
@@ -29,7 +29,7 @@ export enum NotificationChannel {
   SMS = 'sms',
   PUSH = 'push',
   WHATSAPP = 'whatsapp',
-  IN_APP = 'in_app'
+  IN_APP = 'in_app',
 }
 
 export interface SmartNotification {
@@ -111,17 +111,23 @@ export interface NotificationAnalytics {
   failed: number;
   openRate: number;
   clickRate: number;
-  channelPerformance: Record<NotificationChannel, {
-    sent: number;
-    delivered: number;
-    read: number;
-    openRate: number;
-  }>;
-  typePerformance: Record<NotificationType, {
-    sent: number;
-    read: number;
-    openRate: number;
-  }>;
+  channelPerformance: Record<
+    NotificationChannel,
+    {
+      sent: number;
+      delivered: number;
+      read: number;
+      openRate: number;
+    }
+  >;
+  typePerformance: Record<
+    NotificationType,
+    {
+      sent: number;
+      read: number;
+      openRate: number;
+    }
+  >;
   timePerformance: {
     hourly: Record<number, number>;
     daily: Record<string, number>;
@@ -160,9 +166,15 @@ class AdvancedNotificationService {
         id: 'payment_due',
         type: NotificationType.PAYMENT_DUE,
         title: 'Pago de renta próximo a vencer',
-        message: 'Hola {{name}}, tu pago de renta de {{amount}} vence el {{dueDate}}. ¡No olvides realizar el pago a tiempo!',
+        message:
+          'Hola {{name}}, tu pago de renta de {{amount}} vence el {{dueDate}}. ¡No olvides realizar el pago a tiempo!',
         variables: ['name', 'amount', 'dueDate'],
-        channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH, NotificationChannel.IN_APP],
+        channels: [
+          NotificationChannel.EMAIL,
+          NotificationChannel.SMS,
+          NotificationChannel.PUSH,
+          NotificationChannel.IN_APP,
+        ],
         priority: NotificationPriority.HIGH,
         aiOptimized: true,
       },
@@ -170,7 +182,8 @@ class AdvancedNotificationService {
         id: 'payment_received',
         type: NotificationType.PAYMENT_RECEIVED,
         title: 'Pago recibido exitosamente',
-        message: '¡Gracias {{name}}! Hemos recibido tu pago de {{amount}}. Tu recibo está disponible en tu cuenta.',
+        message:
+          '¡Gracias {{name}}! Hemos recibido tu pago de {{amount}}. Tu recibo está disponible en tu cuenta.',
         variables: ['name', 'amount'],
         channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP],
         priority: NotificationPriority.MEDIUM,
@@ -180,7 +193,8 @@ class AdvancedNotificationService {
         id: 'maintenance_request',
         type: NotificationType.MAINTENANCE_REQUEST,
         title: 'Nueva solicitud de mantenimiento',
-        message: 'Hemos recibido tu solicitud de mantenimiento para {{property}}. Te mantendremos informado del progreso.',
+        message:
+          'Hemos recibido tu solicitud de mantenimiento para {{property}}. Te mantendremos informado del progreso.',
         variables: ['property'],
         channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP],
         priority: NotificationPriority.MEDIUM,
@@ -190,9 +204,15 @@ class AdvancedNotificationService {
         id: 'maintenance_completed',
         type: NotificationType.MAINTENANCE_COMPLETED,
         title: 'Mantenimiento completado',
-        message: '¡Excelente noticia {{name}}! El mantenimiento en {{property}} ha sido completado. Puedes verificar el trabajo realizado.',
+        message:
+          '¡Excelente noticia {{name}}! El mantenimiento en {{property}} ha sido completado. Puedes verificar el trabajo realizado.',
         variables: ['name', 'property'],
-        channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH, NotificationChannel.IN_APP],
+        channels: [
+          NotificationChannel.EMAIL,
+          NotificationChannel.SMS,
+          NotificationChannel.PUSH,
+          NotificationChannel.IN_APP,
+        ],
         priority: NotificationPriority.MEDIUM,
         aiOptimized: true,
       },
@@ -200,9 +220,15 @@ class AdvancedNotificationService {
         id: 'contract_expiring',
         type: NotificationType.CONTRACT_EXPIRING,
         title: 'Contrato próximo a vencer',
-        message: 'Tu contrato en {{property}} vence el {{dueDate}}. ¿Te gustaría renovar o necesitas ayuda?',
+        message:
+          'Tu contrato en {{property}} vence el {{dueDate}}. ¿Te gustaría renovar o necesitas ayuda?',
         variables: ['property', 'dueDate'],
-        channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH, NotificationChannel.IN_APP],
+        channels: [
+          NotificationChannel.EMAIL,
+          NotificationChannel.SMS,
+          NotificationChannel.PUSH,
+          NotificationChannel.IN_APP,
+        ],
         priority: NotificationPriority.HIGH,
         aiOptimized: true,
       },
@@ -210,7 +236,8 @@ class AdvancedNotificationService {
         id: 'property_viewed',
         type: NotificationType.PROPERTY_VIEWED,
         title: 'Tu propiedad fue vista',
-        message: '¡{{name}}! Tu propiedad en {{location}} recibió {{views}} visitas esta semana. ¡Excelente interés!',
+        message:
+          '¡{{name}}! Tu propiedad en {{location}} recibió {{views}} visitas esta semana. ¡Excelente interés!',
         variables: ['name', 'location', 'views'],
         channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP],
         priority: NotificationPriority.LOW,
@@ -230,7 +257,8 @@ class AdvancedNotificationService {
         id: 'recommendation',
         type: NotificationType.RECOMMENDATION,
         title: 'Recomendación personalizada',
-        message: '{{name}}, hemos encontrado {{count}} propiedades que coinciden con tus preferencias en {{area}}.',
+        message:
+          '{{name}}, hemos encontrado {{count}} propiedades que coinciden con tus preferencias en {{area}}.',
         variables: ['name', 'count', 'area'],
         channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP],
         priority: NotificationPriority.MEDIUM,
@@ -246,11 +274,11 @@ class AdvancedNotificationService {
   private initializeAnalytics() {
     // Inicializar métricas por canal
     const channels: NotificationChannel[] = [
-      NotificationChannel.EMAIL, 
-      NotificationChannel.SMS, 
-      NotificationChannel.PUSH, 
-      NotificationChannel.WHATSAPP, 
-      NotificationChannel.IN_APP
+      NotificationChannel.EMAIL,
+      NotificationChannel.SMS,
+      NotificationChannel.PUSH,
+      NotificationChannel.WHATSAPP,
+      NotificationChannel.IN_APP,
     ];
     channels.forEach(channel => {
       this.analytics.channelPerformance[channel] = {
@@ -263,18 +291,18 @@ class AdvancedNotificationService {
 
     // Inicializar métricas por tipo
     const types: NotificationType[] = [
-      NotificationType.PAYMENT_DUE, 
-      NotificationType.PAYMENT_RECEIVED, 
-      NotificationType.MAINTENANCE_REQUEST, 
+      NotificationType.PAYMENT_DUE,
+      NotificationType.PAYMENT_RECEIVED,
+      NotificationType.MAINTENANCE_REQUEST,
       NotificationType.MAINTENANCE_COMPLETED,
-      NotificationType.CONTRACT_EXPIRING, 
-      NotificationType.CONTRACT_RENEWED, 
-      NotificationType.PROPERTY_VIEWED, 
+      NotificationType.CONTRACT_EXPIRING,
+      NotificationType.CONTRACT_RENEWED,
+      NotificationType.PROPERTY_VIEWED,
       NotificationType.NEW_MESSAGE,
-      NotificationType.SYSTEM_ALERT, 
-      NotificationType.MARKET_UPDATE, 
-      NotificationType.RECOMMENDATION, 
-      NotificationType.REMINDER
+      NotificationType.SYSTEM_ALERT,
+      NotificationType.MARKET_UPDATE,
+      NotificationType.RECOMMENDATION,
+      NotificationType.REMINDER,
     ];
     types.forEach(type => {
       this.analytics.typePerformance[type] = {
@@ -302,17 +330,17 @@ class AdvancedNotificationService {
     try {
       const userPrefs = await this.getUserPreferences(userId);
       const template = this.templates.get(type);
-      
+
       if (!template) {
         throw new Error(`Template no encontrado para tipo: ${type}`);
       }
 
       // Determinar canal óptimo
       const optimalChannel = this.determineOptimalChannel(type, userPrefs, options.channels);
-      
+
       // Determinar tiempo óptimo
       const optimalTime = this.determineOptimalTime(userPrefs, options.scheduledFor);
-      
+
       // Personalizar contenido
       const personalization = {
         ...userPrefs.personalization,
@@ -343,7 +371,7 @@ class AdvancedNotificationService {
 
       // Guardar notificación
       await this.saveNotification(notification);
-      
+
       // Programar envío
       await this.scheduleNotification(notification);
 
@@ -384,7 +412,7 @@ class AdvancedNotificationService {
     }
 
     // Filtrar por canales preferidos si se especifican
-    const availableChannels = preferredChannels 
+    const availableChannels = preferredChannels
       ? enabledChannels.filter(channel => preferredChannels.includes(channel))
       : enabledChannels;
 
@@ -408,22 +436,38 @@ class AdvancedNotificationService {
       switch (type) {
         case NotificationType.PAYMENT_DUE:
         case NotificationType.CONTRACT_EXPIRING:
-          if (channel === NotificationChannel.SMS || channel === NotificationChannel.WHATSAPP) score += 20;
-          if (channel === NotificationChannel.PUSH) score += 15;
+          if (channel === NotificationChannel.SMS || channel === NotificationChannel.WHATSAPP) {
+            score += 20;
+          }
+          if (channel === NotificationChannel.PUSH) {
+            score += 15;
+          }
           break;
         case NotificationType.PAYMENT_RECEIVED:
         case NotificationType.MAINTENANCE_COMPLETED:
-          if (channel === NotificationChannel.EMAIL) score += 25;
-          if (channel === NotificationChannel.PUSH) score += 20;
+          if (channel === NotificationChannel.EMAIL) {
+            score += 25;
+          }
+          if (channel === NotificationChannel.PUSH) {
+            score += 20;
+          }
           break;
         case NotificationType.PROPERTY_VIEWED:
         case NotificationType.MARKET_UPDATE:
-          if (channel === NotificationChannel.EMAIL) score += 30;
-          if (channel === NotificationChannel.PUSH) score += 15;
+          if (channel === NotificationChannel.EMAIL) {
+            score += 30;
+          }
+          if (channel === NotificationChannel.PUSH) {
+            score += 15;
+          }
           break;
         case NotificationType.RECOMMENDATION:
-          if (channel === NotificationChannel.EMAIL) score += 25;
-          if (channel === NotificationChannel.IN_APP) score += 20;
+          if (channel === NotificationChannel.EMAIL) {
+            score += 25;
+          }
+          if (channel === NotificationChannel.IN_APP) {
+            score += 20;
+          }
           break;
       }
 
@@ -452,26 +496,23 @@ class AdvancedNotificationService {
   /**
    * Determinar tiempo óptimo para el envío
    */
-  private determineOptimalTime(
-    userPrefs: UserNotificationPreferences,
-    scheduledFor?: Date
-  ): Date {
+  private determineOptimalTime(userPrefs: UserNotificationPreferences, scheduledFor?: Date): Date {
     if (scheduledFor) {
       return scheduledFor;
     }
 
     const now = new Date();
-    
+
     // Verificar horas silenciosas
     if (userPrefs.quietHours.enabled) {
-      const currentTime = now.toLocaleTimeString('en-US', { 
-        hour12: false, 
-        timeZone: userPrefs.quietHours.timezone 
+      const currentTime = now.toLocaleTimeString('en-US', {
+        hour12: false,
+        timeZone: userPrefs.quietHours.timezone,
       });
-      
+
       const startTime = userPrefs.quietHours.start;
       const endTime = userPrefs.quietHours.end;
-      
+
       if (currentTime >= startTime && currentTime <= endTime) {
         // Programar para después de las horas silenciosas
         const tomorrow = new Date(now);
@@ -491,19 +532,20 @@ class AdvancedNotificationService {
     // Análisis de mejores horarios basado en engagement histórico
     const hour = now.getHours();
     const bestHours = [9, 12, 18, 20]; // Horas con mayor engagement
-    
+
     if (!bestHours.includes(hour)) {
       // Encontrar la próxima mejor hora
-      const nextBestHour = bestHours.find(h => h > hour) || (bestHours.length > 0 ? bestHours[0]! : 9); // 9 AM default
+      const nextBestHour =
+        bestHours.find(h => h > hour) || (bestHours.length > 0 ? bestHours[0]! : 9); // 9 AM default
       const optimalTime = new Date(now);
-      
+
       if (nextBestHour > hour) {
         optimalTime.setHours(nextBestHour, 0, 0, 0);
       } else {
         optimalTime.setDate(optimalTime.getDate() + 1);
         optimalTime.setHours(nextBestHour, 0, 0, 0);
       }
-      
+
       return optimalTime;
     }
 
@@ -550,20 +592,20 @@ class AdvancedNotificationService {
           currency: 'CLP',
           minimumFractionDigits: 0,
         }).format(value);
-      
+
       case 'dueDate':
         return new Intl.DateTimeFormat('es-CL', {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
         }).format(new Date(value));
-      
+
       case 'views':
         return `${value} ${value === 1 ? 'visita' : 'visitas'}`;
-      
+
       case 'count':
         return `${value} ${value === 1 ? 'propiedad' : 'propiedades'}`;
-      
+
       default:
         return String(value);
     }
@@ -578,7 +620,7 @@ class AdvancedNotificationService {
       // Personalizar con el nombre del usuario
       title = title.replace(/^/, `${personalization.name}, `);
     }
-    
+
     // Añadir emojis según el tipo de notificación
     if (title.includes('pago')) {
       title = '💰 ' + title;
@@ -589,7 +631,7 @@ class AdvancedNotificationService {
     } else if (title.includes('propiedad')) {
       title = '🏠 ' + title;
     }
-    
+
     return title;
   }
 
@@ -599,7 +641,7 @@ class AdvancedNotificationService {
   private aiOptimizeMessage(message: string, personalization: Record<string, any>): string {
     // Simular optimización basada en comportamiento del usuario
     const userEngagement = personalization.engagement || 'medium';
-    
+
     if (userEngagement === 'high') {
       // Usuarios con alto engagement reciben mensajes más detallados
       message += ' ¡Gracias por tu confianza!';
@@ -607,7 +649,7 @@ class AdvancedNotificationService {
       // Usuarios con bajo engagement reciben mensajes más concisos
       message = message.split('.')[0]! + '.';
     }
-    
+
     return message;
   }
 
@@ -625,18 +667,18 @@ class AdvancedNotificationService {
 
       // Simular envío según el canal
       const success = await this.sendToChannel(notification);
-      
+
       if (success) {
         notification.status = 'sent';
         notification.sentAt = new Date();
         await this.updateNotification(notification);
         await this.updateAnalytics(notification, 'sent');
-        
+
         logger.info('Notificación enviada exitosamente', {
           id: notification.id,
           channel: notification.optimalChannel,
         });
-        
+
         return true;
       } else {
         throw new Error('Error en el envío');
@@ -646,17 +688,17 @@ class AdvancedNotificationService {
         id: notification.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      
+
       notification.status = 'failed';
       notification.retryCount++;
       await this.updateNotification(notification);
       await this.updateAnalytics(notification, 'failed');
-      
+
       // Reintentar si no se ha excedido el límite
       if (notification.retryCount < notification.maxRetries) {
         await this.retryNotification(notification);
       }
-      
+
       return false;
     }
   }
@@ -717,7 +759,7 @@ class AdvancedNotificationService {
    */
   private async scheduleNotification(notification: SmartNotification): Promise<void> {
     const delay = notification.optimalTime.getTime() - Date.now();
-    
+
     if (delay <= 0) {
       // Enviar inmediatamente
       await this.sendNotification(notification);
@@ -734,7 +776,7 @@ class AdvancedNotificationService {
    */
   private async retryNotification(notification: SmartNotification): Promise<void> {
     const retryDelay = Math.pow(2, notification.retryCount) * 1000; // Backoff exponencial
-    
+
     setTimeout(async () => {
       await this.sendNotification(notification);
     }, retryDelay);
@@ -755,18 +797,78 @@ class AdvancedNotificationService {
         in_app: true,
       },
       types: {
-        payment_due: { enabled: true, priority: NotificationPriority.HIGH, channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH] },
-        payment_received: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
-        maintenance_request: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
-        maintenance_completed: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH] },
-        contract_expiring: { enabled: true, priority: NotificationPriority.HIGH, channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH] },
-        contract_renewed: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
-        property_viewed: { enabled: true, priority: NotificationPriority.LOW, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
-        new_message: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP] },
-        system_alert: { enabled: true, priority: NotificationPriority.HIGH, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP] },
-        market_update: { enabled: true, priority: NotificationPriority.LOW, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
-        recommendation: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH, NotificationChannel.IN_APP] },
-        reminder: { enabled: true, priority: NotificationPriority.MEDIUM, channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH] },
+        payment_due: {
+          enabled: true,
+          priority: NotificationPriority.HIGH,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH],
+        },
+        payment_received: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
+        maintenance_request: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
+        maintenance_completed: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH],
+        },
+        contract_expiring: {
+          enabled: true,
+          priority: NotificationPriority.HIGH,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH],
+        },
+        contract_renewed: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
+        property_viewed: {
+          enabled: true,
+          priority: NotificationPriority.LOW,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
+        new_message: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [
+            NotificationChannel.EMAIL,
+            NotificationChannel.PUSH,
+            NotificationChannel.IN_APP,
+          ],
+        },
+        system_alert: {
+          enabled: true,
+          priority: NotificationPriority.HIGH,
+          channels: [
+            NotificationChannel.EMAIL,
+            NotificationChannel.PUSH,
+            NotificationChannel.IN_APP,
+          ],
+        },
+        market_update: {
+          enabled: true,
+          priority: NotificationPriority.LOW,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
+        recommendation: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [
+            NotificationChannel.EMAIL,
+            NotificationChannel.PUSH,
+            NotificationChannel.IN_APP,
+          ],
+        },
+        reminder: {
+          enabled: true,
+          priority: NotificationPriority.MEDIUM,
+          channels: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
+        },
       },
       quietHours: {
         enabled: true,
@@ -790,14 +892,14 @@ class AdvancedNotificationService {
    * Actualizar preferencias del usuario
    */
   async updateUserPreferences(
-    userId: string, 
+    userId: string,
     preferences: Partial<UserNotificationPreferences>
   ): Promise<void> {
     const currentPrefs = await this.getUserPreferences(userId);
     const updatedPrefs = { ...currentPrefs, ...preferences };
     this.userPreferences.set(userId, updatedPrefs);
-    
-         logger.info('Preferencias de notificación actualizadas', { userId, preferences });
+
+    logger.info('Preferencias de notificación actualizadas', { userId, preferences });
   }
 
   /**
@@ -811,28 +913,36 @@ class AdvancedNotificationService {
    * Actualizar analytics
    */
   private async updateAnalytics(
-    notification: SmartNotification, 
+    notification: SmartNotification,
     event: 'sent' | 'delivered' | 'read' | 'failed'
   ): Promise<void> {
     this.analytics[event]++;
-    
+
     // Actualizar métricas por canal
     const channelPerf = this.analytics.channelPerformance[notification.optimalChannel];
-    if (channelPerf && event in channelPerf && typeof channelPerf[event as keyof typeof channelPerf] === 'number') {
+    if (
+      channelPerf &&
+      event in channelPerf &&
+      typeof channelPerf[event as keyof typeof channelPerf] === 'number'
+    ) {
       (channelPerf as any)[event]++;
       channelPerf.openRate = channelPerf.read / channelPerf.sent;
     }
 
     // Actualizar métricas por tipo
     const typePerf = this.analytics.typePerformance[notification.type];
-    if (typePerf && event in typePerf && typeof typePerf[event as keyof typeof typePerf] === 'number') {
+    if (
+      typePerf &&
+      event in typePerf &&
+      typeof typePerf[event as keyof typeof typePerf] === 'number'
+    ) {
       (typePerf as any)[event]++;
       typePerf.openRate = typePerf.read / typePerf.sent;
     }
-    
+
     // Actualizar métricas de tiempo
     const hour = notification.sentAt?.getHours() || new Date().getHours();
-    this.analytics.timePerformance.hourly[hour] = 
+    this.analytics.timePerformance.hourly[hour] =
       (this.analytics.timePerformance.hourly[hour] || 0) + 1;
   }
 
@@ -852,28 +962,28 @@ class AdvancedNotificationService {
     let userNotifications = Array.from(this.notifications.values())
       .filter(notification => notification.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    
+
     // Filtrar por estado de lectura
     if (options?.isRead !== undefined) {
-      userNotifications = userNotifications.filter(n => 
+      userNotifications = userNotifications.filter(n =>
         options.isRead ? n.status === 'read' : n.status !== 'read'
       );
     }
-    
+
     // Filtrar por tipo
     if (options?.type) {
       userNotifications = userNotifications.filter(n => n.type === options.type);
     }
-    
+
     // Aplicar paginación
     if (options?.offset) {
       userNotifications = userNotifications.slice(options.offset);
     }
-    
+
     if (options?.limit) {
       userNotifications = userNotifications.slice(0, options.limit);
     }
-    
+
     return userNotifications;
   }
 
@@ -911,15 +1021,10 @@ class AdvancedNotificationService {
       throw new Error(`Template no encontrado: ${templateId}`);
     }
 
-    return this.createSmartNotification(
-      userId,
-      template.type,
-      variables,
-      {
-        priority: template.priority,
-        channels: template.channels,
-      }
-    );
+    return this.createSmartNotification(userId, template.type, variables, {
+      priority: template.priority,
+      channels: template.channels,
+    });
   }
 
   /**
@@ -928,7 +1033,7 @@ class AdvancedNotificationService {
   async markAllAsRead(userId: string): Promise<void> {
     const userNotifications = await this.getUserNotifications(userId);
     const unreadNotifications = userNotifications.filter(n => n.status !== 'read');
-    
+
     for (const notification of unreadNotifications) {
       await this.markAsRead(notification.id);
     }
@@ -942,72 +1047,20 @@ class AdvancedNotificationService {
   }
 
   private async saveNotification(notification: SmartNotification): Promise<void> {
-         // En producción, esto se guardaría en la base de datos
-     logger.info('Notificación guardada', { id: notification.id });
+    // En producción, esto se guardaría en la base de datos
+    logger.info('Notificación guardada', { id: notification.id });
   }
 
   private async updateNotification(notification: SmartNotification): Promise<void> {
-         // En producción, esto se actualizaría en la base de datos
-     logger.info('Notificación actualizada', { 
-       id: notification.id, 
-       status: notification.status 
-     });
+    // En producción, esto se actualizaría en la base de datos
+    logger.info('Notificación actualizada', {
+      id: notification.id,
+      status: notification.status,
+    });
   }
 }
 
 // Instancia singleton
 export const notificationService = new AdvancedNotificationService();
 
-// Hook personalizado para React
-export const useNotifications = () => {
-  const [notifications, setNotifications] = React.useState<SmartNotification[]>([]);
-  const [preferences, setPreferences] = React.useState<UserNotificationPreferences | null>(null);
-  const [loading, setLoading] = React.useState(false);
-
-  const sendNotification = async (
-    userId: string,
-    type: NotificationType,
-    metadata: Record<string, any> = {},
-    options: any = {}
-  ) => {
-    setLoading(true);
-    try {
-      const notification = await notificationService.createSmartNotification(
-        userId,
-        type,
-        metadata,
-        options
-      );
-      setNotifications(prev => [notification, ...prev]);
-      return notification;
-    } catch (error) {
-      logger.error('Error enviando notificación:', { error: error instanceof Error ? error.message : String(error) });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePreferences = async (
-    userId: string,
-    newPreferences: Partial<UserNotificationPreferences>
-  ) => {
-    await notificationService.updateUserPreferences(userId, newPreferences);
-    if (preferences) {
-      setPreferences({ ...preferences, ...newPreferences });
-    }
-  };
-
-  const getAnalytics = () => {
-    return notificationService.getAnalytics();
-  };
-
-  return {
-    notifications,
-    preferences,
-    loading,
-    sendNotification,
-    updatePreferences,
-    getAnalytics,
-  };
-};
+// Hook personalizado removido - usar useNotifications del NotificationProvider en su lugar

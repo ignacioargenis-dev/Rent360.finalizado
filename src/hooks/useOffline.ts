@@ -27,12 +27,10 @@ export function useOffline(): OfflineState & OfflineActions {
   const [cachedData, setCachedData] = useState<any[]>([]);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-  // Verificar estado de conexión
+  // Verificar estado de conexión - simplificado para evitar errores
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      // Intentar sincronización automática
-      syncPendingActions();
     };
 
     const handleOffline = () => {
@@ -47,7 +45,7 @@ export function useOffline(): OfflineState & OfflineActions {
     window.addEventListener('offline', handleOffline);
 
     // Verificar si es PWA instalada
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
       setIsPWAInstalled(true);
     }
 
@@ -60,9 +58,6 @@ export function useOffline(): OfflineState & OfflineActions {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Cargar datos offline
-    loadOfflineData();
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -70,7 +65,7 @@ export function useOffline(): OfflineState & OfflineActions {
     };
   }, []);
 
-  // Cargar datos offline desde localStorage
+  // Cargar datos offline desde localStorage - simplificado
   const loadOfflineData = useCallback(() => {
     try {
       const lastSync = localStorage.getItem('rent360_lastSync');
@@ -88,16 +83,18 @@ export function useOffline(): OfflineState & OfflineActions {
         setCachedData(JSON.parse(cached));
       }
     } catch (error) {
-      logger.error('Error loading offline data:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error loading offline data:', error);
     }
   }, []);
 
-  // Sincronizar acciones pendientes
+  // Sincronizar acciones pendientes - simplificado
   const syncPendingActions = useCallback(async () => {
-    if (!isOnline || pendingActions.length === 0) return;
+    if (!isOnline || pendingActions.length === 0) {
+      return;
+    }
 
     try {
-      logger.info('Sincronizando acciones pendientes:', { count: pendingActions.length });
+      console.log('Sincronizando acciones pendientes:', { count: pendingActions.length });
 
       // Aquí iría la lógica para sincronizar con el servidor
       // Por ahora simulamos la sincronización
@@ -110,17 +107,8 @@ export function useOffline(): OfflineState & OfflineActions {
       // Actualizar localStorage
       localStorage.setItem('rent360_lastSync', new Date().toISOString());
       localStorage.removeItem('rent360_pendingActions');
-
-      // Notificar al service worker
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SYNC_COMPLETED',
-          data: { timestamp: Date.now() }
-        });
-      }
-
     } catch (error) {
-      logger.error('Error sincronizando acciones pendientes:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error sincronizando acciones pendientes:', error);
     }
   }, [isOnline, pendingActions]);
 
@@ -149,24 +137,26 @@ export function useOffline(): OfflineState & OfflineActions {
           data: cacheEntry,
         });
       }
-
     } catch (error) {
-      logger.error('Error cacheando datos:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error cacheando datos:', error);
     }
   }, []);
 
   // Obtener datos cacheados
-  const getCachedData = useCallback(async (key?: string) => {
-    try {
-      if (key) {
-        return cachedData.filter(item => item.key === key);
+  const getCachedData = useCallback(
+    async (key?: string) => {
+      try {
+        if (key) {
+          return cachedData.filter(item => item.key === key);
+        }
+        return cachedData;
+      } catch (error) {
+        console.warn('Error obteniendo datos cacheados:', error);
+        return [];
       }
-      return cachedData;
-    } catch (error) {
-      logger.error('Error obteniendo datos cacheados:', { error: error instanceof Error ? error.message : String(error) });
-      return [];
-    }
-  }, [cachedData]);
+    },
+    [cachedData]
+  );
 
   // Limpiar cache
   const clearCache = useCallback(async () => {
@@ -181,27 +171,29 @@ export function useOffline(): OfflineState & OfflineActions {
         });
       }
     } catch (error) {
-      logger.error('Error limpiando cache:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error limpiando cache:', error);
     }
   }, []);
 
   // Instalar PWA
   const installPWA = useCallback(async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      return;
+    }
 
     try {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === 'accepted') {
-        logger.info('PWA instalada exitosamente');
+        console.log('PWA instalada exitosamente');
         setIsPWAInstalled(true);
       }
 
       setDeferredPrompt(null);
       setCanInstallPWA(false);
     } catch (error) {
-      logger.error('Error instalando PWA:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error instalando PWA:', error);
     }
   }, [deferredPrompt]);
 
@@ -318,7 +310,7 @@ export function useServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
 
-      logger.info('Service Worker registrado:', { scope: registration.scope });
+      console.log('Service Worker registrado:', { scope: registration.scope });
 
       setIsRegistered(true);
 
@@ -344,29 +336,28 @@ export function useServiceWorker() {
       }
 
       // Escuchar mensajes del service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      navigator.serviceWorker.addEventListener('message', event => {
         const { type, data } = event.data;
 
         switch (type) {
           case 'SYNC_COMPLETED':
-            logger.info('Sincronización completada:', { data });
+            console.log('Sincronización completada:', { data });
             break;
           case 'SYNC_FAILED':
-            logger.error('Sincronización fallida:', { data });
+            console.warn('Sincronización fallida:', { data });
             break;
           default:
-            logger.debug('Mensaje del Service Worker:', { type, data });
+            console.debug('Mensaje del Service Worker:', { type, data });
         }
       });
-
     } catch (error) {
-      logger.error('Error registrando Service Worker:', { error: error instanceof Error ? error.message : String(error) });
+      console.warn('Error registrando Service Worker:', error);
     }
   };
 
   const updateServiceWorker = () => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((registration) => {
+      navigator.serviceWorker.ready.then(registration => {
         registration.update();
         setUpdateAvailable(false);
       });

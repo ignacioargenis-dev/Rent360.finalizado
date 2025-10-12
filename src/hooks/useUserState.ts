@@ -1,7 +1,5 @@
 'use client';
 
-import { logger } from '@/lib/logger';
-
 import { useState } from 'react';
 import { User } from '@/types';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
@@ -26,11 +24,11 @@ export function useUserState(options: UseUserStateOptions = {}) {
 
   // For backward compatibility - provide no-op functions
   const updateUser = (newUser: User | null) => {
-    logger.warn('updateUser is deprecated - use AuthProvider instead');
+    console.warn('updateUser is deprecated - use AuthProvider instead');
   };
 
   const clearUser = () => {
-    logger.warn('clearUser is deprecated - use AuthProvider instead');
+    console.warn('clearUser is deprecated - use AuthProvider instead');
   };
 
   return {
