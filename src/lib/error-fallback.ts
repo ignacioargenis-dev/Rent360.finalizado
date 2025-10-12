@@ -21,12 +21,5 @@ export class ErrorFallback {
   static async sendToExternalService(logEntry: any) {
     // Implementar envío a servicio de logging externo
     // como Sentry, LogRocket, etc.
-    try {
-      // Aquí iría la lógica para enviar a servicios externos
-      // Por ahora solo log local
-      console.log('External logging service not configured');
-    } catch (error) {
-      // Silenciar errores de logging externo completamente
-    }
   }
 }

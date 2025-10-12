@@ -312,11 +312,15 @@ class Logger {
   }
 
   async warn(message: string, data?: Record<string, any>): Promise<void> {
-    await this.log('WARN', message, data);
+    // Log simple sin dependencias complejas
+    const simpleLog = `[${new Date().toISOString()}] WARN: ${message}`;
+    console.warn(simpleLog, data || '');
   }
 
   async info(message: string, data?: Record<string, any>): Promise<void> {
-    await this.log('INFO', message, data);
+    // Log simple sin dependencias complejas
+    const simpleLog = `[${new Date().toISOString()}] INFO: ${message}`;
+    console.log(simpleLog, data || '');
   }
 
   async debug(message: string, data?: Record<string, any>): Promise<void> {
