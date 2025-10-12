@@ -26,11 +26,11 @@ import {
   Zap,
   Shield,
   Wifi,
-  Star
+  Star,
 } from 'lucide-react';
 import { usePWA } from '@/lib/pwa';
 import { useRecommendations } from '@/lib/recommendations';
-import { useNotifications } from '@/lib/notifications';
+import { useNotifications } from '@/components/ui/notification-provider';
 import { default as DynamicImport } from 'next/dynamic';
 
 // Forzar renderizado dinámico para evitar errores de prerendering con hooks del cliente
@@ -38,13 +38,40 @@ export const dynamic = 'force-dynamic';
 
 // Dynamic imports para componentes que acceden a window APIs
 const Chatbot = DynamicImport(() => import('@/components/ai/Chatbot'), { ssr: false });
-const PredictiveAnalytics = DynamicImport(() => import('@/components/analytics/PredictiveAnalytics'), { ssr: false });
+const PredictiveAnalytics = DynamicImport(
+  () => import('@/components/analytics/PredictiveAnalytics'),
+  { ssr: false }
+);
 
 export default function DemoFase1Page() {
   const [activeTab, setActiveTab] = useState('overview');
   const { canInstall, isInstalled, showInstallPrompt } = usePWA();
-  const { recommendations, loading: recommendationsLoading, generateRecommendations } = useRecommendations();
-  const { sendNotification, loading: notificationLoading } = useNotifications();
+  const {
+    recommendations,
+    loading: recommendationsLoading,
+    generateRecommendations,
+  } = useRecommendations();
+  const {
+    notify,
+    success,
+    error,
+    warning,
+    info,
+    loading: notificationLoading,
+  } = useNotifications();
+
+  // Función wrapper para compatibilidad
+  const sendNotification = async (userId: string, type: string, metadata: any) => {
+    const title = `Notificación: ${type}`;
+    const message = `Enviada a ${userId} con metadata: ${JSON.stringify(metadata)}`;
+    notify({
+      type: 'info',
+      title,
+      message,
+      duration: 5000,
+    });
+    return 'demo-notification-id';
+  };
 
   const features = [
     {
@@ -56,7 +83,7 @@ export default function DemoFase1Page() {
       demo: () => {
         // El chatbot ya está integrado en el layout
         logger.info('Chatbot disponible en la esquina inferior derecha');
-      }
+      },
     },
     {
       icon: Smartphone,
@@ -70,14 +97,18 @@ export default function DemoFase1Page() {
         } else {
           logger.info('PWA ya instalada o no disponible');
         }
-      }
+      },
     },
     {
       icon: Target,
       title: 'Sistema de Recomendaciones',
       description: 'Algoritmo inteligente que conecta usuarios con propiedades ideales',
       status: '✅ Implementado',
-      benefits: ['45% incremento conversiones', '30% reducción tiempo búsqueda', '50% mejora satisfacción'],
+      benefits: [
+        '45% incremento conversiones',
+        '30% reducción tiempo búsqueda',
+        '50% mejora satisfacción',
+      ],
       demo: async () => {
         const mockProperties = [
           { id: '1', location: { area: 'Las Condes' }, price: 850000, bedrooms: 2, bathrooms: 2 },
@@ -98,17 +129,21 @@ export default function DemoFase1Page() {
           lastSearchDate: new Date(),
         };
         await generateRecommendations('demo-user', mockProperties, mockPreferences);
-      }
+      },
     },
     {
       icon: TrendingUp,
       title: 'Analytics Predictivos',
       description: 'Business Intelligence avanzado con predicciones de mercado',
       status: '✅ Implementado',
-      benefits: ['25% incremento rentabilidad', '40% optimización precios', '20% reducción vacancia'],
+      benefits: [
+        '25% incremento rentabilidad',
+        '40% optimización precios',
+        '20% reducción vacancia',
+      ],
       demo: () => {
         setActiveTab('analytics');
-      }
+      },
     },
     {
       icon: Bell,
@@ -120,10 +155,10 @@ export default function DemoFase1Page() {
         await sendNotification('demo-user', 'payment_due' as any, {
           amount: 850000,
           dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          propertyId: 'demo-prop-1'
+          propertyId: 'demo-prop-1',
         });
-      }
-    }
+      },
+    },
   ];
 
   const stats = [
@@ -145,8 +180,8 @@ export default function DemoFase1Page() {
             <h1 className="text-4xl font-bold">Fase 1 - Implementación Completada</h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Todas las mejoras de alta prioridad han sido implementadas exitosamente. 
-            Rent360 ahora cuenta con funcionalidades de vanguardia que transforman la experiencia del usuario.
+            Todas las mejoras de alta prioridad han sido implementadas exitosamente. Rent360 ahora
+            cuenta con funcionalidades de vanguardia que transforman la experiencia del usuario.
           </p>
         </div>
 
@@ -203,9 +238,7 @@ export default function DemoFase1Page() {
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {feature.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-3">{feature.description}</p>
                       <div className="space-y-1">
                         {feature.benefits.map((benefit, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-xs">
@@ -317,11 +350,7 @@ export default function DemoFase1Page() {
                       </div>
                       <div>
                         <h4 className="font-medium mb-3">Demo:</h4>
-                        <Button 
-                          onClick={feature.demo}
-                          className="w-full"
-                          variant="outline"
-                        >
+                        <Button onClick={feature.demo} className="w-full" variant="outline">
                           <Play className="h-4 w-4 mr-2" />
                           Probar Funcionalidad
                         </Button>
@@ -374,19 +403,30 @@ export default function DemoFase1Page() {
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-muted-foreground">Tendencia</div>
-                        <Badge 
-                          variant={rec.marketTrend === 'up' ? 'default' : 
-                                  rec.marketTrend === 'down' ? 'destructive' : 'secondary'}
+                        <Badge
+                          variant={
+                            rec.marketTrend === 'up'
+                              ? 'default'
+                              : rec.marketTrend === 'down'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
                         >
-                          {rec.marketTrend === 'up' ? 'Alcista' : 
-                           rec.marketTrend === 'down' ? 'Bajista' : 'Estable'}
+                          {rec.marketTrend === 'up'
+                            ? 'Alcista'
+                            : rec.marketTrend === 'down'
+                              ? 'Bajista'
+                              : 'Estable'}
                         </Badge>
                       </div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-sm font-medium">Razones:</div>
                       {rec.reasons.map((reason, idx) => (
-                        <div key={idx} className="text-xs text-muted-foreground flex items-center gap-2">
+                        <div
+                          key={idx}
+                          className="text-xs text-muted-foreground flex items-center gap-2"
+                        >
                           <ArrowRight className="h-3 w-3" />
                           {reason}
                         </div>
