@@ -270,7 +270,13 @@ export default function AdminDashboard() {
   }
 
   // Verificar que el usuario esté autenticado y tenga permisos de admin
-  if (!user || user.role !== 'admin') {
+  const hasAdminAccess = user && (
+    user.role === 'admin' ||
+    user.role === 'ADMIN' ||
+    user.role?.toLowerCase() === 'admin'
+  );
+
+  if (!user || !hasAdminAccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -284,6 +290,14 @@ export default function AdminDashboard() {
                 ? `Tu rol actual es "${user.role}". Esta página requiere permisos de administrador.`
                 : 'Debes iniciar sesión para acceder a esta página.'}
             </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Debug Info:</strong><br/>
+                Usuario: {user ? JSON.stringify(user, null, 2) : 'No autenticado'}<br/>
+                Rol requerido: &apos;admin&apos; (case insensitive)<br/>
+                Acceso permitido: {hasAdminAccess ? '✅ Sí' : '❌ No'}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -542,6 +556,41 @@ export default function AdminDashboard() {
                       Forzar Rol Admin
                     </Button>
                   )}
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        const email = prompt('Email para admin de prueba (debe contener "admin"):');
+                        const password = prompt('Password:');
+                        const name = prompt('Nombre:');
+
+                        if (!email || !password || !name) {
+                          alert('Todos los campos son requeridos');
+                          return;
+                        }
+
+                        const response = await fetch('/api/admin/create-test-admin', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email, password, name }),
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                          alert('Usuario admin creado. Usa las credenciales para iniciar sesión.');
+                          logger.info('Credenciales de admin creadas:', { email });
+                        } else {
+                          alert('Error: ' + result.error);
+                        }
+                      } catch (error) {
+                        logger.error('Error creando admin de prueba:', error);
+                        alert('Error creando admin de prueba');
+                      }
+                    }}
+                  >
+                    Crear Admin de Prueba
+                  </Button>
                 </div>
               </div>
             </CardContent>

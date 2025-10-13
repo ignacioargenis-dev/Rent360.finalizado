@@ -53,8 +53,11 @@ export default function UnifiedDashboardLayout({
       return;
     }
 
-    checkAuth();
-  }, [propUser]);
+    // Verificar autenticación solo si no tenemos usuario
+    if (!user) {
+      checkAuth();
+    }
+  }, [propUser, user]);
 
   const checkAuth = async () => {
     try {
@@ -71,20 +74,22 @@ export default function UnifiedDashboardLayout({
 
       if (response.ok) {
         const data = await response.json();
-        logger.info('UnifiedDashboardLayout - User authenticated:', { userId: data.user?.id });
-        setUser(data.user);
+        if (data.user) {
+          logger.info('UnifiedDashboardLayout - User authenticated:', { userId: data.user.id, role: data.user.role });
+          setUser(data.user);
+        } else {
+          logger.warn('UnifiedDashboardLayout - Response OK but no user data');
+          setUser(null);
+        }
       } else if (response.status === 401) {
-        logger.warn('User not authenticated');
-        // No redirigir automáticamente - dejar que las páginas hijas manejen el estado no autenticado
+        logger.info('UnifiedDashboardLayout - User not authenticated (401)');
         setUser(null);
       } else {
-        logger.error('Auth check failed:', { status: response.status });
-        // No redirigir automáticamente - permitir funcionamiento sin autenticación
+        logger.error('UnifiedDashboardLayout - Auth check failed:', { status: response.status });
         setUser(null);
       }
     } catch (error) {
-      logger.error('Error checking auth:', { error: error instanceof Error ? error.message : String(error) });
-      // No redirigir automáticamente - permitir funcionamiento básico
+      logger.error('UnifiedDashboardLayout - Error checking auth:', { error: error instanceof Error ? error.message : String(error) });
       setUser(null);
     } finally {
       setLoading(false);
