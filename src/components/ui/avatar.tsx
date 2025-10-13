@@ -17,9 +17,15 @@ function getInitials(name: string): string {
 
 // Función para generar color consistente basado en el nombre
 function getColorFromName(name: string): string {
-  const colors: readonly string[] = [
-    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
-    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
+  const colors: string[] = [
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-red-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-teal-500'
   ];
 
   let hash = 0;
@@ -27,7 +33,8 @@ function getColorFromName(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  return colors[Math.abs(hash) % colors.length];
+  const index = Math.abs(hash) % colors.length;
+  return colors[index]!;
 }
 
 function Avatar({
