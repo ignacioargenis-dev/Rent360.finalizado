@@ -168,8 +168,16 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   // Detectar dominio automáticamente para producción
   let domain: string | undefined;
   if (isProduction) {
-    // Intentar obtener el dominio de las variables de entorno o del host
-    domain = process.env.DOMAIN || process.env.VERCEL_URL || undefined;
+    // Intentar obtener el dominio de las variables de entorno
+    domain = process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
+
+    // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
+    if (!domain) {
+      const host = process.env.HOST;
+      if (host && host.includes('.ondigitalocean.app')) {
+        domain = host;
+      }
+    }
 
     // Si no hay dominio específico, dejar undefined para usar el dominio actual
     if (!domain) {
@@ -206,7 +214,18 @@ export function clearAuthCookies(response: any) {
   // Detectar dominio automáticamente para producción
   let domain: string | undefined;
   if (isProduction) {
-    domain = process.env.DOMAIN || process.env.VERCEL_URL || undefined;
+    // Intentar obtener el dominio de las variables de entorno
+    domain = process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
+
+    // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
+    if (!domain) {
+      const host = process.env.HOST;
+      if (host && host.includes('.ondigitalocean.app')) {
+        domain = host;
+      }
+    }
+
+    // Si no hay dominio específico, dejar undefined para usar el dominio actual
     if (!domain) {
       domain = undefined;
     }
