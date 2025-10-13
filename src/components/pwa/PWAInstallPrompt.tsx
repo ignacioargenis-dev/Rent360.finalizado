@@ -84,11 +84,6 @@ export default function PWAInstallPrompt({
     setIsVisible(false);
   };
 
-  // No mostrar si ya está instalada o no se puede instalar
-  if (!canInstall || isInstalled || isDismissed) {
-    return null;
-  }
-
   // Verificar si fue descartada anteriormente
   useEffect(() => {
     const dismissed = localStorage.getItem('pwa-install-dismissed');
@@ -96,6 +91,11 @@ export default function PWAInstallPrompt({
       setIsDismissed(true);
     }
   }, []);
+
+  // No mostrar si ya está instalada o no se puede instalar
+  if (!canInstall || isInstalled || isDismissed) {
+    return null;
+  }
 
   if (!isVisible) {
     return null;
