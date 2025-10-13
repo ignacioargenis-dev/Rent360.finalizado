@@ -681,24 +681,6 @@ export default function UnifiedSidebar({
 
   const items = menuItems[finalUserRole] || menuItems[userRole] || menuItems.tenant || [];
 
-  // Debug: Log del rol del usuario (temporal para diagnóstico)
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname;
-    console.log('UnifiedSidebar Debug:', {
-      userRole,
-      finalUserRole,
-      userRoleRaw: user?.role,
-      userId: user?.id,
-      currentPath: pathname,
-      availableMenuKeys: Object.keys(menuItems),
-      selectedMenu: finalUserRole in menuItems ? finalUserRole : 'tenant (fallback)',
-      timestamp: new Date().toISOString(),
-      userObject: user, // Agregar el objeto completo del usuario
-      menuItemsAvailable: Object.keys(menuItems),
-      userLoaded: !!user, // Indicar si el usuario ya se cargó
-    });
-  }
-
   const isActiveRoute = (url: string) => {
     return pathname === url || pathname.startsWith(url + '/');
   };

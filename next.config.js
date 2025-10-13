@@ -11,7 +11,9 @@ const nextConfig = {
   // Optimizaciones de performance
   swcMinify: true,
   compiler: {
-    removeConsole: false, // Temporalmente desactivado en producción para debugging
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'] // Solo mantener errores críticos en producción
+    } : false,
   },
   // Configuración experimental
   experimental: {
@@ -27,35 +29,19 @@ const nextConfig = {
   // output: 'standalone', // Deshabilitado para usar servidor personalizado con Socket.IO
   poweredByHeader: false,
   webpack: (config, { isServer }) => {
-    // Fix for node modules in client-side code
+    // Solo mantener fallbacks críticos para evitar problemas de inicialización
     if (!isServer) {
       config.resolve.fallback = {
-        ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
-        crypto: false,
-        stream: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
-        path: false,
       };
     }
 
-    // Exclude server-side packages from client bundle
+    // Remover externals complejos que pueden causar problemas - simplificar configuración
     config.externals = config.externals || [];
     if (!isServer) {
-      config.externals.push({
-        redis: 'commonjs redis',
-        '@redis/client': 'commonjs @redis/client',
-        sqlite3: 'commonjs sqlite3',
-        '@aws-sdk/client-s3': 'commonjs @aws-sdk/client-s3',
-        '@google-cloud/storage': 'commonjs @google-cloud/storage',
-      });
+      config.externals.push('redis', 'sqlite3');
     }
 
     return config;

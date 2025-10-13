@@ -36,14 +36,25 @@ const createPrismaClient = () => {
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 
-// Función para verificar y reconectar la base de datos
+// Función mejorada para verificar conexión DB con timeout
 export async function ensureDatabaseConnection(): Promise<boolean> {
   try {
-    await db.$connect();
+    // Timeout de conexión más corto para evitar bloqueos en producción
+    await Promise.race([
+      db.$connect(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+      )
+    ]);
     console.log('✅ Database connection verified');
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);
+    // No intentar reconectar automáticamente en producción - dejar que el sistema se recupere
+    if (process.env.NODE_ENV === 'production') {
+      return false;
+    }
+    // Solo intentar reconectar en desarrollo
     try {
       console.log('🔄 Attempting to reconnect...');
       await db.$disconnect();
