@@ -3,10 +3,12 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-import { logger } from '@/lib/logger-minimal';
+import { logger } from '@/lib/logger-edge-runtime';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import UnifiedDashboardLayout, { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
+import UnifiedDashboardLayout, {
+  useDashboardUser,
+} from '@/components/layout/UnifiedDashboardLayout';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -278,23 +280,19 @@ export default function AdminDashboard() {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
             <p className="text-gray-600 mb-4">
-              {user ? `Tu rol actual es "${user.role}". Esta página requiere permisos de administrador.` : 'Debes iniciar sesión para acceder a esta página.'}
+              {user
+                ? `Tu rol actual es "${user.role}". Esta página requiere permisos de administrador.`
+                : 'Debes iniciar sesión para acceder a esta página.'}
             </p>
           </div>
 
           <div className="space-y-3">
             {!user ? (
-              <Button
-                onClick={() => window.location.href = '/auth/login'}
-                className="w-full"
-              >
+              <Button onClick={() => (window.location.href = '/auth/login')} className="w-full">
                 Iniciar Sesión
               </Button>
             ) : (
-              <Button
-                onClick={() => window.location.href = '/'}
-                className="w-full"
-              >
+              <Button onClick={() => (window.location.href = '/')} className="w-full">
                 Ir al Inicio
               </Button>
             )}
@@ -485,8 +483,9 @@ export default function AdminDashboard() {
                 {user?.role !== 'admin' && (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">
-                      ⚠️ Tu rol actual es <strong>{user?.role}</strong>. Si deberías ser administrador,
-                      contacta al soporte técnico o verifica tu configuración de autenticación.
+                      ⚠️ Tu rol actual es <strong>{user?.role}</strong>. Si deberías ser
+                      administrador, contacta al soporte técnico o verifica tu configuración de
+                      autenticación.
                     </p>
                   </div>
                 )}
