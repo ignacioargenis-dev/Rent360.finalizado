@@ -1,4 +1,4 @@
-// Configuración de logging
+// Configuración de logging simplificada para evitar problemas de Edge Runtime
 const LOG_LEVELS = {
   ERROR: 0,
   WARN: 1,
@@ -6,33 +6,48 @@ const LOG_LEVELS = {
   DEBUG: 3,
 } as const;
 
-// Imports lazy para evitar dependencias circulares
-let db: any = null;
-let cacheManager: any = null;
-let rateLimiter: any = null;
+// Logger simplificado que funciona en Edge Runtime y Node.js
+const createLogger = () => {
+  const isEdgeRuntime = typeof process === 'undefined' || !process.memoryUsage;
 
-const getDb = async () => {
-  if (!db) {
-    const { db: dbModule } = await import('@/lib/db');
-    db = dbModule;
-  }
-  return db;
-};
-
-const getCacheManager = async () => {
-  if (!cacheManager) {
-    const cacheModule = await import('@/lib/cache');
-    cacheManager = cacheModule.cacheManager;
-  }
-  return cacheManager;
-};
-
-const getRateLimiter = async () => {
-  if (!rateLimiter) {
-    const rateLimiterModule = await import('@/lib/rate-limiter');
-    rateLimiter = rateLimiterModule.rateLimiter;
-  }
-  return rateLimiter;
+  return {
+    error: (message: string, data?: Record<string, any>) => {
+      const logMessage = `[${new Date().toISOString()}] ERROR: ${message}`;
+      if (isEdgeRuntime) {
+        // En Edge Runtime, usar console.error directamente
+        console.error(logMessage, data || '');
+      } else {
+        // En Node.js, usar console.error con formato
+        console.error(logMessage, data || '');
+      }
+    },
+    warn: (message: string, data?: Record<string, any>) => {
+      const logMessage = `[${new Date().toISOString()}] WARN: ${message}`;
+      if (isEdgeRuntime) {
+        console.warn(logMessage, data || '');
+      } else {
+        console.warn(logMessage, data || '');
+      }
+    },
+    info: (message: string, data?: Record<string, any>) => {
+      const logMessage = `[${new Date().toISOString()}] INFO: ${message}`;
+      if (isEdgeRuntime) {
+        console.log(logMessage, data || '');
+      } else {
+        console.log(logMessage, data || '');
+      }
+    },
+    debug: (message: string, data?: Record<string, any>) => {
+      if (process.env.NODE_ENV === 'development') {
+        const logMessage = `[${new Date().toISOString()}] DEBUG: ${message}`;
+        if (isEdgeRuntime) {
+          console.debug(logMessage, data || '');
+        } else {
+          console.debug(logMessage, data || '');
+        }
+      }
+    },
+  };
 };
 
 // Configuración de servicios externos de logging
@@ -295,36 +310,27 @@ class Logger {
     }
   }
 
-  // Métodos públicos de logging
-  async error(message: string, data?: Record<string, any>): Promise<void> {
-    // Log simple sin dependencias complejas
+  // Métodos públicos de logging simplificados
+  error(message: string, data?: Record<string, any>): void {
     const simpleLog = `[${new Date().toISOString()}] ERROR: ${message}`;
     console.error(simpleLog, data || '');
-
-    // Solo intentar logging avanzado si no hay errores críticos
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        await this.log('ERROR', message, data);
-      } catch (logError) {
-        console.error('Logging failed:', logError);
-      }
-    }
   }
 
-  async warn(message: string, data?: Record<string, any>): Promise<void> {
-    // Log simple sin dependencias complejas
+  warn(message: string, data?: Record<string, any>): void {
     const simpleLog = `[${new Date().toISOString()}] WARN: ${message}`;
     console.warn(simpleLog, data || '');
   }
 
-  async info(message: string, data?: Record<string, any>): Promise<void> {
-    // Log simple sin dependencias complejas
+  info(message: string, data?: Record<string, any>): void {
     const simpleLog = `[${new Date().toISOString()}] INFO: ${message}`;
     console.log(simpleLog, data || '');
   }
 
-  async debug(message: string, data?: Record<string, any>): Promise<void> {
-    await this.log('DEBUG', message, data);
+  debug(message: string, data?: Record<string, any>): void {
+    if (process.env.NODE_ENV === 'development') {
+      const simpleLog = `[${new Date().toISOString()}] DEBUG: ${message}`;
+      console.debug(simpleLog, data || '');
+    }
   }
 
   // MÉTODOS DE PERFORMANCE
@@ -950,11 +956,8 @@ class Logger {
   }
 }
 
-// Instancia singleton
-export const logger = new Logger();
-
-// Inicializar monitoreo automáticamente - DESACTIVADO para evitar dependencias circulares
-// logger.startMonitoring(30000); // 30 segundos
+// Instancia singleton simplificada
+export const logger = createLogger();
 
 // Funciones de conveniencia para uso directo
 export const logError = (message: string, data?: Record<string, any>) =>
@@ -963,20 +966,6 @@ export const logWarn = (message: string, data?: Record<string, any>) => logger.w
 export const logInfo = (message: string, data?: Record<string, any>) => logger.info(message, data);
 export const logDebug = (message: string, data?: Record<string, any>) =>
   logger.debug(message, data);
-
-// Funciones de monitoreo para uso directo
-export const logEvent = (
-  type: MonitoringEvent['type'],
-  message: string,
-  severity?: MonitoringEvent['severity'],
-  metadata?: Record<string, any>
-) => logger.logEvent(type, message, severity, metadata);
-export const getSystemMetrics = () => logger.getSystemMetrics();
-export const checkSystemHealth = () => logger.checkSystemHealth();
-export const getMonitoringStats = () => logger.getMonitoringStats();
-export const getLogStats = () => logger.getLogStats();
-export const resolveAlert = (alertId: string, resolvedBy: string) =>
-  logger.resolveAlert(alertId, resolvedBy);
 
 // Tipos para exportar
 export type { SystemMetrics, Alert, MonitoringEvent };
