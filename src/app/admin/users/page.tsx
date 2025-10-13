@@ -36,10 +36,12 @@ import {
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
-import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
 
 export default function AdminUsersPage() {
-  const { user, loading: authLoading } = useAuth();
+  // Usar el usuario del dashboard layout que ya verificó autenticación
+  const user = useDashboardUser();
+  const authLoading = false; // El layout ya manejó la carga
 
   const [users, setUsers] = useState<User[]>([]);
 
