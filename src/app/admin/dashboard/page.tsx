@@ -6,8 +6,7 @@ export const dynamic = 'force-dynamic';
 import { logger } from '@/lib/logger-minimal';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import UnifiedDashboardLayout, { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
