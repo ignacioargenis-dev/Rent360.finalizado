@@ -1,5 +1,9 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar prerendering de páginas protegidas
+export const dynamic = 'force-dynamic';
+
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

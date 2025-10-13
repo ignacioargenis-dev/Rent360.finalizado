@@ -1,5 +1,9 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar prerendering de páginas protegidas
+export const dynamic = 'force-dynamic';
+
+
 import React from 'react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,21 +99,21 @@ export default function DebugAuthPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span>Rol es exactamente 'admin'?</span>
+                <span>Rol es exactamente &apos;admin&apos;?</span>
                 <Badge variant={user.role === 'admin' ? 'default' : 'destructive'}>
                   {user.role === 'admin' ? '✅ Sí' : '❌ No'}
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between">
-                <span>Rol es exactamente 'ADMIN'?</span>
+                <span>Rol es exactamente &apos;ADMIN&apos;?</span>
                 <Badge variant={user.role === 'ADMIN' ? 'default' : 'destructive'}>
                   {user.role === 'ADMIN' ? '✅ Sí' : '❌ No'}
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between">
-                <span>Rol incluye 'admin' (case insensitive)?</span>
+                <span>Rol incluye &apos;admin&apos; (case insensitive)?</span>
                 <Badge variant={user.role?.toLowerCase().includes('admin') ? 'default' : 'destructive'}>
                   {user.role?.toLowerCase().includes('admin') ? '✅ Sí' : '❌ No'}
                 </Badge>

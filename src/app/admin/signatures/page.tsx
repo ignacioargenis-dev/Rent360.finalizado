@@ -1,5 +1,9 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar prerendering de páginas protegidas
+export const dynamic = 'force-dynamic';
+
+
 // Build fix - force update
 
 import React, { useState, useEffect } from 'react';

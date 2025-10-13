@@ -1,5 +1,8 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar prerendering de páginas protegidas
+export const dynamic = 'force-dynamic';
+
 import { logger } from '@/lib/logger-minimal';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
 
