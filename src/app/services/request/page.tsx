@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Wrench, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 export default function RequestServicePage() {
   const [formData, setFormData] = useState({

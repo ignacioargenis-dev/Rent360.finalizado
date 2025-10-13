@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { getUsersOptimized } from '@/lib/db-optimizer';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 export async function GET(request: NextRequest) {
   try {

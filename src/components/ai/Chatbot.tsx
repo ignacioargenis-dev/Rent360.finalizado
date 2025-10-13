@@ -27,7 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 import { aiChatbotService } from '@/lib/ai-chatbot-service';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface SpecializedAgent {
   id: string;

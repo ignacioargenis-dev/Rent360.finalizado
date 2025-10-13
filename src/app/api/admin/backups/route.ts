@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { backupManager } from '@/lib/backup-manager';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 

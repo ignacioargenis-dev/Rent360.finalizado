@@ -30,7 +30,7 @@ import { User, Property, Contract, Payment } from '@/types';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface DashboardStats {
   totalProperties: number;

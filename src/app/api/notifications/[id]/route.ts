@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
 import { handleApiError } from '@/lib/api-error-handler';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 export async function GET(
   request: NextRequest,

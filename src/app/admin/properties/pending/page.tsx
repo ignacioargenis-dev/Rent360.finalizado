@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { Filter, Search, Eye, CheckCircle, XCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';

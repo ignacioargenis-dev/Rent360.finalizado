@@ -5,24 +5,15 @@ const DYNAMIC_CACHE_NAME = 'rent360-dynamic-v1.0.1';
 
 // Recursos críticos que deben cachearse
 const STATIC_ASSETS = [
-  '/',
-  '/offline',
+  '/', // Solo página principal
+  '/offline', // Página offline
   '/manifest.json',
-  '/favicon.ico',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  // CSS y JS principales
-  '/_next/static/css/',
-  '/_next/static/',
-  // Componentes UI críticos
-  '/_next/static/chunks/',
 ];
 
 // APIs que deben cachearse para funcionamiento offline
 const API_CACHE_PATTERNS = [
-  '/api/health',
-  // APIs públicas que no requieren autenticación
-  '/api/properties?status=AVAILABLE', // Solo propiedades disponibles
+  // REMOVER APIs que requieren autenticación
+  // '/api/properties?status=AVAILABLE',
 ];
 
 // Recursos que no deben cachearse

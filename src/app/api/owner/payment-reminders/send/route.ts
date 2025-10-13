@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 import { NotificationService } from '@/lib/notification-service';
 import { z } from 'zod';

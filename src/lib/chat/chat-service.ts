@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * Tipos de participantes en el chat

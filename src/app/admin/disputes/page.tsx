@@ -52,7 +52,7 @@ import {
   Timer,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface Dispute {
   id: string;

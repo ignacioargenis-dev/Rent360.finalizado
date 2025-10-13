@@ -28,7 +28,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { User } from '@/types';
 
 // Función auxiliar para formatear moneda

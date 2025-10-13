@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { Filter, Search, Download, CreditCard, AlertTriangle, Eye } from 'lucide-react';
 
 import { useState, useEffect } from 'react';

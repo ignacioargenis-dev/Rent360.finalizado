@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';

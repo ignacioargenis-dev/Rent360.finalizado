@@ -24,7 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import {
   Zap,
   Play,

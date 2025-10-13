@@ -28,7 +28,7 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType } from '@/lib/ratings/rating-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface JobDetails {
   id: string;

@@ -47,7 +47,7 @@ import {
   Gavel,
   HeartHandshake,
 } from 'lucide-react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface LegalCase {
   id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 import { useState, useEffect } from 'react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';

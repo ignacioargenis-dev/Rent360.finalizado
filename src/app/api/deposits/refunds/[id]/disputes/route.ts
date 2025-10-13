@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { requireAuth } from '@/lib/auth';
 type DisputeType = 'DAMAGE' | 'CLEANING' | 'UNPAID_RENT' | 'OTHER';
 type DisputeStatus = 'OPEN' | 'UNDER_MEDIATION' | 'RESOLVED' | 'REJECTED';

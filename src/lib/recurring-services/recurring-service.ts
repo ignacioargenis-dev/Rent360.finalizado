@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * Frecuencia de servicios recurrentes

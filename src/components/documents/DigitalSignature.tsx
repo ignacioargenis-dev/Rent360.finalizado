@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';

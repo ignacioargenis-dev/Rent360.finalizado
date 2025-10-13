@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { UserRatingService, UserRatingData } from '@/lib/user-rating-service';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 

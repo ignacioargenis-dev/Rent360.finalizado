@@ -11,7 +11,7 @@ import { Star, CheckCircle, AlertCircle, ThumbsUp, MessageSquare } from 'lucide-
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { ratingService, RatingType, type ProviderRating } from '@/lib/ratings/rating-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface JobDetails {
   id: string;

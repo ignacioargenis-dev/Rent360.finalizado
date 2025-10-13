@@ -2,7 +2,7 @@
 // Servicio centralizado para registro y consulta de logs de auditoría
 
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 export interface AuditLogData {
   userId?: string;

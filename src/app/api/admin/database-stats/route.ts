@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { dbOptimizer } from '@/lib/db-optimizer';
 import { cacheManager } from '@/lib/cache-manager';
 import { handleApiError } from '@/lib/api-error-handler';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 export async function GET(request: NextRequest) {
   try {

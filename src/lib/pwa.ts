@@ -1,5 +1,6 @@
 // PWA Service - Gestión de Progressive Web App
 import { logger } from './logger';
+import { useState, useEffect } from 'react'; // IMPORTAR ANTES DE USAR
 export interface PWAInstallPrompt {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -150,27 +151,31 @@ class PWAService {
   }
 
   private async setupOfflineCache() {
+    // DESACTIVAR temporalmente el cache offline que causa errores
     // Solo ejecutar en el navegador, no durante SSR
     if (typeof window === 'undefined') {
       return;
     }
 
-    // Configurar cache para recursos críticos
+    // Cache mínimo solo para recursos críticos existentes
     const criticalResources = [
-      '/',
-      '/offline',
-      '/api/properties',
-      '/api/contracts',
-      '/api/payments',
-      '/api/user/profile',
+      '/offline', // Solo página offline
     ];
 
     if ('caches' in window) {
       try {
-        const cache = await caches.open('rent360-critical-v1');
-        await cache.addAll(criticalResources);
+        const cache = await caches.open('rent360-minimal-v1');
+        // Solo cachear recursos que existen
+        for (const resource of criticalResources) {
+          try {
+            await cache.add(resource);
+          } catch (error) {
+            // Ignorar errores individuales de recursos
+            console.warn(`No se pudo cachear: ${resource}`);
+          }
+        }
       } catch (error) {
-        console.warn('Error al configurar cache offline:', error);
+        console.warn('Error al configurar cache mínimo:', error);
       }
     }
   }
@@ -410,6 +415,3 @@ export const usePWA = () => {
     sendNotification: pwaService.sendNotification.bind(pwaService),
   };
 };
-
-// Importar useState y useEffect para el hook
-import { useState, useEffect } from 'react';

@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
 
 import React, { useState, useEffect } from 'react';

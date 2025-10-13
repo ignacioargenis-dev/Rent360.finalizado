@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { NextResponse } from 'next/server';
 
 // Extend global type to include rateLimits

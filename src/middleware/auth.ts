@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [

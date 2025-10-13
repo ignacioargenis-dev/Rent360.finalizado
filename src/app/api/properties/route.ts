@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { PropertyStatus, PropertyType, UserRole } from '@/types';
 import { ValidationError, handleApiError } from '@/lib/api-error-handler';
 import { getPropertiesOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
 
 // Validation schema

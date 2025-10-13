@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { ProviderPayoutsService } from '@/lib/provider-payouts-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 
 /**

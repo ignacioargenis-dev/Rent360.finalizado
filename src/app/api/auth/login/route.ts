@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validations';
 import { generateTokens, setAuthCookies, verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 // Importar servicios con manejo de errores
 let auditService: any = null;

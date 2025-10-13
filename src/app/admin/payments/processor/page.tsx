@@ -36,7 +36,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface PaymentTransaction {
   id: string;

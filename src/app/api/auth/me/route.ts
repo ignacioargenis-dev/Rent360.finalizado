@@ -1,26 +1,22 @@
-import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import * as jwt from 'jsonwebtoken';
 import { db } from '@/lib/db';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 export async function GET(request: NextRequest) {
   try {
-    // Obtener token de la cookie
     const token = request.cookies.get('auth-token')?.value;
 
-    if (!token) {
+    // Verificar que existe token Y JWT_SECRET
+    if (!token || !process.env.JWT_SECRET) {
       return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 },
+        { error: 'Configuración de autenticación incompleta' },
+        { status: 500 }
       );
     }
 
-    // Verificar token
-    const decoded = jwt.verify(token, JWT_SECRET!) as any;
-    
-    // Buscar usuario en la base de datos usando Prisma
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
+
+    // Verificar que el usuario existe
     const user = await db.user.findUnique({
       where: { id: decoded.id },
       select: {
@@ -36,42 +32,32 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
-    // Determinar el rol del usuario
-    const role = user.role.toLowerCase();
+    return NextResponse.json({ user });
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: role,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-      },
-    });
   } catch (error) {
-    logger.error('Error al verificar token:', { error: error instanceof Error ? error.message : String(error) });
-    if (error instanceof Error) {
-      if (error.name === 'JsonWebTokenError') {
-        return NextResponse.json(
-          { error: 'Token inválido' },
-          { status: 401 },
-        );
-      }
-      if (error.name === 'TokenExpiredError') {
-        return NextResponse.json(
-          { error: 'Token expirado' },
-          { status: 401 },
-        );
-      }
+    console.error('Auth error:', error);
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return NextResponse.json(
+        { error: 'Token inválido' },
+        { status: 401 }
+      );
     }
+
+    if (error instanceof jwt.TokenExpiredError) {
+      return NextResponse.json(
+        { error: 'Token expirado' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Error interno del servidor' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

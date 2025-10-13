@@ -33,7 +33,7 @@ import {
   type ProviderRatingSummary,
   type ProviderRating,
 } from '@/lib/ratings/rating-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 interface ProviderProfile {
   id: string;

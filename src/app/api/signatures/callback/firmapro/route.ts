@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 import { SignatureStatus } from '@/lib/signature/types';
 

@@ -10,7 +10,7 @@ import {
   createApiResponse
 } from '@/lib/api-error-handler';
 import { getContractsOptimized, dbOptimizer } from '@/lib/db-optimizer';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
 
 // Schema para crear contrato

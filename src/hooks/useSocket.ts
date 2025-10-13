@@ -1,6 +1,6 @@
 'use client';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';

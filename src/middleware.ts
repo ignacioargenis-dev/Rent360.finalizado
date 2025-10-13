@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { rateLimiter } from '@/lib/rate-limiter';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { securityMiddleware } from '@/middleware/security';
 import { authMiddleware } from '@/middleware/auth';
 

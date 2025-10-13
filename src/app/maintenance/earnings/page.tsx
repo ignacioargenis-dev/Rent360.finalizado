@@ -56,7 +56,7 @@ import {
   Plus,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 // INTERFACES PARA DASHBOARD DE GANANCIAS DE MANTENIMIENTO
 interface EarningsStats {

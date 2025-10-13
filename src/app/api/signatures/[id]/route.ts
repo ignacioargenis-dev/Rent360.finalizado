@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { signatureService } from '@/lib/signature';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
 /**

@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { registerSchema } from '@/lib/validations';

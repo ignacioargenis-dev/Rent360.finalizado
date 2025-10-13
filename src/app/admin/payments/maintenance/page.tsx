@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import {
   DollarSign,
   Users,
