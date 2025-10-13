@@ -10,8 +10,8 @@ import {
 
 // Configuración de seguridad avanzada
 const SECURITY_CONFIG = {
-  MAX_REQUESTS_PER_MINUTE: 100,
-  MAX_REQUESTS_PER_HOUR: 1000,
+  MAX_REQUESTS_PER_MINUTE: 1000, // Aumentado temporalmente para producción
+  MAX_REQUESTS_PER_HOUR: 10000, // Aumentado temporalmente para producción
   BLOCKED_IPS: new Set<string>(),
   SUSPICIOUS_PATTERNS: [
     /\bunion\b.*\bselect\b/i,
@@ -272,30 +272,41 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
       );
     }
 
-    // 3. Rate limiting por IP
-    const rateLimitKey = `ip:${clientIP}`;
-    if (!checkRateLimit(rateLimitKey, SECURITY_CONFIG.MAX_REQUESTS_PER_MINUTE, 60000)) {
-      logger.warn('Rate limit exceeded by IP', {
-        clientIP,
-        userAgent,
-        url,
-        context: 'security.rate_limit_ip'
-      });
+    // 3. Rate limiting por IP (excluir rutas críticas durante prerendering)
+    const pathname = new URL(url).pathname;
+    const isPrerendering = !userAgent || userAgent.includes('Next.js') || userAgent.includes('prerenderer');
+    const isCriticalAPI = pathname.startsWith('/api/users') ||
+                         pathname.startsWith('/api/settings') ||
+                         pathname.startsWith('/api/auth/me') ||
+                         pathname.startsWith('/api/health') ||
+                         pathname.startsWith('/api/test-');
 
-      return new NextResponse(
-        JSON.stringify({
-          error: 'Rate limit exceeded',
-          message: 'Too many requests from this IP address',
-          retryAfter: 60
-        }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': '60'
+    // Excluir rate limiting para prerendering y APIs críticas
+    if (!isPrerendering && !isCriticalAPI) {
+      const rateLimitKey = `ip:${clientIP}`;
+      if (!checkRateLimit(rateLimitKey, SECURITY_CONFIG.MAX_REQUESTS_PER_MINUTE, 60000)) {
+        logger.warn('Rate limit exceeded by IP', {
+          clientIP,
+          userAgent,
+          url,
+          context: 'security.rate_limit_ip'
+        });
+
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Rate limit exceeded',
+            message: 'Too many requests from this IP address',
+            retryAfter: 60
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': '60'
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     // 4. Detectar ataques avanzados
