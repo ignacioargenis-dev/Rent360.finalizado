@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       role: role.toUpperCase(),
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.replace(/[^a-zA-Z0-9\s]/g, ''))}&background=0D8ABC&color=fff`,
+      avatar: null, // Los usuarios pueden subir su avatar después del registro
       // Campos obligatorios
       rut,
       // Campos opcionales
