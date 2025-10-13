@@ -36,9 +36,6 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
     const startTime = Date.now();
 
-    // Debug: verificar autenticación
-    console.log('User authenticated:', { id: user.id, email: user.email, role: user.role });
-
     // Obtener parámetros de consulta
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -48,9 +45,6 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get('isActive');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
-
-    // Debug: mostrar parámetros
-    console.log('Query params:', { page, limit, role, search, isActive, sortBy, sortOrder });
 
     const skip = (page - 1) * limit;
 

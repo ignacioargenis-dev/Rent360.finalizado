@@ -66,42 +66,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Log detallado para debugging
-    console.log('🔍 SETTINGS API POST - Request received');
-    console.log('Headers:', Object.fromEntries(request.headers.entries()));
-    console.log('URL:', request.url);
-    console.log('Method:', request.method);
-
     const user = await requireRole(request, 'admin');
-    console.log('✅ User authenticated:', { id: user.id, email: user.email, role: user.role });
 
     const body = await request.json();
-    console.log('📦 Request body received:', JSON.stringify(body, null, 2));
-
     const { settings } = body;
 
     if (!settings) {
-      console.log('❌ No settings provided in request');
       return NextResponse.json({ error: 'No se proporcionaron configuraciones' }, { status: 400 });
     }
-
-    console.log('🔄 Processing settings categories:', Object.keys(settings));
 
     // Procesar cada configuración
     const updatePromises: any[] = [];
     let processedCount = 0;
 
     Object.entries(settings).forEach(([category, categorySettings]) => {
-      console.log(`📁 Processing category: ${category}`, {
-        fields: Object.keys(categorySettings as any),
-      });
-
       Object.entries(categorySettings as Record<string, any>).forEach(([key, settingData]) => {
-        console.log(`⚙️ Processing setting: ${key}`, settingData);
-
         // Convertir valor a string si no lo es
         const stringValue = String(settingData.value);
-        console.log(`🔄 Converted value to string: "${stringValue}"`);
 
         updatePromises.push(
           db.systemSetting.upsert({
@@ -124,16 +105,8 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    console.log(`🚀 Executing ${updatePromises.length} database operations`);
-
     // Ejecutar todas las actualizaciones
     const results = await Promise.all(updatePromises);
-
-    console.log(`✅ Settings updated successfully`, {
-      processedCount,
-      resultsCount: results.length,
-      results: results.map(r => ({ key: r.key, value: r.value, category: r.category })),
-    });
 
     return NextResponse.json({
       message: 'Configuraciones guardadas exitosamente',
@@ -141,7 +114,7 @@ export async function POST(request: NextRequest) {
       savedSettings: results.map(r => ({ key: r.key, value: r.value })),
     });
   } catch (error) {
-    console.error('❌ Error al guardar configuraciones:', error);
+    logger.error('Error al guardar configuraciones:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('No autorizado') || error.message.includes('Acceso denegado')) {
