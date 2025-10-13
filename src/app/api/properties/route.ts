@@ -58,6 +58,7 @@ const propertySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Datos de propiedades por defecto para evitar errores durante build
+    const startTime = Date.now();
     const defaultProperties = [
       {
         id: 'prop-1',
@@ -86,6 +87,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const type = searchParams.get('type');
+    const search = searchParams.get('search');
+    const city = searchParams.get('city');
+    const commune = searchParams.get('commune');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const bedrooms = searchParams.get('bedrooms');
+    const bathrooms = searchParams.get('bathrooms');
+    const minArea = searchParams.get('minArea');
+    const maxArea = searchParams.get('maxArea');
 
     const skip = (page - 1) * limit;
 
