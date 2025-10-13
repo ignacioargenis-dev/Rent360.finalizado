@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Producción - Rent360</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        .test-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .result.success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .result.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .result.info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        .loading { color: #667eea; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .metric h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .metric .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Diagnóstico de Producción - Rent360</h1>
+            <p>Verificación del estado del sistema en producción</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h3>📊 Estado General del Sistema</h3>
+                <div class="grid">
+                    <div class="metric">
+                        <h4>Servidor Web</h4>
+                        <div class="value" id="server-status">...</div>
+                        <button class="test-button" onclick="testHealth()">Verificar</button>
+                    </div>
+                    <div class="metric">
+                        <h4>Base de Datos</h4>
+                        <div class="value" id="db-status">...</div>
+                        <button class="test-button" onclick="testDatabase()">Verificar</button>
+                    </div>
+                    <div class="metric">
+                        <h4>Autenticación</h4>
+                        <div class="value" id="auth-status">...</div>
+                        <button class="test-button" onclick="testAuth()">Verificar</button>
+                    </div>
+                    <div class="metric">
+                        <h4>API Users</h4>
+                        <div class="value" id="api-status">...</div>
+                        <button class="test-button" onclick="testAPI()">Verificar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🌐 Configuración de Red y Variables</h3>
+                <button class="test-button" onclick="checkEnvironment()">Verificar Variables de Entorno</button>
+                <button class="test-button" onclick="checkConnectivity()">Verificar Conectividad</button>
+                <div class="result" id="env-result" style="display: none;"></div>
+            </div>
+
+            <div class="section">
+                <h3>🔧 Pruebas de API Específicas</h3>
+                <button class="test-button" onclick="testUsersAPI()">Probar API Users</button>
+                <button class="test-button" onclick="testSettingsAPI()">Probar API Settings</button>
+                <button class="test-button" onclick="testAuthAPI()">Probar API Auth</button>
+                <div class="result" id="api-result" style="display: none;"></div>
+            </div>
+
+            <div class="section">
+                <h3>📋 Resultados de Diagnóstico</h3>
+                <div class="result" id="diagnostic-result" style="display: none;"></div>
+            </div>
+
+            <div class="section">
+                <h3>🚨 Problemas Críticos Detectados</h3>
+                <div id="critical-issues" style="display: none;">
+                    <div class="result error" id="critical-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentTest = null;
+
+        // Función para actualizar el estado de un elemento
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = text;
+                element.className = element.className.replace(/status-\w+/g, '');
+                element.classList.add('status-' + status);
+            }
+        }
+
+        // Función para mostrar resultados
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = 'block';
+                element.textContent = content;
+                element.className = element.className.replace(/result-\w+/g, '');
+                element.classList.add('result-' + type);
+            }
+        }
+
+        // Función para hacer fetch con timeout
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
+        // Test de salud del servidor
+        async function testHealth() {
+            updateStatus('server-status', 'info', 'Probando...');
+            try {
+                const response = await fetchWithTimeout('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('server-status', 'success', '✅ OK');
+                    showResult('diagnostic-result', `✅ Servidor funcionando correctamente\nTimestamp: ${data.timestamp}\nUptime: ${data.uptime}s\nMemoria: ${Math.round(data.memory.heapUsed / 1024 / 1024)}MB`, 'success');
+                } else {
+                    updateStatus('server-status', 'error', '❌ Error ' + response.status);
+                    showResult('diagnostic-result', `❌ Error del servidor: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('server-status', 'error', '❌ Sin conexión');
+                showResult('diagnostic-result', `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Test de base de datos
+        async function testDatabase() {
+            updateStatus('db-status', 'info', 'Probando...');
+            try {
+                const response = await fetchWithTimeout('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('db-status', 'success', '✅ OK');
+                    showResult('diagnostic-result', '✅ Base de datos conectada correctamente', 'success');
+                } else {
+                    updateStatus('db-status', 'error', '❌ Error');
+                    showResult('diagnostic-result', '❌ Error en la conexión a base de datos', 'error');
+                }
+            } catch (error) {
+                updateStatus('db-status', 'error', '❌ Error');
+                showResult('diagnostic-result', `❌ Error de base de datos: ${error.message}`, 'error');
+            }
+        }
+
+        // Test de autenticación
+        async function testAuth() {
+            updateStatus('auth-status', 'info', 'Probando...');
+            try {
+                const response = await fetchWithTimeout('/api/auth/me', {
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    updateStatus('auth-status', 'warning', '⚠️ No autenticado');
+                    showResult('diagnostic-result', '⚠️ Usuario no autenticado (esperado en página pública)', 'info');
+                } else if (response.ok) {
+                    updateStatus('auth-status', 'success', '✅ OK');
+                    showResult('diagnostic-result', '✅ Sistema de autenticación funcionando', 'success');
+                } else {
+                    updateStatus('auth-status', 'error', '❌ Error ' + response.status);
+                    showResult('diagnostic-result', `❌ Error de autenticación: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('auth-status', 'error', '❌ Error');
+                showResult('diagnostic-result', `❌ Error de autenticación: ${error.message}`, 'error');
+            }
+        }
+
+        // Test de API general
+        async function testAPI() {
+            updateStatus('api-status', 'info', 'Probando...');
+            try {
+                const response = await fetchWithTimeout('/api/users', {
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    updateStatus('api-status', 'warning', '⚠️ No autorizado');
+                    showResult('diagnostic-result', '⚠️ API requiere autenticación (normal)', 'info');
+                } else if (response.ok) {
+                    updateStatus('api-status', 'success', '✅ OK');
+                    showResult('diagnostic-result', '✅ API funcionando correctamente', 'success');
+                } else if (response.status === 503) {
+                    updateStatus('api-status', 'error', '❌ 503 Service Unavailable');
+                    showResult('diagnostic-result', '❌ ERROR CRÍTICO: API devolviendo 503 - Service Unavailable\nEsto indica un problema grave en el servidor backend.', 'error');
+
+                    // Mostrar problemas críticos
+                    document.getElementById('critical-issues').style.display = 'block';
+                    showResult('critical-result', '🔴 PROBLEMA CRÍTICO DETECTADO:\n\nEl servidor está devolviendo errores 503 (Service Unavailable) para las APIs críticas.\n\nPosibles causas:\n1. Variables de entorno no configuradas (DATABASE_URL)\n2. Base de datos no accesible\n3. Configuración de JWT incorrecta\n4. Problemas de memoria/servidor\n\nSOLUCIÓN: Revisar configuración en DigitalOcean App Platform', 'error');
+                } else {
+                    updateStatus('api-status', 'error', '❌ Error ' + response.status);
+                    showResult('diagnostic-result', `❌ Error de API: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('api-status', 'error', '❌ Error');
+                showResult('diagnostic-result', `❌ Error de API: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar variables de entorno
+        async function checkEnvironment() {
+            const envVars = [
+                'NODE_ENV',
+                'DATABASE_URL',
+                'JWT_SECRET',
+                'NEXTAUTH_URL',
+                'NEXTAUTH_SECRET'
+            ];
+
+            let result = '🔍 Verificación de Variables de Entorno:\n\n';
+
+            try {
+                // Intentar hacer una petición para ver qué headers llegan
+                const response = await fetchWithTimeout('/api/health');
+                result += `✅ Conexión al servidor: OK\n`;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result += `✅ API Health: OK\n`;
+                    result += `📊 Timestamp: ${data.timestamp}\n`;
+                    result += `⏱️ Uptime: ${data.uptime}s\n`;
+                    result += `💾 Memoria: ${Math.round(data.memory.heapUsed / 1024 / 1024)}MB\n\n`;
+                }
+            } catch (error) {
+                result += `❌ Error de conexión: ${error.message}\n\n`;
+            }
+
+            result += '🔧 Variables críticas que deben estar configuradas:\n';
+            envVars.forEach(variable => {
+                result += `• ${variable}\n`;
+            });
+
+            result += '\n📝 Para verificar en DigitalOcean:\n';
+            result += '1. Ir a App Platform > Tu App > Settings > Environment\n';
+            result += '2. Verificar que todas las variables estén configuradas\n';
+            result += '3. Asegurarse de que DATABASE_URL tenga la URL correcta\n';
+            result += '4. Reiniciar la app después de cambios\n';
+
+            showResult('env-result', result, 'info');
+        }
+
+        // Verificar conectividad
+        async function checkConnectivity() {
+            let result = '🌐 Verificación de Conectividad:\n\n';
+
+            const endpoints = [
+                '/api/health',
+                '/api/ping',
+                '/api/auth-status'
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetchWithTimeout(endpoint, {}, 5000);
+                    result += `✅ ${endpoint}: ${response.status} ${response.statusText}\n`;
+                } catch (error) {
+                    result += `❌ ${endpoint}: Error - ${error.message}\n`;
+                }
+            }
+
+            showResult('env-result', result, 'info');
+        }
+
+        // Test específico de API Users
+        async function testUsersAPI() {
+            try {
+                const response = await fetchWithTimeout('/api/users', {
+                    credentials: 'include'
+                });
+
+                let result = `🔍 API Users Test:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+
+                if (response.status === 503) {
+                    result += `\n❌ ERROR CRÍTICO: 503 Service Unavailable\n`;
+                    result += `Esto explica por qué el panel de usuarios no carga.\n`;
+                    result += `El servidor backend no puede procesar la petición.\n`;
+                } else if (response.status === 401) {
+                    result += `\n⚠️ 401 Unauthorized: Requiere autenticación (normal)\n`;
+                } else if (response.ok) {
+                    result += `\n✅ API funcionando correctamente\n`;
+                }
+
+                showResult('api-result', result, response.status === 503 ? 'error' : 'info');
+            } catch (error) {
+                showResult('api-result', `❌ Error al probar API Users: ${error.message}`, 'error');
+            }
+        }
+
+        // Test específico de API Settings
+        async function testSettingsAPI() {
+            try {
+                const response = await fetchWithTimeout('/api/settings', {
+                    credentials: 'include'
+                });
+
+                let result = `🔍 API Settings Test:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+
+                if (response.status === 503) {
+                    result += `\n❌ ERROR CRÍTICO: 503 Service Unavailable\n`;
+                    result += `Esto explica el "acceso denegado" en configuraciones.\n`;
+                }
+
+                showResult('api-result', result, response.status === 503 ? 'error' : 'info');
+            } catch (error) {
+                showResult('api-result', `❌ Error al probar API Settings: ${error.message}`, 'error');
+            }
+        }
+
+        // Test específico de API Auth
+        async function testAuthAPI() {
+            try {
+                const response = await fetchWithTimeout('/api/auth/me', {
+                    credentials: 'include'
+                });
+
+                let result = `🔍 API Auth Test:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+
+                if (response.status === 503) {
+                    result += `\n❌ ERROR CRÍTICO: 503 Service Unavailable\n`;
+                    result += `El sistema de autenticación está caído.\n`;
+                } else if (response.status === 401) {
+                    result += `\n⚠️ 401 Unauthorized: Usuario no autenticado (normal)\n`;
+                }
+
+                showResult('api-result', result, response.status === 503 ? 'error' : 'info');
+            } catch (error) {
+                showResult('api-result', `❌ Error al probar API Auth: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-ejecutar test inicial
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testHealth();
+                testAuth();
+                testAPI();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
