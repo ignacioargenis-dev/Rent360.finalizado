@@ -64,6 +64,28 @@ interface RoleMenuItems {
 }
 
 const menuItems: RoleMenuItems = {
+  guest: [
+    {
+      title: 'Inicio',
+      url: '/',
+      icon: Home,
+    },
+    {
+      title: 'Propiedades',
+      url: '/properties/search',
+      icon: Building,
+    },
+    {
+      title: 'Servicios',
+      url: '/services/request',
+      icon: Wrench,
+    },
+    {
+      title: 'Contacto',
+      url: '/contact',
+      icon: Phone,
+    },
+  ],
   admin: [
     {
       title: 'Panel Principal',
@@ -599,40 +621,20 @@ export default function UnifiedSidebar({
     }));
   };
 
-  // Determinar rol del usuario - priorizar el rol real del usuario
+  // Determinar rol del usuario - usar ÚNICAMENTE el rol real del usuario
   let finalUserRole: string;
 
   if (user && user.role) {
-    // Si tenemos información real del usuario, usarla
+    // Si tenemos información real del usuario, usarla exclusivamente
     finalUserRole = user.role.toLowerCase();
   } else {
-    // Si no hay usuario, determinar desde la URL como fallback
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname.startsWith('/admin/')) {
-      finalUserRole = 'admin';
-    } else if (pathname.startsWith('/owner/')) {
-      finalUserRole = 'owner';
-    } else if (pathname.startsWith('/tenant/')) {
-      finalUserRole = 'tenant';
-    } else if (pathname.startsWith('/broker/')) {
-      finalUserRole = 'broker';
-    } else if (pathname.startsWith('/provider/')) {
-      finalUserRole = 'provider';
-    } else if (pathname.startsWith('/maintenance/')) {
-      finalUserRole = 'maintenance';
-    } else if (pathname.startsWith('/runner/')) {
-      finalUserRole = 'runner';
-    } else if (pathname.startsWith('/support/')) {
-      finalUserRole = 'support';
-    } else {
-      finalUserRole = 'tenant';
-    }
+    // Si no hay usuario autenticado, usar 'guest' para mostrar funcionalidad limitada
+    finalUserRole = 'guest';
   }
 
   // Validar que el rol existe en menuItems
   if (!(finalUserRole in menuItems)) {
-    // Rol no encontrado en menuItems, usando 'tenant' como fallback
-    finalUserRole = 'tenant';
+    finalUserRole = 'tenant'; // fallback seguro
   }
 
   const items = menuItems[finalUserRole] || menuItems.tenant || [];

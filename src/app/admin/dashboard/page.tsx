@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger-minimal';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -262,6 +263,51 @@ export default function AdminDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando dashboard administrativo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar que el usuario esté autenticado y tenga permisos de admin
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
+            <p className="text-gray-600 mb-4">
+              {user ? `Tu rol actual es "${user.role}". Esta página requiere permisos de administrador.` : 'Debes iniciar sesión para acceder a esta página.'}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {!user ? (
+              <Button
+                onClick={() => window.location.href = '/auth/login'}
+                className="w-full"
+              >
+                Iniciar Sesión
+              </Button>
+            ) : (
+              <Button
+                onClick={() => window.location.href = '/'}
+                className="w-full"
+              >
+                Ir al Inicio
+              </Button>
+            )}
+          </div>
+
+          {user && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Si crees que deberías tener permisos de administrador, contacta al soporte técnico.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
