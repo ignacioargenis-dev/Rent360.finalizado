@@ -19,24 +19,24 @@ export function RoleGuard({
 }: RoleGuardProps) {
   const router = useRouter();
 
-  // Usar requiredRole si está especificado, sino usar allowedRoles
-  const rolesToCheck = requiredRole ? [requiredRole] : allowedRoles;
-
   useEffect(() => {
+    // Usar requiredRole si está especificado, sino usar allowedRoles
+    const rolesToCheck = requiredRole ? [requiredRole] : allowedRoles;
+
     // Verificar autorización del lado del cliente
     const checkAuthorization = () => {
       try {
         // Obtener información del usuario desde localStorage o contexto
         const userData = localStorage.getItem('user');
         if (!userData) {
-          console.warn('Usuario no encontrado en localStorage');
+          // Usuario no encontrado en localStorage
           return;
         }
 
         const user: User = JSON.parse(userData);
 
         if (!user || !user.role) {
-          console.warn('Usuario sin rol definido');
+          // Usuario sin rol definido
           return;
         }
 
@@ -44,16 +44,16 @@ export function RoleGuard({
         const hasPermission = rolesToCheck.includes(user.role);
 
         if (!hasPermission) {
-          console.warn(`Usuario con rol ${user.role} intentando acceder a contenido restringido`);
+          // Usuario con rol no autorizado intentando acceder a contenido restringido
           // No redirigir automáticamente - permitir que el componente padre maneje esto
         }
       } catch (error) {
-        console.error('Error verificando autorización:', error);
+        // Error verificando autorización
       }
     };
 
     checkAuthorization();
-  }, [rolesToCheck]);
+  }, [requiredRole, allowedRoles]);
 
   // Siempre renderizar children - el manejo de permisos se hace en el componente padre
   return <>{children}</>;

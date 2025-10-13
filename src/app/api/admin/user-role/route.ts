@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error verificando rol de usuario:', error);
+    // Error verificando rol de usuario
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('Error actualizando rol de usuario:', error);
+    // Error actualizando rol de usuario
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

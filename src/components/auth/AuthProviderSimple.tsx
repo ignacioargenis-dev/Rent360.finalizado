@@ -65,10 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else if (response.status === 401) {
           // Usuario no autenticado - estado normal para páginas públicas
-          console.log('Usuario no autenticado - estado normal');
+          logger.info('Usuario no autenticado - estado normal');
         }
       } catch (error) {
-        console.warn('Auth check failed:', error);
+        logger.warn('Auth check failed:', error);
         // No establecer error crítico - permitir funcionamiento sin autenticación
       }
     };
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
     }
   };
 

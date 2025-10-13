@@ -631,7 +631,7 @@ export default function UnifiedSidebar({
 
   // Validar que el rol existe en menuItems
   if (!(finalUserRole in menuItems)) {
-    console.warn(`Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`);
+    // Rol no encontrado en menuItems, usando 'tenant' como fallback
     finalUserRole = 'tenant';
   }
 

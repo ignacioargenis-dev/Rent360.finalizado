@@ -76,7 +76,6 @@ import {
   WifiOff,
   RefreshCw,
 } from 'lucide-react';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import Link from 'next/link';
 import { User, Property, Payment } from '@/types';
 
@@ -454,10 +453,10 @@ export default function AdminDashboard() {
                       try {
                         const response = await fetch('/api/diagnostics');
                         const data = await response.json();
-                        console.log('Diagnóstico:', data);
+                        logger.info('Diagnóstico obtenido:', data);
                         alert('Revisa la consola del navegador para ver el diagnóstico completo');
                       } catch (error) {
-                        console.error('Error obteniendo diagnóstico:', error);
+                        logger.error('Error obteniendo diagnóstico:', error);
                       }
                     }}
                   >
@@ -491,7 +490,7 @@ export default function AdminDashboard() {
                             alert('Error actualizando rol: ' + error.error);
                           }
                         } catch (error) {
-                          console.error('Error actualizando rol:', error);
+                          logger.error('Error actualizando rol:', error);
                           alert('Error actualizando rol. Revisa la consola.');
                         }
                       }}
