@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/auth/AuthProviderSimple';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
+import { NotificationToast } from '@/components/ui/notification-toast';
 // import { DataSyncProvider } from '@/components/providers/DataSyncProvider';
 import dynamic from 'next/dynamic';
 

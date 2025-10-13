@@ -599,38 +599,14 @@ export default function UnifiedSidebar({
     }));
   };
 
-  // Determinar rol del usuario de forma más robusta
-  let userRole: string;
-  if (!user) {
-    // Si no hay usuario aún (cargando), intentar determinar desde URL
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname.startsWith('/admin/')) {
-      userRole = 'admin';
-    } else if (pathname.startsWith('/owner/')) {
-      userRole = 'owner';
-    } else if (pathname.startsWith('/tenant/')) {
-      userRole = 'tenant';
-    } else if (pathname.startsWith('/broker/')) {
-      userRole = 'broker';
-    } else if (pathname.startsWith('/provider/')) {
-      userRole = 'provider';
-    } else if (pathname.startsWith('/maintenance/')) {
-      userRole = 'maintenance';
-    } else if (pathname.startsWith('/runner/')) {
-      userRole = 'runner';
-    } else if (pathname.startsWith('/support/')) {
-      userRole = 'support';
-    } else {
-      userRole = 'tenant';
-    } // fallback por defecto
-  } else {
-    userRole = user.role.toLowerCase();
-  }
+  // Determinar rol del usuario - priorizar el rol real del usuario
+  let finalUserRole: string;
 
-  // Si el rol no existe en menuItems, intentar determinarlo desde la URL actual
-  let finalUserRole = userRole;
-  if (!(userRole in menuItems)) {
-    // Intentar determinar el rol desde la URL actual
+  if (user && user.role) {
+    // Si tenemos información real del usuario, usarla
+    finalUserRole = user.role.toLowerCase();
+  } else {
+    // Si no hay usuario, determinar desde la URL como fallback
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
     if (pathname.startsWith('/admin/')) {
       finalUserRole = 'admin';
@@ -648,38 +624,18 @@ export default function UnifiedSidebar({
       finalUserRole = 'runner';
     } else if (pathname.startsWith('/support/')) {
       finalUserRole = 'support';
+    } else {
+      finalUserRole = 'tenant';
     }
   }
 
-  // Verificación adicional: si estamos en una URL que no corresponde al rol del usuario,
-  // forzar el rol basado en la URL actual
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname;
-    const urlRole = pathname.split('/')[1]; // Obtener primera parte de la URL
-
-    // Si la URL indica un rol diferente al del usuario, usar el rol de la URL
-    if (
-      urlRole &&
-      [
-        'admin',
-        'owner',
-        'tenant',
-        'broker',
-        'provider',
-        'maintenance',
-        'runner',
-        'support',
-      ].includes(urlRole) &&
-      urlRole !== finalUserRole
-    ) {
-      console.warn(
-        `URL role (${urlRole}) differs from user role (${finalUserRole}). Using URL role.`
-      );
-      finalUserRole = urlRole;
-    }
+  // Validar que el rol existe en menuItems
+  if (!(finalUserRole in menuItems)) {
+    console.warn(`Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`);
+    finalUserRole = 'tenant';
   }
 
-  const items = menuItems[finalUserRole] || menuItems[userRole] || menuItems.tenant || [];
+  const items = menuItems[finalUserRole] || menuItems.tenant || [];
 
   const isActiveRoute = (url: string) => {
     return pathname === url || pathname.startsWith(url + '/');

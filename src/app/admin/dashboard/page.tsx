@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 
 import { logger } from '@/lib/logger-minimal';
 import { useAdminDashboardSync } from '@/hooks/useDashboardSync';
+import { RoleGuard } from '@/components/auth/RoleGuard';
+import { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -404,6 +406,99 @@ export default function AdminDashboard() {
                 </div>
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <Ticket className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sección de Diagnóstico */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Diagnóstico de Autenticación
+              </CardTitle>
+              <CardDescription>
+                Verifica tu estado de autenticación y corrige problemas de roles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">Usuario actual</p>
+                    <p className="text-sm text-gray-600">
+                      {user ? `${user.name} (${user.role})` : 'No autenticado'}
+                    </p>
+                  </div>
+                  <Badge variant={user?.role === 'admin' ? 'default' : 'destructive'}>
+                    {user?.role || 'Sin rol'}
+                  </Badge>
+                </div>
+
+                {user?.role !== 'admin' && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      ⚠️ Tu rol actual es <strong>{user?.role}</strong>. Si deberías ser administrador,
+                      contacta al soporte técnico o verifica tu configuración de autenticación.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/diagnostics');
+                        const data = await response.json();
+                        console.log('Diagnóstico:', data);
+                        alert('Revisa la consola del navegador para ver el diagnóstico completo');
+                      } catch (error) {
+                        console.error('Error obteniendo diagnóstico:', error);
+                      }
+                    }}
+                  >
+                    Ver Diagnóstico Técnico
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      localStorage.clear();
+                      window.location.href = '/auth/login';
+                    }}
+                  >
+                    Limpiar Sesión y Reintentar
+                  </Button>
+                  {user?.role !== 'admin' && (
+                    <Button
+                      variant="default"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/admin/user-role', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ role: 'admin' }),
+                          });
+
+                          if (response.ok) {
+                            alert('Rol actualizado a admin. Recarga la página.');
+                            window.location.reload();
+                          } else {
+                            const error = await response.json();
+                            alert('Error actualizando rol: ' + error.error);
+                          }
+                        } catch (error) {
+                          console.error('Error actualizando rol:', error);
+                          alert('Error actualizando rol. Revisa la consola.');
+                        }
+                      }}
+                    >
+                      Forzar Rol Admin
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>

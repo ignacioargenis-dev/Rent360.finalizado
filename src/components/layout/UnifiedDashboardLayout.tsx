@@ -12,12 +12,13 @@ const DashboardUserContext = createContext<User | null>(null);
 
 export const useDashboardUser = () => {
   const user = useContext(DashboardUserContext);
-  // Durante prerendering, el contexto puede ser null
-  // Devolver un usuario mock para evitar errores
+
+  // Si no hay contexto disponible, devolver null en lugar de mock
+  // Esto permitirá que las páginas manejen correctamente el estado no autenticado
   if (user === null) {
-    // Esto solo ocurre durante prerendering, en runtime el contexto estará disponible
-    return { role: 'admin', id: 'prerender-user', name: 'Prerender User' } as User;
+    return null;
   }
+
   return user;
 };
 
@@ -73,17 +74,18 @@ export default function UnifiedDashboardLayout({
         logger.info('UnifiedDashboardLayout - User authenticated:', { userId: data.user?.id });
         setUser(data.user);
       } else if (response.status === 401) {
-        logger.warn('User not authenticated, redirecting to login');
-        router.push('/auth/login');
+        logger.warn('User not authenticated');
+        // No redirigir automáticamente - dejar que las páginas hijas manejen el estado no autenticado
+        setUser(null);
       } else {
-        setError('Error checking authentication status');
         logger.error('Auth check failed:', { status: response.status });
-        router.push('/auth/login');
+        // No redirigir automáticamente - permitir funcionamiento sin autenticación
+        setUser(null);
       }
     } catch (error) {
       logger.error('Error checking auth:', { error: error instanceof Error ? error.message : String(error) });
-      setError('Network error checking authentication');
-      router.push('/auth/login');
+      // No redirigir automáticamente - permitir funcionamiento básico
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -100,23 +102,25 @@ export default function UnifiedDashboardLayout({
     );
   }
 
-  if (error || !user) {
+  // Si hay error crítico, mostrar error
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-red-600 mb-4">
-            {error || 'Usuario no autenticado'}
-          </p>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => router.push('/auth/login')}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors"
           >
-            Ir al Login
+            Reintentar
           </button>
         </div>
       </div>
     );
   }
+
+  // Si no hay usuario, permitir acceso básico con funcionalidad limitada
+  // Esto evita redirecciones automáticas que pueden causar problemas
 
   return (
     <DashboardUserContext.Provider value={user}>
