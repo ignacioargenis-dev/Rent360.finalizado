@@ -530,7 +530,7 @@ export default function EnhancedAdminSettingsPage() {
   // Función para cargar settings desde la API
   const loadSettings = async () => {
     try {
-      const settingsResponse = await fetch('/api/settings', {
+      const settingsResponse = await fetch('/api/admin/settings', {
         credentials: 'include', // Incluir cookies de autenticación
       });
       if (settingsResponse.ok) {
@@ -919,13 +919,48 @@ El equipo de Rent360`,
         });
       });
 
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Transformar a formato que espera el endpoint PATCH /api/admin/settings
+      // Formato esperado: { settings: [{ key, value, description, category }] }
+      // Categorías válidas del endpoint: 'system', 'integration', 'security', 'email', 'payment', 'signature', 'maps', 'sms'
+
+      const categoryMapping: Record<string, string> = {
+        general: 'system',
+        properties: 'system',
+        users: 'system',
+        commissions: 'payment',
+        notifications: 'system',
+        security: 'security',
+        payments: 'payment',
+        integrations: 'integration',
+        advanced: 'system',
+        email: 'email',
+        maps: 'maps',
+        sms: 'sms',
+        signature: 'signature',
+      };
+
+      const settingsArray: any[] = [];
+
+      Object.entries(categorizedSettings).forEach(([category, fields]: [string, any]) => {
+        const mappedCategory = categoryMapping[category] || 'system'; // Usar 'system' como default
+        Object.entries(fields).forEach(([key, data]: [string, any]) => {
+          settingsArray.push({
+            key,
+            value: data.value,
+            description: data.description || `${key} setting`,
+            category: mappedCategory,
+            isActive: data.isActive !== undefined ? data.isActive : true,
+          });
+        });
+      });
+
+      const response = await fetch('/api/admin/settings', {
+        method: 'PATCH', // Usar PATCH para actualización masiva
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Incluir cookies de autenticación
-        body: JSON.stringify({ settings: categorizedSettings }),
+        body: JSON.stringify({ settings: settingsArray }),
       });
 
       if (response.ok) {
