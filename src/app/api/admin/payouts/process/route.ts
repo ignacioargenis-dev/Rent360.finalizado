@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -20,11 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      payouts,
-      batchType = 'manual',
-      notes
-    } = body;
+    const { payouts, batchType = 'manual', notes } = body;
 
     if (!payouts || !Array.isArray(payouts) || payouts.length === 0) {
       return NextResponse.json(
@@ -37,23 +33,24 @@ export async function POST(request: NextRequest) {
       adminId: user.id,
       payoutCount: payouts.length,
       batchType,
-      totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0)
+      totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
     });
 
     const batch = await PayoutService.processPayoutBatch(payouts, {
       batchType,
       triggeredBy: user.id,
-      notes
+      notes,
     });
 
     return NextResponse.json({
       success: true,
       data: batch,
-      message: `Lote de payouts procesado exitosamente. ${batch.totalRecipients} destinatarios, ${batch.totalAmount.toLocaleString('es-CL')} CLP total.`
+      message: `Lote de payouts procesado exitosamente. ${batch.totalRecipients} destinatarios, ${batch.totalAmount.toLocaleString('es-CL')} CLP total.`,
     });
-
   } catch (error) {
-    logger.error('Error procesando lote de payouts:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error procesando lote de payouts:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

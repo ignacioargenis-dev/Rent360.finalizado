@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -23,11 +23,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: config
+      data: config,
     });
-
   } catch (error) {
-    logger.error('Error obteniendo configuración de comisiones:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error obteniendo configuración de comisiones:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -52,21 +53,19 @@ export async function POST(request: NextRequest) {
     const { contractId, brokerId } = body;
 
     if (!contractId) {
-      return NextResponse.json(
-        { error: 'ID de contrato requerido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'ID de contrato requerido' }, { status: 400 });
     }
 
     const calculation = await CommissionService.calculateCommission(contractId, brokerId);
 
     return NextResponse.json({
       success: true,
-      data: calculation
+      data: calculation,
     });
-
   } catch (error) {
-    logger.error('Error calculando comisión:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error calculando comisión:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

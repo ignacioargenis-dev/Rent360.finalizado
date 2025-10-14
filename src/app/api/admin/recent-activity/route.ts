@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar autenticación
     const user = await requireAuth(request);
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }

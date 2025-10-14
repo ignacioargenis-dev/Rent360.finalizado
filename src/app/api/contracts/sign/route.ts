@@ -11,22 +11,27 @@ const signatureSchema = z.object({
   signerId: z.string().min(1, 'ID del firmante requerido'),
   signatureType: z.enum(['DIGITAL', 'ADVANCED', 'QUALIFIED']),
   otpCode: z.string().optional(),
-  certificateData: z.object({
-    certificateNumber: z.string(),
-    issuer: z.string(),
-    validFrom: z.string(),
-    validTo: z.string(),
-  }).optional(),
+  certificateData: z
+    .object({
+      certificateNumber: z.string(),
+      issuer: z.string(),
+      validFrom: z.string(),
+      validTo: z.string(),
+    })
+    .optional(),
 });
 
 // Configuración de proveedores de firma electrónica
 type SignatureProviderKey = 'ADVANCED' | 'QUALIFIED';
-const SIGNATURE_PROVIDERS: Record<SignatureProviderKey, {
-  name: string;
-  apiUrl: string | undefined;
-  apiKey: string | undefined;
-  secretKey: string | undefined;
-}> = {
+const SIGNATURE_PROVIDERS: Record<
+  SignatureProviderKey,
+  {
+    name: string;
+    apiUrl: string | undefined;
+    apiKey: string | undefined;
+    secretKey: string | undefined;
+  }
+> = {
   ADVANCED: {
     name: 'Firma Electrónica Avanzada',
     apiUrl: process.env.ADVANCED_SIGNATURE_API_URL,
@@ -45,12 +50,12 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    
+
     // Validar datos de entrada
     const validatedData = signatureSchema.parse(body);
-    
+
     const { contractId, signerId, signatureType, otpCode, certificateData } = validatedData;
-    
+
     // Verificar que el contrato existe
     const contract = await db.contract.findUnique({
       where: { id: contractId },
@@ -61,50 +66,48 @@ export async function POST(request: NextRequest) {
         broker: true,
       },
     });
-    
+
     if (!contract) {
-      return NextResponse.json(
-        { error: 'Contrato no encontrado' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 });
     }
-    
+
     // Verificar que el usuario tiene permisos para firmar
-    const canSign = 
-      user.id === contract.ownerId || 
-      user.id === contract.tenantId || 
+    const canSign =
+      user.id === contract.ownerId ||
+      user.id === contract.tenantId ||
       user.id === contract.brokerId ||
-      user.role === 'admin';
-    
+      user.role === 'ADMIN';
+
     if (!canSign) {
       return NextResponse.json(
         { error: 'No tienes permisos para firmar este contrato' },
-        { status: 403 },
+        { status: 403 }
       );
     }
-    
+
     // Verificar que el contrato está en estado válido para firma
-    if (contract.status !== 'DRAFT' && contract.status !== 'PENDING' as any) {
+    if (contract.status !== 'DRAFT' && contract.status !== ('PENDING' as any)) {
       return NextResponse.json(
         { error: 'El contrato no está en estado válido para firma' },
-        { status: 400 },
+        { status: 400 }
       );
     }
-    
+
     // Obtener configuración del proveedor (normalizar DIGITAL -> ADVANCED)
-    const providerKey: SignatureProviderKey = signatureType === 'DIGITAL' ? 'ADVANCED' : signatureType;
+    const providerKey: SignatureProviderKey =
+      signatureType === 'DIGITAL' ? 'ADVANCED' : signatureType;
     const provider = SIGNATURE_PROVIDERS[providerKey];
     if (!provider || !provider.apiUrl || !provider.apiKey) {
       return NextResponse.json(
         { error: 'Proveedor de firma electrónica no configurado' },
-        { status: 500 },
+        { status: 500 }
       );
     }
-    
+
     // Generar documento para firma
     const documentContent = generateContractDocument(contract);
     const documentHash = generateDocumentHash(documentContent);
-    
+
     // Crear solicitud de firma
     const signatureRequest = {
       documentHash,
@@ -120,22 +123,22 @@ export async function POST(request: NextRequest) {
         tenantName: contract.tenant?.name,
       },
     };
-    
+
     // Enviar a proveedor de firma electrónica
     const signatureResponse = await sendToSignatureProvider(
       provider,
       signatureRequest,
       otpCode,
-      certificateData,
+      certificateData
     );
-    
+
     if (!signatureResponse.success) {
       return NextResponse.json(
         { error: signatureResponse.error || 'Error en el proceso de firma' },
-        { status: 400 },
+        { status: 400 }
       );
     }
-    
+
     // Guardar firma en base de datos
     const signature = await db.contractSignature.create({
       data: {
@@ -153,46 +156,46 @@ export async function POST(request: NextRequest) {
         signers: JSON.stringify([signerId]),
       },
     });
-    
+
     // Actualizar estado del contrato
     const allSignatures = await db.contractSignature.findMany({
       where: { contractId },
     });
-    
+
     const requiredSignatures: string[] = [];
     if (contract.ownerId) {
-requiredSignatures.push(contract.ownerId);
-}
+      requiredSignatures.push(contract.ownerId);
+    }
     if (contract.tenantId) {
-requiredSignatures.push(contract.tenantId);
-}
+      requiredSignatures.push(contract.tenantId);
+    }
     if (contract.brokerId) {
-requiredSignatures.push(contract.brokerId);
-}
-    
+      requiredSignatures.push(contract.brokerId);
+    }
+
     const isFullySigned = requiredSignatures.every(signerId =>
-      allSignatures.some(sig => sig.signerId === signerId),
+      allSignatures.some(sig => sig.signerId === signerId)
     );
-    
+
     await db.contract.update({
       where: { id: contractId },
       data: {
-                 status: isFullySigned ? 'ACTIVE' : 'PENDING' as any,
+        status: isFullySigned ? 'ACTIVE' : ('PENDING' as any),
         signedAt: isFullySigned ? new Date() : null,
       },
     });
-    
+
     // Crear notificación
     await db.notification.create({
       data: {
         userId: contract.ownerId,
         title: 'Contrato Firmado',
         message: `El contrato ${contract.contractNumber} ha sido firmado por ${user.name}`,
-                 type: 'CONTRACT' as any,
+        type: 'CONTRACT' as any,
         data: JSON.stringify({ contractId, signerId: user.id }),
       },
     });
-    
+
     return NextResponse.json({
       message: 'Firma procesada exitosamente',
       signature: {
@@ -202,11 +205,12 @@ requiredSignatures.push(contract.brokerId);
         isFullySigned,
       },
     });
-    
-      } catch (error) {
-      logger.error('Error en firma electrónica:', { error: error instanceof Error ? error.message : String(error) });
-      return handleApiError(error as Error);
-    }
+  } catch (error) {
+    logger.error('Error en firma electrónica:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return handleApiError(error as Error);
+  }
 }
 
 // Función para generar documento del contrato
@@ -229,12 +233,16 @@ Nombre: ${contract.tenant?.name}
 RUT: ${contract.tenant?.rut || 'No especificado'}
 Email: ${contract.tenant?.email}
 
-${contract.broker ? `
+${
+  contract.broker
+    ? `
 CORREDOR:
 Nombre: ${contract.broker.name}
 RUT: ${contract.broker.rut || 'No especificado'}
 Email: ${contract.broker.email}
-` : ''}
+`
+    : ''
+}
 
 2. INMUEBLE ARRENDADO
 
@@ -282,12 +290,16 @@ Fecha: _____________________
 ARRENDATARIO: _____________________
 Fecha: _____________________
 
-${contract.broker ? `
+${
+  contract.broker
+    ? `
 CORREDOR: _____________________
 Fecha: _____________________
-` : ''}
+`
+    : ''
+}
   `;
-  
+
   return template.trim();
 }
 
@@ -302,14 +314,14 @@ async function sendToSignatureProvider(
   provider: any,
   request: any,
   otpCode?: string,
-  certificateData?: any,
+  certificateData?: any
 ): Promise<any> {
   try {
     const response = await fetch(`${provider.apiUrl}/sign`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${provider.apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
         'X-API-Secret': provider.secretKey,
       },
       body: JSON.stringify({
@@ -319,7 +331,7 @@ async function sendToSignatureProvider(
         timestamp: new Date().toISOString(),
       }),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       return {
@@ -327,7 +339,7 @@ async function sendToSignatureProvider(
         error: error.message || 'Error en proveedor de firma',
       };
     }
-    
+
     const result = await response.json();
     return {
       success: true,
@@ -335,9 +347,10 @@ async function sendToSignatureProvider(
       certificate: result.certificate,
       timestamp: result.timestamp,
     };
-    
   } catch (error) {
-    logger.error('Error con proveedor de firma:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error con proveedor de firma:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: 'Error de conexión con proveedor de firma',

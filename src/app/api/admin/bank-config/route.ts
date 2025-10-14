@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -36,13 +36,14 @@ export async function GET(request: NextRequest) {
           enabledServices: serviceStats.enabled,
           disabledServices: serviceStats.disabled,
           availableBanks: availableBanks.filter(b => b.available).length,
-          totalBanks: availableBanks.length
-        }
-      }
+          totalBanks: availableBanks.length,
+        },
+      },
     });
-
   } catch (error) {
-    logger.error('Error obteniendo configuración bancaria:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error obteniendo configuración bancaria:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -67,10 +68,7 @@ export async function POST(request: NextRequest) {
     const { serviceId, config, action } = body;
 
     if (!serviceId) {
-      return NextResponse.json(
-        { error: 'serviceId es requerido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'serviceId es requerido' }, { status: 400 });
     }
 
     switch (action) {
@@ -85,36 +83,36 @@ export async function POST(request: NextRequest) {
         await PaymentConfigService.updateServiceConfig(serviceId, config);
         logger.info('Configuración bancaria actualizada', {
           serviceId,
-          adminId: user.id
+          adminId: user.id,
         });
 
         return NextResponse.json({
           success: true,
-          message: `Configuración de ${serviceId} actualizada exitosamente`
+          message: `Configuración de ${serviceId} actualizada exitosamente`,
         });
 
       case 'enable':
         await PaymentConfigService.toggleService(serviceId, true);
         logger.info('Servicio bancario habilitado', {
           serviceId,
-          adminId: user.id
+          adminId: user.id,
         });
 
         return NextResponse.json({
           success: true,
-          message: `Servicio ${serviceId} habilitado`
+          message: `Servicio ${serviceId} habilitado`,
         });
 
       case 'disable':
         await PaymentConfigService.toggleService(serviceId, false);
         logger.info('Servicio bancario deshabilitado', {
           serviceId,
-          adminId: user.id
+          adminId: user.id,
         });
 
         return NextResponse.json({
           success: true,
-          message: `Servicio ${serviceId} deshabilitado`
+          message: `Servicio ${serviceId} deshabilitado`,
         });
 
       case 'test':
@@ -122,23 +120,23 @@ export async function POST(request: NextRequest) {
         logger.info('Prueba de conexión bancaria realizada', {
           serviceId,
           success: testResult.success,
-          adminId: user.id
+          adminId: user.id,
         });
 
         return NextResponse.json({
           success: true,
-          data: testResult
+          data: testResult,
         });
 
       case 'initialize_defaults':
         await PaymentConfigService.initializeDefaultConfigs();
         logger.info('Configuraciones por defecto inicializadas', {
-          adminId: user.id
+          adminId: user.id,
         });
 
         return NextResponse.json({
           success: true,
-          message: 'Configuraciones por defecto inicializadas'
+          message: 'Configuraciones por defecto inicializadas',
         });
 
       default:
@@ -147,9 +145,10 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
     }
-
   } catch (error) {
-    logger.error('Error en operación de configuración bancaria:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error en operación de configuración bancaria:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

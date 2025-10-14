@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -36,17 +36,13 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json(
-          { error: 'Tipo de notificación no válido' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Tipo de notificación no válido' }, { status: 400 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Notificación enviada exitosamente'
+      message: 'Notificación enviada exitosamente',
     });
-
   } catch (error) {
     logger.error('Error sending notification:', { error });
     const errorResponse = handleApiError(error, 'POST /api/notifications');
@@ -58,7 +54,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -69,9 +65,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
     logger.error('Error getting notification stats:', { error });
     const errorResponse = handleApiError(error, 'GET /api/notifications');

@@ -110,7 +110,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  */
 async function checkDocumentAccess(user: any, document: any): Promise<boolean> {
   // Admins tienen acceso a todo
-  if (user.role === 'admin') {
+  if (user.role === 'ADMIN') {
     return true;
   }
 

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -50,11 +50,10 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: payouts.length,
-          pages: Math.ceil(payouts.length / limit)
-        }
-      }
+          pages: Math.ceil(payouts.length / limit),
+        },
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo payouts de runners:', error as Error);
     const errorResponse = handleApiError(error as Error);
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -91,12 +90,10 @@ export async function POST(request: NextRequest) {
       summary: {
         totalPayouts: payouts.length,
         totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
-        averageAmount: payouts.length > 0
-          ? payouts.reduce((sum, p) => sum + p.amount, 0) / payouts.length
-          : 0
-      }
+        averageAmount:
+          payouts.length > 0 ? payouts.reduce((sum, p) => sum + p.amount, 0) / payouts.length : 0,
+      },
     });
-
   } catch (error) {
     logger.error('Error calculando payouts de runners:', error as Error);
     const errorResponse = handleApiError(error as Error);

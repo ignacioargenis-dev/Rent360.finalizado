@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -23,11 +23,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
-    logger.error('Error getting notification queue stats:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error getting notification queue stats:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -55,32 +56,30 @@ export async function POST(request: NextRequest) {
         await NotificationQueue.processQueue();
         return NextResponse.json({
           success: true,
-          message: 'Cola de notificaciones procesada'
+          message: 'Cola de notificaciones procesada',
         });
 
       case 'cleanup':
         NotificationQueue.cleanupOldNotifications();
         return NextResponse.json({
           success: true,
-          message: 'Notificaciones antiguas limpiadas'
+          message: 'Notificaciones antiguas limpiadas',
         });
 
       case 'schedule_recurring':
         await NotificationQueue.scheduleRecurringNotifications();
         return NextResponse.json({
           success: true,
-          message: 'Notificaciones recurrentes programadas'
+          message: 'Notificaciones recurrentes programadas',
         });
 
       default:
-        return NextResponse.json(
-          { error: 'Acción no válida' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
     }
-
   } catch (error) {
-    logger.error('Error managing notification queue:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error managing notification queue:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

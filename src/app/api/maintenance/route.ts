@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     let hasPermission = false;
     let requesterRole = 'USER';
 
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
       hasPermission = true;
       requesterRole = 'admin';
     } else if (user.role === 'owner' && property.ownerId === user.id) {

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const userId = params.id;
 
     // Solo admin puede ver otros usuarios, los usuarios solo pueden verse a sí mismos
-    if (user.role !== 'admin' && user.id !== userId) {
+    if (user.role !== 'ADMIN' && user.id !== userId) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver este usuario' },
         { status: 403 }
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const userId = params.id;
 
     // Verificar permisos
-    if (user.role !== 'admin' && user.id !== userId) {
+    if (user.role !== 'ADMIN' && user.id !== userId) {
       return NextResponse.json(
         { error: 'No tienes permisos para actualizar este usuario' },
         { status: 403 }

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -23,11 +23,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
-    logger.error('Error obteniendo estadísticas de payouts:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error obteniendo estadísticas de payouts:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -49,11 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      recipientType = 'broker',
-      startDate,
-      endDate
-    } = body;
+    const { recipientType = 'broker', startDate, endDate } = body;
 
     const payouts = await PayoutService.calculatePendingPayouts(
       recipientType,
@@ -67,14 +64,14 @@ export async function POST(request: NextRequest) {
       summary: {
         totalPayouts: payouts.length,
         totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
-        averageAmount: payouts.length > 0
-          ? payouts.reduce((sum, p) => sum + p.amount, 0) / payouts.length
-          : 0
-      }
+        averageAmount:
+          payouts.length > 0 ? payouts.reduce((sum, p) => sum + p.amount, 0) / payouts.length : 0,
+      },
     });
-
   } catch (error) {
-    logger.error('Error calculando payouts:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error calculando payouts:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

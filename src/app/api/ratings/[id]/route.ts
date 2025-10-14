@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verificar permisos: solo el autor o el receptor pueden ver la calificación
-    if (rating.fromUserId !== user.id && rating.toUserId !== user.id && user.role !== 'admin') {
+    if (rating.fromUserId !== user.id && rating.toUserId !== user.id && user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'No tienes acceso a esta calificación' }, { status: 403 });
     }
 

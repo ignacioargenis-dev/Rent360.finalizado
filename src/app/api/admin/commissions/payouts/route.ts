@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de administrador.' },
         { status: 403 }
@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: payout,
-      message: 'Payout de comisión generado exitosamente'
+      message: 'Payout de comisión generado exitosamente',
     });
-
   } catch (error) {
-    logger.error('Error generando payout de comisión:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error generando payout de comisión:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
