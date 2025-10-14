@@ -178,26 +178,8 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   // 'strict' puede causar problemas con redirecciones y navegación
   const sameSitePolicy = 'lax'; // Más compatible que 'strict'
 
-  // Detectar dominio automáticamente para producción
-  let domain: string | undefined;
-  if (isProduction) {
-    // Intentar obtener el dominio de las variables de entorno
-    domain =
-      process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
-
-    // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
-    if (!domain) {
-      const host = process.env.HOST;
-      if (host && host.includes('.ondigitalocean.app')) {
-        domain = host;
-      }
-    }
-
-    // Si no hay dominio específico, dejar undefined para usar el dominio actual
-    if (!domain) {
-      domain = undefined;
-    }
-  }
+  // NO establecer dominio - dejar que el navegador use el dominio actual automáticamente
+  // Esto es más seguro y funciona en todos los entornos (local, DigitalOcean, Vercel, etc.)
 
   // Establecer cookie de acceso
   response.cookies.set('auth-token', accessToken, {
@@ -206,7 +188,7 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: sameSitePolicy,
     maxAge: 60 * 60, // 1 hora
     path: '/',
-    domain: domain,
+    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
 
   // Establecer cookie de refresh
@@ -216,7 +198,7 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: sameSitePolicy,
     maxAge: 7 * 24 * 60 * 60, // 7 días
     path: '/',
-    domain: domain,
+    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
 }
 
@@ -225,26 +207,7 @@ export function clearAuthCookies(response: any) {
   const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
   const sameSitePolicy = 'lax'; // Usar 'lax' para mejor compatibilidad
 
-  // Detectar dominio automáticamente para producción
-  let domain: string | undefined;
-  if (isProduction) {
-    // Intentar obtener el dominio de las variables de entorno
-    domain =
-      process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
-
-    // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
-    if (!domain) {
-      const host = process.env.HOST;
-      if (host && host.includes('.ondigitalocean.app')) {
-        domain = host;
-      }
-    }
-
-    // Si no hay dominio específico, dejar undefined para usar el dominio actual
-    if (!domain) {
-      domain = undefined;
-    }
-  }
+  // NO establecer dominio - dejar que el navegador use el dominio actual automáticamente
 
   response.cookies.set('auth-token', '', {
     httpOnly: true,
@@ -252,7 +215,7 @@ export function clearAuthCookies(response: any) {
     sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: domain,
+    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
 
   response.cookies.set('refresh-token', '', {
@@ -261,6 +224,6 @@ export function clearAuthCookies(response: any) {
     sameSite: sameSitePolicy,
     maxAge: 0,
     path: '/',
-    domain: domain,
+    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
 }
