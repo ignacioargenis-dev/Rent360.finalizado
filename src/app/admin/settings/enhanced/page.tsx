@@ -657,10 +657,22 @@ export default function EnhancedAdminSettingsPage() {
 
   // useEffect para log garantizado en el cliente (se ejecuta solo una vez)
   useEffect(() => {
-    console.log('🔥🔥🔥 [SETTINGS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
-    console.log('📄 [SETTINGS] Page: /admin/settings/enhanced');
-    console.log('🚀 [SETTINGS] Component: EnhancedAdminSettingsPage');
-    console.log('⏰ [SETTINGS] Timestamp:', new Date().toISOString());
+    // Usar window.console para evitar que sea optimizado
+    window.console.error('🔥🔥🔥 [SETTINGS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
+    window.console.error('📄 [SETTINGS] Page: /admin/settings/enhanced');
+    window.console.error('🚀 [SETTINGS] Component: EnhancedAdminSettingsPage');
+    window.console.error('⏰ [SETTINGS] Timestamp:', new Date().toISOString());
+
+    // También escribir en el DOM para verificación visual
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'debug-settings-mounted';
+    debugDiv.style.cssText =
+      'position:fixed;top:0;left:0;background:red;color:white;padding:10px;z-index:9999;font-weight:bold;';
+    debugDiv.textContent = '🔥 SETTINGS COMPONENT MOUNTED - CHECK CONSOLE 🔥';
+    document.body.appendChild(debugDiv);
+
+    // Remover después de 5 segundos
+    setTimeout(() => debugDiv.remove(), 5000);
   }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {

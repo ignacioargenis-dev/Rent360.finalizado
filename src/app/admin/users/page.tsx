@@ -86,10 +86,22 @@ export default function AdminUsersPage() {
 
   // useEffect para log garantizado en el cliente (se ejecuta solo una vez)
   useEffect(() => {
-    console.log('🔥🔥🔥 [USERS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
-    console.log('📄 [USERS] Page: /admin/users');
-    console.log('🚀 [USERS] Component: AdminUsersPage');
-    console.log('⏰ [USERS] Timestamp:', new Date().toISOString());
+    // Usar window.console para evitar que sea optimizado
+    window.console.error('🔥🔥🔥 [USERS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
+    window.console.error('📄 [USERS] Page: /admin/users');
+    window.console.error('🚀 [USERS] Component: AdminUsersPage');
+    window.console.error('⏰ [USERS] Timestamp:', new Date().toISOString());
+
+    // También escribir en el DOM para verificación visual
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'debug-users-mounted';
+    debugDiv.style.cssText =
+      'position:fixed;top:0;left:0;background:red;color:white;padding:10px;z-index:9999;font-weight:bold;';
+    debugDiv.textContent = '🔥 USERS COMPONENT MOUNTED - CHECK CONSOLE 🔥';
+    document.body.appendChild(debugDiv);
+
+    // Remover después de 5 segundos
+    setTimeout(() => debugDiv.remove(), 5000);
   }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {
