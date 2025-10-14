@@ -126,7 +126,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireRole(request, 'admin');
+    const user = await requireRole(request, 'ADMIN'); // Usar mayúscula para coincidir con el rol normalizado
     const userId = params.id;
 
     const data = await request.json();
@@ -252,7 +252,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     logger.info('Iniciando eliminación de usuario', { params });
 
-    const user = await requireRole(request, 'admin');
+    const user = await requireRole(request, 'ADMIN'); // Usar mayúscula para coincidir con el rol normalizado
     const userId = params.id;
 
     logger.info('Usuario autenticado', {
@@ -285,9 +285,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Verificar que no sea el último admin (soft delete)
-    if (targetUser.role === 'admin') {
+    if (targetUser.role === 'ADMIN') {
       const adminCount = await db.user.count({
-        where: { role: 'admin', isActive: true },
+        where: { role: 'ADMIN', isActive: true },
       });
 
       logger.info('Conteo de admins activos', { adminCount });

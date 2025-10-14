@@ -34,6 +34,7 @@ const updateUserSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
+    await requireRole(request, 'ADMIN'); // Solo admins pueden ver la lista de usuarios
     const startTime = Date.now();
 
     // Obtener parámetros de consulta
@@ -139,7 +140,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    await requireRole(request, 'admin');
+    await requireRole(request, 'ADMIN'); // Usar mayúscula para coincidir con el rol normalizado
 
     const body = await request.json();
 
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    await requireRole(request, 'admin');
+    await requireRole(request, 'ADMIN'); // Usar mayúscula para coincidir con el rol normalizado
 
     const body = await request.json();
     const { id, ...updateData } = body;
@@ -312,7 +313,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    await requireRole(request, 'admin');
+    await requireRole(request, 'ADMIN'); // Usar mayúscula para coincidir con el rol normalizado
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
