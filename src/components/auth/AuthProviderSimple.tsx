@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await response.json();
 
     // Crear objeto de usuario completo
-    const userData = {
+    const completeUserData = {
       id: data.user?.id || 'unknown',
       email: data.user?.email || 'unknown@example.com',
       password: '',
@@ -177,11 +177,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date(),
     };
 
-    setUser(userData);
+    setUser(completeUserData);
 
     // Guardar en localStorage para persistencia
     if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(completeUserData));
     }
   };
 
@@ -218,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await response.json();
 
     // Crear objeto de usuario completo
-    const userData = {
+    const completeUserData = {
       id: data.user?.id || 'unknown',
       email: data.user?.email || 'unknown@example.com',
       password: '',
@@ -246,11 +246,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date(),
     };
 
-    setUser(userData);
+    setUser(completeUserData);
 
     // Guardar en localStorage para persistencia
     if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(completeUserData));
     }
   };
 
