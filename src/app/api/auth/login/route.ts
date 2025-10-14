@@ -138,8 +138,21 @@ async function loginHandler(request: NextRequest) {
     const role = user.role.toUpperCase();
 
     // Generar tokens
+    console.log('🔐 Login: Generando tokens para usuario:', user.email, 'Rol:', role);
+    console.log(
+      '🔑 JWT_SECRET disponible:',
+      !!process.env.JWT_SECRET,
+      'Longitud:',
+      process.env.JWT_SECRET?.length
+    );
+
     logger.debug('Generando tokens para usuario', { email });
     const { accessToken, refreshToken } = generateTokens(user.id, user.email, role, user.name);
+
+    console.log(
+      '✅ Login: Tokens generados exitosamente, longitud accessToken:',
+      accessToken.length
+    );
 
     // Crear respuesta con cookies
     const response = NextResponse.json({
