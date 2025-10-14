@@ -25,34 +25,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
-      // Primero intentar cargar desde localStorage como fallback rápido
+      // CRÍTICO: Limpiar SIEMPRE localStorage al inicio para forzar recarga fresca
       if (typeof window !== 'undefined') {
         const cachedUser = localStorage.getItem('user');
         if (cachedUser) {
           try {
             const parsedUser = JSON.parse(cachedUser);
-            // Validar que tenga los campos mínimos necesarios Y que el rol esté en MAYÚSCULAS
-            if (parsedUser.id && parsedUser.email && parsedUser.role) {
-              // VALIDACIÓN CRÍTICA: El rol DEBE estar en MAYÚSCULAS
-              if (parsedUser.role !== parsedUser.role.toUpperCase()) {
-                console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando...', {
-                  storedRole: parsedUser.role,
-                  expectedRole: parsedUser.role.toUpperCase(),
-                });
-                localStorage.removeItem('user');
-              } else {
-                console.log('✅ Usuario cargado desde localStorage:', {
-                  email: parsedUser.email,
-                  role: parsedUser.role,
-                  id: parsedUser.id,
-                });
-                setUser(parsedUser);
-              }
-              // Continuar con la verificación en background
+            // VALIDACIÓN CRÍTICA: El rol DEBE estar en MAYÚSCULAS
+            if (parsedUser.role && parsedUser.role !== parsedUser.role.toUpperCase()) {
+              console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando TODO...', {
+                storedRole: parsedUser.role,
+                expectedRole: parsedUser.role.toUpperCase(),
+              });
+              localStorage.clear(); // Limpiar TODO el localStorage
             }
           } catch (e) {
             logger.warn('Error parsing cached user from localStorage', e);
-            localStorage.removeItem('user');
+            localStorage.clear(); // Limpiar TODO si hay error
           }
         }
       }
