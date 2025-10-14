@@ -123,8 +123,13 @@ export async function POST(request: NextRequest) {
       data: userData,
     });
 
-    // Generar tokens
-    const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.role, user.name);
+    // Generar tokens con rol normalizado a MAYÚSCULAS
+    const { accessToken, refreshToken } = generateTokens(
+      user.id,
+      user.email,
+      user.role.toUpperCase(),
+      user.name
+    );
 
     // Crear respuesta con cookies
     const response = NextResponse.json({
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role.toUpperCase(),
         avatar: user.avatar,
       },
     });

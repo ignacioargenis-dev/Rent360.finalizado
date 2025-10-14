@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado o inactivo' }, { status: 401 });
     }
 
-    // Generar nuevos tokens (mantener rol en MAYÚSCULAS)
+    // Generar nuevos tokens (normalizar rol a MAYÚSCULAS)
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(
       user.id,
       user.email,
-      user.role,
+      user.role.toUpperCase(),
       user.name
     );
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role.toUpperCase(),
         avatar: user.avatar,
       },
     });

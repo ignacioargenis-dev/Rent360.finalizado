@@ -73,8 +73,12 @@ export default async function middleware(request: NextRequest) {
 
       const decoded = jwt.verify(token, JWT_SECRET) as any;
 
+      // Normalizar el rol del usuario a MAYÚSCULAS para comparación
+      const userRole = (decoded.role || '').toUpperCase();
+      const normalizedRequiredRoles = requiredRoles.map(r => r.toUpperCase());
+
       // Verificar si el usuario tiene el rol requerido
-      if (!requiredRoles.includes(decoded.role)) {
+      if (!normalizedRequiredRoles.includes(userRole)) {
         // Redirigir a página de acceso denegado o dashboard apropiado
         const url = request.nextUrl.clone();
         url.pathname = '/auth/access-denied';

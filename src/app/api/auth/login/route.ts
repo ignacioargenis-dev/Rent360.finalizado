@@ -134,8 +134,8 @@ async function loginHandler(request: NextRequest) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
     }
 
-    // Mantener el rol en MAYÚSCULAS (formato de base de datos)
-    const role = user.role;
+    // Normalizar el rol a MAYÚSCULAS independientemente de cómo esté en la BD
+    const role = user.role.toUpperCase();
 
     // Generar tokens
     logger.debug('Generando tokens para usuario', { email });
