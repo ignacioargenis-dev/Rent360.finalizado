@@ -530,87 +530,112 @@ export default function EnhancedAdminSettingsPage() {
   // Función para cargar settings desde la API
   const loadSettings = async () => {
     try {
+      logger.info('Loading settings from /api/admin/settings...');
+
       const settingsResponse = await fetch('/api/admin/settings', {
         credentials: 'include', // Incluir cookies de autenticación
       });
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
 
-        // Function to safely convert settings, filtering out null/undefined values
-        const processSettingsData = (apiSettings: any) => {
-          const processed: any = {};
+      logger.info('Settings response received:', {
+        status: settingsResponse.status,
+        statusText: settingsResponse.statusText,
+        ok: settingsResponse.ok,
+      });
 
-          // Helper function to safely get numeric values
-          const safeNumber = (value: any, defaultValue: number): number => {
-            if (value === null || value === undefined || value === '') {
-              return defaultValue;
-            }
-            const num = Number(value);
-            return isNaN(num) ? defaultValue : num;
-          };
-
-          // Helper function to safely get string values
-          const safeString = (value: any, defaultValue: string): string => {
-            return value === null || value === undefined ? defaultValue : String(value);
-          };
-
-          // Helper function to safely get boolean values
-          const safeBoolean = (value: any, defaultValue: boolean): boolean => {
-            return value === null || value === undefined ? defaultValue : Boolean(value);
-          };
-
-          // Process each category
-          Object.keys(apiSettings).forEach(category => {
-            if (!processed[category]) {
-              processed[category] = {};
-            }
-
-            Object.keys(apiSettings[category]).forEach(key => {
-              const settingData = apiSettings[category][key];
-              if (settingData && settingData.value !== null && settingData.value !== undefined) {
-                // Convert based on expected type
-                if (typeof settingData.value === 'number' || !isNaN(Number(settingData.value))) {
-                  processed[category][key] = Number(settingData.value);
-                } else if (
-                  typeof settingData.value === 'boolean' ||
-                  settingData.value === 'true' ||
-                  settingData.value === 'false'
-                ) {
-                  processed[category][key] =
-                    settingData.value === 'true' || settingData.value === true;
-                } else {
-                  processed[category][key] = settingData.value;
-                }
-              }
-            });
-          });
-
-          return processed;
-        };
-
-        const processedSettings = processSettingsData(settingsData.settings);
-        // Merge with default settings, but only override with valid values
-        setSettings(prev => {
-          const merged = { ...prev } as any;
-          Object.keys(processedSettings).forEach(category => {
-            if (!merged[category]) {
-              merged[category] = {};
-            }
-            Object.keys(processedSettings[category]).forEach(key => {
-              const value = processedSettings[category][key];
-              // Solo excluir valores null/undefined, permitir strings, números y booleanos
-              if (value !== null && value !== undefined) {
-                merged[category] = { ...merged[category], [key]: value };
-              }
-            });
-          });
-          return merged;
+      if (!settingsResponse.ok) {
+        const errorText = await settingsResponse.text();
+        logger.error('Error loading settings - HTTP error:', {
+          status: settingsResponse.status,
+          statusText: settingsResponse.statusText,
+          body: errorText,
         });
+
+        // Si es 404, significa que no hay configuraciones guardadas aún, eso es normal
+        if (settingsResponse.status === 404) {
+          logger.info('No settings found in database, using defaults');
+          return; // Usar configuraciones por defecto
+        }
+
+        throw new Error(`Error ${settingsResponse.status}: ${errorText}`);
       }
+
+      const settingsData = await settingsResponse.json();
+      logger.info('Settings data received:', {
+        hasData: !!settingsData,
+        hasSettings: !!settingsData?.data,
+        dataKeys: settingsData ? Object.keys(settingsData) : [],
+      });
+
+      // El endpoint devuelve: { success: true, data: [...] }
+      // Donde data es un array de objetos: { key, value, category, ... }
+      const settingsArray = settingsData.data || [];
+
+      logger.info('Processing settings array:', { count: settingsArray.length });
+
+      if (settingsArray.length === 0) {
+        logger.info('No settings in database, using defaults');
+        return; // Usar configuraciones por defecto
+      }
+
+      // Convertir el array plano a objeto de configuraciones
+      // Formato: { key: value }
+      const processedSettings: any = {};
+
+      settingsArray.forEach((setting: any) => {
+        if (setting && setting.key && setting.value !== null && setting.value !== undefined) {
+          const { key, value } = setting;
+
+          // Intentar inferir el tipo del valor
+          let processedValue: any = value;
+
+          // Si es un string que parece booleano, convertir
+          if (value === 'true') {
+            processedValue = true;
+          } else if (value === 'false') {
+            processedValue = false;
+          }
+          // Si es un string que parece número, convertir
+          else if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
+            processedValue = Number(value);
+          }
+
+          processedSettings[key] = processedValue;
+          logger.debug(`Processed setting: ${key} =`, processedValue);
+        }
+      });
+
+      // Merge with default settings, but only override with valid values
+      setSettings(prev => {
+        const merged = { ...prev } as any;
+
+        // processedSettings es un objeto plano: { key: value }
+        Object.keys(processedSettings).forEach(key => {
+          const value = processedSettings[key];
+          // Solo aplicar valores que no sean null/undefined
+          if (value !== null && value !== undefined) {
+            merged[key] = value;
+          }
+        });
+
+        logger.info('Settings merged successfully:', {
+          processedKeys: Object.keys(processedSettings).length,
+          totalKeys: Object.keys(merged).length,
+        });
+
+        return merged;
+      });
     } catch (error) {
       logger.error('Error loading settings:', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name,
       });
+
+      // También intentar obtener más detalles del error
+      if (error && typeof error === 'object') {
+        logger.error('Error object details:', error);
+      }
     }
   };
 
