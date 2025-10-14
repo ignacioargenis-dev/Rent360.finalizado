@@ -909,12 +909,18 @@ El equipo de Rent360`,
       Object.entries(categories).forEach(([category, fields]) => {
         categorizedSettings[category] = {};
         fields.forEach(field => {
-          if (settings[field as keyof SystemSettings] !== undefined) {
-            categorizedSettings[category][field] = {
-              value: String(settings[field as keyof SystemSettings]), // Convertir a string
-              isActive: true,
-              description: `${field} setting`,
-            };
+          const value = settings[field as keyof SystemSettings];
+          // Solo incluir si el valor existe y no es undefined/null
+          if (value !== undefined && value !== null) {
+            // Convertir a string y asegurar que no esté vacío
+            const stringValue = String(value);
+            if (stringValue.trim().length > 0) {
+              categorizedSettings[category][field] = {
+                value: stringValue,
+                isActive: true,
+                description: `${field} setting`,
+              };
+            }
           }
         });
       });

@@ -104,20 +104,46 @@ export default function AdminUsersPage() {
       }
 
       const url = `/api/users${params.toString() ? `?${params.toString()}` : ''}`;
+
+      logger.info('Fetching users from:', { url, roleFilter, statusFilter, searchQuery });
+
       const response = await fetch(url, {
         credentials: 'include', // Incluir cookies de autenticación
       });
 
       if (!response.ok) {
-        throw new Error('Error al cargar usuarios');
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        logger.error('Error response from /api/users:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+
+        if (response.status === 403) {
+          throw new Error('Acceso denegado: No tienes permisos para ver usuarios');
+        } else if (response.status === 401) {
+          throw new Error('No autorizado: Por favor, vuelve a iniciar sesión');
+        }
+
+        throw new Error(errorData.error || 'Error al cargar usuarios');
       }
       const data = await response.json();
       const usersArray = data.users || [];
       setUsers(usersArray);
+
+      // Limpiar mensaje de error si la carga fue exitosa
+      if (errorMessage) {
+        setErrorMessage('');
+      }
     } catch (error) {
       logger.error('Error fetching users:', {
         error: error instanceof Error ? error.message : String(error),
       });
+
+      // Mostrar mensaje de error al usuario
+      const errorMsg = error instanceof Error ? error.message : 'Error al cargar usuarios';
+      setErrorMessage(errorMsg);
+      setTimeout(() => setErrorMessage(''), 10000); // 10 segundos para leer el mensaje
     } finally {
       setLoading(false);
     }
