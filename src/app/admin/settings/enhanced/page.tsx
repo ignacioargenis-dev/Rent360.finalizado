@@ -622,7 +622,7 @@ export default function EnhancedAdminSettingsPage() {
 
   useEffect(() => {
     // Solo cargar datos si el usuario está autenticado
-    if (!authLoading && user && user.role === 'admin') {
+    if (!authLoading && user && user.role === 'ADMIN') {
       // Load user data
       const loadUserData = async () => {
         try {
