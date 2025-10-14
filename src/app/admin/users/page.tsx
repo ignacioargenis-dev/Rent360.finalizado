@@ -76,9 +76,24 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
+    console.log('🔍 [USERS] useEffect triggered:', {
+      authLoading,
+      hasUser: !!user,
+      role: user?.role,
+      roleFilter,
+      statusFilter,
+      searchQuery,
+    });
+
     // Solo hacer la llamada si el usuario está autenticado y cargado
     if (!authLoading && user && user.role === 'ADMIN') {
+      console.log('✅ [USERS] User is authenticated as ADMIN, fetching users...');
       fetchUsers();
+    } else {
+      console.log('⏸️ [USERS] Waiting for auth or user is not ADMIN:', {
+        authLoading,
+        role: user?.role,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter, statusFilter, searchQuery, user, authLoading]);
@@ -105,15 +120,26 @@ export default function AdminUsersPage() {
 
       const url = `/api/users${params.toString() ? `?${params.toString()}` : ''}`;
 
-      logger.info('Fetching users from:', { url, roleFilter, statusFilter, searchQuery });
+      console.log('🔍 [USERS] Fetching users from:', {
+        url,
+        roleFilter,
+        statusFilter,
+        searchQuery,
+      });
 
       const response = await fetch(url, {
         credentials: 'include', // Incluir cookies de autenticación
       });
 
+      console.log('📡 [USERS] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        logger.error('Error response from /api/users:', {
+        console.error('❌ [USERS] Error response:', {
           status: response.status,
           statusText: response.statusText,
           errorData,
@@ -129,6 +155,7 @@ export default function AdminUsersPage() {
       }
       const data = await response.json();
       const usersArray = data.users || [];
+      console.log('✅ [USERS] Users loaded successfully:', { count: usersArray.length });
       setUsers(usersArray);
 
       // Limpiar mensaje de error si la carga fue exitosa
@@ -136,8 +163,9 @@ export default function AdminUsersPage() {
         setErrorMessage('');
       }
     } catch (error) {
-      logger.error('Error fetching users:', {
+      console.error('❌ [USERS] Error fetching users:', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
 
       // Mostrar mensaje de error al usuario

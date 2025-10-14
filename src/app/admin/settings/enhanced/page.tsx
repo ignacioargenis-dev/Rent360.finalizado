@@ -530,13 +530,13 @@ export default function EnhancedAdminSettingsPage() {
   // Función para cargar settings desde la API
   const loadSettings = async () => {
     try {
-      logger.info('Loading settings from /api/admin/settings...');
+      console.log('🔍 [SETTINGS] Loading settings from /api/admin/settings...');
 
       const settingsResponse = await fetch('/api/admin/settings', {
         credentials: 'include', // Incluir cookies de autenticación
       });
 
-      logger.info('Settings response received:', {
+      console.log('🔍 [SETTINGS] Response received:', {
         status: settingsResponse.status,
         statusText: settingsResponse.statusText,
         ok: settingsResponse.ok,
@@ -544,7 +544,7 @@ export default function EnhancedAdminSettingsPage() {
 
       if (!settingsResponse.ok) {
         const errorText = await settingsResponse.text();
-        logger.error('Error loading settings - HTTP error:', {
+        console.error('❌ [SETTINGS] HTTP error:', {
           status: settingsResponse.status,
           statusText: settingsResponse.statusText,
           body: errorText,
@@ -552,7 +552,7 @@ export default function EnhancedAdminSettingsPage() {
 
         // Si es 404, significa que no hay configuraciones guardadas aún, eso es normal
         if (settingsResponse.status === 404) {
-          logger.info('No settings found in database, using defaults');
+          console.log('ℹ️ [SETTINGS] No settings found in database, using defaults');
           return; // Usar configuraciones por defecto
         }
 
@@ -560,20 +560,21 @@ export default function EnhancedAdminSettingsPage() {
       }
 
       const settingsData = await settingsResponse.json();
-      logger.info('Settings data received:', {
+      console.log('📦 [SETTINGS] Data received:', {
         hasData: !!settingsData,
         hasSettings: !!settingsData?.data,
         dataKeys: settingsData ? Object.keys(settingsData) : [],
+        fullData: settingsData,
       });
 
       // El endpoint devuelve: { success: true, data: [...] }
       // Donde data es un array de objetos: { key, value, category, ... }
       const settingsArray = settingsData.data || [];
 
-      logger.info('Processing settings array:', { count: settingsArray.length });
+      console.log('🔄 [SETTINGS] Processing settings array:', { count: settingsArray.length });
 
       if (settingsArray.length === 0) {
-        logger.info('No settings in database, using defaults');
+        console.log('ℹ️ [SETTINGS] No settings in database, using defaults');
         return; // Usar configuraciones por defecto
       }
 
@@ -600,7 +601,7 @@ export default function EnhancedAdminSettingsPage() {
           }
 
           processedSettings[key] = processedValue;
-          logger.debug(`Processed setting: ${key} =`, processedValue);
+          console.log(`  ✓ [SETTINGS] Processed: ${key} =`, processedValue);
         }
       });
 
@@ -617,7 +618,7 @@ export default function EnhancedAdminSettingsPage() {
           }
         });
 
-        logger.info('Settings merged successfully:', {
+        console.log('✅ [SETTINGS] Merged successfully:', {
           processedKeys: Object.keys(processedSettings).length,
           totalKeys: Object.keys(merged).length,
         });
@@ -625,7 +626,7 @@ export default function EnhancedAdminSettingsPage() {
         return merged;
       });
     } catch (error) {
-      logger.error('Error loading settings:', {
+      console.error('❌ [SETTINGS] Error loading settings:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         errorType: typeof error,
@@ -634,7 +635,7 @@ export default function EnhancedAdminSettingsPage() {
 
       // También intentar obtener más detalles del error
       if (error && typeof error === 'object') {
-        logger.error('Error object details:', error);
+        console.error('❌ [SETTINGS] Error object details:', error);
       }
     }
   };
@@ -646,8 +647,16 @@ export default function EnhancedAdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
+    console.log('🔍 [SETTINGS] useEffect triggered:', {
+      authLoading,
+      hasUser: !!user,
+      role: user?.role,
+    });
+
     // Solo cargar datos si el usuario está autenticado
     if (!authLoading && user && user.role === 'ADMIN') {
+      console.log('✅ [SETTINGS] User is authenticated as ADMIN, loading data...');
+
       // Load user data
       const loadUserData = async () => {
         try {
@@ -985,6 +994,11 @@ El equipo de Rent360`,
         });
       });
 
+      console.log('💾 [SETTINGS] Saving settings:', {
+        count: settingsArray.length,
+        sample: settingsArray.slice(0, 3),
+      });
+
       const response = await fetch('/api/admin/settings', {
         method: 'PATCH', // Usar PATCH para actualización masiva
         headers: {
@@ -992,6 +1006,12 @@ El equipo de Rent360`,
         },
         credentials: 'include', // Incluir cookies de autenticación
         body: JSON.stringify({ settings: settingsArray }),
+      });
+
+      console.log('📡 [SETTINGS] Save response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
       });
 
       if (response.ok) {
