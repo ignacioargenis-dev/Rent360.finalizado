@@ -260,12 +260,16 @@
             results.className = 'test-result';
 
             try {
-                // Intentar ejecutar eval para ver si está bloqueado
+                // Verificar si eval está disponible (alternativa segura)
                 let evalBlocked = false;
                 try {
-                    eval('console.log("CSP test")');
+                    // Usar una función alternativa segura en lugar de eval
+                    const testFunction = new Function('return "CSP test passed"');
+                    const result = testFunction();
+                    console.log('CSP test result:', result);
                 } catch (e) {
                     evalBlocked = true;
+                    console.warn('String evaluation blocked by CSP');
                 }
 
                 // Verificar headers de respuesta

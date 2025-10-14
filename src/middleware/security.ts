@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger-minimal';
+import { logger } from '@/lib/logger-edge-runtime';
 import {
   validateSecurityHeaders,
   validateQueryParams,
   detectInjectionAttacks,
   sanitizeString,
-  sanitizeObject
+  sanitizeObject,
 } from '@/lib/security/input-validator';
 
 // Configuración de seguridad avanzada
@@ -40,8 +40,8 @@ const SECURITY_CONFIG = {
     'Opera/',
     'PostmanRuntime/',
     'curl/',
-    'wget/'
-  ]
+    'wget/',
+  ],
 };
 
 // Cache de rate limiting en memoria (en producción usar Redis)
@@ -74,7 +74,10 @@ function checkRateLimit(identifier: string, maxRequests: number, windowMs: numbe
 }
 
 // Función para validar User-Agent
-function validateUserAgent(userAgent: string | null): { isValid: boolean; risk: 'low' | 'medium' | 'high' } {
+function validateUserAgent(userAgent: string | null): {
+  isValid: boolean;
+  risk: 'low' | 'medium' | 'high';
+} {
   if (!userAgent) {
     return { isValid: false, risk: 'high' };
   }
@@ -90,7 +93,7 @@ function validateUserAgent(userAgent: string | null): { isValid: boolean; risk: 
 
   // Verificar patrones sospechosos
   const suspiciousPatterns = [
-    /^$/ , // Empty
+    /^$/, // Empty
     /^-$/, // Dash only
     /^unknown$/i, // Unknown
     /^python/i, // Python requests
@@ -124,8 +127,8 @@ function detectAdvancedAttacks(request: NextRequest): {
     /(\bunion\b.*\bselect\b)/i,
     /(\border\s+by\s+\d+)/i,
     /(\bgroup\s+by\s+\d+)/i,
-    (/having\s+\d+\s*=\s*\d+/i),
-    (/;\s*(drop|delete|update|insert)/i),
+    /having\s+\d+\s*=\s*\d+/i,
+    /;\s*(drop|delete|update|insert)/i,
   ];
 
   for (const pattern of sqlInjectionPatterns) {
@@ -191,7 +194,7 @@ function detectAdvancedAttacks(request: NextRequest): {
     'x-forwarded-port',
     'x-original-url',
     'x-rewrite-url',
-    'x-custom-header'
+    'x-custom-header',
   ];
 
   for (const header of suspiciousHeaders) {
@@ -208,7 +211,8 @@ function detectAdvancedAttacks(request: NextRequest): {
   }
 
   for (const [key, count] of paramCounts.entries()) {
-    if (count > 5) { // Más de 5 valores para el mismo parámetro
+    if (count > 5) {
+      // Más de 5 valores para el mismo parámetro
       return { isAttack: true, attackType: 'Parameter Pollution', severity: 'medium' };
     }
   }
@@ -219,10 +223,11 @@ function detectAdvancedAttacks(request: NextRequest): {
 // Middleware principal de seguridad
 export async function securityMiddleware(request: NextRequest): Promise<NextResponse | null> {
   const startTime = Date.now();
-  const clientIP = request.headers.get('x-forwarded-for') ||
-                   request.headers.get('x-real-ip') ||
-                   request.headers.get('cf-connecting-ip') ||
-                   'unknown';
+  const clientIP =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('cf-connecting-ip') ||
+    'unknown';
 
   const userAgent = request.headers.get('user-agent');
   const url = request.url;
@@ -235,17 +240,17 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         clientIP,
         userAgent,
         url,
-        context: 'security.blocked_ip'
+        context: 'security.blocked_ip',
       });
 
       return new NextResponse(
         JSON.stringify({
           error: 'Access denied',
-          message: 'Your IP address has been blocked due to suspicious activity'
+          message: 'Your IP address has been blocked due to suspicious activity',
         }),
         {
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -257,29 +262,31 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         clientIP,
         userAgent,
         risk: userAgentValidation.risk,
-        context: 'security.invalid_user_agent'
+        context: 'security.invalid_user_agent',
       });
 
       return new NextResponse(
         JSON.stringify({
           error: 'Access denied',
-          message: 'Invalid request'
+          message: 'Invalid request',
         }),
         {
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
     // 3. Rate limiting por IP (excluir rutas críticas durante prerendering)
     const pathname = new URL(url).pathname;
-    const isPrerendering = !userAgent || userAgent.includes('Next.js') || userAgent.includes('prerenderer');
-    const isCriticalAPI = pathname.startsWith('/api/users') ||
-                         pathname.startsWith('/api/settings') ||
-                         pathname.startsWith('/api/auth/me') ||
-                         pathname.startsWith('/api/health') ||
-                         pathname.startsWith('/api/test-');
+    const isPrerendering =
+      !userAgent || userAgent.includes('Next.js') || userAgent.includes('prerenderer');
+    const isCriticalAPI =
+      pathname.startsWith('/api/users') ||
+      pathname.startsWith('/api/settings') ||
+      pathname.startsWith('/api/auth/me') ||
+      pathname.startsWith('/api/health') ||
+      pathname.startsWith('/api/test-');
 
     // Excluir rate limiting para prerendering y APIs críticas
     if (!isPrerendering && !isCriticalAPI) {
@@ -289,21 +296,21 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
           clientIP,
           userAgent,
           url,
-          context: 'security.rate_limit_ip'
+          context: 'security.rate_limit_ip',
         });
 
         return new NextResponse(
           JSON.stringify({
             error: 'Rate limit exceeded',
             message: 'Too many requests from this IP address',
-            retryAfter: 60
+            retryAfter: 60,
           }),
           {
             status: 429,
             headers: {
               'Content-Type': 'application/json',
-              'Retry-After': '60'
-            }
+              'Retry-After': '60',
+            },
           }
         );
       }
@@ -318,7 +325,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         url,
         attackType: attackDetection.attackType,
         severity: attackDetection.severity,
-        context: 'security.attack_detected'
+        context: 'security.attack_detected',
       });
 
       // Bloquear IP por ataques críticos
@@ -334,11 +341,11 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
       return new NextResponse(
         JSON.stringify({
           error: 'Security violation detected',
-          message: 'Your request contains potentially malicious content'
+          message: 'Your request contains potentially malicious content',
         }),
         {
           status: statusCode,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -351,7 +358,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         userAgent,
         url,
         warnings: headerValidation.warnings,
-        context: 'security.header_validation'
+        context: 'security.header_validation',
       });
     }
 
@@ -363,17 +370,17 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         userAgent,
         url,
         error: queryValidation.error,
-        context: 'security.query_validation'
+        context: 'security.query_validation',
       });
 
       return new NextResponse(
         JSON.stringify({
           error: 'Invalid request parameters',
-          message: queryValidation.error
+          message: queryValidation.error,
         }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -386,7 +393,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         userAgent,
         originalUrl: url,
         sanitizedUrl,
-        context: 'security.url_sanitization'
+        context: 'security.url_sanitization',
       });
     }
 
@@ -399,19 +406,18 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
       url: sanitizedUrl,
       processingTime,
       riskLevel: userAgentValidation.risk,
-      context: 'security.check_passed'
+      context: 'security.check_passed',
     });
 
     // Continuar con la solicitud normal
     return null;
-
   } catch (error) {
     logger.error('Security middleware error', {
       clientIP,
       userAgent,
       url,
       error: error instanceof Error ? error.message : String(error),
-      context: 'security.middleware_error'
+      context: 'security.middleware_error',
     });
 
     // En caso de error en el middleware, permitir la solicitud para evitar bloqueos
@@ -432,7 +438,7 @@ export function blockIP(ip: string, durationMs: number = 3600000): void {
   logger.warn('IP manually blocked', {
     ip,
     durationMs,
-    context: 'security.manual_block'
+    context: 'security.manual_block',
   });
 }
 
@@ -443,7 +449,7 @@ export function unblockIP(ip: string): boolean {
   if (wasBlocked) {
     logger.info('IP manually unblocked', {
       ip,
-      context: 'security.manual_unblock'
+      context: 'security.manual_unblock',
     });
   }
 
@@ -459,6 +465,6 @@ export function getSecurityStats(): {
   return {
     blockedIPs: SECURITY_CONFIG.BLOCKED_IPS.size,
     rateLimitCacheSize: rateLimitCache.size,
-    blockedIPsList: Array.from(SECURITY_CONFIG.BLOCKED_IPS)
+    blockedIPsList: Array.from(SECURITY_CONFIG.BLOCKED_IPS),
   };
 }
