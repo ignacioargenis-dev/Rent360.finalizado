@@ -626,27 +626,45 @@ export default function UnifiedSidebar({
   let finalUserRole: string;
 
   if (user && user.role) {
+    // VALIDACIÓN: El rol debe venir en MAYÚSCULAS desde el AuthProvider
+    if (user.role !== user.role.toUpperCase()) {
+      console.error('🚨 CRÍTICO: Rol NO está en MAYÚSCULAS en el Sidebar!', {
+        receivedRole: user.role,
+        expectedRole: user.role.toUpperCase(),
+        userEmail: user.email,
+      });
+    }
+
     // Si tenemos información real del usuario, usarla exclusivamente
     finalUserRole = user.role.toLowerCase();
-    console.log('Usando rol del usuario autenticado:', finalUserRole, 'para usuario:', user.id);
+    console.log('📍 Sidebar - Usando rol del usuario autenticado:', {
+      receivedRole: user.role,
+      finalUserRole: finalUserRole,
+      email: user.email,
+      userId: user.id,
+    });
   } else {
     // Si no hay usuario autenticado, usar 'guest' para mostrar funcionalidad limitada
     finalUserRole = 'guest';
-    console.log('Usuario no autenticado, usando rol guest');
+    console.log('📍 Sidebar - Usuario no autenticado, usando rol guest');
   }
 
   // Validar que el rol existe en menuItems
   if (!(finalUserRole in menuItems)) {
-    console.warn(`Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`);
+    console.warn(
+      `⚠️ Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`
+    );
     finalUserRole = 'tenant'; // fallback seguro
   }
 
   // Log para debugging
-  console.log('UnifiedSidebar - Rol final determinado:', {
+  console.log('📍 Sidebar - Rol final determinado:', {
     userRole: user?.role,
     finalUserRole,
     userId: user?.id,
-    hasUser: !!user
+    userEmail: user?.email,
+    hasUser: !!user,
+    menuItemsForRole: menuItems[finalUserRole]?.length || 0,
   });
 
   const items = menuItems[finalUserRole] || menuItems.tenant || [];

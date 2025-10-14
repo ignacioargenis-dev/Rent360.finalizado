@@ -31,9 +31,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cachedUser) {
           try {
             const parsedUser = JSON.parse(cachedUser);
-            // Validar que tenga los campos mínimos necesarios
+            // Validar que tenga los campos mínimos necesarios Y que el rol esté en MAYÚSCULAS
             if (parsedUser.id && parsedUser.email && parsedUser.role) {
-              setUser(parsedUser);
+              // VALIDACIÓN CRÍTICA: El rol DEBE estar en MAYÚSCULAS
+              if (parsedUser.role !== parsedUser.role.toUpperCase()) {
+                console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando...', {
+                  storedRole: parsedUser.role,
+                  expectedRole: parsedUser.role.toUpperCase(),
+                });
+                localStorage.removeItem('user');
+              } else {
+                console.log('✅ Usuario cargado desde localStorage:', {
+                  email: parsedUser.email,
+                  role: parsedUser.role,
+                  id: parsedUser.id,
+                });
+                setUser(parsedUser);
+              }
               // Continuar con la verificación en background
             }
           } catch (e) {
@@ -55,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         if (userData.user && userData.user.id) {
+          // CRÍTICO: Normalizar rol a MAYÚSCULAS SIEMPRE
+          const normalizedRole = (userData.user.role || 'TENANT').toUpperCase();
+
           const completeUser = {
             id: userData.user.id,
             email: userData.user.email || 'unknown@example.com',
@@ -73,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             city: null,
             commune: null,
             region: null,
-            role: userData.user.role || 'TENANT',
+            role: normalizedRole,
             avatar: userData.user.avatar || null,
             isActive: true,
             emailVerified: true,
@@ -83,14 +100,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatedAt: new Date(),
           };
 
+          console.log('✅ Usuario autenticado desde servidor:', {
+            email: completeUser.email,
+            role: completeUser.role,
+            id: completeUser.id,
+            originalRole: userData.user.role,
+          });
+
           setUser(completeUser);
 
           // Actualizar localStorage
           if (typeof window !== 'undefined') {
             localStorage.setItem('user', JSON.stringify(completeUser));
+            console.log('💾 Usuario guardado en localStorage con rol:', completeUser.role);
           }
         }
       } else if (response.status === 401) {
+        console.warn('⚠️ No autorizado (401), limpiando sesión');
         setUser(null);
         // Limpiar localStorage si no autenticado
         if (typeof window !== 'undefined') {
@@ -116,54 +142,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      // CRÍTICO: Limpiar localStorage ANTES de hacer login para evitar datos antiguos
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+        console.log('🧹 localStorage limpiado antes del login');
+      }
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error en el login');
-    }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error en el login');
+      }
 
-    // Crear objeto de usuario completo
-    const completeUserData = {
-      id: data.user?.id || 'unknown',
-      email: data.user?.email || 'unknown@example.com',
-      password: '',
-      name: data.user?.name || 'Unknown',
-      phone: data.user?.phone || null,
-      phoneSecondary: null,
-      emergencyContact: null,
-      emergencyPhone: null,
-      rut: data.user?.rut || null,
-      rutVerified: false,
-      dateOfBirth: null,
-      gender: null,
-      nationality: null,
-      address: null,
-      city: null,
-      commune: null,
-      region: null,
-      role: data.user?.role || 'TENANT',
-      avatar: data.user?.avatar || null,
-      isActive: true,
-      emailVerified: true,
-      phoneVerified: false,
-      lastLogin: new Date(),
-      createdAt: data.user?.createdAt ? new Date(data.user?.createdAt) : new Date(),
-      updatedAt: new Date(),
-    };
+      const data = await response.json();
 
-    setUser(completeUserData);
+      // CRÍTICO: Normalizar rol a MAYÚSCULAS SIEMPRE
+      const normalizedRole = (data.user?.role || 'TENANT').toUpperCase();
 
-    // Guardar en localStorage para persistencia
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(completeUserData));
+      // Crear objeto de usuario completo
+      const completeUserData = {
+        id: data.user?.id || 'unknown',
+        email: data.user?.email || 'unknown@example.com',
+        password: '',
+        name: data.user?.name || 'Unknown',
+        phone: data.user?.phone || null,
+        phoneSecondary: null,
+        emergencyContact: null,
+        emergencyPhone: null,
+        rut: data.user?.rut || null,
+        rutVerified: false,
+        dateOfBirth: null,
+        gender: null,
+        nationality: null,
+        address: null,
+        city: null,
+        commune: null,
+        region: null,
+        role: normalizedRole,
+        avatar: data.user?.avatar || null,
+        isActive: true,
+        emailVerified: true,
+        phoneVerified: false,
+        lastLogin: new Date(),
+        createdAt: data.user?.createdAt ? new Date(data.user?.createdAt) : new Date(),
+        updatedAt: new Date(),
+      };
+
+      console.log('🔐 Login exitoso:', {
+        email: completeUserData.email,
+        role: completeUserData.role,
+        id: completeUserData.id,
+        originalRole: data.user?.role,
+      });
+
+      setUser(completeUserData);
+
+      // Guardar en localStorage para persistencia
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(completeUserData));
+        console.log('💾 Usuario guardado en localStorage después del login');
+      }
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -199,6 +246,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
 
+    // CRÍTICO: Normalizar rol a MAYÚSCULAS SIEMPRE
+    const normalizedRole = (data.user?.role || 'TENANT').toUpperCase();
+
     // Crear objeto de usuario completo
     const completeUserData = {
       id: data.user?.id || 'unknown',
@@ -218,7 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       city: null,
       commune: null,
       region: null,
-      role: data.user?.role || 'TENANT',
+      role: normalizedRole,
       avatar: data.user?.avatar || null,
       isActive: true,
       emailVerified: true,
