@@ -147,7 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    setUser({
+
+    // Crear objeto de usuario completo
+    const userData = {
       id: data.user?.id || 'unknown',
       email: data.user?.email || 'unknown@example.com',
       password: '',
@@ -170,18 +172,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive: true,
       emailVerified: true,
       phoneVerified: false,
-      lastLogin: null,
-      createdAt: new Date(),
+      lastLogin: new Date(),
+      createdAt: data.user?.createdAt ? new Date(data.user?.createdAt) : new Date(),
       updatedAt: new Date(),
-    });
+    };
+
+    setUser(userData);
+
+    // Guardar en localStorage para persistencia
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
   };
 
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
+
+      // Limpiar localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
     } catch (error) {
       logger.error('Logout error:', error);
+      // Limpiar localStorage incluso si hay error
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
     }
   };
 
@@ -198,7 +216,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    setUser({
+
+    // Crear objeto de usuario completo
+    const userData = {
       id: data.user?.id || 'unknown',
       email: data.user?.email || 'unknown@example.com',
       password: '',
@@ -221,10 +241,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive: true,
       emailVerified: true,
       phoneVerified: false,
-      lastLogin: null,
-      createdAt: new Date(),
+      lastLogin: new Date(),
+      createdAt: data.user?.createdAt ? new Date(data.user?.createdAt) : new Date(),
       updatedAt: new Date(),
-    });
+    };
+
+    setUser(userData);
+
+    // Guardar en localStorage para persistencia
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
   };
 
   return (

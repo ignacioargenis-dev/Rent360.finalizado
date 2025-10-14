@@ -622,21 +622,32 @@ export default function UnifiedSidebar({
     }));
   };
 
-  // Determinar rol del usuario - usar ÚNICAMENTE el rol real del usuario
+  // Determinar rol del usuario - usar el rol real del usuario SIEMPRE
   let finalUserRole: string;
 
   if (user && user.role) {
     // Si tenemos información real del usuario, usarla exclusivamente
     finalUserRole = user.role.toLowerCase();
+    console.log('Usando rol del usuario autenticado:', finalUserRole, 'para usuario:', user.id);
   } else {
     // Si no hay usuario autenticado, usar 'guest' para mostrar funcionalidad limitada
     finalUserRole = 'guest';
+    console.log('Usuario no autenticado, usando rol guest');
   }
 
   // Validar que el rol existe en menuItems
   if (!(finalUserRole in menuItems)) {
+    console.warn(`Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`);
     finalUserRole = 'tenant'; // fallback seguro
   }
+
+  // Log para debugging
+  console.log('UnifiedSidebar - Rol final determinado:', {
+    userRole: user?.role,
+    finalUserRole,
+    userId: user?.id,
+    hasUser: !!user
+  });
 
   const items = menuItems[finalUserRole] || menuItems.tenant || [];
 

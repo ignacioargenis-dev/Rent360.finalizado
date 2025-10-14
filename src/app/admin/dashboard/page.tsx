@@ -597,6 +597,91 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Corrección de Roles de Usuarios Existentes */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-orange-500" />
+                Corrección de Roles de Usuarios Existentes
+              </CardTitle>
+              <CardDescription>
+                Si los usuarios existentes tienen problemas de permisos, usa esta herramienta para corregir sus roles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <h4 className="font-medium text-orange-800 mb-2">Problema Detectado</h4>
+                  <p className="text-sm text-orange-700 mb-3">
+                    Los usuarios existentes pueden tener roles incorrectos (ej: "tenant" en lugar de "admin").
+                    Esta herramienta permite corregir los roles de usuarios existentes.
+                  </p>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/admin/fix-user-roles');
+                          const data = await response.json();
+
+                          if (response.ok) {
+                            alert(`Se encontraron ${data.total} usuarios. Revisa la consola para ver la lista.`);
+                            console.log('Usuarios con problemas de roles:', data.users);
+                          } else {
+                            alert('Error obteniendo usuarios: ' + data.error);
+                          }
+                        } catch (error) {
+                          console.error('Error obteniendo usuarios:', error);
+                          alert('Error obteniendo usuarios');
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      Ver Usuarios con Problemas de Roles
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={async () => {
+                        const userId = prompt('Ingrese el ID del usuario a corregir:');
+                        const newRole = prompt('Ingrese el nuevo rol (admin, tenant, owner, broker, provider, maintenance, runner, support):');
+
+                        if (!userId || !newRole) {
+                          alert('Ambos campos son requeridos');
+                          return;
+                        }
+
+                        try {
+                          const response = await fetch('/api/admin/fix-user-roles', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId, newRole }),
+                          });
+
+                          const result = await response.json();
+
+                          if (response.ok) {
+                            alert('Rol actualizado correctamente. Recarga la página.');
+                            window.location.reload();
+                          } else {
+                            alert('Error: ' + result.error);
+                          }
+                        } catch (error) {
+                          console.error('Error actualizando rol:', error);
+                          alert('Error actualizando rol');
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      Corregir Rol de Usuario Específico
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
