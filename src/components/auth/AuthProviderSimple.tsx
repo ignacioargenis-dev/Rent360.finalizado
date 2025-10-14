@@ -18,12 +18,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // No bloquear render inicial
+  const [loading, setLoading] = useState(true); // Iniciar con loading true
 
-  // Función para verificar autenticación manualmente
+  // Función para verificar autenticación
   const checkAuth = async () => {
     try {
       setLoading(true);
+
+      // Primero intentar cargar desde localStorage como fallback rápido
+      if (typeof window !== 'undefined') {
+        const cachedUser = localStorage.getItem('user');
+        if (cachedUser) {
+          try {
+            const parsedUser = JSON.parse(cachedUser);
+            // Validar que tenga los campos mínimos necesarios
+            if (parsedUser.id && parsedUser.email && parsedUser.role) {
+              setUser(parsedUser);
+              // Continuar con la verificación en background
+            }
+          } catch (e) {
+            logger.warn('Error parsing cached user from localStorage', e);
+            localStorage.removeItem('user');
+          }
+        }
+      }
+
+      // Verificar autenticación con el servidor
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
         headers: {
@@ -35,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         if (userData.user && userData.user.id) {
-          setUser({
+          const completeUser = {
             id: userData.user.id,
             email: userData.user.email || 'unknown@example.com',
             password: '',
@@ -53,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             city: null,
             commune: null,
             region: null,
-            role: userData.user.role || 'tenant',
+            role: userData.user.role || 'TENANT',
             avatar: userData.user.avatar || null,
             isActive: true,
             emailVerified: true,
@@ -61,77 +81,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             lastLogin: null,
             createdAt: userData.user.createdAt ? new Date(userData.user.createdAt) : new Date(),
             updatedAt: new Date(),
-          });
+          };
+
+          setUser(completeUser);
+
+          // Actualizar localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(completeUser));
+          }
         }
       } else if (response.status === 401) {
         setUser(null);
+        // Limpiar localStorage si no autenticado
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user');
+        }
       }
     } catch (error) {
       logger.warn('Auth check failed:', error);
-      setUser(null);
+      // Si falla la verificación pero tenemos usuario en cache, mantenerlo
+      // Solo establecer null si no hay usuario en absoluto
+      if (!user) {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // DESACTIVADO: Auth check automático que causa problemas de sesiones automáticas
-  // Solo verificar auth cuando sea necesario (login, registro, etc.)
-  // useEffect(() => {
-  //   const checkAuth = async () => {
-  //     try {
-  //       const response = await fetch('/api/auth/me', {
-  //         credentials: 'include',
-  //         headers: {
-  //           'Cache-Control': 'no-cache',
-  //           'Pragma': 'no-cache'
-  //         }
-  //       });
-  //
-  //       if (response.ok) {
-  //         const userData = await response.json();
-  //
-  //         // Validar que el usuario tenga datos válidos
-  //         if (userData.user && userData.user.id) {
-  //           setUser({
-  //             id: userData.user.id,
-  //             email: userData.user.email || 'unknown@example.com',
-  //             password: '',
-  //             name: userData.user.name || 'Usuario',
-  //             phone: userData.user.phone || null,
-  //             phoneSecondary: null,
-  //             emergencyContact: null,
-  //             emergencyPhone: null,
-  //             rut: userData.user.rut || null,
-  //             rutVerified: false,
-  //             dateOfBirth: null,
-  //             gender: null,
-  //             nationality: null,
-  //             address: null,
-  //             city: null,
-  //             commune: null,
-  //             region: null,
-  //             role: userData.user.role || 'tenant',
-  //             avatar: userData.user.avatar || null,
-  //             isActive: true,
-  //             emailVerified: true,
-  //             phoneVerified: false,
-  //             lastLogin: null,
-  //             createdAt: userData.user.createdAt ? new Date(userData.user.createdAt) : new Date(),
-  //             updatedAt: new Date(),
-  //           });
-  //         }
-  //       } else if (response.status === 401) {
-  //         // Usuario no autenticado - estado normal para páginas públicas
-  //         logger.info('Usuario no autenticado - estado normal');
-  //       }
-  //     } catch (error) {
-  //       logger.warn('Auth check failed:', error);
-  //       // No establecer error crítico - permitir funcionamiento sin autenticación
-  //     }
-  //   };
-  //
-  //   checkAuth();
-  // }, []);
+  // ACTIVADO: Auth check automático al cargar el AuthProvider
+  useEffect(() => {
+    checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const login = async (email: string, password: string) => {
     const response = await fetch('/api/auth/login', {
@@ -167,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       city: null,
       commune: null,
       region: null,
-      role: data.user?.role || 'tenant',
+      role: data.user?.role || 'TENANT',
       avatar: data.user?.avatar || null,
       isActive: true,
       emailVerified: true,
@@ -236,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       city: null,
       commune: null,
       region: null,
-      role: data.user?.role || 'tenant',
+      role: data.user?.role || 'TENANT',
       avatar: data.user?.avatar || null,
       isActive: true,
       emailVerified: true,

@@ -6,12 +6,9 @@ import { verifyRefreshToken, generateTokens, setAuthCookies } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const refreshToken = verifyRefreshToken(request);
-    
+
     if (!refreshToken) {
-      return NextResponse.json(
-        { error: 'Refresh token inválido o expirado' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Refresh token inválido o expirado' }, { status: 401 });
     }
 
     // Buscar usuario en la base de datos
@@ -20,18 +17,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado o inactivo' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Usuario no encontrado o inactivo' }, { status: 401 });
     }
 
-    // Generar nuevos tokens
+    // Generar nuevos tokens (mantener rol en MAYÚSCULAS)
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(
       user.id,
       user.email,
-      user.role.toLowerCase(),
-      user.name,
+      user.role,
+      user.name
     );
 
     // Crear respuesta con cookies
@@ -41,7 +35,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role.toLowerCase(),
+        role: user.role,
         avatar: user.avatar,
       },
     });
@@ -51,10 +45,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    logger.error('Error en refresh token:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 },
-    );
+    logger.error('Error en refresh token:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

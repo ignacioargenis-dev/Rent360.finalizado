@@ -34,9 +34,9 @@ import {
   X,
 } from 'lucide-react';
 import { User } from '@/types';
-import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-
-import { useDashboardUser } from '@/components/layout/UnifiedDashboardLayout';
+import UnifiedDashboardLayout, {
+  useDashboardUser,
+} from '@/components/layout/UnifiedDashboardLayout';
 
 export default function AdminUsersPage() {
   // Usar el usuario del dashboard layout que ya verificó autenticación
@@ -72,14 +72,15 @@ export default function AdminUsersPage() {
     name: '',
     email: '',
     password: '',
-    role: 'tenant',
+    role: 'TENANT',
   });
 
   useEffect(() => {
     // Solo hacer la llamada si el usuario está autenticado y cargado
-    if (!authLoading && user && user.role === 'admin') {
+    if (!authLoading && user && user.role === 'ADMIN') {
       fetchUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter, statusFilter, searchQuery, user, authLoading]);
 
   const fetchUsers = async () => {
@@ -289,7 +290,7 @@ export default function AdminUsersPage() {
             name: '',
             email: '',
             password: '',
-            role: 'tenant',
+            role: 'TENANT',
           });
           setSuccessMessage('Usuario actualizado exitosamente');
           setTimeout(() => setSuccessMessage(''), 3000);
@@ -316,7 +317,7 @@ export default function AdminUsersPage() {
             name: '',
             email: '',
             password: '',
-            role: 'tenant',
+            role: 'TENANT',
           });
           setSuccessMessage('Usuario creado exitosamente');
           setTimeout(() => setSuccessMessage(''), 3000);
@@ -375,7 +376,7 @@ export default function AdminUsersPage() {
   }
 
   // Verificar si el usuario tiene permisos de admin
-  if (user.role !== 'admin') {
+  if (user.role !== 'ADMIN') {
     return (
       <UnifiedDashboardLayout title="Gestión de Usuarios" subtitle="Acceso restringido">
         <div className="flex items-center justify-center h-64">

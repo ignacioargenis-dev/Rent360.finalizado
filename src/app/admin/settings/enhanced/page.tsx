@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import { logger } from '@/lib/logger-minimal';
 
 import { useState, useEffect } from 'react';
@@ -3971,7 +3970,7 @@ El equipo de Rent360`,
   }
 
   // Verificar si el usuario tiene permisos de admin
-  if (user.role !== 'admin') {
+  if (user.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

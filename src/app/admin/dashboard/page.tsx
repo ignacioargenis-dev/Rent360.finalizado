@@ -179,22 +179,24 @@ export default function AdminDashboard() {
   }, []);
 
   const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'admin':
+    switch (role.toUpperCase()) {
+      case 'ADMIN':
         return 'Administrador';
-      case 'owner':
+      case 'OWNER':
         return 'Propietario';
-      case 'tenant':
+      case 'TENANT':
         return 'Inquilino';
-      case 'broker':
+      case 'BROKER':
         return 'Corredor';
-      case 'runner':
+      case 'RUNNER':
         return 'Runner360';
-      case 'support':
+      case 'SUPPORT':
         return 'Soporte';
-      case 'maintenance':
+      case 'MAINTENANCE':
+      case 'MAINTENANCE_PROVIDER':
         return 'Servicio de Mantenimiento';
-      case 'provider':
+      case 'PROVIDER':
+      case 'SERVICE_PROVIDER':
         return 'Proveedor de Servicios';
       default:
         return role;
@@ -270,11 +272,7 @@ export default function AdminDashboard() {
   }
 
   // Verificar que el usuario esté autenticado y tenga permisos de admin
-  const hasAdminAccess = user && (
-    user.role === 'admin' ||
-    user.role === 'ADMIN' ||
-    user.role?.toLowerCase() === 'admin'
-  );
+  const hasAdminAccess = user && user.role === 'ADMIN';
 
   if (!user || !hasAdminAccess) {
     return (
@@ -292,9 +290,12 @@ export default function AdminDashboard() {
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-yellow-800">
-                <strong>Debug Info:</strong><br/>
-                Usuario: {user ? JSON.stringify(user, null, 2) : 'No autenticado'}<br/>
-                Rol requerido: &apos;admin&apos; (case insensitive)<br/>
+                <strong>Debug Info:</strong>
+                <br />
+                Usuario: {user ? JSON.stringify(user, null, 2) : 'No autenticado'}
+                <br />
+                Rol requerido: &apos;admin&apos; (case insensitive)
+                <br />
                 Acceso permitido: {hasAdminAccess ? '✅ Sí' : '❌ No'}
               </p>
             </div>
@@ -606,7 +607,8 @@ export default function AdminDashboard() {
                 Corrección de Roles de Usuarios Existentes
               </CardTitle>
               <CardDescription>
-                Si los usuarios existentes tienen problemas de permisos, usa esta herramienta para corregir sus roles
+                Si los usuarios existentes tienen problemas de permisos, usa esta herramienta para
+                corregir sus roles
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -614,8 +616,9 @@ export default function AdminDashboard() {
                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <h4 className="font-medium text-orange-800 mb-2">Problema Detectado</h4>
                   <p className="text-sm text-orange-700 mb-3">
-                    Los usuarios existentes pueden tener roles incorrectos (ej: "tenant" en lugar de "admin").
-                    Esta herramienta permite corregir los roles de usuarios existentes.
+                    Los usuarios existentes pueden tener roles incorrectos (ej: &ldquo;tenant&rdquo;
+                    en lugar de &ldquo;admin&rdquo;). Esta herramienta permite corregir los roles de
+                    usuarios existentes.
                   </p>
                   <div className="space-y-2">
                     <Button
@@ -626,12 +629,16 @@ export default function AdminDashboard() {
                           const data = await response.json();
 
                           if (response.ok) {
-                            alert(`Se encontraron ${data.total} usuarios. Revisa la consola para ver la lista.`);
+                            alert(
+                              `Se encontraron ${data.total} usuarios. Revisa la consola para ver la lista.`
+                            );
+                            // eslint-disable-next-line no-console
                             console.log('Usuarios con problemas de roles:', data.users);
                           } else {
                             alert('Error obteniendo usuarios: ' + data.error);
                           }
                         } catch (error) {
+                          // eslint-disable-next-line no-console
                           console.error('Error obteniendo usuarios:', error);
                           alert('Error obteniendo usuarios');
                         }
@@ -644,7 +651,9 @@ export default function AdminDashboard() {
                       variant="default"
                       onClick={async () => {
                         const userId = prompt('Ingrese el ID del usuario a corregir:');
-                        const newRole = prompt('Ingrese el nuevo rol (admin, tenant, owner, broker, provider, maintenance, runner, support):');
+                        const newRole = prompt(
+                          'Ingrese el nuevo rol (admin, tenant, owner, broker, provider, maintenance, runner, support):'
+                        );
 
                         if (!userId || !newRole) {
                           alert('Ambos campos son requeridos');
@@ -667,6 +676,7 @@ export default function AdminDashboard() {
                             alert('Error: ' + result.error);
                           }
                         } catch (error) {
+                          // eslint-disable-next-line no-console
                           console.error('Error actualizando rol:', error);
                           alert('Error actualizando rol');
                         }

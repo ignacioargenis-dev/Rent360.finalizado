@@ -34,10 +34,7 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        return NextResponse.json(
-          { error: errorMessages.join('. ') },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: errorMessages.join('. ') }, { status: 400 });
       }
       throw validationError;
     }
@@ -57,7 +54,7 @@ export async function POST(request: NextRequest) {
       region,
       phoneSecondary,
       emergencyContact,
-      emergencyPhone
+      emergencyPhone,
     } = validatedData;
 
     if (!name || !email || !password || !role || !rut) {
@@ -74,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (!allowedPublicRoles.includes(role)) {
       return NextResponse.json(
         { error: 'Rol de usuario no permitido para registro público' },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -84,10 +81,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUserByEmail) {
-      return NextResponse.json(
-        { error: 'Ya existe un usuario con este email' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'Ya existe un usuario con este email' }, { status: 409 });
     }
 
     // Verificar si el RUT ya existe
@@ -96,10 +90,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUserByRut) {
-      return NextResponse.json(
-        { error: 'Ya existe un usuario con este RUT' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'Ya existe un usuario con este RUT' }, { status: 409 });
     }
 
     // Hash de la contraseña
@@ -133,12 +124,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Generar tokens
-    const { accessToken, refreshToken } = generateTokens(
-      user.id,
-      user.email,
-      user.role.toLowerCase(),
-      user.name,
-    );
+    const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.role, user.name);
 
     // Crear respuesta con cookies
     const response = NextResponse.json({
@@ -147,7 +133,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role.toLowerCase(),
+        role: user.role,
         avatar: user.avatar,
       },
     });
@@ -157,10 +143,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    logger.error('Error en registro:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 },
-    );
+    logger.error('Error en registro:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -43,7 +43,7 @@ async function loginHandler(request: NextRequest) {
     const { email, password } = validatedData;
 
     logger.debug('Buscando usuario en base de datos');
-    
+
     // Usar Prisma para buscar usuario
     const user = await db.user.findUnique({
       where: { email },
@@ -57,25 +57,29 @@ async function loginHandler(request: NextRequest) {
         avatar: true,
       },
     });
-    
+
     if (!user) {
       logger.warn('Intento de login con usuario inexistente', { email });
 
       // Registrar intento de login con usuario inexistente (si el servicio está disponible)
       if (auditService) {
         try {
-          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const clientIP =
+            request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
           const userAgent = request.headers.get('user-agent') || 'unknown';
-          await auditService.logUnauthorizedAccess(null, 'login_user_not_found', 'user', clientIP, userAgent);
+          await auditService.logUnauthorizedAccess(
+            null,
+            'login_user_not_found',
+            'user',
+            clientIP,
+            userAgent
+          );
         } catch (auditError) {
           logger.warn('Error registrando auditoría de login fallido', { auditError });
         }
       }
 
-      return NextResponse.json(
-        { error: 'Credenciales inválidas' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
     }
 
     // Verificar si el usuario está activo
@@ -85,18 +89,22 @@ async function loginHandler(request: NextRequest) {
       // Registrar intento de login con cuenta inactiva (si el servicio está disponible)
       if (auditService) {
         try {
-          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const clientIP =
+            request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
           const userAgent = request.headers.get('user-agent') || 'unknown';
-          await auditService.logUnauthorizedAccess(user.id, 'login_account_inactive', 'user', clientIP, userAgent);
+          await auditService.logUnauthorizedAccess(
+            user.id,
+            'login_account_inactive',
+            'user',
+            clientIP,
+            userAgent
+          );
         } catch (auditError) {
           logger.warn('Error registrando auditoría de cuenta inactiva', { auditError });
         }
       }
 
-      return NextResponse.json(
-        { error: 'Tu cuenta ha sido desactivada' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'Tu cuenta ha sido desactivada' }, { status: 403 });
     }
 
     // Verificar contraseña
@@ -108,31 +116,30 @@ async function loginHandler(request: NextRequest) {
       // Registrar intento de login fallido (si el servicio está disponible)
       if (auditService) {
         try {
-          const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+          const clientIP =
+            request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
           const userAgent = request.headers.get('user-agent') || 'unknown';
-          await auditService.logUnauthorizedAccess(user.id, 'login_failed', 'user', clientIP, userAgent);
+          await auditService.logUnauthorizedAccess(
+            user.id,
+            'login_failed',
+            'user',
+            clientIP,
+            userAgent
+          );
         } catch (auditError) {
           logger.warn('Error registrando auditoría de login fallido', { auditError });
         }
       }
 
-      return NextResponse.json(
-        { error: 'Credenciales inválidas' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
     }
 
-    // Determinar el rol del usuario
-    const role = user.role.toLowerCase();
+    // Mantener el rol en MAYÚSCULAS (formato de base de datos)
+    const role = user.role;
 
     // Generar tokens
     logger.debug('Generando tokens para usuario', { email });
-    const { accessToken, refreshToken } = generateTokens(
-      user.id,
-      user.email,
-      role,
-      user.name,
-    );
+    const { accessToken, refreshToken } = generateTokens(user.id, user.email, role, user.name);
 
     // Crear respuesta con cookies
     const response = NextResponse.json({
@@ -152,7 +159,8 @@ async function loginHandler(request: NextRequest) {
     // Registrar evento de auditoría (si el servicio está disponible)
     if (auditService) {
       try {
-        const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+        const clientIP =
+          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
         const userAgent = request.headers.get('user-agent') || 'unknown';
         await auditService.logLogin(user.id, clientIP, userAgent);
       } catch (auditError) {
@@ -161,14 +169,11 @@ async function loginHandler(request: NextRequest) {
     }
 
     const duration = Date.now() - startTime;
-    logger.info(
-      'Login exitoso',
-      {
-        userId: user.id,
-        userRole: role,
-        duration,
-      },
-    );
+    logger.info('Login exitoso', {
+      userId: user.id,
+      userRole: role,
+      duration,
+    });
 
     // Crear notificación de bienvenida (si el servicio está disponible)
     if (notificationService) {
@@ -202,6 +207,6 @@ export const POST = apiWrapper(
   {
     enableAudit: true,
     auditAction: 'user_login',
-    timeout: 30000 // 30 segundos timeout
+    timeout: 30000, // 30 segundos timeout
   }
 );
