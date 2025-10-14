@@ -3,8 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-console.log('📄 [USERS] File loaded - admin/users/page.tsx');
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,6 +83,14 @@ export default function AdminUsersPage() {
     password: '',
     role: 'TENANT',
   });
+
+  // useEffect para log garantizado en el cliente (se ejecuta solo una vez)
+  useEffect(() => {
+    console.log('🔥🔥🔥 [USERS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
+    console.log('📄 [USERS] Page: /admin/users');
+    console.log('🚀 [USERS] Component: AdminUsersPage');
+    console.log('⏰ [USERS] Timestamp:', new Date().toISOString());
+  }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {
     console.log('🔍 [USERS] useEffect triggered:', {

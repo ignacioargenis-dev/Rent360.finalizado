@@ -1,7 +1,5 @@
 'use client';
 
-console.log('📄 [SETTINGS] File loaded - enhanced/page.tsx');
-
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
@@ -656,6 +654,14 @@ export default function EnhancedAdminSettingsPage() {
   const [saving, setSaving] = useState(false);
 
   const [activeTab, setActiveTab] = useState('general');
+
+  // useEffect para log garantizado en el cliente (se ejecuta solo una vez)
+  useEffect(() => {
+    console.log('🔥🔥🔥 [SETTINGS] ===== COMPONENT MOUNTED IN BROWSER ===== 🔥🔥🔥');
+    console.log('📄 [SETTINGS] Page: /admin/settings/enhanced');
+    console.log('🚀 [SETTINGS] Component: EnhancedAdminSettingsPage');
+    console.log('⏰ [SETTINGS] Timestamp:', new Date().toISOString());
+  }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {
     console.log('🔍 [SETTINGS] useEffect triggered:', {
