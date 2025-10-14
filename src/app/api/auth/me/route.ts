@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ /api/auth/me: Token encontrado, longitud:', token.length);
-    console.log(
+    console.error('✅ /api/auth/me: Token encontrado, longitud:', token.length);
+    console.error(
       '🔑 JWT_SECRET configurado:',
       !!process.env.JWT_SECRET,
       'Longitud:',
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
-      console.log(
+      console.error(
         '✅ /api/auth/me: Token verificado exitosamente para usuario:',
         decoded.email,
         'Rol:',

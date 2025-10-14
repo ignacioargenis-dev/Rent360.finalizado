@@ -175,31 +175,44 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
 
   // Para DigitalOcean App Platform, usar 'lax' en lugar de 'strict' para mejor compatibilidad
-  // 'strict' puede causar problemas con redirecciones y navegación
-  const sameSitePolicy = 'lax'; // Más compatible que 'strict'
+  const sameSitePolicy = 'lax';
 
-  // NO establecer dominio - dejar que el navegador use el dominio actual automáticamente
-  // Esto es más seguro y funciona en todos los entornos (local, DigitalOcean, Vercel, etc.)
-
-  // Establecer cookie de acceso
-  response.cookies.set('auth-token', accessToken, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: sameSitePolicy,
-    maxAge: 60 * 60, // 1 hora
-    path: '/',
-    // NO incluir 'domain' - se usa el dominio actual automáticamente
+  console.error('🍪 setAuthCookies: Estableciendo cookies', {
+    isProduction,
+    isSecure,
+    accessTokenLength: accessToken.length,
+    refreshTokenLength: refreshToken.length,
   });
 
-  // Establecer cookie de refresh
-  response.cookies.set('refresh-token', refreshToken, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: sameSitePolicy,
-    maxAge: 7 * 24 * 60 * 60, // 7 días
-    path: '/',
-    // NO incluir 'domain' - se usa el dominio actual automáticamente
-  });
+  // CRÍTICO: Establecer cookies usando la sintaxis correcta de Next.js
+  // La cookie debe ser una string con formato específico
+  const authCookie = [
+    `auth-token=${accessToken}`,
+    'HttpOnly',
+    `Max-Age=${60 * 60}`,
+    'Path=/',
+    sameSitePolicy === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict',
+    isSecure ? 'Secure' : '',
+  ]
+    .filter(Boolean)
+    .join('; ');
+
+  const refreshCookie = [
+    `refresh-token=${refreshToken}`,
+    'HttpOnly',
+    `Max-Age=${7 * 24 * 60 * 60}`,
+    'Path=/',
+    sameSitePolicy === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict',
+    isSecure ? 'Secure' : '',
+  ]
+    .filter(Boolean)
+    .join('; ');
+
+  // Establecer las cookies en los headers de respuesta
+  response.headers.set('Set-Cookie', authCookie);
+  response.headers.append('Set-Cookie', refreshCookie);
+
+  console.error('✅ setAuthCookies: Cookies establecidas en headers');
 }
 
 export function clearAuthCookies(response: any) {
