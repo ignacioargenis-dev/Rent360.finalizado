@@ -103,7 +103,12 @@ export async function requireAuth(request: NextRequest): Promise<DecodedToken> {
     throw new Error('No autorizado');
   }
 
-  return decoded;
+  // CRÍTICO: Normalizar el rol a MAYÚSCULAS para que todas las comparaciones funcionen
+  // sin importar si el código compara con 'admin' o 'ADMIN'
+  return {
+    ...decoded,
+    role: (decoded.role || '').toUpperCase(),
+  };
 }
 
 export async function requireRole(
@@ -112,7 +117,11 @@ export async function requireRole(
 ): Promise<DecodedToken> {
   const decoded = await requireAuth(request);
 
-  if (decoded.role !== requiredRole) {
+  // Normalizar ambos roles a MAYÚSCULAS para comparación case-insensitive
+  const normalizedUserRole = (decoded.role || '').toUpperCase();
+  const normalizedRequiredRole = requiredRole.toUpperCase();
+
+  if (normalizedUserRole !== normalizedRequiredRole) {
     throw new Error('Acceso denegado: rol insuficiente');
   }
 
@@ -125,7 +134,11 @@ export async function requireAnyRole(
 ): Promise<DecodedToken> {
   const decoded = await requireAuth(request);
 
-  if (!allowedRoles.includes(decoded.role)) {
+  // Normalizar ambos roles a MAYÚSCULAS para comparación case-insensitive
+  const normalizedUserRole = (decoded.role || '').toUpperCase();
+  const normalizedAllowedRoles = allowedRoles.map(r => r.toUpperCase());
+
+  if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
     throw new Error('Acceso denegado: rol no permitido');
   }
 
@@ -169,7 +182,8 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   let domain: string | undefined;
   if (isProduction) {
     // Intentar obtener el dominio de las variables de entorno
-    domain = process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
+    domain =
+      process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
 
     // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
     if (!domain) {
@@ -215,7 +229,8 @@ export function clearAuthCookies(response: any) {
   let domain: string | undefined;
   if (isProduction) {
     // Intentar obtener el dominio de las variables de entorno
-    domain = process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
+    domain =
+      process.env.DOMAIN || process.env.VERCEL_URL || process.env.DIGITALOCEAN_APP_URL || undefined;
 
     // Para DigitalOcean App Platform, intentar detectar el dominio desde HOST o URL
     if (!domain) {
