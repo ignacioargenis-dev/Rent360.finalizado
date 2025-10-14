@@ -1,5 +1,7 @@
 'use client';
 
+console.log('📄 [SETTINGS] File loaded - enhanced/page.tsx');
+
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
@@ -319,7 +321,16 @@ interface SystemSettings {
 }
 
 export default function EnhancedAdminSettingsPage() {
+  console.log('🚀 [SETTINGS] Component mounting - EnhancedAdminSettingsPage');
+
   const { user, loading: authLoading } = useAuth();
+
+  console.log('👤 [SETTINGS] Auth state:', {
+    hasUser: !!user,
+    userEmail: user?.email,
+    userRole: user?.role,
+    authLoading,
+  });
 
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);

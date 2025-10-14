@@ -3,6 +3,8 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
+console.log('📄 [USERS] File loaded - admin/users/page.tsx');
+
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,9 +41,18 @@ import UnifiedDashboardLayout, {
 } from '@/components/layout/UnifiedDashboardLayout';
 
 export default function AdminUsersPage() {
+  console.log('🚀 [USERS] Component mounting - AdminUsersPage');
+
   // Usar el usuario del dashboard layout que ya verificó autenticación
   const user = useDashboardUser();
   const authLoading = false; // El layout ya manejó la carga
+
+  console.log('👤 [USERS] User from dashboard:', {
+    hasUser: !!user,
+    userEmail: user?.email,
+    userRole: user?.role,
+    authLoading,
+  });
 
   const [users, setUsers] = useState<User[]>([]);
 
