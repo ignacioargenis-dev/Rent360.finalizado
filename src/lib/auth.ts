@@ -172,10 +172,10 @@ export function generateTokens(userId: string, email: string, role: string, name
 export function setAuthCookies(response: any, accessToken: string, refreshToken: string) {
   // Configuración de cookies optimizada para producción
   const isProduction = process.env.NODE_ENV === 'production';
-  const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
 
-  // Para DigitalOcean App Platform, usar 'lax' en lugar de 'strict' para mejor compatibilidad
-  const sameSitePolicy = 'lax';
+  // CRÍTICO: En producción (HTTPS), SIEMPRE usar Secure=true
+  // En local (HTTP), usar Secure=false
+  const isSecure = isProduction;
 
   console.error('🍪 setAuthCookies: Estableciendo cookies', {
     isProduction,
@@ -184,59 +184,49 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     refreshTokenLength: refreshToken.length,
   });
 
-  // CRÍTICO: Establecer cookies usando la sintaxis correcta de Next.js
-  // La cookie debe ser una string con formato específico
-  const authCookie = [
-    `auth-token=${accessToken}`,
-    'HttpOnly',
-    `Max-Age=${60 * 60}`,
-    'Path=/',
-    sameSitePolicy === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict',
-    isSecure ? 'Secure' : '',
-  ]
-    .filter(Boolean)
-    .join('; ');
+  // Usar la API nativa de Next.js response.cookies.set()
+  // Sin especificar 'domain' para que use el dominio actual automáticamente
 
-  const refreshCookie = [
-    `refresh-token=${refreshToken}`,
-    'HttpOnly',
-    `Max-Age=${7 * 24 * 60 * 60}`,
-    'Path=/',
-    sameSitePolicy === 'lax' ? 'SameSite=Lax' : 'SameSite=Strict',
-    isSecure ? 'Secure' : '',
-  ]
-    .filter(Boolean)
-    .join('; ');
+  response.cookies.set('auth-token', accessToken, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'lax',
+    maxAge: 60 * 60, // 1 hora
+    path: '/',
+  });
 
-  // Establecer las cookies en los headers de respuesta
-  response.headers.set('Set-Cookie', authCookie);
-  response.headers.append('Set-Cookie', refreshCookie);
+  response.cookies.set('refresh-token', refreshToken, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60, // 7 días
+    path: '/',
+  });
 
-  console.error('✅ setAuthCookies: Cookies establecidas en headers');
+  console.error('✅ setAuthCookies: Cookies establecidas correctamente');
 }
 
 export function clearAuthCookies(response: any) {
   const isProduction = process.env.NODE_ENV === 'production';
-  const isSecure = isProduction || process.env.FORCE_HTTPS === 'true';
-  const sameSitePolicy = 'lax'; // Usar 'lax' para mejor compatibilidad
+  const isSecure = isProduction;
 
-  // NO establecer dominio - dejar que el navegador use el dominio actual automáticamente
+  console.error('🧹 clearAuthCookies: Limpiando cookies de autenticación');
 
   response.cookies.set('auth-token', '', {
     httpOnly: true,
     secure: isSecure,
-    sameSite: sameSitePolicy,
+    sameSite: 'lax',
     maxAge: 0,
     path: '/',
-    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
 
   response.cookies.set('refresh-token', '', {
     httpOnly: true,
     secure: isSecure,
-    sameSite: sameSitePolicy,
+    sameSite: 'lax',
     maxAge: 0,
     path: '/',
-    // NO incluir 'domain' - se usa el dominio actual automáticamente
   });
+
+  console.error('✅ clearAuthCookies: Cookies limpiadas correctamente');
 }
