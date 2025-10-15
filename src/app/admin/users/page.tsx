@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [roleFilter, setRoleFilter] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const [statusFilter, setStatusFilter] = useState<string>('all'); // 'all', 'active', 'inactive'
 

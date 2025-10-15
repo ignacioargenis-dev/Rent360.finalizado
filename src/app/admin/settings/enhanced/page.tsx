@@ -324,6 +324,7 @@ export default function EnhancedAdminSettingsPage() {
 
   const { user, loading: authLoading } = useAuth();
 
+  const [settingsLoaded, setSettingsLoaded] = useState(false); // Flag para evitar cargas múltiples
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -701,8 +702,11 @@ export default function EnhancedAdminSettingsPage() {
       // Load user data
       const loadUserData = async () => {
         try {
-          // Load settings
-          await loadSettings();
+          // Load settings - SOLO SI NO SE HAN CARGADO AÚN
+          if (!settingsLoaded) {
+            await loadSettings();
+            setSettingsLoaded(true);
+          }
 
           // Load email templates
           const templatesResponse = await fetch('/api/admin/email-templates', {
@@ -886,7 +890,8 @@ El equipo de Rent360`,
 
       loadUserData();
     }
-  }, [user, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]); // settingsLoaded NO debe estar aquí para evitar loops
 
   const handleSaveSettings = async () => {
     setSaving(true);
@@ -1202,7 +1207,9 @@ El equipo de Rent360`,
 
         // Recargar settings desde la base de datos para asegurar que se reflejen los cambios
         window.console.error('🔄 [SETTINGS] Calling loadSettings() to reload from DB...');
+        setSettingsLoaded(false); // Resetear flag para permitir recarga
         await loadSettings();
+        setSettingsLoaded(true); // Marcar como cargado nuevamente
 
         window.console.error('✅ [SETTINGS] loadSettings() returned successfully');
 
