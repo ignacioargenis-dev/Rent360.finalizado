@@ -4,8 +4,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Validar que DATABASE_URL esté configurada
-if (!process.env.DATABASE_URL) {
+// Validar que DATABASE_URL esté configurada solo en el servidor
+if (typeof window === 'undefined' && !process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL es obligatorio. Configure la variable de entorno DATABASE_URL.');
 }
 
@@ -44,7 +44,7 @@ export async function ensureDatabaseConnection(): Promise<boolean> {
       db.$connect(),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Database connection timeout')), 5000)
-      )
+      ),
     ]);
     console.log('✅ Database connection verified');
     return true;

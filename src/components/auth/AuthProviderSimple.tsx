@@ -151,21 +151,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (response.status === 401) {
         if (typeof window !== 'undefined') {
           window.console.error(
-            '⚠️ [AUTH] No autorizado (401), pero manteniendo estado local hasta confirmar'
+            '⚠️ [AUTH] No autorizado (401), verificando si es problema de timing'
           );
 
-          // CRÍTICO: No limpiar inmediatamente el usuario si tenemos datos en localStorage
-          // Solo limpiar si NO tenemos usuario en localStorage (usuario nunca autenticado)
+          // CRÍTICO: Verificar cuánto tiempo hace que se guardó el usuario en localStorage
           const hasLocalUser = !!localStorage.getItem('user');
+          const userLoginTime = localStorage.getItem('userLoginTime');
+          const currentTime = Date.now();
 
-          if (!hasLocalUser) {
-            // Usuario nunca se autenticó, podemos limpiar
+          // Si el usuario se logueó hace menos de 5 segundos, es probable que sea un problema de timing
+          const isRecentLogin = userLoginTime && currentTime - parseInt(userLoginTime) < 5000;
+
+          if (!hasLocalUser || !isRecentLogin) {
+            // No hay usuario local o el login fue hace más de 5 segundos - limpiar
             setUser(null);
             localStorage.removeItem('user');
+            localStorage.removeItem('userLoginTime');
+            window.console.error('🧹 [AUTH] Limpiando usuario no autenticado');
           } else {
-            // Usuario se autenticó anteriormente, mantener estado y reintentar más tarde
+            // Usuario recién logueado, mantener estado y no limpiar
             window.console.error(
-              '⚠️ [AUTH] Manteniendo usuario de localStorage, posible problema de timing con cookies'
+              '⏱️ [AUTH] Login reciente detectado, manteniendo usuario local (timing issue probable)'
             );
             // No cambiar el estado del usuario aquí
           }
@@ -333,10 +339,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(completeUserData);
 
-      // Guardar en localStorage para persistencia
+      // Guardar en localStorage para persistencia con timestamp
       if (typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(completeUserData));
-        console.log('💾 Usuario guardado en localStorage después del login');
+        localStorage.setItem('userLoginTime', Date.now().toString());
+        console.log('💾 Usuario guardado en localStorage después del login con timestamp');
       }
     } catch (error) {
       throw error;
@@ -351,12 +358,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Limpiar localStorage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
+        localStorage.removeItem('userLoginTime');
       }
     } catch (error) {
       logger.error('Logout error:', error);
       // Limpiar localStorage incluso si hay error
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
+        localStorage.removeItem('userLoginTime');
       }
     }
   };

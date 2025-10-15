@@ -258,8 +258,8 @@ export default function OwnerDashboard() {
       // Usuario no autenticado, mostrar datos vacíos
       setLoading(false);
     }
-    loadDashboardData();
-  }, [user, userLoading, loadDashboardData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, userLoading]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
