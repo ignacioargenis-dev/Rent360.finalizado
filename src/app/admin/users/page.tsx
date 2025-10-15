@@ -34,17 +34,15 @@ import {
   X,
 } from 'lucide-react';
 import { User } from '@/types';
-import UnifiedDashboardLayout, {
-  useDashboardUser,
-} from '@/components/layout/UnifiedDashboardLayout';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 export default function AdminUsersPage() {
   // ⚠️ NOTA: Los console.log aquí se ejecutan en SSR (servidor), no aparecen en el navegador
   // Todos los logs de depuración deben estar dentro de useEffect para ejecutarse en el cliente
 
-  // Usar el usuario del dashboard layout que ya verificó autenticación
-  const user = useDashboardUser();
-  const authLoading = false; // El layout ya manejó la carga
+  // CRÍTICO: Usar useAuth directamente para asegurar re-renders cuando el usuario cambia
+  const { user, loading: authLoading } = useAuth();
 
   // 🔥 LOG PARA VER SI EL COMPONENTE SE RE-RENDERIZA
   if (typeof window !== 'undefined') {
