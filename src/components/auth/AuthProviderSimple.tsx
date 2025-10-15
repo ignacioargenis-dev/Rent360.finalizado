@@ -20,50 +20,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Iniciar con loading true
 
-  // 🔥 LOG INICIAL
-  if (typeof window !== 'undefined') {
-    window.console.error('🔐 [AUTH] AuthProvider initialized:', {
-      hasUser: !!user,
-      userEmail: user?.email,
-      userRole: user?.role,
-      loading,
-    });
-  }
-
   // Función para verificar autenticación
   const checkAuth = async () => {
     try {
-      if (typeof window !== 'undefined') {
-        window.console.error('🔍 [AUTH] checkAuth() called');
-      }
       setLoading(true);
 
-      // CRÍTICO: Limpiar SIEMPRE localStorage al inicio para forzar recarga fresca
+      // Validar rol en localStorage
       if (typeof window !== 'undefined') {
         const cachedUser = localStorage.getItem('user');
         if (cachedUser) {
           try {
             const parsedUser = JSON.parse(cachedUser);
-            // VALIDACIÓN CRÍTICA: El rol DEBE estar en MAYÚSCULAS
+            // VALIDACIÓN: El rol DEBE estar en MAYÚSCULAS
             if (parsedUser.role && parsedUser.role !== parsedUser.role.toUpperCase()) {
-              console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando TODO...', {
+              console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando...', {
                 storedRole: parsedUser.role,
                 expectedRole: parsedUser.role.toUpperCase(),
               });
-              localStorage.clear(); // Limpiar TODO el localStorage
+              localStorage.clear();
             }
           } catch (e) {
             logger.warn('Error parsing cached user from localStorage', e);
-            localStorage.clear(); // Limpiar TODO si hay error
+            localStorage.clear();
           }
         }
       }
 
       // Verificar autenticación con el servidor
-      if (typeof window !== 'undefined') {
-        window.console.error('🌐 [AUTH] Fetching /api/auth/me...');
-      }
-
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
         headers: {
@@ -72,28 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (typeof window !== 'undefined') {
-        window.console.error('📡 [AUTH] Response from /api/auth/me:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText,
-        });
-      }
-
       if (response.ok) {
         const userData = await response.json();
 
-        if (typeof window !== 'undefined') {
-          window.console.error('📦 [AUTH] User data received:', {
-            hasUser: !!userData.user,
-            userId: userData.user?.id,
-            userEmail: userData.user?.email,
-            userRole: userData.user?.role,
-          });
-        }
-
         if (userData.user && userData.user.id) {
-          // CRÍTICO: Normalizar rol a MAYÚSCULAS SIEMPRE
+          // Normalizar rol a MAYÚSCULAS
           const normalizedRole = (userData.user.role || 'TENANT').toUpperCase();
 
           const completeUser = {
@@ -124,92 +90,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatedAt: new Date(),
           };
 
-          if (typeof window !== 'undefined') {
-            window.console.error('✅ [AUTH] Usuario autenticado desde servidor:', {
-              email: completeUser.email,
-              role: completeUser.role,
-              id: completeUser.id,
-              originalRole: userData.user.role,
-            });
-          }
-
           setUser(completeUser);
 
           // Actualizar localStorage
           if (typeof window !== 'undefined') {
             localStorage.setItem('user', JSON.stringify(completeUser));
-            window.console.error(
-              '💾 [AUTH] Usuario guardado en localStorage con rol:',
-              completeUser.role
-            );
-          }
-        } else {
-          if (typeof window !== 'undefined') {
-            window.console.error('❌ [AUTH] No user data in response or missing ID');
+            // Actualizar timestamp cuando verificamos con éxito
+            localStorage.setItem('userLoginTime', Date.now().toString());
           }
         }
       } else if (response.status === 401) {
         if (typeof window !== 'undefined') {
-          window.console.error(
-            '⚠️ [AUTH] No autorizado (401), verificando si es problema de timing'
-          );
-
-          // CRÍTICO: Verificar cuánto tiempo hace que se guardó el usuario en localStorage
-          const hasLocalUser = !!localStorage.getItem('user');
+          // Verificar si es un problema de timing
+          const cachedUser = localStorage.getItem('user');
           const userLoginTime = localStorage.getItem('userLoginTime');
           const currentTime = Date.now();
 
-          // Si el usuario se logueó hace menos de 5 segundos, es probable que sea un problema de timing
-          const isRecentLogin = userLoginTime && currentTime - parseInt(userLoginTime) < 5000;
+          // Si el usuario se logueó hace menos de 10 segundos, es probable timing issue
+          const isRecentLogin = userLoginTime && currentTime - parseInt(userLoginTime) < 10000;
 
-          if (!hasLocalUser || !isRecentLogin) {
-            // No hay usuario local o el login fue hace más de 5 segundos - limpiar
-            setUser(null);
-            localStorage.removeItem('user');
-            localStorage.removeItem('userLoginTime');
-            window.console.error('🧹 [AUTH] Limpiando usuario no autenticado');
-          } else {
-            // Usuario recién logueado, mantener estado y no limpiar
-            window.console.error(
-              '⏱️ [AUTH] Login reciente detectado, manteniendo usuario local (timing issue probable)'
-            );
-            // No cambiar el estado del usuario aquí
+          if (cachedUser && isRecentLogin) {
+            // Mantener usuario de localStorage (timing issue)
+            try {
+              const parsedUser = JSON.parse(cachedUser);
+              const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
+              const completeUser = {
+                ...parsedUser,
+                role: normalizedRole,
+                createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
+                updatedAt: new Date(),
+              };
+              setUser(completeUser);
+              console.log(
+                '⏱️ [AUTH] Manteniendo usuario local (timing issue, login hace',
+                Math.round((currentTime - parseInt(userLoginTime)) / 1000),
+                'segundos)'
+              );
+              return; // Salir sin limpiar
+            } catch (e) {
+              console.error('Error parsing cached user:', e);
+            }
           }
-        }
-      } else {
-        if (typeof window !== 'undefined') {
-          window.console.error('❌ [AUTH] Unexpected status:', response.status);
+
+          // Si no es timing issue, limpiar sesión
+          setUser(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('userLoginTime');
+          console.log('🧹 [AUTH] Sesión no autenticada limpiada');
         }
       }
     } catch (error) {
-      if (typeof window !== 'undefined') {
-        window.console.error('❌ [AUTH] Auth check failed with error:', {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
-      }
       logger.warn('Auth check failed:', error);
-      // Si falla la verificación pero tenemos usuario en cache, mantenerlo
-      // Solo establecer null si no hay usuario en absoluto
+      // Si falla y tenemos usuario en localStorage reciente, mantenerlo
+      if (typeof window !== 'undefined') {
+        const cachedUser = localStorage.getItem('user');
+        const userLoginTime = localStorage.getItem('userLoginTime');
+        if (cachedUser && userLoginTime) {
+          const timeSinceLogin = Date.now() - parseInt(userLoginTime);
+          if (timeSinceLogin < 10000) {
+            try {
+              const parsedUser = JSON.parse(cachedUser);
+              const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
+              setUser({
+                ...parsedUser,
+                role: normalizedRole,
+                createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
+                updatedAt: new Date(),
+              });
+              return; // Mantener usuario en caso de error de red temporal
+            } catch (e) {
+              // Si falla el parsing, continuar con limpiar
+            }
+          }
+        }
+      }
+      // Solo limpiar si no hay usuario válido en cache
       if (!user) {
         setUser(null);
       }
     } finally {
-      if (typeof window !== 'undefined') {
-        window.console.error(
-          '🏁 [AUTH] checkAuth() completed, loading set to false. Current user:',
-          {
-            hasUser: !!user,
-            userEmail: user?.email,
-            userRole: user?.role,
-          }
-        );
-      }
       setLoading(false);
     }
   };
 
-  // ACTIVADO: Auth check automático al cargar el AuthProvider
+  // Auth check automático al cargar el AuthProvider
   useEffect(() => {
     let retryTimeout: NodeJS.Timeout;
 
@@ -221,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const parsedUser = JSON.parse(cachedUser);
           // Validar que tenga la estructura correcta
           if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
-            // CRÍTICO: Normalizar rol a MAYÚSCULAS
+            // Normalizar rol a MAYÚSCULAS
             const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
 
             const completeUser = {
@@ -232,15 +196,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
 
             setUser(completeUser);
-            window.console.error('💾 [AUTH] Usuario cargado inmediatamente desde localStorage:', {
-              email: completeUser.email,
-              role: completeUser.role,
-            });
           }
         }
       } catch (error) {
-        window.console.error('❌ [AUTH] Error loading user from localStorage:', error);
-        localStorage.removeItem('user'); // Limpiar si hay error
+        console.error('Error loading user from localStorage:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('userLoginTime');
       }
     }
 
@@ -249,16 +210,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await checkAuth();
       } catch (error) {
-        // Si falla, programar un reintento en 2 segundos para manejar problemas de timing con cookies
+        // Si falla, programar un reintento en 2 segundos
         if (typeof window !== 'undefined') {
-          window.console.error(
-            '🔄 [AUTH] Primera verificación falló, programando reintento en 2 segundos'
-          );
           retryTimeout = setTimeout(async () => {
             try {
               await checkAuth();
             } catch (retryError) {
-              window.console.error('❌ [AUTH] Reintento también falló:', retryError);
+              console.warn('Auth retry también falló:', retryError);
             }
           }, 2000);
         }
@@ -281,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // CRÍTICO: Limpiar localStorage ANTES de hacer login para evitar datos antiguos
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
+        localStorage.removeItem('userLoginTime');
         console.log('🧹 localStorage limpiado antes del login');
       }
 
@@ -337,14 +296,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         originalRole: data.user?.role,
       });
 
-      setUser(completeUserData);
-
-      // Guardar en localStorage para persistencia con timestamp
+      // IMPORTANTE: Guardar PRIMERO en localStorage con timestamp ANTES de setUser
+      // Esto evita el problema de timing con checkAuth
       if (typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(completeUserData));
         localStorage.setItem('userLoginTime', Date.now().toString());
-        console.log('💾 Usuario guardado en localStorage después del login con timestamp');
+        console.log(
+          '💾 Usuario guardado en localStorage ANTES de setUser para evitar timing issues'
+        );
       }
+
+      // Ahora sí actualizar el estado - esto puede disparar checkAuth en otros componentes
+      // pero localStorage ya tiene los datos correctos
+      setUser(completeUserData);
+      setLoading(false); // Asegurar que loading está en false después del login
     } catch (error) {
       throw error;
     }
