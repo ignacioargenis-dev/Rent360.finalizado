@@ -167,17 +167,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
       // Validar que el role sea válido y convertir a mayúscula
       const validRoles = [
-        'admin',
-        'owner',
-        'tenant',
-        'broker',
-        'runner',
-        'support',
-        'provider',
-        'maintenance_provider',
-        'service_provider',
+        'ADMIN',
+        'OWNER',
+        'TENANT',
+        'BROKER',
+        'RUNNER',
+        'SUPPORT',
+        'PROVIDER',
+        'MAINTENANCE_PROVIDER',
+        'SERVICE_PROVIDER',
       ];
-      const normalizedRole = data.role.toLowerCase().trim();
+      const normalizedRole = data.role.toUpperCase().trim();
 
       if (!validRoles.includes(normalizedRole)) {
         return NextResponse.json(
@@ -188,8 +188,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         );
       }
 
-      // Convertir a mayúscula para Prisma enum
-      updateData.role = normalizedRole.toUpperCase();
+      // Ya está en mayúsculas
+      updateData.role = normalizedRole;
     }
     if (data.isActive !== undefined) {
       if (typeof data.isActive !== 'boolean') {
