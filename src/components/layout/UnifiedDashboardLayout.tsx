@@ -37,7 +37,27 @@ export default function UnifiedDashboardLayout({
   // Usar propUser si se proporciona, sino usar authUser del contexto
   const user = propUser || authUser;
 
+  // 🔥 LOGS DE DIAGNÓSTICO
+  if (typeof window !== 'undefined') {
+    window.console.error('🏢 [LAYOUT] UnifiedDashboardLayout rendering:', {
+      hasAuthUser: !!authUser,
+      authUserEmail: authUser?.email,
+      authUserRole: authUser?.role,
+      hasPropUser: !!propUser,
+      propUserEmail: propUser?.email,
+      propUserRole: propUser?.role,
+      finalUser: !!user,
+      finalUserEmail: user?.email,
+      finalUserRole: user?.role,
+      loading,
+      title,
+    });
+  }
+
   if (loading) {
+    if (typeof window !== 'undefined') {
+      window.console.error('⏳ [LAYOUT] Still loading, showing spinner...');
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -46,6 +66,14 @@ export default function UnifiedDashboardLayout({
         </div>
       </div>
     );
+  }
+
+  if (typeof window !== 'undefined') {
+    window.console.error('✅ [LAYOUT] Rendering dashboard with user:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      userRole: user?.role,
+    });
   }
 
   return (

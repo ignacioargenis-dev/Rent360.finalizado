@@ -20,9 +20,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Iniciar con loading true
 
+  // 🔥 LOG INICIAL
+  if (typeof window !== 'undefined') {
+    window.console.error('🔐 [AUTH] AuthProvider initialized:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      userRole: user?.role,
+      loading,
+    });
+  }
+
   // Función para verificar autenticación
   const checkAuth = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        window.console.error('🔍 [AUTH] checkAuth() called');
+      }
       setLoading(true);
 
       // CRÍTICO: Limpiar SIEMPRE localStorage al inicio para forzar recarga fresca
@@ -47,6 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Verificar autenticación con el servidor
+      if (typeof window !== 'undefined') {
+        window.console.error('🌐 [AUTH] Fetching /api/auth/me...');
+      }
+
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
         headers: {
@@ -55,8 +72,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
+      if (typeof window !== 'undefined') {
+        window.console.error('📡 [AUTH] Response from /api/auth/me:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+        });
+      }
+
       if (response.ok) {
         const userData = await response.json();
+
+        if (typeof window !== 'undefined') {
+          window.console.error('📦 [AUTH] User data received:', {
+            hasUser: !!userData.user,
+            userId: userData.user?.id,
+            userEmail: userData.user?.email,
+            userRole: userData.user?.role,
+          });
+        }
+
         if (userData.user && userData.user.id) {
           // CRÍTICO: Normalizar rol a MAYÚSCULAS SIEMPRE
           const normalizedRole = (userData.user.role || 'TENANT').toUpperCase();
@@ -89,30 +124,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatedAt: new Date(),
           };
 
-          console.log('✅ Usuario autenticado desde servidor:', {
-            email: completeUser.email,
-            role: completeUser.role,
-            id: completeUser.id,
-            originalRole: userData.user.role,
-          });
+          if (typeof window !== 'undefined') {
+            window.console.error('✅ [AUTH] Usuario autenticado desde servidor:', {
+              email: completeUser.email,
+              role: completeUser.role,
+              id: completeUser.id,
+              originalRole: userData.user.role,
+            });
+          }
 
           setUser(completeUser);
 
           // Actualizar localStorage
           if (typeof window !== 'undefined') {
             localStorage.setItem('user', JSON.stringify(completeUser));
-            console.log('💾 Usuario guardado en localStorage con rol:', completeUser.role);
+            window.console.error(
+              '💾 [AUTH] Usuario guardado en localStorage con rol:',
+              completeUser.role
+            );
+          }
+        } else {
+          if (typeof window !== 'undefined') {
+            window.console.error('❌ [AUTH] No user data in response or missing ID');
           }
         }
       } else if (response.status === 401) {
-        console.warn('⚠️ No autorizado (401), limpiando sesión');
+        if (typeof window !== 'undefined') {
+          window.console.error('⚠️ [AUTH] No autorizado (401), limpiando sesión');
+        }
         setUser(null);
         // Limpiar localStorage si no autenticado
         if (typeof window !== 'undefined') {
           localStorage.removeItem('user');
         }
+      } else {
+        if (typeof window !== 'undefined') {
+          window.console.error('❌ [AUTH] Unexpected status:', response.status);
+        }
       }
     } catch (error) {
+      if (typeof window !== 'undefined') {
+        window.console.error('❌ [AUTH] Auth check failed with error:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
       logger.warn('Auth check failed:', error);
       // Si falla la verificación pero tenemos usuario en cache, mantenerlo
       // Solo establecer null si no hay usuario en absoluto
@@ -120,6 +176,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
     } finally {
+      if (typeof window !== 'undefined') {
+        window.console.error(
+          '🏁 [AUTH] checkAuth() completed, loading set to false. Current user:',
+          {
+            hasUser: !!user,
+            userEmail: user?.email,
+            userRole: user?.role,
+          }
+        );
+      }
       setLoading(false);
     }
   };
