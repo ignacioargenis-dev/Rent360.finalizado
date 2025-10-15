@@ -104,17 +104,10 @@ export async function GET(request: NextRequest) {
         : result,
     });
 
-    // Convertir roles a minúscula para el frontend
-    const processedResult = Array.isArray(result)
-      ? result.map(user => ({
-          ...user,
-          role: user.role.toLowerCase(),
-        }))
-      : result;
-
+    // Ya no es necesario convertir roles - todo el sistema usa mayúsculas ahora
     return NextResponse.json({
-      users: processedResult,
-      total: Array.isArray(processedResult) ? processedResult.length : 0,
+      users: result,
+      total: Array.isArray(result) ? result.length : 0,
       page,
       limit,
     });
@@ -201,10 +194,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: 'Usuario creado exitosamente',
-        user: {
-          ...newUser,
-          role: newUser.role.toLowerCase(),
-        },
+        user: newUser,
       },
       { status: 201 }
     );

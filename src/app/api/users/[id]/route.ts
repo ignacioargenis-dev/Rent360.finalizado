@@ -37,10 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     return NextResponse.json({
-      user: {
-        ...targetUser,
-        role: targetUser.role.toLowerCase(),
-      },
+      user: targetUser,
     });
   } catch (error) {
     logger.error('Error al obtener usuario:', {
@@ -232,10 +229,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     return NextResponse.json({
       message: 'Usuario actualizado exitosamente',
-      user: {
-        ...updatedUser,
-        role: updatedUser.role.toLowerCase(),
-      },
+      user: updatedUser,
     });
   } catch (error) {
     logger.error('Error al actualizar usuario:', {
