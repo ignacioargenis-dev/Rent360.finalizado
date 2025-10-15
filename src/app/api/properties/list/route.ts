@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const { searchParams } = new URL(request.url);
-    
+
     // Parámetros de consulta
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -26,20 +26,17 @@ export async function GET(request: NextRequest) {
     const bathrooms = searchParams.get('bathrooms') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
-    
+
     // Construir filtros
     const where: any = {};
 
-    // Filtro por rol de usuario
-    if (user.role === 'owner') {
+    // Filtro por rol de usuario (roles siempre en MAYÚSCULAS)
+    if (user.role === 'OWNER' || user.role === UserRole.OWNER) {
       where.ownerId = user.id;
-    } else if (user.role === UserRole.BROKER) {
-      where.OR = [
-        { ownerId: user.id },
-        { brokerId: user.id },
-      ];
+    } else if (user.role === 'BROKER' || user.role === UserRole.BROKER) {
+      where.OR = [{ ownerId: user.id }, { brokerId: user.id }];
     }
-    // Admin puede ver todas las propiedades
+    // Admin y ADMIN pueden ver todas las propiedades
 
     // Crear clave de cache basada en parámetros y usuario
     const cacheKey = createCacheKey('properties:list', {
@@ -57,7 +54,7 @@ export async function GET(request: NextRequest) {
       bedrooms,
       bathrooms,
       sortBy,
-      sortOrder
+      sortOrder,
     });
 
     // Intentar obtener del cache primero
@@ -66,7 +63,7 @@ export async function GET(request: NextRequest) {
       logger.debug('Properties list obtenido del cache', { cacheKey });
       return NextResponse.json(cachedResult);
     }
-    
+
     // Filtros de búsqueda
     if (search) {
       where.OR = [
@@ -77,48 +74,48 @@ export async function GET(request: NextRequest) {
         { commune: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (type) {
       where.type = type;
     }
-    
+
     if (city) {
       where.city = { contains: city, mode: 'insensitive' };
     }
-    
+
     if (commune) {
       where.commune = { contains: commune, mode: 'insensitive' };
     }
-    
+
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) {
-where.price.gte = parseFloat(minPrice);
-}
+        where.price.gte = parseFloat(minPrice);
+      }
       if (maxPrice) {
-where.price.lte = parseFloat(maxPrice);
-}
+        where.price.lte = parseFloat(maxPrice);
+      }
     }
-    
+
     if (bedrooms) {
       where.bedrooms = parseInt(bedrooms);
     }
-    
+
     if (bathrooms) {
       where.bathrooms = parseInt(bathrooms);
     }
-    
+
     // Ordenamiento
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
-    
+
     // Calcular offset para paginación
     const offset = (page - 1) * limit;
-    
+
     // Ejecutar consulta con paginación
     const [properties, totalCount] = await Promise.all([
       db.property.findMany({
@@ -157,15 +154,18 @@ where.price.lte = parseFloat(maxPrice);
       }),
       db.property.count({ where }),
     ]);
-    
+
     // Calcular estadísticas
-    const averageRating = properties.length > 0 
-      ? properties.reduce((acc, property) => {
-          const ratings = property.reviews.map(review => review.rating);
-          return acc + (ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0);
-        }, 0) / properties.length
-      : 0;
-    
+    const averageRating =
+      properties.length > 0
+        ? properties.reduce((acc, property) => {
+            const ratings = property.reviews.map(review => review.rating);
+            return (
+              acc + (ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0)
+            );
+          }, 0) / properties.length
+        : 0;
+
     // Formatear respuesta
     const formattedProperties = properties.map(property => ({
       id: property.id,
@@ -193,7 +193,7 @@ where.price.lte = parseFloat(maxPrice);
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
     }));
-    
+
     // Calcular información de paginación
     const totalPages = Math.ceil(totalCount / limit);
     const hasNextPage = page < totalPages;
@@ -217,18 +217,24 @@ where.price.lte = parseFloat(maxPrice);
     };
 
     // Guardar en cache con tags para invalidación
-    cacheManager.setWithTags(cacheKey, responseData, ['properties', `user:${user.id}`], cacheConfigs.property.ttl);
+    cacheManager.setWithTags(
+      cacheKey,
+      responseData,
+      ['properties', `user:${user.id}`],
+      cacheConfigs.property.ttl
+    );
 
     logger.debug('Properties list guardado en cache', {
       cacheKey,
       propertiesCount: formattedProperties.length,
-      ttl: cacheConfigs.property.ttl
+      ttl: cacheConfigs.property.ttl,
     });
 
     return NextResponse.json(responseData);
-    
   } catch (error) {
-    logger.error('Error fetching properties:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error fetching properties:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }
