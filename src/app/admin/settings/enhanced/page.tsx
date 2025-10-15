@@ -614,6 +614,11 @@ export default function EnhancedAdminSettingsPage() {
       setSettings(prev => {
         const merged = { ...prev } as any;
 
+        window.console.error('🔧 [SETTINGS] Before merge:', {
+          prevKeys: Object.keys(prev).length,
+          processedKeys: Object.keys(processedSettings).length,
+        });
+
         // processedSettings es un objeto plano: { key: value }
         Object.keys(processedSettings).forEach(key => {
           const value = processedSettings[key];
@@ -626,10 +631,21 @@ export default function EnhancedAdminSettingsPage() {
         window.console.error('✅ [SETTINGS] Merged successfully:', {
           processedKeys: Object.keys(processedSettings).length,
           totalKeys: Object.keys(merged).length,
+          sampleMerged: Object.keys(merged)
+            .slice(0, 5)
+            .reduce((acc, key) => {
+              acc[key] = merged[key];
+              return acc;
+            }, {} as any),
         });
 
         return merged;
       });
+
+      // Log después de que setSettings se aplica (en el siguiente ciclo)
+      setTimeout(() => {
+        window.console.error('🎯 [SETTINGS] State updated with new settings from DB');
+      }, 0);
     } catch (error) {
       window.console.error('❌ [SETTINGS] Error loading settings:', {
         error: error instanceof Error ? error.message : String(error),
@@ -1040,12 +1056,37 @@ El equipo de Rent360`,
       });
 
       if (response.ok) {
-        window.console.error('✅ [SETTINGS] Settings saved successfully, reloading from DB...');
+        const saveResult = await response.json();
+        window.console.error('✅ [SETTINGS] Settings saved successfully!', {
+          savedCount: saveResult.count || 'unknown',
+          response: saveResult,
+        });
+
+        window.console.error(
+          '🔄 [SETTINGS] Now reloading settings from DB to verify persistence...'
+        );
+
+        // Guardar el estado actual antes de recargar para comparar
+        const beforeReload = { ...settings };
+        window.console.error('📸 [SETTINGS] State before reload:', {
+          sampleKeys: Object.keys(beforeReload).slice(0, 5),
+          totalKeys: Object.keys(beforeReload).length,
+        });
 
         // Recargar settings desde la base de datos para asegurar que se reflejen los cambios
         await loadSettings();
 
         window.console.error('✅ [SETTINGS] Settings reloaded from DB successfully');
+
+        // Comparar después de recargar
+        setTimeout(() => {
+          window.console.error('🔍 [SETTINGS] State after reload:', {
+            sampleKeys: Object.keys(settings).slice(0, 5),
+            totalKeys: Object.keys(settings).length,
+          });
+          window.console.error('✅ [SETTINGS] Save and reload cycle completed!');
+        }, 100);
+
         alert('Configuración guardada exitosamente');
       } else {
         const errorData = await response.json();
@@ -1057,12 +1098,16 @@ El equipo de Rent360`,
         alert(`Error al guardar la configuración: ${errorData.error || 'Error desconocido'}`);
       }
     } catch (error) {
-      logger.error('Error saving settings:', {
+      window.console.error('❌ [SETTINGS] Unexpected error in handleSaveSettings:', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      alert('Error al guardar la configuración');
+      alert(
+        `Error inesperado al guardar configuración: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setSaving(false);
+      window.console.error('🏁 [SETTINGS] handleSaveSettings finished, saving:', false);
     }
   };
 

@@ -210,30 +210,50 @@ export default function AdminUsersPage() {
   };
 
   const filterUsers = () => {
+    window.console.error('🔄 [USERS] filterUsers() called with:', {
+      usersLength: users.length,
+      searchQuery,
+      roleFilter,
+      statusFilter,
+    });
+
     let filtered = [...users];
+    window.console.error('📝 [USERS] Starting with users:', filtered.length);
 
     // Apply search filter
     if (searchQuery) {
+      const beforeSearch = filtered.length;
       filtered = filtered.filter(
         user =>
           user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (user.phone && user.phone.includes(searchQuery))
       );
+      window.console.error(`🔍 [USERS] After search filter: ${beforeSearch} → ${filtered.length}`);
     }
 
     // Apply role filter
     if (roleFilter && roleFilter !== 'all') {
+      const beforeRole = filtered.length;
       filtered = filtered.filter(user => user.role === roleFilter);
+      window.console.error(
+        `👤 [USERS] After role filter (${roleFilter}): ${beforeRole} → ${filtered.length}`
+      );
     }
 
     // Apply status filter
     if (statusFilter && statusFilter !== 'all') {
+      const beforeStatus = filtered.length;
       filtered = filtered.filter(user =>
         statusFilter === 'active' ? user.isActive : !user.isActive
       );
+      window.console.error(
+        `✅ [USERS] After status filter (${statusFilter}): ${beforeStatus} → ${filtered.length}`
+      );
     }
 
+    window.console.error('✨ [USERS] Final filtered count:', filtered.length);
+    window.console.error('📋 [USERS] Setting filteredUsers state with:', filtered.length, 'users');
     setFilteredUsers(filtered);
   };
 
@@ -246,6 +266,15 @@ export default function AdminUsersPage() {
       statusFilter,
     });
     filterUsers();
+
+    // Log después de filtrar (en el próximo ciclo)
+    setTimeout(() => {
+      window.console.error('📊 [USERS] After filtering:', {
+        filteredCount: filteredUsers.length,
+        totalCount: users.length,
+        showing: `${filteredUsers.length} de ${users.length} usuarios`,
+      });
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchQuery, roleFilter, statusFilter]);
 
@@ -443,6 +472,30 @@ export default function AdminUsersPage() {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  // Log para rastrear cuántos usuarios se están renderizando
+  useEffect(() => {
+    window.console.error('📺 [USERS] Rendering state:', {
+      totalUsers: users.length,
+      filteredUsers: filteredUsers.length,
+      currentPage,
+      usersPerPage,
+      currentUsers: currentUsers.length,
+      totalPages,
+      willRender: currentUsers.length > 0 ? 'YES - Users will be displayed' : 'NO - Empty list!',
+    });
+
+    if (currentUsers.length > 0) {
+      window.console.error(
+        '👥 [USERS] Sample of users to render:',
+        currentUsers.slice(0, 3).map(u => ({ email: u.email, role: u.role, name: u.name }))
+      );
+    } else {
+      window.console.error(
+        '⚠️ [USERS] WARNING: No users to render! Check filters and data loading.'
+      );
+    }
+  }, [currentUsers, filteredUsers, users, currentPage, usersPerPage, totalPages]);
 
   // Verificar estado de autenticación primero
   if (authLoading) {
