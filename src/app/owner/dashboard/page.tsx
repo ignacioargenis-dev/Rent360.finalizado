@@ -79,15 +79,149 @@ export default function OwnerDashboard() {
     try {
       setLoading(true);
 
-      // Intentar cargar datos reales del usuario
-      // Usuarios nuevos SIEMPRE ven dashboards vacíos - nunca datos mock
-      const isNewUser =
-        !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000; // Menos de 1 hora desde creación
+      // Cargar datos reales del dashboard desde las APIs
+      try {
+        // Cargar propiedades del usuario
+        const propertiesResponse = await fetch('/api/properties/list?limit=10', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
 
-      // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-      // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-      if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-        // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
+        let properties = [];
+        if (propertiesResponse.ok) {
+          const propertiesData = await propertiesResponse.json();
+          properties = propertiesData.properties;
+        }
+
+        // Cargar contratos activos
+        const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=10', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+
+        let contracts = [];
+        if (contractsResponse.ok) {
+          const contractsData = await contractsResponse.json();
+          contracts = contractsData.contracts || [];
+        }
+
+        // Cargar pagos recientes
+        const paymentsResponse = await fetch('/api/payments?limit=10', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+
+        let payments = [];
+        if (paymentsResponse.ok) {
+          const paymentsData = await paymentsResponse.json();
+          payments = paymentsData.payments || [];
+        }
+
+        // Calcular estadísticas basadas en datos reales
+        const rentedProperties = properties.filter((p: any) => p.status === 'RENTED');
+        const totalRevenue = rentedProperties.reduce(
+          (sum: number, p: any) => sum + (p.price || 0),
+          0
+        );
+        const pendingPayments = payments.filter((p: any) => p.status === 'PENDING').length;
+        const totalTenants = rentedProperties.length;
+
+        // Calcular rating promedio
+        const ratings = properties.flatMap((p: any) => p.reviews || []);
+        const averageRating =
+          ratings.length > 0
+            ? ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length
+            : 0;
+
+        setStats({
+          totalProperties: properties.length,
+          activeContracts: contracts.length,
+          monthlyRevenue: totalRevenue,
+          pendingPayments,
+          averageRating: Math.round(averageRating * 10) / 10,
+          totalTenants,
+        });
+
+        // Formatear propiedades recientes
+        const recentProps = properties.slice(0, 3).map((prop: any) => ({
+          id: prop.id,
+          title: prop.title,
+          address: prop.address,
+          status: prop.status,
+          monthlyRent: prop.price || 0,
+          tenant: prop.currentTenant?.name || null,
+          contractEnd: prop.currentTenant?.leaseEnd || null,
+        }));
+
+        setRecentProperties(recentProps);
+
+        // Crear actividad reciente basada en datos reales
+        const activities: RecentActivity[] = [];
+
+        // Agregar actividad de pagos recientes
+        payments.slice(0, 2).forEach((payment: any) => {
+          activities.push({
+            id: `payment-${payment.id}`,
+            type: 'payment' as const,
+            title: 'Pago recibido',
+            description: `Pago de ${payment.amount || 0} CLP recibido`,
+            date: payment.createdAt
+              ? new Date(payment.createdAt).toISOString().split('T')[0]!
+              : new Date().toISOString().split('T')[0]!,
+            status: payment.status,
+          });
+        });
+
+        // Agregar actividad de contratos
+        contracts.slice(0, 2).forEach((contract: any) => {
+          activities.push({
+            id: `contract-${contract.id}`,
+            type: 'contract' as const,
+            title: 'Nuevo contrato',
+            description: `Contrato ${contract.status?.toLowerCase() || 'activo'}`,
+            date: contract.createdAt
+              ? new Date(contract.createdAt).toISOString().split('T')[0]!
+              : new Date().toISOString().split('T')[0]!,
+            status: contract.status,
+          });
+        });
+
+        // Agregar actividad de propiedades recientes
+        properties.slice(0, 1).forEach((prop: any) => {
+          activities.push({
+            id: `property-${prop.id}`,
+            type: 'property' as const,
+            title: 'Nueva propiedad',
+            description: `Propiedad "${prop.title}" agregada`,
+            date: prop.createdAt
+              ? new Date(prop.createdAt).toISOString().split('T')[0]!
+              : new Date().toISOString().split('T')[0]!,
+            status: prop.status,
+          });
+        });
+
+        // Si no hay actividad, mostrar mensaje de bienvenida
+        if (activities.length === 0) {
+          activities.push({
+            id: 'welcome',
+            type: 'message',
+            title: '¡Bienvenido a Rent360!',
+            description:
+              properties.length === 0
+                ? 'Tu cuenta ha sido creada exitosamente. Comienza agregando tu primera propiedad.'
+                : 'Tu cuenta está lista. Explora las funcionalidades disponibles.',
+            date: new Date().toISOString().split('T')[0]!,
+            status: 'INFO',
+          });
+        }
+
+        setRecentActivity(activities);
+      } catch (apiError) {
+        logger.warn('Error loading real dashboard data, showing welcome state', {
+          error: apiError,
+        });
+
+        // Fallback: mostrar estado de bienvenida si fallan las APIs
         setStats({
           totalProperties: 0,
           activeContracts: 0,
@@ -108,70 +242,6 @@ export default function OwnerDashboard() {
             status: 'INFO',
           },
         ]);
-      } else {
-        // Solo usuarios seed con @rent360.cl ven datos mock (para testing/marketing)
-        setStats({
-          totalProperties: 3,
-          activeContracts: 2,
-          monthlyRevenue: 900000,
-          pendingPayments: 1,
-          averageRating: 4.7,
-          totalTenants: 2,
-        });
-
-        setRecentProperties([
-          {
-            id: '1',
-            title: 'Departamento Las Condes',
-            address: 'Av. Apoquindo 3400, Las Condes',
-            status: 'RENTED',
-            monthlyRent: 550000,
-            tenant: 'Carlos Ramírez',
-            contractEnd: '2024-12-31',
-          },
-          {
-            id: '2',
-            title: 'Oficina Providencia',
-            address: 'Av. Providencia 1245, Providencia',
-            status: 'RENTED',
-            monthlyRent: 350000,
-            tenant: 'Empresa Soluciones Ltda.',
-            contractEnd: '2025-02-14',
-          },
-          {
-            id: '3',
-            title: 'Casa Vitacura',
-            address: 'Av. Vitacura 8900, Vitacura',
-            status: 'AVAILABLE',
-            monthlyRent: 1200000,
-          },
-        ]);
-
-        setRecentActivity([
-          {
-            id: '1',
-            type: 'payment',
-            title: 'Pago recibido',
-            description: 'Carlos Ramírez pagó arriendo de marzo',
-            date: '2024-03-15',
-            status: 'COMPLETED',
-          },
-          {
-            id: '2',
-            type: 'contract',
-            title: 'Nuevo contrato',
-            description: 'Contrato firmado con Empresa Soluciones Ltda.',
-            date: '2024-03-10',
-            status: 'ACTIVE',
-          },
-          {
-            id: '3',
-            type: 'rating',
-            title: 'Nueva calificación',
-            description: 'Carlos Ramírez te calificó con 5 estrellas',
-            date: '2024-03-08',
-          },
-        ]);
       }
 
       setLoading(false);
@@ -179,7 +249,7 @@ export default function OwnerDashboard() {
       logger.error('Error loading dashboard data:', { error });
       setLoading(false);
     }
-  }, [user?.createdAt]);
+  }, [user]);
 
   useEffect(() => {
     if (user) {

@@ -6,13 +6,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useRouter } from 'next/navigation';
-import { Eye, Edit, DollarSign, Users, TrendingUp, Home, MapPin, Calendar, Plus, Search, Filter } from 'lucide-react';
+import {
+  Eye,
+  Edit,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Home,
+  MapPin,
+  Calendar,
+  Plus,
+  Search,
+  Filter,
+} from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
-
 
 interface Property {
   id: string;
@@ -81,7 +98,9 @@ export default function OwnerPropertiesPage() {
         // Load properties data
         await loadPropertiesData();
       } catch (error) {
-        logger.error('Error loading data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       } finally {
         setLoading(false);
       }
@@ -95,10 +114,11 @@ export default function OwnerPropertiesPage() {
     let filtered = properties;
 
     if (searchTerm) {
-      filtered = filtered.filter(property =>
-        property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.city.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        property =>
+          property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.city.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -115,133 +135,93 @@ export default function OwnerPropertiesPage() {
 
   const loadPropertiesData = async () => {
     try {
-      // Mock properties data
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          title: 'Departamento en Providencia',
-          address: 'Av. Providencia 1234, Dpto 5B',
-          city: 'Santiago',
-          price: 850000,
-          rent: 450000,
-          bedrooms: 2,
-          bathrooms: 1,
-          area: 65,
-          status: 'RENTED',
-          type: 'APARTMENT',
-          createdAt: '2023-01-15T10:00:00Z',
-          updatedAt: '2024-01-15T10:00:00Z',
-          images: ['/images/prop1-1.jpg', '/images/prop1-2.jpg'],
-          views: 125,
-          inquiries: 18,
-          currentTenant: {
-            name: 'María González',
-            email: 'maria.gonzalez@email.com',
-            leaseStart: '2024-01-01',
-            leaseEnd: '2024-12-31',
-          },
+      // Cargar propiedades reales desde la API
+      const response = await fetch('/api/properties/list?limit=100', {
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
         },
-        {
-          id: '2',
-          title: 'Casa Familiar en Las Condes',
-          address: 'Calle Los Militares 5678',
-          city: 'Santiago',
-          price: 1200000,
-          rent: 650000,
-          bedrooms: 3,
-          bathrooms: 2,
-          area: 120,
-          status: 'AVAILABLE',
-          type: 'HOUSE',
-          createdAt: '2023-03-20T14:30:00Z',
-          updatedAt: '2024-01-10T09:15:00Z',
-          images: ['/images/prop2-1.jpg', '/images/prop2-2.jpg', '/images/prop2-3.jpg'],
-          views: 89,
-          inquiries: 15,
-        },
-        {
-          id: '3',
-          title: 'Estudio Moderno Centro',
-          address: 'Pasaje Ahumada 432',
-          city: 'Santiago',
-          price: 450000,
-          rent: 280000,
-          bedrooms: 1,
-          bathrooms: 1,
-          area: 35,
-          status: 'VACANT',
-          type: 'STUDIO',
-          createdAt: '2023-06-10T16:45:00Z',
-          updatedAt: '2024-01-20T11:20:00Z',
-          images: ['/images/prop3-1.jpg'],
-          views: 67,
-          inquiries: 8,
-        },
-        {
-          id: '4',
-          title: 'Oficina Corporativa',
-          address: 'Av. Apoquindo 3456, Piso 12',
-          city: 'Santiago',
-          price: 2000000,
-          rent: 950000,
-          bedrooms: 0,
-          bathrooms: 2,
-          area: 150,
-          status: 'MAINTENANCE',
-          type: 'OFFICE',
-          createdAt: '2023-08-05T13:20:00Z',
-          updatedAt: '2024-01-25T08:30:00Z',
-          images: ['/images/prop4-1.jpg', '/images/prop4-2.jpg'],
-          views: 45,
-          inquiries: 12,
-        },
-        {
-          id: '5',
-          title: 'Apartamento Vista al Mar',
-          address: 'Av. Playa Grande 789, Dpto 15A',
-          city: 'Viña del Mar',
-          price: 650000,
-          rent: 380000,
-          bedrooms: 1,
-          bathrooms: 1,
-          area: 55,
-          status: 'RENTED',
-          type: 'APARTMENT',
-          createdAt: '2023-11-12T12:15:00Z',
-          updatedAt: '2024-01-05T14:45:00Z',
-          images: ['/images/prop5-1.jpg', '/images/prop5-2.jpg', '/images/prop5-3.jpg'],
-          views: 156,
-          inquiries: 22,
-          currentTenant: {
-            name: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            leaseStart: '2024-01-01',
-            leaseEnd: '2024-12-31',
-          },
-        },
-      ];
+      });
 
-      setProperties(mockProperties);
+      if (response.ok) {
+        const data = await response.json();
+        const realProperties: Property[] = data.properties.map((prop: any) => ({
+          id: prop.id,
+          title: prop.title,
+          address: prop.address,
+          city: prop.city,
+          price: prop.price,
+          rent: prop.price, // Usar price como rent por ahora, ajustar según necesidad
+          bedrooms: prop.bedrooms,
+          bathrooms: prop.bathrooms,
+          area: prop.area,
+          status: prop.status,
+          type: prop.type,
+          createdAt: prop.createdAt,
+          updatedAt: prop.updatedAt,
+          images: prop.images || [],
+          views: prop.views || 0,
+          inquiries: prop.inquiries || 0,
+          currentTenant: prop.currentTenant
+            ? {
+                name: prop.currentTenant.name,
+                email: prop.currentTenant.email,
+                leaseStart: prop.currentTenant.leaseStart || '2024-01-01',
+                leaseEnd: prop.currentTenant.leaseEnd || '2024-12-31',
+              }
+            : undefined,
+        }));
 
-      // Calculate stats
-      const rentedProperties = mockProperties.filter(p => p.status === 'RENTED');
-      const vacantProperties = mockProperties.filter(p => p.status === 'VACANT' || p.status === 'AVAILABLE');
-      const totalRentIncome = rentedProperties.reduce((sum, prop) => sum + prop.rent, 0);
-      const occupancyRate = (rentedProperties.length / mockProperties.length) * 100;
-      const averageRentPrice = totalRentIncome / rentedProperties.length || 0;
+        setProperties(realProperties);
 
-      const propertyStats: PropertyStats = {
-        totalProperties: mockProperties.length,
-        rentedProperties: rentedProperties.length,
-        vacantProperties: vacantProperties.length,
-        totalRentIncome,
-        occupancyRate,
-        averageRentPrice,
-      };
+        // Calculate stats
+        const rentedProperties = realProperties.filter(p => p.status === 'RENTED');
+        const vacantProperties = realProperties.filter(
+          p => p.status === 'VACANT' || p.status === 'AVAILABLE'
+        );
+        const totalRentIncome = rentedProperties.reduce((sum, prop) => sum + prop.rent, 0);
+        const occupancyRate =
+          realProperties.length > 0 ? (rentedProperties.length / realProperties.length) * 100 : 0;
+        const averageRentPrice =
+          rentedProperties.length > 0 ? totalRentIncome / rentedProperties.length : 0;
 
-      setStats(propertyStats);
+        const propertyStats: PropertyStats = {
+          totalProperties: realProperties.length,
+          rentedProperties: rentedProperties.length,
+          vacantProperties: vacantProperties.length,
+          totalRentIncome,
+          occupancyRate,
+          averageRentPrice,
+        };
+
+        setStats(propertyStats);
+      } else {
+        logger.warn('Failed to load properties from API, falling back to empty state');
+        // Si falla la API, mostrar estado vacío en lugar de datos mock
+        setProperties([]);
+        setStats({
+          totalProperties: 0,
+          rentedProperties: 0,
+          vacantProperties: 0,
+          totalRentIncome: 0,
+          occupancyRate: 0,
+          averageRentPrice: 0,
+        });
+      }
     } catch (error) {
-      logger.error('Error loading properties data:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error loading properties data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // En caso de error, mostrar estado vacío
+      setProperties([]);
+      setStats({
+        totalProperties: 0,
+        rentedProperties: 0,
+        vacantProperties: 0,
+        totalRentIncome: 0,
+        occupancyRate: 0,
+        averageRentPrice: 0,
+      });
     }
   };
 
@@ -390,7 +370,9 @@ export default function OwnerPropertiesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
-                  <p className="text-2xl font-bold text-purple-900">{formatCurrency(stats.totalRentIncome)}</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {formatCurrency(stats.totalRentIncome)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-purple-600" />
@@ -404,7 +386,9 @@ export default function OwnerPropertiesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Tasa de Ocupación</p>
-                  <p className="text-2xl font-bold text-orange-900">{stats.occupancyRate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold text-orange-900">
+                    {stats.occupancyRate.toFixed(1)}%
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-orange-600" />
@@ -423,7 +407,7 @@ export default function OwnerPropertiesPage() {
                 <Input
                   placeholder="Buscar por título, dirección o ciudad..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -457,7 +441,7 @@ export default function OwnerPropertiesPage() {
 
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
+          {filteredProperties.map(property => (
             <Card key={property.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 {/* Property Image */}
@@ -524,7 +508,8 @@ export default function OwnerPropertiesPage() {
                             Inquilino: {property.currentTenant.name}
                           </p>
                           <p className="text-xs text-green-700">
-                            Contrato: {property.currentTenant.leaseStart} - {property.currentTenant.leaseEnd}
+                            Contrato: {property.currentTenant.leaseStart} -{' '}
+                            {property.currentTenant.leaseEnd}
                           </p>
                         </div>
                         <Button
@@ -606,5 +591,3 @@ export default function OwnerPropertiesPage() {
     </UnifiedDashboardLayout>
   );
 }
-
-

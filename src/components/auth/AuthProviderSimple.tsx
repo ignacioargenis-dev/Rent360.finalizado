@@ -150,12 +150,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else if (response.status === 401) {
         if (typeof window !== 'undefined') {
-          window.console.error('⚠️ [AUTH] No autorizado (401), limpiando sesión');
-        }
-        setUser(null);
-        // Limpiar localStorage si no autenticado
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('user');
+          window.console.error(
+            '⚠️ [AUTH] No autorizado (401), pero manteniendo estado local hasta confirmar'
+          );
+
+          // CRÍTICO: No limpiar inmediatamente el usuario si tenemos datos en localStorage
+          // Solo limpiar si NO tenemos usuario en localStorage (usuario nunca autenticado)
+          const hasLocalUser = !!localStorage.getItem('user');
+
+          if (!hasLocalUser) {
+            // Usuario nunca se autenticó, podemos limpiar
+            setUser(null);
+            localStorage.removeItem('user');
+          } else {
+            // Usuario se autenticó anteriormente, mantener estado y reintentar más tarde
+            window.console.error(
+              '⚠️ [AUTH] Manteniendo usuario de localStorage, posible problema de timing con cookies'
+            );
+            // No cambiar el estado del usuario aquí
+          }
         }
       } else {
         if (typeof window !== 'undefined') {
@@ -192,6 +205,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ACTIVADO: Auth check automático al cargar el AuthProvider
   useEffect(() => {
+    let retryTimeout: NodeJS.Timeout;
+
     // PRIMERO: Intentar cargar desde localStorage inmediatamente
     if (typeof window !== 'undefined') {
       try {
@@ -224,7 +239,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // SEGUNDO: Verificar con el servidor para datos frescos
-    checkAuth();
+    const performAuthCheck = async () => {
+      try {
+        await checkAuth();
+      } catch (error) {
+        // Si falla, programar un reintento en 2 segundos para manejar problemas de timing con cookies
+        if (typeof window !== 'undefined') {
+          window.console.error(
+            '🔄 [AUTH] Primera verificación falló, programando reintento en 2 segundos'
+          );
+          retryTimeout = setTimeout(async () => {
+            try {
+              await checkAuth();
+            } catch (retryError) {
+              window.console.error('❌ [AUTH] Reintento también falló:', retryError);
+            }
+          }, 2000);
+        }
+      }
+    };
+
+    performAuthCheck();
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

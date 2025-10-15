@@ -144,23 +144,54 @@ export async function POST(request: NextRequest) {
     // Procesar imágenes si existen
     const images = formData.getAll('images') as File[];
     if (images && images.length > 0) {
-      // Aquí iría la lógica para subir imágenes a un servicio de almacenamiento
-      // Por ahora, solo guardamos referencias a las imágenes
       const imageUrls: string[] = [];
 
       for (const image of images) {
         if (image instanceof File) {
-          // Simular subida de imagen - en producción usarías S3, Cloudinary, etc.
-          const imageUrl = `/uploads/${Date.now()}-${image.name}`;
-          imageUrls.push(imageUrl);
+          try {
+            // Generar nombre único para la imagen
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const extension = image.name.split('.').pop() || 'jpg';
+            const filename = `${timestamp}-${randomId}.${extension}`;
+            const filepath = `public/uploads/${filename}`;
+
+            // Convertir File a Buffer y guardar
+            const bytes = await image.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+
+            // Usar Node.js fs para guardar el archivo
+            const fs = require('fs').promises;
+            await fs.writeFile(filepath, buffer);
+
+            // Crear URL accesible desde el navegador
+            const imageUrl = `/uploads/${filename}`;
+            imageUrls.push(imageUrl);
+
+            logger.info('Image saved successfully', {
+              propertyId: newProperty.id,
+              filename,
+              originalName: image.name,
+              size: image.size,
+            });
+          } catch (imageError) {
+            logger.error('Error saving image', {
+              error: imageError instanceof Error ? imageError.message : String(imageError),
+              propertyId: newProperty.id,
+              imageName: image.name,
+            });
+            // Continuar sin esta imagen en lugar de fallar completamente
+          }
         }
       }
 
       // Actualizar propiedad con URLs de imágenes
-      await db.property.update({
-        where: { id: newProperty.id },
-        data: { images: JSON.stringify(imageUrls) },
-      });
+      if (imageUrls.length > 0) {
+        await db.property.update({
+          where: { id: newProperty.id },
+          data: { images: JSON.stringify(imageUrls) },
+        });
+      }
     }
 
     // TODO: Agregar logs de auditoría y notificaciones cuando los servicios estén disponibles
