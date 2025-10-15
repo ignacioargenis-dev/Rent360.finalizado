@@ -64,6 +64,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* SCRIPT DE EMERGENCIA: Desinstalar TODOS los Service Workers INMEDIATAMENTE */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if ('serviceWorker' in navigator) {
+                  console.error('🚨 [EMERGENCY] Unregistering ALL Service Workers...');
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    console.error('🔍 [EMERGENCY] Found', registrations.length, 'Service Worker(s)');
+                    for(let registration of registrations) {
+                      registration.unregister().then(function(success) {
+                        if (success) {
+                          console.error('✅ [EMERGENCY] Service Worker unregistered successfully');
+                        } else {
+                          console.error('❌ [EMERGENCY] Service Worker unregister failed');
+                        }
+                      });
+                    }
+                  });
+                  
+                  // También limpiar TODAS las cachés
+                  if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                      console.error('🗑️ [EMERGENCY] Deleting', names.length, 'cache(s)');
+                      for (let name of names) {
+                        caches.delete(name).then(function() {
+                          console.error('✅ [EMERGENCY] Cache deleted:', name);
+                        });
+                      }
+                    });
+                  }
+                } else {
+                  console.error('ℹ️ [EMERGENCY] Service Workers not supported');
+                }
+              })();
+            `,
+          }}
+        />
         <meta name="application-name" content="Rent360" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
