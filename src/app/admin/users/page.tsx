@@ -186,9 +186,30 @@ export default function AdminUsersPage() {
         throw new Error(errorData.error || 'Error al cargar usuarios');
       }
       const data = await response.json();
+      window.console.error('📦 [USERS] Raw response data:', {
+        hasUsers: !!data.users,
+        dataKeys: Object.keys(data),
+        fullData: data,
+      });
+
       const usersArray = data.users || [];
-      window.console.error('✅ [USERS] Users loaded successfully:', { count: usersArray.length });
+      window.console.error('✅ [USERS] Users loaded successfully:', {
+        count: usersArray.length,
+        sample: usersArray.slice(0, 2).map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          role: u.role,
+          name: u.name,
+        })),
+      });
+
+      window.console.error('🔄 [USERS] Setting users state...');
       setUsers(usersArray);
+
+      // Verificar que el estado se actualizó
+      setTimeout(() => {
+        window.console.error('✅ [USERS] Users state should be updated now');
+      }, 0);
 
       // Limpiar mensaje de error si la carga fue exitosa
       if (errorMessage) {
@@ -482,6 +503,8 @@ export default function AdminUsersPage() {
       usersPerPage,
       currentUsers: currentUsers.length,
       totalPages,
+      indexOfFirstUser,
+      indexOfLastUser,
       willRender: currentUsers.length > 0 ? 'YES - Users will be displayed' : 'NO - Empty list!',
     });
 
@@ -494,8 +517,32 @@ export default function AdminUsersPage() {
       window.console.error(
         '⚠️ [USERS] WARNING: No users to render! Check filters and data loading.'
       );
+
+      // Diagnóstico adicional
+      window.console.error('🔍 [USERS] Diagnostic info:', {
+        'users.length': users.length,
+        'filteredUsers.length': filteredUsers.length,
+        searchQuery: searchQuery,
+        roleFilter: roleFilter,
+        statusFilter: statusFilter,
+        currentPage: currentPage,
+        calculation: `${indexOfFirstUser} to ${indexOfLastUser}`,
+        'filteredUsers sample': filteredUsers.slice(0, 2),
+      });
     }
-  }, [currentUsers, filteredUsers, users, currentPage, usersPerPage, totalPages]);
+  }, [
+    currentUsers,
+    filteredUsers,
+    users,
+    currentPage,
+    usersPerPage,
+    totalPages,
+    indexOfFirstUser,
+    indexOfLastUser,
+    searchQuery,
+    roleFilter,
+    statusFilter,
+  ]);
 
   // Verificar estado de autenticación primero
   if (authLoading) {

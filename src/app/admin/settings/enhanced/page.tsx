@@ -1038,6 +1038,14 @@ El equipo de Rent360`,
       window.console.error('💾 [SETTINGS] Saving settings:', {
         count: settingsArray.length,
         sample: settingsArray.slice(0, 3),
+        categories: [...new Set(settingsArray.map(s => s.category))],
+        totalSettingsObject: Object.keys(settings).length,
+      });
+
+      window.console.error('📤 [SETTINGS] Request body preview:', {
+        settingsCount: settingsArray.length,
+        first3: settingsArray.slice(0, 3),
+        last3: settingsArray.slice(-3),
       });
 
       const response = await fetch('/api/admin/settings', {
@@ -1074,20 +1082,24 @@ El equipo de Rent360`,
         });
 
         // Recargar settings desde la base de datos para asegurar que se reflejen los cambios
+        window.console.error('🔄 [SETTINGS] Calling loadSettings() to reload from DB...');
         await loadSettings();
 
-        window.console.error('✅ [SETTINGS] Settings reloaded from DB successfully');
+        window.console.error('✅ [SETTINGS] loadSettings() returned successfully');
 
-        // Comparar después de recargar
-        setTimeout(() => {
-          window.console.error('🔍 [SETTINGS] State after reload:', {
-            sampleKeys: Object.keys(settings).slice(0, 5),
-            totalKeys: Object.keys(settings).length,
-          });
-          window.console.error('✅ [SETTINGS] Save and reload cycle completed!');
-        }, 100);
+        // Dar tiempo al estado para actualizarse antes de verificar
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        alert('Configuración guardada exitosamente');
+        window.console.error('🔍 [SETTINGS] Verifying state after reload:', {
+          settingsKeys: Object.keys(settings).length,
+          sampleSettings: {
+            siteName: settings.siteName,
+            maintenanceMode: settings.maintenanceMode,
+            debugMode: settings.debugMode,
+          },
+        });
+
+        alert('✅ Configuración guardada exitosamente. Verifica la consola para detalles.');
       } else {
         const errorData = await response.json();
         window.console.error('❌ [SETTINGS] Error saving settings:', {
