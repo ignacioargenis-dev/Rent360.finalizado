@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requireRole } from '@/lib/auth';
+import { requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { PropertyStatus, PropertyType, UserRole } from '@/types';
-import { ValidationError, handleApiError } from '@/lib/api-error-handler';
-import { getPropertiesOptimized, dbOptimizer } from '@/lib/db-optimizer';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
 
@@ -49,11 +46,146 @@ const propertySchema = z.object({
     .number()
     .min(1, 'El área debe ser mayor a 0')
     .max(10000, 'El área no puede exceder 10000 m²'),
-  type: z.nativeEnum(PropertyType),
-  status: z.nativeEnum(PropertyStatus).optional(),
+  type: z.string().min(1, 'El tipo es requerido'),
+  status: z.string().optional(),
   images: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
 });
+
+export async function POST(request: NextRequest) {
+  try {
+    // Verificar autenticación y rol de OWNER
+    const decoded = await requireRole(request, 'OWNER');
+
+    const startTime = Date.now();
+
+    // Parsear FormData para archivos
+    const formData = await request.formData();
+
+    // Extraer datos del formulario
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const address = formData.get('address') as string;
+    const city = formData.get('city') as string;
+    const commune = formData.get('commune') as string;
+    const region = formData.get('region') as string;
+    const price = parseFloat(formData.get('price') as string);
+    const deposit = parseFloat((formData.get('deposit') as string) || '0');
+    const bedrooms = parseInt(formData.get('bedrooms') as string);
+    const bathrooms = parseInt(formData.get('bathrooms') as string);
+    const area = parseFloat(formData.get('area') as string);
+    const type = formData.get('type') as string;
+    // Campos opcionales que pueden no estar en el esquema
+    const featuresStr = formData.get('features') as string;
+    const features = featuresStr ? JSON.parse(featuresStr) : [];
+
+    // Validar datos con Zod
+    const propertyData = {
+      title,
+      description,
+      address,
+      city,
+      commune,
+      region,
+      price,
+      deposit,
+      bedrooms,
+      bathrooms,
+      area,
+      type,
+      status: 'PENDING' as const, // Todas las nuevas propiedades empiezan como pendientes
+      features,
+    };
+
+    const validationResult = propertySchema.safeParse(propertyData);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(err => err.message);
+      return NextResponse.json({ error: errorMessages.join(', ') }, { status: 400 });
+    }
+
+    // Crear propiedad en la base de datos
+    const newProperty = await db.property.create({
+      data: {
+        title: title.trim(),
+        description: description.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        commune: commune.trim(),
+        region: region.trim(),
+        price,
+        deposit,
+        bedrooms,
+        bathrooms,
+        area,
+        type,
+        status: 'PENDING',
+        features: features ? JSON.stringify(features) : null,
+        ownerId: decoded.id,
+        createdBy: decoded.id, // El creador es el mismo que el owner
+      },
+    });
+
+    // Procesar imágenes si existen
+    const images = formData.getAll('images') as File[];
+    if (images && images.length > 0) {
+      // Aquí iría la lógica para subir imágenes a un servicio de almacenamiento
+      // Por ahora, solo guardamos referencias a las imágenes
+      const imageUrls: string[] = [];
+
+      for (const image of images) {
+        if (image instanceof File) {
+          // Simular subida de imagen - en producción usarías S3, Cloudinary, etc.
+          const imageUrl = `/uploads/${Date.now()}-${image.name}`;
+          imageUrls.push(imageUrl);
+        }
+      }
+
+      // Actualizar propiedad con URLs de imágenes
+      await db.property.update({
+        where: { id: newProperty.id },
+        data: { images: JSON.stringify(imageUrls) },
+      });
+    }
+
+    // TODO: Agregar logs de auditoría y notificaciones cuando los servicios estén disponibles
+
+    const endTime = Date.now();
+    logger.info('Property created successfully', {
+      propertyId: newProperty.id,
+      ownerId: decoded.id,
+      responseTime: endTime - startTime,
+    });
+
+    return NextResponse.json({
+      success: true,
+      property: {
+        id: newProperty.id,
+        title: newProperty.title,
+        status: newProperty.status,
+        createdAt: newProperty.createdAt,
+      },
+      message:
+        'Propiedad creada exitosamente. Será revisada por nuestro equipo antes de ser publicada.',
+    });
+  } catch (error) {
+    logger.error('Error creating property:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor',
+        message:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : String(error)
+            : 'Error interno del servidor',
+      },
+      { status: 500 }
+    );
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {

@@ -92,6 +92,284 @@ const regions = [
   'Ñuble',
 ];
 
+// Ciudades principales de Chile
+const validCities = [
+  'Santiago',
+  'Viña del Mar',
+  'Valparaíso',
+  'Concepción',
+  'La Serena',
+  'Antofagasta',
+  'Temuco',
+  'Rancagua',
+  'Talca',
+  'Arica',
+  'Chillán',
+  'Iquique',
+  'Puerto Montt',
+  'Copiapó',
+  'Los Ángeles',
+  'Calama',
+  'Osorno',
+  'Quillota',
+  'Curicó',
+  'Punta Arenas',
+  'Ovalle',
+  'Linares',
+  'Puerto Varas',
+  'Cauquenes',
+  'Ancud',
+  'Castro',
+  'Coyhaique',
+  'Vallenar',
+  'Pichilemu',
+  'San Felipe',
+  'San Fernando',
+  'Angol',
+  'Villarrica',
+  'Victoria',
+  'Traiguén',
+  'Collipulli',
+  'Lautaro',
+  'Nueva Imperial',
+  'Carahue',
+  'Saavedra',
+  'Teodoro Schmidt',
+  'Toltén',
+  'Lumaco',
+  'Purén',
+  'Cunco',
+  'Melipeuco',
+  'Curarrehue',
+  'Pucón',
+  'Villarrica',
+  'Freire',
+  'Pitrufquén',
+  'Gorbea',
+  'Loncoche',
+  'Panguipulli',
+  'Los Lagos',
+  'Futrono',
+  'Río Bueno',
+  'Lago Ranco',
+  'La Unión',
+  'Paillaco',
+  'Río Negro',
+  'Corral',
+  'Valdivia',
+  'Mariquina',
+  'Lanco',
+  'Máfil',
+  'Panguipulli',
+  'Choshuenco',
+  'San José de la Mariquina',
+  'San Pablo',
+  'Cochamó',
+  'Fresia',
+  'Frutillar',
+  'Llanquihue',
+  'Puerto Varas',
+  'Puerto Montt',
+  'Calbuco',
+  'Maullín',
+  'Los Muermos',
+  'Puerto Octay',
+  'Río Negro',
+  'San Juan de la Costa',
+  'Cochamó',
+  'Purranque',
+  'Puyehue',
+  'Río Bueno',
+  'San Pablo',
+  'Osorno',
+  'Puerto Octay',
+  'Purranque',
+  'Puyehue',
+  'Río Negro',
+  'San Juan de la Costa',
+  'San Pablo',
+];
+
+// Comunas principales de Chile
+const validCommunes = [
+  'Santiago',
+  'Providencia',
+  'Las Condes',
+  'Ñuñoa',
+  'Vitacura',
+  'La Reina',
+  'Macul',
+  'Peñalolén',
+  'La Florida',
+  'Puente Alto',
+  'Maipú',
+  'La Cisterna',
+  'San Miguel',
+  'La Granja',
+  'Independencia',
+  'Recoleta',
+  'Quinta Normal',
+  'Lo Prado',
+  'Pudahuel',
+  'Cerro Navia',
+  'Lo Espejo',
+  'Pedro Aguirre Cerda',
+  'San Joaquín',
+  'Renca',
+  'Estación Central',
+  'Quilicura',
+  'Conchalí',
+  'Huechuraba',
+  'Colina',
+  'Lampa',
+  'Tiltil',
+  'Pirque',
+  'Puente Alto',
+  'San José de Maipo',
+  'Buin',
+  'Paine',
+  'Peñaflor',
+  'Talagante',
+  'El Monte',
+  'Isla de Maipo',
+  'Padre Hurtado',
+  'Alhué',
+  'Calera de Tango',
+  'San Pedro',
+  'Melipilla',
+  'María Pinto',
+  'Curacaví',
+  'San Bernardo',
+  'Buin',
+  'Calera de Tango',
+  'Paine',
+  'Peñaflor',
+  'Talagante',
+  'El Monte',
+  'Isla de Maipo',
+  'Padre Hurtado',
+  'Alhué',
+  'San Pedro',
+  'Melipilla',
+  'María Pinto',
+  'Curacaví',
+  'Viña del Mar',
+  'Valparaíso',
+  'Quilpué',
+  'Villa Alemana',
+  'Concón',
+  'Quintero',
+  'Puchuncaví',
+  'Casablanca',
+  'Juan Fernández',
+  'San Antonio',
+  'Cartagena',
+  'El Tabo',
+  'El Quisco',
+  'Algarrobo',
+  'Santo Domingo',
+  'Limache',
+  'Olmué',
+  'Rinconada',
+  'Nogales',
+  'La Cruz',
+  'La Calera',
+  'Hijuelas',
+  'Zapallar',
+  'Petorca',
+  'Papudo',
+  'La Ligua',
+  'Cabildo',
+  'Concepción',
+  'Talcahuano',
+  'San Pedro de la Paz',
+  'Hualpén',
+  'Chiguayante',
+  'Penco',
+  'Tomé',
+  'Lota',
+  'Coronel',
+  'San Carlos',
+  'Cabrero',
+  'Yumbel',
+  'Tucapel',
+  'Antuco',
+  'Curanilahue',
+  'Los Álamos',
+  'Cañete',
+  'Contulmo',
+  'Tirúa',
+  'Lebu',
+  'Arauco',
+  'Curanilahue',
+  'Los Álamos',
+  'Cañete',
+  'Contulmo',
+  'Tirúa',
+  'Lebu',
+  'Arauco',
+  'Temuco',
+  'Padre Las Casas',
+  'Lautaro',
+  'Nueva Imperial',
+  'Carahue',
+  'Saavedra',
+  'Teodoro Schmidt',
+  'Toltén',
+  'Lumaco',
+  'Purén',
+  'Cunco',
+  'Melipeuco',
+  'Curarrehue',
+  'Pucón',
+  'Villarrica',
+  'Freire',
+  'Pitrufquén',
+  'Gorbea',
+  'Loncoche',
+  'Panguipulli',
+  'Los Lagos',
+  'Futrono',
+  'Río Bueno',
+  'Lago Ranco',
+  'La Unión',
+  'Paillaco',
+  'Río Negro',
+  'Corral',
+  'Valdivia',
+  'Mariquina',
+  'Lanco',
+  'Máfil',
+  'Panguipulli',
+  'Choshuenco',
+  'San José de la Mariquina',
+  'San Pablo',
+  'Cochamó',
+  'Fresia',
+  'Frutillar',
+  'Llanquihue',
+  'Puerto Varas',
+  'Puerto Montt',
+  'Calbuco',
+  'Maullín',
+  'Los Muermos',
+  'Puerto Octay',
+  'Río Negro',
+  'San Juan de la Costa',
+  'Cochamó',
+  'Purranque',
+  'Puyehue',
+  'Río Bueno',
+  'San Pablo',
+  'Osorno',
+  'Puerto Octay',
+  'Purranque',
+  'Puyehue',
+  'Río Negro',
+  'San Juan de la Costa',
+  'San Pablo',
+];
+
 export default function NewPropertyPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -161,12 +439,34 @@ export default function NewPropertyPage() {
           newErrors.city = 'La ciudad es requerida';
         } else if (formData.city.trim().length < 2) {
           newErrors.city = 'La ciudad debe tener al menos 2 caracteres';
+        } else {
+          // Verificar que la ciudad sea un nombre completo válido
+          const cityInput = formData.city.trim();
+          const isValidCity = validCities.some(
+            city => city.toLowerCase() === cityInput.toLowerCase()
+          );
+
+          if (!isValidCity) {
+            newErrors.city =
+              'Por favor, ingrese una ciudad válida completa (ej: Santiago, Viña del Mar)';
+          }
         }
 
         if (!formData.commune.trim()) {
           newErrors.commune = 'La comuna es requerida';
         } else if (formData.commune.trim().length < 2) {
           newErrors.commune = 'La comuna debe tener al menos 2 caracteres';
+        } else {
+          // Verificar que la comuna sea un nombre completo válido
+          const communeInput = formData.commune.trim();
+          const isValidCommune = validCommunes.some(
+            commune => commune.toLowerCase() === communeInput.toLowerCase()
+          );
+
+          if (!isValidCommune) {
+            newErrors.commune =
+              'Por favor, ingrese una comuna válida completa (ej: Las Condes, Providencia)';
+          }
         }
 
         if (!formData.region) {
@@ -446,7 +746,7 @@ export default function NewPropertyPage() {
                         </label>
                         <input
                           type="text"
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             errors.title ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Ej: Departamento Las Condes con vista panorámica"
@@ -464,7 +764,7 @@ export default function NewPropertyPage() {
                         </label>
                         <textarea
                           rows={4}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             errors.description ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Describe las características principales de tu propiedad..."
@@ -481,7 +781,7 @@ export default function NewPropertyPage() {
                           Tipo de Propiedad *
                         </label>
                         <select
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             errors.propertyType ? 'border-red-500' : 'border-gray-300'
                           }`}
                           value={formData.propertyType}
@@ -514,7 +814,7 @@ export default function NewPropertyPage() {
                         </label>
                         <input
                           type="text"
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             errors.address ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Ej: Av. Apoquindo 3400"
@@ -533,7 +833,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="text"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.city ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="Ej: Santiago"
@@ -551,7 +851,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="text"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.commune ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="Ej: Las Condes"
@@ -568,7 +868,7 @@ export default function NewPropertyPage() {
                             Región *
                           </label>
                           <select
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.region ? 'border-red-500' : 'border-gray-300'
                             }`}
                             value={formData.region}
@@ -603,7 +903,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="number"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.price ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="550000"
@@ -621,7 +921,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="number"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.deposit ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="550000"
@@ -639,7 +939,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="number"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.bedrooms ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="2"
@@ -657,7 +957,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="number"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.bathrooms ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="2"
@@ -675,7 +975,7 @@ export default function NewPropertyPage() {
                           </label>
                           <input
                             type="number"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            className={`w-full px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               errors.area ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="85"
@@ -785,7 +1085,7 @@ export default function NewPropertyPage() {
                         </label>
                         <input
                           type="date"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.availabilityDate}
                           onChange={e => handleInputChange('availabilityDate', e.target.value)}
                         />
@@ -796,7 +1096,7 @@ export default function NewPropertyPage() {
                           Preferencia de Contacto
                         </label>
                         <select
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.contactPreference}
                           onChange={e => handleInputChange('contactPreference', e.target.value)}
                         >
