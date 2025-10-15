@@ -1040,11 +1040,20 @@ El equipo de Rent360`,
       });
 
       if (response.ok) {
+        window.console.error('✅ [SETTINGS] Settings saved successfully, reloading from DB...');
+
         // Recargar settings desde la base de datos para asegurar que se reflejen los cambios
         await loadSettings();
+
+        window.console.error('✅ [SETTINGS] Settings reloaded from DB successfully');
         alert('Configuración guardada exitosamente');
       } else {
         const errorData = await response.json();
+        window.console.error('❌ [SETTINGS] Error saving settings:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
         alert(`Error al guardar la configuración: ${errorData.error || 'Error desconocido'}`);
       }
     } catch (error) {

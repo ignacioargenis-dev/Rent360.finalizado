@@ -237,6 +237,18 @@ export default function AdminUsersPage() {
     setFilteredUsers(filtered);
   };
 
+  // CRÍTICO: Ejecutar filterUsers cada vez que cambien los usuarios o los filtros
+  useEffect(() => {
+    window.console.error('🔍 [USERS] Filtering users:', {
+      totalUsers: users.length,
+      searchQuery,
+      roleFilter,
+      statusFilter,
+    });
+    filterUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users, searchQuery, roleFilter, statusFilter]);
+
   const getRoleBadge = (role: string) => {
     const roleConfig = {
       admin: { label: 'Administrador', className: 'bg-purple-100 text-purple-800' },
