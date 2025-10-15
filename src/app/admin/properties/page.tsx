@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -210,15 +209,45 @@ export default function AdminPropertiesPage() {
 
   const handleCreateProperty = async (propertyData: any) => {
     try {
-      // Create property object with ID compatible with global Property interface
+      // Create FormData for API submission
+      const formDataToSend = new FormData();
+
+      // Add property data
+      formDataToSend.append('title', propertyData.title || 'Nueva Propiedad');
+      formDataToSend.append('description', propertyData.description || 'Descripción pendiente');
+      formDataToSend.append('address', propertyData.address || 'Dirección pendiente');
+      formDataToSend.append('city', propertyData.city || 'Santiago');
+      formDataToSend.append('commune', propertyData.commune || 'Centro');
+      formDataToSend.append('region', propertyData.region || 'Metropolitana');
+      formDataToSend.append('price', String(propertyData.price || 0));
+      formDataToSend.append('deposit', String(propertyData.deposit || 0));
+      formDataToSend.append('bedrooms', String(propertyData.bedrooms || 1));
+      formDataToSend.append('bathrooms', String(propertyData.bathrooms || 1));
+      formDataToSend.append('area', String(propertyData.area || 50));
+      formDataToSend.append('type', 'APARTMENT');
+
+      // Call the API endpoint
+      const response = await fetch('/api/properties', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear propiedad');
+      }
+
+      const result = await response.json();
+
+      // Create property object for local state (mock data for UI)
       const emptyImages: string[] = [];
       const emptyFeatures: string[] = [];
 
       const newProperty = {
-        id: Date.now().toString(),
+        id: result.property?.id || Date.now().toString(),
         title: propertyData.title || 'Nueva Propiedad',
-        description: propertyData.description || 'Descripci�n pendiente',
-        address: propertyData.address || 'Direcci�n pendiente',
+        description: propertyData.description || 'Descripción pendiente',
+        address: propertyData.address || 'Dirección pendiente',
         city: propertyData.city || 'Santiago',
         commune: propertyData.commune || 'Centro',
         region: 'Metropolitana',
@@ -228,7 +257,7 @@ export default function AdminPropertiesPage() {
         bathrooms: propertyData.bathrooms || 1,
         area: propertyData.area || 50,
         type: 'APARTMENT' as const,
-        status: 'AVAILABLE' as const,
+        status: 'PENDING' as const, // Properties start as pending for review
         images: emptyImages,
         features: emptyFeatures,
         ownerId: user?.id || 'user-admin',
@@ -238,11 +267,21 @@ export default function AdminPropertiesPage() {
 
       // Add to properties list
       setProperties([newProperty, ...properties]);
+
+      // Show success message
+      setSuccessMessage(
+        'Propiedad creada exitosamente. Será revisada por nuestro equipo antes de ser publicada.'
+      );
+      setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       logger.error('Error creating property:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al crear propiedad. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al crear propiedad. Por favor, inténtalo nuevamente.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
     }
   };

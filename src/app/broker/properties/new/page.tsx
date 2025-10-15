@@ -65,6 +65,141 @@ interface PropertyForm {
   otherDocuments: File[];
 }
 
+// Valid cities and communes for Chile
+const validCities = [
+  'Santiago',
+  'Viña del Mar',
+  'Valparaíso',
+  'Concepción',
+  'Antofagasta',
+  'Temuco',
+  'La Serena',
+  'Rancagua',
+  'Talca',
+  'Arica',
+  'Iquique',
+  'Puerto Montt',
+  'Chillán',
+  'Los Ángeles',
+  'Copiapó',
+  'Calama',
+  'Osorno',
+  'Quillota',
+  'San Antonio',
+  'Punta Arenas',
+  'Curicó',
+  'Ovalle',
+  'Linares',
+  'Pichilemu',
+  'San Felipe',
+  'San Fernando',
+  'Melipilla',
+  'Puerto Varas',
+  'Villarrica',
+  'Angol',
+  'Castro',
+  'Ancud',
+  'Coihaique',
+  'Coyhaique',
+  'Natales',
+  'Puerto Aysén',
+];
+
+const validCommunes = [
+  'Las Condes',
+  'Providencia',
+  'Vitacura',
+  'Lo Barnechea',
+  'Ñuñoa',
+  'Santiago Centro',
+  'Independencia',
+  'Recoleta',
+  'Estación Central',
+  'Pedro Aguirre Cerda',
+  'San Miguel',
+  'Lo Prado',
+  'Quinta Normal',
+  'Cerro Navia',
+  'Renca',
+  'Pudahuel',
+  'Maipú',
+  'La Florida',
+  'La Granja',
+  'Macul',
+  'Peñalolén',
+  'La Reina',
+  'La Cisterna',
+  'El Bosque',
+  'San Bernardo',
+  'Puente Alto',
+  'La Pintana',
+  'San Joaquín',
+  'Pedro Aguirre Cerda',
+  'Cerrillos',
+  'Huechuraba',
+  'Conchalí',
+  'Colina',
+  'Lampa',
+  'Til Til',
+  'Buin',
+  'Calera de Tango',
+  'Paine',
+  'San José de Maipo',
+  'Pirque',
+  'San Pedro',
+  'Alhué',
+  'Curacaví',
+  'María Pinto',
+  'Melipilla',
+  'San Francisco de Mostazal',
+  'Codegua',
+  'Graneros',
+  'Machalí',
+  'Olivar',
+  'Peumo',
+  'Pichidegua',
+  'Quinta de Tilcoco',
+  'Rancagua',
+  'Rengo',
+  'Requínoa',
+  'San Fernando',
+  'San Vicente',
+  'Las Cabras',
+  'Peumo',
+  'Pichilemu',
+  'Litueche',
+  'Marchigüe',
+  'Navidad',
+  'Paredones',
+  'Pichilemu',
+  'Chepica',
+  'Chimbarongo',
+  'Lolol',
+  'Nancagua',
+  'Palmilla',
+  'Peralillo',
+  'Placilla',
+  'Pumanque',
+  'Santa Cruz',
+  'San Fernando',
+  'Chépica',
+  'La Estrella',
+  'Litueche',
+  'Marchihue',
+  'Navidad',
+  'Paredones',
+  'Pichilemu',
+  'Pumanque',
+  'San Vicente',
+  'Palmilla',
+  'Peralillo',
+  'Placilla',
+  'Nancagua',
+  'Chimbarongo',
+  'Lolol',
+  'Santa Cruz',
+];
+
 export default function BrokerNewPropertyPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -124,8 +259,37 @@ export default function BrokerNewPropertyPage() {
     }));
   };
 
+  const validateStep = (stepNumber: number) => {
+    switch (stepNumber) {
+      case 1:
+        return formData.title.trim() && formData.address.trim() && formData.price;
+      case 2:
+        // Validate city and commune exactly match valid entries (case-insensitive)
+        const normalizedCity = formData.city.trim().toLowerCase();
+        const normalizedCommune = formData.city.trim().toLowerCase(); // Using city as commune for now
+        const isValidCity = validCities.some(city => city.toLowerCase() === normalizedCity);
+        const isValidCommune = validCommunes.some(
+          commune => commune.toLowerCase() === normalizedCommune
+        );
+        return formData.city.trim() && formData.region && isValidCity && isValidCommune;
+      case 3:
+        return formData.bedrooms && formData.bathrooms && formData.area;
+      case 4:
+        return (
+          formData.ownerName.trim() &&
+          formData.ownerEmail.trim() &&
+          formData.ownerPhone.trim() &&
+          formData.ownerRut.trim()
+        );
+      default:
+        return false;
+    }
+  };
+
   const handleFileChange = (field: keyof PropertyForm, files: FileList | null) => {
-    if (!files) return;
+    if (!files) {
+      return;
+    }
 
     if (field === 'utilitiesBills' || field === 'otherDocuments') {
       setFormData(prev => ({
@@ -300,7 +464,7 @@ export default function BrokerNewPropertyPage() {
                         placeholder="Ej: Hermoso departamento en Las Condes"
                         value={formData.title}
                         onChange={e => handleInputChange('title', e.target.value)}
-                        className="mt-1"
+                        className="mt-1 bg-white"
                         required
                       />
                     </div>
@@ -316,7 +480,7 @@ export default function BrokerNewPropertyPage() {
                         placeholder="Ej: Av. Providencia 1234"
                         value={formData.address}
                         onChange={e => handleInputChange('address', e.target.value)}
-                        className="mt-1"
+                        className="mt-1 bg-white"
                         required
                       />
                     </div>
@@ -324,31 +488,37 @@ export default function BrokerNewPropertyPage() {
                     {/* Location */}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-medium">Ciudad</Label>
-                        <Select
+                        <Label htmlFor="city" className="text-sm font-medium">
+                          Ciudad *
+                        </Label>
+                        <Input
+                          id="city"
+                          type="text"
+                          placeholder="Ej: Santiago, Viña del Mar, Concepción"
                           value={formData.city}
-                          onValueChange={value => handleInputChange('city', value)}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Seleccione ciudad" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="santiago">Santiago</SelectItem>
-                            <SelectItem value="vina-del-mar">Viña del Mar</SelectItem>
-                            <SelectItem value="concepcion">Concepción</SelectItem>
-                            <SelectItem value="antofagasta">Antofagasta</SelectItem>
-                            <SelectItem value="temuco">Temuco</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          onChange={e => handleInputChange('city', e.target.value)}
+                          className="mt-1 bg-white"
+                          required
+                        />
+                        {formData.city &&
+                          !validCities.some(
+                            city => city.toLowerCase() === formData.city.trim().toLowerCase()
+                          ) && (
+                            <p className="text-sm text-red-600 mt-1">
+                              Ciudad no válida. Use una ciudad existente en Chile.
+                            </p>
+                          )}
                       </div>
 
                       <div>
-                        <Label className="text-sm font-medium">Región</Label>
+                        <Label htmlFor="region" className="text-sm font-medium">
+                          Región *
+                        </Label>
                         <Select
                           value={formData.region}
                           onValueChange={value => handleInputChange('region', value)}
                         >
-                          <SelectTrigger className="mt-1">
+                          <SelectTrigger className="mt-1 bg-white">
                             <SelectValue placeholder="Seleccione región" />
                           </SelectTrigger>
                           <SelectContent>
@@ -357,6 +527,17 @@ export default function BrokerNewPropertyPage() {
                             <SelectItem value="biobio">Biobío</SelectItem>
                             <SelectItem value="antofagasta">Antofagasta</SelectItem>
                             <SelectItem value="araucania">Araucanía</SelectItem>
+                            <SelectItem value="coquimbo">Coquimbo</SelectItem>
+                            <SelectItem value="ohiggins">O&apos;Higgins</SelectItem>
+                            <SelectItem value="maule">Maule</SelectItem>
+                            <SelectItem value="nuble">Ñuble</SelectItem>
+                            <SelectItem value="los-lagos">Los Lagos</SelectItem>
+                            <SelectItem value="aysen">Aysén</SelectItem>
+                            <SelectItem value="magallanes">Magallanes</SelectItem>
+                            <SelectItem value="los-rios">Los Ríos</SelectItem>
+                            <SelectItem value="arica-parinacota">Arica y Parinacota</SelectItem>
+                            <SelectItem value="tarapaca">Tarapacá</SelectItem>
+                            <SelectItem value="atacama">Atacama</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -374,7 +555,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 500000"
                           value={formData.price}
                           onChange={e => handleInputChange('price', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                           required
                         />
                       </div>
@@ -389,7 +570,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 2"
                           value={formData.bedrooms}
                           onChange={e => handleInputChange('bedrooms', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                         />
                       </div>
 
@@ -403,7 +584,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 1"
                           value={formData.bathrooms}
                           onChange={e => handleInputChange('bathrooms', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                         />
                       </div>
 
@@ -417,7 +598,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 65"
                           value={formData.area}
                           onChange={e => handleInputChange('area', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                         />
                       </div>
                     </div>
@@ -510,9 +691,7 @@ export default function BrokerNewPropertyPage() {
                       <UserIcon className="w-5 h-5" />
                       Información del Propietario
                     </CardTitle>
-                    <CardDescription>
-                      Datos del propietario de la propiedad
-                    </CardDescription>
+                    <CardDescription>Datos del propietario de la propiedad</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Owner Registration Status */}
@@ -532,8 +711,9 @@ export default function BrokerNewPropertyPage() {
                     {!formData.ownerIsRegistered && (
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <p className="text-sm text-blue-800 mb-4">
-                          Como corredor, puedes registrar propiedades de propietarios que no están en la plataforma.
-                          Tú tendrás control administrativo completo sobre esta propiedad.
+                          Como corredor, puedes registrar propiedades de propietarios que no están
+                          en la plataforma. Tú tendrás control administrativo completo sobre esta
+                          propiedad.
                         </p>
                       </div>
                     )}
@@ -550,7 +730,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: Juan Pérez González"
                           value={formData.ownerName}
                           onChange={e => handleInputChange('ownerName', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                           required
                         />
                       </div>
@@ -565,7 +745,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 12.345.678-9"
                           value={formData.ownerRut}
                           onChange={e => handleInputChange('ownerRut', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                           required
                         />
                       </div>
@@ -582,7 +762,7 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: propietario@email.com"
                           value={formData.ownerEmail}
                           onChange={e => handleInputChange('ownerEmail', e.target.value)}
-                          className="mt-1"
+                          className="mt-1 bg-white"
                           required
                         />
                       </div>

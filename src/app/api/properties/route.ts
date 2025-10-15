@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole } from '@/lib/auth';
+import { requireAnyRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
@@ -54,8 +54,8 @@ const propertySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticación y rol de OWNER
-    const decoded = await requireRole(request, 'OWNER');
+    // Verificar autenticación y roles permitidos (OWNER, ADMIN, BROKER)
+    const decoded = await requireAnyRole(request, ['OWNER', 'ADMIN', 'BROKER']);
 
     const startTime = Date.now();
 
@@ -103,6 +103,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: errorMessages.join(', ') }, { status: 400 });
     }
 
+    // Determinar el ownerId basado en el rol del usuario
+    let ownerId: string;
+    let brokerId: string | null = null;
+
+    if (decoded.role === 'OWNER') {
+      // Si es OWNER, él mismo es el propietario
+      ownerId = decoded.id;
+    } else if (decoded.role === 'BROKER' || decoded.role === 'ADMIN') {
+      // Si es BROKER o ADMIN, debe especificar el propietario (o usar su propio ID como fallback)
+      ownerId = decoded.id; // Por ahora usar el ID del usuario, pero esto debería cambiarse para permitir especificar otro propietario
+      brokerId = decoded.role === 'BROKER' ? decoded.id : null;
+    } else {
+      ownerId = decoded.id;
+    }
+
     // Crear propiedad en la base de datos
     const newProperty = await db.property.create({
       data: {
@@ -120,8 +135,9 @@ export async function POST(request: NextRequest) {
         type,
         status: 'PENDING',
         features: features ? JSON.stringify(features) : null,
-        ownerId: decoded.id,
-        createdBy: decoded.id, // El creador es el mismo que el owner
+        ownerId,
+        brokerId,
+        createdBy: decoded.id,
       },
     });
 
