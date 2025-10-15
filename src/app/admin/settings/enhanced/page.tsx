@@ -319,16 +319,10 @@ interface SystemSettings {
 }
 
 export default function EnhancedAdminSettingsPage() {
-  console.log('🚀 [SETTINGS] Component mounting - EnhancedAdminSettingsPage');
+  // ⚠️ NOTA: Los console.log aquí se ejecutan en SSR (servidor), no aparecen en el navegador
+  // Todos los logs de depuración deben estar dentro de useEffect para ejecutarse en el cliente
 
   const { user, loading: authLoading } = useAuth();
-
-  console.log('👤 [SETTINGS] Auth state:', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    userRole: user?.role,
-    authLoading,
-  });
 
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
@@ -539,13 +533,13 @@ export default function EnhancedAdminSettingsPage() {
   // Función para cargar settings desde la API
   const loadSettings = async () => {
     try {
-      console.log('🔍 [SETTINGS] Loading settings from /api/admin/settings...');
+      window.console.error('🔍 [SETTINGS] Loading settings from /api/admin/settings...');
 
       const settingsResponse = await fetch('/api/admin/settings', {
         credentials: 'include', // Incluir cookies de autenticación
       });
 
-      console.log('🔍 [SETTINGS] Response received:', {
+      window.console.error('📡 [SETTINGS] Response received:', {
         status: settingsResponse.status,
         statusText: settingsResponse.statusText,
         ok: settingsResponse.ok,
@@ -553,7 +547,7 @@ export default function EnhancedAdminSettingsPage() {
 
       if (!settingsResponse.ok) {
         const errorText = await settingsResponse.text();
-        console.error('❌ [SETTINGS] HTTP error:', {
+        window.console.error('❌ [SETTINGS] HTTP error:', {
           status: settingsResponse.status,
           statusText: settingsResponse.statusText,
           body: errorText,
@@ -561,7 +555,7 @@ export default function EnhancedAdminSettingsPage() {
 
         // Si es 404, significa que no hay configuraciones guardadas aún, eso es normal
         if (settingsResponse.status === 404) {
-          console.log('ℹ️ [SETTINGS] No settings found in database, using defaults');
+          window.console.error('ℹ️ [SETTINGS] No settings found in database, using defaults');
           return; // Usar configuraciones por defecto
         }
 
@@ -569,7 +563,7 @@ export default function EnhancedAdminSettingsPage() {
       }
 
       const settingsData = await settingsResponse.json();
-      console.log('📦 [SETTINGS] Data received:', {
+      window.console.error('📦 [SETTINGS] Data received:', {
         hasData: !!settingsData,
         hasSettings: !!settingsData?.data,
         dataKeys: settingsData ? Object.keys(settingsData) : [],
@@ -580,10 +574,12 @@ export default function EnhancedAdminSettingsPage() {
       // Donde data es un array de objetos: { key, value, category, ... }
       const settingsArray = settingsData.data || [];
 
-      console.log('🔄 [SETTINGS] Processing settings array:', { count: settingsArray.length });
+      window.console.error('🔄 [SETTINGS] Processing settings array:', {
+        count: settingsArray.length,
+      });
 
       if (settingsArray.length === 0) {
-        console.log('ℹ️ [SETTINGS] No settings in database, using defaults');
+        window.console.error('ℹ️ [SETTINGS] No settings in database, using defaults');
         return; // Usar configuraciones por defecto
       }
 
@@ -610,7 +606,7 @@ export default function EnhancedAdminSettingsPage() {
           }
 
           processedSettings[key] = processedValue;
-          console.log(`  ✓ [SETTINGS] Processed: ${key} =`, processedValue);
+          window.console.error(`  ✓ [SETTINGS] Processed: ${key} =`, processedValue);
         }
       });
 
@@ -627,7 +623,7 @@ export default function EnhancedAdminSettingsPage() {
           }
         });
 
-        console.log('✅ [SETTINGS] Merged successfully:', {
+        window.console.error('✅ [SETTINGS] Merged successfully:', {
           processedKeys: Object.keys(processedSettings).length,
           totalKeys: Object.keys(merged).length,
         });
@@ -635,7 +631,7 @@ export default function EnhancedAdminSettingsPage() {
         return merged;
       });
     } catch (error) {
-      console.error('❌ [SETTINGS] Error loading settings:', {
+      window.console.error('❌ [SETTINGS] Error loading settings:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         errorType: typeof error,
@@ -644,7 +640,7 @@ export default function EnhancedAdminSettingsPage() {
 
       // También intentar obtener más detalles del error
       if (error && typeof error === 'object') {
-        console.error('❌ [SETTINGS] Error object details:', error);
+        window.console.error('❌ [SETTINGS] Error object details:', error);
       }
     }
   };
@@ -676,7 +672,7 @@ export default function EnhancedAdminSettingsPage() {
   }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {
-    console.log('🔍 [SETTINGS] useEffect triggered:', {
+    window.console.error('🔍 [SETTINGS] useEffect triggered:', {
       authLoading,
       hasUser: !!user,
       role: user?.role,
@@ -684,7 +680,7 @@ export default function EnhancedAdminSettingsPage() {
 
     // Solo cargar datos si el usuario está autenticado
     if (!authLoading && user && user.role === 'ADMIN') {
-      console.log('✅ [SETTINGS] User is authenticated as ADMIN, loading data...');
+      window.console.error('✅ [SETTINGS] User is authenticated as ADMIN, loading data...');
 
       // Load user data
       const loadUserData = async () => {
@@ -1023,7 +1019,7 @@ El equipo de Rent360`,
         });
       });
 
-      console.log('💾 [SETTINGS] Saving settings:', {
+      window.console.error('💾 [SETTINGS] Saving settings:', {
         count: settingsArray.length,
         sample: settingsArray.slice(0, 3),
       });
@@ -1037,7 +1033,7 @@ El equipo de Rent360`,
         body: JSON.stringify({ settings: settingsArray }),
       });
 
-      console.log('📡 [SETTINGS] Save response:', {
+      window.console.error('📡 [SETTINGS] Save response:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,

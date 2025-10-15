@@ -39,18 +39,12 @@ import UnifiedDashboardLayout, {
 } from '@/components/layout/UnifiedDashboardLayout';
 
 export default function AdminUsersPage() {
-  console.log('🚀 [USERS] Component mounting - AdminUsersPage');
+  // ⚠️ NOTA: Los console.log aquí se ejecutan en SSR (servidor), no aparecen en el navegador
+  // Todos los logs de depuración deben estar dentro de useEffect para ejecutarse en el cliente
 
   // Usar el usuario del dashboard layout que ya verificó autenticación
   const user = useDashboardUser();
   const authLoading = false; // El layout ya manejó la carga
-
-  console.log('👤 [USERS] User from dashboard:', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    userRole: user?.role,
-    authLoading,
-  });
 
   const [users, setUsers] = useState<User[]>([]);
 
@@ -105,7 +99,7 @@ export default function AdminUsersPage() {
   }, []); // Array vacío = solo se ejecuta una vez al montar
 
   useEffect(() => {
-    console.log('🔍 [USERS] useEffect triggered:', {
+    window.console.error('🔍 [USERS] useEffect triggered:', {
       authLoading,
       hasUser: !!user,
       role: user?.role,
@@ -116,10 +110,10 @@ export default function AdminUsersPage() {
 
     // Solo hacer la llamada si el usuario está autenticado y cargado
     if (!authLoading && user && user.role === 'ADMIN') {
-      console.log('✅ [USERS] User is authenticated as ADMIN, fetching users...');
+      window.console.error('✅ [USERS] User is authenticated as ADMIN, fetching users...');
       fetchUsers();
     } else {
-      console.log('⏸️ [USERS] Waiting for auth or user is not ADMIN:', {
+      window.console.error('⏸️ [USERS] Waiting for auth or user is not ADMIN:', {
         authLoading,
         role: user?.role,
       });
@@ -149,7 +143,7 @@ export default function AdminUsersPage() {
 
       const url = `/api/users${params.toString() ? `?${params.toString()}` : ''}`;
 
-      console.log('🔍 [USERS] Fetching users from:', {
+      window.console.error('🔍 [USERS] Fetching users from:', {
         url,
         roleFilter,
         statusFilter,
@@ -160,7 +154,7 @@ export default function AdminUsersPage() {
         credentials: 'include', // Incluir cookies de autenticación
       });
 
-      console.log('📡 [USERS] Response received:', {
+      window.console.error('📡 [USERS] Response received:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -168,7 +162,7 @@ export default function AdminUsersPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        console.error('❌ [USERS] Error response:', {
+        window.console.error('❌ [USERS] Error response:', {
           status: response.status,
           statusText: response.statusText,
           errorData,
@@ -184,7 +178,7 @@ export default function AdminUsersPage() {
       }
       const data = await response.json();
       const usersArray = data.users || [];
-      console.log('✅ [USERS] Users loaded successfully:', { count: usersArray.length });
+      window.console.error('✅ [USERS] Users loaded successfully:', { count: usersArray.length });
       setUsers(usersArray);
 
       // Limpiar mensaje de error si la carga fue exitosa
@@ -192,7 +186,7 @@ export default function AdminUsersPage() {
         setErrorMessage('');
       }
     } catch (error) {
-      console.error('❌ [USERS] Error fetching users:', {
+      window.console.error('❌ [USERS] Error fetching users:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
