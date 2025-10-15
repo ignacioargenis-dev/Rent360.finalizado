@@ -192,6 +192,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ACTIVADO: Auth check automático al cargar el AuthProvider
   useEffect(() => {
+    // PRIMERO: Intentar cargar desde localStorage inmediatamente
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedUser = localStorage.getItem('user');
+        if (cachedUser) {
+          const parsedUser = JSON.parse(cachedUser);
+          // Validar que tenga la estructura correcta
+          if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
+            // CRÍTICO: Normalizar rol a MAYÚSCULAS
+            const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
+
+            const completeUser = {
+              ...parsedUser,
+              role: normalizedRole,
+              createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
+              updatedAt: new Date(),
+            };
+
+            setUser(completeUser);
+            window.console.error('💾 [AUTH] Usuario cargado inmediatamente desde localStorage:', {
+              email: completeUser.email,
+              role: completeUser.role,
+            });
+          }
+        }
+      } catch (error) {
+        window.console.error('❌ [AUTH] Error loading user from localStorage:', error);
+        localStorage.removeItem('user'); // Limpiar si hay error
+      }
+    }
+
+    // SEGUNDO: Verificar con el servidor para datos frescos
     checkAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
