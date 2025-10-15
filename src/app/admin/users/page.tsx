@@ -301,12 +301,14 @@ export default function AdminUsersPage() {
 
   const getRoleBadge = (role: string) => {
     const roleConfig = {
-      admin: { label: 'Administrador', className: 'bg-purple-100 text-purple-800' },
-      tenant: { label: 'Inquilino', className: 'bg-blue-100 text-blue-800' },
-      owner: { label: 'Propietario', className: 'bg-green-100 text-green-800' },
-      broker: { label: 'Corredor', className: 'bg-orange-100 text-orange-800' },
-      runner: { label: 'Runner', className: 'bg-yellow-100 text-yellow-800' },
-      support: { label: 'Soporte', className: 'bg-red-100 text-red-800' },
+      ADMIN: { label: 'Administrador', className: 'bg-purple-100 text-purple-800' },
+      TENANT: { label: 'Inquilino', className: 'bg-blue-100 text-blue-800' },
+      OWNER: { label: 'Propietario', className: 'bg-green-100 text-green-800' },
+      BROKER: { label: 'Corredor', className: 'bg-orange-100 text-orange-800' },
+      RUNNER: { label: 'Runner', className: 'bg-yellow-100 text-yellow-800' },
+      SUPPORT: { label: 'Soporte', className: 'bg-red-100 text-red-800' },
+      PROVIDER: { label: 'Proveedor', className: 'bg-indigo-100 text-indigo-800' },
+      MAINTENANCE: { label: 'Mantenimiento', className: 'bg-teal-100 text-teal-800' },
     };
 
     const config = roleConfig[role as keyof typeof roleConfig] || {
@@ -735,12 +737,12 @@ export default function AdminUsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los roles</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="tenant">Inquilino</SelectItem>
-                    <SelectItem value="owner">Propietario</SelectItem>
-                    <SelectItem value="broker">Corredor</SelectItem>
-                    <SelectItem value="runner">Runner</SelectItem>
-                    <SelectItem value="support">Soporte</SelectItem>
+                    <SelectItem value="ADMIN">Administrador</SelectItem>
+                    <SelectItem value="TENANT">Inquilino</SelectItem>
+                    <SelectItem value="OWNER">Propietario</SelectItem>
+                    <SelectItem value="BROKER">Corredor</SelectItem>
+                    <SelectItem value="RUNNER">Runner</SelectItem>
+                    <SelectItem value="SUPPORT">Soporte</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -978,14 +980,14 @@ export default function AdminUsersPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tenant">Inquilino</SelectItem>
-                      <SelectItem value="owner">Propietario</SelectItem>
-                      <SelectItem value="broker">Corredor</SelectItem>
-                      <SelectItem value="runner">Runner</SelectItem>
-                      <SelectItem value="provider">Proveedor de Servicios</SelectItem>
-                      <SelectItem value="maintenance">Servicio de Mantenimiento</SelectItem>
-                      <SelectItem value="support">Soporte</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="TENANT">Inquilino</SelectItem>
+                      <SelectItem value="OWNER">Propietario</SelectItem>
+                      <SelectItem value="BROKER">Corredor</SelectItem>
+                      <SelectItem value="RUNNER">Runner</SelectItem>
+                      <SelectItem value="PROVIDER">Proveedor de Servicios</SelectItem>
+                      <SelectItem value="MAINTENANCE">Servicio de Mantenimiento</SelectItem>
+                      <SelectItem value="SUPPORT">Soporte</SelectItem>
+                      <SelectItem value="ADMIN">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1001,7 +1003,7 @@ export default function AdminUsersPage() {
                       name: '',
                       email: '',
                       password: '',
-                      role: 'tenant',
+                      role: 'TENANT',
                     });
                   }}
                   disabled={creatingUser}
