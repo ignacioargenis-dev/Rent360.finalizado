@@ -46,6 +46,17 @@ export default function AdminUsersPage() {
   const user = useDashboardUser();
   const authLoading = false; // El layout ya manejó la carga
 
+  // 🔥 LOG PARA VER SI EL COMPONENTE SE RE-RENDERIZA
+  if (typeof window !== 'undefined') {
+    window.console.error('🔄 [USERS] Component rendering (every render):', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      userRole: user?.role,
+      authLoading,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   const [users, setUsers] = useState<User[]>([]);
 
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
