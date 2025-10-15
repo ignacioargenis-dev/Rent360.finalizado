@@ -362,30 +362,56 @@ export default function AdminUsersPage() {
   };
 
   const deleteUser = async (userId: string) => {
+    window.console.error('🗑️ [USERS] deleteUser called with userId:', userId);
+
     if (
       !confirm(
         '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.'
       )
     ) {
+      window.console.error('❌ [USERS] User cancelled deletion');
       return;
     }
 
+    window.console.error('✅ [USERS] User confirmed deletion, proceeding...');
+
     try {
+      window.console.error('📡 [USERS] Sending DELETE request to:', `/api/users/${userId}`);
+
       const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
 
+      window.console.error('📡 [USERS] DELETE response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
       if (response.ok) {
+        const responseData = await response.json();
+        window.console.error('✅ [USERS] Delete successful, response:', responseData);
+
+        window.console.error('🔄 [USERS] Calling fetchUsers() to refresh list...');
         await fetchUsers(); // Refresh the list
+
         setSuccessMessage('Usuario eliminado exitosamente');
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         const errorData = await response.json();
+        window.console.error('❌ [USERS] Delete failed:', {
+          status: response.status,
+          error: errorData,
+        });
         setErrorMessage(errorData.error || 'Error al eliminar el usuario');
         setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
+      window.console.error('❌ [USERS] Exception during delete:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       logger.error('Error deleting user:', {
         error: error instanceof Error ? error.message : String(error),
       });
