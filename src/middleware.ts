@@ -105,9 +105,11 @@ export async function middleware(request: NextRequest) {
       'Permissions-Policy',
       'camera=(), microphone=(), geolocation=(self), payment=()'
     );
-    response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+
+    // ⚠️ TEMPORALMENTE DESHABILITADO: Estos headers bloqueaban la ejecución de Next.js
+    // response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+    // response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    // response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
 
     // Content Security Policy (CSP) optimizado para producción
     const csp = [
