@@ -64,41 +64,77 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        {/* SCRIPT DE EMERGENCIA: Desinstalar TODOS los Service Workers INMEDIATAMENTE */}
+        {/* SCRIPT DE DIAGNÓSTICO: Verificar si JavaScript se está ejecutando */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                if ('serviceWorker' in navigator) {
-                  console.error('🚨 [EMERGENCY] Unregistering ALL Service Workers...');
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    console.error('🔍 [EMERGENCY] Found', registrations.length, 'Service Worker(s)');
-                    for(let registration of registrations) {
-                      registration.unregister().then(function(success) {
-                        if (success) {
-                          console.error('✅ [EMERGENCY] Service Worker unregistered successfully');
-                        } else {
-                          console.error('❌ [EMERGENCY] Service Worker unregister failed');
-                        }
-                      });
-                    }
-                  });
-                  
-                  // También limpiar TODAS las cachés
-                  if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                      console.error('🗑️ [EMERGENCY] Deleting', names.length, 'cache(s)');
-                      for (let name of names) {
-                        caches.delete(name).then(function() {
-                          console.error('✅ [EMERGENCY] Cache deleted:', name);
-                        });
+              console.log('🟢 [DIAGNOSTIC] JavaScript IS EXECUTING');
+              console.log('🔍 [DIAGNOSTIC] User Agent:', navigator.userAgent);
+              console.log('🔍 [DIAGNOSTIC] Location:', window.location.href);
+              console.log('🔍 [DIAGNOSTIC] React:', typeof React);
+              console.log('🔍 [DIAGNOSTIC] Next:', typeof __NEXT_DATA__);
+              
+              // Verificar si hay errores globales
+              window.addEventListener('error', function(event) {
+                console.error('❌ [DIAGNOSTIC] Global Error:', event.error);
+              });
+              
+              window.addEventListener('unhandledrejection', function(event) {
+                console.error('❌ [DIAGNOSTIC] Unhandled Rejection:', event.reason);
+              });
+              
+              // Service Worker cleanup
+              if ('serviceWorker' in navigator) {
+                console.log('🚨 [DIAGNOSTIC] Unregistering ALL Service Workers...');
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  console.log('🔍 [DIAGNOSTIC] Found', registrations.length, 'Service Worker(s)');
+                  for(let registration of registrations) {
+                    registration.unregister().then(function(success) {
+                      if (success) {
+                        console.log('✅ [DIAGNOSTIC] Service Worker unregistered');
+                      } else {
+                        console.error('❌ [DIAGNOSTIC] Service Worker unregister failed');
                       }
                     });
                   }
-                } else {
-                  console.error('ℹ️ [EMERGENCY] Service Workers not supported');
+                });
+                
+                // Limpiar cachés
+                if ('caches' in window) {
+                  caches.keys().then(function(names) {
+                    console.log('🗑️ [DIAGNOSTIC] Deleting', names.length, 'cache(s)');
+                    for (let name of names) {
+                      caches.delete(name).then(function() {
+                        console.log('✅ [DIAGNOSTIC] Cache deleted:', name);
+                      });
+                    }
+                  });
                 }
-              })();
+              }
+              
+              // Verificar hydration
+              window.addEventListener('DOMContentLoaded', function() {
+                console.log('🟢 [DIAGNOSTIC] DOMContentLoaded fired');
+                setTimeout(function() {
+                  console.log('🔍 [DIAGNOSTIC] Checking React hydration...');
+                  const rootDiv = document.getElementById('__next');
+                  if (rootDiv) {
+                    console.log('🟢 [DIAGNOSTIC] #__next found, children:', rootDiv.children.length);
+                    
+                    // Verificar si los botones tienen event listeners
+                    const buttons = document.querySelectorAll('button');
+                    console.log('🔍 [DIAGNOSTIC] Found', buttons.length, 'buttons');
+                    if (buttons.length > 0) {
+                      const firstButton = buttons[0];
+                      const hasClickListener = firstButton.onclick !== null || 
+                                              firstButton.getAttribute('onclick') !== null;
+                      console.log('🔍 [DIAGNOSTIC] First button has onclick:', hasClickListener);
+                    }
+                  } else {
+                    console.error('❌ [DIAGNOSTIC] #__next NOT found!');
+                  }
+                }, 1000);
+              });
             `,
           }}
         />
