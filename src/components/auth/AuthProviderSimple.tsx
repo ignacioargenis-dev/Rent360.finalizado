@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Iniciar con loading true
+  const [loading, setLoading] = useState(false); // ⚠️ TEMPORALMENTE: Iniciar con loading false para evitar problemas de hidratación
 
   // Función para verificar autenticación
   const checkAuth = async () => {
@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ⚠️ TEMPORALMENTE DESHABILITADO: Auth check automático que causa problemas de hidratación
+  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+  /*
   // Auth check automático al cargar el AuthProvider
   useEffect(() => {
     let retryTimeout: NodeJS.Timeout;
@@ -120,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+  */
 
   const login = async (email: string, password: string) => {
     try {
