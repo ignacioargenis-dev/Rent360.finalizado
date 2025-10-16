@@ -46,7 +46,7 @@ interface DashboardStats {
 
 interface RecentActivity {
   id: string;
-  type: 'property' | 'contract' | 'payment' | 'message' | 'rating';
+  type: 'property' | 'contract' | 'payment' | 'message' | 'rating' | 'system';
   title: string;
   description: string;
   date: string;
@@ -77,10 +77,12 @@ export default function OwnerDashboard() {
   const [recentProperties, setRecentProperties] = useState<PropertySummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // Cargar datos reales del dashboard desde las APIs de forma secuencial para evitar sobrecarga
       try {
@@ -195,11 +197,11 @@ export default function OwnerDashboard() {
           });
         });
 
-        // Agregar actividad de propiedades recientes
+        // Agregar actividad de propiedades recientes - CAMBIADO DE 'property' A 'system'
         properties.slice(0, 1).forEach((prop: any) => {
           activities.push({
             id: `property-${prop.id}`,
-            type: 'property' as const,
+            type: 'system' as const, // Cambiado de 'property' a 'system'
             title: 'Nueva propiedad',
             description: `Propiedad "${prop.title}" agregada`,
             date: prop.createdAt
@@ -256,9 +258,33 @@ export default function OwnerDashboard() {
       setLoading(false);
     } catch (error) {
       logger.error('Error loading dashboard data:', { error });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido al cargar datos';
+
+      // En caso de error, mostrar datos vacíos pero no dejar loading forever
+      setStats({
+        totalProperties: 0,
+        activeContracts: 0,
+        monthlyRevenue: 0,
+        pendingPayments: 0,
+        averageRating: 0,
+        totalTenants: 0,
+      });
+      setRecentProperties([]);
+      setRecentActivity([
+        {
+          id: 'error',
+          type: 'message',
+          title: 'Error al cargar datos',
+          description: 'Hubo un problema al cargar los datos del dashboard. Inténtalo de nuevo.',
+          date: new Date().toISOString().split('T')[0]!,
+          status: 'ERROR',
+        },
+      ]);
+      setError(errorMessage);
       setLoading(false);
     }
-  }, [user]);
+  }, []); // Removido 'user' de las dependencias para evitar loops infinitos
 
   useEffect(() => {
     if (user) {
@@ -311,6 +337,7 @@ export default function OwnerDashboard() {
     payment: CreditCard,
     message: MessageCircle,
     rating: Star,
+    system: Building, // Icono para actividades del sistema
     default: Star,
   };
 
@@ -321,6 +348,7 @@ export default function OwnerDashboard() {
     payment: 'text-green-600 bg-green-50',
     message: 'text-orange-600 bg-orange-50',
     rating: 'text-yellow-600 bg-yellow-50',
+    system: 'text-blue-600 bg-blue-50', // Color para actividades del sistema
     default: 'text-gray-600 bg-gray-50',
   };
 
@@ -351,6 +379,34 @@ export default function OwnerDashboard() {
           <p className="text-gray-600 mt-2">Por favor, inicia sesión nuevamente</p>
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout
+        user={user}
+        title="Panel de Control de Propietario"
+        subtitle="Gestiona tus propiedades e ingresos"
+      >
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h2 className="text-lg font-semibold text-red-800 mb-2">
+                Error al cargar el dashboard
+              </h2>
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+            <Button
+              onClick={loadDashboardData}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Intentar de nuevo
+            </Button>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
     );
   }
 
@@ -665,32 +721,34 @@ export default function OwnerDashboard() {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
-                    {recentActivity.map(activity => (
-                      <ActivityItem
-                        key={activity.id}
-                        id={activity.id}
-                        type={
-                          activity.type === 'property'
-                            ? 'system'
-                            : (activity.type as
-                                | 'payment'
-                                | 'maintenance'
-                                | 'contract'
-                                | 'message'
-                                | 'system')
-                        }
-                        title={activity.title}
-                        description={activity.description}
-                        user={{
-                          id: '1',
-                          name: 'Usuario',
-                          email: 'usuario@ejemplo.com',
-                        }}
-                        timestamp={new Date(activity.date)}
-                        icon={iconMap[activity.type] || Home}
-                        onView={() => {}}
-                      />
-                    ))}
+                    {recentActivity.map(activity => {
+                      // Mapear el tipo de actividad al tipo esperado por ActivityItem
+                      const activityType = activity.type === 'property' ? 'system' : activity.type;
+                      return (
+                        <ActivityItem
+                          key={activity.id}
+                          id={activity.id}
+                          type={
+                            activityType as
+                              | 'payment'
+                              | 'maintenance'
+                              | 'contract'
+                              | 'message'
+                              | 'system'
+                          }
+                          title={activity.title}
+                          description={activity.description}
+                          user={{
+                            id: '1',
+                            name: 'Usuario',
+                            email: 'usuario@ejemplo.com',
+                          }}
+                          timestamp={new Date(activity.date)}
+                          icon={iconMap[activityType as keyof typeof iconMap] || Home}
+                          onView={() => {}}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               </div>
