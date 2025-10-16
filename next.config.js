@@ -29,9 +29,9 @@ const nextConfig = {
   // generateBuildId: async () => {
   //   return 'build-' + Date.now();
   // },
-  // ⚠️ TEMPORALMENTE DESHABILITADO: Servidor personalizado para debugging
+  // ⚠️ TEMPORALMENTE DESHABILITADO: output standalone para debugging
   // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-  output: 'standalone', // Usar servidor estándar de Next.js
+  // output: 'standalone', // Deshabilitado para usar next start
   poweredByHeader: false,
   // ⚠️ TEMPORALMENTE DESHABILITADO: Configuración webpack personalizada para debugging
   // TODO: Re-habilitar cuando se confirme que el dashboard funciona
