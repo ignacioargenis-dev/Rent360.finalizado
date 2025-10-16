@@ -1073,6 +1073,164 @@ export default function NewPropertyPage() {
                           })}
                         </div>
                       </div>
+
+                      {/* Nuevas características adicionales */}
+                      <div className="mt-6">
+                        <h4 className="text-md font-semibold mb-4">Características Adicionales</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Amoblado */}
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id="furnished"
+                              checked={formData.furnished}
+                              onChange={e => handleInputChange('furnished', e.target.checked)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label
+                              htmlFor="furnished"
+                              className="ml-2 text-sm font-medium text-gray-700"
+                            >
+                              Amoblado
+                            </label>
+                          </div>
+
+                          {/* Permitido mascotas */}
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id="petFriendly"
+                              checked={formData.petFriendly}
+                              onChange={e => handleInputChange('petFriendly', e.target.checked)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label
+                              htmlFor="petFriendly"
+                              className="ml-2 text-sm font-medium text-gray-700"
+                            >
+                              Permitido mascotas
+                            </label>
+                          </div>
+
+                          {/* Número de estacionamientos */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Número de estacionamientos
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="0"
+                              value={formData.parkingSpaces || ''}
+                              onChange={e =>
+                                handleInputChange('parkingSpaces', Number(e.target.value) || 0)
+                              }
+                            />
+                          </div>
+
+                          {/* Fecha de disponibilidad */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Fecha de disponibilidad
+                            </label>
+                            <input
+                              type="date"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              value={formData.availabilityDate || ''}
+                              onChange={e => handleInputChange('availabilityDate', e.target.value)}
+                            />
+                          </div>
+
+                          {/* Piso */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Piso
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="0"
+                              value={formData.floor || ''}
+                              onChange={e =>
+                                handleInputChange('floor', Number(e.target.value) || 0)
+                              }
+                            />
+                          </div>
+
+                          {/* Nombre del edificio */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Nombre del edificio
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Ej: Torre Providencia"
+                              value={formData.buildingName || ''}
+                              onChange={e => handleInputChange('buildingName', e.target.value)}
+                            />
+                          </div>
+
+                          {/* Año de construcción */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Año de construcción
+                            </label>
+                            <input
+                              type="number"
+                              min="1800"
+                              max={new Date().getFullYear()}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="2020"
+                              value={formData.yearBuilt || ''}
+                              onChange={e =>
+                                handleInputChange(
+                                  'yearBuilt',
+                                  Number(e.target.value) || new Date().getFullYear()
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Servicios y comodidades */}
+                      <div className="mt-6">
+                        <h4 className="text-md font-semibold mb-4">Servicios y Comodidades</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {[
+                            { id: 'heating', label: 'Calefacción', key: 'heating' },
+                            { id: 'cooling', label: 'Aire acondicionado', key: 'cooling' },
+                            { id: 'internet', label: 'Internet', key: 'internet' },
+                            { id: 'elevator', label: 'Ascensor', key: 'elevator' },
+                            { id: 'balcony', label: 'Balcón', key: 'balcony' },
+                            { id: 'terrace', label: 'Terraza', key: 'terrace' },
+                            { id: 'garden', label: 'Jardín', key: 'garden' },
+                            { id: 'pool', label: 'Piscina', key: 'pool' },
+                            { id: 'gym', label: 'Gimnasio', key: 'gym' },
+                            { id: 'security', label: 'Seguridad 24/7', key: 'security' },
+                            { id: 'concierge', label: 'Conserje', key: 'concierge' },
+                          ].map(service => (
+                            <div key={service.id} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={service.id}
+                                checked={formData[service.key as keyof PropertyFormData] as boolean}
+                                onChange={e => handleInputChange(service.key, e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label
+                                htmlFor={service.id}
+                                className="ml-2 text-sm font-medium text-gray-700"
+                              >
+                                {service.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
