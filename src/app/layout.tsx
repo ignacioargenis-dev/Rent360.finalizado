@@ -92,7 +92,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               setTimeout(function() {
                 console.log('🔍 [DIAGNOSTIC] Checking Next.js availability after 3 seconds...');
                 console.log('🔍 [DIAGNOSTIC] window.__NEXT_DATA__:', typeof window.__NEXT_DATA__);
-                console.log('🔍 [DIAGNOSTIC] window.__NEXT_DATA__ content:', window.__NEXT_DATA__);
                 console.log('🔍 [DIAGNOSTIC] window.React:', typeof window.React);
                 console.log('🔍 [DIAGNOSTIC] window.next:', typeof window.next);
                 
@@ -100,27 +99,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 const nextElement = document.getElementById('__next');
                 console.log('🔍 [DIAGNOSTIC] #__next element:', nextElement);
                 
-                // VERIFICAR HTML COMPLETO PARA __NEXT_DATA__
+                // VERIFICAR HTML COMPLETO PARA __NEXT_DATA__ (VERSION SIMPLE)
                 console.log('🔍 [DIAGNOSTIC] Checking HTML for __NEXT_DATA__ script...');
                 const htmlContent = document.documentElement.outerHTML;
                 const hasNextDataScript = htmlContent.includes('__NEXT_DATA__');
                 console.log('🔍 [DIAGNOSTIC] HTML contains __NEXT_DATA__ script:', hasNextDataScript);
                 
-                if (hasNextDataScript) {
-                  const scriptMatch = htmlContent.match(/<script[^>]*>.*?__NEXT_DATA__.*?<\/script>/);
-                  if (scriptMatch) {
-                    console.log('🔍 [DIAGNOSTIC] Found __NEXT_DATA__ script:', scriptMatch[0].substring(0, 200) + '...');
-                  }
-                } else {
+                if (!hasNextDataScript) {
                   console.error('❌ [DIAGNOSTIC] __NEXT_DATA__ script NOT FOUND in HTML!');
                 }
-                
-                // Verificar si hay algún error en la consola
-                const originalError = console.error;
-                console.error = function(...args) {
-                  console.log('🚨 [DIAGNOSTIC] Console Error Captured:', args);
-                  originalError.apply(console, args);
-                };
               }, 3000);
               
               // Service Worker cleanup
