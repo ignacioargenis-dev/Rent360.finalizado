@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as jwt from 'jsonwebtoken';
 
-// ⚠️ VERSIÓN DE EMERGENCIA SIN RATE LIMITING
-// Usar SOLO hasta que DigitalOcean actualice el código
-
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
   '/',
@@ -20,7 +17,6 @@ const PUBLIC_ROUTES = [
   '/favicon.ico',
   '/images',
   '/static',
-  '/uploads',
 ];
 
 // Mapeo de rutas protegidas y los roles permitidos
@@ -101,7 +97,6 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // ✅ SIN RATE LIMITING - Permitir todas las requests
   return NextResponse.next();
 }
 
@@ -115,6 +110,5 @@ export const config = {
     '/broker/:path*',
     '/runner/:path*',
     '/support/:path*',
-    '/api/:path*', // Agregado para asegurar que APIs pasen
   ],
 };
