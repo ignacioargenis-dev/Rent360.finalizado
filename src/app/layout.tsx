@@ -112,6 +112,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 }
               }
               
+              // FORZAR LIMPIEZA DE CACHE DEL NAVEGADOR
+              console.log('🧹 [DIAGNOSTIC] Forcing browser cache cleanup...');
+              if ('caches' in window) {
+                // Limpiar todos los caches
+                caches.keys().then(function(cacheNames) {
+                  return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                      console.log('🗑️ [DIAGNOSTIC] Deleting cache:', cacheName);
+                      return caches.delete(cacheName);
+                    })
+                  );
+                }).then(function() {
+                  console.log('✅ [DIAGNOSTIC] All caches cleared');
+                });
+              }
+              
+              // Verificar si hay chunks de Next.js cargados
+              setTimeout(function() {
+                console.log('🔍 [DIAGNOSTIC] Checking Next.js chunks...');
+                const scripts = document.querySelectorAll('script[src*="_next/static"]');
+                console.log('🔍 [DIAGNOSTIC] Found', scripts.length, 'Next.js script tags');
+                scripts.forEach(function(script, index) {
+                  console.log('🔍 [DIAGNOSTIC] Script', index + 1, ':', script.src);
+                });
+              }, 2000);
+              
               // Verificar hydration
               window.addEventListener('DOMContentLoaded', function() {
                 console.log('🟢 [DIAGNOSTIC] DOMContentLoaded fired');
