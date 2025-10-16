@@ -156,9 +156,7 @@ class PWAService {
   }
 
   private async registerServiceWorker() {
-    // ⚠️ TEMPORALMENTE DESHABILITADO: Service Worker que causa errores 404
-    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-    /*
+    // ✅ RESTAURADO: Service Worker con manejo seguro de errores
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -166,6 +164,9 @@ class PWAService {
         });
 
         console.log('Service Worker registrado:', { scope: registration.scope });
+
+        this.isServiceWorkerSupported = true;
+        this.isServiceWorkerActive = true;
 
         // Escuchar actualizaciones del service worker
         registration.addEventListener('updatefound', () => {
@@ -182,9 +183,10 @@ class PWAService {
         console.warn('Error al registrar Service Worker:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        this.isServiceWorkerSupported = false;
+        this.isServiceWorkerActive = false;
       }
     }
-    */
   }
 
   private async setupOfflineCache() {

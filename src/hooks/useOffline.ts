@@ -307,11 +307,11 @@ export function useServiceWorker() {
   }, []);
 
   const registerServiceWorker = async () => {
-    // ⚠️ TEMPORALMENTE DESHABILITADO: Service Worker que causa errores 404
-    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-    /*
+    // ✅ RESTAURADO: Service Worker con manejo seguro de errores
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+      });
 
       console.log('Service Worker registrado:', { scope: registration.scope });
 
@@ -341,7 +341,7 @@ export function useServiceWorker() {
       // ⚡ OPTIMIZACIÓN: Escuchar mensajes del service worker con throttling
       let lastMessageTime = 0;
       const MESSAGE_THROTTLE_MS = 100; // Throttle messages to max 10 per second
-      
+
       navigator.serviceWorker.addEventListener('message', event => {
         const now = Date.now();
         if (now - lastMessageTime < MESSAGE_THROTTLE_MS) {
@@ -368,8 +368,8 @@ export function useServiceWorker() {
       });
     } catch (error) {
       console.warn('Error registrando Service Worker:', error);
+      setIsRegistered(false);
     }
-    */
   };
 
   const updateServiceWorker = () => {
