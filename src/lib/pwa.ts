@@ -23,6 +23,8 @@ class PWAService {
   private isInstalled = false;
   private isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
   private isInitialized = false;
+  private isServiceWorkerSupported = false;
+  private isServiceWorkerActive = false;
   private config: PWAConfig = {
     name: 'Rent360 - Plataforma de Arrendamiento Inteligente',
     shortName: 'Rent360',
