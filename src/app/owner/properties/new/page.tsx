@@ -597,7 +597,7 @@ export default function NewPropertyPage() {
       // Create FormData for file upload
       const formDataToSend = new FormData();
 
-      // Add all property data
+      // Add all property data (solo campos que el backend espera)
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
@@ -610,13 +610,7 @@ export default function NewPropertyPage() {
       formDataToSend.append('bathrooms', formData.bathrooms.toString());
       formDataToSend.append('area', formData.area.toString());
       formDataToSend.append('type', formData.propertyType);
-      formDataToSend.append('furnished', formData.features.includes('furnished').toString());
-      formDataToSend.append('petFriendly', formData.features.includes('pets').toString());
-      formDataToSend.append('parkingSpaces', formData.features.includes('parking') ? '1' : '0');
-      formDataToSend.append('availableFrom', formData.availabilityDate);
-      formDataToSend.append('contactName', user?.name || '');
-      formDataToSend.append('contactPhone', user?.phone || '');
-      formDataToSend.append('contactEmail', user?.email || '');
+      // El backend procesa 'features' como array de strings
       formDataToSend.append('features', JSON.stringify(formData.features));
 
       // Add images

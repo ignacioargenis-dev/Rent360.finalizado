@@ -39,13 +39,31 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Guardar información del usuario en localStorage para el AuthProvider
+        try {
+          const userData = data.user;
+          localStorage.setItem(
+            'user',
+            JSON.stringify({
+              id: userData.id,
+              email: userData.email,
+              name: userData.name,
+              role: userData.role.toUpperCase(), // Asegurar que esté en mayúsculas
+              avatar: userData.avatar,
+            })
+          );
+          localStorage.setItem('userLoginTime', Date.now().toString());
+        } catch (storageError) {
+          logger.warn('Error guardando en localStorage:', storageError);
+        }
+
         // Redirigir al dashboard correspondiente
         const dashboardUrl = getDashboardUrl(data.user.role);
         try {
           sessionStorage.setItem('r360_splash_after_login', '1');
         } catch {}
         router.push(dashboardUrl);
-        router.refresh();
+        // No necesitamos router.refresh() aquí porque el AuthProvider se actualizará automáticamente
       } else {
         setError(data.error || 'Error al iniciar sesión');
       }

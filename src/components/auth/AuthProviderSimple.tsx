@@ -181,21 +181,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       try {
         const cachedUser = localStorage.getItem('user');
-        if (cachedUser) {
-          const parsedUser = JSON.parse(cachedUser);
-          // Validar que tenga la estructura correcta
-          if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
-            // Normalizar rol a MAYÚSCULAS
-            const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
+        const userLoginTime = localStorage.getItem('userLoginTime');
 
-            const completeUser = {
-              ...parsedUser,
-              role: normalizedRole,
-              createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
-              updatedAt: new Date(),
-            };
+        if (cachedUser && userLoginTime) {
+          const loginTime = parseInt(userLoginTime);
+          const now = Date.now();
+          const timeSinceLogin = now - loginTime;
 
-            setUser(completeUser);
+          // Solo usar localStorage si el login fue hace menos de 15 minutos
+          if (timeSinceLogin < 15 * 60 * 1000) {
+            const parsedUser = JSON.parse(cachedUser);
+            // Validar que tenga la estructura correcta
+            if (parsedUser && parsedUser.id && parsedUser.email && parsedUser.role) {
+              // Normalizar rol a MAYÚSCULAS
+              const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
+
+              const completeUser = {
+                ...parsedUser,
+                role: normalizedRole,
+                createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
+                updatedAt: new Date(),
+              };
+
+              setUser(completeUser);
+              setLoading(false); // Usuario cargado, no necesitamos loading
+            }
+          } else {
+            // localStorage expirado, limpiar
+            localStorage.removeItem('user');
+            localStorage.removeItem('userLoginTime');
           }
         }
       } catch (error) {
@@ -205,12 +219,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // SEGUNDO: Verificar con el servidor para datos frescos
+    // SEGUNDO: Verificar con el servidor para datos frescos (solo si no hay usuario en localStorage)
     const performAuthCheck = async () => {
       try {
         await checkAuth();
       } catch (error) {
-        // Si falla, programar un reintento en 2 segundos
+        // Si falla, programar un reintento en 3 segundos
         if (typeof window !== 'undefined') {
           retryTimeout = setTimeout(async () => {
             try {
@@ -218,12 +232,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch (retryError) {
               console.warn('Auth retry también falló:', retryError);
             }
-          }, 2000);
+          }, 3000);
         }
       }
     };
 
-    performAuthCheck();
+    // Solo verificar con servidor si no tenemos usuario de localStorage
+    if (!user) {
+      performAuthCheck();
+    }
 
     // Cleanup timeout on unmount
     return () => {
@@ -232,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     try {

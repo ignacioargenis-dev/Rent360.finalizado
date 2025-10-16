@@ -79,9 +79,12 @@ export default async function middleware(request: NextRequest) {
 
       // Verificar si el usuario tiene el rol requerido
       if (!normalizedRequiredRoles.includes(userRole)) {
-        // Redirigir a página de acceso denegado o dashboard apropiado
+        // Redirigir al login con mensaje de error
         const url = request.nextUrl.clone();
-        url.pathname = '/auth/access-denied';
+        url.pathname = '/auth/login';
+        url.searchParams.set('error', 'access_denied');
+        url.searchParams.set('required_roles', normalizedRequiredRoles.join(','));
+        url.searchParams.set('user_role', userRole);
         return NextResponse.redirect(url);
       }
     } catch (error) {
