@@ -75,9 +75,36 @@ export async function POST(request: NextRequest) {
     const bathrooms = parseInt(formData.get('bathrooms') as string);
     const area = parseFloat(formData.get('area') as string);
     const type = formData.get('type') as string;
+
     // Campos opcionales que pueden no estar en el esquema
     const featuresStr = formData.get('features') as string;
     const features = featuresStr ? JSON.parse(featuresStr) : [];
+
+    // Nuevos campos de características
+    const furnished = formData.get('furnished') === 'true';
+    const petFriendly = formData.get('petFriendly') === 'true';
+    const parkingSpaces = parseInt(formData.get('parkingSpaces') as string) || 0;
+    const availableFrom = formData.get('availableFrom')
+      ? new Date(formData.get('availableFrom') as string)
+      : undefined;
+    const floor = formData.get('floor') ? parseInt(formData.get('floor') as string) : undefined;
+    const buildingName = (formData.get('buildingName') as string) || undefined;
+    const yearBuilt = formData.get('yearBuilt')
+      ? parseInt(formData.get('yearBuilt') as string)
+      : undefined;
+
+    // Características del edificio/servicios
+    const heating = formData.get('heating') === 'true';
+    const cooling = formData.get('cooling') === 'true';
+    const internet = formData.get('internet') === 'true';
+    const elevator = formData.get('elevator') === 'true';
+    const balcony = formData.get('balcony') === 'true';
+    const terrace = formData.get('terrace') === 'true';
+    const garden = formData.get('garden') === 'true';
+    const pool = formData.get('pool') === 'true';
+    const gym = formData.get('gym') === 'true';
+    const security = formData.get('security') === 'true';
+    const concierge = formData.get('concierge') === 'true';
 
     // Validar datos con Zod
     const propertyData = {
@@ -95,6 +122,25 @@ export async function POST(request: NextRequest) {
       type,
       status: 'PENDING' as const, // Todas las nuevas propiedades empiezan como pendientes
       features,
+      // Nuevos campos
+      furnished,
+      petFriendly,
+      parkingSpaces,
+      availableFrom,
+      floor,
+      buildingName,
+      yearBuilt,
+      heating,
+      cooling,
+      internet,
+      elevator,
+      balcony,
+      terrace,
+      garden,
+      pool,
+      gym,
+      security,
+      concierge,
     };
 
     const validationResult = propertySchema.safeParse(propertyData);
@@ -138,6 +184,25 @@ export async function POST(request: NextRequest) {
         ownerId,
         brokerId,
         createdBy: decoded.id,
+        // Nuevos campos - convertir undefined a null para compatibilidad con Prisma
+        furnished,
+        petFriendly,
+        parkingSpaces,
+        availableFrom: availableFrom || null,
+        floor: floor || null,
+        buildingName: buildingName || null,
+        yearBuilt: yearBuilt || null,
+        heating,
+        cooling,
+        internet,
+        elevator,
+        balcony,
+        terrace,
+        garden,
+        pool,
+        gym,
+        security,
+        concierge,
       },
     });
 
@@ -259,6 +324,25 @@ export async function GET(request: NextRequest) {
         ownerId: 'owner-1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Nuevos campos con valores por defecto
+        furnished: false,
+        petFriendly: false,
+        parkingSpaces: 0,
+        availableFrom: undefined,
+        floor: undefined,
+        buildingName: undefined,
+        yearBuilt: undefined,
+        heating: false,
+        cooling: false,
+        internet: false,
+        elevator: false,
+        balcony: false,
+        terrace: false,
+        garden: false,
+        pool: false,
+        gym: false,
+        security: false,
+        concierge: false,
       },
     ];
 

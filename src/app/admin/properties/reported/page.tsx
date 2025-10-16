@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Filter, Search, AlertTriangle, Eye, CheckCircle } from 'lucide-react';
@@ -94,6 +93,26 @@ export default function AdminReportedPropertiesPage() {
             updatedAt: new Date('2024-01-15'),
             features: 'Estacionamiento, Seguridad 24/7',
             images: '/images/prop1-1.jpg, /images/prop1-2.jpg',
+
+            // Nuevos campos con valores por defecto
+            furnished: true,
+            petFriendly: false,
+            parkingSpaces: 1,
+            availableFrom: new Date('2024-02-01'),
+            floor: 5,
+            buildingName: 'Torre Providencia',
+            yearBuilt: 2018,
+            heating: true,
+            cooling: true,
+            internet: true,
+            elevator: true,
+            balcony: true,
+            terrace: false,
+            garden: false,
+            pool: true,
+            gym: true,
+            security: true,
+            concierge: false,
           },
           reporter: {
             name: 'Juan P�rez',
@@ -132,6 +151,26 @@ export default function AdminReportedPropertiesPage() {
             updatedAt: new Date('2024-01-10'),
             features: 'Jard�n, Estacionamiento, Seguridad',
             images: '/images/prop2-1.jpg, /images/prop2-2.jpg',
+
+            // Nuevos campos con valores por defecto
+            furnished: false,
+            petFriendly: true,
+            parkingSpaces: 2,
+            availableFrom: new Date('2024-02-01'),
+            floor: null,
+            buildingName: null,
+            yearBuilt: 2015,
+            heating: true,
+            cooling: false,
+            internet: true,
+            elevator: false,
+            balcony: false,
+            terrace: true,
+            garden: true,
+            pool: false,
+            gym: false,
+            security: true,
+            concierge: false,
           },
           reporter: {
             name: 'Mar�a Gonz�lez',

@@ -37,6 +37,28 @@ interface PropertyData {
   description: string;
   features: string[];
   images: string[];
+
+  // Nuevos campos de características
+  furnished: boolean;
+  petFriendly: boolean;
+  parkingSpaces: number;
+  availableFrom: Date;
+  floor: number;
+  buildingName: string;
+  yearBuilt: number;
+
+  // Características del edificio/servicios
+  heating: boolean;
+  cooling: boolean;
+  internet: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  terrace: boolean;
+  garden: boolean;
+  pool: boolean;
+  gym: boolean;
+  security: boolean;
+  concierge: boolean;
 }
 
 const PROPERTY_TYPES = ['Apartamento', 'Casa', 'Oficina', 'Local Comercial', 'Bodega', 'Otro'];
@@ -83,6 +105,28 @@ export default function OwnerPropertyEditPage() {
     description: '',
     features: [],
     images: [],
+
+    // Nuevos campos con valores por defecto
+    furnished: false,
+    petFriendly: false,
+    parkingSpaces: 0,
+    availableFrom: new Date(),
+    floor: 0,
+    buildingName: '',
+    yearBuilt: new Date().getFullYear(),
+
+    // Características del edificio/servicios con valores por defecto
+    heating: false,
+    cooling: false,
+    internet: false,
+    elevator: false,
+    balcony: false,
+    terrace: false,
+    garden: false,
+    pool: false,
+    gym: false,
+    security: false,
+    concierge: false,
   });
 
   const [newImages, setNewImages] = useState<File[]>([]);
@@ -115,6 +159,26 @@ export default function OwnerPropertyEditPage() {
       'Terraza',
     ],
     images: ['/api/placeholder/600/400', '/api/placeholder/600/400', '/api/placeholder/600/400'],
+
+    // Nuevos campos de características de propiedad
+    furnished: true,
+    petFriendly: true,
+    parkingSpaces: 1,
+    availableFrom: new Date('2024-01-15'),
+    floor: 8,
+    buildingName: 'Torre Providencia',
+    yearBuilt: 2018,
+    heating: true,
+    cooling: true,
+    internet: true,
+    elevator: true,
+    balcony: true,
+    terrace: false,
+    garden: false,
+    pool: true,
+    gym: true,
+    security: true,
+    concierge: false,
   };
 
   useEffect(() => {

@@ -49,8 +49,30 @@ interface PropertyFormData {
   area: number;
   propertyType: 'apartment' | 'house' | 'office' | 'commercial' | 'room';
   features: string[];
-  images: File[];
+
+  // Características adicionales
+  furnished: boolean;
+  petFriendly: boolean;
+  parkingSpaces: number;
   availabilityDate: string;
+  floor: number;
+  buildingName: string;
+  yearBuilt: number;
+
+  // Características del edificio/servicios
+  heating: boolean;
+  cooling: boolean;
+  internet: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  terrace: boolean;
+  garden: boolean;
+  pool: boolean;
+  gym: boolean;
+  security: boolean;
+  concierge: boolean;
+
+  images: File[];
   contactPreference: 'email' | 'phone' | 'whatsapp' | 'platform';
 }
 
@@ -392,8 +414,30 @@ export default function NewPropertyPage() {
     area: 0,
     propertyType: 'apartment',
     features: emptyFeatures,
-    images: emptyImages,
+
+    // Características adicionales con valores por defecto
+    furnished: false,
+    petFriendly: false,
+    parkingSpaces: 0,
     availabilityDate: '',
+    floor: 0,
+    buildingName: '',
+    yearBuilt: new Date().getFullYear(),
+
+    // Características del edificio/servicios con valores por defecto
+    heating: false,
+    cooling: false,
+    internet: false,
+    elevator: false,
+    balcony: false,
+    terrace: false,
+    garden: false,
+    pool: false,
+    gym: false,
+    security: false,
+    concierge: false,
+
+    images: emptyImages,
     contactPreference: 'platform',
   });
   const [loading, setLoading] = useState(false);
@@ -597,7 +641,7 @@ export default function NewPropertyPage() {
       // Create FormData for file upload
       const formDataToSend = new FormData();
 
-      // Add all property data (solo campos que el backend espera)
+      // Add all property data (todos los campos que el backend espera)
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
@@ -610,8 +654,29 @@ export default function NewPropertyPage() {
       formDataToSend.append('bathrooms', formData.bathrooms.toString());
       formDataToSend.append('area', formData.area.toString());
       formDataToSend.append('type', formData.propertyType);
-      // El backend procesa 'features' como array de strings
       formDataToSend.append('features', JSON.stringify(formData.features));
+
+      // Características adicionales
+      formDataToSend.append('furnished', formData.furnished.toString());
+      formDataToSend.append('petFriendly', formData.petFriendly.toString());
+      formDataToSend.append('parkingSpaces', formData.parkingSpaces.toString());
+      formDataToSend.append('availableFrom', formData.availabilityDate);
+      formDataToSend.append('floor', formData.floor.toString());
+      formDataToSend.append('buildingName', formData.buildingName);
+      formDataToSend.append('yearBuilt', formData.yearBuilt.toString());
+
+      // Características del edificio/servicios
+      formDataToSend.append('heating', formData.heating.toString());
+      formDataToSend.append('cooling', formData.cooling.toString());
+      formDataToSend.append('internet', formData.internet.toString());
+      formDataToSend.append('elevator', formData.elevator.toString());
+      formDataToSend.append('balcony', formData.balcony.toString());
+      formDataToSend.append('terrace', formData.terrace.toString());
+      formDataToSend.append('garden', formData.garden.toString());
+      formDataToSend.append('pool', formData.pool.toString());
+      formDataToSend.append('gym', formData.gym.toString());
+      formDataToSend.append('security', formData.security.toString());
+      formDataToSend.append('concierge', formData.concierge.toString());
 
       // Add images
       formData.images.forEach((image, index) => {

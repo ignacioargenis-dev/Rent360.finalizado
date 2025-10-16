@@ -125,6 +125,35 @@ export interface Property {
   createdAt: Date;
   updatedAt: Date;
   owner?: User;
+
+  // Características adicionales
+  furnished: boolean;
+  petFriendly: boolean;
+  parkingSpaces: number;
+  availableFrom?: Date | null;
+  floor?: number | null;
+  buildingName?: string | null;
+  yearBuilt?: number | null;
+
+  // Características del edificio/servicios
+  heating: boolean;
+  cooling: boolean;
+  internet: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  terrace: boolean;
+  garden: boolean;
+  pool: boolean;
+  gym: boolean;
+  security: boolean;
+  concierge: boolean;
+
+  // Campos opcionales para compatibilidad
+  type?: string;
+  brokerId?: string | null;
+  currentTenant?: any;
+  averageRating?: number;
+  totalReviews?: number;
 }
 
 export interface Contract {

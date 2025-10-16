@@ -5,7 +5,16 @@ export const userSchema = z.object({
   id: z.string().optional(),
   email: z.string().email('Email inválido'),
   name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
-  role: z.enum(['ADMIN', 'OWNER', 'TENANT', 'BROKER', 'RUNNER', 'SUPPORT', 'MAINTENANCE_PROVIDER', 'SERVICE_PROVIDER']),
+  role: z.enum([
+    'ADMIN',
+    'OWNER',
+    'TENANT',
+    'BROKER',
+    'RUNNER',
+    'SUPPORT',
+    'MAINTENANCE_PROVIDER',
+    'SERVICE_PROVIDER',
+  ]),
   isActive: z.boolean().default(true),
   emailVerified: z.boolean().default(false),
   phoneVerified: z.boolean().default(false),
@@ -49,6 +58,36 @@ export const propertySchema = z.object({
   ownerId: z.string(),
   features: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
+
+  // Características adicionales
+  furnished: z.boolean().default(false),
+  petFriendly: z.boolean().default(false),
+  parkingSpaces: z
+    .number()
+    .int()
+    .min(0, 'Estacionamientos debe ser un número entero positivo')
+    .default(0),
+  availableFrom: z.date().optional(),
+  floor: z.number().int().min(0, 'Piso debe ser un número entero positivo').optional(),
+  buildingName: z.string().optional(),
+  yearBuilt: z
+    .number()
+    .int()
+    .min(1800, 'Año de construcción debe ser válido')
+    .max(new Date().getFullYear(), 'Año de construcción no puede ser futuro')
+    .optional(),
+  heating: z.boolean().default(false),
+  cooling: z.boolean().default(false),
+  internet: z.boolean().default(false),
+  elevator: z.boolean().default(false),
+  balcony: z.boolean().default(false),
+  terrace: z.boolean().default(false),
+  garden: z.boolean().default(false),
+  pool: z.boolean().default(false),
+  gym: z.boolean().default(false),
+  security: z.boolean().default(false),
+  concierge: z.boolean().default(false),
+
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -93,7 +132,9 @@ export const maintenanceSchema = z.object({
   title: z.string().min(5, 'Título debe tener al menos 5 caracteres'),
   description: z.string().min(10, 'Descripción debe tener al menos 10 caracteres'),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
-  status: z.enum(['pending', 'assigned', 'in_progress', 'completed', 'cancelled']).default('pending'),
+  status: z
+    .enum(['pending', 'assigned', 'in_progress', 'completed', 'cancelled'])
+    .default('pending'),
   assignedTo: z.string().optional(),
   estimatedCost: z.number().min(0, 'Costo estimado debe ser mayor o igual a 0').optional(),
   actualCost: z.number().min(0, 'Costo real debe ser mayor o igual a 0').optional(),
@@ -136,30 +177,41 @@ export const loginSchema = z.object({
   password: z.string().min(8, 'Contraseña debe tener al menos 8 caracteres'),
 });
 
-export const registerSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Contraseña debe tener al menos 8 caracteres'),
-  confirmPassword: z.string(),
-  name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
-  role: z.enum(['ADMIN', 'OWNER', 'TENANT', 'BROKER', 'RUNNER', 'SUPPORT', 'PROVIDER', 'MAINTENANCE']),
-  // Campos obligatorios en Chile
-  rut: z.string().min(1, 'RUT es obligatorio'),
-  // Campos opcionales
-  phone: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  gender: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  commune: z.string().optional(),
-  region: z.string().optional(),
-  // Campos adicionales de contacto
-  phoneSecondary: z.string().optional(),
-  emergencyContact: z.string().optional(),
-  emergencyPhone: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
+export const registerSchema = z
+  .object({
+    email: z.string().email('Email inválido'),
+    password: z.string().min(8, 'Contraseña debe tener al menos 8 caracteres'),
+    confirmPassword: z.string(),
+    name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
+    role: z.enum([
+      'ADMIN',
+      'OWNER',
+      'TENANT',
+      'BROKER',
+      'RUNNER',
+      'SUPPORT',
+      'PROVIDER',
+      'MAINTENANCE',
+    ]),
+    // Campos obligatorios en Chile
+    rut: z.string().min(1, 'RUT es obligatorio'),
+    // Campos opcionales
+    phone: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+    gender: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    commune: z.string().optional(),
+    region: z.string().optional(),
+    // Campos adicionales de contacto
+    phoneSecondary: z.string().optional(),
+    emergencyContact: z.string().optional(),
+    emergencyPhone: z.string().optional(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+  });
 
 // Esquemas de validación para búsqueda
 export const searchSchema = z.object({
@@ -179,30 +231,38 @@ export const filterSchema = z.object({
   status: z.enum(['all', 'available', 'rented', 'maintenance']).default('all'),
   sortBy: z.enum(['price', 'date', 'area', 'bedrooms']).default('date'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
-  dateRange: z.object({
-    start: z.date().optional(),
-    end: z.date().optional(),
-  }).optional(),
+  dateRange: z
+    .object({
+      start: z.date().optional(),
+      end: z.date().optional(),
+    })
+    .optional(),
 });
 
 // Funciones de validación personalizadas
 export const validateRut = (rut: string): boolean => {
-  if (!rut || typeof rut !== 'string') return false;
-  
+  if (!rut || typeof rut !== 'string') {
+    return false;
+  }
+
   // Limpiar RUT
   const cleanRut = rut.replace(/[.-]/g, '').toUpperCase();
-  
-  if (cleanRut.length < 2) return false;
-  
+
+  if (cleanRut.length < 2) {
+    return false;
+  }
+
   const body = cleanRut.slice(0, -1);
   const dv = cleanRut.slice(-1);
-  
-  if (!/^\d+$/.test(body)) return false;
-  
+
+  if (!/^\d+$/.test(body)) {
+    return false;
+  }
+
   // Calcular dígito verificador
   let sum = 0;
   let multiplier = 2;
-  
+
   for (let i = body.length - 1; i >= 0; i--) {
     const digit = body[i];
     if (digit && /^\d$/.test(digit)) {
@@ -212,56 +272,60 @@ export const validateRut = (rut: string): boolean => {
     }
     multiplier = multiplier === 7 ? 2 : multiplier + 1;
   }
-  
+
   const expectedDv = 11 - (sum % 11);
   const calculatedDv = expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
-  
+
   return dv === calculatedDv;
 };
 
 export const validatePhone = (phone: string): boolean => {
-  if (!phone) return false;
-  
+  if (!phone) {
+    return false;
+  }
+
   // Validar formato chileno: +56 9 1234 5678 o 9 1234 5678
   const phoneRegex = /^(\+56\s?)?9\s?\d{4}\s?\d{4}$/;
   return phoneRegex.test(phone.replace(/\s/g, ''));
 };
 
 export const validateEmail = (email: string): boolean => {
-  if (!email) return false;
-  
+  if (!email) {
+    return false;
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 export const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
-  
+
   if (!password) {
     errors.push('Contraseña es requerida');
     return { isValid: false, errors };
   }
-  
+
   if (password.length < 8) {
     errors.push('Contraseña debe tener al menos 8 caracteres');
   }
-  
+
   if (!/[A-Z]/.test(password)) {
     errors.push('Contraseña debe contener al menos una mayúscula');
   }
-  
+
   if (!/[a-z]/.test(password)) {
     errors.push('Contraseña debe contener al menos una minúscula');
   }
-  
+
   if (!/\d/.test(password)) {
     errors.push('Contraseña debe contener al menos un número');
   }
-  
+
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
     errors.push('Contraseña debe contener al menos un carácter especial');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -272,7 +336,7 @@ export const validateAmount = (amount: number, min: number, max: number): boolea
   if (typeof amount !== 'number' || isNaN(amount)) {
     return false;
   }
-  
+
   return amount >= min && amount <= max;
 };
 

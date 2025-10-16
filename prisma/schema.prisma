@@ -160,6 +160,26 @@ model Property {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  // Características adicionales de la propiedad
+  furnished      Boolean      @default(false) // Amoblado
+  petFriendly    Boolean      @default(false) // Acepta mascotas
+  parkingSpaces  Int          @default(0)     // Número de estacionamientos
+  availableFrom  DateTime?                    // Fecha de disponibilidad
+  floor          Int?                         // Piso (para departamentos)
+  buildingName   String?                      // Nombre del edificio
+  yearBuilt      Int?                         // Año de construcción
+  heating        Boolean      @default(false) // Calefacción
+  cooling        Boolean      @default(false) // Aire acondicionado
+  internet       Boolean      @default(false) // Internet incluido
+  elevator       Boolean      @default(false) // Ascensor
+  balcony        Boolean      @default(false) // Balcón
+  terrace        Boolean      @default(false) // Terraza
+  garden         Boolean      @default(false) // Jardín
+  pool           Boolean      @default(false) // Piscina
+  gym            Boolean      @default(false) // Gimnasio
+  security       Boolean      @default(false) // Seguridad 24/7
+  concierge      Boolean      @default(false) // Conserje
+
   // Relations
   owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   broker            User?              @relation("BrokerProperties", fields: [brokerId], references: [id], onDelete: SetNull)

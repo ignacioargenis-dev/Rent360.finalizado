@@ -80,6 +80,28 @@ interface PropertyDetail {
   };
   documents: Document[];
   notes: Note[];
+
+  // Nuevos campos de características
+  furnished: boolean;
+  petFriendly: boolean;
+  parkingSpaces: number;
+  availableFrom: Date;
+  floor?: number | null;
+  buildingName?: string | null;
+  yearBuilt?: number | null;
+
+  // Características del edificio/servicios
+  heating: boolean;
+  cooling: boolean;
+  internet: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  terrace: boolean;
+  garden: boolean;
+  pool: boolean;
+  gym: boolean;
+  security: boolean;
+  concierge: boolean;
 }
 
 interface MaintenanceRecord {
@@ -238,6 +260,26 @@ export default function OwnerPropertyDetailPage() {
         type: 'tenant',
       },
     ],
+
+    // Nuevos campos de características de propiedad
+    furnished: true,
+    petFriendly: true,
+    parkingSpaces: 1,
+    availableFrom: new Date('2024-01-15'),
+    floor: 8,
+    buildingName: 'Torre Providencia',
+    yearBuilt: 2018,
+    heating: true,
+    cooling: true,
+    internet: true,
+    elevator: true,
+    balcony: true,
+    terrace: false,
+    garden: false,
+    pool: true,
+    gym: true,
+    security: true,
+    concierge: false,
   };
 
   useEffect(() => {

@@ -190,6 +190,29 @@ export async function GET(request: NextRequest) {
       currentTenant: property.contracts[0]?.tenant || null,
       averageRating: safeAverage(property.reviews.map(review => review.rating)),
       totalReviews: property.reviews.length,
+
+      // Nuevos campos de características
+      furnished: property.furnished,
+      petFriendly: property.petFriendly,
+      parkingSpaces: property.parkingSpaces,
+      availableFrom: property.availableFrom,
+      floor: property.floor,
+      buildingName: property.buildingName,
+      yearBuilt: property.yearBuilt,
+
+      // Características del edificio/servicios
+      heating: property.heating,
+      cooling: property.cooling,
+      internet: property.internet,
+      elevator: property.elevator,
+      balcony: property.balcony,
+      terrace: property.terrace,
+      garden: property.garden,
+      pool: property.pool,
+      gym: property.gym,
+      security: property.security,
+      concierge: property.concierge,
+
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
     }));
