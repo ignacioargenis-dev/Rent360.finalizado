@@ -11,9 +11,12 @@ const nextConfig = {
   // Optimizaciones de performance
   swcMinify: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'] // Solo mantener errores críticos en producción
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
+            exclude: ['error', 'warn'], // Solo mantener errores críticos en producción
+          }
+        : false,
   },
   // Configuración experimental
   experimental: {
@@ -83,18 +86,19 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self), payment=()',
           },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',
-          },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Resource-Policy',
-            value: 'cross-origin',
-          },
+          // TEMPORALMENTE DESHABILITADO: Estos headers bloqueaban chunks de Next.js
+          // {
+          //   key: 'Cross-Origin-Embedder-Policy',
+          //   value: 'credentialless',
+          // },
+          // {
+          //   key: 'Cross-Origin-Opener-Policy',
+          //   value: 'same-origin',
+          // },
+          // {
+          //   key: 'Cross-Origin-Resource-Policy',
+          //   value: 'cross-origin',
+          // },
         ],
       },
       {
