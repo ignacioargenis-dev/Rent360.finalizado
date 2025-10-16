@@ -91,6 +91,10 @@ export default function OwnerPropertiesPage() {
       try {
         setLoading(true);
 
+        // Verificar si hay parámetro de refresh en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const shouldRefresh = urlParams.has('refresh');
+
         // Load user data
         const userResponse = await fetch('/api/auth/me');
         if (userResponse.ok) {
@@ -100,6 +104,13 @@ export default function OwnerPropertiesPage() {
 
         // Load properties data
         await loadPropertiesData();
+
+        // Si había parámetro de refresh, limpiarlo de la URL
+        if (shouldRefresh) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('refresh');
+          window.history.replaceState({}, '', url.toString());
+        }
       } catch (error) {
         logger.error('Error loading data:', {
           error: error instanceof Error ? error.message : String(error),
@@ -110,6 +121,16 @@ export default function OwnerPropertiesPage() {
     };
 
     loadData();
+  }, []);
+
+  // Re-cargar datos cuando la ventana obtiene foco (usuario regresa a la página)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadPropertiesData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   useEffect(() => {
@@ -139,10 +160,13 @@ export default function OwnerPropertiesPage() {
   const loadPropertiesData = async () => {
     try {
       // Cargar propiedades reales desde la API
-      const response = await fetch('/api/properties/list?limit=100', {
+      // Agregar timestamp para evitar cache y forzar refresh
+      const timestamp = Date.now();
+      const response = await fetch(`/api/properties/list?limit=100&_t=${timestamp}`, {
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
         },
       });
 

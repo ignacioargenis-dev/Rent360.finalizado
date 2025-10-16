@@ -326,7 +326,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ahora sí actualizar el estado - esto puede disparar checkAuth en otros componentes
       // pero localStorage ya tiene los datos correctos
       setUser(completeUserData);
-      setLoading(false); // Asegurar que loading está en false después del login
+      setLoading(false);
+
+      // Pequeño delay para asegurar que las cookies estén disponibles antes de cualquier checkAuth posterior
+      await new Promise(resolve => setTimeout(resolve, 100)); // Asegurar que loading está en false después del login
     } catch (error) {
       throw error;
     }

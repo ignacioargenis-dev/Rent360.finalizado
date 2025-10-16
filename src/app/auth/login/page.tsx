@@ -8,18 +8,16 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Building, EyeOff, Eye, LogIn } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-
   const [password, setPassword] = useState('');
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
-
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,51 +25,32 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+      // Usar el método login del AuthProvider que maneja todo el flujo correctamente
+      await login(email, password);
 
-      const data = await response.json();
+      // Pequeño delay para asegurar que las cookies HTTP-only estén disponibles
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (response.ok) {
-        // Guardar información del usuario en localStorage para el AuthProvider
-        try {
-          const userData = data.user;
-          localStorage.setItem(
-            'user',
-            JSON.stringify({
-              id: userData.id,
-              email: userData.email,
-              name: userData.name,
-              role: userData.role.toUpperCase(), // Asegurar que esté en mayúsculas
-              avatar: userData.avatar,
-            })
-          );
-          localStorage.setItem('userLoginTime', Date.now().toString());
-        } catch (storageError) {
-          logger.warn('Error guardando en localStorage:', storageError);
-        }
-
-        // Redirigir al dashboard correspondiente
-        const dashboardUrl = getDashboardUrl(data.user.role);
+      // El AuthProvider ya manejó el login, ahora redirigir al dashboard
+      // Nota: El AuthProvider no maneja la redirección, así que lo hacemos aquí
+      // Primero necesitamos obtener el usuario actual para determinar el dashboard
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        const dashboardUrl = getDashboardUrl(user.role);
         try {
           sessionStorage.setItem('r360_splash_after_login', '1');
         } catch {}
         router.push(dashboardUrl);
-        // No necesitamos router.refresh() aquí porque el AuthProvider se actualizará automáticamente
       } else {
-        setError(data.error || 'Error al iniciar sesión');
+        // Fallback si no hay datos en localStorage
+        router.push('/tenant/dashboard');
       }
     } catch (error) {
       logger.error('Error en login:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setError('Error al conectar con el servidor');
+      setError(error instanceof Error ? error.message : 'Error al iniciar sesión');
     } finally {
       setIsLoading(false);
     }

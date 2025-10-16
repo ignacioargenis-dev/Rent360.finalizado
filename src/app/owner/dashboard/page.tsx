@@ -82,10 +82,10 @@ export default function OwnerDashboard() {
     try {
       setLoading(true);
 
-      // Cargar datos reales del dashboard desde las APIs
+      // Cargar datos reales del dashboard desde las APIs de forma secuencial para evitar sobrecarga
       try {
-        // Cargar propiedades del usuario
-        const propertiesResponse = await fetch('/api/properties/list?limit=10', {
+        // Cargar propiedades del usuario (reducido a 5 para menos carga)
+        const propertiesResponse = await fetch('/api/properties/list?limit=5', {
           credentials: 'include',
           headers: { 'Cache-Control': 'no-cache' },
         });
@@ -93,11 +93,14 @@ export default function OwnerDashboard() {
         let properties = [];
         if (propertiesResponse.ok) {
           const propertiesData = await propertiesResponse.json();
-          properties = propertiesData.properties;
+          properties = propertiesData.properties || [];
         }
 
-        // Cargar contratos activos
-        const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=10', {
+        // Pequeña pausa para evitar sobrecarga del servidor
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Cargar contratos activos (reducido a 5)
+        const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=5', {
           credentials: 'include',
           headers: { 'Cache-Control': 'no-cache' },
         });
@@ -108,8 +111,11 @@ export default function OwnerDashboard() {
           contracts = contractsData.contracts || [];
         }
 
-        // Cargar pagos recientes
-        const paymentsResponse = await fetch('/api/payments?limit=10', {
+        // Pequeña pausa para evitar sobrecarga del servidor
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Cargar pagos recientes (reducido a 5)
+        const paymentsResponse = await fetch('/api/payments?limit=5', {
           credentials: 'include',
           headers: { 'Cache-Control': 'no-cache' },
         });

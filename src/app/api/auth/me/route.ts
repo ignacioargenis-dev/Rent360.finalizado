@@ -9,11 +9,26 @@ export async function GET(request: NextRequest) {
       request.cookies.get('next-auth.session-token')?.value ||
       request.headers.get('authorization')?.replace('Bearer ', '');
 
+    // Debug: mostrar todas las cookies disponibles
+    const allCookies = request.cookies.getAll();
+    console.error(
+      '🔍 /api/auth/me: Debug cookies disponibles:',
+      allCookies.map(c => ({ name: c.name, valueLength: c.value.length }))
+    );
+
     // Si no hay token, devolver error de no autorizado
     if (!token) {
       console.error('❌ /api/auth/me: No se encontró token en cookies ni headers');
+      console.error(
+        '🔍 Cookies disponibles:',
+        allCookies.map(c => c.name)
+      );
       return NextResponse.json(
-        { error: 'No autorizado', debug: 'No token found' },
+        {
+          error: 'No autorizado',
+          debug: 'No token found',
+          availableCookies: allCookies.map(c => c.name),
+        },
         { status: 401 }
       );
     }

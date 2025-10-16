@@ -172,13 +172,15 @@ export function generateTokens(userId: string, email: string, role: string, name
 export function setAuthCookies(response: any, accessToken: string, refreshToken: string) {
   // Configuración de cookies optimizada para producción
   const isProduction = process.env.NODE_ENV === 'production';
+  const isDigitalOcean = !!process.env.DIGITALOCEAN_APP_ID;
 
   // CRÍTICO: En producción (HTTPS), SIEMPRE usar Secure=true
   // En local (HTTP), usar Secure=false
-  const isSecure = isProduction;
+  const isSecure = isProduction || isDigitalOcean;
 
   console.error('🍪 setAuthCookies: Estableciendo cookies', {
     isProduction,
+    isDigitalOcean,
     isSecure,
     accessTokenLength: accessToken.length,
     refreshTokenLength: refreshToken.length,

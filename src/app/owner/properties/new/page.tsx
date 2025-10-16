@@ -565,13 +565,13 @@ export default function NewPropertyPage() {
     setStep(step - 1);
   };
 
-  const handleInputChange = (
-    field: keyof PropertyFormData,
-    value: string | number | string[] | File[] | boolean
+  const handleInputChange = <T extends keyof PropertyFormData>(
+    field: T,
+    value: PropertyFormData[T]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    if (errors[field as string]) {
+      setErrors(prev => ({ ...prev, [field as string]: '' }));
     }
   };
 
@@ -692,7 +692,8 @@ export default function NewPropertyPage() {
         const result = await response.json();
         setSuccessMessage('Propiedad creada exitosamente');
         setTimeout(() => {
-          router.push('/owner/properties');
+          // Redirigir con parámetro de refresh para forzar recarga de datos
+          router.push('/owner/properties?refresh=' + Date.now());
         }, 2000);
       } else {
         const error = await response.json();
@@ -844,7 +845,12 @@ export default function NewPropertyPage() {
                             errors.propertyType ? 'border-red-500' : 'border-gray-300'
                           }`}
                           value={formData.propertyType}
-                          onChange={e => handleInputChange('propertyType', e.target.value)}
+                          onChange={e =>
+                            handleInputChange(
+                              'propertyType',
+                              e.target.value as PropertyFormData['propertyType']
+                            )
+                          }
                         >
                           <option value="">Selecciona un tipo</option>
                           {propertyTypes.map(type => (
@@ -1320,7 +1326,12 @@ export default function NewPropertyPage() {
                         <select
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.contactPreference}
-                          onChange={e => handleInputChange('contactPreference', e.target.value)}
+                          onChange={e =>
+                            handleInputChange(
+                              'contactPreference',
+                              e.target.value as PropertyFormData['contactPreference']
+                            )
+                          }
                         >
                           <option value="platform">A través de la plataforma</option>
                           <option value="email">Email</option>

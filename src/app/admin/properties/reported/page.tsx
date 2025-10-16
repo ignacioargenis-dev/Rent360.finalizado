@@ -92,7 +92,7 @@ export default function AdminReportedPropertiesPage() {
             createdAt: new Date('2024-01-15'),
             updatedAt: new Date('2024-01-15'),
             features: 'Estacionamiento, Seguridad 24/7',
-            images: '/images/prop1-1.jpg, /images/prop1-2.jpg',
+            images: '/uploads/prop1-1.jpg, /uploads/prop1-2.jpg',
 
             // Nuevos campos con valores por defecto
             furnished: true,
@@ -150,7 +150,7 @@ export default function AdminReportedPropertiesPage() {
             createdAt: new Date('2024-01-10'),
             updatedAt: new Date('2024-01-10'),
             features: 'Jard�n, Estacionamiento, Seguridad',
-            images: '/images/prop2-1.jpg, /images/prop2-2.jpg',
+            images: '/uploads/prop2-1.jpg, /uploads/prop2-2.jpg',
 
             // Nuevos campos con valores por defecto
             furnished: false,
