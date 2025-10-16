@@ -61,46 +61,54 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // ⚠️ RATE LIMITING TEMPORALMENTE DESHABILITADO PARA DEBUGGING
-    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+    // ✅ RESTAURADO: Rate limiting con límites más altos para evitar bloqueos
+    const rateLimitResult = rateLimiter.checkLimit(request, rateLimitKey);
 
-    // Aplicar rate limiting (COMENTADO TEMPORALMENTE)
-    // const rateLimitResult = rateLimiter.checkLimit(request, rateLimitKey);
+    if (!rateLimitResult.allowed) {
+      logger.warn('Rate limit exceeded', {
+        context: 'middleware.rate-limit',
+        pathname,
+        rateLimitKey,
+        clientIP:
+          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      });
 
-    // if (!rateLimitResult.allowed) {
-    //   logger.warn('Rate limit exceeded', {
-    //     context: 'middleware.rate-limit',
-    //     pathname,
-    //     rateLimitKey,
-    //     clientIP:
-    //       request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-    //     userAgent: request.headers.get('user-agent') || 'unknown',
-    //   });
-
-    //   return NextResponse.json(
-    //     {
-    //       error: 'Rate limit exceeded',
-    //       message: rateLimitResult.message,
-    //       retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
-    //     },
-    //     {
-    //       status: rateLimitResult.statusCode || 429,
-    //       headers: {
-    //         'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
-    //         'X-RateLimit-Limit': process.env.RATE_LIMIT_MAX_REQUESTS || '100',
-    //         'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-    //         'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
-    //       },
-    //     }
-    //   );
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: rateLimitResult.message,
+          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
+        },
+        {
+          status: rateLimitResult.statusCode || 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': process.env.RATE_LIMIT_MAX_REQUESTS || '1000',
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
+    }
 
     // ⚠️ MIDDLEWARE ULTRA-SIMPLIFICADO PARA DEBUGGING
     // TODO: Restaurar headers de seguridad cuando se confirme que el dashboard funciona
 
     const response = NextResponse.next();
 
-    // SOLO headers absolutamente esenciales
+    // ✅ RESTAURADO: Headers de seguridad básicos y esenciales
     response.headers.set('X-Response-Time', `${Date.now() - startTime}ms`);
+
+    // Headers de seguridad básicos (no restrictivos)
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+
+    // Headers de información
+    response.headers.set('X-Powered-By', 'Rent360');
+    response.headers.set('X-Application-Version', '1.0.0');
 
     // Log de la solicitud
     const responseTime = Date.now() - startTime;
