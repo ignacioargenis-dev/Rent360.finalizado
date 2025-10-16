@@ -66,6 +66,48 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* SCRIPT DE DIAGNÓSTICO: Verificar si JavaScript se está ejecutando */}
         <meta name="application-name" content="Rent360" />
+        {/* SCRIPT DE DIAGNÓSTICO SIMPLE PARA VERIFICAR REACT */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              console.log('🟢 [DIAGNOSTIC] JavaScript IS EXECUTING');
+              
+              // Verificar React después de que se carguen todos los scripts
+              setTimeout(function() {
+                console.log('🔍 [DIAGNOSTIC] Checking React hydration...');
+                console.log('🔍 [DIAGNOSTIC] window.React:', typeof window.React);
+                console.log('🔍 [DIAGNOSTIC] window.__NEXT_DATA__:', typeof window.__NEXT_DATA__);
+                
+                // Verificar si hay un elemento con id="__next"
+                const nextElement = document.getElementById('__next');
+                console.log('🔍 [DIAGNOSTIC] #__next element:', nextElement);
+                
+                if (nextElement) {
+                  console.log('🔍 [DIAGNOSTIC] #__next children:', nextElement.children.length);
+                  
+                  // Verificar si los botones tienen event listeners
+                  const buttons = document.querySelectorAll('button');
+                  console.log('🔍 [DIAGNOSTIC] Found', buttons.length, 'buttons');
+                  
+                  if (buttons.length > 0) {
+                    const firstButton = buttons[0];
+                    console.log('🔍 [DIAGNOSTIC] First button:', firstButton);
+                    console.log('🔍 [DIAGNOSTIC] First button onclick:', firstButton.onclick);
+                    console.log('🔍 [DIAGNOSTIC] First button getAttribute onclick:', firstButton.getAttribute('onclick'));
+                    
+                    // Verificar si tiene event listeners
+                    const hasEventListeners = firstButton.onclick !== null || 
+                                            firstButton.getAttribute('onclick') !== null ||
+                                            firstButton.addEventListener !== undefined;
+                    console.log('🔍 [DIAGNOSTIC] First button has event listeners:', hasEventListeners);
+                  }
+                } else {
+                  console.error('❌ [DIAGNOSTIC] #__next NOT found!');
+                }
+              }, 5000);
+            `,
+          }}
+        />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Rent360" />
