@@ -107,7 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 console.log('🔍 [DIAGNOSTIC] HTML contains __NEXT_DATA__ script:', hasNextDataScript);
                 
                 if (hasNextDataScript) {
-                  const scriptMatch = htmlContent.match(/<script[^>]*>.*?__NEXT_DATA__.*?<\/script>/s);
+                  const scriptMatch = htmlContent.match(/<script[^>]*>.*?__NEXT_DATA__.*?<\/script>/);
                   if (scriptMatch) {
                     console.log('🔍 [DIAGNOSTIC] Found __NEXT_DATA__ script:', scriptMatch[0].substring(0, 200) + '...');
                   }
