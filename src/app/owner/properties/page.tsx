@@ -96,7 +96,12 @@ export default function OwnerPropertiesPage() {
         const shouldRefresh = urlParams.has('refresh');
 
         // Load user data
-        const userResponse = await fetch('/api/auth/me');
+        const userResponse = await fetch(
+          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/me`,
+          {
+            headers: { Accept: 'application/json' },
+          }
+        );
         if (userResponse.ok) {
           const data = await userResponse.json();
           setUser(data.user);
@@ -162,13 +167,17 @@ export default function OwnerPropertiesPage() {
       // Cargar propiedades reales desde la API
       // Agregar timestamp para evitar cache y forzar refresh
       const timestamp = Date.now();
-      const response = await fetch(`/api/properties/list?limit=100&_t=${timestamp}`, {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
-      });
+      const response = await fetch(
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=100&_t=${timestamp}`,
+        {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+            Accept: 'application/json',
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

@@ -10,7 +10,7 @@ import {
 
 // Configuración de seguridad avanzada
 const SECURITY_CONFIG = {
-  MAX_REQUESTS_PER_MINUTE: 1000, // Aumentado temporalmente para producción
+  MAX_REQUESTS_PER_MINUTE: 5000, // Aumentado significativamente para producción
   MAX_REQUESTS_PER_HOUR: 10000, // Aumentado temporalmente para producción
   BLOCKED_IPS: new Set<string>(),
   SUSPICIOUS_PATTERNS: [

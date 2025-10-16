@@ -87,10 +87,13 @@ export default function OwnerDashboard() {
       // Cargar datos reales del dashboard desde las APIs de forma secuencial para evitar sobrecarga
       try {
         // Cargar propiedades del usuario (reducido a 5 para menos carga)
-        const propertiesResponse = await fetch('/api/properties/list?limit=5', {
-          credentials: 'include',
-          headers: { 'Cache-Control': 'no-cache' },
-        });
+        const propertiesResponse = await fetch(
+          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=5`,
+          {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          }
+        );
 
         let properties = [];
         if (propertiesResponse.ok) {
@@ -102,10 +105,13 @@ export default function OwnerDashboard() {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // Cargar contratos activos (reducido a 5)
-        const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=5', {
-          credentials: 'include',
-          headers: { 'Cache-Control': 'no-cache' },
-        });
+        const contractsResponse = await fetch(
+          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/contracts?status=ACTIVE&limit=5`,
+          {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          }
+        );
 
         let contracts = [];
         if (contractsResponse.ok) {
@@ -117,10 +123,13 @@ export default function OwnerDashboard() {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // Cargar pagos recientes (reducido a 5)
-        const paymentsResponse = await fetch('/api/payments?limit=5', {
-          credentials: 'include',
-          headers: { 'Cache-Control': 'no-cache' },
-        });
+        const paymentsResponse = await fetch(
+          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/payments?limit=5`,
+          {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+          }
+        );
 
         let payments = [];
         if (paymentsResponse.ok) {

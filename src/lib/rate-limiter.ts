@@ -15,7 +15,7 @@ const simpleLogger = {
     if (process.env.NODE_ENV === 'development') {
       console.debug(`[RATE LIMITER DEBUG] ${message}`, data || '');
     }
-  }
+  },
 };
 
 interface RateLimitConfig {
@@ -43,62 +43,65 @@ class RateLimiter {
       windowMs: 15 * 60 * 1000, // 15 minutos
       maxRequests: 100,
       message: 'Demasiadas solicitudes desde esta IP',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('auth', {
       windowMs: 15 * 60 * 1000, // 15 minutos
       maxRequests: 30,
       message: 'Demasiados intentos de autenticación',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('auth-me', {
       windowMs: 5 * 60 * 1000, // 5 minutos - más permisivo para verificar sesión
       maxRequests: 50,
       message: 'Demasiadas verificaciones de sesión',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('auth-strict', {
       windowMs: 60 * 1000, // 1 minuto - más estricto para login/register
       maxRequests: 3,
       message: 'Demasiados intentos de autenticación. Intente más tarde.',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('financial', {
       windowMs: 60 * 1000, // 1 minuto - sensible para pagos/depósitos
       maxRequests: 10,
       message: 'Demasiadas operaciones financieras. Intente más tarde.',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('api', {
       windowMs: 60 * 1000, // 1 minuto
       maxRequests: 60,
       message: 'Límite de API excedido',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('admin', {
       windowMs: 60 * 1000, // 1 minuto
       maxRequests: 120, // Más permisivo para admin
       message: 'Límite de administración excedido',
-      statusCode: 429
+      statusCode: 429,
     });
 
     this.setConfig('health-unlimited', {
       windowMs: 60 * 1000, // 1 minuto
       maxRequests: 1000, // Sin límite práctico para health checks
       message: 'Servicio no disponible',
-      statusCode: 503
+      statusCode: 503,
     });
 
     // Limpiar entradas expiradas cada 5 minutos
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   setConfig(key: string, config: RateLimitConfig): void {
@@ -109,7 +112,7 @@ class RateLimiter {
     // Obtener IP del cliente
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : (request as any).ip || 'unknown';
-    
+
     // Combinar IP con user agent para mejor identificación
     const userAgent = request.headers.get('user-agent') || 'unknown';
     return `${ip}:${userAgent}`;
@@ -119,7 +122,10 @@ class RateLimiter {
     return this.configs.get(key) || this.configs.get('default')!;
   }
 
-  checkLimit(request: NextRequest, key: string = 'default'): {
+  checkLimit(
+    request: NextRequest,
+    key: string = 'default'
+  ): {
     allowed: boolean;
     remaining: number;
     resetTime: number;
@@ -139,7 +145,7 @@ class RateLimiter {
         count: 0,
         resetTime: now + config.windowMs,
         blocked: false,
-        blockUntil: 0
+        blockUntil: 0,
       };
     }
 
@@ -151,7 +157,7 @@ class RateLimiter {
         remaining: 0,
         resetTime: entry.resetTime,
         message: `IP bloqueada temporalmente. Intente nuevamente en ${remainingBlockTime} segundos.`,
-        statusCode: 429
+        statusCode: 429,
       };
     }
 
@@ -160,12 +166,12 @@ class RateLimiter {
       // Bloquear por 5 minutos si excede el límite
       entry.blocked = true;
       entry.blockUntil = now + 5 * 60 * 1000;
-      
+
       simpleLogger.warn('Rate limit excedido', {
         identifier,
         key,
         count: entry.count,
-        limit: config.maxRequests
+        limit: config.maxRequests,
       });
 
       return {
@@ -173,7 +179,7 @@ class RateLimiter {
         remaining: 0,
         resetTime: entry.resetTime,
         message: config.message,
-        statusCode: config.statusCode
+        statusCode: config.statusCode,
       };
     }
 
@@ -184,7 +190,7 @@ class RateLimiter {
     return {
       allowed: true,
       remaining: Math.max(0, config.maxRequests - entry.count),
-      resetTime: entry.resetTime
+      resetTime: entry.resetTime,
     };
   }
 
@@ -201,9 +207,9 @@ class RateLimiter {
     expiredKeys.forEach(key => this.limits.delete(key));
 
     if (expiredKeys.length > 0) {
-      simpleLogger.debug('Rate limiter cleanup', { 
+      simpleLogger.debug('Rate limiter cleanup', {
         expiredEntries: expiredKeys.length,
-        totalEntries: this.limits.size
+        totalEntries: this.limits.size,
       });
     }
   }
@@ -223,7 +229,7 @@ class RateLimiter {
       totalKeys: this.limits.size,
       activeKeys,
       memoryUsage: this.limits.size * 64, // Estimación aproximada
-      configs: Object.fromEntries(this.configs)
+      configs: Object.fromEntries(this.configs),
     };
   }
 
@@ -250,31 +256,31 @@ export function withRateLimit(
 ) {
   return async (request: NextRequest): Promise<Response> => {
     const limitCheck = rateLimiter.checkLimit(request, key);
-    
+
     if (!limitCheck.allowed) {
       return new Response(
         JSON.stringify({
           error: limitCheck.message || 'Rate limit excedido',
-          retryAfter: Math.ceil((limitCheck.resetTime - Date.now()) / 1000)
+          retryAfter: Math.ceil((limitCheck.resetTime - Date.now()) / 1000),
         }),
         {
           status: limitCheck.statusCode || 429,
           headers: {
             'Content-Type': 'application/json',
             'Retry-After': Math.ceil((limitCheck.resetTime - Date.now()) / 1000).toString(),
-            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Limit': '1000',
             'X-RateLimit-Remaining': limitCheck.remaining.toString(),
-            'X-RateLimit-Reset': limitCheck.resetTime.toString()
-          }
+            'X-RateLimit-Reset': limitCheck.resetTime.toString(),
+          },
         }
       );
     }
 
     // Agregar headers de rate limit a la respuesta
     const response = await handler(request);
-    
+
     if (response instanceof Response) {
-      response.headers.set('X-RateLimit-Limit', '100');
+      response.headers.set('X-RateLimit-Limit', '1000');
       response.headers.set('X-RateLimit-Remaining', limitCheck.remaining.toString());
       response.headers.set('X-RateLimit-Reset', limitCheck.resetTime.toString());
     }
@@ -292,12 +298,12 @@ export function rateLimit(key: string = 'default') {
       const request = args[0];
       if (request instanceof Request) {
         const limitCheck = rateLimiter.checkLimit(request as any, key);
-        
+
         if (!limitCheck.allowed) {
           throw new Error(limitCheck.message || 'Rate limit excedido');
         }
       }
-      
+
       return originalMethod.apply(this, args);
     };
 

@@ -683,10 +683,16 @@ export default function NewPropertyPage() {
         formDataToSend.append('images', image);
       });
 
-      const response = await fetch('/api/properties', {
-        method: 'POST',
-        body: formDataToSend,
-      });
+      const response = await fetch(
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          },
+          body: formDataToSend,
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();

@@ -47,13 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Verificar autenticación con el servidor
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
-      });
+      const response = await fetch(
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/me`,
+        {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+            Accept: 'application/json',
+          },
+        }
+      );
 
       if (response.ok) {
         const userData = await response.json();
@@ -260,12 +264,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('🧹 localStorage limpiado antes del login');
       }
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -337,7 +347,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch(
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/logout`,
+        {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+        }
+      );
       setUser(null);
 
       // Limpiar localStorage
@@ -356,11 +372,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (userData: any) => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
+    const response = await fetch(
+      `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/register`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(userData),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
