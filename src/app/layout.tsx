@@ -77,11 +77,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               // Verificar si hay errores globales
               window.addEventListener('error', function(event) {
                 console.error('❌ [DIAGNOSTIC] Global Error:', event.error);
+                console.error('❌ [DIAGNOSTIC] Error Message:', event.message);
+                console.error('❌ [DIAGNOSTIC] Error Filename:', event.filename);
+                console.error('❌ [DIAGNOSTIC] Error Line:', event.lineno);
+                console.error('❌ [DIAGNOSTIC] Error Column:', event.colno);
               });
               
               window.addEventListener('unhandledrejection', function(event) {
                 console.error('❌ [DIAGNOSTIC] Unhandled Rejection:', event.reason);
+                console.error('❌ [DIAGNOSTIC] Promise:', event.promise);
               });
+              
+              // Verificar si Next.js está disponible después de cargar los scripts
+              setTimeout(function() {
+                console.log('🔍 [DIAGNOSTIC] Checking Next.js availability after 3 seconds...');
+                console.log('🔍 [DIAGNOSTIC] window.__NEXT_DATA__:', typeof window.__NEXT_DATA__);
+                console.log('🔍 [DIAGNOSTIC] window.__NEXT_DATA__ content:', window.__NEXT_DATA__);
+                console.log('🔍 [DIAGNOSTIC] window.React:', typeof window.React);
+                console.log('🔍 [DIAGNOSTIC] window.next:', typeof window.next);
+                
+                // Verificar si hay un elemento con id="__next"
+                const nextElement = document.getElementById('__next');
+                console.log('🔍 [DIAGNOSTIC] #__next element:', nextElement);
+                
+                // Verificar si hay algún error en la consola
+                const originalError = console.error;
+                console.error = function(...args) {
+                  console.log('🚨 [DIAGNOSTIC] Console Error Captured:', args);
+                  originalError.apply(console, args);
+                };
+              }, 3000);
               
               // Service Worker cleanup
               if ('serviceWorker' in navigator) {
