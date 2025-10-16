@@ -17,11 +17,13 @@ interface PushNotificationPayload {
   icon?: string | undefined;
   badge?: string | undefined;
   data?: Record<string, any> | undefined;
-  actions?: Array<{
-    action: string;
-    title: string;
-    icon?: string | undefined;
-  }> | undefined;
+  actions?:
+    | Array<{
+        action: string;
+        title: string;
+        icon?: string | undefined;
+      }>
+    | undefined;
 }
 
 interface NotificationSettings {
@@ -69,18 +71,24 @@ class FirebaseNotificationService {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         this.messaging = getMessaging(this.app);
 
+        // ⚠️ TEMPORALMENTE DESHABILITADO: Service Worker que causa errores 404
+        // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+        /*
         // Register service worker for push notifications
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         logger.info('Service Worker registered for push notifications');
+        */
 
         // Handle incoming messages when app is in foreground
-        onMessage(this.messaging, (payload) => {
+        onMessage(this.messaging, payload => {
           logger.info('Received foreground message', { payload });
           this.handleForegroundMessage(payload);
         });
       }
     } catch (error) {
-      logger.error('Error initializing Firebase', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error initializing Firebase', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -112,7 +120,7 @@ class FirebaseNotificationService {
       }
 
       const currentToken = await getToken(this.messaging, {
-        vapidKey: this.vapidKey
+        vapidKey: this.vapidKey,
       });
 
       if (currentToken) {
@@ -189,7 +197,7 @@ class FirebaseNotificationService {
         body: JSON.stringify({
           token,
           payload,
-          options
+          options,
         }),
       });
 
@@ -222,7 +230,7 @@ class FirebaseNotificationService {
         body: JSON.stringify({
           topic,
           payload,
-          options
+          options,
         }),
       });
 
@@ -247,7 +255,7 @@ class FirebaseNotificationService {
         body,
         icon: '/icon-192x192.png',
         badge: '/badge-72x72.png',
-        data
+        data,
       });
 
       notification.onclick = () => {
@@ -266,7 +274,9 @@ class FirebaseNotificationService {
   }
 
   isQuietHour(settings: NotificationSettings): boolean {
-    if (!settings.quietHours.enabled) return false;
+    if (!settings.quietHours.enabled) {
+      return false;
+    }
 
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -300,8 +310,12 @@ class FirebaseNotificationService {
   }
 
   shouldSendNotification(settings: NotificationSettings, category: string): boolean {
-    if (!settings.enabled) return false;
-    if (this.isQuietHour(settings)) return false;
+    if (!settings.enabled) {
+      return false;
+    }
+    if (this.isQuietHour(settings)) {
+      return false;
+    }
 
     // Check category-specific settings
     switch (category) {
@@ -321,9 +335,15 @@ class FirebaseNotificationService {
   }
 
   // Utility methods for common notifications
-  async notifyPaymentApproved(userId: string, amount: number, transactionId: string): Promise<void> {
+  async notifyPaymentApproved(
+    userId: string,
+    amount: number,
+    transactionId: string
+  ): Promise<void> {
     const settings = await this.getUserSettings(userId);
-    if (!settings || !this.shouldSendNotification(settings, 'payments')) return;
+    if (!settings || !this.shouldSendNotification(settings, 'payments')) {
+      return;
+    }
 
     if (settings.token) {
       await this.sendNotification(settings.token, {
@@ -333,15 +353,21 @@ class FirebaseNotificationService {
         data: {
           type: 'payment_approved',
           transactionId,
-          url: `/payments/${transactionId}`
-        }
+          url: `/payments/${transactionId}`,
+        },
       });
     }
   }
 
-  async notifyNewMessage(userId: string, senderName: string, conversationId: string): Promise<void> {
+  async notifyNewMessage(
+    userId: string,
+    senderName: string,
+    conversationId: string
+  ): Promise<void> {
     const settings = await this.getUserSettings(userId);
-    if (!settings || !this.shouldSendNotification(settings, 'messages')) return;
+    if (!settings || !this.shouldSendNotification(settings, 'messages')) {
+      return;
+    }
 
     if (settings.token) {
       await this.sendNotification(settings.token, {
@@ -351,15 +377,17 @@ class FirebaseNotificationService {
         data: {
           type: 'new_message',
           conversationId,
-          url: `/chat?conversation=${conversationId}`
-        }
+          url: `/chat?conversation=${conversationId}`,
+        },
       });
     }
   }
 
   async notifyJobUpdate(userId: string, jobId: string, status: string): Promise<void> {
     const settings = await this.getUserSettings(userId);
-    if (!settings || !this.shouldSendNotification(settings, 'jobs')) return;
+    if (!settings || !this.shouldSendNotification(settings, 'jobs')) {
+      return;
+    }
 
     if (settings.token) {
       await this.sendNotification(settings.token, {
@@ -369,15 +397,17 @@ class FirebaseNotificationService {
         data: {
           type: 'job_update',
           jobId,
-          url: `/jobs/${jobId}`
-        }
+          url: `/jobs/${jobId}`,
+        },
       });
     }
   }
 
   async notifyNewRating(userId: string, providerName: string, rating: number): Promise<void> {
     const settings = await this.getUserSettings(userId);
-    if (!settings || !this.shouldSendNotification(settings, 'ratings')) return;
+    if (!settings || !this.shouldSendNotification(settings, 'ratings')) {
+      return;
+    }
 
     if (settings.token) {
       await this.sendNotification(settings.token, {
@@ -387,8 +417,8 @@ class FirebaseNotificationService {
         data: {
           type: 'new_rating',
           providerName,
-          url: '/ratings'
-        }
+          url: '/ratings',
+        },
       });
     }
   }
@@ -405,15 +435,15 @@ class FirebaseNotificationService {
       quietHours: {
         enabled: false,
         start: '22:00',
-        end: '08:00'
+        end: '08:00',
       },
       categories: {
         payments: true,
         messages: true,
         jobs: true,
         ratings: true,
-        promotions: false
-      }
+        promotions: false,
+      },
     };
   }
 }

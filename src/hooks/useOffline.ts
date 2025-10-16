@@ -307,6 +307,9 @@ export function useServiceWorker() {
   }, []);
 
   const registerServiceWorker = async () => {
+    // ⚠️ TEMPORALMENTE DESHABILITADO: Service Worker que causa errores 404
+    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+    /*
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
 
@@ -353,6 +356,7 @@ export function useServiceWorker() {
     } catch (error) {
       console.warn('Error registrando Service Worker:', error);
     }
+    */
   };
 
   const updateServiceWorker = () => {

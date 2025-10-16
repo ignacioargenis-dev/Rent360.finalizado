@@ -123,6 +123,9 @@ class PWAService {
   }
 
   private async registerServiceWorker() {
+    // ⚠️ TEMPORALMENTE DESHABILITADO: Service Worker que causa errores 404
+    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+    /*
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -148,6 +151,7 @@ class PWAService {
         });
       }
     }
+    */
   }
 
   private async setupOfflineCache() {
