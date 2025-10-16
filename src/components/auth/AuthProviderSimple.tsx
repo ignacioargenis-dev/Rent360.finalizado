@@ -18,35 +18,73 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // ⚠️ TEMPORALMENTE: Iniciar con loading false para evitar problemas de hidratación
+  const [loading, setLoading] = useState(true); // ✅ RESTAURADO: Iniciar con loading true para hidratación correcta
 
   // Función para verificar autenticación
   const checkAuth = async () => {
     try {
       setLoading(true);
 
-      // ⚠️ TEMPORALMENTE DESHABILITADO: Verificación de API que causa problemas de hidratación
-      // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+      // ✅ RESTAURADO: Verificación de API con manejo seguro de errores
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
 
-      // ⚠️ TEMPORALMENTE: Simular usuario no autenticado para permitir hidratación
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData && userData.id) {
+          // Normalizar rol a MAYÚSCULAS
+          const normalizedRole = (userData.role || 'TENANT').toUpperCase();
+
+          const completeUser = {
+            ...userData,
+            role: normalizedRole,
+            createdAt: userData.createdAt ? new Date(userData.createdAt) : new Date(),
+            updatedAt: new Date(),
+          };
+
+          setUser(completeUser);
+
+          // Guardar en localStorage de forma segura
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('user', JSON.stringify(completeUser));
+              localStorage.setItem('userLoginTime', Date.now().toString());
+            } catch (error) {
+              logger.warn('Error saving to localStorage:', error);
+            }
+          }
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+        // Limpiar localStorage si la autenticación falla
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user');
+          localStorage.removeItem('userLoginTime');
+        }
+      }
+    } catch (error) {
+      logger.warn('Auth check failed:', error);
       setUser(null);
+      // Limpiar localStorage en caso de error
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
         localStorage.removeItem('userLoginTime');
       }
-    } catch (error) {
-      logger.warn('Auth check failed:', error);
-      // ⚠️ TEMPORALMENTE: Simular usuario no autenticado para permitir hidratación
-      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // ⚠️ TEMPORALMENTE DESHABILITADO: Auth check automático que causa problemas de hidratación
-  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-  /*
-  // Auth check automático al cargar el AuthProvider
+  // ✅ RESTAURADO: Auth check automático con manejo seguro de hidratación
   useEffect(() => {
     let retryTimeout: NodeJS.Timeout;
 
@@ -123,7 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-  */
 
   const login = async (email: string, password: string) => {
     try {
