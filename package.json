@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:all": "npm run build && npm run build:services",
-    "start": "NODE_ENV=production next start",
+    "start": "NODE_ENV=production node .next/standalone/server.js",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
