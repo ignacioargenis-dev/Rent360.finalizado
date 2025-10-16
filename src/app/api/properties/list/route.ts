@@ -131,7 +131,6 @@ export async function GET(request: NextRequest) {
           },
           contracts: {
             where: { status: 'ACTIVE' },
-            select: { id: true, tenantId: true },
             include: {
               tenant: {
                 select: {
