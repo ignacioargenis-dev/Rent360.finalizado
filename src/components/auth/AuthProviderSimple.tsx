@@ -25,153 +25,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
-      // Validar rol en localStorage
+      // ⚠️ TEMPORALMENTE DESHABILITADO: Verificación de API que causa problemas de hidratación
+      // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+
+      // ⚠️ TEMPORALMENTE: Simular usuario no autenticado para permitir hidratación
+      setUser(null);
       if (typeof window !== 'undefined') {
-        const cachedUser = localStorage.getItem('user');
-        if (cachedUser) {
-          try {
-            const parsedUser = JSON.parse(cachedUser);
-            // VALIDACIÓN: El rol DEBE estar en MAYÚSCULAS
-            if (parsedUser.role && parsedUser.role !== parsedUser.role.toUpperCase()) {
-              console.warn('🔄 LocalStorage tiene rol en formato incorrecto, limpiando...', {
-                storedRole: parsedUser.role,
-                expectedRole: parsedUser.role.toUpperCase(),
-              });
-              localStorage.clear();
-            }
-          } catch (e) {
-            logger.warn('Error parsing cached user from localStorage', e);
-            localStorage.clear();
-          }
-        }
-      }
-
-      // Verificar autenticación con el servidor
-      const response = await fetch(
-        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/me`,
-        {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Accept: 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        const userData = await response.json();
-
-        if (userData.user && userData.user.id) {
-          // Normalizar rol a MAYÚSCULAS
-          const normalizedRole = (userData.user.role || 'TENANT').toUpperCase();
-
-          const completeUser = {
-            id: userData.user.id,
-            email: userData.user.email || 'unknown@example.com',
-            password: '',
-            name: userData.user.name || 'Usuario',
-            phone: userData.user.phone || null,
-            phoneSecondary: null,
-            emergencyContact: null,
-            emergencyPhone: null,
-            rut: userData.user.rut || null,
-            rutVerified: false,
-            dateOfBirth: null,
-            gender: null,
-            nationality: null,
-            address: null,
-            city: null,
-            commune: null,
-            region: null,
-            role: normalizedRole,
-            avatar: userData.user.avatar || null,
-            isActive: true,
-            emailVerified: true,
-            phoneVerified: false,
-            lastLogin: null,
-            createdAt: userData.user.createdAt ? new Date(userData.user.createdAt) : new Date(),
-            updatedAt: new Date(),
-          };
-
-          setUser(completeUser);
-
-          // Actualizar localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user', JSON.stringify(completeUser));
-            // Actualizar timestamp cuando verificamos con éxito
-            localStorage.setItem('userLoginTime', Date.now().toString());
-          }
-        }
-      } else if (response.status === 401) {
-        if (typeof window !== 'undefined') {
-          // Verificar si es un problema de timing
-          const cachedUser = localStorage.getItem('user');
-          const userLoginTime = localStorage.getItem('userLoginTime');
-          const currentTime = Date.now();
-
-          // Si el usuario se logueó hace menos de 10 segundos, es probable timing issue
-          const isRecentLogin = userLoginTime && currentTime - parseInt(userLoginTime) < 10000;
-
-          if (cachedUser && isRecentLogin) {
-            // Mantener usuario de localStorage (timing issue)
-            try {
-              const parsedUser = JSON.parse(cachedUser);
-              const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
-              const completeUser = {
-                ...parsedUser,
-                role: normalizedRole,
-                createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
-                updatedAt: new Date(),
-              };
-              setUser(completeUser);
-              console.log(
-                '⏱️ [AUTH] Manteniendo usuario local (timing issue, login hace',
-                Math.round((currentTime - parseInt(userLoginTime)) / 1000),
-                'segundos)'
-              );
-              return; // Salir sin limpiar
-            } catch (e) {
-              console.error('Error parsing cached user:', e);
-            }
-          }
-
-          // Si no es timing issue, limpiar sesión
-          setUser(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('userLoginTime');
-          console.log('🧹 [AUTH] Sesión no autenticada limpiada');
-        }
+        localStorage.removeItem('user');
+        localStorage.removeItem('userLoginTime');
       }
     } catch (error) {
       logger.warn('Auth check failed:', error);
-      // Si falla y tenemos usuario en localStorage reciente, mantenerlo
-      if (typeof window !== 'undefined') {
-        const cachedUser = localStorage.getItem('user');
-        const userLoginTime = localStorage.getItem('userLoginTime');
-        if (cachedUser && userLoginTime) {
-          const timeSinceLogin = Date.now() - parseInt(userLoginTime);
-          if (timeSinceLogin < 10000) {
-            try {
-              const parsedUser = JSON.parse(cachedUser);
-              const normalizedRole = (parsedUser.role || 'TENANT').toUpperCase();
-              setUser({
-                ...parsedUser,
-                role: normalizedRole,
-                createdAt: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
-                updatedAt: new Date(),
-              });
-              return; // Mantener usuario en caso de error de red temporal
-            } catch (e) {
-              // Si falla el parsing, continuar con limpiar
-            }
-          }
-        }
-      }
-      // Solo limpiar si no hay usuario válido en cache
-      if (!user) {
-        setUser(null);
-      }
+      // ⚠️ TEMPORALMENTE: Simular usuario no autenticado para permitir hidratación
+      setUser(null);
     } finally {
       setLoading(false);
     }
