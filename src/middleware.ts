@@ -144,7 +144,10 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    response.headers.set('Content-Security-Policy', csp);
+    // Temporalmente deshabilitar CSP en producción para debugging
+    if (process.env.NODE_ENV !== 'production') {
+      response.headers.set('Content-Security-Policy', csp);
+    }
 
     // Headers para forzar recarga del CSP y evitar cache
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
