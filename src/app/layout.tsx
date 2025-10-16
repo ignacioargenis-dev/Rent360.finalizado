@@ -100,6 +100,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 const nextElement = document.getElementById('__next');
                 console.log('🔍 [DIAGNOSTIC] #__next element:', nextElement);
                 
+                // VERIFICAR HTML COMPLETO PARA __NEXT_DATA__
+                console.log('🔍 [DIAGNOSTIC] Checking HTML for __NEXT_DATA__ script...');
+                const htmlContent = document.documentElement.outerHTML;
+                const hasNextDataScript = htmlContent.includes('__NEXT_DATA__');
+                console.log('🔍 [DIAGNOSTIC] HTML contains __NEXT_DATA__ script:', hasNextDataScript);
+                
+                if (hasNextDataScript) {
+                  const scriptMatch = htmlContent.match(/<script[^>]*>.*?__NEXT_DATA__.*?<\/script>/s);
+                  if (scriptMatch) {
+                    console.log('🔍 [DIAGNOSTIC] Found __NEXT_DATA__ script:', scriptMatch[0].substring(0, 200) + '...');
+                  }
+                } else {
+                  console.error('❌ [DIAGNOSTIC] __NEXT_DATA__ script NOT FOUND in HTML!');
+                }
+                
                 // Verificar si hay algún error en la consola
                 const originalError = console.error;
                 console.error = function(...args) {
