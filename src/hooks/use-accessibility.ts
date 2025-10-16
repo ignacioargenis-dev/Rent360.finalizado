@@ -12,56 +12,71 @@ export const useAccessibility = (options: AccessibilityOptions = {}) => {
     announceToScreenReader = false,
     focusManagement = false,
     keyboardNavigation = false,
-    skipLinks = false
+    skipLinks = false,
   } = options;
 
   const announcementRef = useRef<HTMLDivElement | null>(null);
 
   // Función para anunciar mensajes a lectores de pantalla
-  const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    if (!announceToScreenReader) return;
+  const announce = useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      if (!announceToScreenReader) {
+        return;
+      }
 
-    if (!announcementRef.current) {
-      const div = document.createElement('div');
-      div.setAttribute('aria-live', priority);
-      div.setAttribute('aria-atomic', 'true');
-      div.style.position = 'absolute';
-      div.style.left = '-10000px';
-      div.style.width = '1px';
-      div.style.height = '1px';
-      div.style.overflow = 'hidden';
-      document.body.appendChild(div);
-      announcementRef.current = div;
-    }
+      if (!announcementRef.current) {
+        const div = document.createElement('div');
+        div.setAttribute('aria-live', priority);
+        div.setAttribute('aria-atomic', 'true');
+        div.style.position = 'absolute';
+        div.style.left = '-10000px';
+        div.style.width = '1px';
+        div.style.height = '1px';
+        div.style.overflow = 'hidden';
+        document.body.appendChild(div);
+        announcementRef.current = div;
+      }
 
-    announcementRef.current.textContent = message;
-  }, [announceToScreenReader]);
+      announcementRef.current.textContent = message;
+    },
+    [announceToScreenReader]
+  );
 
   // Función para manejar foco
-  const manageFocus = useCallback((element: HTMLElement | null) => {
-    if (!focusManagement || !element) return;
+  const manageFocus = useCallback(
+    (element: HTMLElement | null) => {
+      if (!focusManagement || !element) {
+        return;
+      }
 
-    element.focus();
-    // Asegurar que el elemento sea visible
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [focusManagement]);
+      element.focus();
+      // Asegurar que el elemento sea visible
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+    [focusManagement]
+  );
 
   // Hook para navegación por teclado
   useEffect(() => {
-    if (!keyboardNavigation) return;
+    if (!keyboardNavigation) {
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Implementar navegación por teclado personalizada si es necesario
       // Por ejemplo, navegación con flechas, Enter, Escape, etc.
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    // ⚡ OPTIMIZACIÓN: Usar passive listener para mejor performance
+    document.addEventListener('keydown', handleKeyDown, { passive: true });
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [keyboardNavigation]);
 
   // Hook para skip links
   useEffect(() => {
-    if (!skipLinks) return;
+    if (!skipLinks) {
+      return;
+    }
 
     const handleSkipLink = (event: KeyboardEvent) => {
       if (event.key === 'Tab' && event.shiftKey) {
@@ -80,8 +95,9 @@ export const useAccessibility = (options: AccessibilityOptions = {}) => {
       });
     };
 
-    document.addEventListener('keydown', handleSkipLink);
-    document.addEventListener('focusout', handleSkipLinkHide);
+    // ⚡ OPTIMIZACIÓN: Usar passive listeners para mejor performance
+    document.addEventListener('keydown', handleSkipLink, { passive: true });
+    document.addEventListener('focusout', handleSkipLinkHide, { passive: true });
 
     return () => {
       document.removeEventListener('keydown', handleSkipLink);
@@ -91,7 +107,7 @@ export const useAccessibility = (options: AccessibilityOptions = {}) => {
 
   return {
     announce,
-    manageFocus
+    manageFocus,
   };
 };
 

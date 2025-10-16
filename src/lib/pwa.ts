@@ -86,17 +86,26 @@ class PWAService {
     }
 
     try {
-      window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        this.deferredPrompt = e as any;
-        this.dispatchEvent('pwa-install-available');
-      });
+      // ⚡ OPTIMIZACIÓN: Usar passive listeners para mejor performance
+      window.addEventListener(
+        'beforeinstallprompt',
+        e => {
+          e.preventDefault();
+          this.deferredPrompt = e as any;
+          this.dispatchEvent('pwa-install-available');
+        },
+        { passive: false }
+      );
 
-      window.addEventListener('appinstalled', () => {
-        this.isInstalled = true;
-        this.deferredPrompt = null;
-        this.dispatchEvent('pwa-installed');
-      });
+      window.addEventListener(
+        'appinstalled',
+        () => {
+          this.isInstalled = true;
+          this.deferredPrompt = null;
+          this.dispatchEvent('pwa-installed');
+        },
+        { passive: true }
+      );
     } catch (error) {
       // Ignore errors in SSR
     }
@@ -108,15 +117,39 @@ class PWAService {
     }
 
     try {
-      window.addEventListener('online', () => {
-        this.isOnline = true;
-        this.dispatchEvent('pwa-online');
-      });
+      // ⚡ OPTIMIZACIÓN: Usar passive listeners y throttling para eventos de conectividad
+      let lastConnectivityChange = 0;
+      const CONNECTIVITY_THROTTLE_MS = 1000; // Throttle connectivity changes to max 1 per second
 
-      window.addEventListener('offline', () => {
-        this.isOnline = false;
-        this.dispatchEvent('pwa-offline');
-      });
+      window.addEventListener(
+        'online',
+        () => {
+          const now = Date.now();
+          if (now - lastConnectivityChange < CONNECTIVITY_THROTTLE_MS) {
+            return;
+          }
+          lastConnectivityChange = now;
+
+          this.isOnline = true;
+          this.dispatchEvent('pwa-online');
+        },
+        { passive: true }
+      );
+
+      window.addEventListener(
+        'offline',
+        () => {
+          const now = Date.now();
+          if (now - lastConnectivityChange < CONNECTIVITY_THROTTLE_MS) {
+            return;
+          }
+          lastConnectivityChange = now;
+
+          this.isOnline = false;
+          this.dispatchEvent('pwa-offline');
+        },
+        { passive: true }
+      );
     } catch (error) {
       // Ignore errors in SSR
     }

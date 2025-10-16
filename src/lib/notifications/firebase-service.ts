@@ -247,9 +247,29 @@ class FirebaseNotificationService {
   }
 
   private handleForegroundMessage(payload: any): void {
-    const { title, body, data } = payload.data || {};
+    try {
+      const { title, body, data } = payload.data || {};
 
-    if (title && body) {
+      if (title && body) {
+        // ⚡ OPTIMIZACIÓN: Usar requestIdleCallback para manejar notificaciones sin bloquear el hilo principal
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            this.showNotification(title, body, data);
+          });
+        } else {
+          // Fallback para navegadores que no soportan requestIdleCallback
+          setTimeout(() => {
+            this.showNotification(title, body, data);
+          }, 0);
+        }
+      }
+    } catch (error) {
+      logger.warn('Error handling foreground message:', error);
+    }
+  }
+
+  private showNotification(title: string, body: string, data: any): void {
+    try {
       // Show browser notification
       const notification = new Notification(title, {
         body,
@@ -258,7 +278,14 @@ class FirebaseNotificationService {
         data,
       });
 
+      // ⚡ OPTIMIZACIÓN: Usar debounce para el click handler
+      let clickHandled = false;
       notification.onclick = () => {
+        if (clickHandled) {
+          return;
+        }
+        clickHandled = true;
+
         // Handle notification click
         if (data?.url) {
           window.open(data.url, '_blank');
@@ -268,8 +295,14 @@ class FirebaseNotificationService {
 
       // Auto-close after 5 seconds
       setTimeout(() => {
-        notification.close();
+        try {
+          notification.close();
+        } catch (error) {
+          // Ignorar errores al cerrar notificaciones
+        }
       }, 5000);
+    } catch (error) {
+      logger.warn('Error showing notification:', error);
     }
   }
 

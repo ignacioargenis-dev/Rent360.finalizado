@@ -338,19 +338,32 @@ export function useServiceWorker() {
         });
       }
 
-      // Escuchar mensajes del service worker
+      // ⚡ OPTIMIZACIÓN: Escuchar mensajes del service worker con throttling
+      let lastMessageTime = 0;
+      const MESSAGE_THROTTLE_MS = 100; // Throttle messages to max 10 per second
+      
       navigator.serviceWorker.addEventListener('message', event => {
-        const { type, data } = event.data;
+        const now = Date.now();
+        if (now - lastMessageTime < MESSAGE_THROTTLE_MS) {
+          return; // Skip this message to prevent spam
+        }
+        lastMessageTime = now;
 
-        switch (type) {
-          case 'SYNC_COMPLETED':
-            console.log('Sincronización completada:', { data });
-            break;
-          case 'SYNC_FAILED':
-            console.warn('Sincronización fallida:', { data });
-            break;
-          default:
-            console.debug('Mensaje del Service Worker:', { type, data });
+        try {
+          const { type, data } = event.data;
+
+          switch (type) {
+            case 'SYNC_COMPLETED':
+              console.log('Sincronización completada:', { data });
+              break;
+            case 'SYNC_FAILED':
+              console.warn('Sincronización fallida:', { data });
+              break;
+            default:
+              console.debug('Mensaje del Service Worker:', { type, data });
+          }
+        } catch (error) {
+          console.warn('Error procesando mensaje del Service Worker:', error);
         }
       });
     } catch (error) {
