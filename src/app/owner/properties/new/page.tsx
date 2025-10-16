@@ -567,7 +567,7 @@ export default function NewPropertyPage() {
 
   const handleInputChange = (
     field: keyof PropertyFormData,
-    value: string | number | string[] | File[]
+    value: string | number | string[] | File[] | boolean
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -1218,7 +1218,12 @@ export default function NewPropertyPage() {
                                 type="checkbox"
                                 id={service.id}
                                 checked={formData[service.key as keyof PropertyFormData] as boolean}
-                                onChange={e => handleInputChange(service.key, e.target.checked)}
+                                onChange={e =>
+                                  handleInputChange(
+                                    service.key as keyof PropertyFormData,
+                                    e.target.checked
+                                  )
+                                }
                                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                               />
                               <label
