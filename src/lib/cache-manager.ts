@@ -39,7 +39,7 @@ class CacheManager {
     size: 0,
     memoryUsage: 0,
     hitRate: 0,
-    totalRequests: 0
+    totalRequests: 0,
   };
   private config: CacheConfig = {
     maxSize: 1000,
@@ -48,7 +48,8 @@ class CacheManager {
     maxMemoryUsage: 100 * 1024 * 1024, // 100MB
     persistencePath: './cache',
     persistenceInterval: 5 * 60 * 1000, // 5 minutos
-    enablePersistence: true
+    // Deshabilitar persistencia en producción para evitar errores ENOENT
+    enablePersistence: process.env.NODE_ENV !== 'production',
   };
   private cleanupInterval!: NodeJS.Timeout;
   private persistenceInterval!: NodeJS.Timeout;
@@ -90,18 +91,18 @@ class CacheManager {
       timestamp: now,
       ttl: entryTTL,
       accessCount: 0,
-      lastAccessed: now
+      lastAccessed: now,
     };
 
     this.cache.set(key, entry);
     this.updateStats();
-    
+
     logger.debug('Cache entry creada', { key, ttl: entryTTL });
   }
 
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       this.stats.misses++;
       this.stats.totalRequests++;
@@ -110,7 +111,7 @@ class CacheManager {
     }
 
     const now = Date.now();
-    
+
     // Verificar si ha expirado
     if (now > entry.timestamp + entry.ttl) {
       this.cache.delete(key);
@@ -132,13 +133,13 @@ class CacheManager {
 
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
 
     const now = Date.now();
-    
+
     // Verificar si ha expirado
     if (now > entry.timestamp + entry.ttl) {
       this.cache.delete(key);
@@ -193,9 +194,9 @@ class CacheManager {
     expiredKeys.forEach(key => this.cache.delete(key));
 
     if (expiredKeys.length > 0) {
-      logger.debug('Cache cleanup completado', { 
+      logger.debug('Cache cleanup completado', {
         expiredEntries: expiredKeys.length,
-        remainingEntries: this.cache.size
+        remainingEntries: this.cache.size,
       });
     }
 
@@ -205,9 +206,8 @@ class CacheManager {
   private updateStats(): void {
     this.stats.size = this.cache.size;
     this.stats.memoryUsage = this.cache.size * 1024; // Estimación aproximada
-    this.stats.hitRate = this.stats.totalRequests > 0 
-      ? (this.stats.hits / this.stats.totalRequests) * 100 
-      : 0;
+    this.stats.hitRate =
+      this.stats.totalRequests > 0 ? (this.stats.hits / this.stats.totalRequests) * 100 : 0;
   }
 
   getStats(): CacheStats {
@@ -216,13 +216,9 @@ class CacheManager {
   }
 
   // Métodos de utilidad para patrones comunes
-  async getOrSet<T>(
-    key: string, 
-    fetchFn: () => Promise<T>, 
-    ttl?: number
-  ): Promise<T> {
+  async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttl?: number): Promise<T> {
     const cached = this.get<T>(key);
-    
+
     if (cached !== null) {
       return cached;
     }
@@ -232,7 +228,10 @@ class CacheManager {
       this.set(key, value, ttl);
       return value;
     } catch (error) {
-      logger.error('Error en getOrSet', { key, error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error en getOrSet', {
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -242,7 +241,7 @@ class CacheManager {
 
   setWithTags<T>(key: string, value: T, tags: string[], ttl?: number): void {
     this.set(key, value, ttl);
-    
+
     tags.forEach(tag => {
       if (!this.tagMap.has(tag)) {
         this.tagMap.set(tag, new Set());
@@ -253,7 +252,7 @@ class CacheManager {
 
   invalidateByTag(tag: string): void {
     const keys = this.tagMap.get(tag);
-    
+
     if (keys) {
       keys.forEach(key => this.delete(key));
       this.tagMap.delete(tag);
@@ -285,7 +284,7 @@ class CacheManager {
 
   getCompressed<T>(key: string): T | null {
     const compressed = this.get<string>(key);
-    
+
     if (compressed === null) {
       return null;
     }
@@ -307,7 +306,7 @@ class CacheManager {
     lastAccessed: number;
   } | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -322,7 +321,7 @@ class CacheManager {
       age,
       ttl: entry.ttl,
       accessCount: entry.accessCount,
-      lastAccessed: entry.lastAccessed
+      lastAccessed: entry.lastAccessed,
     };
   }
 
@@ -340,7 +339,8 @@ class CacheManager {
       for (const [key, entry] of this.cache.entries()) {
         if (now <= entry.timestamp + entry.ttl) {
           const size = entry.size || JSON.stringify(entry.value).length;
-          if (size < 1024 * 1024) { // Solo entradas menores a 1MB
+          if (size < 1024 * 1024) {
+            // Solo entradas menores a 1MB
             cacheData[key] = entry;
           }
         }
@@ -350,20 +350,23 @@ class CacheManager {
       await mkdir(cacheDir, { recursive: true });
 
       const cacheFile = `${this.config.persistencePath}/cache.json`;
-      await writeFile(cacheFile, JSON.stringify({
-        data: cacheData,
-        timestamp: now,
-        stats: this.stats
-      }), 'utf8');
+      await writeFile(
+        cacheFile,
+        JSON.stringify({
+          data: cacheData,
+          timestamp: now,
+          stats: this.stats,
+        }),
+        'utf8'
+      );
 
       logger.debug('Cache persistido', {
         entriesCount: Object.keys(cacheData).length,
-        file: cacheFile
+        file: cacheFile,
       });
-
     } catch (error) {
       logger.error('Error persistiendo cache', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -405,23 +408,24 @@ class CacheManager {
             logger.info('Cache persistido cargado', {
               loadedEntries: loadedCount,
               cacheAge: Math.round(age / 1000 / 60),
-              file: cacheFile
+              file: cacheFile,
             });
           } else {
-            logger.info('Cache persistido muy antiguo, ignorando', { age: Math.round(age / 1000 / 60) });
+            logger.info('Cache persistido muy antiguo, ignorando', {
+              age: Math.round(age / 1000 / 60),
+            });
           }
         }
       } catch (fileError) {
         // Archivo no existe o está corrupto, continuar sin cache persistido
         logger.debug('No se pudo cargar cache persistido', {
           file: cacheFile,
-          error: fileError instanceof Error ? fileError.message : String(fileError)
+          error: fileError instanceof Error ? fileError.message : String(fileError),
         });
       }
-
     } catch (error) {
       logger.error('Error cargando cache persistido', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -476,7 +480,7 @@ export function createCacheKey(prefix: string, params: Record<string, any>): str
     .sort()
     .map(key => `${key}:${params[key]}`)
     .join('|');
-  
+
   return `${prefix}:${sortedParams}`;
 }
 
@@ -486,7 +490,7 @@ export function cached(ttl?: number, keyPrefix?: string) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      const cacheKey = keyPrefix 
+      const cacheKey = keyPrefix
         ? `${keyPrefix}:${propertyKey}:${JSON.stringify(args)}`
         : `${target.constructor.name}:${propertyKey}:${JSON.stringify(args)}`;
 

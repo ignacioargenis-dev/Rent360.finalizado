@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Forzar renderizado dinámico para evitar problemas de autenticación durante build
 export const dynamic = 'force-dynamic';
@@ -66,6 +66,7 @@ interface PropertySummary {
 export default function OwnerDashboard() {
   const { user, loading: userLoading } = useAuth();
   const router = useRouter();
+  const hasLoadedData = useRef(false); // Para evitar cargas múltiples
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     activeContracts: 0,
@@ -296,14 +297,16 @@ export default function OwnerDashboard() {
   }, []); // Removido 'user' de las dependencias para evitar loops infinitos
 
   useEffect(() => {
-    if (user) {
+    // Solo cargar datos UNA VEZ cuando el usuario esté disponible
+    if (user && !hasLoadedData.current) {
+      hasLoadedData.current = true; // Marcar como cargado ANTES de la llamada
       loadDashboardData();
-    } else if (!userLoading) {
+    } else if (!user && !userLoading && !hasLoadedData.current) {
       // Usuario no autenticado, mostrar datos vacíos
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, userLoading]);
+  }, [user?.id]); // Solo depender del ID del usuario, no del objeto completo
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -408,7 +411,10 @@ export default function OwnerDashboard() {
               <p className="text-red-600 text-sm">{error}</p>
             </div>
             <Button
-              onClick={loadDashboardData}
+              onClick={() => {
+                hasLoadedData.current = false; // Resetear para permitir nueva carga
+                loadDashboardData();
+              }}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Intentar de nuevo
