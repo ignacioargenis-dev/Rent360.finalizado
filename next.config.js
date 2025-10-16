@@ -24,31 +24,34 @@ const nextConfig = {
     optimizeCss: false, // Deshabilitado para evitar problemas con Tailwind
     scrollRestoration: true,
   },
-  // Forzar renderizado dinámico para páginas que usan APIs del cliente
-  generateBuildId: async () => {
-    return 'build-' + Date.now();
-  },
+  // ⚠️ TEMPORALMENTE DESHABILITADO: generateBuildId dinámico puede causar problemas con chunks
+  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+  // generateBuildId: async () => {
+  //   return 'build-' + Date.now();
+  // },
   // Optimizaciones de build - Usar servidor personalizado
   // output: 'standalone', // Deshabilitado para usar servidor personalizado con Socket.IO
   poweredByHeader: false,
-  webpack: (config, { isServer }) => {
-    // Solo mantener fallbacks críticos para evitar problemas de inicialización
-    if (!isServer) {
-      config.resolve.fallback = {
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
+  // ⚠️ TEMPORALMENTE DESHABILITADO: Configuración webpack personalizada para debugging
+  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+  // webpack: (config, { isServer }) => {
+  //   // Solo mantener fallbacks críticos para evitar problemas de inicialización
+  //   if (!isServer) {
+  //     config.resolve.fallback = {
+  //       fs: false,
+  //       net: false,
+  //       tls: false,
+  //     };
+  //   }
 
-    // Remover externals complejos que pueden causar problemas - simplificar configuración
-    config.externals = config.externals || [];
-    if (!isServer) {
-      config.externals.push('redis', 'sqlite3');
-    }
+  //   // Remover externals complejos que pueden causar problemas - simplificar configuración
+  //   config.externals = config.externals || [];
+  //   if (!isServer) {
+  //     config.externals.push('redis', 'sqlite3');
+  //   }
 
-    return config;
-  },
+  //   return config;
+  // },
   // Configuración optimizada de imágenes
   images: {
     domains: [
