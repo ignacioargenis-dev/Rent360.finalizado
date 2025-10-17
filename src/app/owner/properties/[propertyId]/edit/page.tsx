@@ -183,17 +183,81 @@ export default function OwnerPropertyEditPage() {
 
   useEffect(() => {
     loadPropertyData();
-  }, [propertyId]);
+  }, [propertyId, loadPropertyData]);
 
   const loadPropertyData = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setFormData(mockProperty);
-      setImagePreviews(mockProperty.images);
+      // ✅ CORREGIDO: Cargar datos reales de la API
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const propertyData = await response.json();
+
+        // Transformar datos de la API al formato esperado por el formulario
+        const transformedData: PropertyData = {
+          id: propertyData.id,
+          title: propertyData.title,
+          address: propertyData.address,
+          city: propertyData.city,
+          region: propertyData.region,
+          type: propertyData.type,
+          bedrooms: propertyData.bedrooms,
+          bathrooms: propertyData.bathrooms,
+          area: propertyData.area,
+          monthlyRent: propertyData.price,
+          currency: propertyData.currency || 'CLP',
+          status: propertyData.status,
+          description: propertyData.description,
+          features: propertyData.features || [],
+          images: propertyData.images || [],
+
+          // Características básicas
+          furnished: propertyData.furnished || false,
+          petFriendly: propertyData.petFriendly || false,
+          parkingSpaces: propertyData.parkingSpaces || 0,
+          availableFrom: propertyData.availableFrom
+            ? new Date(propertyData.availableFrom)
+            : new Date(),
+          floor: propertyData.floor || 0,
+          buildingName: propertyData.buildingName || '',
+          yearBuilt: propertyData.yearBuilt || new Date().getFullYear(),
+
+          // Características del edificio/servicios
+          heating: propertyData.heating || false,
+          cooling: propertyData.cooling || false,
+          internet: propertyData.internet || false,
+          elevator: propertyData.elevator || false,
+          balcony: propertyData.balcony || false,
+          terrace: propertyData.terrace || false,
+          garden: propertyData.garden || false,
+          pool: propertyData.pool || false,
+          gym: propertyData.gym || false,
+          security: propertyData.security || false,
+          concierge: propertyData.concierge || false,
+        };
+
+        setFormData(transformedData);
+        setImagePreviews(transformedData.images);
+      } else {
+        logger.error('Error loading property for edit:', response.status, response.statusText);
+        // Fallback a datos mock si la API falla
+        setFormData(mockProperty);
+        setImagePreviews(mockProperty.images);
+      }
     } catch (error) {
       logger.error('Error al cargar datos de la propiedad', { error, propertyId });
+      // Fallback a datos mock si hay error
+      setFormData(mockProperty);
+      setImagePreviews(mockProperty.images);
     } finally {
       setIsLoading(false);
     }

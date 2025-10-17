@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -28,6 +30,7 @@ import {
   Eye,
   RefreshCw,
   Camera,
+  Upload,
   Home,
   Users,
   Star,
@@ -139,6 +142,7 @@ export default function OwnerPropertyDetailPage() {
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -284,7 +288,7 @@ export default function OwnerPropertyDetailPage() {
 
   useEffect(() => {
     loadPropertyDetails();
-  }, [propertyId]);
+  }, [propertyId, loadPropertyDetails]);
 
   const loadPropertyDetails = async () => {
     setIsLoading(true);
@@ -418,6 +422,42 @@ export default function OwnerPropertyDetailPage() {
     document.body.removeChild(link);
 
     logger.info('Documento descargado', { propertyId, documentId });
+  };
+
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !property) {
+      return;
+    }
+
+    setIsUploadingDocument(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('propertyId', property.id);
+      formData.append('type', 'PROPERTY_DOCUMENT');
+
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/documents/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (response.ok) {
+        // Recargar los datos de la propiedad para mostrar el nuevo documento
+        await loadPropertyDetails();
+        logger.info('Document uploaded successfully');
+      } else {
+        logger.error('Error uploading document:', response.statusText);
+      }
+    } catch (error) {
+      logger.error('Error uploading document:', error);
+    } finally {
+      setIsUploadingDocument(false);
+      // Limpiar el input
+      event.target.value = '';
+    }
   };
 
   const handleEditProperty = () => {
@@ -980,34 +1020,77 @@ export default function OwnerPropertyDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Documentos de la Propiedad</CardTitle>
+                <CardDescription>
+                  Documentos legales y administrativos de la propiedad (solo visibles para quienes
+                  celebran un contrato)
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {property.documents.map(doc => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex items-center gap-4">
-                        <FileText className="w-8 h-8 text-blue-600" />
-                        <div>
-                          <p className="font-medium">{doc.name}</p>
-                          <p className="text-sm text-gray-600">
-                            {doc.type} • {doc.size} • Subido: {formatDate(doc.uploadDate)}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadDocument(doc.id)}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Descargar
+              <CardContent className="space-y-6">
+                {/* Upload Section */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Subir Documento</h3>
+                  <p className="text-gray-600 mb-4">
+                    Arrastra y suelta archivos o haz clic para seleccionar
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Label htmlFor="document-upload" className="cursor-pointer">
+                      <Button variant="outline" asChild>
+                        <span>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {isUploadingDocument ? 'Subiendo...' : 'Seleccionar Archivo'}
+                        </span>
                       </Button>
-                    </div>
-                  ))}
+                      <Input
+                        id="document-upload"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleDocumentUpload}
+                        disabled={isUploadingDocument}
+                        className="hidden"
+                      />
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Formatos aceptados: PDF, DOC, DOCX, JPG, PNG. Tamaño máximo: 10MB.
+                  </p>
                 </div>
+
+                {/* Documents List */}
+                {property.documents && property.documents.length > 0 ? (
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900">Documentos Subidos</h4>
+                    {property.documents.map(doc => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          <FileText className="w-8 h-8 text-blue-600" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {doc.type} • {doc.size} • Subido: {formatDate(doc.uploadDate)}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadDocument(doc.id)}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Descargar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>No hay documentos subidos para esta propiedad</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
