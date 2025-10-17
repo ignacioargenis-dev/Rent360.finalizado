@@ -170,8 +170,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
 
-    // Verificar permisos (solo el propietario puede editar)
-    if (existingProperty.ownerId !== user.id && user.role !== 'ADMIN') {
+    // ✅ CORREGIDO: Verificar permisos (propietario, corredor y administrador pueden editar)
+    if (existingProperty.ownerId !== user.id && user.role !== 'ADMIN' && user.role !== 'BROKER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

@@ -80,6 +80,69 @@ export default function AdminPropertiesPage() {
     // Load properties data
     const loadProperties = async () => {
       try {
+        // ✅ CORREGIDO: Cargar datos reales desde la API
+        const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${baseUrl}/api/properties/list?limit=100`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const propertiesData = data.properties || [];
+
+          // Transformar datos de la API al formato esperado
+          const transformedProperties: Property[] = propertiesData.map((property: any) => ({
+            id: property.id,
+            title: property.title,
+            description: property.description || '',
+            address: property.address,
+            city: property.city,
+            commune: property.commune,
+            region: property.region,
+            price: property.price,
+            deposit: property.deposit || 0,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            area: property.area,
+            status: property.status,
+            images: property.images ? JSON.stringify(property.images) : JSON.stringify([]),
+            features: property.features || [],
+            ownerId: property.ownerId,
+            createdAt: new Date(property.createdAt),
+            updatedAt: new Date(property.updatedAt),
+          }));
+
+          setProperties(transformedProperties);
+          setFilteredProperties(transformedProperties);
+        } else {
+          logger.error('Error loading properties from API:', {
+            status: response.status,
+            statusText: response.statusText,
+          });
+          // Fallback a datos vacíos si falla la API
+          setProperties([]);
+          setFilteredProperties([]);
+        }
+        setLoading(false);
+      } catch (error) {
+        logger.error('Error loading properties:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Fallback a datos vacíos en caso de error
+        setProperties([]);
+        setFilteredProperties([]);
+        setLoading(false);
+      }
+    };
+
+    // Función original comentada para referencia
+    const loadPropertiesOriginal = async () => {
+      try {
         // Mock data for demo
         const emptyImages: string[] = [];
         const emptyFeatures: string[] = [];

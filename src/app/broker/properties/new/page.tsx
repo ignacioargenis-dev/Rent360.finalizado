@@ -387,8 +387,11 @@ export default function BrokerNewPropertyPage() {
         formDataToSend.append(`otherDocuments`, doc);
       });
 
-      const response = await fetch('/api/broker/properties', {
+      // ✅ CORREGIDO: Usar la API correcta que permite BROKER
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/properties`, {
         method: 'POST',
+        credentials: 'include',
         body: formDataToSend,
       });
 

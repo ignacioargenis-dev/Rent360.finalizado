@@ -101,106 +101,107 @@ export default function BrokerPropertiesPage() {
 
     const loadPropertiesData = async () => {
       try {
-        // Mock properties data
-        const mockProperties: BrokerProperty[] = [
-          {
-            id: '1',
-            title: 'Departamento Moderno Providencia',
-            address: 'Av. Providencia 123, Providencia, Santiago',
-            type: 'departamento',
-            status: 'rented',
-            price: 450000,
-            ownerName: 'María González',
-            tenantName: 'Carlos Ramírez',
-            commissionEarned: 225000,
-            views: 145,
-            inquiries: 12,
-            occupancyRate: 100,
-            lastPayment: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 180).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+        // ✅ CORREGIDO: Cargar datos reales de propiedades desde la API
+        const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${baseUrl}/api/properties/list?limit=50`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
           },
-          {
-            id: '2',
-            title: 'Casa Familiar Las Condes',
-            address: 'Calle Las Condes 456, Las Condes, Santiago',
-            type: 'casa',
-            status: 'available',
-            price: 850000,
-            ownerName: 'Roberto Díaz',
-            commissionEarned: 0,
-            views: 89,
-            inquiries: 7,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const propertiesData = data.properties || [];
+
+          // Transformar datos de la API al formato esperado por el componente
+          const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({
+            id: property.id,
+            title: property.title,
+            address: `${property.address}, ${property.commune}, ${property.city}`,
+            type: property.type,
+            status: property.status,
+            price: property.price,
+            ownerName: property.owner?.name || 'Propietario',
+            tenantName: property.currentTenant?.name || undefined,
+            commissionEarned: property.commissionEarned || 0,
+            views: property.views || 0,
+            inquiries: property.inquiries || 0,
+            occupancyRate: property.status === 'rented' ? 100 : 0,
+            images:
+              property.images && property.images.length > 0
+                ? property.images
+                : ['/api/placeholder/400/300'],
+            createdAt: property.createdAt,
+            updatedAt: property.updatedAt,
+          }));
+
+          setProperties(transformedProperties);
+
+          // Calcular estadísticas reales
+          const availableProperties = transformedProperties.filter(
+            p => p.status === 'available'
+          ).length;
+          const rentedProperties = transformedProperties.filter(p => p.status === 'rented').length;
+          const totalPortfolioValue = transformedProperties
+            .filter(p => p.status === 'rented')
+            .reduce((sum, p) => sum + p.price, 0);
+          const totalViews = transformedProperties.reduce((sum, p) => sum + p.views, 0);
+          const totalInquiries = transformedProperties.reduce((sum, p) => sum + p.inquiries, 0);
+          const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;
+          const occupancyRate =
+            transformedProperties.length > 0
+              ? (rentedProperties / transformedProperties.length) * 100
+              : 0;
+
+          const propertyStats: PropertyStats = {
+            totalProperties: transformedProperties.length,
+            availableProperties,
+            rentedProperties,
+            totalPortfolioValue,
+            averageRent,
+            occupancyRate,
+            totalViews,
+            totalInquiries,
+          };
+
+          setStats(propertyStats);
+        } else {
+          logger.error('Error loading properties from API:', {
+            status: response.status,
+            statusText: response.statusText,
+          });
+          // Fallback a datos vacíos si falla la API
+          setProperties([]);
+          setStats({
+            totalProperties: 0,
+            availableProperties: 0,
+            rentedProperties: 0,
+            totalPortfolioValue: 0,
+            averageRent: 0,
             occupancyRate: 0,
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          },
-          {
-            id: '3',
-            title: 'Oficina Corporativa Centro',
-            address: 'Av. Libertador 789, Santiago Centro, Santiago',
-            type: 'oficina',
-            status: 'rented',
-            price: 1200000,
-            ownerName: 'Empresa ABC Ltda',
-            tenantName: 'Tech Solutions SpA',
-            commissionEarned: 360000,
-            views: 203,
-            inquiries: 15,
-            occupancyRate: 100,
-            lastPayment: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 120).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-          },
-          {
-            id: '4',
-            title: 'Local Comercial Ñuñoa',
-            address: 'Irarrázaval 321, Ñuñoa, Santiago',
-            type: 'local',
-            status: 'maintenance',
-            price: 350000,
-            ownerName: 'Patricia Soto',
-            commissionEarned: 350000,
-            views: 67,
-            inquiries: 4,
-            occupancyRate: 0,
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-          },
-        ];
-
-        setProperties(mockProperties);
-
-        // Calculate stats
-        const availableProperties = mockProperties.filter(p => p.status === 'available').length;
-        const rentedProperties = mockProperties.filter(p => p.status === 'rented').length;
-        const totalPortfolioValue = mockProperties
-          .filter(p => p.status === 'rented')
-          .reduce((sum, p) => sum + p.price, 0);
-        const totalViews = mockProperties.reduce((sum, p) => sum + p.views, 0);
-        const totalInquiries = mockProperties.reduce((sum, p) => sum + p.inquiries, 0);
-        const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;
-        const occupancyRate =
-          mockProperties.length > 0 ? (rentedProperties / mockProperties.length) * 100 : 0;
-
-        const propertyStats: PropertyStats = {
-          totalProperties: mockProperties.length,
-          availableProperties,
-          rentedProperties,
-          totalPortfolioValue,
-          averageRent,
-          occupancyRate,
-          totalViews,
-          totalInquiries,
-        };
-
-        setStats(propertyStats);
+            totalViews: 0,
+            totalInquiries: 0,
+          });
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading properties data:', {
           error: error instanceof Error ? error.message : String(error),
+        });
+        // Fallback a datos vacíos en caso de error
+        setProperties([]);
+        setStats({
+          totalProperties: 0,
+          availableProperties: 0,
+          rentedProperties: 0,
+          totalPortfolioValue: 0,
+          averageRent: 0,
+          occupancyRate: 0,
+          totalViews: 0,
+          totalInquiries: 0,
         });
         setLoading(false);
       }
