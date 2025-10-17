@@ -43,6 +43,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { User as UserType } from '@/types';
+import { LocationSelectors } from '@/components/ui/location-selectors';
 
 interface Document {
   id: string;
@@ -185,76 +186,56 @@ export default function OwnerSettingsPage() {
 
   const loadSettings = async () => {
     try {
-      // Mock settings data - in real app this would come from API
-      const mockSettings: Partial<OwnerSettings> = {
-        profile: {
-          firstName: 'Juan',
-          lastName: 'Pérez',
-          email: 'juan.perez@email.com',
-          phone: '+56987654321',
-          address: 'Av. Providencia 1234',
-          city: 'Santiago',
-          region: 'Metropolitana',
-          description:
-            'Propietario de propiedades residenciales con más de 10 años de experiencia.',
-        },
-        security: {
-          twoFactorEnabled: false,
-          sessionTimeout: 30,
-          passwordLastChanged: '2024-01-15',
-        },
-        business: {
-          taxId: '12.345.678-9',
-          businessType: 'company',
-          commissionRate: 5.0,
-          paymentTerms: '30 días',
-        },
-        documents: [
-          {
-            id: '1',
-            name: 'Cédula de Identidad.pdf',
-            type: 'PDF',
-            category: 'personal',
-            uploadDate: '2024-01-10',
-            size: '2.1 MB',
-            url: '/documents/personal/cedula.pdf',
-          },
-          {
-            id: '2',
-            name: 'ROL Propiedad Las Condes.pdf',
-            type: 'PDF',
-            category: 'property',
-            propertyId: '1',
-            uploadDate: '2024-01-12',
-            size: '1.8 MB',
-            url: '/documents/property/rol-las-condes.pdf',
-          },
-          {
-            id: '3',
-            name: 'Certificado de Avalúo.pdf',
-            type: 'PDF',
-            category: 'property',
-            propertyId: '1',
-            uploadDate: '2024-01-15',
-            size: '3.2 MB',
-            url: '/documents/property/certificado-avaluo.pdf',
-          },
-        ],
-      };
+      // Cargar documentos reales desde la API
+      const documentsResponse = await fetch('/api/documents/upload?limit=100', {
+        credentials: 'include',
+      });
 
-      setSettings(prev => ({
-        ...prev,
-        ...mockSettings,
-        profile: { ...prev.profile, ...mockSettings.profile },
-        security: { ...prev.security, ...mockSettings.security },
-        business: { ...prev.business, ...mockSettings.business },
-        documents: mockSettings.documents || [],
-      }));
+      if (documentsResponse.ok) {
+        const documentsData = await documentsResponse.json();
+        const realDocuments: Document[] = documentsData.documents.map((doc: any) => ({
+          id: doc.id,
+          name: doc.name,
+          type: doc.mimeType === 'application/pdf' ? 'PDF' : 'Imagen',
+          category:
+            doc.type === 'PROPERTY_DOCUMENT'
+              ? 'property'
+              : doc.type === 'IDENTIFICATION'
+                ? 'personal'
+                : 'legal',
+          propertyId: doc.propertyId,
+          uploadDate: new Date(doc.createdAt).toISOString().split('T')[0],
+          size: `${(doc.fileSize / 1024 / 1024).toFixed(1)} MB`,
+          url: doc.filePath,
+        }));
+
+        setSettings(prev => ({
+          ...prev,
+          documents: realDocuments,
+        }));
+      } else {
+        logger.warn('No se pudieron cargar los documentos, usando datos vacíos');
+        setSettings(prev => ({
+          ...prev,
+          documents: [],
+        }));
+      }
     } catch (error) {
-      logger.error('Error loading settings:', {
+      logger.error('Error loading documents:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      setSettings(prev => ({
+        ...prev,
+        documents: [],
+      }));
     }
+  };
+
+  const handleRegionChange = (regionId: string) => {
+    setSettings(prev => ({
+      ...prev,
+      profile: { ...prev.profile, region: regionId, city: '' },
+    }));
   };
 
   const handleSaveSettings = async () => {
@@ -426,6 +407,9 @@ export default function OwnerSettingsPage() {
         setShowUploadModal(false);
         setSuccessMessage('Documento subido exitosamente');
         setTimeout(() => setSuccessMessage(''), 3000);
+
+        // Recargar documentos desde la API para asegurar consistencia
+        await loadSettings();
       } else {
         throw new Error('No se recibió información del archivo subido');
       }
@@ -667,35 +651,12 @@ export default function OwnerSettingsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="city">Ciudad</Label>
-                    <Input
-                      id="city"
-                      value={settings.profile.city}
-                      onChange={e => updateProfile('city', e.target.value)}
-                      placeholder="Ciudad"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="region">Región</Label>
-                    <Select
-                      value={settings.profile.region}
-                      onValueChange={value => updateProfile('region', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona región" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Metropolitana">Metropolitana</SelectItem>
-                        <SelectItem value="Valparaíso">Valparaíso</SelectItem>
-                        <SelectItem value="Biobío">Biobío</SelectItem>
-                        <SelectItem value="Maule">Maule</SelectItem>
-                        <SelectItem value="Araucanía">Araucanía</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <LocationSelectors
+                  selectedRegion={settings.profile.region}
+                  selectedCommune={settings.profile.city}
+                  onRegionChange={handleRegionChange}
+                  onCommuneChange={value => updateProfile('city', value)}
+                />
 
                 <div>
                   <Label htmlFor="description">Descripción</Label>
