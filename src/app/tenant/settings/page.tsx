@@ -131,12 +131,12 @@ export default function TenantSettingsPage() {
           if (savedSettings) {
             setSettings(JSON.parse(savedSettings));
           } else {
-            // Initialize with user data
+            // ✅ CORREGIDO: Initialize with real user data
             setSettings(prev => ({
               ...prev,
               profile: {
-                firstName: data.user?.firstName || '',
-                lastName: data.user?.lastName || '',
+                firstName: data.user?.name?.split(' ')[0] || '',
+                lastName: data.user?.name?.split(' ').slice(1).join(' ') || '',
                 email: data.user?.email || '',
                 phone: data.user?.phone || '',
                 emergencyContact: '',
@@ -696,7 +696,10 @@ export default function TenantSettingsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span><strong>Certificado de Cotizaciones</strong> - Obligatorio para arrendamiento</span>
+                        <span>
+                          <strong>Certificado de Cotizaciones</strong> - Obligatorio para
+                          arrendamiento
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -710,7 +713,9 @@ export default function TenantSettingsPage() {
                     <div className="space-y-2 text-sm text-purple-800">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span><strong>Certificado de Antecedentes</strong> - Requerido por ley</span>
+                        <span>
+                          <strong>Certificado de Antecedentes</strong> - Requerido por ley
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
@@ -736,11 +741,13 @@ export default function TenantSettingsPage() {
                             <span className="text-orange-600 font-bold text-xs">1</span>
                           </div>
                           <div>
-                            <h6 className="font-medium text-orange-900">Certificado de Cotizaciones</h6>
+                            <h6 className="font-medium text-orange-900">
+                              Certificado de Cotizaciones
+                            </h6>
                             <p className="text-orange-700 text-xs mb-2">
-                              Documento emitido por la Administradora de Fondos de Cesantía (AFC) que acredita
-                              tu historial laboral y capacidad de pago. Es obligatorio para contratos de arriendo
-                              superiores a $500.000 mensuales.
+                              Documento emitido por la Administradora de Fondos de Cesantía (AFC)
+                              que acredita tu historial laboral y capacidad de pago. Es obligatorio
+                              para contratos de arriendo superiores a $500.000 mensuales.
                             </p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="text-xs">
@@ -767,10 +774,13 @@ export default function TenantSettingsPage() {
                             <span className="text-orange-600 font-bold text-xs">2</span>
                           </div>
                           <div>
-                            <h6 className="font-medium text-orange-900">Certificado de Antecedentes</h6>
+                            <h6 className="font-medium text-orange-900">
+                              Certificado de Antecedentes
+                            </h6>
                             <p className="text-orange-700 text-xs mb-2">
-                              Documento emitido por el Registro Civil e Identificación que certifica que no
-                              tienes antecedentes penales. Es obligatorio según la Ley de Arrendamiento.
+                              Documento emitido por el Registro Civil e Identificación que certifica
+                              que no tienes antecedentes penales. Es obligatorio según la Ley de
+                              Arrendamiento.
                             </p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="text-xs">
@@ -798,10 +808,10 @@ export default function TenantSettingsPage() {
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    <strong>Documentos obligatorios por ley:</strong> El Certificado de Antecedentes y el
-                    Certificado de Cotizaciones son requeridos por la legislación chilena para contratos
-                    de arriendo. Sin estos documentos, no podrás completar solicitudes de arriendo en
-                    Rent360.
+                    <strong>Documentos obligatorios por ley:</strong> El Certificado de Antecedentes
+                    y el Certificado de Cotizaciones son requeridos por la legislación chilena para
+                    contratos de arriendo. Sin estos documentos, no podrás completar solicitudes de
+                    arriendo en Rent360.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -878,262 +888,299 @@ export default function TenantSettingsPage() {
         </Dialog>
       </div>
       {/* Certificado de Cotizaciones Guide Modal */}
-    <Dialog open={showCotizacionesGuide} onOpenChange={setShowCotizacionesGuide}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-green-600">📄 Cómo Obtener el Certificado de Cotizaciones</DialogTitle>
-          <DialogDescription>
-            Guía paso a paso para obtener tu Certificado de Cotizaciones de la AFC
-          </DialogDescription>
-        </DialogHeader>
+      <Dialog open={showCotizacionesGuide} onOpenChange={setShowCotizacionesGuide}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-green-600">
+              📄 Cómo Obtener el Certificado de Cotizaciones
+            </DialogTitle>
+            <DialogDescription>
+              Guía paso a paso para obtener tu Certificado de Cotizaciones de la AFC
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {/* What is it */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-900 mb-2">¿Qué es el Certificado de Cotizaciones?</h4>
-            <p className="text-green-800 text-sm">
-              Es un documento emitido por tu Administradora de Fondos de Cesantía (AFC) que acredita
-              tu historial laboral, ingresos y capacidad de pago. Es obligatorio para contratos de
-              arriendo superiores a $500.000 mensuales según la Ley de Arrendamiento chilena.
-            </p>
-          </div>
+          <div className="space-y-6">
+            {/* What is it */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-2">
+                ¿Qué es el Certificado de Cotizaciones?
+              </h4>
+              <p className="text-green-800 text-sm">
+                Es un documento emitido por tu Administradora de Fondos de Cesantía (AFC) que
+                acredita tu historial laboral, ingresos y capacidad de pago. Es obligatorio para
+                contratos de arriendo superiores a $500.000 mensuales según la Ley de Arrendamiento
+                chilena.
+              </p>
+            </div>
 
-          {/* Steps */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-gray-900">Pasos para obtenerlo:</h4>
+            {/* Steps */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900">Pasos para obtenerlo:</h4>
 
-            <div className="space-y-3">
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  1
+              <div className="space-y-3">
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Identifica tu AFC</h5>
+                    <p className="text-blue-800 text-sm">
+                      Revisa tu contrato de trabajo o liquidaciones de sueldo para saber cuál es tu
+                      AFC. Las principales son:{' '}
+                      <strong>Unión, Hábitat, PlanVital, Provida, Modelo</strong>.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Identifica tu AFC</h5>
-                  <p className="text-blue-800 text-sm">
-                    Revisa tu contrato de trabajo o liquidaciones de sueldo para saber cuál es tu AFC.
-                    Las principales son: <strong>Unión, Hábitat, PlanVital, Provida, Modelo</strong>.
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  2
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Reúne tus documentos</h5>
+                    <ul className="text-blue-800 text-sm space-y-1">
+                      <li>• Cédula de Identidad</li>
+                      <li>• Número de serie de tu cédula (opcional pero recomendado)</li>
+                      <li>• Información de contacto actualizada</li>
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Reúne tus documentos</h5>
-                  <ul className="text-blue-800 text-sm space-y-1">
-                    <li>• Cédula de Identidad</li>
-                    <li>• Número de serie de tu cédula (opcional pero recomendado)</li>
-                    <li>• Información de contacto actualizada</li>
-                  </ul>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  3
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    3
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Solicítalo en línea</h5>
+                    <p className="text-blue-800 text-sm">
+                      Ingresa al sitio web de tu AFC y solicita el certificado en la sección de
+                      &quot;Certificados&quot; o &quot;Documentos&quot;. La mayoría ofrece solicitud
+                      gratuita en línea.
+                    </p>
+                    <div className="mt-2">
+                      <Button size="sm" variant="outline" className="text-xs">
+                        <Info className="w-3 h-3 mr-1" />
+                        Ver Sitios Web de AFC
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Solicítalo en línea</h5>
-                  <p className="text-blue-800 text-sm">
-                    Ingresa al sitio web de tu AFC y solicita el certificado en la sección de
-                    &quot;Certificados&quot; o &quot;Documentos&quot;. La mayoría ofrece solicitud gratuita en línea.
-                  </p>
-                  <div className="mt-2">
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <Info className="w-3 h-3 mr-1" />
-                      Ver Sitios Web de AFC
-                    </Button>
+
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    4
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Espera la emisión</h5>
+                    <p className="text-blue-800 text-sm">
+                      El certificado se emite generalmente en 24-48 horas hábiles. Recibirás una
+                      notificación por email cuando esté disponible para descarga.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    5
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Descarga y sube a Rent360</h5>
+                    <p className="text-blue-800 text-sm">
+                      Una vez emitido, descarga el PDF y súbelo a tu perfil en Rent360. El sistema
+                      lo validará automáticamente.
+                    </p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  4
-                </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Espera la emisión</h5>
-                  <p className="text-blue-800 text-sm">
-                    El certificado se emite generalmente en 24-48 horas hábiles. Recibirás una
-                    notificación por email cuando esté disponible para descarga.
-                  </p>
-                </div>
-              </div>
+            {/* Important Notes */}
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información Importante</h4>
+              <ul className="text-yellow-800 text-sm space-y-1">
+                <li>
+                  • <strong>Gratuito:</strong> La solicitud del certificado es gratuita
+                </li>
+                <li>
+                  • <strong>Vigencia:</strong> Tiene una vigencia de 30 días desde su emisión
+                </li>
+                <li>
+                  • <strong>Actualización:</strong> Si cambia tu situación laboral, debes
+                  actualizarlo
+                </li>
+                <li>
+                  • <strong>Obligatorio:</strong> Sin este certificado no podrás arrendar
+                  propiedades
+                </li>
+              </ul>
+            </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  5
-                </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Descarga y sube a Rent360</h5>
-                  <p className="text-blue-800 text-sm">
-                    Una vez emitido, descarga el PDF y súbelo a tu perfil en Rent360.
-                    El sistema lo validará automáticamente.
-                  </p>
-                </div>
-              </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowCotizacionesGuide(false)}>
+                Cerrar
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Upload className="w-4 h-4 mr-2" />
+                Subir Certificado
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Important Notes */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información Importante</h4>
-            <ul className="text-yellow-800 text-sm space-y-1">
-              <li>• <strong>Gratuito:</strong> La solicitud del certificado es gratuita</li>
-              <li>• <strong>Vigencia:</strong> Tiene una vigencia de 30 días desde su emisión</li>
-              <li>• <strong>Actualización:</strong> Si cambia tu situación laboral, debes actualizarlo</li>
-              <li>• <strong>Obligatorio:</strong> Sin este certificado no podrás arrendar propiedades</li>
-            </ul>
-          </div>
+      {/* Certificado de Antecedentes Guide Modal */}
+      <Dialog open={showAntecedentesGuide} onOpenChange={setShowAntecedentesGuide}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-purple-600">
+              🛡️ Cómo Obtener el Certificado de Antecedentes
+            </DialogTitle>
+            <DialogDescription>
+              Guía paso a paso para obtener tu Certificado de Antecedentes del Registro Civil
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setShowCotizacionesGuide(false)}>
-              Cerrar
-            </Button>
-            <Button className="bg-green-600 hover:bg-green-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Subir Certificado
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-6">
+            {/* What is it */}
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-purple-900 mb-2">
+                ¿Qué es el Certificado de Antecedentes?
+              </h4>
+              <p className="text-purple-800 text-sm">
+                Es un documento emitido por el Registro Civil e Identificación que certifica que no
+                tienes antecedentes penales. Es obligatorio según la Ley de Arrendamiento chilena
+                para todos los contratos de arriendo.
+              </p>
+            </div>
 
-    {/* Certificado de Antecedentes Guide Modal */}
-    <Dialog open={showAntecedentesGuide} onOpenChange={setShowAntecedentesGuide}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-purple-600">🛡️ Cómo Obtener el Certificado de Antecedentes</DialogTitle>
-          <DialogDescription>
-            Guía paso a paso para obtener tu Certificado de Antecedentes del Registro Civil
-          </DialogDescription>
-        </DialogHeader>
+            {/* Steps */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900">Pasos para obtenerlo:</h4>
 
-        <div className="space-y-6">
-          {/* What is it */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-purple-900 mb-2">¿Qué es el Certificado de Antecedentes?</h4>
-            <p className="text-purple-800 text-sm">
-              Es un documento emitido por el Registro Civil e Identificación que certifica que no
-              tienes antecedentes penales. Es obligatorio según la Ley de Arrendamiento chilena
-              para todos los contratos de arriendo.
-            </p>
-          </div>
-
-          {/* Steps */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-gray-900">Pasos para obtenerlo:</h4>
-
-            <div className="space-y-3">
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  1
+              <div className="space-y-3">
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Prepara tus documentos</h5>
+                    <ul className="text-blue-800 text-sm space-y-1">
+                      <li>• Cédula de Identidad vigente</li>
+                      <li>• Número de serie de tu cédula</li>
+                      <li>• Información personal actualizada</li>
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Prepara tus documentos</h5>
-                  <ul className="text-blue-800 text-sm space-y-1">
-                    <li>• Cédula de Identidad vigente</li>
-                    <li>• Número de serie de tu cédula</li>
-                    <li>• Información personal actualizada</li>
-                  </ul>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  2
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Solicítalo en línea</h5>
+                    <p className="text-blue-800 text-sm mb-2">
+                      El método más rápido y fácil es solicitarlo en línea a través del sitio web
+                      del Registro Civil.
+                    </p>
+                    <div className="bg-white p-3 rounded border border-blue-200">
+                      <p className="text-sm font-medium text-blue-900 mb-1">🔗 Sitio oficial:</p>
+                      <p className="text-sm text-blue-800">www.registrocivil.cl</p>
+                      <Button size="sm" variant="outline" className="mt-2 text-xs">
+                        Ir al Sitio Web
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Solicítalo en línea</h5>
-                  <p className="text-blue-800 text-sm mb-2">
-                    El método más rápido y fácil es solicitarlo en línea a través del sitio web
-                    del Registro Civil.
-                  </p>
-                  <div className="bg-white p-3 rounded border border-blue-200">
-                    <p className="text-sm font-medium text-blue-900 mb-1">🔗 Sitio oficial:</p>
-                    <p className="text-sm text-blue-800">www.registrocivil.cl</p>
-                    <Button size="sm" variant="outline" className="mt-2 text-xs">
-                      Ir al Sitio Web
-                    </Button>
+
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    3
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Completa la solicitud</h5>
+                    <p className="text-blue-800 text-sm">
+                      Crea una cuenta en el portal, ingresa tus datos y solicita el certificado. El
+                      proceso es 100% digital y seguro.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    4
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Espera la emisión</h5>
+                    <p className="text-blue-800 text-sm">
+                      El certificado se emite generalmente en 24-48 horas hábiles. Recibirás una
+                      notificación cuando esté disponible para descarga.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    5
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Descarga y sube a Rent360</h5>
+                    <p className="text-blue-800 text-sm">
+                      Descarga el PDF oficial y súbelo a tu perfil en Rent360. El sistema lo
+                      validará automáticamente.
+                    </p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  3
-                </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Completa la solicitud</h5>
-                  <p className="text-blue-800 text-sm">
-                    Crea una cuenta en el portal, ingresa tus datos y solicita el certificado.
-                    El proceso es 100% digital y seguro.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  4
-                </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Espera la emisión</h5>
-                  <p className="text-blue-800 text-sm">
-                    El certificado se emite generalmente en 24-48 horas hábiles. Recibirás una
-                    notificación cuando esté disponible para descarga.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                  5
-                </div>
-                <div>
-                  <h5 className="font-medium text-blue-900">Descarga y sube a Rent360</h5>
-                  <p className="text-blue-800 text-sm">
-                    Descarga el PDF oficial y súbelo a tu perfil en Rent360. El sistema lo
-                    validará automáticamente.
-                  </p>
-                </div>
+            {/* Alternative Methods */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-2">🏢 Métodos Alternativos</h4>
+              <div className="space-y-2 text-sm text-green-800">
+                <p>
+                  <strong>Oficina del Registro Civil:</strong> Puedes solicitarlo personalmente en
+                  cualquier oficina del Registro Civil presentando tu cédula de identidad.
+                </p>
+                <p>
+                  <strong>Notario:</strong> Algunos notarios ofrecen el servicio de obtención del
+                  certificado.
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Alternative Methods */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-900 mb-2">🏢 Métodos Alternativos</h4>
-            <div className="space-y-2 text-sm text-green-800">
-              <p><strong>Oficina del Registro Civil:</strong> Puedes solicitarlo personalmente en cualquier oficina del Registro Civil presentando tu cédula de identidad.</p>
-              <p><strong>Notario:</strong> Algunos notarios ofrecen el servicio de obtención del certificado.</p>
+            {/* Important Notes */}
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información Importante</h4>
+              <ul className="text-yellow-800 text-sm space-y-1">
+                <li>
+                  • <strong>Costo:</strong> Aprox. $3.000 - $5.000 (depende del método)
+                </li>
+                <li>
+                  • <strong>Vigencia:</strong> Tiene una vigencia de 30 días desde su emisión
+                </li>
+                <li>
+                  • <strong>Obligatorio:</strong> Requerido por ley para todos los contratos de
+                  arriendo
+                </li>
+                <li>
+                  • <strong>Privacidad:</strong> Solo se informa sobre antecedentes penales, no
+                  sobre detalles
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowAntecedentesGuide(false)}>
+                Cerrar
+              </Button>
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <Upload className="w-4 h-4 mr-2" />
+                Subir Certificado
+              </Button>
             </div>
           </div>
-
-          {/* Important Notes */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información Importante</h4>
-            <ul className="text-yellow-800 text-sm space-y-1">
-              <li>• <strong>Costo:</strong> Aprox. $3.000 - $5.000 (depende del método)</li>
-              <li>• <strong>Vigencia:</strong> Tiene una vigencia de 30 días desde su emisión</li>
-              <li>• <strong>Obligatorio:</strong> Requerido por ley para todos los contratos de arriendo</li>
-              <li>• <strong>Privacidad:</strong> Solo se informa sobre antecedentes penales, no sobre detalles</li>
-            </ul>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setShowAntecedentesGuide(false)}>
-              Cerrar
-            </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Subir Certificado
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

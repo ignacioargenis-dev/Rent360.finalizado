@@ -367,13 +367,69 @@ export default function OwnerPropertyEditPage() {
 
     setIsSaving(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // ✅ CORREGIDO: Hacer llamada real a la API para actualizar la propiedad
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          address: formData.address,
+          city: formData.city,
+          region: formData.region,
+          type: formData.type,
+          bedrooms: formData.bedrooms,
+          bathrooms: formData.bathrooms,
+          area: formData.area,
+          price: formData.monthlyRent,
+          currency: formData.currency,
+          status: formData.status,
+          description: formData.description,
+          features: formData.features,
+          images: formData.images,
+          // Características básicas
+          furnished: formData.furnished,
+          petFriendly: formData.petFriendly,
+          parkingSpaces: formData.parkingSpaces,
+          availableFrom: formData.availableFrom,
+          floor: formData.floor,
+          buildingName: formData.buildingName,
+          yearBuilt: formData.yearBuilt,
+          // Características del edificio/servicios
+          heating: formData.heating,
+          cooling: formData.cooling,
+          internet: formData.internet,
+          elevator: formData.elevator,
+          balcony: formData.balcony,
+          terrace: formData.terrace,
+          garden: formData.garden,
+          pool: formData.pool,
+          gym: formData.gym,
+          security: formData.security,
+          concierge: formData.concierge,
+        }),
+      });
 
-      logger.info('Propiedad actualizada exitosamente', { propertyId });
-      router.push(`/owner/properties/${propertyId}`);
+      if (response.ok) {
+        logger.info('Propiedad actualizada exitosamente', { propertyId });
+        router.push(`/owner/properties/${propertyId}`);
+      } else {
+        const errorData = await response.json();
+        logger.error('Error al guardar la propiedad', {
+          error: errorData.error || 'Error desconocido',
+          status: response.status,
+          propertyId,
+        });
+        // Mostrar error al usuario
+        alert(`Error al guardar: ${errorData.error || 'Error desconocido'}`);
+      }
     } catch (error) {
       logger.error('Error al guardar la propiedad', { error, propertyId });
+      alert('Error de conexión al guardar la propiedad');
     } finally {
       setIsSaving(false);
     }

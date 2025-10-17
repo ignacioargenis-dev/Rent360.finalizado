@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -144,6 +145,112 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       error: error instanceof Error ? error.message : String(error),
       propertyId: params.id,
     });
+
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = await requireAuth(request);
+    const propertyId = params.id;
+    const body = await request.json();
+
+    if (!propertyId) {
+      return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
+    }
+
+    // Verificar que la propiedad existe y pertenece al usuario
+    const existingProperty = await db.property.findUnique({
+      where: { id: propertyId },
+      select: { ownerId: true },
+    });
+
+    if (!existingProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+
+    // Verificar permisos (solo el propietario puede editar)
+    if (existingProperty.ownerId !== user.id && user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    // Preparar datos para actualización
+    const updateData: any = {
+      title: body.title,
+      address: body.address,
+      city: body.city,
+      region: body.region,
+      type: body.type,
+      bedrooms: parseInt(body.bedrooms) || 0,
+      bathrooms: parseInt(body.bathrooms) || 0,
+      area: parseFloat(body.area) || 0,
+      price: parseFloat(body.price) || 0,
+      currency: body.currency || 'CLP',
+      status: body.status,
+      description: body.description,
+      features: body.features ? JSON.stringify(body.features) : null,
+      images: body.images ? JSON.stringify(body.images) : null,
+      // Características básicas
+      furnished: Boolean(body.furnished),
+      petFriendly: Boolean(body.petFriendly),
+      parkingSpaces: parseInt(body.parkingSpaces) || 0,
+      availableFrom: body.availableFrom ? new Date(body.availableFrom) : null,
+      floor: parseInt(body.floor) || null,
+      buildingName: body.buildingName || null,
+      yearBuilt: parseInt(body.yearBuilt) || null,
+      // Características del edificio/servicios
+      heating: Boolean(body.heating),
+      cooling: Boolean(body.cooling),
+      internet: Boolean(body.internet),
+      elevator: Boolean(body.elevator),
+      balcony: Boolean(body.balcony),
+      terrace: Boolean(body.terrace),
+      garden: Boolean(body.garden),
+      pool: Boolean(body.pool),
+      gym: Boolean(body.gym),
+      security: Boolean(body.security),
+      concierge: Boolean(body.concierge),
+      updatedAt: new Date(),
+    };
+
+    // Actualizar la propiedad
+    const updatedProperty = await db.property.update({
+      where: { id: propertyId },
+      data: updateData,
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    logger.info('Property updated successfully', {
+      propertyId,
+      userId: user.id,
+      userRole: user.role,
+    });
+
+    return NextResponse.json({
+      message: 'Property updated successfully',
+      property: updatedProperty,
+    });
+  } catch (error) {
+    logger.error('Error updating property', {
+      error: error instanceof Error ? error.message : String(error),
+      propertyId: params.id,
+    });
+
+    if (error instanceof Error) {
+      if (error.message.includes('No autorizado') || error.message.includes('Acceso denegado')) {
+        return NextResponse.json({ error: error.message }, { status: 401 });
+      }
+    }
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

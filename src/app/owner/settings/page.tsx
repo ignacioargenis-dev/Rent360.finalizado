@@ -153,21 +153,24 @@ export default function OwnerSettingsPage() {
           const userData = await userResponse.json();
           setUser(userData.user);
 
-          // Initialize settings with user data
+          // ✅ CORREGIDO: Usar datos reales del usuario en lugar de mock
           setSettings(prev => ({
             ...prev,
             profile: {
-              ...prev.profile,
-              firstName: userData.user.firstName || '',
-              lastName: userData.user.lastName || '',
+              firstName: userData.user.name?.split(' ')[0] || '',
+              lastName: userData.user.name?.split(' ').slice(1).join(' ') || '',
               email: userData.user.email || '',
               phone: userData.user.phone || '',
+              address: userData.user.address || '',
+              city: userData.user.city || '',
+              region: userData.user.region || '',
+              description: prev.profile.description, // Mantener descripción existente
             },
           }));
+        } else {
+          // Solo cargar settings mock si no se puede obtener datos del usuario
+          await loadSettings();
         }
-
-        // Load settings (mock for now)
-        await loadSettings();
       } catch (error) {
         logger.error('Error loading data:', {
           error: error instanceof Error ? error.message : String(error),
