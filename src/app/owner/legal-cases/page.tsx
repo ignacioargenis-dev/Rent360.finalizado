@@ -95,6 +95,8 @@ export default function LegalCasesPage() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactMessage, setContactMessage] = useState('');
   const [contactType, setContactType] = useState<'lawyer' | 'broker' | 'support'>('lawyer');
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+  const [selectedTrainingModule, setSelectedTrainingModule] = useState<string>('');
 
   useEffect(() => {
     loadLegalCases();
@@ -283,27 +285,28 @@ export default function LegalCasesPage() {
     setCaseDetailsModalOpen(true);
   };
 
-  const handleDownloadDocuments = (legalCase: LegalCase) => {
-    // Simular descarga de documentos legales
-    const documents = [
-      `Demanda_Judicial_${legalCase.caseNumber}.pdf`,
-      `Citacion_Inquilino_${legalCase.caseNumber}.pdf`,
-      `Citacion_Propietario_${legalCase.caseNumber}.pdf`,
-      `Evidencia_Presentada_${legalCase.caseNumber}.pdf`,
-      `Resoluciones_${legalCase.caseNumber}.pdf`,
-    ];
-
-    // Simular descarga
-    alert(
-      `📁 Descargando expediente completo del caso ${legalCase.caseNumber}\n\nDocumentos incluidos:\n${documents.map(doc => `• ${doc}`).join('\n')}\n\nLa descarga comenzará en breve...`
-    );
-
-    // Simular progreso de descarga
-    setTimeout(() => {
-      alert(
-        `✅ Expediente descargado exitosamente\nArchivo: Expediente_${legalCase.caseNumber}.zip`
-      );
-    }, 2000);
+  const handleDownloadDocuments = async (legalCase: LegalCase) => {
+    try {
+      // Real download of legal case expediente
+      const response = await fetch(`/api/legal/cases/${legalCase.id}/expediente`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Expediente_${legalCase.caseNumber}.html`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        logger.error('Error downloading expediente:', { error: await response.text() });
+        alert('Error al descargar el expediente. Intente nuevamente.');
+      }
+    } catch (error) {
+      logger.error('Error downloading expediente:', { error });
+      alert('Error al descargar el expediente. Intente nuevamente.');
+    }
   };
 
   const handleSendMessage = (legalCase: LegalCase) => {
@@ -331,18 +334,311 @@ Propietario`;
     }
 
     try {
-      // TODO: Implement actual API call to send message
-      alert(
-        `Mensaje enviado exitosamente\n\nAsunto: Actualización del caso ${selectedCase.caseNumber}\n\n${contactMessage}`
-      );
+      // Real API call to send message to legal team
+      const response = await fetch('/api/admin/notifications/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientId:
+            contactType === 'lawyer'
+              ? 'legal-team'
+              : contactType === 'broker'
+                ? selectedCase.brokerName
+                : 'support-team',
+          title: `Actualización del caso ${selectedCase.caseNumber}`,
+          message: contactMessage,
+          type: 'LEGAL_UPDATE',
+          data: {
+            caseId: selectedCase.id,
+            caseNumber: selectedCase.caseNumber,
+            contactType: contactType,
+          },
+        }),
+      });
 
-      setContactModalOpen(false);
-      setSelectedCase(null);
-      setContactMessage('');
+      if (response.ok) {
+        alert(
+          `Mensaje enviado exitosamente\n\nAsunto: Actualización del caso ${selectedCase.caseNumber}\n\n${contactMessage}`
+        );
+        setContactModalOpen(false);
+        setSelectedCase(null);
+        setContactMessage('');
+      } else {
+        throw new Error('Failed to send message');
+      }
     } catch (error) {
       logger.error('Error sending contact message:', { error });
       alert('Error al enviar mensaje. Intente nuevamente.');
     }
+  };
+
+  // New function to download legal document templates
+  const handleDownloadTemplate = async (templateType: string) => {
+    try {
+      const templates = {
+        'payment-agreement': {
+          filename: 'Acuerdo_de_Pago.pdf',
+          content: generatePaymentAgreementTemplate(),
+        },
+        'termination-letter': {
+          filename: 'Carta_de_Terminacion.pdf',
+          content: generateTerminationLetterTemplate(),
+        },
+        'judicial-requirement': {
+          filename: 'Requerimiento_Judicial.pdf',
+          content: generateJudicialRequirementTemplate(),
+        },
+      };
+
+      const template = templates[templateType as keyof typeof templates];
+      if (!template) {
+        alert('Plantilla no encontrada');
+        return;
+      }
+
+      // Create and download the document
+      const blob = new Blob([template.content], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = template.filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      logger.error('Error downloading template:', { error });
+      alert('Error al descargar la plantilla. Intente nuevamente.');
+    }
+  };
+
+  // Template generators
+  const generatePaymentAgreementTemplate = () => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Acuerdo de Pago</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .content { margin: 20px 0; }
+        .signature-section { margin-top: 50px; }
+        .signature-line { border-bottom: 1px solid #000; width: 200px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ACUERDO DE PAGO</h1>
+        <p>Contrato de Arrendamiento</p>
+    </div>
+    
+    <div class="content">
+        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL')}</p>
+        
+        <p>Por medio del presente documento, las partes acuerdan lo siguiente:</p>
+        
+        <h3>1. PARTES</h3>
+        <p><strong>Propietario:</strong> [Nombre del Propietario]<br>
+        <strong>RUT:</strong> [RUT del Propietario]<br>
+        <strong>Domicilio:</strong> [Dirección del Propietario]</p>
+        
+        <p><strong>Inquilino:</strong> [Nombre del Inquilino]<br>
+        <strong>RUT:</strong> [RUT del Inquilino]<br>
+        <strong>Domicilio:</strong> [Dirección del Inquilino]</p>
+        
+        <h3>2. OBJETO</h3>
+        <p>El presente acuerdo tiene por objeto establecer las condiciones de pago de las obligaciones pendientes del arrendamiento de la propiedad ubicada en [Dirección de la Propiedad].</p>
+        
+        <h3>3. OBLIGACIONES PENDIENTES</h3>
+        <p>El inquilino reconoce adeudar la suma de $[Monto] por concepto de:</p>
+        <ul>
+            <li>Arriendos vencidos: $[Monto Arriendos]</li>
+            <li>Gastos comunes: $[Monto Gastos Comunes]</li>
+            <li>Otros conceptos: $[Otros Gastos]</li>
+        </ul>
+        
+        <h3>4. FORMA DE PAGO</h3>
+        <p>El inquilino se compromete a pagar la deuda en [Número] cuotas de $[Monto Cuota] cada una, con vencimiento los días [Día] de cada mes, comenzando el [Fecha Primer Pago].</p>
+        
+        <h3>5. PENALIDADES</h3>
+        <p>En caso de incumplimiento de alguna cuota, se aplicará un interés del [Porcentaje]% mensual sobre el saldo insoluto.</p>
+        
+        <h3>6. ACEPTACIÓN</h3>
+        <p>Las partes declaran estar de acuerdo con las condiciones establecidas en el presente documento.</p>
+    </div>
+    
+    <div class="signature-section">
+        <p><strong>Propietario:</strong></p>
+        <div class="signature-line"></div>
+        <p>Firma y RUT</p>
+        
+        <p><strong>Inquilino:</strong></p>
+        <div class="signature-line"></div>
+        <p>Firma y RUT</p>
+        
+        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL')}</p>
+    </div>
+</body>
+</html>`;
+  };
+
+  const generateTerminationLetterTemplate = () => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Carta de Terminación</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .content { margin: 20px 0; }
+        .footer { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CARTA DE TERMINACIÓN DE CONTRATO</h1>
+        <p>Arrendamiento de Inmueble</p>
+    </div>
+    
+    <div class="content">
+        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL')}</p>
+        
+        <p><strong>Señor(a):</strong> [Nombre del Inquilino]<br>
+        <strong>RUT:</strong> [RUT del Inquilino]<br>
+        <strong>Domicilio:</strong> [Dirección del Inquilino]</p>
+        
+        <p><strong>Asunto:</strong> Terminación de Contrato de Arrendamiento</p>
+        
+        <p>Estimado(a) señor(a):</p>
+        
+        <p>Por medio de la presente, me dirijo a usted para comunicarle la terminación del contrato de arrendamiento de la propiedad ubicada en [Dirección de la Propiedad], suscrito el [Fecha del Contrato].</p>
+        
+        <h3>FUNDAMENTOS DE LA TERMINACIÓN:</h3>
+        <p>La terminación se fundamenta en las siguientes causales establecidas en el artículo [Artículo] del Código Civil:</p>
+        <ul>
+            <li>[ ] Incumplimiento en el pago de arriendos</li>
+            <li>[ ] Destrucción o deterioro grave de la cosa arrendada</li>
+            <li>[ ] Uso de la cosa para fines distintos a los convenidos</li>
+            <li>[ ] Subarriendo sin autorización</li>
+            <li>[ ] Otras causales: [Especificar]</li>
+        </ul>
+        
+        <h3>PLAZO DE DESOCUPACIÓN:</h3>
+        <p>Conforme a la legislación vigente, usted tiene un plazo de [Número] días para desocupar la propiedad, contados desde la notificación de la presente carta.</p>
+        
+        <h3>DEVOLUCIÓN DE DEPÓSITO:</h3>
+        <p>Una vez desocupada la propiedad en las condiciones establecidas en el contrato, procederé a la devolución del depósito de garantía, previo descuento de los gastos que correspondan.</p>
+        
+        <p>Sin otro particular, le saluda atentamente,</p>
+    </div>
+    
+    <div class="footer">
+        <p><strong>[Nombre del Propietario]</strong><br>
+        <strong>RUT:</strong> [RUT del Propietario]<br>
+        <strong>Domicilio:</strong> [Dirección del Propietario]<br>
+        <strong>Teléfono:</strong> [Teléfono]<br>
+        <strong>Email:</strong> [Email]</p>
+    </div>
+</body>
+</html>`;
+  };
+
+  const generateJudicialRequirementTemplate = () => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Requerimiento Judicial</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .content { margin: 20px 0; }
+        .footer { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>REQUERIMIENTO JUDICIAL</h1>
+        <p>Pago de Obligaciones Contractuales</p>
+    </div>
+    
+    <div class="content">
+        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL')}</p>
+        
+        <p><strong>Señor(a):</strong> [Nombre del Demandado]<br>
+        <strong>RUT:</strong> [RUT del Demandado]<br>
+        <strong>Domicilio:</strong> [Dirección del Demandado]</p>
+        
+        <p><strong>Asunto:</strong> Requerimiento de Pago - Contrato de Arrendamiento</p>
+        
+        <p>Estimado(a) señor(a):</p>
+        
+        <p>Por medio de la presente, y en mi calidad de propietario de la propiedad ubicada en [Dirección de la Propiedad], me dirijo a usted para requerirle el pago de las obligaciones pendientes derivadas del contrato de arrendamiento suscrito el [Fecha del Contrato].</p>
+        
+        <h3>OBLIGACIONES PENDIENTES:</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background-color: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 8px;">Concepto</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Período</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Monto</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">Arriendo</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">[Período]</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">$[Monto]</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">Gastos Comunes</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">[Período]</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">$[Monto]</td>
+            </tr>
+            <tr style="background-color: #f9f9f9; font-weight: bold;">
+                <td style="border: 1px solid #ddd; padding: 8px;" colspan="2">TOTAL ADEUDADO</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">$[Total]</td>
+            </tr>
+        </table>
+        
+        <h3>PLAZO DE PAGO:</h3>
+        <p>Le otorgo un plazo de [Número] días hábiles, contados desde la notificación de la presente, para cancelar la totalidad de las obligaciones adeudadas.</p>
+        
+        <h3>CONSECUENCIAS DEL INCUMPLIMIENTO:</h3>
+        <p>Vencido el plazo otorgado sin que se haya efectuado el pago, procederé a iniciar las acciones legales correspondientes, las que incluirán:</p>
+        <ul>
+            <li>Demanda por cobro de pesos</li>
+            <li>Requerimiento de pago con intereses y reajustes</li>
+            <li>Gastos de cobranza y honorarios de abogado</li>
+        </ul>
+        
+        <p>Sin otro particular, le saluda atentamente,</p>
+    </div>
+    
+    <div class="footer">
+        <p><strong>[Nombre del Propietario]</strong><br>
+        <strong>RUT:</strong> [RUT del Propietario]<br>
+        <strong>Domicilio:</strong> [Dirección del Propietario]<br>
+        <strong>Teléfono:</strong> [Teléfono]<br>
+        <strong>Email:</strong> [Email]</p>
+        
+        <p><strong>Abogado Patrocinante:</strong><br>
+        <strong>Nombre:</strong> [Nombre del Abogado]<br>
+        <strong>RUT:</strong> [RUT del Abogado]<br>
+        <strong>Colegio de Abogados:</strong> [Número de Matrícula]</p>
+    </div>
+</body>
+</html>`;
+  };
+
+  // Function to open training modules
+  const handleOpenTrainingModule = (moduleType: string) => {
+    setSelectedTrainingModule(moduleType);
+    setTrainingModalOpen(true);
   };
 
   const getFilteredCases = () => {
@@ -826,7 +1122,7 @@ Propietario`;
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => alert('Descargando Acuerdo de Pago...')}
+                    onClick={() => handleDownloadTemplate('payment-agreement')}
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Acuerdo de Pago
@@ -834,7 +1130,7 @@ Propietario`;
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => alert('Descargando Carta de Terminación...')}
+                    onClick={() => handleDownloadTemplate('termination-letter')}
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Carta de Terminación
@@ -842,7 +1138,7 @@ Propietario`;
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => alert('Descargando Requerimiento Judicial...')}
+                    onClick={() => handleDownloadTemplate('judicial-requirement')}
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Requerimiento Judicial
@@ -891,15 +1187,27 @@ Propietario`;
                   <CardDescription>Recursos de aprendizaje</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleOpenTrainingModule('property-rights')}
+                  >
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Derechos del Propietario
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleOpenTrainingModule('legal-process')}
+                  >
                     <Scale className="w-4 h-4 mr-2" />
                     Proceso Legal en Chile
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleOpenTrainingModule('communication')}
+                  >
                     <Users className="w-4 h-4 mr-2" />
                     Comunicación Efectiva
                   </Button>
@@ -1183,6 +1491,180 @@ Propietario`;
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Enviar Mensaje
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Training Modal */}
+        <Dialog open={trainingModalOpen} onOpenChange={setTrainingModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">
+                {selectedTrainingModule === 'property-rights' && 'Derechos del Propietario'}
+                {selectedTrainingModule === 'legal-process' && 'Proceso Legal en Chile'}
+                {selectedTrainingModule === 'communication' && 'Comunicación Efectiva'}
+              </DialogTitle>
+              <DialogDescription>Módulo de capacitación interactivo</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {selectedTrainingModule === 'property-rights' && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">
+                      Derechos Fundamentales del Propietario
+                    </h3>
+                    <ul className="text-blue-800 space-y-2">
+                      <li>• Derecho a recibir el pago puntual del arriendo</li>
+                      <li>• Derecho a que se respete la propiedad y sus instalaciones</li>
+                      <li>• Derecho a terminar el contrato por incumplimiento</li>
+                      <li>• Derecho a inspeccionar la propiedad con previo aviso</li>
+                      <li>• Derecho a recibir el depósito de garantía</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-900 mb-2">
+                      Obligaciones del Propietario
+                    </h3>
+                    <ul className="text-green-800 space-y-2">
+                      <li>• Entregar la propiedad en buen estado</li>
+                      <li>• Mantener la propiedad habitable</li>
+                      <li>• Respetar la privacidad del inquilino</li>
+                      <li>• Devolver el depósito al término del contrato</li>
+                      <li>• Cumplir con las condiciones del contrato</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-yellow-900 mb-2">Causales de Terminación</h3>
+                    <ul className="text-yellow-800 space-y-2">
+                      <li>• Incumplimiento en el pago de arriendos</li>
+                      <li>• Destrucción o deterioro grave de la propiedad</li>
+                      <li>• Uso de la propiedad para fines no convenidos</li>
+                      <li>• Subarriendo sin autorización</li>
+                      <li>• Molestias a vecinos o terceros</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {selectedTrainingModule === 'legal-process' && (
+                <div className="space-y-4">
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-orange-900 mb-2">Fases del Proceso Legal</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center text-orange-800 font-bold text-sm">
+                          1
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-orange-900">Fase Pre-Judicial</h4>
+                          <p className="text-orange-800 text-sm">
+                            Requerimientos extrajudiciales, mediación, negociación
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center text-orange-800 font-bold text-sm">
+                          2
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-orange-900">Fase Judicial</h4>
+                          <p className="text-orange-800 text-sm">
+                            Demanda, citación, audiencia, sentencia
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center text-orange-800 font-bold text-sm">
+                          3
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-orange-900">Fase de Ejecución</h4>
+                          <p className="text-orange-800 text-sm">Embargo, remate, cobro efectivo</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-red-900 mb-2">Plazos Importantes</h3>
+                    <ul className="text-red-800 space-y-2">
+                      <li>• Requerimiento extrajudicial: 15 días hábiles</li>
+                      <li>• Demanda judicial: 30 días desde el requerimiento</li>
+                      <li>• Audiencia: 20 días desde la citación</li>
+                      <li>• Sentencia: 30 días desde la audiencia</li>
+                      <li>• Ejecución: 6 meses desde la sentencia</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-purple-900 mb-2">Costos del Proceso</h3>
+                    <ul className="text-purple-800 space-y-2">
+                      <li>• Honorarios de abogado: 10-20% del monto</li>
+                      <li>• Gastos judiciales: $50,000 - $200,000</li>
+                      <li>• Peritos y tasaciones: $100,000 - $500,000</li>
+                      <li>• Notificaciones: $5,000 - $15,000</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {selectedTrainingModule === 'communication' && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-900 mb-2">
+                      Comunicación Efectiva con Inquilinos
+                    </h3>
+                    <ul className="text-green-800 space-y-2">
+                      <li>• Mantener un tono profesional y respetuoso</li>
+                      <li>• Documentar todas las comunicaciones</li>
+                      <li>• Ser claro en las expectativas y plazos</li>
+                      <li>• Escuchar activamente las preocupaciones</li>
+                      <li>• Ofrecer soluciones prácticas</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Técnicas de Negociación</h3>
+                    <ul className="text-blue-800 space-y-2">
+                      <li>• Identificar intereses comunes</li>
+                      <li>• Proponer alternativas creativas</li>
+                      <li>• Mantener la calma en situaciones tensas</li>
+                      <li>• Buscar acuerdos ganar-ganar</li>
+                      <li>• Documentar todos los acuerdos</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-yellow-900 mb-2">Manejo de Conflictos</h3>
+                    <ul className="text-yellow-800 space-y-2">
+                      <li>• Abordar problemas temprano</li>
+                      <li>• Separar el problema de la persona</li>
+                      <li>• Buscar mediación cuando sea necesario</li>
+                      <li>• Mantener registros detallados</li>
+                      <li>• Conocer cuándo escalar legalmente</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setTrainingModalOpen(false)}>
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    alert('Módulo completado exitosamente. ¡Buen trabajo!');
+                    setTrainingModalOpen(false);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Completar Módulo
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

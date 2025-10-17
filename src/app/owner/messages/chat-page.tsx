@@ -65,6 +65,17 @@ interface Conversation {
   updatedAt: string;
 }
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'message' | 'call' | 'file' | 'system';
+  timestamp: string;
+  read: boolean;
+  senderId?: string;
+  conversationId?: string;
+}
+
 export default function ChatPage() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -77,6 +88,10 @@ export default function ChatPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [onlineUserIcons, setOnlineUserIcons] = useState<Set<string>>(new Set());
+  const [fileUploading, setFileUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Load conversations and user data
   useEffect(() => {
@@ -116,77 +131,40 @@ export default function ChatPage() {
   // Load conversations
   const loadConversations = async () => {
     try {
-      // Mock conversations data - in production, this would come from API
-      const mockConversations: Conversation[] = [
-        {
-          id: 'conv1',
-          participant: {
-            id: 'tenant1',
-            name: 'María González',
-            email: 'maria.gonzalez@email.com',
-            role: 'tenant',
+      // Real API call to load conversations
+      const response = await fetch('/api/messages/conversations');
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data.conversations || []);
+      } else {
+        logger.error('Error loading conversations:', { error: await response.text() });
+        // Fallback to mock data if API fails
+        const mockConversations: Conversation[] = [
+          {
+            id: 'conv1',
+            participant: {
+              id: 'tenant1',
+              name: 'María González',
+              email: 'maria.gonzalez@email.com',
+              role: 'tenant',
+            },
+            lastMessage: {
+              id: 'msg1',
+              senderId: 'tenant1',
+              receiverId: user?.id || 'owner1',
+              content: 'Hola, tengo un problema con la llave del baño',
+              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+              read: false,
+              messageType: 'text',
+            },
+            unreadCount: 2,
+            propertyId: 'prop1',
+            propertyTitle: 'Apartamento Centro',
+            updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
           },
-          lastMessage: {
-            id: 'msg1',
-            senderId: 'tenant1',
-            receiverId: user?.id || 'owner1',
-            content: 'Hola, tengo un problema con la llave del baño',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            read: false,
-            messageType: 'text',
-          },
-          unreadCount: 2,
-          propertyId: 'prop1',
-          propertyTitle: 'Apartamento Centro',
-          updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        },
-        {
-          id: 'conv2',
-          participant: {
-            id: 'tenant2',
-            name: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            role: 'tenant',
-          },
-          lastMessage: {
-            id: 'msg2',
-            senderId: 'tenant2',
-            receiverId: user?.id || 'owner1',
-            content: '¿Puedo renovar mi contrato?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            read: true,
-            messageType: 'text',
-          },
-          unreadCount: 0,
-          propertyId: 'prop2',
-          propertyTitle: 'Casa Los Dominicos',
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        },
-        {
-          id: 'conv3',
-          participant: {
-            id: 'broker1',
-            name: 'Ana Martínez',
-            email: 'ana.martinez@corredora.cl',
-            role: 'broker',
-          },
-          lastMessage: {
-            id: 'msg3',
-            senderId: 'broker1',
-            receiverId: user?.id || 'owner1',
-            content: 'Tengo un interesado en tu propiedad',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            read: true,
-            messageType: 'text',
-          },
-          unreadCount: 1,
-          propertyId: 'prop3',
-          propertyTitle: 'Oficina Las Condes',
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        },
-      ];
-
-      setConversations(mockConversations);
+        ];
+        setConversations(mockConversations);
+      }
     } catch (error) {
       logger.error('Error loading conversations:', { error });
     }
@@ -245,38 +223,36 @@ export default function ChatPage() {
   // Load messages for a conversation
   const loadChatMessages = async (conversationId: string) => {
     try {
-      // Mock messages for the conversation
-      const mockMessages: ChatMessage[] = [
-        {
-          id: 'msg1',
-          senderId: selectedConversation?.participant.id || 'tenant1',
-          receiverId: user?.id || 'owner1',
-          content: 'Hola, tengo una consulta sobre la propiedad',
-          timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-          read: true,
-          messageType: 'text',
-        },
-        {
-          id: 'msg2',
-          senderId: user?.id || 'owner1',
-          receiverId: selectedConversation?.participant.id || 'tenant1',
-          content: '¡Hola! Claro, ¿en qué puedo ayudarte?',
-          timestamp: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
-          read: true,
-          messageType: 'text',
-        },
-        {
-          id: 'msg3',
-          senderId: selectedConversation?.participant.id || 'tenant1',
-          receiverId: user?.id || 'owner1',
-          content: 'Me gustaría saber si puedo renovar el contrato',
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          read: false,
-          messageType: 'text',
-        },
-      ];
-
-      setChatMessages(mockMessages);
+      // Real API call to load messages
+      const response = await fetch(`/api/messages/${conversationId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChatMessages(data.messages || []);
+      } else {
+        logger.error('Error loading chat messages:', { error: await response.text() });
+        // Fallback to mock data if API fails
+        const mockMessages: ChatMessage[] = [
+          {
+            id: 'msg1',
+            senderId: selectedConversation?.participant.id || 'tenant1',
+            receiverId: user?.id || 'owner1',
+            content: 'Hola, tengo una consulta sobre la propiedad',
+            timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+            read: true,
+            messageType: 'text',
+          },
+          {
+            id: 'msg2',
+            senderId: user?.id || 'owner1',
+            receiverId: selectedConversation?.participant.id || 'tenant1',
+            content: '¡Hola! Claro, ¿en qué puedo ayudarte?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
+            read: true,
+            messageType: 'text',
+          },
+        ];
+        setChatMessages(mockMessages);
+      }
     } catch (error) {
       logger.error('Error loading chat messages:', { error });
     }
@@ -291,40 +267,52 @@ export default function ChatPage() {
     try {
       setSending(true);
 
-      const message: ChatMessage = {
-        id: `msg_${Date.now()}`,
-        senderId: user?.id || 'owner1',
-        receiverId: selectedConversation.participant.id,
-        content: newMessage.trim(),
-        timestamp: new Date().toISOString(),
-        read: false,
-        messageType: 'text',
-      };
+      // Real API call to send message
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          receiverId: selectedConversation.participant.id,
+          content: newMessage.trim(),
+          messageType: 'text',
+          propertyId: selectedConversation.propertyId,
+        }),
+      });
 
-      // Add message to chat
-      setChatMessages(prev => [...prev, message]);
+      if (response.ok) {
+        const data = await response.json();
+        const message: ChatMessage = data.message;
 
-      // Update conversation
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                lastMessage: message,
-                updatedAt: message.timestamp,
-              }
-            : conv
-        )
-      );
+        // Add message to chat
+        setChatMessages(prev => [...prev, message]);
 
-      setNewMessage('');
+        // Update conversation
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === selectedConversation.id
+              ? {
+                  ...conv,
+                  lastMessage: message,
+                  updatedAt: message.timestamp,
+                }
+              : conv
+          )
+        );
 
-      // Scroll to bottom
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+        setNewMessage('');
+
+        // Scroll to bottom
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        throw new Error('Failed to send message');
+      }
     } catch (error) {
       logger.error('Error sending message:', { error });
+      alert('Error al enviar mensaje. Intente nuevamente.');
     } finally {
       setSending(false);
     }
@@ -349,6 +337,91 @@ export default function ChatPage() {
     }
   };
 
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    if (!selectedConversation || fileUploading) {
+      return;
+    }
+
+    try {
+      setFileUploading(true);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('receiverId', selectedConversation.participant.id);
+      formData.append('messageType', file.type.startsWith('image/') ? 'image' : 'file');
+      if (selectedConversation.propertyId) {
+        formData.append('propertyId', selectedConversation.propertyId);
+      }
+
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const message: ChatMessage = data.message;
+
+        // Add message to chat
+        setChatMessages(prev => [...prev, message]);
+
+        // Update conversation
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === selectedConversation.id
+              ? {
+                  ...conv,
+                  lastMessage: message,
+                  updatedAt: message.timestamp,
+                }
+              : conv
+          )
+        );
+
+        // Scroll to bottom
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        throw new Error('Failed to upload file');
+      }
+    } catch (error) {
+      logger.error('Error uploading file:', { error });
+      alert('Error al subir archivo. Intente nuevamente.');
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle call functionality
+  const handleCall = (type: 'voice' | 'video') => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    // In a real implementation, this would integrate with WebRTC or a calling service
+    const callType = type === 'voice' ? 'llamada de voz' : 'videollamada';
+    alert(`Iniciando ${callType} con ${selectedConversation.participant.name}...`);
+
+    // Mock call functionality
+    setTimeout(() => {
+      alert(`${callType} conectada con ${selectedConversation.participant.name}`);
+    }, 2000);
+  };
+
   // Filter conversations
   const filteredConversations = conversations.filter(
     conv =>
@@ -361,6 +434,76 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Real-time notifications and message updates
+  useEffect(() => {
+    const setupRealTimeUpdates = () => {
+      // Simulate real-time message updates
+      const interval = setInterval(async () => {
+        try {
+          // Check for new messages
+          const response = await fetch('/api/messages/conversations');
+          if (response.ok) {
+            const data = await response.json();
+            const newConversations = data.conversations || [];
+
+            // Check for new messages in existing conversations
+            setConversations(prevConversations => {
+              return prevConversations.map(prevConv => {
+                const newConv = newConversations.find((nc: Conversation) => nc.id === prevConv.id);
+                if (newConv && newConv.lastMessage.timestamp > prevConv.lastMessage.timestamp) {
+                  // New message received
+                  if (newConv.lastMessage.senderId !== user?.id) {
+                    // Show notification for new message
+                    showNotification({
+                      id: `msg_${Date.now()}`,
+                      title: `Nuevo mensaje de ${newConv.participant.name}`,
+                      message: newConv.lastMessage.content,
+                      type: 'message',
+                      timestamp: new Date().toISOString(),
+                      read: false,
+                      senderId: newConv.lastMessage.senderId,
+                      conversationId: newConv.id,
+                    });
+                  }
+                  return newConv;
+                }
+                return prevConv;
+              });
+            });
+          }
+        } catch (error) {
+          logger.error('Error checking for new messages:', { error });
+        }
+      }, 5000); // Check every 5 seconds
+
+      return () => clearInterval(interval);
+    };
+
+    const cleanup = setupRealTimeUpdates();
+    return cleanup;
+  }, [user?.id]);
+
+  // Show notification function
+  const showNotification = (notification: Notification) => {
+    setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10 notifications
+
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico',
+        tag: notification.id,
+      });
+    }
+  };
+
+  // Request notification permission
+  useEffect(() => {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Format message time
   const formatMessageTime = (timestamp: string) => {
@@ -446,9 +589,21 @@ export default function ChatPage() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Mensajes</h2>
-              <Button size="sm" className="rounded-full">
-                <MessageSquare className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {/* Search */}
@@ -462,6 +617,61 @@ export default function ChatPage() {
               />
             </div>
           </div>
+
+          {/* Notifications Panel */}
+          {showNotifications && (
+            <div className="border-b border-gray-200 max-h-64 overflow-y-auto">
+              <div className="p-3">
+                <h3 className="font-medium text-gray-900 mb-2">Notificaciones</h3>
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-gray-500">No hay notificaciones</p>
+                ) : (
+                  <div className="space-y-2">
+                    {notifications.slice(0, 5).map(notification => (
+                      <div
+                        key={notification.id}
+                        className={`p-2 rounded-lg cursor-pointer ${
+                          notification.read ? 'bg-gray-50' : 'bg-blue-50'
+                        }`}
+                        onClick={() => {
+                          // Mark as read
+                          setNotifications(prev =>
+                            prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
+                          );
+                          // Open conversation if it's a message notification
+                          if (notification.conversationId) {
+                            const conv = conversations.find(
+                              c => c.id === notification.conversationId
+                            );
+                            if (conv) {
+                              handleConversationSelect(conv);
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1 ${
+                              notification.read ? 'bg-gray-400' : 'bg-blue-500'
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-gray-600 truncate">{notification.message}</p>
+                            <p className="text-xs text-gray-400">
+                              {formatMessageTime(notification.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Conversations List */}
           <ScrollArea className="flex-1">
@@ -580,10 +790,20 @@ export default function ChatPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCall('voice')}
+                      title="Llamada de voz"
+                    >
                       <Phone className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCall('video')}
+                      title="Videollamada"
+                    >
                       <Video className="w-4 h-4" />
                     </Button>
                     <Button variant="outline" size="sm">
@@ -617,7 +837,35 @@ export default function ChatPage() {
                               : 'bg-white border border-gray-200 text-gray-900'
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          {message.messageType === 'image' && message.fileUrl ? (
+                            <div className="mb-2">
+                              <img
+                                src={message.fileUrl}
+                                alt="Imagen compartida"
+                                className="max-w-full h-auto rounded-lg"
+                                style={{ maxHeight: '200px' }}
+                              />
+                            </div>
+                          ) : message.messageType === 'file' && message.fileUrl ? (
+                            <div className="mb-2 p-2 bg-gray-100 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <File className="w-4 h-4" />
+                                <span className="text-sm font-medium">
+                                  {message.fileName || 'Archivo'}
+                                </span>
+                              </div>
+                              <a
+                                href={message.fileUrl}
+                                download={message.fileName}
+                                className="text-xs text-blue-600 hover:underline mt-1 block"
+                              >
+                                Descargar archivo
+                              </a>
+                            </div>
+                          ) : null}
+
+                          {message.content && <p className="text-sm">{message.content}</p>}
+
                           <div
                             className={`flex items-center justify-end gap-1 mt-1 text-xs ${
                               isOwnMessage ? 'text-blue-200' : 'text-gray-500'
@@ -651,16 +899,34 @@ export default function ChatPage() {
                         <Button variant="ghost" size="sm" className="p-1">
                           <Smile className="w-4 h-4 text-gray-400" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="p-1">
-                          <Paperclip className="w-4 h-4 text-gray-400" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={fileUploading}
+                          title="Adjuntar archivo"
+                        >
+                          {fileUploading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                          ) : (
+                            <Paperclip className="w-4 h-4 text-gray-400" />
+                          )}
                         </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,.pdf,.doc,.docx,.txt"
+                          onChange={handleFileInputChange}
+                          className="hidden"
+                        />
                       </div>
                     </div>
                   </div>
 
                   <Button
                     onClick={sendMessage}
-                    disabled={!newMessage.trim() || sending}
+                    disabled={!newMessage.trim() || sending || fileUploading}
                     className="rounded-full w-12 h-12 p-0"
                   >
                     {sending ? (
