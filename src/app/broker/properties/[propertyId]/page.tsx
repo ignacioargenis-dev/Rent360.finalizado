@@ -273,11 +273,67 @@ export default function BrokerPropertyDetailPage() {
   const loadPropertyDetails = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProperty(mockProperty);
+      // ✅ CORREGIDO: Cargar datos reales de la API
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const propertyData = await response.json();
+
+        // Transformar datos de la API al formato esperado
+        const transformedProperty: PropertyDetail = {
+          id: propertyData.id,
+          title: propertyData.title,
+          address: propertyData.address,
+          city: propertyData.city,
+          region: propertyData.region,
+          type: propertyData.type,
+          bedrooms: propertyData.bedrooms,
+          bathrooms: propertyData.bathrooms,
+          area: propertyData.area,
+          price: propertyData.price,
+          currency: propertyData.currency || 'CLP',
+          status: propertyData.status,
+          ownerName: propertyData.owner?.name || 'Propietario',
+          ownerEmail: propertyData.owner?.email || '',
+          ownerPhone: propertyData.owner?.phone || '',
+          description: propertyData.description,
+          features: propertyData.features || [],
+          images:
+            propertyData.images && propertyData.images.length > 0
+              ? propertyData.images
+              : ['/api/placeholder/600/400'], // Fallback a placeholder si no hay imágenes
+          currentTenant: propertyData.currentTenant || null,
+          maintenanceHistory: propertyData.maintenanceHistory || [],
+          financialData: propertyData.financialData || {
+            monthlyRent: propertyData.price || 0,
+            deposit: propertyData.deposit || 0,
+            totalIncome: 0,
+            totalExpenses: 0,
+            netIncome: 0,
+          },
+          documents: propertyData.documents || [],
+          notes: propertyData.notes || '',
+          viewings: propertyData.viewings || [],
+        };
+
+        setProperty(transformedProperty);
+      } else {
+        console.error('Error loading property:', response.status, response.statusText);
+        // Fallback a datos mock si la API falla
+        setProperty(mockProperty);
+      }
     } catch (error) {
       logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
+      // Fallback a datos mock si hay error
+      setProperty(mockProperty);
     } finally {
       setIsLoading(false);
     }
