@@ -96,7 +96,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images
         ? JSON.parse(property.images).map((img: string) =>
-            img.startsWith('/images/') ? img.replace('/images/', '/uploads/') : img
+            img.startsWith('/images/')
+              ? img.replace('/images/', '/api/uploads/')
+              : img.startsWith('/uploads/')
+                ? img.replace('/uploads/', '/api/uploads/')
+                : img
           )
         : [],
       views: property.views,
@@ -152,7 +156,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // ✅ CORREGIDO: Mejor manejo de errores de autenticación
+    let user;
+    try {
+      user = await requireAuth(request);
+    } catch (authError) {
+      logger.error('Authentication error in PUT property:', {
+        error: authError instanceof Error ? authError.message : String(authError),
+        propertyId: params.id,
+      });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const propertyId = params.id;
     const body = await request.json();
 
@@ -180,13 +195,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       title: body.title,
       address: body.address,
       city: body.city,
+      commune: body.commune,
       region: body.region,
       type: body.type,
       bedrooms: parseInt(body.bedrooms) || 0,
       bathrooms: parseInt(body.bathrooms) || 0,
       area: parseFloat(body.area) || 0,
       price: parseFloat(body.price) || 0,
-      currency: body.currency || 'CLP',
       status: body.status,
       description: body.description,
       features: body.features ? JSON.stringify(body.features) : null,
@@ -214,21 +229,37 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       updatedAt: new Date(),
     };
 
-    // Actualizar la propiedad
-    const updatedProperty = await db.property.update({
-      where: { id: propertyId },
-      data: updateData,
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
+    // ✅ CORREGIDO: Actualizar la propiedad con mejor manejo de errores
+    let updatedProperty;
+    try {
+      updatedProperty = await db.property.update({
+        where: { id: propertyId },
+        data: updateData,
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (dbError) {
+      logger.error('Database error updating property:', {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        propertyId,
+        updateData: Object.keys(updateData),
+      });
+      return NextResponse.json(
+        {
+          error: 'Error actualizando la propiedad en la base de datos',
+          details: dbError instanceof Error ? dbError.message : String(dbError),
+        },
+        { status: 500 }
+      );
+    }
 
     logger.info('Property updated successfully', {
       propertyId,

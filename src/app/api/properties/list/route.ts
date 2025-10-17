@@ -184,7 +184,11 @@ export async function GET(request: NextRequest) {
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images
         ? JSON.parse(property.images).map((img: string) =>
-            img.startsWith('/images/') ? img.replace('/images/', '/uploads/') : img
+            img.startsWith('/images/')
+              ? img.replace('/images/', '/api/uploads/')
+              : img.startsWith('/uploads/')
+                ? img.replace('/uploads/', '/api/uploads/')
+                : img
           )
         : [],
       views: property.views,
