@@ -165,12 +165,79 @@ export default function CalificacionesPage() {
   ];
 
   useEffect(() => {
-    // Simular carga
-    setTimeout(() => {
-      setRatingsToGive(mockRatingsToGive);
-      setLoading(false);
-    }, 1000);
+    loadPageData();
   }, []);
+
+  const loadPageData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch real ratings data from API
+      const response = await fetch('/api/ratings?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
+        id: rating.id,
+        tenantName: rating.tenantName || 'Usuario no identificado',
+        propertyTitle: rating.propertyTitle || 'Propiedad no identificada',
+        overallRating: rating.overallRating || rating.rating || 0,
+        punctuality: rating.punctuality || 0,
+        professionalism: rating.professionalism || 0,
+        communication: rating.communication || 0,
+        comment: rating.comment || 'Sin comentario',
+        verified: rating.verified || false,
+        anonymous: rating.anonymous || false,
+        date: rating.createdAt,
+      }));
+
+      setRatings(transformedRatings);
+
+      // Fetch ratings that can be given (from contracts, maintenance, etc.)
+      const contractsResponse = await fetch('/api/contracts?status=COMPLETED&limit=50', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (contractsResponse.ok) {
+        const contractsData = await contractsResponse.json();
+        const ratingsToGive: RatingToGive[] = contractsData.contracts.map((contract: any) => ({
+          id: `contract-${contract.id}`,
+          recipientType: 'tenant',
+          recipientName: contract.tenant?.name || 'Inquilino',
+          recipientId: contract.tenantId,
+          propertyTitle: contract.property?.title || 'Propiedad',
+          contractId: contract.id,
+          canRate: true,
+        }));
+
+        setRatingsToGive(ratingsToGive);
+      }
+
+    } catch (error) {
+      logger.error('Error loading ratings data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Functions for rating management
   const handleGiveRating = (ratingToGive: RatingToGive) => {
@@ -197,12 +264,31 @@ export default function CalificacionesPage() {
     }
 
     try {
-      // Here you would send the rating to the API
-      console.log('Submitting rating:', {
-        recipientId: selectedRatingToGive.recipientId,
-        recipientType: selectedRatingToGive.recipientType,
-        ...ratingForm,
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          recipientType: selectedRatingToGive.recipientType,
+          recipientId: selectedRatingToGive.recipientId,
+          overallRating: ratingForm.overallRating,
+          punctuality: ratingForm.punctuality,
+          professionalism: ratingForm.professionalism,
+          communication: ratingForm.communication,
+          quality: ratingForm.quality,
+          comment: ratingForm.comment,
+          anonymous: ratingForm.anonymous,
+          contractId: selectedRatingToGive.contractId,
+          maintenanceId: selectedRatingToGive.maintenanceId,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
       // Remove from ratings to give list
       setRatingsToGive(prev => prev.filter(r => r.id !== selectedRatingToGive.id));
@@ -210,10 +296,13 @@ export default function CalificacionesPage() {
       setShowRatingDialog(false);
       setSelectedRatingToGive(null);
 
-      // Show success message (you could add a toast here)
+      // Reload data to show the new rating
+      await loadPageData();
+
+      // Show success message
       alert('Calificación enviada exitosamente');
     } catch (error) {
-      console.error('Error submitting rating:', error);
+      logger.error('Error submitting rating:', error);
       alert('Error al enviar la calificación');
     }
   };

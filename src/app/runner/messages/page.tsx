@@ -420,7 +420,9 @@ export default function RunnerMessagesPage() {
       title="Mensajes"
       subtitle="Gestión de mensajes y comunicaciones con clientes"
     >
-      <div className="container mx-auto px-4 py-6">
+      <div className="h-full flex flex-col">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full flex flex-col p-6">
         {/* Success Message */}
         {successMessage && (
           <Card className="mb-6 border-green-200 bg-green-50">
@@ -507,7 +509,8 @@ export default function RunnerMessagesPage() {
         </div>
 
         {/* Main Content Area */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full grid lg:grid-cols-3 gap-6">
           {/* Conversation List */}
           <div className="lg:col-span-1">
             <Card>
@@ -518,7 +521,7 @@ export default function RunnerMessagesPage() {
                 </CardTitle>
                 <CardDescription>Lista de todas tus conversaciones</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col h-full">
                 <div className="flex gap-2 mb-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -526,7 +529,7 @@ export default function RunnerMessagesPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 overflow-y-auto space-y-3">
                   {conversations.length === 0 ? (
                     <p className="text-center text-gray-500">No hay conversaciones.</p>
                   ) : (

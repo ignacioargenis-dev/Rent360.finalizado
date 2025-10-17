@@ -412,7 +412,9 @@ export default function TenantMessagesPage() {
       title="Mensajes"
       subtitle="Comunícate con propietarios y corredores"
     >
-      <div className="container mx-auto px-4 py-6">
+      <div className="h-full flex flex-col">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full flex flex-col p-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -474,7 +476,8 @@ export default function TenantMessagesPage() {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full grid lg:grid-cols-3 gap-6">
           {/* Conversations List */}
           <div className="lg:col-span-1">
             <Card>
@@ -703,6 +706,7 @@ export default function TenantMessagesPage() {
                 )}
               </CardContent>
             </Card>
+          </div>
           </div>
         </div>
       </div>

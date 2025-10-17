@@ -184,14 +184,44 @@ export default function CalificacionesPage() {
       setLoading(true);
       setError(null);
 
-      // Load ratings data
-      setRatings(mockRatings);
+      // Fetch real ratings data from API
+      const response = await fetch('/api/ratings?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-      // Calculate stats
-      const totalRatings = mockRatings.length;
-      const averageRating =
-        mockRatings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings;
-      const ratingDistribution = mockRatings.reduce(
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
+        id: rating.id,
+        type: rating.type || 'property',
+        targetId: rating.targetId,
+        targetName: rating.targetName || 'Objeto no identificado',
+        rating: rating.rating || 0,
+        comment: rating.comment || 'Sin comentario',
+        date: rating.createdAt,
+        category: rating.category || 'General',
+        verified: rating.verified || false,
+        helpful: rating.helpful || 0,
+      }));
+
+      setRatings(transformedRatings);
+
+      // Calculate stats from real data
+      const totalRatings = transformedRatings.length;
+      const averageRating = totalRatings > 0
+        ? transformedRatings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings
+        : 0;
+      const ratingDistribution = transformedRatings.reduce(
         (dist, rating) => {
           dist[rating.rating] = (dist[rating.rating] || 0) + 1;
           return dist;
@@ -199,7 +229,7 @@ export default function CalificacionesPage() {
         {} as { [key: number]: number }
       );
 
-      const recentActivity = mockRatings.filter(rating => {
+      const recentActivity = transformedRatings.filter(rating => {
         const ratingDate = new Date(rating.date);
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);

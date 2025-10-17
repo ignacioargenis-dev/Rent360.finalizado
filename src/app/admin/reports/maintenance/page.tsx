@@ -165,11 +165,40 @@ export default function MaintenanceReportsPage() {
   const loadMaintenanceData = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch real maintenance data from API
+      const response = await fetch('/api/maintenance?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRecords: MaintenanceRecord[] = data.maintenanceRequests.map((request: any) => ({
+        id: request.id,
+        propertyAddress: request.property?.address || 'Dirección no disponible',
+        tenantName: request.requestedBy?.name || 'Usuario no identificado',
+        providerName: request.assignedTo?.name || request.provider || 'No asignado',
+        serviceType: request.category || 'General',
+        priority: request.priority?.toLowerCase() || 'medium',
+        status: request.status?.toLowerCase() || 'pending',
+        requestDate: request.createdAt.split('T')[0],
+        completionDate: request.completedDate?.split('T')[0],
+        cost: request.actualCost || request.estimatedCost || 0,
+        description: request.description || 'Sin descripción',
+        rating: request.rating,
+      }));
 
       // Filter records based on criteria
-      let filteredRecords = mockMaintenanceRecords;
+      let filteredRecords = transformedRecords;
 
       if (statusFilter !== 'all') {
         filteredRecords = filteredRecords.filter(r => r.status === statusFilter);
@@ -188,7 +217,7 @@ export default function MaintenanceReportsPage() {
 
       setMaintenanceRecords(filteredRecords);
 
-      // Calculate summary
+      // Calculate summary from real data
       const totalRequests = filteredRecords.length;
       const completedRequests = filteredRecords.filter(r => r.status === 'completed').length;
       const pendingRequests = filteredRecords.filter(r => r.status === 'pending').length;
@@ -208,6 +237,15 @@ export default function MaintenanceReportsPage() {
             }, 0) / completedRecords.length
           : 0;
 
+      // Calculate monthly growth
+      const currentMonth = new Date().getMonth();
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const currentMonthRequests = filteredRecords.filter(r => new Date(r.requestDate).getMonth() === currentMonth).length;
+      const lastMonthRequests = filteredRecords.filter(r => new Date(r.requestDate).getMonth() === lastMonth).length;
+      const monthlyGrowth = lastMonthRequests > 0 
+        ? ((currentMonthRequests - lastMonthRequests) / lastMonthRequests) * 100 
+        : 0;
+
       setSummary({
         totalRequests,
         completedRequests,
@@ -215,7 +253,7 @@ export default function MaintenanceReportsPage() {
         urgentRequests,
         averageCompletionTime: Math.round(averageCompletionTime * 10) / 10, // Round to 1 decimal
         totalCost,
-        monthlyGrowth: 8.3, // Mock growth percentage
+        monthlyGrowth,
       });
     } catch (error) {
       logger.error('Error al cargar datos de mantenimiento', { error });

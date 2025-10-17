@@ -126,73 +126,50 @@ export default function MantenimientoPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for demo - in production this would come from API
-      const mockRequests: MaintenanceRequest[] = [
-        {
-          id: '1',
-          propertyId: 'prop-001',
-          propertyTitle: 'Departamento Las Condes',
-          tenantName: 'Carlos Ramírez',
-          type: 'REPAIR',
-          description: 'Reparación de grifería en baño principal',
-          urgency: 'MEDIUM',
-          status: 'PENDING',
-          estimatedCost: 85000,
-          createdAt: '2024-01-15T10:30:00Z',
+      // Fetch real maintenance data from API
+      const response = await fetch('/api/maintenance?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        {
-          id: '2',
-          propertyId: 'prop-002',
-          propertyTitle: 'Casa Providencia',
-          tenantName: 'Ana Martínez',
-          type: 'MAINTENANCE',
-          description: 'Mantenimiento preventivo de caldera',
-          urgency: 'LOW',
-          status: 'APPROVED',
-          estimatedCost: 120000,
-          createdAt: '2024-01-10T14:20:00Z',
-          scheduledDate: '2024-01-25T09:00:00Z',
-        },
-        {
-          id: '3',
-          propertyId: 'prop-003',
-          propertyTitle: 'Oficina Santiago Centro',
-          tenantName: 'Pedro Silva',
-          type: 'EMERGENCY',
-          description: 'Fuga de agua en piso superior',
-          urgency: 'CRITICAL',
-          status: 'IN_PROGRESS',
-          estimatedCost: 150000,
-          createdAt: '2024-01-12T16:45:00Z',
-          provider: 'Servicio Rápido SpA',
-        },
-        {
-          id: '4',
-          propertyId: 'prop-001',
-          propertyTitle: 'Departamento Las Condes',
-          tenantName: 'Carlos Ramírez',
-          type: 'INSPECTION',
-          description: 'Inspección anual de instalaciones eléctricas',
-          urgency: 'LOW',
-          status: 'COMPLETED',
-          estimatedCost: 60000,
-          createdAt: '2024-01-05T11:15:00Z',
-          completedDate: '2024-01-08T13:30:00Z',
-          provider: 'Electricistas Profesionales',
-        },
-      ];
+        credentials: 'include',
+      });
 
-      setMaintenanceRequests(mockRequests);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-      // Calculate stats
-      const totalRequests = mockRequests.length;
-      const pendingRequests = mockRequests.filter(r => r.status === 'PENDING').length;
-      const activeRequests = mockRequests.filter(r =>
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRequests: MaintenanceRequest[] = data.maintenanceRequests.map((request: any) => ({
+        id: request.id,
+        propertyId: request.propertyId,
+        propertyTitle: request.property?.title || 'Propiedad sin título',
+        tenantName: request.requestedBy?.name || 'Usuario no identificado',
+        type: request.type || 'REPAIR',
+        description: request.description || 'Sin descripción',
+        urgency: request.priority || 'MEDIUM',
+        status: request.status || 'PENDING',
+        estimatedCost: request.estimatedCost || 0,
+        createdAt: request.createdAt,
+        scheduledDate: request.scheduledDate,
+        completedDate: request.completedDate,
+        provider: request.assignedTo?.name || request.provider,
+      }));
+
+      setMaintenanceRequests(transformedRequests);
+
+      // Calculate stats from real data
+      const totalRequests = transformedRequests.length;
+      const pendingRequests = transformedRequests.filter(r => r.status === 'PENDING').length;
+      const activeRequests = transformedRequests.filter(r =>
         ['APPROVED', 'IN_PROGRESS'].includes(r.status)
       ).length;
-      const completedRequests = mockRequests.filter(r => r.status === 'COMPLETED').length;
-      const totalCost = mockRequests.reduce((sum, r) => sum + r.estimatedCost, 0);
-      const monthlyCost = mockRequests
+      const completedRequests = transformedRequests.filter(r => r.status === 'COMPLETED').length;
+      const totalCost = transformedRequests.reduce((sum, r) => sum + r.estimatedCost, 0);
+      const monthlyCost = transformedRequests
         .filter(r => new Date(r.createdAt).getMonth() === new Date().getMonth())
         .reduce((sum, r) => sum + r.estimatedCost, 0);
 
@@ -205,8 +182,6 @@ export default function MantenimientoPage() {
         monthlyCost,
       });
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -256,10 +231,24 @@ export default function MantenimientoPage() {
 
   const handleApproveRequest = async (requestId: string) => {
     try {
-      // TODO: Implement API call to approve request
-      setMaintenanceRequests(prev =>
-        prev.map(r => (r.id === requestId ? { ...r, status: 'APPROVED' as const } : r))
-      );
+      const response = await fetch(`/api/maintenance/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'APPROVED',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Reload data to get updated status
+      await loadPageData();
       logger.info('Solicitud de mantenimiento aprobada:', { requestId });
     } catch (error) {
       logger.error('Error aprobando solicitud:', {
@@ -270,10 +259,24 @@ export default function MantenimientoPage() {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      // TODO: Implement API call to reject request
-      setMaintenanceRequests(prev =>
-        prev.map(r => (r.id === requestId ? { ...r, status: 'REJECTED' as const } : r))
-      );
+      const response = await fetch(`/api/maintenance/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'REJECTED',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Reload data to get updated status
+      await loadPageData();
       logger.info('Solicitud de mantenimiento rechazada:', { requestId });
     } catch (error) {
       logger.error('Error rechazando solicitud:', {
@@ -290,101 +293,27 @@ export default function MantenimientoPage() {
 
   const loadAvailableProviders = async () => {
     try {
-      // Mock data for available providers with different specialties
-      const mockProviders = [
-        {
-          id: '1',
-          name: 'Carlos Rodríguez',
-          specialty: 'Mantenimiento General',
-          rating: 4.8,
-          location: 'Santiago Centro',
-          hourlyRate: 15000,
-          availability: 'available',
-          experience: '5 años',
-          completedJobs: 127,
-        },
-        {
-          id: '2',
-          name: 'María González',
-          specialty: 'Limpieza Profesional',
-          rating: 4.9,
-          location: 'Providencia',
-          hourlyRate: 12000,
-          availability: 'available',
-          experience: '3 años',
-          completedJobs: 89,
-        },
-        {
-          id: '3',
-          name: 'Pedro Sánchez',
-          specialty: 'Reparaciones Eléctricas',
-          rating: 4.6,
-          location: 'Las Condes',
-          hourlyRate: 18000,
-          availability: 'busy',
-          experience: '7 años',
-          completedJobs: 156,
-        },
-        {
-          id: '4',
-          name: 'Ana López',
-          specialty: 'Jardinería',
-          rating: 4.7,
-          location: 'Vitacura',
-          hourlyRate: 14000,
-          availability: 'available',
-          experience: '4 años',
-          completedJobs: 73,
-        },
-        {
-          id: '5',
-          name: 'Roberto Silva',
-          specialty: 'Plomería',
-          rating: 4.5,
-          location: 'Ñuñoa',
-          hourlyRate: 16000,
-          availability: 'available',
-          experience: '6 años',
-          completedJobs: 98,
-        },
-        {
-          id: '6',
-          name: 'Carmen Torres',
-          specialty: 'Pintura y Decoración',
-          rating: 4.7,
-          location: 'La Reina',
-          hourlyRate: 13000,
-          availability: 'available',
-          experience: '8 años',
-          completedJobs: 203,
-        },
-        {
-          id: '7',
-          name: 'Diego Morales',
-          specialty: 'Carpintería',
-          rating: 4.9,
-          location: 'Macul',
-          hourlyRate: 17000,
-          availability: 'available',
-          experience: '10 años',
-          completedJobs: 245,
-        },
-        {
-          id: '8',
-          name: 'Patricia Soto',
-          specialty: 'Mantenimiento General',
-          rating: 4.4,
-          location: 'Peñalolén',
-          hourlyRate: 11000,
-          availability: 'available',
-          experience: '2 años',
-          completedJobs: 45,
-        },
-      ];
+      if (!selectedRequest) return;
 
-      setAvailableProviders(mockProviders);
+      const response = await fetch(`/api/maintenance/${selectedRequest.id}/available-providers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setAvailableProviders(data.providers || []);
     } catch (error) {
       logger.error('Error cargando proveedores:', { error });
+      // Fallback to empty array if API fails
+      setAvailableProviders([]);
     }
   };
 
@@ -430,25 +359,32 @@ export default function MantenimientoPage() {
     }
 
     try {
-      const provider = availableProviders.find(p => p.id === selectedProvider);
+      const response = await fetch(`/api/maintenance/${selectedRequest.id}/assign-provider`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          providerId: selectedProvider,
+        }),
+      });
 
-      // TODO: Implement API call to assign provider
-      setMaintenanceRequests(prev =>
-        prev.map(r =>
-          r.id === selectedRequest.id
-            ? { ...r, status: 'IN_PROGRESS' as const, provider: provider?.name }
-            : r
-        )
-      );
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
       setShowAssignProviderDialog(false);
       setSelectedProvider('');
       setSelectedRequest(null);
 
+      // Reload data to get updated status
+      await loadPageData();
+
       logger.info('Proveedor asignado a solicitud:', {
         requestId: selectedRequest.id,
         providerId: selectedProvider,
-        providerName: provider?.name,
       });
     } catch (error) {
       logger.error('Error asignando proveedor:', {

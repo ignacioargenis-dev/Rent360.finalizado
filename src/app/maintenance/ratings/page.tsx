@@ -71,77 +71,44 @@ export default function MaintenanceRatingsPage() {
       setLoading(true);
       setError(null);
 
-      // TODO: Implementar carga de datos reales desde API
-      // const response = await fetch('/api/maintenance/ratings');
-      // const result = await response.json();
-
-      // Simular carga de datos
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Datos de ejemplo
-      const mockRatings: Rating[] = [
-        {
-          id: '1',
-          clientName: 'Carlos Ramírez',
-          propertyAddress: 'Av. Apoquindo 3400, Las Condes',
-          rating: 5,
-          comment:
-            'Excelente trabajo en la reparación de la calefacción. Muy profesional y eficiente. El servicio fue impecable.',
-          date: '2024-09-28',
-          jobType: 'Reparación de Calefacción',
-          response: 'Gracias por su calificación. Fue un placer ayudarlo.',
-          responseDate: '2024-09-29',
+      // Fetch real ratings data from API
+      const response = await fetch('/api/ratings?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        {
-          id: '2',
-          clientName: 'María González',
-          propertyAddress: 'Vitacura 890, Vitacura',
-          rating: 4,
-          comment:
-            'Buen trabajo en la reparación de la fuga. Llegaron a tiempo y resolvieron el problema.',
-          date: '2024-09-25',
-          jobType: 'Reparación de Plomería',
-        },
-        {
-          id: '3',
-          clientName: 'Edificio Corporativo Ltda.',
-          propertyAddress: 'Providencia 123, Providencia',
-          rating: 5,
-          comment:
-            'Servicio de mantenimiento preventivo excepcional. El ascensor funciona perfectamente ahora.',
-          date: '2024-09-20',
-          jobType: 'Mantenimiento de Ascensor',
-          response: 'Agradecemos su confianza. Continuaremos brindando el mejor servicio.',
-          responseDate: '2024-09-21',
-        },
-        {
-          id: '4',
-          clientName: 'Ana López',
-          propertyAddress: 'Ñuñoa 456, Ñuñoa',
-          rating: 5,
-          comment:
-            'Reparación eléctrica realizada con mucha profesionalidad. Altamente recomendado.',
-          date: '2024-09-15',
-          jobType: 'Reparación Eléctrica',
-        },
-        {
-          id: '5',
-          clientName: 'Roberto Silva',
-          propertyAddress: 'La Reina 789, La Reina',
-          rating: 3,
-          comment: 'El trabajo estuvo bien, pero demoraron un poco más de lo esperado.',
-          date: '2024-09-10',
-          jobType: 'Mantenimiento General',
-        },
-      ];
+        credentials: 'include',
+      });
 
-      setRatings(mockRatings);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-      // Calcular estadísticas
-      const totalRatings = mockRatings.length;
-      const averageRating = mockRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
+        id: rating.id,
+        clientName: rating.clientName || 'Cliente no identificado',
+        propertyAddress: rating.propertyAddress || 'Dirección no disponible',
+        rating: rating.rating || 0,
+        comment: rating.comment || 'Sin comentario',
+        date: rating.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+        jobType: rating.jobType || 'Servicio de Mantenimiento',
+        response: rating.response,
+        responseDate: rating.responseDate?.split('T')[0],
+      }));
 
-      const ratingCounts = mockRatings.reduce(
+      setRatings(transformedRatings);
+
+      // Calculate statistics from real data
+      const totalRatings = transformedRatings.length;
+      const averageRating = totalRatings > 0
+        ? transformedRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+        : 0;
+
+      const ratingCounts = transformedRatings.reduce(
         (acc, rating) => {
           switch (rating.rating) {
             case 5:

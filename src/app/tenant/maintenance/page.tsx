@@ -130,80 +130,60 @@ export default function MantenimientoPage() {
       setLoading(true);
       setError(null);
 
-      // Mock maintenance data
-      const mockRequests: MaintenanceRequest[] = [
-        {
-          id: '1',
-          propertyId: '1',
-          propertyTitle: 'Departamento Las Condes',
-          title: 'Fuga en grifería de cocina',
-          description:
-            'La grifería de la cocina tiene una fuga constante de agua que aumenta la cuenta mensual',
-          status: 'in_progress',
-          priority: 'high',
-          category: 'plumbing',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-          estimatedCost: 25000,
-          assignedTo: 'Juan Pérez',
+      // Fetch real maintenance data from API
+      const response = await fetch('/api/maintenance?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        {
-          id: '2',
-          propertyId: '1',
-          propertyTitle: 'Departamento Las Condes',
-          title: 'Bombilla del baño principal quemada',
-          description: 'La bombilla del baño principal se quemó y necesita reemplazo',
-          status: 'completed',
-          priority: 'low',
-          category: 'electrical',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-          resolvedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-          estimatedCost: 5000,
-          actualCost: 4500,
-          assignedTo: 'María López',
-        },
-        {
-          id: '3',
-          propertyId: '2',
-          propertyTitle: 'Oficina Providencia',
-          title: 'Problema con aire acondicionado',
-          description: 'El aire acondicionado no enfría correctamente y hace ruido extraño',
-          status: 'pending',
-          priority: 'urgent',
-          category: 'appliance',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-          estimatedCost: 80000,
-        },
-        {
-          id: '4',
-          propertyId: '1',
-          propertyTitle: 'Departamento Las Condes',
-          title: 'Puerta del balcón atascada',
-          description:
-            'La puerta del balcón se atasca al abrir y cerrar, necesita lubricación o reparación',
-          status: 'pending',
-          priority: 'medium',
-          category: 'structural',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          estimatedCost: 15000,
-        },
-      ];
+        credentials: 'include',
+      });
 
-      setMaintenanceRequests(mockRequests);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-      // Calculate stats
-      const totalRequests = mockRequests.length;
-      const pendingRequests = mockRequests.filter(r => r.status === 'pending').length;
-      const inProgressRequests = mockRequests.filter(r => r.status === 'in_progress').length;
-      const completedRequests = mockRequests.filter(r => r.status === 'completed').length;
-      const urgentRequests = mockRequests.filter(r => r.priority === 'urgent').length;
-      const totalCost = mockRequests
-        .filter(r => r.actualCost)
-        .reduce((sum, r) => sum + (r.actualCost || 0), 0);
-      const averageResolutionTime = 2.5; // days
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRequests: MaintenanceRequest[] = data.maintenanceRequests.map((request: any) => ({
+        id: request.id,
+        propertyId: request.propertyId,
+        propertyTitle: request.property?.title || 'Propiedad sin título',
+        title: request.title || 'Solicitud de mantenimiento',
+        description: request.description || 'Sin descripción',
+        status: request.status?.toLowerCase() || 'pending',
+        priority: request.priority?.toLowerCase() || 'medium',
+        category: request.category?.toLowerCase() || 'general',
+        createdAt: request.createdAt,
+        updatedAt: request.updatedAt,
+        resolvedAt: request.completedDate,
+        estimatedCost: request.estimatedCost || 0,
+        actualCost: request.actualCost || 0,
+        assignedTo: request.assignedTo?.name || request.provider,
+        attachments: request.images ? JSON.parse(request.images) : [],
+      }));
+
+      setMaintenanceRequests(transformedRequests);
+
+      // Calculate stats from real data
+      const totalRequests = transformedRequests.length;
+      const pendingRequests = transformedRequests.filter(r => r.status === 'pending').length;
+      const inProgressRequests = transformedRequests.filter(r => r.status === 'in_progress').length;
+      const completedRequests = transformedRequests.filter(r => r.status === 'completed').length;
+      const urgentRequests = transformedRequests.filter(r => r.priority === 'urgent').length;
+      const totalCost = transformedRequests.reduce((sum, r) => sum + (r.actualCost || r.estimatedCost || 0), 0);
+
+      // Calculate average resolution time
+      const completedWithResolution = transformedRequests.filter(r => r.status === 'completed' && r.resolvedAt);
+      const averageResolutionTime = completedWithResolution.length > 0
+        ? completedWithResolution.reduce((sum, r) => {
+            const created = new Date(r.createdAt).getTime();
+            const resolved = new Date(r.resolvedAt!).getTime();
+            return sum + (resolved - created);
+          }, 0) / completedWithResolution.length / (1000 * 60 * 60 * 24) // Convert to days
+        : 0;
 
       setStats({
         totalRequests,
@@ -332,43 +312,83 @@ export default function MantenimientoPage() {
     setShowNewRequestModal(true);
   };
 
-  const handleSubmitNewRequest = () => {
+  const handleSubmitNewRequest = async () => {
     if (!newRequestForm.title.trim() || !newRequestForm.description.trim()) {
       setErrorMessage('Por favor complete todos los campos obligatorios');
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
 
-    // Create new maintenance request
-    const newRequest: MaintenanceRequest = {
-      id: `req_${Date.now()}`,
-      propertyId: 'current_property', // This should come from user context
-      propertyTitle: 'Propiedad Actual', // This should come from user context
-      title: newRequestForm.title,
-      description: newRequestForm.description,
-      status: 'pending',
-      priority: newRequestForm.priority,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      category: newRequestForm.category,
-      attachments: newRequestForm.attachments.map(file => file.name),
-    };
+    try {
+      // Get user's current property (first active contract)
+      const contractsResponse = await fetch('/api/contracts?status=ACTIVE&limit=1', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-    // Add to requests list
-    setMaintenanceRequests(prev => [newRequest, ...prev]);
+      if (!contractsResponse.ok) {
+        throw new Error('No se pudo obtener la propiedad actual');
+      }
 
-    // Reset form and close modal
-    setNewRequestForm({
-      title: '',
-      description: '',
-      category: 'general',
-      priority: 'medium',
-      attachments: [],
-    });
-    setShowNewRequestModal(false);
+      const contractsData = await contractsResponse.json();
+      if (!contractsData.contracts || contractsData.contracts.length === 0) {
+        setErrorMessage('No tienes una propiedad activa para crear solicitudes de mantenimiento');
+        setTimeout(() => setErrorMessage(''), 3000);
+        return;
+      }
 
-    setSuccessMessage('Solicitud de mantenimiento creada exitosamente');
-    setTimeout(() => setSuccessMessage(''), 3000);
+      const currentProperty = contractsData.contracts[0].property;
+
+      // Create FormData for file uploads
+      const formData = new FormData();
+      formData.append('title', newRequestForm.title);
+      formData.append('description', newRequestForm.description);
+      formData.append('category', newRequestForm.category);
+      formData.append('priority', newRequestForm.priority);
+      formData.append('propertyId', currentProperty.id);
+
+      // Add attachments if any
+      newRequestForm.attachments.forEach((file, index) => {
+        formData.append(`attachments`, file);
+      });
+
+      // Submit to API
+      const response = await fetch('/api/maintenance', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Reset form and close modal
+      setNewRequestForm({
+        title: '',
+        description: '',
+        category: 'general',
+        priority: 'medium',
+        attachments: [],
+      });
+      setShowNewRequestModal(false);
+
+      // Reload data to show the new request
+      await loadMaintenanceData();
+
+      setSuccessMessage('Solicitud de mantenimiento creada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error creating maintenance request:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al crear la solicitud de mantenimiento');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
   };
 
   const handleViewRequestDetails = (requestId: string) => {

@@ -197,11 +197,45 @@ export default function TenantMaintenanceReportsPage() {
   const loadMaintenanceReports = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch real maintenance data from API
+      const response = await fetch('/api/maintenance?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match our interface
+      const transformedRecords: MaintenanceRecord[] = data.maintenanceRequests.map((request: any) => ({
+        id: request.id,
+        requestDate: request.createdAt.split('T')[0],
+        scheduledDate: request.scheduledDate?.split('T')[0],
+        completionDate: request.completedDate?.split('T')[0],
+        serviceType: request.category || 'General',
+        provider: request.assignedTo?.name || request.provider || 'No asignado',
+        providerRating: request.assignedTo?.rating || 4.0,
+        amount: request.actualCost || request.estimatedCost || 0,
+        currency: 'CLP',
+        status: request.status?.toLowerCase() || 'pending',
+        priority: request.priority?.toLowerCase() || 'medium',
+        description: request.description || 'Sin descripción',
+        issues: [], // Not available in current API
+        solutions: [], // Not available in current API
+        rating: request.rating,
+        review: request.review,
+        propertyAddress: request.property?.address || 'Dirección no disponible',
+      }));
 
       // Filter records based on criteria
-      let filteredRecords = mockRecords.filter(record => {
+      let filteredRecords = transformedRecords.filter(record => {
         if (!dateRange.startDate || !dateRange.endDate) {
           return true;
         }
@@ -218,7 +252,7 @@ export default function TenantMaintenanceReportsPage() {
 
       setMaintenanceRecords(filteredRecords);
 
-      // Calculate statistics
+      // Calculate statistics from real data
       const totalRequests = filteredRecords.length;
       const completedRequests = filteredRecords.filter(r => r.status === 'completed').length;
       const pendingRequests = filteredRecords.filter(r => r.status === 'pending').length;
@@ -228,7 +262,16 @@ export default function TenantMaintenanceReportsPage() {
       const averageRating = filteredRecords
         .filter(r => r.rating)
         .reduce((sum, r, _, arr) => sum + (r.rating || 0) / arr.length, 0);
-      const averageResponseTime = 2.3; // Mock data
+      
+      // Calculate average response time
+      const completedWithDates = filteredRecords.filter(r => r.status === 'completed' && r.scheduledDate);
+      const averageResponseTime = completedWithDates.length > 0
+        ? completedWithDates.reduce((sum, r) => {
+            const requestDate = new Date(r.requestDate).getTime();
+            const scheduledDate = new Date(r.scheduledDate!).getTime();
+            return sum + (scheduledDate - requestDate);
+          }, 0) / completedWithDates.length / (1000 * 60 * 60 * 24) // Convert to days
+        : 0;
 
       // Most common service
       const serviceCount = filteredRecords.reduce(
@@ -258,6 +301,15 @@ export default function TenantMaintenanceReportsPage() {
           .map(([provider, data]) => ({ provider, average: data.total / data.count }))
           .sort((a, b) => b.average - a.average)[0]?.provider || '';
 
+      // Calculate monthly trend
+      const currentMonth = new Date().getMonth();
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const currentMonthRequests = filteredRecords.filter(r => new Date(r.requestDate).getMonth() === currentMonth).length;
+      const lastMonthRequests = filteredRecords.filter(r => new Date(r.requestDate).getMonth() === lastMonth).length;
+      const monthlyTrend = lastMonthRequests > 0 
+        ? ((currentMonthRequests - lastMonthRequests) / lastMonthRequests) * 100 
+        : 0;
+
       setStats({
         totalRequests,
         completedRequests,
@@ -267,7 +319,7 @@ export default function TenantMaintenanceReportsPage() {
         averageResponseTime,
         mostCommonService,
         topProvider,
-        monthlyTrend: 5.2,
+        monthlyTrend,
       });
     } catch (error) {
       logger.error('Error al cargar reportes de mantenimiento', { error });
