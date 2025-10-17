@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
     }
 
     // Devolver el archivo con los headers apropiados
-    return new NextResponse(fileBuffer, {
+    return new Response(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400', // Cache por 24 horas

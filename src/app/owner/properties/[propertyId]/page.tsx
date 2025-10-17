@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -286,11 +286,7 @@ export default function OwnerPropertyDetailPage() {
     concierge: false,
   };
 
-  useEffect(() => {
-    loadPropertyDetails();
-  }, [propertyId, loadPropertyDetails]);
-
-  const loadPropertyDetails = async () => {
+  const loadPropertyDetails = useCallback(async () => {
     setIsLoading(true);
     try {
       // ✅ CORREGIDO: Cargar datos reales de la API
@@ -376,7 +372,11 @@ export default function OwnerPropertyDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [propertyId]);
+
+  useEffect(() => {
+    loadPropertyDetails();
+  }, [loadPropertyDetails]);
 
   const handleContactBroker = (method: 'email' | 'phone') => {
     if (!property?.broker) {

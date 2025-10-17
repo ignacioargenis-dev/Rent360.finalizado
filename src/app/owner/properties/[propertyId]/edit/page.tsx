@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -181,11 +181,7 @@ export default function OwnerPropertyEditPage() {
     concierge: false,
   };
 
-  useEffect(() => {
-    loadPropertyData();
-  }, [propertyId, loadPropertyData]);
-
-  const loadPropertyData = async () => {
+  const loadPropertyData = useCallback(async () => {
     setIsLoading(true);
     try {
       // ✅ CORREGIDO: Cargar datos reales de la API
@@ -248,7 +244,10 @@ export default function OwnerPropertyEditPage() {
         setFormData(transformedData);
         setImagePreviews(transformedData.images);
       } else {
-        logger.error('Error loading property for edit:', response.status, response.statusText);
+        logger.error('Error loading property for edit:', {
+          status: response.status,
+          statusText: response.statusText,
+        });
         // Fallback a datos mock si la API falla
         setFormData(mockProperty);
         setImagePreviews(mockProperty.images);
@@ -261,7 +260,11 @@ export default function OwnerPropertyEditPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [propertyId]);
+
+  useEffect(() => {
+    loadPropertyData();
+  }, [loadPropertyData]);
 
   const handleInputChange = (field: keyof PropertyData, value: string | number) => {
     setFormData(prev => ({
