@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // ✅ RESTAURADO: Iniciar con loading true para hidratación correcta
+  const [loading, setLoading] = useState(false); // ✅ CORREGIDO: Iniciar con loading false para evitar problemas de hidratación
 
   // Función para verificar autenticación
   const checkAuth = async () => {
@@ -130,37 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // SEGUNDO: Verificar con el servidor para datos frescos (solo si no hay usuario en localStorage)
-    const performAuthCheck = async () => {
-      try {
-        await checkAuth();
-      } catch (error) {
-        // Si falla, programar un reintento en 3 segundos
-        if (typeof window !== 'undefined') {
-          retryTimeout = setTimeout(async () => {
-            try {
-              await checkAuth();
-            } catch (retryError) {
-              console.warn('Auth retry también falló:', retryError);
-            }
-          }, 3000);
-        }
-      }
-    };
-
-    // Solo verificar con servidor si no tenemos usuario de localStorage
-    if (!user) {
-      performAuthCheck();
-    }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (retryTimeout) {
-        clearTimeout(retryTimeout);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    // ✅ SIMPLIFICADO: No hacer verificaciones automáticas del servidor para evitar problemas de hidratación
+  }, []); // Solo ejecutar una vez al montar
 
   const login = async (email: string, password: string) => {
     try {
