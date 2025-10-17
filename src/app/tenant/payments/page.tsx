@@ -84,7 +84,7 @@ export default function TenantPaymentsPage() {
             id: '1',
             name: 'Juan Pérez',
             email: 'juan.perez@example.com',
-            role: 'tenant'
+            role: 'tenant',
           });
         }
       } catch (error) {
@@ -93,7 +93,7 @@ export default function TenantPaymentsPage() {
           id: '1',
           name: 'Juan Pérez',
           email: 'juan.perez@example.com',
-          role: 'tenant'
+          role: 'tenant',
         });
       } finally {
         setUserLoading(false);
@@ -112,58 +112,67 @@ export default function TenantPaymentsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for tenant payments
-      const mockPayments: Payment[] = [
-        {
-          id: '1',
-          propertyTitle: 'Departamento Las Condes',
-          amount: 450000,
-          dueDate: '2024-01-15',
-          paymentDate: '2024-01-14',
-          status: 'paid',
-          method: 'transferencia',
-          invoiceNumber: 'INV-001',
+      const response = await fetch('/api/payments/list?limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
         },
-        {
-          id: '2',
-          propertyTitle: 'Casa Vitacura',
-          amount: 650000,
-          dueDate: '2024-02-15',
-          paymentDate: '2024-02-10',
-          status: 'paid',
-          method: 'transferencia',
-          invoiceNumber: 'INV-002',
-        },
-        {
-          id: '3',
-          propertyTitle: 'Departamento Providencia',
-          amount: 380000,
-          dueDate: '2024-03-15',
-          status: 'pending',
-          method: 'transferencia',
-        },
-        {
-          id: '4',
-          propertyTitle: 'Loft Santiago Centro',
-          amount: 420000,
-          dueDate: '2024-01-10',
-          status: 'overdue',
-          method: 'transferencia',
-        },
-      ];
+      });
 
-      const mockStats: PaymentStats = {
-        totalPaid: 1100000,
-        totalPending: 380000,
-        totalOverdue: 420000,
-        thisMonthPaid: 650000,
+      if (!response.ok) {
+        throw new Error('Error al cargar los pagos');
+      }
+
+      const data = await response.json();
+
+      // Transformar los datos de la API al formato esperado por el componente
+      const transformedPayments: Payment[] = data.payments.map((payment: any) => ({
+        id: payment.id,
+        propertyTitle: payment.contract.property.title,
+        amount: payment.amount,
+        dueDate: payment.dueDate.split('T')[0], // Convertir a formato YYYY-MM-DD
+        paymentDate: payment.paidDate ? payment.paidDate.split('T')[0] : undefined,
+        status: payment.status.toLowerCase(),
+        method: payment.method.toLowerCase(),
+        invoiceNumber: payment.paymentNumber,
+      }));
+
+      // Calcular estadísticas reales
+      const totalPaid = transformedPayments
+        .filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const totalPending = transformedPayments
+        .filter(p => p.status === 'pending')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const totalOverdue = transformedPayments
+        .filter(p => p.status === 'pending' && new Date(p.dueDate) < new Date())
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const thisMonthPaid = transformedPayments
+        .filter(p => {
+          if (p.status !== 'completed' || !p.paymentDate) {
+            return false;
+          }
+          const paidDate = new Date(p.paymentDate);
+          const now = new Date();
+          return (
+            paidDate.getMonth() === now.getMonth() && paidDate.getFullYear() === now.getFullYear()
+          );
+        })
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const realStats: PaymentStats = {
+        totalPaid,
+        totalPending,
+        totalOverdue,
+        thisMonthPaid,
       };
 
-      setPayments(mockPayments);
-      setStats(mockStats);
-
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setPayments(transformedPayments);
+      setStats(realStats);
     } catch (error) {
       logger.error('Error loading tenant payments:', {
         error: error instanceof Error ? error.message : String(error),

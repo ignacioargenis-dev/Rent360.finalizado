@@ -161,72 +161,60 @@ export default function OwnerPaymentRemindersPage() {
       setLoading(true);
       logger.info('Enviando recordatorios masivos de pago');
 
-      // Obtener recordatorios pendientes para enviar masivamente
-      const pendingReminders = reminders.filter(r => r.status === 'sent');
+      // Obtener pagos pendientes que necesitan recordatorios
+      const response = await fetch('/api/owner/payment-reminders/pending', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
 
-      if (pendingReminders.length === 0) {
+      if (!response.ok) {
+        throw new Error('Error al obtener pagos pendientes');
+      }
+
+      const data = await response.json();
+
+      if (!data.success || data.pendingPayments.length === 0) {
         showNotification(
-          'Sin Recordatorios Pendientes',
-          'No hay recordatorios pendientes para enviar.',
+          'Sin Pagos Pendientes',
+          'No hay pagos pendientes que requieran recordatorios.',
           'error'
         );
         return;
       }
 
-      let sentCount = 0;
-      let failedCount = 0;
+      // Enviar recordatorios masivos
+      const bulkResponse = await fetch('/api/owner/payment-reminders/bulk-send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIds: data.pendingPayments.map((p: any) => p.id),
+          reminderType: 'first',
+          channel: 'email',
+          customMessage: 'Recordatorio automático de pago pendiente.',
+        }),
+      });
 
-      // Enviar cada recordatorio individualmente
-      for (const reminder of pendingReminders) {
-        try {
-          const response = await fetch('/api/owner/payment-reminders/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              reminderId: reminder.id,
-              tenantId: reminder.tenantId,
-              propertyId: reminder.propertyId,
-              amount: reminder.amount,
-              dueDate: reminder.dueDate,
-              reminderType: reminder.reminderType,
-              channel: reminder.channel,
-            }),
-          });
+      if (bulkResponse.ok) {
+        const bulkData = await bulkResponse.json();
 
-          if (response.ok) {
-            sentCount++;
-            // Actualizar estado local
-            setReminders(prevReminders =>
-              prevReminders.map(r =>
-                r.id === reminder.id
-                  ? { ...r, status: 'sent' as any, sentAt: new Date().toISOString() }
-                  : r
-              )
-            );
-          } else {
-            failedCount++;
-            logger.error(`Error enviando recordatorio ${reminder.id}:`, {
-              error: await response.text(),
-            });
-          }
-        } catch (reminderError) {
-          failedCount++;
-          logger.error(`Error enviando recordatorio ${reminder.id}:`, { error: reminderError });
-        }
-      }
-
-      if (sentCount > 0) {
         showNotification(
           'Recordatorios Masivos Enviados',
-          `Se enviaron ${sentCount} recordatorios exitosamente${failedCount > 0 ? ` (${failedCount} fallaron)` : ''}.`,
-          sentCount === pendingReminders.length ? 'success' : 'error'
+          bulkData.message,
+          bulkData.results.sent > 0 ? 'success' : 'error'
         );
+
+        // Recargar los datos
+        await loadRemindersData();
       } else {
+        const errorData = await bulkResponse.json();
         showNotification(
           'Error en Envío Masivo',
-          'No se pudo enviar ningún recordatorio. Por favor, inténtalo nuevamente.',
+          errorData.error || 'Ha ocurrido un error al enviar los recordatorios masivos.',
           'error'
         );
       }
@@ -279,7 +267,6 @@ export default function OwnerPaymentRemindersPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          reminderId: reminder.id,
           tenantId: reminder.tenantId,
           propertyId: reminder.propertyId,
           amount: reminder.amount,
@@ -362,6 +349,9 @@ export default function OwnerPaymentRemindersPage() {
           `El recordatorio para ${reminder.tenantName} ha sido cancelado exitosamente.`,
           'success'
         );
+
+        // Recargar los datos
+        await loadRemindersData();
       } else {
         const errorData = await response.json();
         showNotification(
@@ -399,118 +389,44 @@ export default function OwnerPaymentRemindersPage() {
 
     const loadRemindersData = async () => {
       try {
-        // Mock reminders data
-        const mockReminders: PaymentReminder[] = [
-          {
-            id: 'r1',
-            tenantId: 't1',
-            tenantName: 'María González',
-            tenantEmail: 'maria@example.com',
-            tenantPhone: '+56912345678',
-            propertyId: 'p1',
-            propertyTitle: 'Apartamento Centro',
-            amount: 850000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            reminderType: 'first',
-            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            status: 'delivered',
-            channel: 'email',
-            response: 'pending',
+        const response = await fetch('/api/owner/payment-reminders?limit=100', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
           },
-          {
-            id: 'r2',
-            tenantId: 't2',
-            tenantName: 'Carlos Rodríguez',
-            tenantEmail: 'carlos@example.com',
-            tenantPhone: '+56987654321',
-            propertyId: 'p2',
-            propertyTitle: 'Casa Los Dominicos',
-            amount: 1200000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-            reminderType: 'second',
-            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            status: 'opened',
-            channel: 'both',
-            response: 'contacted',
-          },
-          {
-            id: 'r3',
-            tenantId: 't3',
-            tenantName: 'Ana López',
-            tenantEmail: 'ana@example.com',
-            tenantPhone: '+56955556666',
-            propertyId: 'p3',
-            propertyTitle: 'Oficina Las Condes',
-            amount: 75000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            reminderType: 'first',
-            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            status: 'sent',
-            channel: 'email',
-            response: 'pending',
-          },
-          {
-            id: 'r4',
-            tenantId: 't1',
-            tenantName: 'María González',
-            tenantEmail: 'maria@example.com',
-            tenantPhone: '+56912345678',
-            propertyId: 'p1',
-            propertyTitle: 'Apartamento Centro',
-            amount: 850000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            reminderType: 'final',
-            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            status: 'failed',
-            channel: 'email',
-            response: 'pending',
-          },
-          {
-            id: 'r5',
-            tenantId: 't4',
-            tenantName: 'Pedro Martínez',
-            tenantEmail: 'pedro@example.com',
-            tenantPhone: '+56977778888',
-            propertyId: 'p4',
-            propertyTitle: 'Local Vitacura',
-            amount: 500000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
-            reminderType: 'urgent',
-            sentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            status: 'delivered',
-            channel: 'both',
-            response: 'paid',
-          },
-        ];
+        });
 
-        setReminders(mockReminders);
-        setFilteredReminders(mockReminders);
+        if (!response.ok) {
+          throw new Error('Error al cargar los recordatorios');
+        }
 
-        // Calculate stats
-        const totalSent = mockReminders.length;
-        const delivered = mockReminders.filter(r => r.status === 'delivered').length;
-        const opened = mockReminders.filter(r => r.status === 'opened').length;
-        const responses = mockReminders.filter(r => r.response && r.response !== 'pending').length;
-        const successRate = responses > 0 ? (responses / totalSent) * 100 : 0;
-        const pendingAmount = mockReminders
-          .filter(r => r.response !== 'paid')
-          .reduce((sum, r) => sum + r.amount, 0);
+        const data = await response.json();
 
-        const reminderStats: ReminderStats = {
-          totalSent,
-          delivered,
-          opened,
-          responses,
-          successRate,
-          pendingAmount,
-        };
-
-        setStats(reminderStats);
-        setLoading(false);
+        if (data.success) {
+          setReminders(data.reminders);
+          setFilteredReminders(data.reminders);
+          setStats(data.stats);
+        } else {
+          throw new Error(data.error || 'Error al cargar los recordatorios');
+        }
       } catch (error) {
         logger.error('Error loading reminders data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+
+        // Fallback a datos vacíos en caso de error
+        setReminders([]);
+        setFilteredReminders([]);
+        setStats({
+          totalSent: 0,
+          delivered: 0,
+          opened: 0,
+          responses: 0,
+          successRate: 0,
+          pendingAmount: 0,
+        });
+      } finally {
         setLoading(false);
       }
     };

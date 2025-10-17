@@ -81,22 +81,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Inquilino no encontrado.' }, { status: 404 });
     }
 
-    // TODO: Crear el recordatorio en la base de datos cuando se implemente el modelo PaymentReminder
-    // Por ahora usamos mock data
-    const reminder = {
-      id: `reminder_${Date.now()}`,
-      tenantId: validatedData.tenantId,
-      propertyId: validatedData.propertyId,
-      contractId: contract.id,
-      ownerId: user.id,
-      amount: validatedData.amount,
-      dueDate: new Date(validatedData.dueDate),
-      reminderType: validatedData.reminderType,
-      channel: validatedData.channel,
-      status: 'SENT',
-      sentAt: new Date(),
-      customMessage: validatedData.customMessage,
-    };
+    // Crear el recordatorio en la base de datos
+    const reminder = await db.paymentReminder.create({
+      data: {
+        tenantId: validatedData.tenantId,
+        propertyId: validatedData.propertyId,
+        contractId: contract.id,
+        ownerId: user.id,
+        amount: validatedData.amount,
+        dueDate: new Date(validatedData.dueDate),
+        reminderType: validatedData.reminderType,
+        channel: validatedData.channel.toUpperCase(),
+        status: 'SENT',
+        sentAt: new Date(),
+        customMessage: validatedData.customMessage,
+      },
+    });
 
     // Preparar el mensaje del recordatorio
     const reminderMessage = generateReminderMessage({

@@ -187,116 +187,109 @@ export default function BrokerMessagesPage() {
 
     const loadMessagesData = async () => {
       try {
-        // Mock messages data
-        const mockMessages: Message[] = [
-          {
-            id: '1',
-            senderName: 'María González',
-            senderType: 'owner',
-            recipientName: 'Corredor',
-            recipientType: 'broker',
-            subject: 'Consulta sobre disponibilidad de departamento',
-            content:
-              'Hola, me gustaría saber si el departamento de Providencia está disponible para arriendo. ¿Podrías darme más información sobre las condiciones?',
-            propertyTitle: 'Departamento Moderno Providencia',
-            propertyAddress: 'Av. Providencia 123, Providencia',
-            type: 'inquiry',
-            status: 'unread',
-            priority: 'normal',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            hasAttachments: false,
+        const response = await fetch('/api/messages?limit=100', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
           },
-          {
-            id: '2',
-            senderName: 'Carlos Ramírez',
-            senderType: 'tenant',
-            recipientName: 'Corredor',
-            recipientType: 'broker',
-            subject: 'Recordatorio de pago mensual',
-            content:
-              'Te recuerdo que el pago del arriendo vence este viernes. ¿Has recibido el depósito?',
-            propertyTitle: 'Casa Familiar Las Condes',
-            propertyAddress: 'Calle Las Condes 456, Las Condes',
-            type: 'payment',
-            status: 'read',
-            priority: 'high',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            repliedAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
-            hasAttachments: true,
-          },
-          {
-            id: '3',
-            senderName: 'Ana López',
-            senderType: 'prospect',
-            recipientName: 'Corredor',
-            recipientType: 'broker',
-            subject: 'Fuga de agua en baño principal',
-            content:
-              'Hay una fuga importante en el baño principal. Necesito que venga alguien urgentemente.',
-            propertyTitle: 'Oficina Corporativa Centro',
-            propertyAddress: 'Av. Libertador 789, Santiago Centro',
-            type: 'maintenance',
-            status: 'unread',
-            priority: 'urgent',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-            hasAttachments: true,
-          },
-          {
-            id: '4',
-            senderName: 'Patricia Soto',
-            senderType: 'owner',
-            recipientName: 'Corredor',
-            recipientType: 'broker',
-            subject: 'Actualización mensual de propiedades',
-            content:
-              'Aquí te envío el resumen mensual de todas mis propiedades. Por favor revisa y confirma recepción.',
-            type: 'update',
-            status: 'replied',
-            priority: 'low',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            repliedAt: new Date(
-              Date.now() - 1000 * 60 * 60 * 24 * 2 + 1000 * 60 * 30
-            ).toISOString(),
-            hasAttachments: true,
-          },
-        ];
+        });
 
-        setMessages(mockMessages);
+        if (!response.ok) {
+          throw new Error('Error al cargar los mensajes');
+        }
 
-        // Calculate stats
-        const unreadMessages = mockMessages.filter(m => m.status === 'unread').length;
-        const todayMessages = mockMessages.filter(m => {
-          const today = new Date();
-          const messageDate = new Date(m.createdAt);
-          return messageDate.toDateString() === today.toDateString();
-        }).length;
-        const urgentMessages = mockMessages.filter(m => m.priority === 'urgent').length;
-        const repliedMessages = mockMessages.filter(m => m.repliedAt).length;
-        const responseRate =
-          mockMessages.length > 0 ? (repliedMessages / mockMessages.length) * 100 : 0;
+        const data = await response.json();
 
-        const messageStats: MessageStats = {
-          totalMessages: mockMessages.length,
-          unreadMessages,
-          todayMessages,
-          urgentMessages,
-          responseRate,
-          averageResponseTime: 2.5, // horas promedio
-        };
+        if (data.success) {
+          // Transformar los datos de la API al formato esperado por el componente
+          const transformedMessages: Message[] = data.messages.map((message: any) => ({
+            id: message.id,
+            senderName: message.sender.name,
+            senderType: message.sender.role.toLowerCase() as
+              | 'owner'
+              | 'tenant'
+              | 'prospect'
+              | 'provider'
+              | 'broker',
+            recipientName: message.receiver.name,
+            recipientType: message.receiver.role.toLowerCase() as
+              | 'owner'
+              | 'tenant'
+              | 'prospect'
+              | 'provider'
+              | 'broker',
+            subject: message.subject,
+            content: message.content,
+            propertyTitle: message.property?.title || '',
+            propertyAddress: message.property?.address || '',
+            type: message.type.toLowerCase() as
+              | 'inquiry'
+              | 'update'
+              | 'complaint'
+              | 'payment'
+              | 'maintenance'
+              | 'general',
+            status: message.isRead ? 'read' : 'unread',
+            priority:
+              (message.priority?.toLowerCase() as 'low' | 'normal' | 'high' | 'urgent') || 'normal',
+            createdAt: message.createdAt,
+            repliedAt: message.repliedAt,
+            hasAttachments: message.attachments && message.attachments.length > 0,
+          }));
 
-        setStats(messageStats);
-        setLoading(false);
+          setMessages(transformedMessages);
+
+          // Calcular estadísticas reales
+          const unreadMessages = transformedMessages.filter(m => m.status === 'unread').length;
+          const todayMessages = transformedMessages.filter(m => {
+            const today = new Date();
+            const messageDate = new Date(m.createdAt);
+            return messageDate.toDateString() === today.toDateString();
+          }).length;
+          const urgentMessages = transformedMessages.filter(m => m.priority === 'urgent').length;
+          const repliedMessages = transformedMessages.filter(m => m.repliedAt).length;
+          const responseRate =
+            transformedMessages.length > 0
+              ? (repliedMessages / transformedMessages.length) * 100
+              : 0;
+
+          const messageStats: MessageStats = {
+            totalMessages: transformedMessages.length,
+            unreadMessages,
+            todayMessages,
+            urgentMessages,
+            responseRate,
+            averageResponseTime: 2.5, // TODO: Calcular basado en datos reales
+          };
+
+          setStats(messageStats);
+        } else {
+          throw new Error(data.error || 'Error al cargar los mensajes');
+        }
       } catch (error) {
         logger.error('Error loading messages data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+
+        // Fallback a datos vacíos en caso de error
+        setMessages([]);
+        setStats({
+          totalMessages: 0,
+          unreadMessages: 0,
+          todayMessages: 0,
+          urgentMessages: 0,
+          responseRate: 0,
+          averageResponseTime: 0,
+        });
+      } finally {
         setLoading(false);
       }
     };
 
     loadUserData();
     loadMessagesData();
-  }, []);
+  }, [searchParams, user?.name]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -459,33 +452,46 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
           receiverId: 'system_broadcast', // For system messages, or select a specific recipient
           subject: 'Mensaje del sistema',
           content: newMessageContent,
-          type: 'general',
+          type: 'direct',
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Add message to list (simplified version)
-        const newMessageObj: Message = {
-          id: data.data.id,
-          senderName: user?.name || 'Corredor',
-          senderType: 'broker',
-          recipientName: 'Sistema',
-          recipientType: 'owner',
-          subject: 'Mensaje del sistema',
-          content: newMessageContent,
-          propertyTitle: '',
-          propertyAddress: '',
-          type: 'general',
-          status: 'unread',
-          priority: 'normal',
-          createdAt: new Date().toISOString(),
-          hasAttachments: false,
-        };
 
-        setMessages(prev => [newMessageObj, ...prev]);
-        setNewMessageContent('');
-        alert('Mensaje enviado exitosamente');
+        if (data.success) {
+          // Add message to list
+          const newMessageObj: Message = {
+            id: data.data.id,
+            senderName: user?.name || 'Corredor',
+            senderType: 'broker',
+            recipientName: 'Sistema',
+            recipientType: 'owner',
+            subject: 'Mensaje del sistema',
+            content: newMessageContent,
+            propertyTitle: '',
+            propertyAddress: '',
+            type: 'general',
+            status: 'unread',
+            priority: 'normal',
+            createdAt: new Date().toISOString(),
+            hasAttachments: false,
+          };
+
+          setMessages(prev => [newMessageObj, ...prev]);
+          setNewMessageContent('');
+
+          // Update stats
+          setStats(prev => ({
+            ...prev,
+            totalMessages: prev.totalMessages + 1,
+            todayMessages: prev.todayMessages + 1,
+          }));
+
+          alert('Mensaje enviado exitosamente');
+        } else {
+          throw new Error(data.error || 'Error al enviar mensaje');
+        }
       } else {
         const error = await response.json();
         alert(`Error al enviar mensaje: ${error.error || 'Error desconocido'}`);

@@ -63,6 +63,12 @@ interface Property {
   lastJobDate?: string;
   nextJobDate?: string;
   status: 'active' | 'inactive' | 'maintenance';
+  currentTenant?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
 }
 
 export default function MaintenancePropertiesPage() {
@@ -91,9 +97,40 @@ export default function MaintenancePropertiesPage() {
     setShowPropertyDetailsModal(true);
   };
 
-  const handleViewPropertyJobs = (property: Property) => {
-    setSelectedProperty(property);
-    setShowPropertyJobsModal(true);
+  const handleViewPropertyJobs = async (property: Property) => {
+    try {
+      setSelectedProperty(property);
+      setShowPropertyJobsModal(true);
+
+      // Cargar trabajos de mantenimiento de la propiedad
+      const response = await fetch(`/api/maintenance/properties/${property.id}/jobs`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Los trabajos se mostrarán en el modal
+          logger.info('Trabajos de mantenimiento cargados:', {
+            propertyId: property.id,
+            jobsCount: data.jobs.length,
+          });
+        }
+      } else {
+        logger.error('Error cargando trabajos de mantenimiento:', {
+          propertyId: property.id,
+        });
+      }
+    } catch (error) {
+      logger.error('Error cargando trabajos de mantenimiento:', {
+        error: error instanceof Error ? error.message : String(error),
+        propertyId: property.id,
+      });
+    }
   };
 
   const handleContactOwner = (property: Property) => {
@@ -163,74 +200,33 @@ Equipo de Mantenimiento Rent360`;
       setLoading(true);
       setError(null);
 
-      // Mock data for demonstration
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          address: 'Av. Las Condes 1234, Depto 5B',
-          commune: 'Las Condes',
-          region: 'Metropolitana',
-          ownerName: 'María González Rodríguez',
-          ownerPhone: '+56912345678',
-          ownerEmail: 'maria.gonzalez@email.com',
-          propertyType: 'apartment',
-          bedrooms: 2,
-          bathrooms: 2,
-          totalJobs: 8,
-          activeJobs: 1,
-          completedJobs: 7,
-          totalRevenue: 320000,
-          lastJobDate: '2024-01-10',
-          nextJobDate: '2024-02-15',
-          status: 'active',
+      const response = await fetch('/api/maintenance/properties?limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
         },
-        {
-          id: '2',
-          address: 'Providencia 567',
-          commune: 'Providencia',
-          region: 'Metropolitana',
-          ownerName: 'Carlos Rodríguez Silva',
-          ownerPhone: '+56987654321',
-          ownerEmail: 'carlos.rodriguez@email.com',
-          propertyType: 'house',
-          bedrooms: 3,
-          bathrooms: 2,
-          totalJobs: 5,
-          activeJobs: 0,
-          completedJobs: 5,
-          totalRevenue: 185000,
-          lastJobDate: '2024-01-05',
-          status: 'active',
-        },
-        {
-          id: '3',
-          address: 'Ñuñoa 890, Oficina 201',
-          commune: 'Ñuñoa',
-          region: 'Metropolitana',
-          ownerName: 'Ana López Martínez',
-          ownerPhone: '+56911223344',
-          ownerEmail: 'ana.lopez@email.com',
-          propertyType: 'office',
-          bedrooms: 0,
-          bathrooms: 1,
-          totalJobs: 3,
-          activeJobs: 2,
-          completedJobs: 1,
-          totalRevenue: 95000,
-          lastJobDate: '2024-01-12',
-          nextJobDate: '2024-01-20',
-          status: 'maintenance',
-        },
-      ];
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProperties(mockProperties);
+      if (!response.ok) {
+        throw new Error('Error al cargar las propiedades');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProperties(data.properties);
+      } else {
+        throw new Error(data.error || 'Error al cargar las propiedades');
+      }
     } catch (error) {
       logger.error('Error loading maintenance properties:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar las propiedades');
+
+      // Fallback a datos vacíos en caso de error
+      setProperties([]);
     } finally {
       setLoading(false);
     }

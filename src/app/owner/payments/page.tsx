@@ -381,267 +381,105 @@ Rent360 - Sistema de Gestión Inmobiliaria
   };
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      const mockPayments: PaymentWithDetails[] = [
-        {
-          id: '1',
-          paymentNumber: 'PAY-2024-001',
-          amount: 850000,
-          dueDate: new Date('2024-02-01'),
-          paidDate: new Date('2024-02-01'),
-          method: 'DIGITAL_WALLET' as any,
-          status: 'PAID' as any,
-          notes: 'Pago de arriendo febrero 2024',
-          contractId: '1',
-          payerId: 'tenant1',
-          transactionId: 'TXN-001',
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-02-01'),
-          property: {
-            id: '1',
-            title: 'Departamento Amoblado Centro',
-            description: 'Hermoso departamento en el centro de Santiago',
-            type: 'APARTMENT' as any,
-            address: 'Av. Providencia 1234',
-            city: 'Santiago',
-            commune: 'Providencia',
-            region: 'Metropolitana',
-            price: 850000,
-            deposit: 850000,
-            bedrooms: 2,
-            bathrooms: 1,
-            area: 65,
-            status: 'OCCUPIED' as any,
-            images: '',
-            features: 'Estacionamiento, Ascensor, Seguridad 24/7',
-            views: 412,
-            inquiries: 34,
-            ownerId: 'owner1',
-            brokerId: null,
-            createdBy: 'owner1',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+    loadPayments();
+  }, []);
 
-            // Nuevos campos
-            furnished: true,
-            petFriendly: false,
-            parkingSpaces: 1,
-            availableFrom: new Date('2024-01-01'),
-            floor: 5,
-            buildingName: 'Edificio Centro',
-            yearBuilt: 2017,
-            heating: true,
-            cooling: true,
-            internet: true,
-            elevator: true,
-            balcony: false,
-            terrace: false,
-            garden: false,
-            pool: false,
-            gym: false,
-            security: true,
-            concierge: true,
-          },
+  // Mock data removed - now using real API
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch('/api/payments/list?limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
         },
-        {
-          id: '2',
-          paymentNumber: 'PAY-2024-002',
-          amount: 850000,
-          dueDate: new Date('2024-03-01'),
-          paidDate: null,
-          method: 'BANK_TRANSFER' as any,
-          status: 'PENDING' as any,
-          notes: 'Pago de arriendo marzo 2024',
-          contractId: '1',
-          payerId: 'tenant1',
-          transactionId: null,
-          createdAt: new Date('2024-02-15'),
-          updatedAt: new Date('2024-02-15'),
-          property: {
-            id: '1',
-            title: 'Departamento Amoblado Centro',
-            description: 'Hermoso departamento en el centro de Santiago',
-            type: 'APARTMENT' as any,
-            address: 'Av. Providencia 1234',
-            city: 'Santiago',
-            commune: 'Providencia',
-            region: 'Metropolitana',
-            price: 850000,
-            deposit: 850000,
-            bedrooms: 2,
-            bathrooms: 1,
-            area: 65,
-            status: 'OCCUPIED' as any,
-            images: '',
-            features: 'Estacionamiento, Ascensor, Seguridad 24/7',
-            views: 412,
-            inquiries: 34,
-            ownerId: 'owner1',
-            brokerId: null,
-            createdBy: 'owner1',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+      });
 
-            // Nuevos campos
-            furnished: true,
-            petFriendly: false,
-            parkingSpaces: 1,
-            availableFrom: new Date('2024-01-01'),
-            floor: 5,
-            buildingName: 'Edificio Centro',
-            yearBuilt: 2017,
-            heating: true,
-            cooling: true,
-            internet: true,
-            elevator: true,
-            balcony: false,
-            terrace: false,
-            garden: false,
-            pool: false,
-            gym: false,
-            security: true,
-            concierge: true,
-          },
+      if (!response.ok) {
+        throw new Error('Error al cargar los pagos');
+      }
+
+      const data = await response.json();
+
+      // Transformar los datos de la API al formato esperado por el componente
+      const transformedPayments: PaymentWithDetails[] = data.payments.map((payment: any) => ({
+        id: payment.id,
+        paymentNumber: payment.paymentNumber,
+        amount: payment.amount,
+        dueDate: new Date(payment.dueDate),
+        paidDate: payment.paidDate ? new Date(payment.paidDate) : null,
+        method: payment.method,
+        status: payment.status,
+        notes: payment.notes,
+        contractId: payment.contract.id,
+        payerId: payment.contract.tenant.id,
+        transactionId: payment.transactionId,
+        createdAt: new Date(payment.createdAt),
+        updatedAt: new Date(payment.updatedAt),
+        property: {
+          id: payment.contract.property.id,
+          title: payment.contract.property.title,
+          description: payment.contract.property.title,
+          type: payment.contract.property.type,
+          address: payment.contract.property.address,
+          city: payment.contract.property.city,
+          commune: payment.contract.property.commune,
+          region: payment.contract.property.city,
+          price: payment.contract.monthlyRent,
+          deposit: payment.contract.monthlyRent,
+          bedrooms: 0,
+          bathrooms: 0,
+          area: 0,
+          status: 'OCCUPIED' as any,
+          images: '',
+          features: '',
+          views: 0,
+          inquiries: 0,
+          ownerId: payment.contract.owner.id,
+          brokerId: null,
+          createdBy: payment.contract.owner.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          furnished: false,
+          petFriendly: false,
+          parkingSpaces: 0,
+          availableFrom: new Date(),
+          floor: 0,
+          buildingName: null,
+          yearBuilt: 2020,
+          heating: false,
+          cooling: false,
+          internet: false,
+          elevator: false,
+          balcony: false,
+          terrace: false,
+          garden: false,
+          pool: false,
+          gym: false,
+          security: false,
+          concierge: false,
         },
-        {
-          id: '3',
-          paymentNumber: 'PAY-2024-003',
-          amount: 850000,
-          dueDate: new Date('2024-04-01'),
-          paidDate: null,
-          method: 'BANK_TRANSFER' as any,
-          status: 'PENDING' as any,
-          notes: 'Pago de arriendo abril 2024',
-          contractId: '1',
-          payerId: 'tenant1',
-          transactionId: null,
-          createdAt: new Date('2024-02-15'),
-          updatedAt: new Date('2024-02-15'),
-          property: {
-            id: '1',
-            title: 'Departamento Amoblado Centro',
-            description: 'Hermoso departamento en el centro de Santiago',
-            type: 'APARTMENT' as any,
-            address: 'Av. Providencia 1234',
-            city: 'Santiago',
-            commune: 'Providencia',
-            region: 'Metropolitana',
-            price: 850000,
-            deposit: 850000,
-            bedrooms: 2,
-            bathrooms: 1,
-            area: 65,
-            status: 'OCCUPIED' as any,
-            images: '',
-            features: 'Estacionamiento, Ascensor, Seguridad 24/7',
-            views: 412,
-            inquiries: 34,
-            ownerId: 'owner1',
-            brokerId: null,
-            createdBy: 'owner1',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+      }));
 
-            // Nuevos campos
-            furnished: true,
-            petFriendly: false,
-            parkingSpaces: 1,
-            availableFrom: new Date('2024-01-01'),
-            floor: 5,
-            buildingName: 'Edificio Centro',
-            yearBuilt: 2017,
-            heating: true,
-            cooling: true,
-            internet: true,
-            elevator: true,
-            balcony: false,
-            terrace: false,
-            garden: false,
-            pool: false,
-            gym: false,
-            security: true,
-            concierge: true,
-          },
-        },
-        {
-          id: '4',
-          paymentNumber: 'PAY-2024-004',
-          amount: 1200000,
-          dueDate: new Date('2024-02-01'),
-          paidDate: null,
-          method: 'BANK_TRANSFER' as any,
-          status: 'PENDING' as any,
-          notes: 'Pago de arriendo febrero 2024',
-          contractId: '2',
-          payerId: 'tenant2',
-          transactionId: null,
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-02-01'),
-          property: {
-            id: '2',
-            title: 'Casa Familiar Las Condes',
-            description: 'Casa espaciosa en barrio residencial',
-            type: 'APARTMENT' as any,
-            address: 'Calle El Alba 567',
-            city: 'Santiago',
-            commune: 'Las Condes',
-            region: 'Metropolitana',
-            price: 1200000,
-            deposit: 1200000,
-            bedrooms: 3,
-            bathrooms: 2,
-            area: 120,
-            status: 'RENTED' as any,
-            images: '',
-            features: 'Jardín, Estacionamiento, Seguridad',
-            views: 678,
-            inquiries: 42,
-            ownerId: 'owner2',
-            brokerId: null,
-            createdBy: 'owner2',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+      setPayments(transformedPayments);
 
-            // Nuevos campos
-            furnished: false,
-            petFriendly: true,
-            parkingSpaces: 2,
-            availableFrom: new Date('2024-01-01'),
-            floor: null,
-            buildingName: null,
-            yearBuilt: 2015,
-            heating: true,
-            cooling: false,
-            internet: true,
-            elevator: false,
-            balcony: false,
-            terrace: true,
-            garden: true,
-            pool: false,
-            gym: false,
-            security: true,
-            concierge: false,
-          },
-        },
-      ];
-
-      setPayments(mockPayments);
-
-      // Calculate stats
-      const totalReceived = mockPayments
+      // Calculate stats from real data
+      const totalReceived = transformedPayments
         .filter(p => p.status === 'COMPLETED')
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const pendingAmount = mockPayments
+      const pendingAmount = transformedPayments
         .filter(p => p.status === 'PENDING')
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const overdueAmount = mockPayments
+      const overdueAmount = transformedPayments
         .filter(p => p.status === 'PENDING' && new Date() > p.dueDate)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const thisMonthReceived = mockPayments
+      const thisMonthReceived = transformedPayments
         .filter(p => {
           const paidDate = new Date(p.paidDate || '');
           const now = new Date();
@@ -660,10 +498,13 @@ Rent360 - Sistema de Gestión Inmobiliaria
         thisMonthReceived,
         averagePaymentTime: 2.5,
       });
-
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      setError('Error al cargar los pagos');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {

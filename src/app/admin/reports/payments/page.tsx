@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -151,16 +150,43 @@ export default function PaymentsReportsPage() {
 
   useEffect(() => {
     loadPaymentsData();
-  }, [dateRange, paymentType, statusFilter]);
+  }, [dateRange, paymentType, statusFilter, loadPaymentsData]);
 
   const loadPaymentsData = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/payments/list?limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los pagos');
+      }
+
+      const data = await response.json();
+
+      // Transformar los datos de la API al formato esperado por el componente
+      const transformedPayments: PaymentRecord[] = data.payments.map((payment: any) => ({
+        id: payment.id,
+        type: 'owner' as const, // Los pagos son principalmente a propietarios
+        recipientName: payment.contract.owner.name,
+        amount: payment.amount,
+        currency: 'CLP',
+        status: payment.status.toLowerCase() as 'pending' | 'processing' | 'completed' | 'failed',
+        paymentMethod: payment.method.toLowerCase(),
+        paymentDate: payment.paidDate
+          ? payment.paidDate.split('T')[0]
+          : payment.dueDate.split('T')[0],
+        description: `Pago de arriendo - ${payment.contract.property.title}`,
+        reference: payment.paymentNumber,
+      }));
 
       // Filter payments based on criteria
-      let filteredPayments = mockPayments;
+      let filteredPayments = transformedPayments;
 
       if (paymentType !== 'all') {
         filteredPayments = filteredPayments.filter(p => p.type === paymentType);
@@ -185,13 +211,35 @@ export default function PaymentsReportsPage() {
       const completedPayments = filteredPayments.filter(p => p.status === 'completed').length;
       const failedPayments = filteredPayments.filter(p => p.status === 'failed').length;
 
+      // Calcular crecimiento mensual basado en datos reales
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+      const currentMonthPayments = transformedPayments.filter(p => {
+        const paymentDate = new Date(p.paymentDate);
+        return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+      });
+
+      const lastMonthPayments = transformedPayments.filter(p => {
+        const paymentDate = new Date(p.paymentDate);
+        return paymentDate.getMonth() === lastMonth && paymentDate.getFullYear() === lastMonthYear;
+      });
+
+      const currentMonthAmount = currentMonthPayments.reduce((sum, p) => sum + p.amount, 0);
+      const lastMonthAmount = lastMonthPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      const monthlyGrowth =
+        lastMonthAmount > 0 ? ((currentMonthAmount - lastMonthAmount) / lastMonthAmount) * 100 : 0;
+
       setSummary({
         totalPayments: filteredPayments.length,
         totalAmount,
         pendingPayments,
         completedPayments,
         failedPayments,
-        monthlyGrowth: 12.5, // Mock growth percentage
+        monthlyGrowth: Math.round(monthlyGrowth * 10) / 10, // Redondear a 1 decimal
       });
     } catch (error) {
       logger.error('Error al cargar datos de pagos', { error });
