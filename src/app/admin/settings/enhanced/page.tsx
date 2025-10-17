@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -29,6 +30,7 @@ import {
   Bell,
   Mail,
   Database,
+  DollarSign,
   Users,
   CreditCard,
   FileText,
@@ -253,6 +255,15 @@ interface SystemSettings {
   serviceProviderSupportedPaymentMethods: string[];
   serviceProviderRequireBankVerification: boolean;
 
+  // Configuración de Retención de Plataforma
+  platformRetentionEnabled: boolean;
+  platformRetentionFeePercentage: number;
+  paymentProviderFeePercentage: number;
+  platformRetentionSchedule: 'immediate' | 'weekly' | 'monthly';
+  platformRetentionCutoffDay: number;
+  platformRetentionMinimumAmount: number;
+  platformRetentionMaximumAmount: number;
+
   // Configuración de Integraciones
   googleMapsEnabled: boolean;
   googleAnalyticsEnabled: boolean;
@@ -467,6 +478,15 @@ export default function EnhancedAdminSettingsPage() {
     serviceProviderPayoutSchedule: 'weekly',
     serviceProviderSupportedPaymentMethods: ['bank_transfer', 'cash'],
     serviceProviderRequireBankVerification: true,
+
+    // Configuración de Retención de Plataforma
+    platformRetentionEnabled: true,
+    platformRetentionFeePercentage: 5.0,
+    paymentProviderFeePercentage: 1.0,
+    platformRetentionSchedule: 'monthly',
+    platformRetentionCutoffDay: 1,
+    platformRetentionMinimumAmount: 5000,
+    platformRetentionMaximumAmount: 1000000,
 
     // Configuración de Integraciones
     googleMapsEnabled: true,
@@ -1254,6 +1274,7 @@ El equipo de Rent360`,
     { id: 'properties', label: 'Propiedades', icon: Building },
     { id: 'users', label: 'Usuarios', icon: Users },
     { id: 'commissions', label: 'Comisiones', icon: CreditCard },
+    { id: 'platform-retention', label: 'Retención Plataforma', icon: DollarSign },
     { id: 'runners', label: 'Runners', icon: User },
     { id: 'providers', label: 'Proveedores', icon: Wrench },
     { id: 'notifications', label: 'Notificaciones', icon: Bell },
@@ -2083,6 +2104,232 @@ El equipo de Rent360`,
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+
+  const renderPlatformRetentionSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Retención de Plataforma</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Configura la retención mensual que hace la plataforma sobre los montos de arriendo. Esta
+          es la principal fuente de ingresos del sistema.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Configuración Principal */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              Configuración Principal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="platformRetentionEnabled">Sistema Habilitado</Label>
+                <p className="text-sm text-gray-600">Activar/desactivar retención automática</p>
+              </div>
+              <Switch
+                id="platformRetentionEnabled"
+                checked={settings.platformRetentionEnabled}
+                onCheckedChange={checked =>
+                  setSettings({ ...settings, platformRetentionEnabled: checked })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="platformRetentionFeePercentage">Retención de Plataforma (%)</Label>
+              <Input
+                id="platformRetentionFeePercentage"
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={settings.platformRetentionFeePercentage}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    platformRetentionFeePercentage: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Porcentaje retenido por la plataforma sobre cada pago de arriendo
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="paymentProviderFeePercentage">Costo Proveedor de Pagos (%)</Label>
+              <Input
+                id="paymentProviderFeePercentage"
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={settings.paymentProviderFeePercentage}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    paymentProviderFeePercentage: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Costo del proveedor de pagos (Khipu, Stripe, etc.)
+              </p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-4 h-4 text-blue-600" />
+                <span className="font-medium text-blue-900">Retención Total</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-900">
+                {(
+                  settings.platformRetentionFeePercentage + settings.paymentProviderFeePercentage
+                ).toFixed(1)}
+                %
+              </p>
+              <p className="text-sm text-blue-700">
+                Por cada $100.000 de arriendo se retienen $
+                {(
+                  (settings.platformRetentionFeePercentage +
+                    settings.paymentProviderFeePercentage) *
+                  1000
+                ).toLocaleString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configuración de Procesamiento */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Procesamiento
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="platformRetentionSchedule">Frecuencia de Procesamiento</Label>
+              <Select
+                value={settings.platformRetentionSchedule}
+                onValueChange={value =>
+                  setSettings({
+                    ...settings,
+                    platformRetentionSchedule: value as 'immediate' | 'weekly' | 'monthly',
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Inmediato</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {settings.platformRetentionSchedule === 'monthly' && (
+              <div>
+                <Label htmlFor="platformRetentionCutoffDay">Día de Corte Mensual</Label>
+                <Input
+                  id="platformRetentionCutoffDay"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={settings.platformRetentionCutoffDay}
+                  onChange={e =>
+                    setSettings({
+                      ...settings,
+                      platformRetentionCutoffDay: parseInt(e.target.value) || 1,
+                    })
+                  }
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Límites */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Límites
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="platformRetentionMinimumAmount">Retención Mínima (CLP)</Label>
+              <Input
+                id="platformRetentionMinimumAmount"
+                type="number"
+                value={settings.platformRetentionMinimumAmount}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    platformRetentionMinimumAmount: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="platformRetentionMaximumAmount">Retención Máxima (CLP)</Label>
+              <Input
+                id="platformRetentionMaximumAmount"
+                type="number"
+                value={settings.platformRetentionMaximumAmount}
+                onChange={e =>
+                  setSettings({
+                    ...settings,
+                    platformRetentionMaximumAmount: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Información del Sistema */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5" />
+              Información del Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-yellow-900">Fuente Principal de Ingresos</h4>
+                  <p className="text-sm text-yellow-800 mt-1">
+                    La retención mensual sobre los arriendos es la principal fuente de ingresos de
+                    la plataforma. Se aplica automáticamente a cada pago de arriendo procesado.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-green-900">Procesamiento Automático</h4>
+                  <p className="text-sm text-green-800 mt-1">
+                    El sistema calcula y retiene automáticamente el porcentaje configurado de cada
+                    pago de arriendo, garantizando ingresos consistentes para la plataforma.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 
@@ -4564,6 +4811,7 @@ El equipo de Rent360`,
           {activeTab === 'properties' && renderPropertySettings()}
           {activeTab === 'users' && renderUserSettings()}
           {activeTab === 'commissions' && renderCommissionSettings()}
+          {activeTab === 'platform-retention' && renderPlatformRetentionSettings()}
           {activeTab === 'runners' && renderRunnerSettings()}
           {activeTab === 'providers' && renderProvidersSettings()}
           {activeTab === 'notifications' && renderNotificationSettings()}

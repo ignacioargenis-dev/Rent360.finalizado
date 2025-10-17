@@ -13,7 +13,7 @@ export interface BankAccountInfo {
   // Información del banco
   bankCode: string; // Código del banco (ej: '001' para Banco Chile)
   bankName: string; // Nombre del banco
-  country: string;  // País (CL, US, etc.)
+  country: string; // País (CL, US, etc.)
 
   // Información de la cuenta
   accountType: 'checking' | 'savings' | 'business';
@@ -68,7 +68,7 @@ export const CHILEAN_BANK_CODES = {
   '056': 'Banco Santander Banefe',
   '504': 'Banco Bilbao Vizcaya Argentaria (BBVA)',
   '507': 'Banco del Desarrollo',
-  '037': 'Scotiabank Chile'
+  '037': 'Scotiabank Chile',
 } as const;
 
 /**
@@ -79,7 +79,9 @@ export class BankAccountService {
    * Valida formato de RUT chileno
    */
   static validateRut(rut: string): boolean {
-    if (!rut) return false;
+    if (!rut) {
+      return false;
+    }
 
     // Remover puntos y convertir a mayúsculas
     rut = rut.replace(/\./g, '').toUpperCase();
@@ -160,7 +162,7 @@ export class BankAccountService {
       // Verificar que el usuario existe
       const user = await db.user.findUnique({
         where: { id: userId },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true },
       });
 
       if (!user) {
@@ -200,10 +202,10 @@ export class BankAccountService {
           verificationMethod: 'api',
           metadata: {
             verificationAttempts: 0,
-            riskScore: 0
+            riskScore: 0,
           },
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
 
         // En producción, guardar en BD
@@ -211,7 +213,7 @@ export class BankAccountService {
           userId,
           bankCode: accountData.bankCode,
           accountType: accountData.accountType,
-          isPrimary: accountData.isPrimary
+          isPrimary: accountData.isPrimary,
         });
 
         return newAccount;
@@ -223,9 +225,10 @@ export class BankAccountService {
       }, 0);
 
       return bankAccount;
-
     } catch (error) {
-      logger.error('Error registrando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error registrando cuenta bancaria', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -256,17 +259,18 @@ export class BankAccountService {
           metadata: {
             lastVerificationAttempt: new Date(),
             verificationAttempts: 1,
-            riskScore: 0.1
+            riskScore: 0.1,
           },
           createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 días atrás
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       ];
 
       return mockAccounts.filter(account => account.userId === userId);
-
     } catch (error) {
-      logger.error('Error obteniendo cuentas bancarias', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error obteniendo cuentas bancarias', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw new DatabaseError('Error al obtener cuentas bancarias');
     }
   }
@@ -315,18 +319,19 @@ export class BankAccountService {
         accountId,
         userId: account.userId,
         status: verificationResult.status,
-        success: verificationResult.success
+        success: verificationResult.success,
       });
 
       return verificationResult;
-
     } catch (error) {
-      logger.error('Error verificando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error verificando cuenta bancaria', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         success: false,
         status: 'failed',
         message: error instanceof Error ? error.message : 'Error desconocido',
-        nextSteps: ['Reintentar verificación', 'Contactar soporte']
+        nextSteps: ['Reintentar verificación', 'Contactar soporte'],
       };
     }
   }
@@ -337,7 +342,9 @@ export class BankAccountService {
   static async initiateVerification(accountId: string): Promise<void> {
     try {
       const account = await this.getAccountById(accountId);
-      if (!account) return;
+      if (!account) {
+        return;
+      }
 
       // Determinar método de verificación basado en el banco
       const verificationMethod = await this.determineVerificationMethod(account);
@@ -355,9 +362,10 @@ export class BankAccountService {
         default:
           await this.performManualVerification(account);
       }
-
     } catch (error) {
-      logger.error('Error iniciando verificación', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error iniciando verificación', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -396,7 +404,7 @@ export class BankAccountService {
 
     logger.info('Microdepósitos enviados', {
       accountId: account.id,
-      amounts: [amount1, amount2]
+      amounts: [amount1, amount2],
     });
   }
 
@@ -427,12 +435,12 @@ export class BankAccountService {
     account.metadata.documentsRequired = [
       'Comprobante de cuenta bancaria',
       'Cédula de identidad',
-      'Certificado de titularidad'
+      'Certificado de titularidad',
     ];
 
     logger.info('Verificación manual requerida', {
       accountId: account.id,
-      documentsRequired: account.metadata.documentsRequired
+      documentsRequired: account.metadata.documentsRequired,
     });
   }
 
@@ -446,7 +454,7 @@ export class BankAccountService {
     // En producción, actualizar en BD
     logger.info('Estado de verificación actualizado', {
       accountId,
-      status
+      status,
     });
   }
 
@@ -503,7 +511,9 @@ export class BankAccountService {
    * Enmascara el número de cuenta para seguridad
    */
   private static maskAccountNumber(accountNumber: string): string {
-    if (accountNumber.length <= 4) return accountNumber;
+    if (accountNumber.length <= 4) {
+      return accountNumber;
+    }
     const visibleDigits = 4;
     const maskedPart = '*'.repeat(accountNumber.length - visibleDigits);
     const visiblePart = accountNumber.slice(-visibleDigits);
@@ -539,10 +549,10 @@ export class BankAccountService {
       verificationMethod: 'api',
       metadata: {
         verificationAttempts: 0,
-        riskScore: 0
+        riskScore: 0,
       },
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -584,8 +594,8 @@ export class BankAccountService {
           nextSteps: [
             'Verificar que el nombre del titular coincida exactamente',
             'Verificar número de cuenta',
-            'Contactar al banco si el problema persiste'
-          ]
+            'Contactar al banco si el problema persiste',
+          ],
         };
       }
 
@@ -599,23 +609,22 @@ export class BankAccountService {
           message: 'La cuenta bancaria no está activa',
           nextSteps: [
             'Verificar estado de la cuenta con el banco',
-            'Usar una cuenta bancaria activa'
-          ]
+            'Usar una cuenta bancaria activa',
+          ],
         };
       }
 
       return {
         success: true,
         status: 'verified',
-        message: 'Cuenta bancaria verificada exitosamente'
+        message: 'Cuenta bancaria verificada exitosamente',
       };
-
     } catch (error) {
       return {
         success: false,
         status: 'failed',
         message: error instanceof Error ? error.message : 'Error en verificación',
-        nextSteps: ['Reintentar verificación', 'Contactar soporte técnico']
+        nextSteps: ['Reintentar verificación', 'Contactar soporte técnico'],
       };
     }
   }
@@ -645,10 +654,9 @@ export class BankAccountService {
     return {
       active: Math.random() > 0.05, // 95% activo
       frozen: false,
-      closed: false
+      closed: false,
     };
   }
-
 
   /**
    * Elimina una cuenta bancaria
@@ -667,15 +675,18 @@ export class BankAccountService {
         const otherAccounts = userAccounts.filter(acc => acc.id !== accountId);
 
         if (otherAccounts.length > 0) {
-          throw new BusinessLogicError('No se puede eliminar la cuenta primaria. Asigne otra cuenta como primaria primero.');
+          throw new BusinessLogicError(
+            'No se puede eliminar la cuenta primaria. Asigne otra cuenta como primaria primero.'
+          );
         }
       }
 
       // En producción, eliminar de BD
       logger.info('Cuenta bancaria eliminada', { accountId, userId });
-
     } catch (error) {
-      logger.error('Error eliminando cuenta bancaria', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error eliminando cuenta bancaria', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -701,8 +712,63 @@ export class BankAccountService {
         '001': 320, // Banco Chile
         '014': 280, // BCI
         '028': 150, // Santander
-        'otros': 50
-      }
+        otros: 50,
+      },
     };
+  }
+
+  /**
+   * Actualiza una cuenta bancaria
+   */
+  static async updateBankAccount(
+    accountId: string,
+    accountData: {
+      bankCode: string;
+      accountType: 'checking' | 'savings' | 'business';
+      accountNumber: string;
+      accountHolder: string;
+      rut?: string | undefined;
+      branchCode?: string | undefined;
+      isPrimary?: boolean | undefined;
+    }
+  ): Promise<BankAccountInfo> {
+    try {
+      // En producción, actualizar en la base de datos
+      // Por ahora, simular actualización exitosa
+
+      const bankName =
+        CHILEAN_BANK_CODES[accountData.bankCode as keyof typeof CHILEAN_BANK_CODES] ||
+        'Banco Desconocido';
+
+      const updatedAccount: BankAccountInfo = {
+        id: accountId,
+        userId: 'current_user', // Se obtendría del contexto
+        bankCode: accountData.bankCode,
+        bankName,
+        country: 'CL',
+        accountType: accountData.accountType,
+        accountNumber: this.maskAccountNumber(accountData.accountNumber),
+        accountHolder: accountData.accountHolder,
+        rut: accountData.rut,
+        isPrimary: accountData.isPrimary || false,
+        isVerified: false, // Se reinicia la verificación al actualizar
+        verificationStatus: 'pending',
+        verificationMethod: 'manual',
+        metadata: {
+          verificationAttempts: 0,
+          riskScore: 0.5,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      logger.info('Cuenta bancaria actualizada', { accountId, bankCode: accountData.bankCode });
+      return updatedAccount;
+    } catch (error) {
+      logger.error('Error actualizando cuenta bancaria', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new DatabaseError('Error al actualizar cuenta bancaria');
+    }
   }
 }

@@ -13,11 +13,36 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
     // ✅ CORREGIDO: Verificar que el archivo existe, si no, intentar en subdirectorios comunes
     let finalPath = fullPath;
     if (!existsSync(fullPath)) {
-      // Intentar en subdirectorio 'properties' si no se encuentra directamente
-      const propertiesPath = join(process.cwd(), 'public', 'uploads', 'properties', filePath);
-      if (existsSync(propertiesPath)) {
-        finalPath = propertiesPath;
-      } else {
+      // Intentar diferentes rutas posibles
+      const possiblePaths = [
+        // Ruta directa en uploads
+        fullPath,
+        // Ruta en subdirectorio properties
+        join(process.cwd(), 'public', 'uploads', 'properties', filePath),
+        // Ruta con estructura properties/{id}/{filename}
+        join(
+          process.cwd(),
+          'public',
+          'uploads',
+          'properties',
+          filePath.split('/')[0] || '',
+          filePath.split('/').slice(1).join('/')
+        ),
+        // Ruta legacy en uploads directo
+        join(process.cwd(), 'public', 'uploads', filePath.split('/').pop() || ''),
+      ];
+
+      let found = false;
+      for (const path of possiblePaths) {
+        if (existsSync(path)) {
+          finalPath = path;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        console.log('File not found, tried paths:', possiblePaths);
         return NextResponse.json({ error: 'File not found' }, { status: 404 });
       }
     }

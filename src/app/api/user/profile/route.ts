@@ -9,10 +9,7 @@ export async function GET(request: NextRequest) {
 
     if (!user?.id) {
       logger.error('Usuario no encontrado en requireAuth');
-      return NextResponse.json(
-        { error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 });
     }
 
     // Verificar conexión a la base de datos
@@ -20,10 +17,7 @@ export async function GET(request: NextRequest) {
       await db.$connect();
     } catch (dbError) {
       logger.error('Error conectando a la base de datos:', { error: dbError });
-      return NextResponse.json(
-        { error: 'Error de conexión a la base de datos' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Error de conexión a la base de datos' }, { status: 500 });
     }
 
     // Obtener el perfil del usuario desde la base de datos
@@ -47,34 +41,30 @@ export async function GET(request: NextRequest) {
         phoneSecondary: true,
         emergencyContact: true,
         emergencyPhone: true,
+        bio: true,
         isActive: true,
         emailVerified: true,
         phoneVerified: true,
         lastLogin: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
 
     if (!userProfile) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      user: userProfile
+      user: userProfile,
+    });
+  } catch (error) {
+    logger.error('Error obteniendo perfil de usuario:', {
+      error: error instanceof Error ? error.message : String(error),
     });
 
-  } catch (error) {
-    logger.error('Error obteniendo perfil de usuario:', { error: error instanceof Error ? error.message : String(error) });
-
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -83,7 +73,19 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth(request);
 
     const body = await request.json();
-    const { name, phone, avatar, address, city, commune, region, phoneSecondary, emergencyContact, emergencyPhone } = body;
+    const {
+      name,
+      phone,
+      avatar,
+      address,
+      city,
+      commune,
+      region,
+      phoneSecondary,
+      emergencyContact,
+      emergencyPhone,
+      description,
+    } = body;
 
     // Actualizar el perfil del usuario
     const updatedUser = await db.user.update({
@@ -99,7 +101,8 @@ export async function PUT(request: NextRequest) {
         ...(phoneSecondary !== undefined && { phoneSecondary }),
         ...(emergencyContact !== undefined && { emergencyContact }),
         ...(emergencyPhone !== undefined && { emergencyPhone }),
-        updatedAt: new Date()
+        ...(description !== undefined && { bio: description }),
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -114,8 +117,9 @@ export async function PUT(request: NextRequest) {
         phoneSecondary: true,
         emergencyContact: true,
         emergencyPhone: true,
-        updatedAt: true
-      }
+        bio: true,
+        updatedAt: true,
+      },
     });
 
     logger.info('Perfil de usuario actualizado:', { userId: user.id });
@@ -123,15 +127,13 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: updatedUser,
-      message: 'Perfil actualizado correctamente'
+      message: 'Perfil actualizado correctamente',
+    });
+  } catch (error) {
+    logger.error('Error actualizando perfil de usuario:', {
+      error: error instanceof Error ? error.message : String(error),
     });
 
-  } catch (error) {
-    logger.error('Error actualizando perfil de usuario:', { error: error instanceof Error ? error.message : String(error) });
-
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

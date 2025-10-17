@@ -47,6 +47,7 @@ model User {
   phoneSecondary  String?
   emergencyContact String?
   emergencyPhone  String?
+  bio             String?   // Descripción del perfil del usuario
 
   role            String    @default("TENANT")
   avatar          String?
@@ -179,6 +180,10 @@ model Property {
   gym            Boolean      @default(false) // Gimnasio
   security       Boolean      @default(false) // Seguridad 24/7
   concierge      Boolean      @default(false) // Conserje
+
+  // Tour Virtual
+  virtualTourEnabled Boolean   @default(false) // Tour virtual habilitado
+  virtualTourData    String?   // JSON con datos del tour virtual
 
   // Relations
   owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)

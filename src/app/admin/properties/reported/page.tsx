@@ -113,6 +113,8 @@ export default function AdminReportedPropertiesPage() {
             gym: true,
             security: true,
             concierge: false,
+            virtualTourEnabled: false,
+            virtualTourData: null,
           },
           reporter: {
             name: 'Juan P�rez',
@@ -171,6 +173,8 @@ export default function AdminReportedPropertiesPage() {
             gym: false,
             security: true,
             concierge: false,
+            virtualTourEnabled: false,
+            virtualTourData: null,
           },
           reporter: {
             name: 'Mar�a Gonz�lez',

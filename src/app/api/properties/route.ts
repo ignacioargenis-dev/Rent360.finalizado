@@ -219,18 +219,27 @@ export async function POST(request: NextRequest) {
             const randomId = Math.random().toString(36).substring(2, 15);
             const extension = image.name.split('.').pop() || 'jpg';
             const filename = `${timestamp}-${randomId}.${extension}`;
-            const filepath = `public/uploads/${filename}`;
+
+            // Crear directorio específico para la propiedad si no existe
+            const propertyUploadDir = `public/uploads/properties/${newProperty.id}`;
+            const fs = require('fs').promises;
+            const path = require('path');
+
+            try {
+              await fs.mkdir(propertyUploadDir, { recursive: true });
+            } catch (error) {
+              // El directorio ya existe o hay otro error
+            }
+
+            const filepath = path.join(propertyUploadDir, filename);
 
             // Convertir File a Buffer y guardar
             const bytes = await image.arrayBuffer();
             const buffer = Buffer.from(bytes);
-
-            // Usar Node.js fs para guardar el archivo
-            const fs = require('fs').promises;
             await fs.writeFile(filepath, buffer);
 
             // Crear URL accesible desde el navegador
-            const imageUrl = `/uploads/${filename}`;
+            const imageUrl = `/uploads/properties/${newProperty.id}/${filename}`;
             imageUrls.push(imageUrl);
 
             logger.info('Image saved successfully', {
