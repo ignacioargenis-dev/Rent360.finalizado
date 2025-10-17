@@ -36,9 +36,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se proporcionaron archivos' }, { status: 400 });
     }
 
-    // Determinar tipo de validación basado en la categoría
-    const validationType =
-      category === 'contracts' ? 'contracts' : category === 'images' ? 'images' : 'documents';
+    // Determinar tipo de validación basado en la categoría y tipo de archivo
+    let validationType: 'documents' | 'images' | 'contracts' = 'documents';
+
+    if (category === 'contracts') {
+      validationType = 'contracts';
+    } else if (category === 'images') {
+      validationType = 'images';
+    } else {
+      // Para categorías como 'personal', determinar por el tipo de archivo
+      const firstFile = files[0];
+      if (firstFile && firstFile.type.startsWith('image/')) {
+        validationType = 'images';
+      } else {
+        validationType = 'documents';
+      }
+    }
 
     logger.info('Iniciando validación de archivos:', { validationType, category });
 
@@ -137,7 +150,10 @@ export async function POST(request: NextRequest) {
       const randomId = Math.random().toString(36).substring(2, 15);
       const fileExtension = path.extname(file.name);
       const fileName = `${timestamp}_${randomId}${fileExtension}`;
-      const filePath = path.join(process.cwd(), 'public', 'uploads', 'documents', fileName);
+
+      // Determinar directorio según el tipo de archivo
+      const uploadDir = validationType === 'images' ? 'images' : 'documents';
+      const filePath = path.join(process.cwd(), 'public', 'uploads', uploadDir, fileName);
 
       // Crear directorio si no existe
       const fs = await import('fs');
@@ -170,7 +186,7 @@ export async function POST(request: NextRequest) {
         name: title || file.name,
         type: documentType || category || 'OTHER_DOCUMENT',
         fileName: fileName, // Usar el nombre único generado
-        filePath: `/uploads/documents/${fileName}`,
+        filePath: `/uploads/${uploadDir}/${fileName}`,
         fileSize: file.size,
         mimeType: file.type,
         uploadedById: user.id,
@@ -188,7 +204,7 @@ export async function POST(request: NextRequest) {
       uploadedFiles.push({
         id: document.id,
         name: document.fileName,
-        url: `/uploads/documents/${fileName}`,
+        url: `/uploads/${uploadDir}/${fileName}`,
         size: document.fileSize,
         status: 'completed',
         validation: validationResult,
