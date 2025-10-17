@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import { logger } from './logger-minimal';
 
 /**
  * Configuración de validación de archivos
@@ -40,29 +40,24 @@ export const FILE_TYPES = {
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/plain',
-      'text/csv'
+      'text/csv',
     ],
-    allowedExtensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.csv']
+    allowedExtensions: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.csv'],
   },
   images: {
     maxSize: 5 * 1024 * 1024, // 5MB
-    allowedTypes: [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp'
-    ],
-    allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
   },
   contracts: {
     maxSize: 15 * 1024 * 1024, // 15MB
     allowedTypes: [
       'application/pdf',
       'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
-    allowedExtensions: ['.pdf', '.doc', '.docx']
-  }
+    allowedExtensions: ['.pdf', '.doc', '.docx'],
+  },
 } as const;
 
 /**
@@ -79,27 +74,36 @@ export async function validateFile(
     metadata: {
       size: file.size,
       type: file.type || 'unknown',
-      extension: getFileExtension(file.name)
-    }
+      extension: getFileExtension(file.name),
+    },
   };
 
   try {
     // 1. Validar tamaño
     if (file.size > config.maxSize) {
       result.valid = false;
-      result.errors.push(`El archivo es demasiado grande. Tamaño máximo permitido: ${formatBytes(config.maxSize)}`);
+      result.errors.push(
+        `El archivo es demasiado grande. Tamaño máximo permitido: ${formatBytes(config.maxSize)}`
+      );
     }
 
     // 2. Validar tipo MIME
     if (config.allowedTypes.length > 0 && !config.allowedTypes.includes(file.type)) {
       result.valid = false;
-      result.errors.push(`Tipo de archivo no permitido: ${file.type}. Tipos permitidos: ${config.allowedTypes.join(', ')}`);
+      result.errors.push(
+        `Tipo de archivo no permitido: ${file.type}. Tipos permitidos: ${config.allowedTypes.join(', ')}`
+      );
     }
 
     // 3. Validar extensión
-    if (config.allowedExtensions.length > 0 && !config.allowedExtensions.includes(result.metadata.extension)) {
+    if (
+      config.allowedExtensions.length > 0 &&
+      !config.allowedExtensions.includes(result.metadata.extension)
+    ) {
       result.valid = false;
-      result.errors.push(`Extensión de archivo no permitida: ${result.metadata.extension}. Extensiones permitidas: ${config.allowedExtensions.join(', ')}`);
+      result.errors.push(
+        `Extensión de archivo no permitida: ${result.metadata.extension}. Extensiones permitidas: ${config.allowedExtensions.join(', ')}`
+      );
     }
 
     // 4. Validar nombre de archivo
@@ -132,7 +136,9 @@ export async function validateFile(
 
     // 7. Generar warnings
     if (file.size > config.maxSize * 0.8) {
-      result.warnings.push(`El archivo está cerca del límite de tamaño (${formatBytes(config.maxSize)})`);
+      result.warnings.push(
+        `El archivo está cerca del límite de tamaño (${formatBytes(config.maxSize)})`
+      );
     }
 
     logger.info('Validación de archivo completada', {
@@ -141,13 +147,12 @@ export async function validateFile(
       errors: result.errors.length,
       warnings: result.warnings.length,
       size: result.metadata.size,
-      type: result.metadata.type
+      type: result.metadata.type,
     });
-
   } catch (error) {
     logger.error('Error durante validación de archivo:', {
       error: error instanceof Error ? error.message : String(error),
-      fileName: file.name
+      fileName: file.name,
     });
 
     result.valid = false;
@@ -185,7 +190,7 @@ export function getValidationConfig(type: keyof typeof FILE_TYPES): FileValidati
     allowedTypes: [...baseConfig.allowedTypes],
     allowedExtensions: [...baseConfig.allowedExtensions],
     scanContent: true,
-    checkIntegrity: true
+    checkIntegrity: true,
   };
 }
 
@@ -213,7 +218,7 @@ function validateFileName(fileName: string): { valid: boolean; errors: string[] 
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
 
@@ -264,18 +269,17 @@ async function scanFileContent(file: File): Promise<{ safe: boolean }> {
       if (pattern.test(firstBytes)) {
         logger.warn('Patrón peligroso detectado en archivo:', {
           fileName: file.name,
-          pattern: pattern.toString()
+          pattern: pattern.toString(),
         });
         return { safe: false };
       }
     }
 
     return { safe: true };
-
   } catch (error) {
     logger.error('Error durante escaneo de contenido:', {
       error: error instanceof Error ? error.message : String(error),
-      fileName: file.name
+      fileName: file.name,
     });
 
     // En caso de error, consideramos el archivo seguro por defecto
@@ -286,7 +290,9 @@ async function scanFileContent(file: File): Promise<{ safe: boolean }> {
 /**
  * Verificar integridad del archivo
  */
-async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; hash: string; checksum: string }> {
+async function checkFileIntegrity(
+  file: File
+): Promise<{ integrity: boolean; hash: string; checksum: string }> {
   try {
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
@@ -295,7 +301,7 @@ async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; has
     let hash = 0;
     for (let i = 0; i < bytes.length; i++) {
       const byte = bytes[i]!;
-      hash = ((hash << 5) - hash) + byte;
+      hash = (hash << 5) - hash + byte;
       hash = hash & hash; // Convertir a 32 bits
     }
 
@@ -314,19 +320,18 @@ async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; has
     return {
       integrity,
       hash: hashString,
-      checksum: checksumString
+      checksum: checksumString,
     };
-
   } catch (error) {
     logger.error('Error verificando integridad de archivo:', {
       error: error instanceof Error ? error.message : String(error),
-      fileName: file.name
+      fileName: file.name,
     });
 
     return {
       integrity: false,
       hash: 'error',
-      checksum: 'error'
+      checksum: 'error',
     };
   }
 }
@@ -335,7 +340,9 @@ async function checkFileIntegrity(file: File): Promise<{ integrity: boolean; has
  * Formatear bytes a formato legible
  */
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
 
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -350,14 +357,18 @@ function formatBytes(bytes: number): string {
 export async function validateFileMiddleware(
   files: File[],
   type: keyof typeof FILE_TYPES = 'documents'
-): Promise<{ valid: boolean; results: ValidationResult[]; summary: { valid: number; invalid: number; warnings: number } }> {
+): Promise<{
+  valid: boolean;
+  results: ValidationResult[];
+  summary: { valid: number; invalid: number; warnings: number };
+}> {
   const config = getValidationConfig(type);
   const results = await validateFiles(files, config);
 
   const summary = {
     valid: results.filter(r => r.valid).length,
     invalid: results.filter(r => !r.valid).length,
-    warnings: results.reduce((acc, r) => acc + r.warnings.length, 0)
+    warnings: results.reduce((acc, r) => acc + r.warnings.length, 0),
   };
 
   logger.info('Validación de archivos completada', {
@@ -365,12 +376,12 @@ export async function validateFileMiddleware(
     valid: summary.valid,
     invalid: summary.invalid,
     warnings: summary.warnings,
-    type
+    type,
   });
 
   return {
     valid: summary.invalid === 0,
     results,
-    summary
+    summary,
   };
 }

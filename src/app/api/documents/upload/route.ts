@@ -9,7 +9,10 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info('Iniciando subida de documentos...');
+
     const user = await requireAuth(request);
+    logger.info('Usuario autenticado:', { userId: user.id, role: user.role });
 
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
@@ -20,6 +23,15 @@ export async function POST(request: NextRequest) {
     const propertyId = formData.get('propertyId') as string;
     const documentType = formData.get('type') as string;
 
+    logger.info('Datos recibidos:', {
+      filesCount: files.length,
+      title,
+      category,
+      documentType,
+      propertyId,
+      files: files.map(f => ({ name: f.name, type: f.type, size: f.size })),
+    });
+
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'No se proporcionaron archivos' }, { status: 400 });
     }
@@ -28,8 +40,20 @@ export async function POST(request: NextRequest) {
     const validationType =
       category === 'contracts' ? 'contracts' : category === 'images' ? 'images' : 'documents';
 
+    logger.info('Iniciando validación de archivos:', { validationType, category });
+
     // Validar archivos
     const validation = await validateFileMiddleware(files, validationType);
+
+    logger.info('Resultado de validación:', {
+      valid: validation.valid,
+      summary: validation.summary,
+      results: validation.results.map(r => ({
+        valid: r.valid,
+        errors: r.errors,
+        warnings: r.warnings,
+      })),
+    });
 
     if (!validation.valid) {
       const errors = validation.results
@@ -142,18 +166,24 @@ export async function POST(request: NextRequest) {
       };
 
       // Guardar información en la base de datos
+      const documentData = {
+        name: title || file.name,
+        type: documentType || category || 'OTHER_DOCUMENT',
+        fileName: fileName, // Usar el nombre único generado
+        filePath: `/uploads/documents/${fileName}`,
+        fileSize: file.size,
+        mimeType: file.type,
+        uploadedById: user.id,
+        propertyId: propertyId || null, // ✅ AGREGADO: Asociar con propiedad si se proporciona
+      };
+
+      logger.info('Creando documento en la base de datos:', documentData);
+
       const document = await db.document.create({
-        data: {
-          name: title || file.name,
-          type: documentType || category || 'OTHER_DOCUMENT',
-          fileName: fileName, // Usar el nombre único generado
-          filePath: `/uploads/documents/${fileName}`,
-          fileSize: file.size,
-          mimeType: file.type,
-          uploadedById: user.id,
-          propertyId: propertyId || null, // ✅ AGREGADO: Asociar con propiedad si se proporciona
-        },
+        data: documentData,
       });
+
+      logger.info('Documento creado exitosamente:', { documentId: document.id });
 
       uploadedFiles.push({
         id: document.id,
