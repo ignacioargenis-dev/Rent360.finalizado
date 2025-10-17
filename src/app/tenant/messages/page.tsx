@@ -18,378 +18,204 @@ import { Badge } from '@/components/ui/badge';
 import {
   MessageCircle,
   Send,
-  Search,
-  Plus,
-  User as UserIcon,
+  User,
   Clock,
-  CheckCircle,
-  AlertCircle,
-  Paperclip,
-  MoreHorizontal,
-  Star,
   Phone,
   Mail,
-  Building,
-  Info,
+  AlertCircle,
+  CheckCircle,
+  Search,
+  Filter,
+  Archive,
+  MoreVertical,
 } from 'lucide-react';
-import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 
 interface Message {
   id: string;
-  subject: string;
   content: string;
   senderId: string;
   senderName: string;
   senderRole: string;
-  receiverId: string;
-  receiverName: string;
-  propertyTitle?: string;
-  status: 'read' | 'unread' | 'replied' | 'archived';
-  priority: 'low' | 'medium' | 'high';
-  createdAt: string;
-  readAt?: string;
-  attachments?: string[];
+  timestamp: string;
+  isRead: boolean;
+  type: 'text' | 'image' | 'file';
 }
 
 interface Conversation {
   id: string;
-  participant: {
-    id: string;
-    name: string;
-    role: string;
-    avatar?: string;
-  };
-  property?: {
-    id: string;
-    title: string;
-  };
-  lastMessage: {
-    content: string;
-    timestamp: string;
-    isOwn: boolean;
-  };
+  clientId: string;
+  clientName: string;
+  clientRole: string;
+  clientAvatar?: string;
+  lastMessage: Message;
   unreadCount: number;
   status: 'active' | 'archived';
+  lastActivity: string;
 }
 
 export default function TenantMessagesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'archived'>('all');
 
   useEffect(() => {
-    // eslint-disable-line react-hooks/exhaustive-deps
-    // Check if coming from a "new message" link
-    const isNewMessage = searchParams.get('new') === 'true';
+    loadPageData();
+  }, []);
 
-    if (isNewMessage) {
-      const recipientData = sessionStorage.getItem('newMessageRecipient');
-      if (recipientData) {
-        try {
-          const recipient = JSON.parse(recipientData);
+  const loadPageData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-          // Create new conversation with the recipient
-          const newConversationId = `conv_${Date.now()}`;
-          const newConversation: Conversation = {
-            id: newConversationId,
-            participant: {
-              id: recipient.id,
-              name: recipient.name,
-              role: recipient.type === 'provider' ? 'provider' : recipient.role || 'unknown',
-            },
-            property: recipient.propertyId
-              ? {
-                  id: recipient.propertyId,
-                  title: recipient.propertyTitle || 'Servicio Profesional',
-                }
-              : {
-                  id: 'service_1',
-                  title: 'Servicio Profesional',
-                },
-            lastMessage: {
-              content: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
-              timestamp: new Date().toLocaleString('es-CL'),
-              isOwn: true,
-            },
-            unreadCount: 0,
-            status: 'active',
-          };
+      // Fetch real messages data from API
+      const response = await fetch('/api/messages?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
 
-          // Add the new conversation to the list
-          setConversations(prev => [newConversation, ...prev]);
-          setSelectedConversation(newConversationId);
-
-          // Clear the sessionStorage
-          sessionStorage.removeItem('newMessageRecipient');
-
-          // Update URL to remove the 'new' parameter
-          const url = new URL(window.location.href);
-          url.searchParams.delete('new');
-          window.history.replaceState({}, '', url.toString());
-        } catch (error) {
-          logger.error('Error parsing recipient data:', { error });
-        }
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    }
 
-    // Mock data for demo
-    setTimeout(() => {
-      setConversations([
-        {
-          id: '1',
-          participant: {
-            id: '2',
-            name: 'María González',
-            role: 'owner',
-          },
-          property: {
-            id: '1',
-            title: 'Departamento Las Condes',
-          },
-          lastMessage: {
-            content: 'Hola, ¿cómo está todo con el departamento? ¿Necesitas algo?',
-            timestamp: '2024-03-15 14:30',
-            isOwn: false,
-          },
-          unreadCount: 1,
-          status: 'active',
-        },
-        {
-          id: '2',
-          participant: {
-            id: '3',
-            name: 'Carlos Ramírez',
-            role: 'broker',
-          },
-          lastMessage: {
-            content: 'Gracias por tu interés en la propiedad. Te enviaré más información.',
-            timestamp: '2024-03-14 16:45',
-            isOwn: false,
-          },
-          unreadCount: 0,
-          status: 'active',
-        },
-        {
-          id: '3',
-          participant: {
-            id: '4',
-            name: 'Soporte Rent360',
-            role: 'support',
-          },
-          lastMessage: {
-            content:
-              'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
-            timestamp: '2024-03-13 10:20',
-            isOwn: false,
-          },
-          unreadCount: 0,
-          status: 'active',
-        },
-      ]);
+      const data = await response.json();
 
-      setMessages([
-        {
-          id: '1',
-          subject: 'Consulta sobre departamento',
-          content: 'Hola, ¿cómo está todo con el departamento? ¿Necesitas algo?',
-          senderId: '2',
-          senderName: 'María González',
-          senderRole: 'owner',
-          receiverId: '1',
-          receiverName: user?.name || '',
-          propertyTitle: 'Departamento Las Condes',
-          status: 'unread',
-          priority: 'medium',
-          createdAt: '2024-03-15 14:30',
-        },
-        {
-          id: '2',
-          subject: 'Información de propiedad',
-          content: 'Gracias por tu interés en la propiedad. Te enviaré más información.',
-          senderId: '3',
-          senderName: 'Carlos Ramírez',
-          senderRole: 'broker',
-          receiverId: '1',
-          receiverName: user?.name || '',
-          status: 'read',
-          priority: 'low',
-          createdAt: '2024-03-14 16:45',
-        },
-        {
-          id: '3',
-          subject: 'Problema de pago resuelto',
-          content:
-            'Tu problema de pago ha sido resuelto. ¿Hay algo más en lo que podamos ayudarte?',
-          senderId: '4',
-          senderName: 'Soporte Rent360',
-          senderRole: 'support',
-          receiverId: '1',
-          receiverName: user?.name || '',
-          status: 'read',
-          priority: 'high',
-          createdAt: '2024-03-13 10:20',
-        },
-      ]);
+      // Transform API data to match our interface
+      const transformedMessages: Message[] = data.messages.map((message: any) => ({
+        id: message.id,
+        content: message.content || 'Sin contenido',
+        senderId: message.senderId || 'unknown',
+        senderName: message.senderName || 'Usuario desconocido',
+        senderRole: message.senderRole || 'USER',
+        timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+        isRead: message.isRead || false,
+        type: 'text',
+      }));
 
+      // Group messages by conversation (simplified)
+      const conversationMap = new Map<string, Conversation>();
+
+      transformedMessages.forEach(message => {
+        const convId = message.senderId;
+        if (!conversationMap.has(convId)) {
+          conversationMap.set(convId, {
+            id: convId,
+            clientId: message.senderId,
+            clientName: message.senderName,
+            clientRole: message.senderRole,
+            lastMessage: message,
+            unreadCount: message.isRead ? 0 : 1,
+            status: 'active',
+            lastActivity: message.timestamp,
+          });
+        } else {
+          const conv = conversationMap.get(convId)!;
+          if (new Date(message.timestamp) > new Date(conv.lastActivity)) {
+            conv.lastMessage = message;
+            conv.lastActivity = message.timestamp;
+          }
+          if (!message.isRead) {
+            conv.unreadCount++;
+          }
+        }
+      });
+
+      setConversations(Array.from(conversationMap.values()));
+      setMessages(transformedMessages);
+    } catch (error) {
+      logger.error('Error loading page data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los datos');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [searchParams, user?.name]);
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
-    }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
-    }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    }
-
-    return date.toLocaleDateString('es-CL');
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'unread':
-        return <Badge className="bg-blue-100 text-blue-800">No leído</Badge>;
-      case 'read':
-        return <Badge className="bg-gray-100 text-gray-800">Leído</Badge>;
-      case 'replied':
-        return <Badge className="bg-green-100 text-green-800">Respondido</Badge>;
-      case 'archived':
-        return <Badge className="bg-yellow-100 text-yellow-800">Archivado</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800">Alta</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Media</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800">Baja</Badge>;
-      default:
-        return <Badge>{priority}</Badge>;
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return <Building className="w-4 h-4" />;
-      case 'broker':
-        return <UserIcon className="w-4 h-4" />;
-      case 'support':
-        return <MessageCircle className="w-4 h-4" />;
-      default:
-        return <UserIcon className="w-4 h-4" />;
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'Propietario';
-      case 'broker':
-        return 'Corredor';
-      case 'support':
-        return 'Soporte';
-      case 'tenant':
-        return 'Inquilino';
-      default:
-        return role;
-    }
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) {
       return;
     }
 
-    const conversation = conversations.find(c => c.id === selectedConversation);
-    if (!conversation) {
-      return;
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: newMessage,
+          recipientId: selectedConversation.clientId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      setNewMessage('');
+      loadPageData(); // Reload data
+    } catch (error) {
+      logger.error('Error sending message:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
+  };
 
-    const newMessageObj: Message = {
-      id: `msg_${Date.now()}`,
-      subject: `Re: ${conversation.property?.title || 'Mensaje'}`,
-      content: newMessage,
-      senderId: user?.id || 'tenant1',
-      senderName: user?.name || 'Inquilino',
-      senderRole: 'tenant',
-      receiverId: conversation.participant.id,
-      receiverName: conversation.participant.name,
-      propertyTitle: conversation.property?.title || '',
-      status: 'unread',
-      priority: 'medium',
-      createdAt: new Date().toISOString(),
-    };
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
 
-    // Add message to messages list
-    setMessages(prev => [...prev, newMessageObj]);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-    // Update conversation's last message
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === selectedConversation
-          ? {
-              ...conv,
-              lastMessage: {
-                content: newMessage,
-                timestamp: new Date().toLocaleString('es-CL'),
-                isOwn: true,
-              },
-              unreadCount: conv.unreadCount + 1, // This would be 0 for own messages in real app
-            }
-          : conv
-      )
-    );
+      // Update local state
+      setMessages(prev => prev.map(msg => (msg.id === messageId ? { ...msg, isRead: true } : msg)));
+    } catch (error) {
+      logger.error('Error marking message as read:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
-    // Clear input
-    setNewMessage('');
+  const getSelectedConversation = () => {
+    return selectedConversation;
+  };
 
-    // Show success message
-    alert('Mensaje enviado exitosamente');
+  const getConversationMessages = () => {
+    if (!selectedConversation) {
+      return [];
+    }
+    return messages.filter(msg => msg.senderId === selectedConversation.clientId);
   };
 
   const filteredConversations = conversations.filter(conv => {
-    const matchesSearch =
-      conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.property?.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = conv.clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
-      filter === 'all' ||
+      (filter === 'all' && conv.status === 'active') ||
       (filter === 'unread' && conv.unreadCount > 0) ||
       (filter === 'archived' && conv.status === 'archived');
     return matchesSearch && matchesFilter;
@@ -397,12 +223,38 @@ export default function TenantMessagesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando mensajes...</p>
+      <UnifiedDashboardLayout
+        user={user}
+        title="Mensajes"
+        subtitle="Comunícate con propietarios y corredores"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando mensajes...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout
+        user={user}
+        title="Mensajes"
+        subtitle="Comunícate con propietarios y corredores"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={loadPageData} variant="outline">
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
     );
   }
 
@@ -415,298 +267,223 @@ export default function TenantMessagesPage() {
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-hidden">
           <div className="h-full flex flex-col p-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Mensajes</p>
-                  <p className="text-2xl font-bold text-gray-900">{messages.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Mensajes</CardTitle>
+                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{messages.length}</div>
+                  <p className="text-xs text-muted-foreground">+2 desde ayer</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">No Leídos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {messages.filter(m => m.status === 'unread').length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Conversaciones</CardTitle>
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{conversations.length}</div>
+                  <p className="text-xs text-muted-foreground">Activas</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Conversaciones</p>
-                  <p className="text-2xl font-bold text-gray-900">{conversations.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <UserIcon className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Respuestas Rápidas</p>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Send className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full grid lg:grid-cols-3 gap-6">
-          {/* Conversations List */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Conversaciones</CardTitle>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo
-                  </Button>
-                </div>
-                <CardDescription>Tus conversaciones recientes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Search and Filter */}
-                <div className="space-y-3 mb-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      type="text"
-                      placeholder="Buscar conversaciones..."
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                    />
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Sin Leer</CardTitle>
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {conversations.reduce((sum, conv) => sum + conv.unreadCount, 0)}
                   </div>
-                  <Select value={filter} onValueChange={setFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar filtro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las conversaciones</SelectItem>
-                      <SelectItem value="unread">No leídas</SelectItem>
-                      <SelectItem value="archived">Archivadas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <p className="text-xs text-muted-foreground">Mensajes pendientes</p>
+                </CardContent>
+              </Card>
 
-                {/* Conversations List */}
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Tiempo Promedio</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">2.5h</div>
+                  <p className="text-xs text-muted-foreground">Respuesta</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
+                <p className="text-gray-600">Comunícate con propietarios y corredores</p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar conversaciones..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="unread">Sin leer</SelectItem>
+                    <SelectItem value="archived">Archivados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex-1 flex gap-6 min-h-0">
+              {/* Conversations List */}
+              <div className="w-1/3 border-r border-gray-200 pr-6">
+                <div className="space-y-2">
                   {filteredConversations.map(conversation => (
-                    <div
+                    <Card
                       key={conversation.id}
-                      className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedConversation === conversation.id ? 'border-blue-500 bg-blue-50' : ''
+                      className={`cursor-pointer transition-colors ${
+                        selectedConversation?.id === conversation.id
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => setSelectedConversation(conversation.id)}
+                      onClick={() => setSelectedConversation(conversation)}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            {getRoleIcon(conversation.participant.role)}
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-blue-600" />
                           </div>
-                          <div>
-                            <h4 className="font-medium text-sm">{conversation.participant.name}</h4>
-                            <p className="text-xs text-gray-600">
-                              {getRoleDisplayName(conversation.participant.role)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">
+                                {conversation.clientName}
+                              </h3>
+                              {conversation.unreadCount > 0 && (
+                                <Badge variant="destructive" className="text-xs">
+                                  {conversation.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 truncate">
+                              {conversation.lastMessage.content}
+                            </p>
+                            <p className="text-xs text-gray-400">{conversation.lastActivity}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 flex flex-col">
+                {selectedConversation ? (
+                  <>
+                    {/* Conversation Header */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {selectedConversation.clientName}
+                          </h3>
+                          <p className="text-sm text-gray-500">{selectedConversation.clientRole}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Phone className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {getConversationMessages().map(message => (
+                        <div
+                          key={message.id}
+                          className={`flex ${
+                            message.senderId === selectedConversation.clientId
+                              ? 'justify-start'
+                              : 'justify-end'
+                          }`}
+                        >
+                          <div
+                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.senderId === selectedConversation.clientId
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'bg-blue-600 text-white'
+                            }`}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                message.senderId === selectedConversation.clientId
+                                  ? 'text-gray-500'
+                                  : 'text-blue-100'
+                              }`}
+                            >
+                              {message.timestamp}
                             </p>
                           </div>
                         </div>
-                        {conversation.unreadCount > 0 && (
-                          <Badge className="bg-red-100 text-red-800 text-xs">
-                            {conversation.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {conversation.property && (
-                        <p className="text-xs text-gray-600 mb-2 flex items-center gap-1">
-                          <Building className="w-3 h-3" />
-                          {conversation.property.title}
-                        </p>
-                      )}
-
-                      <p className="text-sm text-gray-700 truncate mb-1">
-                        {conversation.lastMessage.content}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatRelativeTime(conversation.lastMessage.timestamp)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Messages Area */}
-          <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardHeader>
-                {selectedConversation ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <UserIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">
-                            {
-                              conversations.find(c => c.id === selectedConversation)?.participant
-                                .name
-                            }
-                          </CardTitle>
-                          <CardDescription>
-                            {getRoleDisplayName(
-                              conversations.find(c => c.id === selectedConversation)?.participant
-                                .role || ''
-                            )}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Phone className="w-4 h-4 mr-2" />
-                          Llamar
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Mail className="w-4 h-4 mr-2" />
-                          Email
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <CardTitle>Selecciona una conversación</CardTitle>
-                    <CardDescription>Elige una conversación para ver los mensajes</CardDescription>
-                  </>
-                )}
-              </CardHeader>
-              <CardContent>
-                {selectedConversation ? (
-                  <div className="space-y-4">
-                    {/* Messages */}
-                    <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
-                      {messages
-                        .filter(m => {
-                          const conv = conversations.find(c => c.id === selectedConversation);
-                          return (
-                            conv &&
-                            (m.senderName === conv.participant.name ||
-                              m.receiverName === conv.participant.name)
-                          );
-                        })
-                        .map(message => (
-                          <div
-                            key={message.id}
-                            className={`flex ${message.senderName === user?.name ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                message.senderName === user?.name
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }`}
-                            >
-                              <p className="text-sm mb-1">{message.content}</p>
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-xs opacity-70">
-                                  {formatDateTime(message.createdAt)}
-                                </p>
-                                {message.senderName === user?.name && (
-                                  <CheckCircle className="w-3 h-3 opacity-70" />
-                                )}
-                              </div>
-                              {message.attachments && message.attachments.length > 0 && (
-                                <div className="mt-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="p-0 h-auto text-xs opacity-70 hover:opacity-100"
-                                  >
-                                    <Paperclip className="w-3 h-3 mr-1" />
-                                    {message.attachments.length} archivo(s)
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                      ))}
                     </div>
 
                     {/* Message Input */}
-                    <div className="border-t pt-4">
-                      <div className="flex gap-2">
+                    <div className="border-t border-gray-200 p-4">
+                      <div className="flex space-x-2">
                         <Input
-                          type="text"
-                          placeholder="Escribe un mensaje..."
-                          className="flex-1"
+                          placeholder="Escribe tu mensaje..."
                           value={newMessage}
                           onChange={e => setNewMessage(e.target.value)}
-                          onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+                          onKeyPress={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
                         />
                         <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                          <Send className="w-4 h-4 mr-2" />
-                          Enviar
-                        </Button>
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <Button size="sm" variant="outline">
-                          <Paperclip className="w-4 h-4 mr-2" />
-                          Adjuntar
+                          <Send className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <div className="text-center py-12">
-                    <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      No hay conversación seleccionada
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Selecciona una conversación de la lista para empezar a chatear
-                    </p>
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Nueva Conversación
-                    </Button>
+                  <div className="flex-1 flex items-center justify-center">
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Selecciona una conversación
+                        </h3>
+                        <p className="text-gray-500">
+                          Elige una conversación de la lista para ver los mensajes y responder.
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

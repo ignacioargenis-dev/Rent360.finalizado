@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
-import * as archiver from 'archiver';
+import archiver from 'archiver';
 import { Readable } from 'stream';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -85,7 +85,7 @@ INFORMACIÓN DEL CASO:
 - Fecha de Última Actualización: ${legalCase.updatedAt.toISOString().split('T')[0]}
 
 DESCRIPCIÓN:
-${legalCase.description}
+${legalCase.notes || 'Sin descripción'}
 
 DETALLES DEL CONTRATO:
 - ID del Contrato: ${legalCase.contract.id}
@@ -101,10 +101,10 @@ ESTADO ACTUAL:
 - Estado: ${legalCase.status}
 - Fase: ${legalCase.currentPhase}
 - Prioridad: ${legalCase.priority}
-- Monto en Disputa: $${legalCase.disputedAmount || 'No especificado'}
+- Monto en Disputa: $${legalCase.totalAmount || 'No especificado'}
 
 NOTAS ADMINISTRATIVAS:
-${legalCase.adminNotes || 'No hay notas administrativas registradas.'}
+${legalCase.internalNotes || 'No hay notas administrativas registradas.'}
 
 FECHA DE GENERACIÓN: ${new Date().toISOString()}
 GENERADO POR: ${user.name || user.email}
@@ -133,7 +133,7 @@ INQUILINO:
 
 DETALLES FINANCIEROS:
 - Renta Mensual: $${legalCase.contract.monthlyRent}
-- Depósito: $${legalCase.contract.depositAmount || 'No especificado'}
+- Depósito: $${legalCase.contract.deposit || 'No especificado'}
 - Fecha de Inicio: ${legalCase.contract.startDate.toISOString().split('T')[0]}
 - Fecha de Fin: ${legalCase.contract.endDate?.toISOString().split('T')[0] || 'Indefinido'}
 
@@ -168,7 +168,7 @@ PRÓXIMOS PASOS:
 - Comunicación con el equipo legal si es necesario
 
 NOTAS ADICIONALES:
-${legalCase.adminNotes || 'No hay notas adicionales.'}
+${legalCase.internalNotes || 'No hay notas adicionales.'}
       `.trim();
 
       archive.append(adminTracking, { name: '03_Seguimiento_Administrativo.txt' });

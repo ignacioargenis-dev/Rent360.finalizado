@@ -18,400 +18,232 @@ import {
   Mail,
   AlertCircle,
   CheckCircle,
-  Eye,
-  Reply,
-  Plus,
   Search,
+  Filter,
+  Archive,
+  MoreVertical,
 } from 'lucide-react';
-import { User as UserType } from '@/types';
 
 interface Message {
   id: string;
+  content: string;
   senderId: string;
   senderName: string;
-  senderType: 'client' | 'admin' | 'system';
-  subject: string;
-  content: string;
+  senderRole: string;
   timestamp: string;
-  read: boolean;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  relatedPropertyId?: string;
-  relatedPropertyTitle?: string;
-  type: 'inquiry' | 'update' | 'complaint' | 'confirmation' | 'system';
+  isRead: boolean;
+  type: 'text' | 'image' | 'file';
 }
 
 interface Conversation {
   id: string;
   clientId: string;
   clientName: string;
-  clientPhone: string;
-  clientEmail: string;
-  propertyTitle: string;
-  lastMessage: string;
-  lastMessageTime: string;
+  clientRole: string;
+  clientAvatar?: string;
+  lastMessage: Message;
   unreadCount: number;
-  status: 'active' | 'archived' | 'resolved';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-}
-
-interface MessageStats {
-  totalMessages: number;
-  unreadMessages: number;
-  activeConversations: number;
-  urgentMessages: number;
+  status: 'active' | 'archived';
+  lastActivity: string;
 }
 
 export default function RunnerMessagesPage() {
-  const searchParams = useSearchParams();
-  const [user, setUser] = useState<UserType | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [stats, setStats] = useState<MessageStats>({
-    totalMessages: 0,
-    unreadMessages: 0,
-    activeConversations: 0,
-    urgentMessages: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [successMessage, setSuccessMessage] = useState('');
-
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'archived'>('all');
 
-  const handleNewMessage = () => {
-    // Navigate to new message composition
-    router.push('/runner/messages/new');
-  };
+  useEffect(() => {
+    loadPageData();
+  }, []);
 
-  const handleArchiveConversation = () => {
-    if (selectedConversation) {
-      setConversations(prevConversations =>
-        prevConversations.map(conv =>
-          conv.id === selectedConversation
-            ? { ...conv, status: 'archived' as const, updatedAt: new Date().toISOString() }
-            : conv
-        )
-      );
-      setSuccessMessage('Conversación archivada exitosamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
+  const loadPageData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const handleResolveConversation = () => {
-    if (selectedConversation) {
-      setConversations(prevConversations =>
-        prevConversations.map(conv =>
-          conv.id === selectedConversation
-            ? { ...conv, status: 'resolved' as const, updatedAt: new Date().toISOString() }
-            : conv
-        )
-      );
-      setSuccessMessage('Conversación marcada como resuelta');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
+      // Fetch real messages data from API
+      const response = await fetch('/api/messages?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
 
-  const handleReplyToMessage = (messageId: string) => {
-    const reply = prompt('Escribe tu respuesta:');
-    if (reply && reply.trim()) {
-      setSuccessMessage(`Respuesta enviada al mensaje ${messageId}`);
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
-    // Check if coming from a "new message" link
-    const isNewMessage = searchParams.get('new') === 'true';
+      const data = await response.json();
 
-    if (isNewMessage) {
-      const recipientData = sessionStorage.getItem('newMessageRecipient');
-      if (recipientData) {
-        try {
-          const recipient = JSON.parse(recipientData);
+      // Transform API data to match our interface
+      const transformedMessages: Message[] = data.messages.map((message: any) => ({
+        id: message.id,
+        content: message.content || 'Sin contenido',
+        senderId: message.senderId || 'unknown',
+        senderName: message.senderName || 'Usuario desconocido',
+        senderRole: message.senderRole || 'USER',
+        timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+        isRead: message.isRead || false,
+        type: 'text',
+      }));
 
-          // Create new conversation with the recipient
-          const newConversationId = `conv_${Date.now()}`;
-          const newConversation: Conversation = {
-            id: newConversationId,
-            clientId: recipient.id,
-            clientName: recipient.name,
-            clientPhone: recipient.phone || '+56900000000',
-            clientEmail: recipient.email || `${recipient.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-            propertyTitle: recipient.propertyTitle || recipient.serviceType || 'Servicio Runner',
-            lastMessage: `Hola ${recipient.name}, me gustaría contactarte sobre ${recipient.propertyTitle ? `la propiedad "${recipient.propertyTitle}"` : recipient.serviceType ? `un servicio de ${recipient.serviceType}` : 'tu servicio'}.`,
-            lastMessageTime: new Date().toLocaleString('es-CL'),
-            unreadCount: 0,
+      // Group messages by conversation (simplified)
+      const conversationMap = new Map<string, Conversation>();
+
+      transformedMessages.forEach(message => {
+        const convId = message.senderId;
+        if (!conversationMap.has(convId)) {
+          conversationMap.set(convId, {
+            id: convId,
+            clientId: message.senderId,
+            clientName: message.senderName,
+            clientRole: message.senderRole,
+            lastMessage: message,
+            unreadCount: message.isRead ? 0 : 1,
             status: 'active',
-            priority: 'medium',
-          };
-
-          // Add the new conversation to the list
-          setConversations(prev => [newConversation, ...prev]);
-          setSelectedConversation(newConversationId);
-
-          // Clear the sessionStorage
-          sessionStorage.removeItem('newMessageRecipient');
-
-          // Update URL to remove the 'new' parameter
-          const url = new URL(window.location.href);
-          url.searchParams.delete('new');
-          window.history.replaceState({}, '', url.toString());
-
-        } catch (error) {
-          logger.error('Error parsing recipient data:', { error });
+            lastActivity: message.timestamp,
+          });
+        } else {
+          const conv = conversationMap.get(convId)!;
+          if (new Date(message.timestamp) > new Date(conv.lastActivity)) {
+            conv.lastMessage = message;
+            conv.lastActivity = message.timestamp;
+          }
+          if (!message.isRead) {
+            conv.unreadCount++;
+          }
         }
-      }
+      });
+
+      setConversations(Array.from(conversationMap.values()));
+      setMessages(transformedMessages);
+    } catch (error) {
+      logger.error('Error loading page data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar los datos');
+    } finally {
+      setLoading(false);
     }
-
-    const loadUserData = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        }
-      } catch (error) {
-        logger.error('Error loading user data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-
-    const loadMessagesData = async () => {
-      try {
-        // Mock conversations data
-        const mockConversations: Conversation[] = [
-          {
-            id: '1',
-            clientId: 'c1',
-            clientName: 'María González',
-            clientPhone: '+56912345678',
-            clientEmail: 'maria@example.com',
-            propertyTitle: 'Apartamento Centro',
-            lastMessage: '¿Cuándo puede venir a revisar el sistema eléctrico?',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-            unreadCount: 2,
-            status: 'active',
-            priority: 'high',
-          },
-          {
-            id: '2',
-            clientId: 'c2',
-            clientName: 'Carlos Rodríguez',
-            clientPhone: '+56987654321',
-            clientEmail: 'carlos@example.com',
-            propertyTitle: 'Casa Los Dominicos',
-            lastMessage: 'La reparación de la fuga está completada',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-            unreadCount: 0,
-            status: 'active',
-            priority: 'medium',
-          },
-          {
-            id: '3',
-            clientId: 'c3',
-            clientName: 'Ana López',
-            clientPhone: '+56955556666',
-            clientEmail: 'ana@example.com',
-            propertyTitle: 'Oficina Las Condes',
-            lastMessage: 'Sistema de climatización instalado exitosamente',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-            unreadCount: 1,
-            status: 'resolved',
-            priority: 'low',
-          },
-          {
-            id: '4',
-            clientId: 'system',
-            clientName: 'Sistema Rent360',
-            clientPhone: '',
-            clientEmail: 'system@rent360.cl',
-            propertyTitle: 'Notificación del Sistema',
-            lastMessage: 'Nuevo trabajo asignado: Inspección anual',
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-            unreadCount: 1,
-            status: 'active',
-            priority: 'urgent',
-          },
-        ];
-
-        // Mock messages for the first conversation
-        const mockMessages: Message[] = [
-          {
-            id: 'm1',
-            senderId: 'c1',
-            senderName: 'María González',
-            senderType: 'client',
-            subject: 'Consulta sobre mantenimiento',
-            content:
-              'Hola, necesito que alguien revise el sistema eléctrico de mi apartamento. Hay un enchufe que no funciona.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-            read: true,
-            priority: 'medium',
-            relatedPropertyId: 'p1',
-            relatedPropertyTitle: 'Apartamento Centro',
-            type: 'inquiry',
-          },
-          {
-            id: 'm2',
-            senderId: 'runner',
-            senderName: 'Juan Pérez (Corredor)',
-            senderType: 'client', // This would be the runner responding
-            subject: 'Re: Consulta sobre mantenimiento',
-            content: 'Hola María, puedo ir mañana a las 10:00 AM. ¿Le parece bien?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-            read: true,
-            priority: 'medium',
-            relatedPropertyId: 'p1',
-            relatedPropertyTitle: 'Apartamento Centro',
-            type: 'confirmation',
-          },
-          {
-            id: 'm3',
-            senderId: 'c1',
-            senderName: 'María González',
-            senderType: 'client',
-            subject: 'Re: Consulta sobre mantenimiento',
-            content: 'Perfecto, lo espero mañana. Gracias.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            read: false,
-            priority: 'medium',
-            relatedPropertyId: 'p1',
-            relatedPropertyTitle: 'Apartamento Centro',
-            type: 'confirmation',
-          },
-        ];
-
-        setConversations(mockConversations);
-        setMessages(mockMessages);
-
-        // Calculate stats
-        const messageStats: MessageStats = {
-          totalMessages:
-            mockConversations.reduce((sum, conv) => sum + conv.unreadCount, 0) +
-            mockMessages.length,
-          unreadMessages: mockConversations.reduce((sum, conv) => sum + conv.unreadCount, 0),
-          activeConversations: mockConversations.filter(c => c.status === 'active').length,
-          urgentMessages: mockConversations.filter(c => c.priority === 'urgent').length,
-        };
-
-        setStats(messageStats);
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error loading messages data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        setLoading(false);
-      }
-    };
-
-    loadUserData();
-    loadMessagesData();
-  }, [searchParams]);
+  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) {
       return;
     }
 
-    const message: Message = {
-      id: Date.now().toString(),
-      senderId: user?.id || 'runner',
-      senderName: user?.name || 'Corredor',
-      senderType: 'client', // Runner responding
-      subject: 'Respuesta',
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-      read: true,
-      priority: 'medium',
-      type: 'update',
-    };
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: newMessage,
+          recipientId: selectedConversation.clientId,
+        }),
+      });
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-    // Update conversation's last message
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === selectedConversation
-          ? {
-              ...conv,
-              lastMessage: newMessage,
-              lastMessageTime: new Date().toISOString(),
-              unreadCount: 0,
-            }
-          : conv
-      )
-    );
-
-    setSuccessMessage('Mensaje enviado exitosamente');
-    setTimeout(() => setSuccessMessage(''), 3000);
-  };
-
-  const handleConversationSelect = (conversationId: string) => {
-    setSelectedConversation(conversationId);
-    // Mark messages as read
-    setConversations(prev =>
-      prev.map(conv => (conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv))
-    );
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return <Badge className="bg-red-100 text-red-800">Urgente</Badge>;
-      case 'high':
-        return <Badge className="bg-orange-100 text-orange-800">Alta</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Media</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800">Baja</Badge>;
-      default:
-        return <Badge>Normal</Badge>;
+      setNewMessage('');
+      loadPageData(); // Reload data
+    } catch (error) {
+      logger.error('Error sending message:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
 
-    if (diffMins < 60) {
-      return `Hace ${diffMins} minutos`;
-    }
-    if (diffHours < 24) {
-      return `Hace ${diffHours} horas`;
-    }
-    if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    }
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-    return date.toLocaleDateString('es-CL');
+      // Update local state
+      setMessages(prev => prev.map(msg => (msg.id === messageId ? { ...msg, isRead: true } : msg)));
+    } catch (error) {
+      logger.error('Error marking message as read:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   };
 
   const getSelectedConversation = () => {
-    return conversations.find(conv => conv.id === selectedConversation);
+    return selectedConversation;
   };
 
   const getConversationMessages = () => {
-    return messages.filter(msg => {
-      const conv = getSelectedConversation();
-      return conv && (msg.senderId === conv.clientId || msg.senderId === user?.id);
-    });
+    if (!selectedConversation) {
+      return [];
+    }
+    return messages.filter(msg => msg.senderId === selectedConversation.clientId);
   };
+
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = conv.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      (filter === 'all' && conv.status === 'active') ||
+      (filter === 'unread' && conv.unreadCount > 0) ||
+      (filter === 'archived' && conv.status === 'archived');
+    return matchesSearch && matchesFilter;
+  });
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando mensajes y comunicaciones...</p>
+      <UnifiedDashboardLayout
+        title="Mensajes"
+        subtitle="Gestión de mensajes y comunicaciones con clientes"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando mensajes y comunicaciones...</p>
+          </div>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout
+        title="Mensajes"
+        subtitle="Gestión de mensajes y comunicaciones con clientes"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={loadPageData} variant="outline">
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
     );
   }
 
@@ -423,255 +255,169 @@ export default function RunnerMessagesPage() {
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-hidden">
           <div className="h-full flex flex-col p-6">
-        {/* Success Message */}
-        {successMessage && (
-          <Card className="mb-6 border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-green-800">{successMessage}</span>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
+                <p className="text-gray-600">Gestiona las comunicaciones con tus clientes</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mensajes</h1>
-            <p className="text-gray-600">Gestiona tus conversaciones con clientes y el equipo</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleNewMessage}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Mensaje
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Mensajes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalMessages}</p>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar conversaciones..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-6 h-6 text-blue-600" />
-                </div>
+                <Button variant="outline" size="sm">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtros
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Mensajes No Leídos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.unreadMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Conversaciones Activas</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeConversations}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Mensajes Urgentes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.urgentMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full grid lg:grid-cols-3 gap-6">
-          {/* Conversation List */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Conversaciones
-                </CardTitle>
-                <CardDescription>Lista de todas tus conversaciones</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col h-full">
-                <div className="flex gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input placeholder="Buscar conversación..." className="pl-10" />
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-3">
-                  {conversations.length === 0 ? (
-                    <p className="text-center text-gray-500">No hay conversaciones.</p>
-                  ) : (
-                    conversations.map(conv => (
-                      <div
-                        key={conv.id}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          selectedConversation === conv.id
-                            ? 'bg-blue-50 border border-blue-200'
-                            : 'hover:bg-gray-50'
-                        }`}
-                        onClick={() => handleConversationSelect(conv.id)}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-gray-900">{conv.clientName}</h4>
-                          {conv.unreadCount > 0 && (
-                            <Badge className="bg-blue-500 text-white">{conv.unreadCount}</Badge>
-                          )}
+            <div className="flex-1 flex gap-6 min-h-0">
+              {/* Conversations List */}
+              <div className="w-1/3 border-r border-gray-200 pr-6">
+                <div className="space-y-2">
+                  {filteredConversations.map(conversation => (
+                    <Card
+                      key={conversation.id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedConversation?.id === conversation.id
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => setSelectedConversation(conversation)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">
+                                {conversation.clientName}
+                              </h3>
+                              {conversation.unreadCount > 0 && (
+                                <Badge variant="destructive" className="text-xs">
+                                  {conversation.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 truncate">
+                              {conversation.lastMessage.content}
+                            </p>
+                            <p className="text-xs text-gray-400">{conversation.lastActivity}</p>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-1">{conv.lastMessage}</p>
-                        <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
-                          <span>{formatDate(conv.lastMessageTime)}</span>
-                          {getPriorityBadge(conv.priority)}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 flex flex-col">
+                {selectedConversation ? (
+                  <>
+                    {/* Conversation Header */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {selectedConversation.clientName}
+                          </h3>
+                          <p className="text-sm text-gray-500">{selectedConversation.clientRole}</p>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Phone className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
 
-          {/* Message Detail / Reply */}
-          <div className="lg:col-span-2">
-            {selectedConversation ? (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
-                      {getSelectedConversation()?.clientName}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      <Mail className="w-4 h-4" />
-                      {getSelectedConversation()?.clientEmail}
-                      <Phone className="w-4 h-4 ml-4" />
-                      {getSelectedConversation()?.clientPhone}
-                    </CardDescription>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Propiedad: {getSelectedConversation()?.propertyTitle}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {getSelectedConversation()?.status === 'active' && (
-                      <>
-                        <Button variant="outline" size="sm" onClick={handleArchiveConversation}>
-                          Archivar
-                        </Button>
-                        <Button variant="default" size="sm" onClick={handleResolveConversation}>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Resolver
-                        </Button>
-                      </>
-                    )}
-                    {getSelectedConversation()?.status === 'archived' && (
-                      <Badge variant="secondary">Archivada</Badge>
-                    )}
-                    {getSelectedConversation()?.status === 'resolved' && (
-                      <Badge className="bg-green-100 text-green-800">Resuelta</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="max-h-96 overflow-y-auto p-4 border rounded-lg bg-gray-50">
-                    {getConversationMessages().map(msg => (
-                      <div
-                        key={msg.id}
-                        className={`flex items-start gap-3 mb-4 ${
-                          msg.senderId === user?.id ? 'justify-end' : ''
-                        }`}
-                      >
-                        {msg.senderId !== user?.id && (
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
-                            {msg.senderName.charAt(0)}
-                          </div>
-                        )}
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {getConversationMessages().map(message => (
                         <div
-                          className={`p-3 rounded-lg max-w-[70%] ${
-                            msg.senderId === user?.id
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white border text-gray-800'
+                          key={message.id}
+                          className={`flex ${
+                            message.senderId === selectedConversation.clientId
+                              ? 'justify-start'
+                              : 'justify-end'
                           }`}
                         >
-                          <p className="font-medium text-sm mb-1">
-                            {msg.senderId === user?.id ? 'Tú' : msg.senderName}
-                          </p>
-                          <p className="text-sm">{msg.content}</p>
-                          <p
-                            className={`text-xs mt-1 ${
-                              msg.senderId === user?.id ? 'text-blue-200' : 'text-gray-500'
+                          <div
+                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.senderId === selectedConversation.clientId
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'bg-blue-600 text-white'
                             }`}
                           >
-                            {formatDate(msg.timestamp)}
-                          </p>
-                        </div>
-                        {msg.senderId === user?.id && (
-                          <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center text-sm font-medium">
-                            {user?.name?.charAt(0) || 'R'}
+                            <p className="text-sm">{message.content}</p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                message.senderId === selectedConversation.clientId
+                                  ? 'text-gray-500'
+                                  : 'text-blue-100'
+                              }`}
+                            >
+                              {message.timestamp}
+                            </p>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                    <Textarea
-                      placeholder="Escribe tu respuesta..."
-                      value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      rows={3}
-                      className="flex-1"
-                    />
-                    <Button onClick={handleSendMessage}>
-                      <Send className="w-4 h-4 mr-2" />
-                      Enviar
-                    </Button>
+                    {/* Message Input */}
+                    <div className="border-t border-gray-200 p-4">
+                      <div className="flex space-x-2">
+                        <Textarea
+                          placeholder="Escribe tu mensaje..."
+                          value={newMessage}
+                          onChange={e => setNewMessage(e.target.value)}
+                          className="flex-1 min-h-[40px] max-h-32"
+                          onKeyPress={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                        />
+                        <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Selecciona una conversación
+                        </h3>
+                        <p className="text-gray-500">
+                          Elige una conversación de la lista para ver los mensajes y responder.
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="pt-8 pb-8 text-center">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Selecciona una conversación
-                  </h3>
-                  <p className="text-gray-600">
-                    Elige una conversación de la lista para ver los mensajes y responder.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

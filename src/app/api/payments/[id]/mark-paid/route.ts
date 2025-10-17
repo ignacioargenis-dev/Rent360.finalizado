@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       where: { id: paymentId },
       data: {
         status: 'PAID',
-        paymentDate: validatedData.paymentDate ? new Date(validatedData.paymentDate) : new Date(),
+        paidDate: validatedData.paymentDate ? new Date(validatedData.paymentDate) : new Date(),
         method: validatedData.paymentMethod || payment.method,
         notes: validatedData.notes || payment.notes,
         updatedAt: new Date(),
@@ -93,14 +93,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         entityType: 'PAYMENT',
         entityId: paymentId,
         userId: user.id,
-        details: JSON.stringify({
-          previousStatus: payment.status,
-          newStatus: 'PAID',
-          paymentMethod: validatedData.paymentMethod,
-          notes: validatedData.notes,
+        oldValues: JSON.stringify({
+          status: payment.status,
+          paidDate: payment.paidDate,
+          method: payment.method,
+          notes: payment.notes,
+        }),
+        newValues: JSON.stringify({
+          status: 'PAID',
+          paidDate: validatedData.paymentDate ? new Date(validatedData.paymentDate) : new Date(),
+          method: validatedData.paymentMethod || payment.method,
+          notes: validatedData.notes || payment.notes,
           markedBy: user.name || user.email,
         }),
-        timestamp: new Date(),
+        ipAddress:
+          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
 
@@ -108,16 +116,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     try {
       await db.notification.create({
         data: {
-          type: 'payment_confirmed',
+          userId: payment.contract.tenantId,
           title: 'Pago Confirmado',
           message: `Tu pago de $${payment.amount} ha sido confirmado por el propietario.`,
-          recipientId: payment.contract.tenantId,
-          recipientEmail: payment.contract.tenant.email,
-          priority: 'MEDIUM',
-          channels: 'in_app,email',
-          status: 'SENT',
-          sentAt: new Date(),
-          sentBy: user.id,
+          type: 'INFO',
+          data: JSON.stringify({
+            recipientEmail: payment.contract.tenant.email,
+            priority: 'MEDIUM',
+            channels: 'in_app,email',
+            paymentId: payment.id,
+            amount: payment.amount,
+            confirmedBy: user.name || user.email,
+          }),
         },
       });
     } catch (notificationError) {
@@ -135,7 +145,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       payment: {
         id: updatedPayment.id,
         status: updatedPayment.status,
-        paymentDate: updatedPayment.paymentDate?.toISOString(),
+        paidDate: updatedPayment.paidDate?.toISOString(),
         method: updatedPayment.method,
         notes: updatedPayment.notes,
         updatedAt: updatedPayment.updatedAt.toISOString(),

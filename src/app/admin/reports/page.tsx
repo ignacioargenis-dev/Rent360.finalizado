@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,40 +91,41 @@ export default function AdminReportsPage() {
     const loadReportData = async () => {
       try {
         // Fetch real data from multiple APIs
-        const [usersResponse, propertiesResponse, contractsResponse, paymentsResponse] = await Promise.all([
-          fetch('/api/users?limit=1000', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include',
-          }),
-          fetch('/api/properties/list?limit=1000', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include',
-          }),
-          fetch('/api/contracts?limit=1000', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include',
-          }),
-          fetch('/api/payments/list?limit=1000', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include',
-          }),
-        ]);
+        const [usersResponse, propertiesResponse, contractsResponse, paymentsResponse] =
+          await Promise.all([
+            fetch('/api/users?limit=1000', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              credentials: 'include',
+            }),
+            fetch('/api/properties/list?limit=1000', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              credentials: 'include',
+            }),
+            fetch('/api/contracts?limit=1000', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              credentials: 'include',
+            }),
+            fetch('/api/payments/list?limit=1000', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              credentials: 'include',
+            }),
+          ]);
 
         const [usersData, propertiesData, contractsData, paymentsData] = await Promise.all([
           usersResponse.ok ? usersResponse.json() : { users: [] },
@@ -137,17 +137,23 @@ export default function AdminReportsPage() {
         // Calculate real statistics
         const totalUsers = usersData.users?.length || 0;
         const totalProperties = propertiesData.properties?.length || 0;
-        const activeContracts = contractsData.contracts?.filter((c: any) => c.status === 'ACTIVE').length || 0;
-        
+        const activeContracts =
+          contractsData.contracts?.filter((c: any) => c.status === 'ACTIVE').length || 0;
+
         // Calculate monthly revenue from payments
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        const monthlyRevenue = paymentsData.payments?.filter((p: any) => {
-          const paymentDate = new Date(p.paidDate || p.dueDate);
-          return paymentDate.getMonth() === currentMonth && 
-                 paymentDate.getFullYear() === currentYear &&
-                 p.status === 'PAID';
-        }).reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
+        const monthlyRevenue =
+          paymentsData.payments
+            ?.filter((p: any) => {
+              const paymentDate = new Date(p.paidDate || p.dueDate);
+              return (
+                paymentDate.getMonth() === currentMonth &&
+                paymentDate.getFullYear() === currentYear &&
+                p.status === 'PAID'
+              );
+            })
+            .reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
 
         const totalPayments = paymentsData.payments?.length || 0;
         const pendingTickets = 0; // TODO: Implement tickets system
@@ -170,13 +176,14 @@ export default function AdminReportsPage() {
         };
 
         // Get top properties (simplified - would need view/analytics data)
-        const topProperties: TopProperty[] = propertiesData.properties?.slice(0, 5).map((property: any, index: number) => ({
-          id: property.id,
-          title: property.title || 'Propiedad sin título',
-          views: Math.floor(Math.random() * 1000) + 100, // TODO: Get real view data
-          inquiries: Math.floor(Math.random() * 50) + 10, // TODO: Get real inquiry data
-          conversionRate: Math.random() * 10, // TODO: Calculate real conversion rate
-        })) || [];
+        const topProperties: TopProperty[] =
+          propertiesData.properties?.slice(0, 5).map((property: any, index: number) => ({
+            id: property.id,
+            title: property.title || 'Propiedad sin título',
+            views: Math.floor(Math.random() * 1000) + 100, // TODO: Get real view data
+            inquiries: Math.floor(Math.random() * 50) + 10, // TODO: Get real inquiry data
+            conversionRate: Math.random() * 10, // TODO: Calculate real conversion rate
+          })) || [];
 
         const mockTopProperties: TopProperty[] = [
           {
@@ -265,7 +272,7 @@ export default function AdminReportsPage() {
 
     loadUserData();
     loadReportData();
-  }, [loadReportData]);
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {

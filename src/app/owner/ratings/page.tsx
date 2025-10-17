@@ -37,6 +37,9 @@ import {
   ThumbsDown,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger-minimal';
 
 interface Rating {
   id: string;
@@ -68,6 +71,7 @@ export default function CalificacionesPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('received');
+  const [ratings, setRatings] = useState<Rating[]>([]);
   const [ratingsToGive, setRatingsToGive] = useState<RatingToGive[]>([]);
   const [selectedRatingToGive, setSelectedRatingToGive] = useState<RatingToGive | null>(null);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
@@ -177,7 +181,7 @@ export default function CalificacionesPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -187,7 +191,7 @@ export default function CalificacionesPage() {
       }
 
       const data = await response.json();
-      
+
       // Transform API data to match our interface
       const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
         id: rating.id,
@@ -210,7 +214,7 @@ export default function CalificacionesPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -229,7 +233,6 @@ export default function CalificacionesPage() {
 
         setRatingsToGive(ratingsToGive);
       }
-
     } catch (error) {
       logger.error('Error loading ratings data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -268,7 +271,7 @@ export default function CalificacionesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({

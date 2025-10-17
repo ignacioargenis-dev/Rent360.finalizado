@@ -31,19 +31,24 @@ export async function POST(request: NextRequest) {
     const validatedData = sendNotificationSchema.parse(body);
 
     // Crear la notificación en la base de datos
+    if (!validatedData.recipientId) {
+      return NextResponse.json({ error: 'Recipient ID is required' }, { status: 400 });
+    }
+
     const notification = await db.notification.create({
       data: {
-        type: validatedData.type,
+        userId: validatedData.recipientId,
         title: validatedData.title,
         message: validatedData.message,
-        recipientId: validatedData.recipientId,
-        recipientEmail: validatedData.recipientEmail,
-        priority: validatedData.priority.toUpperCase(),
-        channels: validatedData.channels.join(','),
-        metadata: validatedData.metadata ? JSON.stringify(validatedData.metadata) : null,
-        sentBy: user.id,
-        status: 'SENT',
-        sentAt: new Date(),
+        type: validatedData.type || 'INFO',
+        data: JSON.stringify({
+          recipientEmail: validatedData.recipientEmail,
+          priority: validatedData.priority.toUpperCase(),
+          channels: validatedData.channels.join(','),
+          metadata: validatedData.metadata,
+          sentBy: user.id,
+          sentAt: new Date().toISOString(),
+        }),
       },
     });
 
@@ -112,17 +117,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Actualizar el estado de la notificación
-    await db.notification.update({
-      where: { id: notification.id },
-      data: {
-        status: 'DELIVERED',
-        deliveredAt: new Date(),
-        metadata: JSON.stringify({
-          ...validatedData.metadata,
-          deliveryResults: results,
-        }),
-      },
+    // Log the delivery results
+    logger.info('Notification sent successfully', {
+      notificationId: notification.id,
+      deliveryResults: results,
     });
 
     return NextResponse.json({

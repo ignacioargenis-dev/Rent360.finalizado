@@ -332,6 +332,12 @@ Rent360 - Sistema de Gestión Inmobiliaria
         'success'
       );
 
+      // Find the payment by ID
+      const payment = payments.find(p => p.id === paymentId);
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
       // Enviar recordatorio usando API real
       const reminderResponse = await fetch('/api/owner/payment-reminders/send', {
         method: 'POST',
@@ -341,8 +347,8 @@ Rent360 - Sistema de Gestión Inmobiliaria
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          tenantId: payment.tenantId,
-          propertyId: payment.propertyId,
+          tenantId: payment.contract?.tenantId,
+          propertyId: payment.contract?.propertyId,
           amount: payment.amount,
           dueDate: payment.dueDate,
           reminderType: 'first',
