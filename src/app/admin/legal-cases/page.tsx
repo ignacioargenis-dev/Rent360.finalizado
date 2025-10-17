@@ -3,8 +3,9 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/components/auth/AuthProviderSimple';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +90,7 @@ interface LegalCase {
 }
 
 export default function AdminLegalCasesPage() {
+  const { user } = useAuth();
   const [legalCases, setLegalCases] = useState<LegalCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -290,52 +292,28 @@ export default function AdminLegalCasesPage() {
     }
 
     try {
-      // Prepare resolution data
-      const resolutionData = {
-        caseId: selectedCase.id,
-        caseNumber: selectedCase.caseNumber,
-        resolutionType: resolutionType,
-        resolutionNotes: resolutionNotes,
-        resolvedBy: 'admin', // This would come from user context
-        resolutionDate: new Date().toISOString(),
-        finalAmount: selectedCase.totalAmount,
-        status: 'CLOSED',
-      };
+      setLoading(true);
 
-      // TODO: Replace with actual API call
-      // await fetch('/api/admin/legal-cases/resolve', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(resolutionData)
-      // });
+      const response = await fetch(`/api/legal/cases/${selectedCase.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'SETTLED',
+          currentPhase: 'RESOLVED',
+          resolutionDate: new Date().toISOString(),
+          notes: `${selectedCase.notes || ''}\n\n[${new Date().toLocaleString('es-CL')}] Caso resuelto por ${user?.name || 'Administrador'}\nTipo de resolución: ${resolutionType}\nNotas: ${resolutionNotes}`,
+        }),
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        throw new Error('Error al resolver el caso');
+      }
 
-      // Show detailed success message
-      const resolutionTypeLabels: { [key: string]: string } = {
-        settlement: 'Acuerdo Extrajudicial',
-        judgment: 'Sentencia Judicial',
-        dismissed: 'Caso Desestimado',
-        withdrawn: 'Retirado por Demandante',
-        other: 'Otra Resolución',
-      };
-
-      alert(`✅ CASO RESUELTO EXITOSAMENTE
-
-📋 Caso: ${selectedCase.caseNumber}
-⚖️ Tipo de Resolución: ${resolutionTypeLabels[resolutionType] || resolutionType}
-💰 Monto Final: ${formatCurrency(selectedCase.totalAmount)}
-📝 Notas: ${resolutionNotes || 'Sin notas adicionales'}
-
-🔄 El caso ha sido cerrado y archivado en el sistema.
-
-📧 Se ha enviado notificación automática a todas las partes involucradas:
-• Propietario: ${selectedCase.ownerName}
-• Inquilino: ${selectedCase.tenantName}
-• Corredor: ${selectedCase.brokerName || 'N/A'}
-
-Los documentos finales estarán disponibles en la sección de archivos históricos.`);
+      toast.success('Caso resuelto exitosamente');
 
       setResolutionModalOpen(false);
       setResolutionNotes('');
@@ -345,10 +323,10 @@ Los documentos finales estarán disponibles en la sección de archivos históric
       // Recargar casos
       await loadLegalCases();
     } catch (error) {
-      logger.error('Error resolving case:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      alert('❌ Error al resolver el caso. Intente nuevamente.');
+      console.error('Error resolving case:', error);
+      toast.error('Error al resolver el caso');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -497,33 +475,44 @@ Mientras tanto, puede resolver el caso o descargar documentos para revisión.`);
 
   const handleDownloadExpediente = async (legalCase: LegalCase) => {
     try {
-      alert(`📋 DESCARGA DE EXPEDIENTE COMPLETO
+      setLoading(true);
 
-Caso: ${legalCase.caseNumber}
+      const response = await fetch(`/api/legal/cases/${legalCase.id}/expediente`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
 
-Este expediente incluye:
-• Documentos judiciales
-• Documentos administrativos
-• Comunicación completa
-• Historial de auditoría
-• Documentos contractuales
+      if (!response.ok) {
+        throw new Error('Error al generar el expediente');
+      }
 
-⏳ Preparando expediente completo...`);
+      // Obtener el nombre del archivo del header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const fileName = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') ||
+          `expediente-${legalCase.caseNumber}.html`
+        : `expediente-${legalCase.caseNumber}.html`;
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Crear blob y descargar
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-      alert(`✅ EXPEDIENTE COMPLETO DESCARGADO
-
-📋 Caso: ${legalCase.caseNumber}
-📁 Archivo: Expediente_Completo_${legalCase.caseNumber}.zip
-📊 Tamaño aproximado: 3.8 MB
-
-El expediente completo está listo y contiene toda la documentación histórica del caso.
-
-🔒 Este archivo contiene información confidencial y debe ser manejado con cuidado.`);
+      toast.success('Expediente descargado exitosamente');
     } catch (error) {
-      logger.error('Error downloading complete expediente:', { error });
-      alert('❌ Error al descargar expediente completo. Intente nuevamente.');
+      console.error('Error downloading expediente:', error);
+      toast.error('Error al descargar el expediente');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -546,42 +535,35 @@ Esta acción:
     }
 
     try {
-      // Prepare archive data
-      const archiveData = {
-        caseId: legalCase.id,
-        caseNumber: legalCase.caseNumber,
-        archivedBy: 'admin',
-        archiveReason: 'Administrative archiving',
-        archiveDate: new Date().toISOString(),
-        finalStatus: legalCase.status,
-      };
+      setLoading(true);
 
-      // TODO: Replace with actual archive API
-      // await fetch('/api/admin/legal-cases/archive', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(archiveData)
-      // });
+      const response = await fetch(`/api/legal/cases/${legalCase.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'CLOSED',
+          currentPhase: 'ARCHIVED',
+          notes: `${legalCase.notes || ''}\n\n[${new Date().toLocaleString('es-CL')}] Caso archivado por ${user?.name || 'Administrador'}`,
+        }),
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!response.ok) {
+        throw new Error('Error al archivar el caso');
+      }
 
-      alert(`✅ CASO ARCHIVADO EXITOSAMENTE
-
-📋 Caso: ${legalCase.caseNumber}
-📅 Fecha de archivado: ${new Date().toLocaleDateString('es-CL')}
-🏷️ Estado final: ${legalCase.status}
-
-El caso ha sido movido a archivos históricos y removido de la lista activa.
-
-📧 Se ha enviado notificación de archivado a todas las partes involucradas.
-
-Para acceder a este caso en el futuro, búsquelo en la sección "Archivos Históricos".`);
+      toast.success('Caso archivado exitosamente');
 
       // Reload cases to remove archived case
       await loadLegalCases();
     } catch (error) {
-      logger.error('Error archiving case:', { error });
-      alert('❌ Error al archivar el caso. Intente nuevamente.');
+      console.error('Error archiving case:', error);
+      toast.error('Error al archivar el caso');
+    } finally {
+      setLoading(false);
     }
   };
 
