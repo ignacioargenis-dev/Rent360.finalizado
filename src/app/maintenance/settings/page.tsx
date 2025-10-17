@@ -144,7 +144,9 @@ export default function MaintenanceSettingsPage() {
     setShowDocumentViewer(true);
     // Aquí se podría abrir un visor de PDF o imagen
     setTimeout(() => {
-      alert(`📄 Abriendo visor de documento: ${documentType}\n\nEn una implementación real, aquí se mostraría el documento PDF o imagen.`);
+      alert(
+        `📄 Abriendo visor de documento: ${documentType}\n\nEn una implementación real, aquí se mostraría el documento PDF o imagen.`
+      );
     }, 500);
   };
 
@@ -180,8 +182,24 @@ export default function MaintenanceSettingsPage() {
     try {
       setSaving(true);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Guardar configuración usando la API real
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          settings,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const data = await response.json();
 
       setSuccessMessage('Configuración guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -189,7 +207,11 @@ export default function MaintenanceSettingsPage() {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al guardar la configuración. Por favor, inténtalo nuevamente.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
@@ -232,26 +254,55 @@ export default function MaintenanceSettingsPage() {
 
     try {
       setErrorMessage('');
+      setSaving(true);
 
-      // Simular subida
-      const newDocument = {
-        id: Date.now().toString(),
-        name: file.name,
-        type: file.type,
-        status: 'pending' as const,
-        uploadDate: new Date().toISOString(),
-        fileUrl: URL.createObjectURL(file), // En producción esto sería la URL del servidor
-      };
+      // Crear FormData para la subida
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('title', file.name);
+      formData.append('category', 'professional');
+      formData.append('type', 'PROFESSIONAL_DOCUMENT');
 
-      setDocuments(prev => [...prev, newDocument]);
+      // Subir archivo usando la API real
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
-      logger.info('Documento subido', { fileName: file.name, fileSize: file.size });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el documento');
+      }
 
-      setSuccessMessage('Documento subido exitosamente y enviado para revisión');
-      setTimeout(() => setSuccessMessage(''), 5000);
+      const data = await response.json();
+
+      if (data.files && data.files.length > 0) {
+        const uploadedFile = data.files[0];
+
+        const newDocument = {
+          id: uploadedFile.id,
+          name: uploadedFile.name,
+          type: file.type,
+          status: 'pending' as const,
+          uploadDate: new Date().toISOString(),
+          fileUrl: uploadedFile.url,
+        };
+
+        setDocuments(prev => [...prev, newDocument]);
+
+        logger.info('Documento subido', { fileName: file.name, fileSize: file.size });
+
+        setSuccessMessage('Documento subido exitosamente y enviado para revisión');
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } else {
+        throw new Error('No se recibió información del archivo subido');
+      }
     } catch (error) {
       logger.error('Error al subir documento', { error });
-      setErrorMessage('Error al subir el documento');
+      setErrorMessage(error instanceof Error ? error.message : 'Error al subir el documento');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1166,10 +1217,22 @@ export default function MaintenanceSettingsPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleViewDocument('Certificado de Situación Tributaria')}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleViewDocument('Certificado de Situación Tributaria')
+                              }
+                            >
                               Ver
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateDocument('Certificado de Situación Tributaria')}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleUpdateDocument('Certificado de Situación Tributaria')
+                              }
+                            >
                               Actualizar
                             </Button>
                           </div>
@@ -1185,7 +1248,12 @@ export default function MaintenanceSettingsPage() {
                           </div>
                           <div className="flex gap-2">
                             <Badge className="bg-red-100 text-red-800">Vencido</Badge>
-                            <Button size="sm" onClick={() => handleUpdateDocument('Certificado de Vigencia SII')}>Subir Nuevo</Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateDocument('Certificado de Vigencia SII')}
+                            >
+                              Subir Nuevo
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1195,9 +1263,7 @@ export default function MaintenanceSettingsPage() {
                       <Button variant="outline" onClick={() => setShowBillingModal(false)}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleSaveBillingInfo}>
-                        Guardar Información Fiscal
-                      </Button>
+                      <Button onClick={handleSaveBillingInfo}>Guardar Información Fiscal</Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -1215,16 +1281,16 @@ export default function MaintenanceSettingsPage() {
               <FileText className="w-5 h-5" />
               Visor de Documento - {selectedDocument}
             </DialogTitle>
-            <DialogDescription>
-              Vista previa del documento fiscal
-            </DialogDescription>
+            <DialogDescription>Vista previa del documento fiscal</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-8 flex items-center justify-center min-h-[400px]">
               <div className="text-center">
                 <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Vista Previa del Documento</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Vista Previa del Documento
+                </h3>
                 <p className="text-gray-600 mb-4">
                   {selectedDocument === 'Certificado de Situación Tributaria'
                     ? 'Certificado emitido por el SII con vigencia hasta 31/12/2024'
@@ -1233,10 +1299,18 @@ export default function MaintenanceSettingsPage() {
                 <div className="bg-white rounded-lg p-4 border border-gray-200 max-w-md mx-auto">
                   <p className="text-sm text-gray-600 mb-2">📄 Información del documento:</p>
                   <ul className="text-sm text-left space-y-1">
-                    <li>• <strong>Tipo:</strong> PDF</li>
-                    <li>• <strong>Tamaño:</strong> 245 KB</li>
-                    <li>• <strong>Fecha de subida:</strong> 15/01/2024</li>
-                    <li>• <strong>Estado:</strong> Vigente</li>
+                    <li>
+                      • <strong>Tipo:</strong> PDF
+                    </li>
+                    <li>
+                      • <strong>Tamaño:</strong> 245 KB
+                    </li>
+                    <li>
+                      • <strong>Fecha de subida:</strong> 15/01/2024
+                    </li>
+                    <li>
+                      • <strong>Estado:</strong> Vigente
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -1263,9 +1337,7 @@ export default function MaintenanceSettingsPage() {
               <FileText className="w-5 h-5" />
               Subir Documento - {selectedDocument}
             </DialogTitle>
-            <DialogDescription>
-              Sube el documento fiscal actualizado
-            </DialogDescription>
+            <DialogDescription>Sube el documento fiscal actualizado</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -1274,30 +1346,35 @@ export default function MaintenanceSettingsPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Arrastra y suelta tu archivo aquí
               </h3>
-              <p className="text-gray-600 mb-4">
-                O haz clic para seleccionar un archivo
-              </p>
-              <Button variant="outline">
-                Seleccionar Archivo
-              </Button>
+              <p className="text-gray-600 mb-4">O haz clic para seleccionar un archivo</p>
+              <Button variant="outline">Seleccionar Archivo</Button>
               <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-800 mb-2">📋 Requisitos del documento</h4>
               <ul className="text-sm space-y-1">
-                <li>• <strong>Formatos aceptados:</strong> PDF, JPG, JPEG, PNG</li>
-                <li>• <strong>Tamaño máximo:</strong> 5 MB</li>
-                <li>• <strong>Estado:</strong> Debe estar vigente</li>
-                <li>• <strong>Calidad:</strong> Texto legible y completo</li>
+                <li>
+                  • <strong>Formatos aceptados:</strong> PDF, JPG, JPEG, PNG
+                </li>
+                <li>
+                  • <strong>Tamaño máximo:</strong> 5 MB
+                </li>
+                <li>
+                  • <strong>Estado:</strong> Debe estar vigente
+                </li>
+                <li>
+                  • <strong>Calidad:</strong> Texto legible y completo
+                </li>
               </ul>
             </div>
 
             <div className="bg-yellow-50 p-4 rounded-lg">
               <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Información importante</h4>
               <p className="text-sm text-yellow-700">
-                Al subir este documento, reemplazarás el archivo anterior. Asegúrate de que el nuevo documento
-                esté actualizado y sea válido. El sistema verificará automáticamente la vigencia del documento.
+                Al subir este documento, reemplazarás el archivo anterior. Asegúrate de que el nuevo
+                documento esté actualizado y sea válido. El sistema verificará automáticamente la
+                vigencia del documento.
               </p>
             </div>
 

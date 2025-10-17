@@ -163,24 +163,43 @@ export default function TenantSettingsPage() {
     setErrorMessage('');
 
     try {
-      // Save to localStorage (in a real app, this would be an API call)
-      localStorage.setItem('tenant-settings', JSON.stringify(settings));
+      // Guardar configuración usando la API real
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          profile: settings.profile,
+          notifications: settings.notifications,
+          privacy: settings.privacy,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const data = await response.json();
 
       setSuccessMessage('Configuración guardada exitosamente.');
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al guardar la configuración. Intente nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al guardar la configuración. Intente nuevamente.'
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !files[0]) {
       return;
@@ -202,22 +221,70 @@ export default function TenantSettingsPage() {
       return;
     }
 
-    const newDocument: Document = {
-      id: `doc_${Date.now()}`,
-      name: file.name,
-      category: selectedDocumentCategory,
-      size: formatFileSize(file.size),
-      uploadDate: new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
-      url: URL.createObjectURL(file), // In a real app, this would be uploaded to a server
-    };
+    try {
+      setSaving(true);
 
-    setDocuments(prev => [...prev, newDocument]);
-    setShowUploadModal(false);
-    setSuccessMessage('Documento subido exitosamente.');
-    setTimeout(() => setSuccessMessage(''), 3000);
+      // Crear FormData para la subida
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('title', file.name);
+      formData.append('category', selectedDocumentCategory);
+      formData.append(
+        'type',
+        selectedDocumentCategory === 'identification'
+          ? 'IDENTIFICATION'
+          : selectedDocumentCategory === 'income'
+            ? 'INCOME_PROOF'
+            : 'OTHER_DOCUMENT'
+      );
 
-    // Reset file input
-    event.target.value = '';
+      // Subir archivo usando la API real
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el documento');
+      }
+
+      const data = await response.json();
+
+      if (data.files && data.files.length > 0) {
+        const uploadedFile = data.files[0];
+
+        const newDocument: Document = {
+          id: uploadedFile.id,
+          name: uploadedFile.name,
+          category: selectedDocumentCategory,
+          size: formatFileSize(file.size),
+          uploadDate:
+            new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
+          url: uploadedFile.url,
+        };
+
+        setDocuments(prev => [...prev, newDocument]);
+        setShowUploadModal(false);
+        setSuccessMessage('Documento subido exitosamente.');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        throw new Error('No se recibió información del archivo subido');
+      }
+    } catch (error) {
+      logger.error('Error subiendo documento:', { error });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al subir el documento. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setSaving(false);
+      // Reset file input
+      event.target.value = '';
+    }
   };
 
   const handleDownloadDocument = (doc: Document) => {

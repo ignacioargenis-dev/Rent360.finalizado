@@ -261,8 +261,27 @@ export default function OwnerSettingsPage() {
     try {
       setSaving(true);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Guardar configuración usando la API real
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          profile: settings.profile,
+          notifications: settings.notifications,
+          security: settings.security,
+          business: settings.business,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const data = await response.json();
 
       setSuccessMessage('Configuraci�n guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -336,6 +355,8 @@ export default function OwnerSettingsPage() {
     }
 
     try {
+      setSaving(true);
+
       // Validar tipo de archivo
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
       if (!allowedTypes.includes(file.type)) {
@@ -349,33 +370,74 @@ export default function OwnerSettingsPage() {
         return;
       }
 
-      // Simular subida del archivo
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Crear FormData para la subida
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('title', file.name);
+      formData.append('category', selectedDocumentCategory);
+      formData.append(
+        'type',
+        selectedDocumentCategory === 'personal'
+          ? 'IDENTIFICATION'
+          : selectedDocumentCategory === 'property'
+            ? 'PROPERTY_DOCUMENT'
+            : 'OTHER_DOCUMENT'
+      );
 
-      const newDocument: Document = {
-        id: Date.now().toString(),
-        name: file.name,
-        type: file.type === 'application/pdf' ? 'PDF' : 'Imagen',
-        category: selectedDocumentCategory,
-        propertyId: selectedDocumentCategory === 'property' ? selectedPropertyId : undefined,
-        uploadDate:
-          new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
-        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-        url: `/documents/${selectedDocumentCategory}/${file.name}`,
-      };
+      if (selectedDocumentCategory === 'property' && selectedPropertyId) {
+        formData.append('propertyId', selectedPropertyId);
+      }
 
-      setSettings(prev => ({
-        ...prev,
-        documents: [...prev.documents, newDocument],
-      }));
+      // Subir archivo usando la API real
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
-      setShowUploadModal(false);
-      setSuccessMessage('Documento subido exitosamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el documento');
+      }
+
+      const data = await response.json();
+
+      if (data.files && data.files.length > 0) {
+        const uploadedFile = data.files[0];
+
+        const newDocument: Document = {
+          id: uploadedFile.id,
+          name: uploadedFile.name,
+          type: file.type === 'application/pdf' ? 'PDF' : 'Imagen',
+          category: selectedDocumentCategory,
+          propertyId: selectedDocumentCategory === 'property' ? selectedPropertyId : undefined,
+          uploadDate:
+            new Date().toISOString().split('T')[0] || new Date().toLocaleDateString('en-CA'),
+          size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+          url: uploadedFile.url,
+        };
+
+        setSettings(prev => ({
+          ...prev,
+          documents: [...prev.documents, newDocument],
+        }));
+
+        setShowUploadModal(false);
+        setSuccessMessage('Documento subido exitosamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        throw new Error('No se recibió información del archivo subido');
+      }
     } catch (error) {
       logger.error('Error subiendo documento:', { error });
-      setErrorMessage('Error al subir el documento. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al subir el documento. Por favor, inténtalo nuevamente.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1151,6 +1213,20 @@ export default function OwnerSettingsPage() {
               <div className="flex gap-3 mt-6">
                 <Button variant="outline" onClick={() => setShowUploadModal(false)}>
                   Cancelar
+                </Button>
+                <Button
+                  onClick={() => {
+                    const fileInput = document.getElementById('documentFile') as HTMLInputElement;
+                    if (fileInput && fileInput.files && fileInput.files[0]) {
+                      handleFileUpload({ target: fileInput } as any);
+                    } else {
+                      setErrorMessage('Por favor selecciona un archivo');
+                      setTimeout(() => setErrorMessage(''), 3000);
+                    }
+                  }}
+                  disabled={saving}
+                >
+                  {saving ? 'Subiendo...' : 'Subir Documento'}
                 </Button>
               </div>
             </div>

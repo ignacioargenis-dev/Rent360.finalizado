@@ -240,8 +240,28 @@ export default function BrokerSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Guardar configuración usando la API real
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          profile: settings.profile,
+          notifications: settings.notifications,
+          payment: settings.payment,
+          goals: settings.goals,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const data = await response.json();
+
       // Show success message
       setSuccessMessage('Configuración guardada exitosamente');
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -249,7 +269,11 @@ export default function BrokerSettings() {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al guardar la configuración. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al guardar la configuración. Por favor, inténtalo nuevamente.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
@@ -302,38 +326,70 @@ export default function BrokerSettings() {
     try {
       logger.info('Subiendo documento:', { documentType, fileName: file.name });
 
-      // TODO: Implementar subida real de archivo
-      // const formData = new FormData();
-      // formData.append('file', file);
-      // const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      // const result = await response.json();
+      // Crear FormData para la subida
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('title', file.name);
+      formData.append('category', 'professional');
+      formData.append(
+        'type',
+        documentType === 'idCard'
+          ? 'IDENTIFICATION'
+          : documentType === 'criminalRecord'
+            ? 'CRIMINAL_RECORD'
+            : documentType === 'professionalTitle'
+              ? 'PROFESSIONAL_TITLE'
+              : documentType === 'brokerRegistration'
+                ? 'BROKER_REGISTRATION'
+                : 'OTHER_DOCUMENT'
+      );
 
-      // Simular subida exitosa
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Subir archivo usando la API real
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
-      const uploadedAt = new Date().toISOString();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el documento');
+      }
 
-      setSettings(prev => ({
-        ...prev,
-        documents: {
-          ...prev.documents,
-          [documentType]: {
-            name: file.name,
-            url: `/uploads/${file.name}`, // URL simulada
-            status: 'uploaded' as const,
-            uploadedAt,
+      const data = await response.json();
+
+      if (data.files && data.files.length > 0) {
+        const uploadedFile = data.files[0];
+        const uploadedAt = new Date().toISOString();
+
+        setSettings(prev => ({
+          ...prev,
+          documents: {
+            ...prev.documents,
+            [documentType]: {
+              name: uploadedFile.name,
+              url: uploadedFile.url,
+              status: 'uploaded' as const,
+              uploadedAt,
+            },
           },
-        },
-      }));
+        }));
 
-      logger.info('Documento subido exitosamente:', { documentType, fileName: file.name });
-      setSuccessMessage(`Documento "${file.name}" subido exitosamente`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+        logger.info('Documento subido exitosamente:', { documentType, fileName: file.name });
+        setSuccessMessage(`Documento "${file.name}" subido exitosamente`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        throw new Error('No se recibió información del archivo subido');
+      }
     } catch (error) {
       logger.error('Error subiendo documento:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al subir el documento. Por favor, inténtalo nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al subir el documento. Por favor, inténtalo nuevamente.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
     }
   };

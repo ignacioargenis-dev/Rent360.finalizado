@@ -161,10 +161,48 @@ export default function ProviderSettingsPage() {
     }
   };
 
-  const handleSaveSettings = (section: string) => {
-    // In a real app, this would save to the backend
-    setSuccessMessage(`Configuración de ${section} guardada exitosamente`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+  const handleSaveSettings = async (section: string) => {
+    try {
+      setUploadingDocument(true);
+
+      // Guardar configuración usando la API real
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          section,
+          profile: profileData,
+          services: servicesData,
+          notifications: notificationsData,
+          security: securityData,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la configuración');
+      }
+
+      const data = await response.json();
+
+      setSuccessMessage(`Configuración de ${section} guardada exitosamente`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error saving settings:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al guardar la configuración. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setUploadingDocument(false);
+    }
   };
 
   const handleInputChange = (section: string, field: string, value: any) => {

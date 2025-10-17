@@ -517,8 +517,55 @@ export default function OwnerPaymentRemindersPage() {
   };
 
   const handleUpdateSettings = async () => {
-    alert('Configuración de recordatorios actualizada');
-    // In a real app, this would save the settings
+    try {
+      setLoading(true);
+      logger.info('Actualizando configuración de recordatorios');
+
+      const response = await fetch('/api/owner/payment-reminders/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          autoReminders: reminderConfig.autoSendFirst,
+          firstReminderDays: reminderConfig.daysBeforeDueFirst,
+          secondReminderDays: reminderConfig.daysBeforeDueSecond,
+          finalReminderDays: reminderConfig.daysBeforeDueFinal,
+          emailTemplates: reminderConfig.emailTemplate,
+          smsEnabled: reminderConfig.smsTemplate !== 'disabled',
+          includePropertyInfo: reminderConfig.includePropertyInfo,
+          includeOwnerContact: reminderConfig.includeOwnerContact,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showNotification(
+          'Configuración Guardada',
+          'La configuración de recordatorios ha sido actualizada exitosamente.',
+          'success'
+        );
+        setShowConfigModal(false);
+      } else {
+        const errorData = await response.json();
+        showNotification(
+          'Error al Guardar',
+          errorData.error || 'Ha ocurrido un error al guardar la configuración.',
+          'error'
+        );
+      }
+    } catch (error) {
+      logger.error('Error actualizando configuración:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      showNotification(
+        'Error al Guardar',
+        'Ha ocurrido un error al guardar la configuración. Por favor, inténtalo nuevamente.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -806,6 +853,241 @@ export default function OwnerPaymentRemindersPage() {
           )}
         </div>
       </div>
+
+      {/* Configuration Modal */}
+      <Dialog open={showConfigModal} onOpenChange={setShowConfigModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Configuración de Recordatorios
+            </DialogTitle>
+            <DialogDescription>
+              Personaliza la configuración automática de recordatorios de pago
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            {/* Auto Reminders Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Recordatorios Automáticos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="autoFirst">Primer Recordatorio</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="autoFirst"
+                      checked={reminderConfig.autoSendFirst}
+                      onChange={e =>
+                        setReminderConfig(prev => ({ ...prev, autoSendFirst: e.target.checked }))
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="autoFirst" className="text-sm">
+                      Enviar automáticamente
+                    </Label>
+                  </div>
+                  <Input
+                    type="number"
+                    value={reminderConfig.daysBeforeDueFirst}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        daysBeforeDueFirst: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="Días antes del vencimiento"
+                    min="1"
+                    max="30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="autoSecond">Segundo Recordatorio</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="autoSecond"
+                      checked={reminderConfig.autoSendSecond}
+                      onChange={e =>
+                        setReminderConfig(prev => ({ ...prev, autoSendSecond: e.target.checked }))
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="autoSecond" className="text-sm">
+                      Enviar automáticamente
+                    </Label>
+                  </div>
+                  <Input
+                    type="number"
+                    value={reminderConfig.daysBeforeDueSecond}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        daysBeforeDueSecond: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="Días antes del vencimiento"
+                    min="1"
+                    max="30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="autoFinal">Recordatorio Final</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="autoFinal"
+                      checked={reminderConfig.autoSendFinal}
+                      onChange={e =>
+                        setReminderConfig(prev => ({ ...prev, autoSendFinal: e.target.checked }))
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="autoFinal" className="text-sm">
+                      Enviar automáticamente
+                    </Label>
+                  </div>
+                  <Input
+                    type="number"
+                    value={reminderConfig.daysBeforeDueFinal}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        daysBeforeDueFinal: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="Días antes del vencimiento"
+                    min="1"
+                    max="30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="autoUrgent">Recordatorio Urgente</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="autoUrgent"
+                      checked={reminderConfig.autoSendUrgent}
+                      onChange={e =>
+                        setReminderConfig(prev => ({ ...prev, autoSendUrgent: e.target.checked }))
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="autoUrgent" className="text-sm">
+                      Enviar automáticamente
+                    </Label>
+                  </div>
+                  <Input
+                    type="number"
+                    value={reminderConfig.daysAfterDue}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        daysAfterDue: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="Días después del vencimiento"
+                    min="1"
+                    max="30"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Templates Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Plantillas de Mensajes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emailTemplate">Plantilla de Email</Label>
+                  <Select
+                    value={reminderConfig.emailTemplate}
+                    onValueChange={value =>
+                      setReminderConfig(prev => ({ ...prev, emailTemplate: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar plantilla" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Por defecto</SelectItem>
+                      <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="friendly">Amigable</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="smsTemplate">Plantilla de SMS</Label>
+                  <Select
+                    value={reminderConfig.smsTemplate}
+                    onValueChange={value =>
+                      setReminderConfig(prev => ({ ...prev, smsTemplate: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar plantilla" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Por defecto</SelectItem>
+                      <SelectItem value="short">Corta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                      <SelectItem value="disabled">Deshabilitado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Options */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Opciones Adicionales</h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includePropertyInfo"
+                    checked={reminderConfig.includePropertyInfo}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        includePropertyInfo: e.target.checked,
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <Label htmlFor="includePropertyInfo">Incluir información de la propiedad</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeOwnerContact"
+                    checked={reminderConfig.includeOwnerContact}
+                    onChange={e =>
+                      setReminderConfig(prev => ({
+                        ...prev,
+                        includeOwnerContact: e.target.checked,
+                      }))
+                    }
+                    className="rounded"
+                  />
+                  <Label htmlFor="includeOwnerContact">
+                    Incluir información de contacto del propietario
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfigModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateSettings} disabled={loading}>
+              {loading ? 'Guardando...' : 'Guardar Configuración'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Notification Dialog */}
       <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
