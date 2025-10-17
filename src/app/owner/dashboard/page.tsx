@@ -257,6 +257,7 @@ export default function OwnerDashboard() {
           pendingPayments: 0,
           averageRating: 0,
           totalTenants: 0,
+          occupancyRate: 0, // ✅ AGREGADO: Campo occupancyRate faltante
         });
         setRecentProperties([]);
         setRecentActivity([
@@ -286,6 +287,7 @@ export default function OwnerDashboard() {
         pendingPayments: 0,
         averageRating: 0,
         totalTenants: 0,
+        occupancyRate: 0, // ✅ AGREGADO: Campo occupancyRate faltante
       });
       setRecentProperties([]);
       setRecentActivity([
