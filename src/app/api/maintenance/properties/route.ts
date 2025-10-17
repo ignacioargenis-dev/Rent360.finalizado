@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       const completedJobs = property.maintenance.filter(m => m.status === 'COMPLETED').length;
       const totalRevenue = property.maintenance
         .filter(m => m.actualCost && m.status === 'COMPLETED')
-        .reduce((sum, m) => sum + m.actualCost, 0);
+        .reduce((sum, m) => sum + (m.actualCost || 0), 0);
 
       const lastJob = property.maintenance
         .filter(m => m.completedDate)

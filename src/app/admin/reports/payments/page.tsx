@@ -3,7 +3,7 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -148,11 +148,7 @@ export default function PaymentsReportsPage() {
     },
   ];
 
-  useEffect(() => {
-    loadPaymentsData();
-  }, [dateRange, paymentType, statusFilter, loadPaymentsData]);
-
-  const loadPaymentsData = async () => {
+  const loadPaymentsData = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/payments/list?limit=100', {
@@ -246,7 +242,11 @@ export default function PaymentsReportsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange, paymentType, statusFilter]);
+
+  useEffect(() => {
+    loadPaymentsData();
+  }, [loadPaymentsData]);
 
   const handleExportReport = () => {
     const csvContent = [

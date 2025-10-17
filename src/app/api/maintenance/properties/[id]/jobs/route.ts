@@ -67,10 +67,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         maintenanceProvider: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            phone: true,
+            businessName: true,
+            specialty: true,
             specialties: true,
+            hourlyRate: true,
+            rating: true,
           },
         },
       },
@@ -99,10 +100,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       assignedTo: job.maintenanceProvider
         ? {
             id: job.maintenanceProvider.id,
-            name: job.maintenanceProvider.name,
-            email: job.maintenanceProvider.email,
-            phone: job.maintenanceProvider.phone,
+            name: job.maintenanceProvider.businessName,
+            email: '', // No hay email en MaintenanceProvider
+            phone: '', // No hay phone en MaintenanceProvider
             specialties: job.maintenanceProvider.specialties,
+            specialty: job.maintenanceProvider.specialty,
+            hourlyRate: job.maintenanceProvider.hourlyRate,
+            rating: job.maintenanceProvider.rating,
           }
         : null,
       scheduledDate: job.scheduledDate?.toISOString(),

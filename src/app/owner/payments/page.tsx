@@ -500,7 +500,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
       });
     } catch (error) {
       console.error('Error loading payments:', error);
-      setError('Error al cargar los pagos');
+      setErrorMessage('Error al cargar los pagos');
     } finally {
       setLoading(false);
     }

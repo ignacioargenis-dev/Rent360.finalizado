@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         channel: validatedData.channel.toUpperCase(),
         status: 'SENT',
         sentAt: new Date(),
-        customMessage: validatedData.customMessage,
+        customMessage: validatedData.customMessage || null,
       },
     });
 

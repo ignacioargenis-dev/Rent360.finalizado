@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -126,6 +126,50 @@ export default function OwnerPaymentRemindersPage() {
     setNotificationType(type);
     setShowNotificationDialog(true);
   };
+
+  const loadRemindersData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/owner/payment-reminders?limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cargar los recordatorios');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setReminders(data.reminders);
+        setFilteredReminders(data.reminders);
+        setStats(data.stats);
+      } else {
+        throw new Error(data.error || 'Error al cargar los recordatorios');
+      }
+    } catch (error) {
+      logger.error('Error loading reminders data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // Fallback a datos vacíos en caso de error
+      setReminders([]);
+      setFilteredReminders([]);
+      setStats({
+        totalSent: 0,
+        delivered: 0,
+        opened: 0,
+        responses: 0,
+        successRate: 0,
+        pendingAmount: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Configuration states
   const [reminderConfig, setReminderConfig] = useState({
@@ -384,50 +428,6 @@ export default function OwnerPaymentRemindersPage() {
         logger.error('Error loading user data:', {
           error: error instanceof Error ? error.message : String(error),
         });
-      }
-    };
-
-    const loadRemindersData = async () => {
-      try {
-        const response = await fetch('/api/owner/payment-reminders?limit=100', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al cargar los recordatorios');
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          setReminders(data.reminders);
-          setFilteredReminders(data.reminders);
-          setStats(data.stats);
-        } else {
-          throw new Error(data.error || 'Error al cargar los recordatorios');
-        }
-      } catch (error) {
-        logger.error('Error loading reminders data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-
-        // Fallback a datos vacíos en caso de error
-        setReminders([]);
-        setFilteredReminders([]);
-        setStats({
-          totalSent: 0,
-          delivered: 0,
-          opened: 0,
-          responses: 0,
-          successRate: 0,
-          pendingAmount: 0,
-        });
-      } finally {
-        setLoading(false);
       }
     };
 

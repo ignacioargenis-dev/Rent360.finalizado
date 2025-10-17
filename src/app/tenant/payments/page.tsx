@@ -140,7 +140,7 @@ export default function TenantPaymentsPage() {
 
       // Calcular estadísticas reales
       const totalPaid = transformedPayments
-        .filter(p => p.status === 'completed')
+        .filter(p => p.status === 'paid')
         .reduce((sum, p) => sum + p.amount, 0);
 
       const totalPending = transformedPayments
@@ -153,7 +153,7 @@ export default function TenantPaymentsPage() {
 
       const thisMonthPaid = transformedPayments
         .filter(p => {
-          if (p.status !== 'completed' || !p.paymentDate) {
+          if (p.status !== 'paid' || !p.paymentDate) {
             return false;
           }
           const paidDate = new Date(p.paymentDate);
