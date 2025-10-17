@@ -163,17 +163,18 @@ export default function TenantSettingsPage() {
     setErrorMessage('');
 
     try {
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          profile: settings.profile,
-          notifications: settings.notifications,
-          privacy: settings.privacy,
+          name: `${settings.profile.firstName} ${settings.profile.lastName}`,
+          phone: settings.profile.phone,
+          emergencyContact: settings.profile.emergencyContact,
+          emergencyPhone: settings.profile.emergencyPhone,
         }),
       });
 

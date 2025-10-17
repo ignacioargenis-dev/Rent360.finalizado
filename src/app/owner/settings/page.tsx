@@ -261,18 +261,19 @@ export default function OwnerSettingsPage() {
     try {
       setSaving(true);
 
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          profile: settings.profile,
-          notifications: settings.notifications,
-          security: settings.security,
-          business: settings.business,
+          name: `${settings.profile.firstName} ${settings.profile.lastName}`,
+          phone: settings.profile.phone,
+          address: settings.profile.address,
+          city: settings.profile.city,
+          region: settings.profile.region,
         }),
       });
 

@@ -240,18 +240,17 @@ export default function BrokerSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          profile: settings.profile,
-          notifications: settings.notifications,
-          payment: settings.payment,
-          goals: settings.goals,
+          name: `${settings.profile.firstName} ${settings.profile.lastName}`,
+          phone: settings.profile.phone,
+          avatar: settings.profile.avatar,
         }),
       });
 

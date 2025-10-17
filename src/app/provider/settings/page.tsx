@@ -165,19 +165,17 @@ export default function ProviderSettingsPage() {
     try {
       setUploadingDocument(true);
 
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          section,
-          profile: profileData,
-          services: servicesData,
-          notifications: notificationsData,
-          security: securityData,
+          name: profileData.contactName,
+          phone: profileData.phone,
+          address: profileData.address,
         }),
       });
 

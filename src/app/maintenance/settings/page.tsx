@@ -182,15 +182,16 @@ export default function MaintenanceSettingsPage() {
     try {
       setSaving(true);
 
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          settings,
+          name: settings.companyName,
+          phone: settings.phone,
         }),
       });
 

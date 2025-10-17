@@ -204,18 +204,19 @@ export default function RunnerSettingsPage() {
     setErrorMessage('');
 
     try {
-      // Guardar configuración usando la API real
-      const response = await fetch('/api/settings', {
-        method: 'POST',
+      // Guardar configuración del perfil usando la API correcta
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          profile: settings.profile,
-          workArea: settings.workArea,
-          notifications: settings.notifications,
-          payment: settings.payment,
+          name: `${settings.profile.firstName} ${settings.profile.lastName}`,
+          phone: settings.profile.phone,
+          avatar: settings.profile.avatar,
+          emergencyContact: settings.profile.emergencyContact,
+          emergencyPhone: settings.profile.emergencyPhone,
         }),
       });
 
