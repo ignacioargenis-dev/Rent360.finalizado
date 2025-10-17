@@ -7,16 +7,23 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
   try {
     const filePath = params.path.join('/');
 
-    // Construir la ruta completa del archivo
+    // ✅ CORREGIDO: Construir la ruta completa del archivo con mejor manejo de subdirectorios
     const fullPath = join(process.cwd(), 'public', 'uploads', filePath);
 
-    // Verificar que el archivo existe
+    // ✅ CORREGIDO: Verificar que el archivo existe, si no, intentar en subdirectorios comunes
+    let finalPath = fullPath;
     if (!existsSync(fullPath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      // Intentar en subdirectorio 'properties' si no se encuentra directamente
+      const propertiesPath = join(process.cwd(), 'public', 'uploads', 'properties', filePath);
+      if (existsSync(propertiesPath)) {
+        finalPath = propertiesPath;
+      } else {
+        return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      }
     }
 
     // Leer el archivo
-    const fileBuffer = await readFile(fullPath);
+    const fileBuffer = await readFile(finalPath);
 
     // Determinar el tipo MIME basado en la extensión
     const extension = filePath.split('.').pop()?.toLowerCase();

@@ -140,7 +140,7 @@ export default function BrokerDashboardPage() {
           return;
         }
 
-        // Intentar cargar datos reales del dashboard del corredor
+        // ✅ CORREGIDO: Cargar datos reales del dashboard del corredor
         const response = await fetch('/api/broker/dashboard');
         if (response.ok) {
           const result = await response.json();

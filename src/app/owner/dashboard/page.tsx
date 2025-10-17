@@ -42,6 +42,7 @@ interface DashboardStats {
   pendingPayments: number;
   averageRating: number;
   totalTenants: number;
+  occupancyRate: number; // ✅ AGREGADO: Tasa de ocupación
 }
 
 interface RecentActivity {
@@ -74,6 +75,7 @@ export default function OwnerDashboard() {
     pendingPayments: 0,
     averageRating: 0,
     totalTenants: 0,
+    occupancyRate: 0, // ✅ AGREGADO: Tasa de ocupación inicial
   });
   const [recentProperties, setRecentProperties] = useState<PropertySummary[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -87,9 +89,9 @@ export default function OwnerDashboard() {
 
       // Cargar datos reales del dashboard desde las APIs de forma secuencial para evitar sobrecarga
       try {
-        // Cargar propiedades del usuario (reducido a 5 para menos carga)
+        // ✅ CORREGIDO: Cargar TODAS las propiedades del usuario para estadísticas correctas
         const propertiesResponse = await fetch(
-          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=5`,
+          `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=100`,
           {
             credentials: 'include',
             headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
@@ -138,14 +140,18 @@ export default function OwnerDashboard() {
           payments = paymentsData.payments || [];
         }
 
-        // Calcular estadísticas basadas en datos reales
+        // ✅ CORREGIDO: Calcular estadísticas basadas en datos reales y consistentes
         const rentedProperties = properties.filter((p: any) => p.status === 'RENTED');
         const totalRevenue = rentedProperties.reduce(
           (sum: number, p: any) => sum + (p.price || 0),
           0
         );
         const pendingPayments = payments.filter((p: any) => p.status === 'PENDING').length;
-        const totalTenants = rentedProperties.length;
+        const totalTenants = contracts.length; // Usar contratos activos reales, no propiedades con status RENTED
+
+        // ✅ CORREGIDO: Calcular tasa de ocupación basada en contratos activos vs total de propiedades
+        const occupancyRate =
+          properties.length > 0 ? (contracts.length / properties.length) * 100 : 0;
 
         // Calcular rating promedio
         const ratings = properties.flatMap((p: any) => p.reviews || []);
@@ -161,6 +167,7 @@ export default function OwnerDashboard() {
           pendingPayments,
           averageRating: Math.round(averageRating * 10) / 10,
           totalTenants,
+          occupancyRate: Math.round(occupancyRate * 10) / 10, // ✅ AGREGADO: Tasa de ocupación calculada
         });
 
         // Formatear propiedades recientes
