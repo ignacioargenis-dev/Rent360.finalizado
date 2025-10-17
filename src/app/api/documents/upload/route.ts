@@ -7,24 +7,26 @@ import path from 'path';
 import { db } from '@/lib/db';
 import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
 
-  export async function POST(request: NextRequest) {
-    try {
-      const user = await requireAuth(request);
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
 
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const category = formData.get('category') as string || 'documents';
+    const category = (formData.get('category') as string) || 'documents';
     const tags = formData.getAll('tags') as string[];
+    const propertyId = formData.get('propertyId') as string;
+    const documentType = formData.get('type') as string;
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'No se proporcionaron archivos' }, { status: 400 });
     }
 
     // Determinar tipo de validación basado en la categoría
-    const validationType = category === 'contracts' ? 'contracts' :
-                          category === 'images' ? 'images' : 'documents';
+    const validationType =
+      category === 'contracts' ? 'contracts' : category === 'images' ? 'images' : 'documents';
 
     // Validar archivos
     const validation = await validateFileMiddleware(files, validationType);
@@ -34,7 +36,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
         .map((result, index) => ({
           result,
           file: files[index],
-          fileName: files[index]?.name || `Archivo ${index + 1}`
+          fileName: files[index]?.name || `Archivo ${index + 1}`,
         }))
         .filter(({ result }) => !result.valid)
         .map(({ fileName, result }) => `${fileName}: ${result.errors.join(', ')}`);
@@ -42,14 +44,17 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       logger.warn('Archivos rechazados por validación:', {
         errors,
         category,
-        validationType
+        validationType,
       });
 
-      return NextResponse.json({
-        error: 'Archivos no válidos',
-        details: errors,
-        summary: validation.summary
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Archivos no válidos',
+          details: errors,
+          summary: validation.summary,
+        },
+        { status: 400 }
+      );
     }
 
     // Registrar warnings si existen
@@ -57,7 +62,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       .map((result, index) => ({
         result,
         file: files[index],
-        fileName: files[index]?.name || `Archivo ${index + 1}`
+        fileName: files[index]?.name || `Archivo ${index + 1}`,
       }))
       .filter(({ result }) => result.warnings.length > 0)
       .map(({ fileName, result }) => `${fileName}: ${result.warnings.join(', ')}`);
@@ -74,13 +79,16 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       status: string;
       validation: any;
     }> = [];
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const validationResult = validation.results[i];
 
       if (!file || !validationResult) {
-        logger.error('Archivo o resultado de validación no encontrado', { index: i, totalFiles: files.length });
+        logger.error('Archivo o resultado de validación no encontrado', {
+          index: i,
+          totalFiles: files.length,
+        });
         continue;
       }
 
@@ -90,7 +98,10 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       }
 
       if (!validationResult) {
-        logger.error('Resultado de validación no encontrado en índice', { index: i, totalResults: validation.results.length });
+        logger.error('Resultado de validación no encontrado en índice', {
+          index: i,
+          totalResults: validation.results.length,
+        });
         continue;
       }
 
@@ -119,27 +130,28 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
         validation: {
           hash: validationResult.metadata.hash,
           checksum: validationResult.metadata.checksum,
-          warnings: validationResult.warnings
+          warnings: validationResult.warnings,
         },
         security: {
           scanned: true,
           safe: true,
-          integrityVerified: true
+          integrityVerified: true,
         },
         originalName: file.name,
-        uploadTimestamp: new Date().toISOString()
+        uploadTimestamp: new Date().toISOString(),
       };
 
       // Guardar información en la base de datos
       const document = await db.document.create({
         data: {
           name: title || file.name,
-          type: category || 'OTHER_DOCUMENT',
+          type: documentType || category || 'OTHER_DOCUMENT',
           fileName: fileName, // Usar el nombre único generado
           filePath: `/uploads/documents/${fileName}`,
           fileSize: file.size,
           mimeType: file.type,
           uploadedById: user.id,
+          propertyId: propertyId || null, // ✅ AGREGADO: Asociar con propiedad si se proporciona
         },
       });
 
@@ -149,7 +161,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
         url: `/uploads/documents/${fileName}`,
         size: document.fileSize,
         status: 'completed',
-        validation: validationResult
+        validation: validationResult,
       });
 
       logger.info('Archivo subido exitosamente:', {
@@ -159,7 +171,7 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
         size: file.size,
         type: file.type,
         validationPassed: validationResult.valid,
-        warnings: validationResult.warnings.length
+        warnings: validationResult.warnings.length,
       });
     }
 
@@ -167,9 +179,10 @@ import { validateFileMiddleware, FILE_TYPES } from '@/lib/file-validation';
       message: 'Documentos subidos exitosamente',
       files: uploadedFiles,
     });
-
   } catch (error) {
-    logger.error('Error al subir documentos:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error al subir documentos:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
@@ -210,9 +223,10 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-
   } catch (error) {
-    logger.error('Error al obtener documentos:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error al obtener documentos:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

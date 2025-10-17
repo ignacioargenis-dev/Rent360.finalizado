@@ -47,6 +47,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             rating: true,
           },
         },
+        documents: {
+          where: {
+            type: 'PROPERTY_DOCUMENT',
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            fileName: true,
+            filePath: true,
+            fileSize: true,
+            mimeType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
         // maintenanceRequests: {
         //   where: {
         //     status: {
@@ -110,6 +128,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       averageRating: Math.round(averageRating * 10) / 10,
       totalReviews: property.reviews.length,
       maintenanceHistory,
+      documents: property.documents.map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        type: doc.type,
+        size: `${(doc.fileSize / 1024 / 1024).toFixed(1)} MB`,
+        uploadDate: doc.createdAt.toISOString().split('T')[0],
+        url: doc.filePath,
+      })),
 
       // Características adicionales
       furnished: property.furnished,
