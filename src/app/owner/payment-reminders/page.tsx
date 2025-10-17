@@ -433,7 +433,7 @@ export default function OwnerPaymentRemindersPage() {
 
     loadUserData();
     loadRemindersData();
-  }, []);
+  }, [loadRemindersData]);
 
   useEffect(() => {
     let filtered = reminders;
@@ -819,6 +819,11 @@ export default function OwnerPaymentRemindersPage() {
               )}
               {notificationTitle}
             </DialogTitle>
+            <DialogDescription>
+              {notificationType === 'success'
+                ? 'Operación completada exitosamente'
+                : 'Ha ocurrido un error'}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600">{notificationMessage}</p>

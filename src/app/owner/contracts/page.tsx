@@ -38,6 +38,7 @@ import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -532,6 +533,7 @@ export default function OwnerContractsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Firmar Contrato</DialogTitle>
+            <DialogDescription>Firma digitalmente el contrato seleccionado</DialogDescription>
           </DialogHeader>
           {selectedContract && (
             <ElectronicSignature

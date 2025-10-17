@@ -323,7 +323,9 @@ export default function AdminLegalCasesPage() {
       // Recargar casos
       await loadLegalCases();
     } catch (error) {
-      console.error('Error resolving case:', error);
+      logger.error('Error resolving case:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       toast.error('Error al resolver el caso');
     } finally {
       setLoading(false);
@@ -363,19 +365,34 @@ Documentos administrativos incluidos:
       // Simulate document preparation
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // TODO: Replace with actual document download API
-      // const response = await fetch(`/api/admin/legal-cases/${legalCase.id}/admin-documents/download`);
-      // if (response.ok) {
-      //   const blob = await response.blob();
-      //   const url = window.URL.createObjectURL(blob);
-      //   const a = document.createElement('a');
-      //   a.href = url;
-      //   a.download = `Expediente_Admin_${legalCase.caseNumber}.zip`;
-      //   document.body.appendChild(a);
-      //   a.click();
-      //   window.URL.revokeObjectURL(url);
-      //   document.body.removeChild(a);
-      // }
+      // Descargar documentos administrativos reales
+      const response = await fetch(
+        `/api/admin/legal-cases/${legalCase.id}/admin-documents/download`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/zip',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Expediente_Admin_${legalCase.caseNumber}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('Documentos administrativos descargados exitosamente');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al descargar documentos');
+      }
 
       // Show success message
       alert(`✅ EXPEDIENTE ADMINISTRATIVO DESCARGADO
@@ -427,12 +444,24 @@ Equipo Administrativo Rent360`,
         timestamp: new Date().toISOString(),
       };
 
-      // TODO: Replace with actual notification API
-      // await fetch('/api/admin/notifications/send', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(notificationData)
-      // });
+      // Enviar notificación real
+      const notificationResponse = await fetch('/api/admin/notifications/send', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+
+      if (!notificationResponse.ok) {
+        const errorData = await notificationResponse.json();
+        throw new Error(errorData.error || 'Error al enviar notificación');
+      }
+
+      const notificationResult = await notificationResponse.json();
+      logger.info('Notificación enviada:', notificationResult);
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -509,7 +538,9 @@ Mientras tanto, puede resolver el caso o descargar documentos para revisión.`);
 
       toast.success('Expediente descargado exitosamente');
     } catch (error) {
-      console.error('Error downloading expediente:', error);
+      logger.error('Error downloading expediente:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       toast.error('Error al descargar el expediente');
     } finally {
       setLoading(false);
@@ -560,7 +591,9 @@ Esta acción:
       // Reload cases to remove archived case
       await loadLegalCases();
     } catch (error) {
-      console.error('Error archiving case:', error);
+      logger.error('Error archiving case:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       toast.error('Error al archivar el caso');
     } finally {
       setLoading(false);

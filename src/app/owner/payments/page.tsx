@@ -332,7 +332,32 @@ Rent360 - Sistema de Gestión Inmobiliaria
         'success'
       );
 
-      // TODO: Implement API call to send reminder
+      // Enviar recordatorio usando API real
+      const reminderResponse = await fetch('/api/owner/payment-reminders/send', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          tenantId: payment.tenantId,
+          propertyId: payment.propertyId,
+          amount: payment.amount,
+          dueDate: payment.dueDate,
+          reminderType: 'first',
+          channel: 'email',
+          customMessage: 'Recordatorio de pago pendiente',
+        }),
+      });
+
+      if (!reminderResponse.ok) {
+        const errorData = await reminderResponse.json();
+        throw new Error(errorData.error || 'Error al enviar el recordatorio');
+      }
+
+      const reminderResult = await reminderResponse.json();
+      logger.info('Recordatorio enviado:', reminderResult);
     } catch (error) {
       logger.error('Error enviando recordatorio:', {
         error: error instanceof Error ? error.message : String(error),
@@ -367,7 +392,31 @@ Rent360 - Sistema de Gestión Inmobiliaria
         'success'
       );
 
-      // TODO: Implement API call to mark payment as paid
+      // Marcar pago como realizado usando API real
+      const response = await fetch(`/api/payments/${paymentId}/mark-paid`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          paymentMethod: 'bank_transfer', // Método por defecto
+          notes: 'Marcado como pagado por el propietario',
+          paymentDate: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al marcar el pago como realizado');
+      }
+
+      const result = await response.json();
+      logger.info('Pago marcado como realizado:', result);
+
+      // Recargar los datos de pagos
+      await loadPayments();
     } catch (error) {
       logger.error('Error marcando pago:', {
         error: error instanceof Error ? error.message : String(error),
@@ -499,7 +548,9 @@ Rent360 - Sistema de Gestión Inmobiliaria
         averagePaymentTime: 2.5,
       });
     } catch (error) {
-      console.error('Error loading payments:', error);
+      logger.error('Error loading payments:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setErrorMessage('Error al cargar los pagos');
     } finally {
       setLoading(false);
@@ -1354,6 +1405,11 @@ Rent360 - Sistema de Gestión Inmobiliaria
                 )}
                 {notificationTitle}
               </DialogTitle>
+              <DialogDescription>
+                {notificationType === 'success'
+                  ? 'Operación completada exitosamente'
+                  : 'Ha ocurrido un error'}
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-gray-600">{notificationMessage}</p>

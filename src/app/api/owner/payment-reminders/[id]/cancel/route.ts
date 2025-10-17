@@ -8,9 +8,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'owner') {
+    if (!['OWNER', 'BROKER', 'ADMIN'].includes(user.role)) {
       return NextResponse.json(
-        { error: 'Acceso denegado. Se requiere rol de propietario.' },
+        { error: 'Acceso denegado. Se requiere rol de propietario, corredor o administrador.' },
         { status: 403 }
       );
     }

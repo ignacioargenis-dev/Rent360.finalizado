@@ -29,6 +29,7 @@ import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -553,6 +554,9 @@ export default function TenantContractsPage() {
                         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Firmar Contrato - {contract.property?.title}</DialogTitle>
+                            <DialogDescription>
+                              Firma digitalmente el contrato de arriendo
+                            </DialogDescription>
                           </DialogHeader>
                           {selectedContract && (
                             <ElectronicSignature
