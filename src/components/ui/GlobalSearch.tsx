@@ -308,7 +308,7 @@ export default function GlobalSearch() {
         <Card className="absolute top-full left-0 right-0 mt-1 z-50">
           <CardContent className="p-4 text-center text-gray-500">
             <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">No se encontraron resultados para "{query}"</p>
+            <p className="text-sm">No se encontraron resultados para &ldquo;{query}&rdquo;</p>
           </CardContent>
         </Card>
       )}

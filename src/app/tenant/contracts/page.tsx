@@ -90,11 +90,35 @@ export default function TenantContractsPage() {
   }, []);
 
   useEffect(() => {
-    // Mock data for demo
-    const emptyImages: string[] = [];
+    loadContracts();
+  }, []);
 
-    setTimeout(() => {
-      setContracts([
+  const loadContracts = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener datos reales desde la API
+      const response = await fetch('/api/tenant/contracts', {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setContracts(result.data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback a datos mock si la API falla
+      logger.warn('API falló, usando datos mock');
+      const emptyImages: string[] = [];
+
+      setTimeout(() => {
+        setContracts([
         {
           id: 'pending-tenant-1',
           contractNumber: 'CTR-2024-004',
@@ -298,6 +322,11 @@ export default function TenantContractsPage() {
 
       setLoading(false);
     }, 1000);
+      } catch (error) {
+        logger.error('Error cargando contratos:', { error });
+        setLoading(false);
+      }
+    };
   }, []);
 
   const formatPrice = (price: number) => {

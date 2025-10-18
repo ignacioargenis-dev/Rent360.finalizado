@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { withCache, getStatsCacheKey, cacheTTL } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,73 +21,33 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get('period') || '30d'; // 7d, 30d, 90d, 1y
     const role = user.role;
 
-    // Calcular fechas según el período
-    const now = new Date();
-    let startDate = new Date();
+    // Generar clave de cache
+    const cacheKey = getStatsCacheKey(user.role, period, user.id);
     
-    switch (period) {
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(now.getDate() - 90);
-        break;
-      case '1y':
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 30);
-    }
+    // Intentar obtener datos del cache
+    const statsData = await withCache(
+      cacheKey,
+      async () => {
+        return await fetchStatsData(user, period);
+      },
+      cacheTTL.MEDIUM
+    );
 
-    let analytics = {};
-
-    // Estadísticas específicas por rol
-    switch (role) {
-      case 'ADMIN':
-        analytics = await getAdminAnalytics(startDate, now);
-        break;
-      case 'OWNER':
-        analytics = await getOwnerAnalytics(user.id, startDate, now);
-        break;
-      case 'BROKER':
-        analytics = await getBrokerAnalytics(user.id, startDate, now);
-        break;
-      case 'TENANT':
-        analytics = await getTenantAnalytics(user.id, startDate, now);
-        break;
-      case 'RUNNER':
-        analytics = await getRunnerAnalytics(user.id, startDate, now);
-        break;
-      case 'PROVIDER':
-      case 'MAINTENANCE':
-        analytics = await getProviderAnalytics(user.id, startDate, now);
-        break;
-    }
-
-    logger.info('Estadísticas de analytics obtenidas', {
+    logger.info('Estadísticas obtenidas', {
       userId: user.id,
-      role,
+      role: user.role,
       period,
-      startDate: startDate.toISOString(),
-      endDate: now.toISOString()
+      cached: true
     });
 
     return NextResponse.json({
       success: true,
-      data: {
-        period,
-        role,
-        startDate: startDate.toISOString(),
-        endDate: now.toISOString(),
-        ...analytics
-      }
+      data: statsData,
+      cached: true
     });
 
   } catch (error) {
-    logger.error('Error obteniendo estadísticas de analytics:', {
+    logger.error('Error obteniendo estadísticas:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
@@ -100,381 +61,317 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Funciones auxiliares para cada rol
-async function getAdminAnalytics(startDate: Date, endDate: Date) {
-  const [
-    totalUsers,
-    totalProperties,
-    totalContracts,
-    totalPayments,
-    monthlyRevenue,
-    activeUsers,
-    newUsers,
-    propertiesByStatus,
-    contractsByStatus,
-    paymentsByStatus
-  ] = await Promise.all([
-    db.user.count(),
-    db.property.count(),
-    db.contract.count(),
-    db.payment.count(),
-    db.payment.aggregate({
-      where: {
-        status: 'PAID',
-        paidAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      },
-      _sum: { amount: true }
-    }),
-    db.user.count({
-      where: {
-        lastLogin: {
-          gte: startDate
-        }
-      }
-    }),
-    db.user.count({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      }
-    }),
-    db.property.groupBy({
-      by: ['status'],
-      _count: { status: true }
-    }),
-    db.contract.groupBy({
-      by: ['status'],
-      _count: { status: true }
-    }),
-    db.payment.groupBy({
-      by: ['status'],
-      _count: { status: true }
-    })
-  ]);
+async function fetchStatsData(user: any, period: string) {
+  const now = new Date();
+  let startDate = new Date();
+  
+  switch (period) {
+    case '7d':
+      startDate.setDate(now.getDate() - 7);
+      break;
+    case '30d':
+      startDate.setDate(now.getDate() - 30);
+      break;
+    case '90d':
+      startDate.setDate(now.getDate() - 90);
+      break;
+    case '1y':
+      startDate.setFullYear(now.getFullYear() - 1);
+      break;
+    default:
+      startDate.setDate(now.getDate() - 30);
+  }
 
-  return {
-    overview: {
-      totalUsers,
-      totalProperties,
-      totalContracts,
-      totalPayments,
-      monthlyRevenue: monthlyRevenue._sum.amount || 0,
-      activeUsers,
-      newUsers
-    },
-    breakdown: {
-      propertiesByStatus,
-      contractsByStatus,
-      paymentsByStatus
-    }
-  };
-}
+  const stats: any = {};
 
-async function getOwnerAnalytics(ownerId: string, startDate: Date, endDate: Date) {
-  const [
-    totalProperties,
-    activeContracts,
-    totalRevenue,
-    pendingPayments,
-    maintenanceRequests,
-    propertiesByStatus
-  ] = await Promise.all([
-    db.property.count({
-      where: { ownerId }
-    }),
-    db.contract.count({
-      where: {
-        ownerId,
-        status: 'ACTIVE'
-      }
-    }),
-    db.payment.aggregate({
-      where: {
-        contract: { ownerId },
-        status: 'PAID',
-        paidAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      },
-      _sum: { amount: true }
-    }),
-    db.payment.count({
-      where: {
-        contract: { ownerId },
-        status: 'PENDING'
-      }
-    }),
-    db.maintenanceRequest.count({
-      where: {
-        property: { ownerId },
-        createdAt: {
-          gte: startDate
-        }
-      }
-    }),
-    db.property.groupBy({
-      by: ['status'],
-      where: { ownerId },
-      _count: { status: true }
-    })
-  ]);
+  switch (user.role) {
+    case 'ADMIN':
+      // Estadísticas globales del sistema
+      const [
+        totalUsers,
+        totalProperties,
+        totalContracts,
+        totalPayments,
+        monthlyRevenue,
+        activeUsers,
+        newUsers,
+        pendingTickets
+      ] = await Promise.all([
+        db.user.count(),
+        db.property.count(),
+        db.contract.count({ where: { status: 'ACTIVE' } }),
+        db.payment.count({ where: { status: 'PAID' } }),
+        db.payment.aggregate({
+          where: {
+            status: 'PAID',
+            createdAt: { gte: startDate }
+          },
+          _sum: { amount: true }
+        }),
+        db.user.count({ where: { isActive: true } }),
+        db.user.count({ where: { createdAt: { gte: startDate } } }),
+        db.ticket.count({ where: { status: 'OPEN' } })
+      ]);
 
-  return {
-    overview: {
-      totalProperties,
-      activeContracts,
-      totalRevenue: totalRevenue._sum.amount || 0,
-      pendingPayments,
-      maintenanceRequests
-    },
-    breakdown: {
-      propertiesByStatus
-    }
-  };
-}
+      stats.totalUsers = totalUsers;
+      stats.totalProperties = totalProperties;
+      stats.totalContracts = totalContracts;
+      stats.totalPayments = totalPayments;
+      stats.monthlyRevenue = monthlyRevenue._sum.amount || 0;
+      stats.activeUsers = activeUsers;
+      stats.newUsers = newUsers;
+      stats.pendingTickets = pendingTickets;
+      break;
 
-async function getBrokerAnalytics(brokerId: string, startDate: Date, endDate: Date) {
-  const [
-    totalProperties,
-    activeContracts,
-    totalCommissions,
-    newClients,
-    propertiesByStatus
-  ] = await Promise.all([
-    db.property.count({
-      where: { brokerId }
-    }),
-    db.contract.count({
-      where: {
-        brokerId,
-        status: 'ACTIVE'
-      }
-    }),
-    db.payment.aggregate({
-      where: {
-        contract: { brokerId },
-        status: 'PAID',
-        paidAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      },
-      _sum: { amount: true }
-    }),
-    db.user.count({
-      where: {
-        contracts: {
-          some: {
-            brokerId,
-            createdAt: {
-              gte: startDate
-            }
-          }
-        }
-      }
-    }),
-    db.property.groupBy({
-      by: ['status'],
-      where: { brokerId },
-      _count: { status: true }
-    })
-  ]);
+    case 'OWNER':
+      // Estadísticas del propietario
+      const [
+        ownerProperties,
+        ownerContracts,
+        ownerPayments,
+        ownerRevenue,
+        ownerCompletedTasks,
+        ownerPendingTasks
+      ] = await Promise.all([
+        db.property.count({ where: { ownerId: user.id } }),
+        db.contract.count({ where: { ownerId: user.id, status: 'ACTIVE' } }),
+        db.payment.count({ 
+          where: { 
+            contract: { ownerId: user.id },
+            status: 'PAID'
+          } 
+        }),
+        db.payment.aggregate({
+          where: {
+            contract: { ownerId: user.id },
+            status: 'PAID',
+            createdAt: { gte: startDate }
+          },
+          _sum: { amount: true }
+        }),
+        db.task.count({ 
+          where: { 
+            property: { ownerId: user.id },
+            status: 'COMPLETED'
+          } 
+        }),
+        db.task.count({ 
+          where: { 
+            property: { ownerId: user.id },
+            status: 'PENDING'
+          } 
+        })
+      ]);
 
-  return {
-    overview: {
-      totalProperties,
-      activeContracts,
-      totalCommissions: totalCommissions._sum.amount || 0,
-      newClients
-    },
-    breakdown: {
-      propertiesByStatus
-    }
-  };
-}
+      stats.totalProperties = ownerProperties;
+      stats.totalContracts = ownerContracts;
+      stats.totalPayments = ownerPayments;
+      stats.monthlyRevenue = ownerRevenue._sum.amount || 0;
+      stats.completedTasks = ownerCompletedTasks;
+      stats.pendingTasks = ownerPendingTasks;
+      break;
 
-async function getTenantAnalytics(tenantId: string, startDate: Date, endDate: Date) {
-  const [
-    activeContracts,
-    totalPaid,
-    pendingPayments,
-    overduePayments,
-    maintenanceRequests
-  ] = await Promise.all([
-    db.contract.count({
-      where: {
-        tenantId,
-        status: 'ACTIVE'
-      }
-    }),
-    db.payment.aggregate({
-      where: {
-        contract: { tenantId },
-        status: 'PAID',
-        paidAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      },
-      _sum: { amount: true }
-    }),
-    db.payment.count({
-      where: {
-        contract: { tenantId },
-        status: 'PENDING',
-        dueDate: {
-          gte: new Date()
-        }
-      }
-    }),
-    db.payment.count({
-      where: {
-        contract: { tenantId },
-        status: 'PENDING',
-        dueDate: {
-          lt: new Date()
-        }
-      }
-    }),
-    db.maintenanceRequest.count({
-      where: {
-        tenantId,
-        createdAt: {
-          gte: startDate
-        }
-      }
-    })
-  ]);
+    case 'BROKER':
+      // Estadísticas del corredor
+      const [
+        brokerProperties,
+        brokerContracts,
+        brokerPayments,
+        brokerRevenue,
+        brokerCompletedTasks,
+        brokerPendingTasks
+      ] = await Promise.all([
+        db.property.count({ where: { brokerId: user.id } }),
+        db.contract.count({ where: { brokerId: user.id, status: 'ACTIVE' } }),
+        db.payment.count({ 
+          where: { 
+            contract: { brokerId: user.id },
+            status: 'PAID'
+          } 
+        }),
+        db.payment.aggregate({
+          where: {
+            contract: { brokerId: user.id },
+            status: 'PAID',
+            createdAt: { gte: startDate }
+          },
+          _sum: { amount: true }
+        }),
+        db.task.count({ 
+          where: { 
+            property: { brokerId: user.id },
+            status: 'COMPLETED'
+          } 
+        }),
+        db.task.count({ 
+          where: { 
+            property: { brokerId: user.id },
+            status: 'PENDING'
+          } 
+        })
+      ]);
 
-  return {
-    overview: {
-      activeContracts,
-      totalPaid: totalPaid._sum.amount || 0,
-      pendingPayments,
-      overduePayments,
-      maintenanceRequests
-    }
-  };
-}
+      stats.totalProperties = brokerProperties;
+      stats.totalContracts = brokerContracts;
+      stats.totalPayments = brokerPayments;
+      stats.monthlyRevenue = brokerRevenue._sum.amount || 0;
+      stats.completedTasks = brokerCompletedTasks;
+      stats.pendingTasks = brokerPendingTasks;
+      break;
 
-async function getRunnerAnalytics(runnerId: string, startDate: Date, endDate: Date) {
-  const [
-    totalTasks,
-    completedTasks,
-    pendingTasks,
-    totalEarnings
-  ] = await Promise.all([
-    db.task.count({
-      where: { assignedTo: runnerId }
-    }),
-    db.task.count({
-      where: {
-        assignedTo: runnerId,
-        status: 'COMPLETED',
-        updatedAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      }
-    }),
-    db.task.count({
-      where: {
-        assignedTo: runnerId,
-        status: 'PENDING'
-      }
-    }),
-    db.payment.aggregate({
-      where: {
-        contract: {
-          tasks: {
-            some: {
-              assignedTo: runnerId,
-              status: 'COMPLETED',
-              updatedAt: {
-                gte: startDate,
-                lte: endDate
+    case 'TENANT':
+      // Estadísticas del inquilino
+      const [
+        tenantContracts,
+        tenantPayments,
+        tenantCompletedTasks,
+        tenantPendingTasks
+      ] = await Promise.all([
+        db.contract.count({ where: { tenantId: user.id, status: 'ACTIVE' } }),
+        db.payment.count({ 
+          where: { 
+            contract: { tenantId: user.id },
+            status: 'PAID'
+          } 
+        }),
+        db.maintenanceRequest.count({ 
+          where: { 
+            tenantId: user.id,
+            status: 'COMPLETED'
+          } 
+        }),
+        db.maintenanceRequest.count({ 
+          where: { 
+            tenantId: user.id,
+            status: 'PENDING'
+          } 
+        })
+      ]);
+
+      stats.totalContracts = tenantContracts;
+      stats.totalPayments = tenantPayments;
+      stats.completedTasks = tenantCompletedTasks;
+      stats.pendingTasks = tenantPendingTasks;
+      break;
+
+    case 'RUNNER':
+      // Estadísticas del runner
+      const [
+        runnerCompletedTasks,
+        runnerPendingTasks,
+        runnerTotalEarnings,
+        runnerPendingPayments
+      ] = await Promise.all([
+        db.task.count({ 
+          where: { 
+            assignedTo: user.id,
+            status: 'COMPLETED'
+          } 
+        }),
+        db.task.count({ 
+          where: { 
+            assignedTo: user.id,
+            status: 'PENDING'
+          } 
+        }),
+        db.payment.aggregate({
+          where: {
+            contract: {
+              tasks: {
+                some: {
+                  assignedTo: user.id,
+                  status: 'COMPLETED'
+                }
               }
-            }
-          }
-        },
-        status: 'PAID'
-      },
-      _sum: { amount: true }
-    })
-  ]);
-
-  return {
-    overview: {
-      totalTasks,
-      completedTasks,
-      pendingTasks,
-      totalEarnings: totalEarnings._sum.amount || 0
-    }
-  };
-}
-
-async function getProviderAnalytics(providerId: string, startDate: Date, endDate: Date) {
-  const [
-    totalServices,
-    activeServices,
-    totalRequests,
-    completedRequests,
-    totalEarnings
-  ] = await Promise.all([
-    db.service.count({
-      where: { providerId }
-    }),
-    db.service.count({
-      where: {
-        providerId,
-        isActive: true
-      }
-    }),
-    db.maintenanceRequest.count({
-      where: { assignedProviderId: providerId }
-    }),
-    db.maintenanceRequest.count({
-      where: {
-        assignedProviderId: providerId,
-        status: 'COMPLETED',
-        updatedAt: {
-          gte: startDate,
-          lte: endDate
-        }
-      }
-    }),
-    db.payment.aggregate({
-      where: {
-        contract: {
-          maintenanceRequests: {
-            some: {
-              assignedProviderId: providerId,
-              status: 'COMPLETED',
-              updatedAt: {
-                gte: startDate,
-                lte: endDate
+            },
+            status: 'PAID'
+          },
+          _sum: { amount: true }
+        }),
+        db.payment.aggregate({
+          where: {
+            contract: {
+              tasks: {
+                some: {
+                  assignedTo: user.id,
+                  status: 'COMPLETED'
+                }
               }
-            }
-          }
-        },
-        status: 'PAID'
-      },
-      _sum: { amount: true }
-    })
-  ]);
+            },
+            status: 'PENDING'
+          },
+          _sum: { amount: true }
+        })
+      ]);
 
-  return {
-    overview: {
-      totalServices,
-      activeServices,
-      totalRequests,
-      completedRequests,
-      totalEarnings: totalEarnings._sum.amount || 0
-    }
-  };
+      stats.completedTasks = runnerCompletedTasks;
+      stats.pendingTasks = runnerPendingTasks;
+      stats.totalEarnings = runnerTotalEarnings._sum.amount || 0;
+      stats.pendingPayments = runnerPendingPayments._sum.amount || 0;
+      break;
+
+    case 'PROVIDER':
+    case 'MAINTENANCE':
+      // Estadísticas del proveedor
+      const [
+        providerCompletedRequests,
+        providerTotalEarnings,
+        providerPendingPayments,
+        providerAverageRating,
+        providerTotalReviews
+      ] = await Promise.all([
+        db.maintenanceRequest.count({ 
+          where: { 
+            assignedProviderId: user.id,
+            status: 'COMPLETED'
+          } 
+        }),
+        db.payment.aggregate({
+          where: {
+            maintenanceRequest: {
+              assignedProviderId: user.id,
+              status: 'COMPLETED'
+            },
+            status: 'PAID'
+          },
+          _sum: { amount: true }
+        }),
+        db.payment.aggregate({
+          where: {
+            maintenanceRequest: {
+              assignedProviderId: user.id,
+              status: 'COMPLETED'
+            },
+            status: 'PENDING'
+          },
+          _sum: { amount: true }
+        }),
+        db.service.aggregate({
+          where: { providerId: user.id },
+          _avg: { averageRating: true }
+        }),
+        db.service.aggregate({
+          where: { providerId: user.id },
+          _sum: { totalReviews: true }
+        })
+      ]);
+
+      stats.completedRequests = providerCompletedRequests;
+      stats.totalEarnings = providerTotalEarnings._sum.amount || 0;
+      stats.pendingPayments = providerPendingPayments._sum.amount || 0;
+      stats.averageRating = providerAverageRating._avg.averageRating || 0;
+      stats.totalReviews = providerTotalReviews._sum.totalReviews || 0;
+      break;
+
+    default:
+      // Estadísticas básicas para otros roles
+      stats.totalUsers = 0;
+      stats.totalProperties = 0;
+      stats.totalContracts = 0;
+      stats.totalPayments = 0;
+      stats.monthlyRevenue = 0;
+      break;
+  }
+
+  return stats;
 }

@@ -1,139 +1,72 @@
-// Logger simplificado para evitar dependencias circulares
-const simpleLogger = {
-  info: (message: string, data?: any) => {
-    console.log(`[CACHE INFO] ${message}`, data || '');
-  },
-  warn: (message: string, data?: any) => {
-    console.warn(`[CACHE WARN] ${message}`, data || '');
-  },
-  error: (message: string, data?: any) => {
-    console.error(`[CACHE ERROR] ${message}`, data || '');
-  },
-  debug: (message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`[CACHE DEBUG] ${message}`, data || '');
-    }
-  }
-};
+import { logger } from './logger-minimal';
 
-// Interfaz para entradas de cache
-interface CacheEntry<T> {
+interface CacheItem<T> {
   data: T;
   timestamp: number;
   ttl: number; // Time to live in milliseconds
-  version?: number; // Para invalidación de versiones
 }
 
-// Interfaz para el driver de cache
-interface CacheDriver {
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T, ttl?: number): Promise<void>;
-  delete(key: string): Promise<boolean>;
-  clear(): Promise<void>;
-  getStats(): Promise<{
-    total: number;
-    hitRate?: number;
-    memoryUsage?: number;
-    uptime?: number;
-  }>;
-  exists(key: string): Promise<boolean>;
-  expire(key: string, ttl: number): Promise<boolean>;
-  ttl(key: string): Promise<number>;
-}
+class MemoryCache {
+  private cache = new Map<string, CacheItem<any>>();
+  private maxSize: number;
+  private defaultTTL: number;
 
-// Configuración del cache
-interface CacheConfig {
-  defaultTTL: number; // 5 minutos por defecto
-  maxSize: number; // Máximo número de entradas
-  cleanupInterval: number; // Intervalo de limpieza en ms
-  enableRedis?: boolean; // Habilitar Redis si está disponible
-  redisUrl?: string; // URL de Redis
-}
-
-// Driver de cache en memoria
-class MemoryCacheDriver implements CacheDriver {
-  private cache: Map<string, CacheEntry<any>> = new Map();
-  private config!: CacheConfig;
-  private hitCount = 0;
-  private missCount = 0;
-  private startTime = Date.now();
-
-  constructor(config: CacheConfig) {
-    this.config = config;
-    this.startCleanupInterval();
+  constructor(maxSize: number = 1000, defaultTTL: number = 5 * 60 * 1000) { // 5 minutes default
+    this.maxSize = maxSize;
+    this.defaultTTL = defaultTTL;
+    
+    // Limpiar cache expirado cada minuto
+    setInterval(() => {
+      this.cleanExpired();
+    }, 60 * 1000);
   }
 
-  async get<T>(key: string): Promise<T | null> {
-    const entry = this.cache.get(key);
-
-    if (!entry) {
-      this.missCount++;
-      return null;
+  set<T>(key: string, data: T, ttl?: number): void {
+    // Si el cache está lleno, eliminar el item más antiguo
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      this.cache.delete(oldestKey);
     }
 
-    // Verificar si ha expirado
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      this.missCount++;
-      return null;
-    }
-
-    this.hitCount++;
-    return entry.data;
-  }
-
-  async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-    // Verificar límite de tamaño
-    if (this.cache.size >= this.config.maxSize) {
-      this.evictOldest();
-    }
-
-    const entry: CacheEntry<T> = {
-      data: value,
+    const item: CacheItem<T> = {
+      data,
       timestamp: Date.now(),
-      ttl: ttl || this.config.defaultTTL
+      ttl: ttl || this.defaultTTL
     };
 
-    this.cache.set(key, entry);
+    this.cache.set(key, item);
+    
+    logger.debug('Cache set', { key, ttl: item.ttl });
   }
 
-  async delete(key: string): Promise<boolean> {
-    return this.cache.delete(key);
-  }
-
-  async clear(): Promise<void> {
-    this.cache.clear();
-    this.hitCount = 0;
-    this.missCount = 0;
-    simpleLogger.info('Memory cache cleared');
-  }
-
-  async getStats() {
-    const now = Date.now();
-    let expired = 0;
-
-    for (const [key, entry] of this.cache.entries()) {
-      if (now - entry.timestamp > entry.ttl) {
-        expired++;
-      }
+  get<T>(key: string): T | null {
+    const item = this.cache.get(key);
+    
+    if (!item) {
+      logger.debug('Cache miss', { key });
+      return null;
     }
 
-    const totalRequests = this.hitCount + this.missCount;
-    const hitRate = totalRequests > 0 ? (this.hitCount / totalRequests) * 100 : 0;
+    // Verificar si el item ha expirado
+    if (Date.now() - item.timestamp > item.ttl) {
+      this.cache.delete(key);
+      logger.debug('Cache expired', { key });
+      return null;
+    }
 
-    return {
-      total: this.cache.size,
-      hitRate,
-      memoryUsage: this.cache.size * 1024, // Estimación aproximada
-      uptime: now - this.startTime
-    };
+    logger.debug('Cache hit', { key });
+    return item.data;
   }
 
-  async exists(key: string): Promise<boolean> {
-    const entry = this.cache.get(key);
-    if (!entry) return false;
+  has(key: string): boolean {
+    const item = this.cache.get(key);
+    
+    if (!item) {
+      return false;
+    }
 
-    if (Date.now() - entry.timestamp > entry.ttl) {
+    // Verificar si el item ha expirado
+    if (Date.now() - item.timestamp > item.ttl) {
       this.cache.delete(key);
       return false;
     }
@@ -141,333 +74,154 @@ class MemoryCacheDriver implements CacheDriver {
     return true;
   }
 
-  async expire(key: string, ttl: number): Promise<boolean> {
-    const entry = this.cache.get(key);
-    if (!entry) return false;
-
-    entry.ttl = ttl;
-    return true;
-  }
-
-  async ttl(key: string): Promise<number> {
-    const entry = this.cache.get(key);
-    if (!entry) return -2; // Key doesn't exist
-
-    const remaining = entry.ttl - (Date.now() - entry.timestamp);
-    return remaining > 0 ? Math.ceil(remaining / 1000) : -1; // Convert to seconds
-  }
-
-  private evictOldest(): void {
-    let oldestKey: string | null = null;
-    let oldestTimestamp = Date.now();
-
-    for (const [key, entry] of this.cache.entries()) {
-      if (entry.timestamp < oldestTimestamp) {
-        oldestTimestamp = entry.timestamp;
-        oldestKey = key;
-      }
+  delete(key: string): boolean {
+    const deleted = this.cache.delete(key);
+    if (deleted) {
+      logger.debug('Cache deleted', { key });
     }
-
-    if (oldestKey) {
-      this.cache.delete(oldestKey);
-      simpleLogger.debug('Evicted oldest cache entry', { key: oldestKey });
-    }
+    return deleted;
   }
 
-  private cleanup(): void {
+  clear(): void {
+    this.cache.clear();
+    logger.debug('Cache cleared');
+  }
+
+  private cleanExpired(): void {
     const now = Date.now();
     let cleaned = 0;
 
-    for (const [key, entry] of this.cache.entries()) {
-      if (now - entry.timestamp > entry.ttl) {
+    for (const [key, item] of this.cache.entries()) {
+      if (now - item.timestamp > item.ttl) {
         this.cache.delete(key);
         cleaned++;
       }
     }
 
     if (cleaned > 0) {
-      simpleLogger.debug('Cleaned expired cache entries', { count: cleaned });
+      logger.debug('Cache cleaned', { expiredItems: cleaned });
     }
   }
 
-  private startCleanupInterval(): void {
-    setInterval(() => {
-      this.cleanup();
-    }, this.config.cleanupInterval);
-  }
-}
-
-// Driver de cache Redis (si está disponible)
-class RedisCacheDriver implements CacheDriver {
-  private redis: any = null;
-  private isConnected = false;
-
-  constructor(config: CacheConfig) {
-    this.initializeRedis(config);
+  size(): number {
+    return this.cache.size;
   }
 
-  private async initializeRedis(config: CacheConfig): Promise<void> {
-    // Para evitar problemas de compilación, deshabilitar Redis completamente por ahora
-    simpleLogger.info('Using memory cache (Redis disabled for build compatibility)');
-    this.isConnected = false;
+  keys(): string[] {
+    return Array.from(this.cache.keys());
   }
 
-  async get<T>(key: string): Promise<T | null> {
-    if (!this.isConnected || !this.redis) return null;
+  // Método para obtener estadísticas del cache
+  getStats() {
+    const now = Date.now();
+    let expired = 0;
+    let valid = 0;
 
-    try {
-      const data = await this.redis.get(key);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      simpleLogger.error('Redis GET error:', error);
-      return null;
-    }
-  }
-
-  async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-    if (!this.isConnected || !this.redis) return;
-
-    try {
-      const serialized = JSON.stringify(value);
-      if (ttl) {
-        await this.redis.setEx(key, Math.ceil(ttl / 1000), serialized);
+    for (const item of this.cache.values()) {
+      if (now - item.timestamp > item.ttl) {
+        expired++;
       } else {
-        await this.redis.set(key, serialized);
+        valid++;
       }
-    } catch (error) {
-      simpleLogger.error('Redis SET error:', error);
-    }
-  }
-
-  async delete(key: string): Promise<boolean> {
-    if (!this.isConnected || !this.redis) return false;
-
-    try {
-      const result = await this.redis.del(key);
-      return result > 0;
-    } catch (error) {
-      simpleLogger.error('Redis DEL error:', error);
-      return false;
-    }
-  }
-
-  async clear(): Promise<void> {
-    if (!this.isConnected || !this.redis) return;
-
-    try {
-      await this.redis.flushAll();
-      simpleLogger.info('Redis cache cleared');
-    } catch (error) {
-      simpleLogger.error('Redis FLUSH error:', error);
-    }
-  }
-
-  async getStats() {
-    if (!this.isConnected || !this.redis) {
-      return { total: 0 };
     }
 
-    try {
-      const info = await this.redis.info();
-      // Parse Redis info for basic stats
-      return {
-        total: 0, // Would need to parse from info
-        memoryUsage: 0,
-        uptime: 0
-      };
-    } catch (error) {
-      simpleLogger.error('Redis INFO error:', error);
-      return { total: 0 };
-    }
-  }
-
-  async exists(key: string): Promise<boolean> {
-    if (!this.isConnected || !this.redis) return false;
-
-    try {
-      const result = await this.redis.exists(key);
-      return result === 1;
-    } catch (error) {
-      simpleLogger.error('Redis EXISTS error:', error);
-      return false;
-    }
-  }
-
-  async expire(key: string, ttl: number): Promise<boolean> {
-    if (!this.isConnected || !this.redis) return false;
-
-    try {
-      const result = await this.redis.expire(key, Math.ceil(ttl / 1000));
-      return result === 1;
-    } catch (error) {
-      simpleLogger.error('Redis EXPIRE error:', error);
-      return false;
-    }
-  }
-
-  async ttl(key: string): Promise<number> {
-    if (!this.isConnected || !this.redis) return -2;
-
-    try {
-      return await this.redis.ttl(key);
-    } catch (error) {
-      simpleLogger.error('Redis TTL error:', error);
-      return -2;
-    }
-  }
-}
-
-class DistributedCacheManager {
-  private driver!: CacheDriver;
-  private config!: CacheConfig;
-
-  constructor(config: Partial<CacheConfig> = {}) {
-    this.config = {
-      defaultTTL: 5 * 60 * 1000, // 5 minutos
-      maxSize: 1000,
-      cleanupInterval: 10 * 60 * 1000, // 10 minutos
-      enableRedis: process.env.REDIS_URL ? true : false,
-      ...config
+    return {
+      total: this.cache.size,
+      valid,
+      expired,
+      maxSize: this.maxSize,
+      usage: (this.cache.size / this.maxSize) * 100
     };
-
-    // Inicializar el driver apropiado
-    this.initializeDriver();
   }
-
-  private async initializeDriver(): Promise<void> {
-    if (this.config.enableRedis) {
-      try {
-        this.driver = new RedisCacheDriver(this.config);
-        simpleLogger.info('Using Redis cache driver');
-      } catch (error) {
-        simpleLogger.warn('Failed to initialize Redis, falling back to memory cache:', error);
-        this.driver = new MemoryCacheDriver(this.config);
-      }
-    } else {
-      this.driver = new MemoryCacheDriver(this.config);
-      simpleLogger.info('Using memory cache driver');
-    }
-  }
-
-  // Obtener datos del cache
-  async get<T>(key: string): Promise<T | null> {
-    return this.driver.get<T>(key);
-  }
-
-  // Guardar datos en cache
-  async set<T>(key: string, data: T, ttl?: number): Promise<void> {
-    return this.driver.set(key, data, ttl || this.config.defaultTTL);
-  }
-
-  // Eliminar entrada del cache
-  async delete(key: string): Promise<boolean> {
-    return this.driver.delete(key);
-  }
-
-  // Limpiar todo el cache
-  async clear(): Promise<void> {
-    return this.driver.clear();
-  }
-
-  // Obtener estadísticas del cache
-  async getStats() {
-    return this.driver.getStats();
-  }
-
-  // Verificar si una clave existe
-  async exists(key: string): Promise<boolean> {
-    return this.driver.exists(key);
-  }
-
-  // Establecer tiempo de expiración
-  async expire(key: string, ttl: number): Promise<boolean> {
-    return this.driver.expire(key, ttl);
-  }
-
-  // Obtener tiempo restante de vida
-  async ttl(key: string): Promise<number> {
-    return this.driver.ttl(key);
-  }
-
-  // Obtener o establecer (con función)
-  async getOrSet<T>(
-    key: string,
-    fetcher: () => Promise<T>,
-    ttl?: number
-  ): Promise<T> {
-    // Intentar obtener del cache
-    const cached = await this.get<T>(key);
-    if (cached !== null) {
-      simpleLogger.debug('Cache hit', { key });
-      return cached;
-    }
-
-    // Si no está en cache, obtener datos y guardarlos
-    simpleLogger.debug('Cache miss, fetching data', { key });
-    const data = await fetcher();
-    await this.set(key, data, ttl);
-
-    return data;
-  }
-
 }
 
-// Instancia singleton del cache manager distribuido
-export const cacheManager = new DistributedCacheManager();
+// Instancia global del cache
+export const cache = new MemoryCache();
 
-// Funciones de utilidad para cache específico de la aplicación
-export const CacheKeys = {
-  USER_PROFILE: (userId: string) => `user:profile:${userId}`,
-  PROPERTY_LIST: (filters: string) => `property:list:${filters}`,
-  CONTRACT_DETAILS: (contractId: string) => `contract:details:${contractId}`,
-  MARKET_STATS: (city: string, commune?: string) => `market:stats:${city}:${commune || 'all'}`,
-  USER_STATS: (userId: string) => `user:stats:${userId}`,
-  SYSTEM_METRICS: 'system:metrics',
-  ANALYTICS_DASHBOARD: 'analytics:dashboard',
-  AUDIT_LOGS: (page: number, filters: string) => `audit:logs:${page}:${filters}`
+// Funciones de utilidad para cache con diferentes TTLs
+export const cacheTTL = {
+  SHORT: 1 * 60 * 1000,      // 1 minuto
+  MEDIUM: 5 * 60 * 1000,     // 5 minutos
+  LONG: 15 * 60 * 1000,      // 15 minutos
+  VERY_LONG: 60 * 60 * 1000, // 1 hora
 };
 
-// Wrapper para operaciones de base de datos con cache
-export async function withCache<T>(
-  key: string,
-  operation: () => Promise<T>,
-  ttl?: number
-): Promise<T> {
-  return cacheManager.getOrSet(key, operation, ttl);
+// Función helper para generar claves de cache consistentes
+export function generateCacheKey(prefix: string, params: Record<string, any>): string {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map(key => `${key}:${params[key]}`)
+    .join('|');
+  
+  return `${prefix}:${sortedParams}`;
 }
 
-// Invalidar cache por patrón (versión simplificada)
-export async function invalidateCache(pattern: string): Promise<void> {
-  // Esta función necesita ser implementada de manera diferente para Redis
-  // Por ahora, solo loggeamos que debería invalidarse
-  simpleLogger.info('Cache invalidation requested', { pattern });
-  // En una implementación completa, se necesitaría:
-  // 1. Para Redis: usar SCAN para encontrar keys con patrón
-  // 2. Para memoria: iterar sobre las keys disponibles
+// Función helper para cache con retry automático
+export async function withCache<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttl: number = cacheTTL.MEDIUM
+): Promise<T> {
+  // Intentar obtener del cache primero
+  const cached = cache.get<T>(key);
+  if (cached !== null) {
+    return cached;
+  }
 
-  // Versión básica que funciona con ambos drivers
+  // Si no está en cache, ejecutar la función
   try {
-    // Intentar limpiar algunas keys comunes relacionadas con el patrón
-    if (pattern.includes('user')) {
-      await cacheManager.clear(); // Limpieza completa por simplicidad
-    } else if (pattern.includes('property')) {
-      await cacheManager.clear();
-    } else if (pattern.includes('market')) {
-      await cacheManager.clear();
-    }
+    const data = await fetcher();
+    cache.set(key, data, ttl);
+    return data;
   } catch (error) {
-    simpleLogger.error('Error invalidating cache', { pattern, error });
+    logger.error('Error en withCache:', { key, error });
+    throw error;
   }
 }
 
-// Cache para estadísticas de usuario (se actualiza cada hora)
-export const USER_STATS_TTL = 60 * 60 * 1000; // 1 hora
+// Función para invalidar cache por patrón
+export function invalidateCachePattern(pattern: string): number {
+  const keys = cache.keys();
+  let invalidated = 0;
 
-// Cache para estadísticas de mercado (se actualiza cada 30 minutos)
-export const MARKET_STATS_TTL = 30 * 60 * 1000; // 30 minutos
+  for (const key of keys) {
+    if (key.includes(pattern)) {
+      cache.delete(key);
+      invalidated++;
+    }
+  }
 
-// Cache para métricas del sistema (se actualiza cada 5 minutos)
-export const SYSTEM_METRICS_TTL = 5 * 60 * 1000; // 5 minutos
+  logger.debug('Cache invalidated by pattern', { pattern, invalidated });
+  return invalidated;
+}
 
-// Cache para dashboard de analytics (se actualiza cada 15 minutos)
-export const ANALYTICS_DASHBOARD_TTL = 15 * 60 * 1000; // 15 minutos
+// Función para cache de consultas de base de datos
+export function getDBCacheKey(table: string, where: any, include?: any, orderBy?: any): string {
+  const params = {
+    table,
+    where: JSON.stringify(where),
+    include: include ? JSON.stringify(include) : undefined,
+    orderBy: orderBy ? JSON.stringify(orderBy) : undefined,
+  };
+
+  return generateCacheKey(`db:${table}`, params);
+}
+
+// Función para cache de APIs
+export function getAPICacheKey(endpoint: string, params: Record<string, any>): string {
+  return generateCacheKey(`api:${endpoint}`, params);
+}
+
+// Función para cache de estadísticas
+export function getStatsCacheKey(role: string, period: string, userId?: string): string {
+  const params = { role, period, ...(userId && { userId }) };
+  return generateCacheKey('stats', params);
+}
+
+// Función para cache de búsquedas
+export function getSearchCacheKey(query: string, type: string, userId: string): string {
+  const params = { query, type, userId };
+  return generateCacheKey('search', params);
+}
+
+export default cache;
