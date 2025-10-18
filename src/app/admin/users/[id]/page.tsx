@@ -69,8 +69,9 @@ export default function UserDetailPage() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL');
+  const formatDate = (date: string | Date) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('es-CL');
   };
 
   return (
@@ -229,16 +230,16 @@ export default function UserDetailPage() {
               <CardContent className="space-y-2">
                 <div>
                   <span className="font-medium">Registrado:</span>
-                  <span className="ml-2">{formatDate(user.createdAt.toISOString())}</span>
+                  <span className="ml-2">{formatDate(user.createdAt)}</span>
                 </div>
                 <div>
                   <span className="font-medium">Última actualización:</span>
-                  <span className="ml-2">{formatDate(user.updatedAt.toISOString())}</span>
+                  <span className="ml-2">{formatDate(user.updatedAt)}</span>
                 </div>
                 {user.lastLogin && (
                   <div>
                     <span className="font-medium">Último acceso:</span>
-                    <span className="ml-2">{formatDate(user.lastLogin.toISOString())}</span>
+                    <span className="ml-2">{formatDate(user.lastLogin)}</span>
                   </div>
                 )}
               </CardContent>

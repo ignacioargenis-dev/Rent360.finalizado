@@ -75,8 +75,9 @@ export default function PropertyDetailPage() {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL');
+  const formatDate = (date: string | Date) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('es-CL');
   };
 
   return (
@@ -252,11 +253,11 @@ export default function PropertyDetailPage() {
               <CardContent className="space-y-2">
                 <div>
                   <span className="font-medium">Creado:</span>
-                  <span className="ml-2">{formatDate(property.createdAt.toISOString())}</span>
+                  <span className="ml-2">{formatDate(property.createdAt)}</span>
                 </div>
                 <div>
                   <span className="font-medium">Actualizado:</span>
-                  <span className="ml-2">{formatDate(property.updatedAt.toISOString())}</span>
+                  <span className="ml-2">{formatDate(property.updatedAt)}</span>
                 </div>
               </CardContent>
             </Card>

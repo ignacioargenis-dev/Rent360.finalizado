@@ -256,7 +256,8 @@ export default function AdminPropertiesPage() {
         property =>
           property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          property.ownerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (property.ownerId &&
+            property.ownerId.toLowerCase().includes(searchQuery.toLowerCase())) ||
           property.commune.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
@@ -467,7 +468,8 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 flex-1"
-              onClick={() => router.push(`/admin/users/${property.ownerId}`)}
+              onClick={() => property.ownerId && router.push(`/admin/users/${property.ownerId}`)}
+              disabled={!property.ownerId}
             >
               <Users className="w-3 h-3 mr-1" />
               <span>Propietario</span>
@@ -562,7 +564,8 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-              onClick={() => router.push(`/admin/users/${property.ownerId}`)}
+              onClick={() => property.ownerId && router.push(`/admin/users/${property.ownerId}`)}
+              disabled={!property.ownerId}
             >
               <Users className="w-4 h-4 mr-1" />
               <span>Propietario</span>
