@@ -197,12 +197,26 @@ export async function GET(request: NextRequest) {
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images
         ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
-            (img: string) =>
-              img.startsWith('/images/')
-                ? img.replace('/images/', '/api/uploads/')
-                : img.startsWith('/uploads/')
-                  ? img.replace('/uploads/', '/api/uploads/')
-                  : img
+            (img: string) => {
+              // Si la imagen ya tiene la ruta correcta de API, no hacer nada
+              if (img.startsWith('/api/uploads/')) {
+                return img;
+              }
+              // Si empieza con /images/, convertir a /api/uploads/
+              if (img.startsWith('/images/')) {
+                return img.replace('/images/', '/api/uploads/');
+              }
+              // Si empieza con /uploads/, convertir a /api/uploads/
+              if (img.startsWith('/uploads/')) {
+                return img.replace('/uploads/', '/api/uploads/');
+              }
+              // Si es una ruta relativa, asumir que está en uploads
+              if (!img.startsWith('http') && !img.startsWith('/')) {
+                return `/api/uploads/${img}`;
+              }
+              // Para cualquier otro caso, devolver tal como está
+              return img;
+            }
           )
         : [],
       views: property.views,

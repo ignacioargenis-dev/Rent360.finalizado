@@ -114,9 +114,38 @@ export default function AdminPropertiesPage() {
             status: property.status,
             images: property.images ? JSON.stringify(property.images) : JSON.stringify([]),
             features: property.features || [],
-            ownerId: property.ownerId,
+            views: property.views || 0,
+            inquiries: property.inquiries || 0,
+            ownerId: property.owner?.id || property.ownerId,
+            owner: property.owner, // Incluir información completa del propietario
             createdAt: new Date(property.createdAt),
             updatedAt: new Date(property.updatedAt),
+            // Características adicionales con valores por defecto
+            furnished: property.furnished || false,
+            petFriendly: property.petFriendly || false,
+            parkingSpaces: property.parkingSpaces || 0,
+            availableFrom: property.availableFrom ? new Date(property.availableFrom) : null,
+            floor: property.floor || null,
+            buildingName: property.buildingName || null,
+            yearBuilt: property.yearBuilt || null,
+            // Características del edificio/servicios
+            heating: property.heating || false,
+            cooling: property.cooling || false,
+            internet: property.internet || false,
+            elevator: property.elevator || false,
+            balcony: property.balcony || false,
+            terrace: property.terrace || false,
+            garden: property.garden || false,
+            pool: property.pool || false,
+            gym: property.gym || false,
+            security: property.security || false,
+            concierge: property.concierge || false,
+            // Campos opcionales
+            type: property.type,
+            brokerId: property.brokerId || null,
+            currentTenant: property.currentTenant || null,
+            averageRating: property.averageRating || 0,
+            totalReviews: property.totalReviews || 0,
           }));
 
           setProperties(transformedProperties);
@@ -449,7 +478,8 @@ export default function AdminPropertiesPage() {
         </div>
 
         <div className="text-xs text-gray-500 mb-3">
-          <div>Propietario ID: {property.ownerId}</div>
+          <div>Propietario: {(property as any).owner?.name || 'No disponible'}</div>
+          <div>Email: {(property as any).owner?.email || 'No disponible'}</div>
           <div>Estado: {property.status}</div>
         </div>
 
@@ -468,8 +498,11 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 flex-1"
-              onClick={() => property.ownerId && router.push(`/admin/users/${property.ownerId}`)}
-              disabled={!property.ownerId}
+              onClick={() =>
+                (property as any).owner?.id &&
+                router.push(`/admin/users/${(property as any).owner.id}`)
+              }
+              disabled={!(property as any).owner?.id}
             >
               <Users className="w-3 h-3 mr-1" />
               <span>Propietario</span>
@@ -518,7 +551,7 @@ export default function AdminPropertiesPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Users className="w-4 h-4" />
-                <span>Propietario ID: {property.ownerId}</span>
+                <span>Propietario: {(property as any).owner?.name || 'No disponible'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>Estado: {property.status}</span>
@@ -564,8 +597,11 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-              onClick={() => property.ownerId && router.push(`/admin/users/${property.ownerId}`)}
-              disabled={!property.ownerId}
+              onClick={() =>
+                (property as any).owner?.id &&
+                router.push(`/admin/users/${(property as any).owner.id}`)
+              }
+              disabled={!(property as any).owner?.id}
             >
               <Users className="w-4 h-4 mr-1" />
               <span>Propietario</span>

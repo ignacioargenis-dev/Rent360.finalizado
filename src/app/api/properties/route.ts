@@ -320,50 +320,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Datos de propiedades por defecto para evitar errores durante build
     const startTime = Date.now();
-    const defaultProperties = [
-      {
-        id: 'prop-1',
-        title: 'Propiedad de Ejemplo',
-        description: 'Propiedad de ejemplo para desarrollo',
-        address: 'Dirección de ejemplo',
-        city: 'Santiago',
-        commune: 'Providencia',
-        region: 'RM',
-        price: 500000,
-        deposit: 500000,
-        bedrooms: 2,
-        bathrooms: 1,
-        area: 80,
-        type: 'apartment',
-        status: 'AVAILABLE',
-        images: [],
-        features: [],
-        ownerId: 'owner-1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        // Nuevos campos con valores por defecto
-        furnished: false,
-        petFriendly: false,
-        parkingSpaces: 0,
-        availableFrom: undefined,
-        floor: undefined,
-        buildingName: undefined,
-        yearBuilt: undefined,
-        heating: false,
-        cooling: false,
-        internet: false,
-        elevator: false,
-        balcony: false,
-        terrace: false,
-        garden: false,
-        pool: false,
-        gym: false,
-        security: false,
-        concierge: false,
-      },
-    ];
 
     // Obtener parámetros de consulta
     const { searchParams } = new URL(request.url);
@@ -381,56 +338,162 @@ export async function GET(request: NextRequest) {
     const minArea = searchParams.get('minArea');
     const maxArea = searchParams.get('maxArea');
 
+    // Construir filtros para la base de datos
+    const where: any = {};
+
+    // Filtros de búsqueda
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { commune: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (city) {
+      where.city = { contains: city, mode: 'insensitive' };
+    }
+
+    if (commune) {
+      where.commune = { contains: commune, mode: 'insensitive' };
+    }
+
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) {
+        where.price.gte = parseFloat(minPrice);
+      }
+      if (maxPrice) {
+        where.price.lte = parseFloat(maxPrice);
+      }
+    }
+
+    if (bedrooms) {
+      where.bedrooms = parseInt(bedrooms);
+    }
+
+    if (bathrooms) {
+      where.bathrooms = parseInt(bathrooms);
+    }
+
+    if (minArea || maxArea) {
+      where.area = {};
+      if (minArea) {
+        where.area.gte = parseFloat(minArea);
+      }
+      if (maxArea) {
+        where.area.lte = parseFloat(maxArea);
+      }
+    }
+
     const skip = (page - 1) * limit;
 
-    // Datos por defecto para evitar errores durante build
-    const filteredProperties = defaultProperties.filter(prop => {
-      if (status && prop.status !== status) {
-        return false;
-      }
-      if (type && prop.type !== type) {
-        return false;
-      }
-      if (city && !prop.city.toLowerCase().includes(city.toLowerCase())) {
-        return false;
-      }
-      if (commune && !prop.commune.toLowerCase().includes(commune.toLowerCase())) {
-        return false;
-      }
-      if (minPrice && prop.price < parseFloat(minPrice)) {
-        return false;
-      }
-      if (maxPrice && prop.price > parseFloat(maxPrice)) {
-        return false;
-      }
-      if (bedrooms && prop.bedrooms < parseInt(bedrooms)) {
-        return false;
-      }
-      if (bathrooms && prop.bathrooms < parseInt(bathrooms)) {
-        return false;
-      }
-      if (minArea && prop.area < parseFloat(minArea)) {
-        return false;
-      }
-      if (maxArea && prop.area > parseFloat(maxArea)) {
-        return false;
-      }
-      if (
-        search &&
-        !prop.title.toLowerCase().includes(search.toLowerCase()) &&
-        !prop.description.toLowerCase().includes(search.toLowerCase())
-      ) {
-        return false;
-      }
-      return true;
-    });
+    // Ejecutar consulta con paginación
+    const [properties, totalCount] = await Promise.all([
+      db.property.findMany({
+        where,
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
+          contracts: {
+            where: { status: 'ACTIVE' },
+            include: {
+              tenant: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      db.property.count({ where }),
+    ]);
 
-    // Simular paginación
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProperties = filteredProperties.slice(startIndex, endIndex);
+    // Formatear respuesta
+    const formattedProperties = properties.map(property => ({
+      id: property.id,
+      title: property.title,
+      description: property.description,
+      address: property.address,
+      city: property.city,
+      commune: property.commune,
+      region: property.region,
+      price: property.price,
+      deposit: property.deposit,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area,
+      type: property.type,
+      status: property.status,
+      features: property.features ? JSON.parse(property.features) : [],
+      images: property.images
+        ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
+            (img: string) => {
+              // Si la imagen ya tiene la ruta correcta de API, no hacer nada
+              if (img.startsWith('/api/uploads/')) {
+                return img;
+              }
+              // Si empieza con /images/, convertir a /api/uploads/
+              if (img.startsWith('/images/')) {
+                return img.replace('/images/', '/api/uploads/');
+              }
+              // Si empieza con /uploads/, convertir a /api/uploads/
+              if (img.startsWith('/uploads/')) {
+                return img.replace('/uploads/', '/api/uploads/');
+              }
+              // Si es una ruta relativa, asumir que está en uploads
+              if (!img.startsWith('http') && !img.startsWith('/')) {
+                return `/api/uploads/${img}`;
+              }
+              // Para cualquier otro caso, devolver tal como está
+              return img;
+            }
+          )
+        : [],
+      views: property.views,
+      inquiries: property.inquiries,
+      owner: property.owner,
+      currentTenant: property.contracts[0]?.tenant || null,
+      averageRating:
+        property.reviews.length > 0
+          ? property.reviews.reduce((sum, review) => sum + review.rating, 0) /
+            property.reviews.length
+          : 0,
+      totalReviews: property.reviews.length,
+      createdAt: property.createdAt,
+      updatedAt: property.updatedAt,
+    }));
 
-    const totalCount = filteredProperties.length;
+    const paginatedProperties = formattedProperties;
 
     // Log performance (simulado)
     const endTime = Date.now();
@@ -448,8 +511,11 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        pages: Math.ceil(totalCount / limit),
+        hasNext: page < Math.ceil(totalCount / limit),
+        hasPrev: page > 1,
       },
+      success: true,
     });
 
     return NextResponse.json({
@@ -458,8 +524,11 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        pages: Math.ceil(totalCount / limit),
+        hasNext: page < Math.ceil(totalCount / limit),
+        hasPrev: page > 1,
       },
+      success: true,
     });
   } catch (error) {
     logger.error('Error fetching properties', {
