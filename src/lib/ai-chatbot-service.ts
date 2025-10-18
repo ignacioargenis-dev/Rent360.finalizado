@@ -3,6 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { logger } from './logger';
 import { DatabaseError } from './errors';
+import { TrainingDataManager, allTrainingDatasets } from './ai-training-data';
+import { aiLearningSystem } from './ai-learning-system';
 
 /**
  * SISTEMA REVOLUCIONARIO DE CHATBOT IA 10.000% MEJORADO
@@ -2283,6 +2285,81 @@ export class AIChatbotService {
         maxTokens: 1000,
         temperature: 0.7,
       };
+    }
+  }
+
+  /**
+   * Procesa un mensaje del usuario usando datos de entrenamiento mejorados
+   */
+  async processMessageWithTrainingData(
+    userMessage: string,
+    userRole: string,
+    userId: string,
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<{
+    response: string;
+    confidence: number;
+    intent?: string;
+    suggestions?: string[];
+    metadata?: Record<string, any>;
+    trainingSource?: string;
+  }> {
+    try {
+      // Primero intentar con datos de entrenamiento específicos
+      const contextualResponse = TrainingDataManager.generateContextualResponse(
+        userMessage,
+        userRole,
+        'user_query'
+      );
+
+      if (contextualResponse) {
+        const confidence = TrainingDataManager.calculateConfidence(
+          userMessage,
+          contextualResponse,
+          userRole
+        );
+
+        const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
+        const intent = this.extractIntent(userMessage);
+
+        // Registrar interacción para aprendizaje
+        aiLearningSystem.recordInteraction({
+          userId,
+          userRole,
+          userMessage,
+          botResponse: contextualResponse,
+          context: { source: 'training_data' },
+          intent: intent || 'unknown',
+          confidence
+        });
+
+        logger.info('Respuesta generada con datos de entrenamiento', {
+          userId,
+          userRole,
+          intent,
+          confidence,
+          trainingSource: 'specialized_dataset'
+        });
+
+        return {
+          response: contextualResponse,
+          confidence,
+          intent,
+          suggestions,
+          metadata: {
+            source: 'training_data',
+            dataset: 'specialized',
+            timestamp: new Date().toISOString()
+          },
+          trainingSource: 'specialized_dataset'
+        };
+      }
+
+      // Si no hay coincidencia específica, usar el método original
+      return await this.processMessage(userMessage, userRole, userId, conversationHistory);
+    } catch (error) {
+      logger.error('Error procesando mensaje con datos de entrenamiento:', error);
+      return await this.processMessage(userMessage, userRole, userId, conversationHistory);
     }
   }
 

@@ -224,4 +224,21 @@ export function getSearchCacheKey(query: string, type: string, userId: string): 
   return generateCacheKey('search', params);
 }
 
+// Constantes para compatibilidad con archivos existentes
+export const CacheKeys = {
+  ANALYTICS_DASHBOARD: 'analytics_dashboard',
+  SYSTEM_METRICS: 'system_metrics',
+  USER_STATS: 'user_stats',
+  MARKET_STATS: 'market_stats',
+  COMMISSION_DATA: 'commission_data'
+};
+
+export const ANALYTICS_DASHBOARD_TTL = cacheTTL.MEDIUM;
+export const SYSTEM_METRICS_TTL = cacheTTL.SHORT;
+export const USER_STATS_TTL = cacheTTL.MEDIUM;
+export const MARKET_STATS_TTL = cacheTTL.LONG;
+
+// Alias para compatibilidad
+export const cacheManager = cache;
+
 export default cache;

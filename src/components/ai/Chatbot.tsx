@@ -272,34 +272,15 @@ export default function Chatbot({
     const userId = user?.id || 'anonymous';
 
     try {
-      // 🚀 Usar el servicio de IA revolucionario 10.000% mejorado
-      const result = await aiChatbotService.processMessageRevolutionary(
+      // 🚀 Usar el servicio de IA con datos de entrenamiento mejorados
+      const result = await aiChatbotService.processMessageWithTrainingData(
         userInput,
         userRole,
         userId,
         messages.slice(-10).map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
           content: msg.content,
-        })),
-        // Contexto adicional del usuario
-        user
-          ? {
-              name: user.name || 'Usuario',
-              preferences: {
-                communicationStyle: 'casual',
-                preferredTopics: ['general', 'support'],
-                responseLength: 'detailed',
-                notificationPreferences: {
-                  email: true,
-                  push: false,
-                  sms: false,
-                  frequency: 'immediate',
-                },
-                language: 'es',
-                timezone: 'America/Santiago',
-              },
-            }
-          : undefined
+        }))
       );
 
       return {

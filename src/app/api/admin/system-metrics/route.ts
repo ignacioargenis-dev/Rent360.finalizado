@@ -156,7 +156,7 @@ async function getSystemMetrics() {
       quickMetrics: {
         memoryUsage: Math.round((systemStats.memory.used / systemStats.memory.total) * 100),
         cpuUsage: systemStats.cpu.loadAverage[0] * 100,
-        cacheHitRate: cacheStats.hitRate || 0,
+        cacheHitRate: cacheStats.valid / (cacheStats.total || 1) * 100,
         activeAlerts: activeAlerts.length,
       },
       systemHealth: {
@@ -166,13 +166,13 @@ async function getSystemMetrics() {
       },
       performance: {
         cache: {
-          hitRate: cacheStats.hitRate || 0,
-          memoryUsage: Math.round((cacheStats.memoryUsage || 0) / 1024 / 1024), // Convertir a MB
+          hitRate: cacheStats.valid / (cacheStats.total || 1) * 100,
+          memoryUsage: Math.round((cacheStats.usage || 0) / 1024 / 1024), // Convertir a MB
           totalRequests: cacheStats.total || 0,
           efficiency:
-            (cacheStats.hitRate || 0) >= 80
+            (cacheStats.valid / (cacheStats.total || 1) * 100) >= 80
               ? 'excellent'
-              : (cacheStats.hitRate || 0) >= 60
+              : (cacheStats.valid / (cacheStats.total || 1) * 100) >= 60
                 ? 'good'
                 : 'poor',
         },
@@ -322,12 +322,12 @@ async function getActiveAlerts() {
 
     // Verificar estadísticas de caché
     const cacheStats = await cacheManager.getStats();
-    if ((cacheStats.hitRate || 0) < 50) {
+    if ((cacheStats.valid / (cacheStats.total || 1) * 100) < 50) {
       alerts.push({
         id: 'cache-poor',
         type: 'warning',
         title: 'Rendimiento de caché bajo',
-        message: `Hit rate del caché: ${(cacheStats.hitRate || 0).toFixed(1)}%`,
+        message: `Hit rate del caché: ${(cacheStats.valid / (cacheStats.total || 1) * 100).toFixed(1)}%`,
         timestamp: Date.now(),
       });
     }
