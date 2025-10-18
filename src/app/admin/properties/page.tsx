@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ import { User, Property } from '@/types';
 import RecordModal from '@/components/forms/RecordModal';
 
 export default function AdminPropertiesPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -421,25 +423,39 @@ export default function AdminPropertiesPage() {
         </div>
 
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Eye className="w-3 h-3" />
-            <span>Ver detalles</span>
-            <Users className="w-3 h-3 ml-2" />
-            <span>Propietario</span>
+          <div className="flex items-center gap-2 text-xs">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              onClick={() => router.push(`/admin/properties/${property.id}`)}
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              <span>Ver detalles</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50"
+              onClick={() => router.push(`/admin/users/${property.ownerId}`)}
+            >
+              <Users className="w-3 h-3 mr-1" />
+              <span>Propietario</span>
+            </Button>
           </div>
 
           <div className="flex gap-1">
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => window.open(`/admin/properties/${property.id}`, '_blank')}
+              onClick={() => router.push(`/admin/properties/${property.id}`)}
             >
               <Eye className="w-4 h-4" />
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => window.open(`/admin/properties/${property.id}/edit`, '_blank')}
+              onClick={() => router.push(`/admin/properties/${property.id}/edit`)}
             >
               <Edit className="w-4 h-4" />
             </Button>
@@ -499,14 +515,24 @@ export default function AdminPropertiesPage() {
               <DollarSign className="w-4 h-4 text-green-600" />
               <span className="font-medium">{formatPrice(property.price)}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-blue-600" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              onClick={() => router.push(`/admin/properties/${property.id}`)}
+            >
+              <Eye className="w-4 h-4 mr-1" />
               <span>Ver detalles</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-purple-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              onClick={() => router.push(`/admin/users/${property.ownerId}`)}
+            >
+              <Users className="w-4 h-4 mr-1" />
               <span>Propietario</span>
-            </div>
+            </Button>
           </div>
         </div>
 
