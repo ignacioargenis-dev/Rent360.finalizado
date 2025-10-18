@@ -6,46 +6,19 @@ import { existsSync } from 'fs';
 export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
   try {
     const filePath = params.path.join('/');
+    console.log('🔍 Requested file path:', filePath);
 
-    // ✅ CORREGIDO: Construir la ruta completa del archivo con mejor manejo de subdirectorios
+    // Construir la ruta completa del archivo
     const fullPath = join(process.cwd(), 'public', 'uploads', filePath);
+    console.log('📁 Full path:', fullPath);
 
-    // ✅ CORREGIDO: Verificar que el archivo existe, si no, intentar en subdirectorios comunes
-    let finalPath = fullPath;
+    // Verificar que el archivo existe
     if (!existsSync(fullPath)) {
-      // Intentar diferentes rutas posibles
-      const possiblePaths = [
-        // Ruta directa en uploads
-        fullPath,
-        // Ruta en subdirectorio properties
-        join(process.cwd(), 'public', 'uploads', 'properties', filePath),
-        // Ruta con estructura properties/{id}/{filename}
-        join(
-          process.cwd(),
-          'public',
-          'uploads',
-          'properties',
-          filePath.split('/')[0] || '',
-          filePath.split('/').slice(1).join('/')
-        ),
-        // Ruta legacy en uploads directo
-        join(process.cwd(), 'public', 'uploads', filePath.split('/').pop() || ''),
-      ];
-
-      let found = false;
-      for (const path of possiblePaths) {
-        if (existsSync(path)) {
-          finalPath = path;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        console.log('File not found, tried paths:', possiblePaths);
-        return NextResponse.json({ error: 'File not found' }, { status: 404 });
-      }
+      console.log('❌ File not found at:', fullPath);
+      return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
+
+    const finalPath = fullPath;
 
     // Leer el archivo
     const fileBuffer = await readFile(finalPath);

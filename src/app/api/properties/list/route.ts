@@ -4,8 +4,21 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PropertyStatus, PropertyType, UserRole } from '@/types';
 import { handleApiError } from '@/lib/api-error-handler';
-import { cacheManager, createCacheKey, cacheConfigs } from '@/lib/cache-manager';
-import { safeAverage, roundToDecimal } from '@/lib/math-utils';
+import { cache, generateCacheKey, cacheTTL } from '@/lib/cache';
+// Funciones de utilidad matemática
+const safeAverage = (numbers: number[]): number => {
+  if (!numbers || numbers.length === 0) {
+    return 0;
+  }
+  const validNumbers = numbers.filter(n => typeof n === 'number' && !isNaN(n));
+  return validNumbers.length > 0
+    ? validNumbers.reduce((sum, n) => sum + n, 0) / validNumbers.length
+    : 0;
+};
+
+const roundToDecimal = (num: number, decimals: number = 2): number => {
+  return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,7 +52,7 @@ export async function GET(request: NextRequest) {
     // Admin y ADMIN pueden ver todas las propiedades
 
     // Crear clave de cache basada en parámetros y usuario
-    const cacheKey = createCacheKey('properties:list', {
+    const cacheKey = generateCacheKey('properties:list', {
       userId: user.id,
       userRole: user.role,
       page,
@@ -58,7 +71,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Intentar obtener del cache primero
-    const cachedResult = cacheManager.get(cacheKey);
+    const cachedResult = cache.get(cacheKey);
     if (cachedResult) {
       logger.debug('Properties list obtenido del cache', { cacheKey });
       return NextResponse.json(cachedResult);
@@ -246,18 +259,13 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Guardar en cache con tags para invalidación
-    cacheManager.setWithTags(
-      cacheKey,
-      responseData,
-      ['properties', `user:${user.id}`],
-      cacheConfigs.property.ttl
-    );
+    // Guardar en cache
+    cache.set(cacheKey, responseData, cacheTTL.MEDIUM);
 
     logger.debug('Properties list guardado en cache', {
       cacheKey,
       propertiesCount: formattedProperties.length,
-      ttl: cacheConfigs.property.ttl,
+      ttl: cacheTTL.MEDIUM,
     });
 
     return NextResponse.json(responseData);

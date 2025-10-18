@@ -1,0 +1,8 @@
+{
+  "type": "test-image",
+  "filename": "property1.jpg",
+  "color": "#3B82F6",
+  "svgContent": "\n<svg width=\"400\" height=\"300\" xmlns=\"http://www.w3.org/2000/svg\">\n  <rect width=\"400\" height=\"300\" fill=\"#3B82F6\"/>\n  <text x=\"200\" y=\"150\" text-anchor=\"middle\" fill=\"white\" font-family=\"Arial\" font-size=\"24\" font-weight=\"bold\">\n    property1\n  </text>\n  <text x=\"200\" y=\"180\" text-anchor=\"middle\" fill=\"white\" font-family=\"Arial\" font-size=\"16\">\n    Imagen de Prueba\n  </text>\n</svg>",
+  "dataUrl": "data:image/svg+xml;base64,Cjxzdmcgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzQjgyRjYiLz4KICA8dGV4dCB4PSIyMDAiIHk9IjE1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiPgogICAgcHJvcGVydHkxCiAgPC90ZXh0PgogIDx0ZXh0IHg9IjIwMCIgeT0iMTgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2Ij4KICAgIEltYWdlbiBkZSBQcnVlYmEKICA8L3RleHQ+Cjwvc3ZnPg==",
+  "created": "2025-10-18T15:34:55.434Z"
+}
