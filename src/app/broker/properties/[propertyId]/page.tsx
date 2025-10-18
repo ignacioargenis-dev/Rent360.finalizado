@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,6 +39,7 @@ import {
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
 
 interface PropertyDetail {
   id: string;
@@ -77,6 +78,10 @@ interface PropertyDetail {
   documents: Document[];
   notes: Note[];
   viewings: Viewing[];
+
+  // Tour virtual
+  virtualTourEnabled: boolean;
+  virtualTourData: string | null;
 }
 
 interface MaintenanceRecord {
@@ -264,6 +269,10 @@ export default function BrokerPropertyDetailPage() {
         notes: 'Cliente hizo oferta inicial',
       },
     ],
+
+    // Tour virtual
+    virtualTourEnabled: false,
+    virtualTourData: null,
   };
 
   useEffect(() => {
@@ -322,6 +331,10 @@ export default function BrokerPropertyDetailPage() {
           documents: propertyData.documents || [],
           notes: propertyData.notes || '',
           viewings: propertyData.viewings || [],
+
+          // Tour virtual
+          virtualTourEnabled: propertyData.virtualTourEnabled || false,
+          virtualTourData: propertyData.virtualTourData || null,
         };
 
         setProperty(transformedProperty);
@@ -593,6 +606,24 @@ export default function BrokerPropertyDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Virtual Tour */}
+            {property.virtualTourEnabled && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    Tour Virtual 360°
+                  </CardTitle>
+                  <CardDescription>
+                    Explora la propiedad con nuestro tour virtual interactivo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <VirtualTour360 propertyId={property.id} scenes={[]} />
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Property Information */}

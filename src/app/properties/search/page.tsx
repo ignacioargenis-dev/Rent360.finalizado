@@ -7,12 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, 
-  MapPin, 
-  Bed, 
-  Bath, 
-  Square, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Search,
+  MapPin,
+  Bed,
+  Bath,
+  Square,
   Filter,
   Grid,
   List,
@@ -20,8 +27,11 @@ import { Search,
   Share2,
   Home,
   Loader2,
-  Eye } from 'lucide-react';
+  Eye,
+  Camera,
+} from 'lucide-react';
 import { Property } from '@/types';
+import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
 
 interface PropertyFilters {
   city?: string;
@@ -37,8 +47,16 @@ interface PropertyFilters {
 }
 
 const communes = [
-  'Las Condes', 'Vitacura', 'Lo Barnechea', 'Providencia', 'Ñuñoa', 
-  'Santiago Centro', 'La Reina', 'Macul', 'San Miguel', 'Estación Central',
+  'Las Condes',
+  'Vitacura',
+  'Lo Barnechea',
+  'Providencia',
+  'Ñuñoa',
+  'Santiago Centro',
+  'La Reina',
+  'Macul',
+  'San Miguel',
+  'Estación Central',
 ];
 
 export default function PropertySearch() {
@@ -50,6 +68,7 @@ export default function PropertySearch() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedPropertyForTour, setSelectedPropertyForTour] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,14 +128,14 @@ export default function PropertySearch() {
         params.append('maxArea', filters.maxArea.toString());
       }
       if (filters.status && (filters.status as any) !== 'all') {
-        params.append('status', (filters.status as any));
+        params.append('status', filters.status as any);
       }
       if (filters.type && (filters.type as any) !== 'all') {
-        params.append('type', (filters.type as any));
+        params.append('type', filters.type as any);
       }
 
       const response = await fetch(`/api/properties?${params}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Error al cargar propiedades');
@@ -126,8 +145,14 @@ export default function PropertySearch() {
       setProperties(data.properties || []);
       setError(null);
     } catch (err) {
-      logger.error('Error fetching properties:', { error: err instanceof Error ? err.message : String(err) });
-      setError(err instanceof Error ? err.message : 'Error al cargar las propiedades. Por favor intenta nuevamente.');
+      logger.error('Error fetching properties:', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Error al cargar las propiedades. Por favor intenta nuevamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -184,6 +209,11 @@ export default function PropertySearch() {
     window.location.href = `/properties/${propertyId}`;
   };
 
+  const handleViewVirtualTour = (propertyId: string) => {
+    setSelectedPropertyForTour(propertyId);
+    logger.info('Ver tour virtual', { propertyId });
+  };
+
   const handleSaveProperty = async (propertyId: string) => {
     try {
       // Check if user is logged in
@@ -195,7 +225,7 @@ export default function PropertySearch() {
       }
 
       const user = await userResponse.json();
-      
+
       // Save property to user's favorites via API
       const response = await fetch('/api/users/favorites', {
         method: 'POST',
@@ -212,7 +242,9 @@ export default function PropertySearch() {
         alert(error.error || 'Error al guardar la propiedad');
       }
     } catch (error) {
-      logger.error('Error saving property:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error saving property:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al guardar la propiedad');
     }
   };
@@ -247,13 +279,11 @@ export default function PropertySearch() {
               <Home className="w-16 h-16 text-blue-400" />
             </div>
           )}
-          <div className="absolute top-2 right-2">
-            {getStatusBadge(property.status)}
-          </div>
+          <div className="absolute top-2 right-2">{getStatusBadge(property.status)}</div>
           <div className="absolute top-2 left-2">
-            <Button 
-              size="sm" 
-              variant="secondary" 
+            <Button
+              size="sm"
+              variant="secondary"
               className="bg-white/80 hover:bg-white"
               onClick={() => handleSaveProperty(property.id)}
             >
@@ -262,26 +292,24 @@ export default function PropertySearch() {
           </div>
         </div>
       </div>
-      
+
       <CardHeader className="pb-3">
         <CardTitle className="text-lg line-clamp-1">{property.title}</CardTitle>
         <div className="flex items-center text-sm text-gray-600">
           <MapPin className="w-4 h-4 mr-1" />
-          <span className="line-clamp-1">{property.commune}, {property.city}</span>
+          <span className="line-clamp-1">
+            {property.commune}, {property.city}
+          </span>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-blue-600">
-              {formatPrice(property.price)}
-            </div>
-            <div className="text-sm text-gray-500">
-              {formatPrice(property.deposit)} depósito
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{formatPrice(property.price)}</div>
+            <div className="text-sm text-gray-500">{formatPrice(property.deposit)} depósito</div>
           </div>
-          
+
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center">
               <Bed className="w-4 h-4 mr-1" />
@@ -296,36 +324,40 @@ export default function PropertySearch() {
               <span>{property.area} m²</span>
             </div>
           </div>
-          
-          {property.features && Array.isArray(property.features) && property.features.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {(property.features as string[]).slice(0, 3).map((feature, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {feature}
-                </Badge>
-              ))}
-              {(property.features as string[]).length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{(property.features as string[]).length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
-          
+
+          {property.features &&
+            Array.isArray(property.features) &&
+            property.features.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {(property.features as string[]).slice(0, 3).map((feature, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {feature}
+                  </Badge>
+                ))}
+                {(property.features as string[]).length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{(property.features as string[]).length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
+
           <div className="flex gap-2 pt-2">
-            <Button 
-              size="sm" 
-              className="flex-1"
-              onClick={() => handleViewDetails(property.id)}
-            >
+            <Button size="sm" className="flex-1" onClick={() => handleViewDetails(property.id)}>
               <Eye className="w-4 h-4 mr-1" />
               Ver detalles
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleShareProperty(property.id)}
-            >
+            {property.virtualTourEnabled && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleViewVirtualTour(property.id)}
+                title="Tour Virtual 360°"
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => handleShareProperty(property.id)}>
               <Share2 className="w-4 h-4" />
             </Button>
           </div>
@@ -350,29 +382,25 @@ export default function PropertySearch() {
                 <Home className="w-8 h-8 text-blue-400" />
               </div>
             )}
-            <div className="absolute top-1 right-1">
-              {getStatusBadge(property.status)}
-            </div>
+            <div className="absolute top-1 right-1">{getStatusBadge(property.status)}</div>
           </div>
-          
+
           <div className="flex-1">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold">{property.title}</h3>
               <div className="text-right">
-                <div className="text-xl font-bold text-blue-600">
-                  {formatPrice(property.price)}
-                </div>
+                <div className="text-xl font-bold text-blue-600">{formatPrice(property.price)}</div>
                 <div className="text-sm text-gray-500">
                   {formatPrice(property.deposit)} depósito
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center text-sm text-gray-600 mb-2">
               <MapPin className="w-4 h-4 mr-1" />
               <span>{property.address}</span>
             </div>
-            
+
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
               <div className="flex items-center">
                 <Bed className="w-4 h-4 mr-1" />
@@ -387,32 +415,19 @@ export default function PropertySearch() {
                 <span>{property.area} m²</span>
               </div>
             </div>
-            
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-              {property.description}
-            </p>
-            
+
+            <p className="text-sm text-gray-600 line-clamp-2 mb-3">{property.description}</p>
+
             <div className="flex gap-2">
-              <Button 
-                size="sm"
-                onClick={() => handleViewDetails(property.id)}
-              >
+              <Button size="sm" onClick={() => handleViewDetails(property.id)}>
                 <Eye className="w-4 h-4 mr-1" />
                 Ver detalles
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => handleSaveProperty(property.id)}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleSaveProperty(property.id)}>
                 <Heart className="w-4 h-4 mr-1" />
                 Guardar
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => handleShareProperty(property.id)}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleShareProperty(property.id)}>
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
@@ -438,8 +453,18 @@ export default function PropertySearch() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-red-600 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Error al cargar propiedades</h2>
@@ -462,10 +487,10 @@ export default function PropertySearch() {
                 placeholder="Buscar por dirección, comuna o características..."
                 className="pl-10"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant={showFilters ? 'default' : 'outline'}
@@ -474,7 +499,7 @@ export default function PropertySearch() {
                 <Filter className="w-4 h-4 mr-2" />
                 Filtros
               </Button>
-              
+
               <div className="flex border rounded-md">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -493,7 +518,7 @@ export default function PropertySearch() {
                   <List className="w-4 h-4" />
                 </Button>
               </div>
-              
+
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -521,20 +546,20 @@ export default function PropertySearch() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ciudad
-                    </label>
-                    <Select 
-                      value={filters.city || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.city;
-                        } else {
-                          newFilters.city = value;
-                        }
-                        return newFilters;
-                      })}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                    <Select
+                      value={filters.city || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.city;
+                          } else {
+                            newFilters.city = value;
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar ciudad" />
@@ -547,20 +572,20 @@ export default function PropertySearch() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Comuna
-                    </label>
-                    <Select 
-                      value={filters.commune || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.commune;
-                        } else {
-                          newFilters.commune = value;
-                        }
-                        return newFilters;
-                      })}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Comuna</label>
+                    <Select
+                      value={filters.commune || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.commune;
+                          } else {
+                            newFilters.commune = value;
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar comuna" />
@@ -585,29 +610,33 @@ export default function PropertySearch() {
                         type="number"
                         placeholder="Mínimo"
                         value={filters.minPrice || ''}
-                        onChange={(e) => setFilters(prev => {
-                          const newFilters = { ...prev };
-                          if (e.target.value) {
-                            newFilters.minPrice = parseInt(e.target.value);
-                          } else {
-                            delete newFilters.minPrice;
-                          }
-                          return newFilters;
-                        })}
+                        onChange={e =>
+                          setFilters(prev => {
+                            const newFilters = { ...prev };
+                            if (e.target.value) {
+                              newFilters.minPrice = parseInt(e.target.value);
+                            } else {
+                              delete newFilters.minPrice;
+                            }
+                            return newFilters;
+                          })
+                        }
                       />
                       <Input
                         type="number"
                         placeholder="Máximo"
                         value={filters.maxPrice || ''}
-                        onChange={(e) => setFilters(prev => {
-                          const newFilters = { ...prev };
-                          if (e.target.value) {
-                            newFilters.maxPrice = parseInt(e.target.value);
-                          } else {
-                            delete newFilters.maxPrice;
-                          }
-                          return newFilters;
-                        })}
+                        onChange={e =>
+                          setFilters(prev => {
+                            const newFilters = { ...prev };
+                            if (e.target.value) {
+                              newFilters.maxPrice = parseInt(e.target.value);
+                            } else {
+                              delete newFilters.maxPrice;
+                            }
+                            return newFilters;
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -616,17 +645,19 @@ export default function PropertySearch() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Dormitorios
                     </label>
-                    <Select 
-                      value={filters.bedrooms?.toString() || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.bedrooms;
-                        } else {
-                          newFilters.bedrooms = parseInt(value);
-                        }
-                        return newFilters;
-                      })}
+                    <Select
+                      value={filters.bedrooms?.toString() || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.bedrooms;
+                          } else {
+                            newFilters.bedrooms = parseInt(value);
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquiera" />
@@ -642,20 +673,20 @@ export default function PropertySearch() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Baños
-                    </label>
-                    <Select 
-                      value={filters.bathrooms?.toString() || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.bathrooms;
-                        } else {
-                          newFilters.bathrooms = parseInt(value);
-                        }
-                        return newFilters;
-                      })}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Baños</label>
+                    <Select
+                      value={filters.bathrooms?.toString() || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.bathrooms;
+                          } else {
+                            newFilters.bathrooms = parseInt(value);
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquiera" />
@@ -678,29 +709,33 @@ export default function PropertySearch() {
                         type="number"
                         placeholder="Mínimo"
                         value={filters.minArea || ''}
-                        onChange={(e) => setFilters(prev => {
-                          const newFilters = { ...prev };
-                          if (e.target.value) {
-                            newFilters.minArea = parseInt(e.target.value);
-                          } else {
-                            delete newFilters.minArea;
-                          }
-                          return newFilters;
-                        })}
+                        onChange={e =>
+                          setFilters(prev => {
+                            const newFilters = { ...prev };
+                            if (e.target.value) {
+                              newFilters.minArea = parseInt(e.target.value);
+                            } else {
+                              delete newFilters.minArea;
+                            }
+                            return newFilters;
+                          })
+                        }
                       />
                       <Input
                         type="number"
                         placeholder="Máximo"
                         value={filters.maxArea || ''}
-                        onChange={(e) => setFilters(prev => {
-                          const newFilters = { ...prev };
-                          if (e.target.value) {
-                            newFilters.maxArea = parseInt(e.target.value);
-                          } else {
-                            delete newFilters.maxArea;
-                          }
-                          return newFilters;
-                        })}
+                        onChange={e =>
+                          setFilters(prev => {
+                            const newFilters = { ...prev };
+                            if (e.target.value) {
+                              newFilters.maxArea = parseInt(e.target.value);
+                            } else {
+                              delete newFilters.maxArea;
+                            }
+                            return newFilters;
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -709,17 +744,19 @@ export default function PropertySearch() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tipo de Propiedad
                     </label>
-                    <Select 
-                      value={filters.type || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.type;
-                        } else {
-                          newFilters.type = value;
-                        }
-                        return newFilters;
-                      })}
+                    <Select
+                      value={filters.type || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.type;
+                          } else {
+                            newFilters.type = value;
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquier tipo" />
@@ -736,20 +773,20 @@ export default function PropertySearch() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado
-                    </label>
-                    <Select 
-                      value={filters.status || 'all'} 
-                      onValueChange={(value) => setFilters(prev => {
-                        const newFilters = { ...prev };
-                        if (value === 'all') {
-                          delete newFilters.status;
-                        } else {
-                          newFilters.status = value;
-                        }
-                        return newFilters;
-                      })}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                    <Select
+                      value={filters.status || 'all'}
+                      onValueChange={value =>
+                        setFilters(prev => {
+                          const newFilters = { ...prev };
+                          if (value === 'all') {
+                            delete newFilters.status;
+                          } else {
+                            newFilters.status = value;
+                          }
+                          return newFilters;
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Cualquier estado" />
@@ -765,21 +802,11 @@ export default function PropertySearch() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => setFilters({})}
-                    >
+                    <Button variant="outline" className="flex-1" onClick={() => setFilters({})}>
                       Limpiar filtros
                     </Button>
-                    <Button 
-                      className="flex-1"
-                      onClick={fetchProperties}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : null}
+                    <Button className="flex-1" onClick={fetchProperties} disabled={loading}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       Aplicar filtros
                     </Button>
                   </div>
@@ -810,9 +837,12 @@ export default function PropertySearch() {
                   <p className="text-gray-600 mb-4">
                     Intenta ajustar tus filtros o términos de búsqueda
                   </p>
-                  <Button onClick={() => {
- setFilters({}); setSearchQuery(''); 
-}}>
+                  <Button
+                    onClick={() => {
+                      setFilters({});
+                      setSearchQuery('');
+                    }}
+                  >
                     Limpiar búsqueda
                   </Button>
                 </CardContent>
@@ -839,21 +869,40 @@ export default function PropertySearch() {
                 ))}
               </div>
             ) : (
-              <div className={
-                viewMode === 'grid' 
-                  ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' 
-                  : 'space-y-4'
-              }>
-                {filteredProperties.map((property) => (
-                  viewMode === 'grid' 
-                    ? <PropertyCard key={property.id} property={property} />
-                    : <PropertyListItem key={property.id} property={property} />
-                ))}
+              <div
+                className={
+                  viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'
+                }
+              >
+                {filteredProperties.map(property =>
+                  viewMode === 'grid' ? (
+                    <PropertyCard key={property.id} property={property} />
+                  ) : (
+                    <PropertyListItem key={property.id} property={property} />
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Modal del Tour Virtual */}
+      {selectedPropertyForTour && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Tour Virtual 360°</h3>
+              <Button variant="outline" size="sm" onClick={() => setSelectedPropertyForTour(null)}>
+                Cerrar
+              </Button>
+            </div>
+            <div className="p-4">
+              <VirtualTour360 propertyId={selectedPropertyForTour} scenes={[]} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

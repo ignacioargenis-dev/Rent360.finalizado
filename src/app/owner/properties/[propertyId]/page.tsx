@@ -38,10 +38,12 @@ import {
   PieChart,
   BarChart3,
   Wrench,
+  Settings,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import VirtualTour360 from '@/components/virtual-tour/VirtualTour360';
 
 interface PropertyDetail {
   id: string;
@@ -105,6 +107,10 @@ interface PropertyDetail {
   gym: boolean;
   security: boolean;
   concierge: boolean;
+
+  // Tour virtual
+  virtualTourEnabled: boolean;
+  virtualTourData: string | null;
 }
 
 interface MaintenanceRecord {
@@ -284,6 +290,10 @@ export default function OwnerPropertyDetailPage() {
     gym: true,
     security: true,
     concierge: false,
+
+    // Tour virtual
+    virtualTourEnabled: false,
+    virtualTourData: null,
   };
 
   const loadPropertyDetails = useCallback(async () => {
@@ -357,6 +367,10 @@ export default function OwnerPropertyDetailPage() {
           gym: propertyData.gym || false,
           security: propertyData.security || false,
           concierge: propertyData.concierge || false,
+
+          // Tour virtual
+          virtualTourEnabled: propertyData.virtualTourEnabled || false,
+          virtualTourData: propertyData.virtualTourData || null,
         };
 
         setProperty(transformedProperty);
@@ -669,6 +683,58 @@ export default function OwnerPropertyDetailPage() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Virtual Tour */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    Tour Virtual 360°
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={property.virtualTourEnabled ? 'default' : 'secondary'}>
+                      {property.virtualTourEnabled ? 'Habilitado' : 'Deshabilitado'}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/owner/properties/${property.id}/virtual-tour`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Configurar
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  {property.virtualTourEnabled
+                    ? 'Explora la propiedad con nuestro tour virtual interactivo'
+                    : 'Configura un tour virtual 360° para mostrar tu propiedad'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {property.virtualTourEnabled ? (
+                  <VirtualTour360 propertyId={property.id} scenes={[]} />
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Camera className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">Tour Virtual No Configurado</p>
+                    <p className="text-sm mb-4">
+                      Configura un tour virtual 360° para ofrecer una experiencia inmersiva a tus
+                      inquilinos
+                    </p>
+                    <Button
+                      onClick={() => router.push(`/owner/properties/${property.id}/virtual-tour`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Configurar Tour Virtual
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

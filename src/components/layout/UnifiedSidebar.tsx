@@ -110,6 +110,7 @@ const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
         { title: 'Todas las Propiedades', url: '/admin/properties', icon: Building },
         { title: 'Propiedades Pendientes', url: '/admin/properties/pending', icon: Eye },
         { title: 'Reportadas', url: '/admin/properties/reported', icon: Bell },
+        { title: 'Tours Virtuales', url: '/admin/virtual-tours', icon: Camera },
       ],
     },
     {
