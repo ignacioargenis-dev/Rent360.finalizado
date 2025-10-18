@@ -248,11 +248,11 @@ export default function PropertyDetailPage() {
               <CardContent className="space-y-2">
                 <div>
                   <span className="font-medium">Creado:</span>
-                  <span className="ml-2">{formatDate(property.createdAt)}</span>
+                  <span className="ml-2">{formatDate(property.createdAt.toISOString())}</span>
                 </div>
                 <div>
                   <span className="font-medium">Actualizado:</span>
-                  <span className="ml-2">{formatDate(property.updatedAt)}</span>
+                  <span className="ml-2">{formatDate(property.updatedAt.toISOString())}</span>
                 </div>
               </CardContent>
             </Card>

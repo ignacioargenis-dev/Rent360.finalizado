@@ -38,11 +38,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             rating: true,
             comment: true,
             createdAt: true,
-            user: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
       },

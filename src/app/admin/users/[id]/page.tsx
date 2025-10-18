@@ -201,18 +201,14 @@ export default function UserDetailPage() {
                 <div>
                   <span className="font-medium">Estado:</span>
                   <span className="ml-2">
-                    {user.isActive ? (
-                      <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                    ) : (
-                      <Badge className="bg-red-100 text-red-800">Inactivo</Badge>
-                    )}
+                    <Badge className="bg-green-100 text-green-800">Activo</Badge>
                   </span>
                 </div>
 
                 <div>
                   <span className="font-medium">Verificado:</span>
                   <span className="ml-2">
-                    {user.isVerified ? (
+                    {user.rutVerified ? (
                       <Badge className="bg-green-100 text-green-800">Sí</Badge>
                     ) : (
                       <Badge className="bg-yellow-100 text-yellow-800">No</Badge>
@@ -233,16 +229,16 @@ export default function UserDetailPage() {
               <CardContent className="space-y-2">
                 <div>
                   <span className="font-medium">Registrado:</span>
-                  <span className="ml-2">{formatDate(user.createdAt)}</span>
+                  <span className="ml-2">{formatDate(user.createdAt.toISOString())}</span>
                 </div>
                 <div>
                   <span className="font-medium">Última actualización:</span>
-                  <span className="ml-2">{formatDate(user.updatedAt)}</span>
+                  <span className="ml-2">{formatDate(user.updatedAt.toISOString())}</span>
                 </div>
-                {user.lastLoginAt && (
+                {user.lastLogin && (
                   <div>
                     <span className="font-medium">Último acceso:</span>
-                    <span className="ml-2">{formatDate(user.lastLoginAt)}</span>
+                    <span className="ml-2">{formatDate(user.lastLogin.toISOString())}</span>
                   </div>
                 )}
               </CardContent>

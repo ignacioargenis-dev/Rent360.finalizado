@@ -23,20 +23,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             commune: true,
           },
         },
-        contracts: {
-          select: {
-            id: true,
-            status: true,
-            startDate: true,
-            endDate: true,
-            property: {
-              select: {
-                title: true,
-                address: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -61,13 +47,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       phone: targetUser.phone,
       address: targetUser.address,
       role: targetUser.role,
-      isActive: targetUser.isActive,
-      isVerified: targetUser.isVerified,
+      rutVerified: targetUser.rutVerified,
       createdAt: targetUser.createdAt,
       updatedAt: targetUser.updatedAt,
-      lastLoginAt: targetUser.lastLoginAt,
+      lastLogin: targetUser.lastLogin,
       properties: targetUser.properties,
-      contracts: targetUser.contracts,
     };
 
     return NextResponse.json({ user: formattedUser });
@@ -110,8 +94,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         bio: body.bio,
         phone: body.phone,
         address: body.address,
-        isActive: body.isActive !== undefined ? body.isActive : existingUser.isActive,
-        isVerified: body.isVerified !== undefined ? body.isVerified : existingUser.isVerified,
+        rutVerified: body.rutVerified !== undefined ? body.rutVerified : existingUser.rutVerified,
         updatedAt: new Date(),
       },
       select: {
@@ -123,11 +106,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         phone: true,
         address: true,
         role: true,
-        isActive: true,
-        isVerified: true,
+        rutVerified: true,
         createdAt: true,
         updatedAt: true,
-        lastLoginAt: true,
+        lastLogin: true,
       },
     });
 

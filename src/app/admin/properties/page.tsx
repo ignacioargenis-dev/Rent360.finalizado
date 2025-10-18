@@ -398,7 +398,10 @@ export default function AdminPropertiesPage() {
                   onError={e => {
                     // Fallback a placeholder si la imagen falla
                     e.currentTarget.style.display = 'none';
-                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) {
+                      nextElement.style.display = 'flex';
+                    }
                   }}
                 />
               );
