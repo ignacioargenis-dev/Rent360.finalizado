@@ -125,9 +125,13 @@ export default function PropertyDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {property.images && property.images.length > 0 ? (
+                {property.images &&
+                (Array.isArray(property.images) ? property.images.length > 0 : true) ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {JSON.parse(property.images).map((image: string, index: number) => (
+                    {(Array.isArray(property.images)
+                      ? property.images
+                      : JSON.parse(property.images)
+                    ).map((image: string, index: number) => (
                       <div
                         key={index}
                         className="aspect-video bg-gray-200 rounded-lg overflow-hidden"

@@ -388,7 +388,11 @@ export default function AdminPropertiesPage() {
       <div className="aspect-video bg-gray-200 relative overflow-hidden">
         {(() => {
           try {
-            const images = property.images ? JSON.parse(property.images) : [];
+            const images = Array.isArray(property.images)
+              ? property.images
+              : property.images
+                ? JSON.parse(property.images)
+                : [];
             if (images && images.length > 0) {
               return (
                 <img

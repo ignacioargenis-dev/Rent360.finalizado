@@ -74,7 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       type: property.type,
       status: property.status,
       features: property.features ? JSON.parse(property.features) : [],
-      images: property.images ? JSON.parse(property.images) : [],
+      images: property.images || [],
       views: property.views,
       inquiries: property.inquiries,
       owner: property.owner,
