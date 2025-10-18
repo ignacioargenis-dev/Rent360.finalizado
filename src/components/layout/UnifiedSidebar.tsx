@@ -65,7 +65,8 @@ interface RoleMenuItems {
   [key: string]: MenuItem[];
 }
 
-const menuItems: RoleMenuItems = {
+// Función para generar el menú dinámicamente con estadísticas reales
+const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
   guest: [
     {
       title: 'Inicio',
@@ -581,7 +582,7 @@ const menuItems: RoleMenuItems = {
       icon: Settings,
     },
   ],
-};
+});
 
 interface UnifiedSidebarProps {
   children: React.ReactNode;
@@ -603,6 +604,9 @@ export default function UnifiedSidebar({
 
   // Obtener estadísticas reales del sidebar
   const sidebarStats = useSidebarStats();
+
+  // Generar menú dinámicamente con estadísticas reales
+  const menuItems = getMenuItems(sidebarStats);
 
   const handleLogout = async () => {
     try {

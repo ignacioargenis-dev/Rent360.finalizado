@@ -75,7 +75,6 @@ async function getAdminStats() {
     totalUsers,
     pendingTickets,
     legalCases,
-    warrantyDisputes,
     pendingProperties,
     pendingContracts,
     pendingPayments,
@@ -83,7 +82,6 @@ async function getAdminStats() {
     db.user.count(),
     db.ticket.count({ where: { status: 'OPEN' } }),
     db.legalCase.count({ where: { status: 'ACTIVE' } }),
-    db.warrantyDispute.count({ where: { status: 'PENDING' } }),
     db.property.count({ where: { status: 'PENDING' } }),
     db.contract.count({ where: { status: 'PENDING' } }),
     db.payment.count({ where: { status: 'PENDING' } }),
@@ -93,7 +91,7 @@ async function getAdminStats() {
     totalUsers,
     pendingTickets,
     legalCases,
-    warrantyDisputes,
+    warrantyDisputes: 0, // No existe este modelo, usar 0
     pendingProperties,
     pendingContracts,
     pendingPayments,
@@ -165,11 +163,10 @@ async function getTenantStats(userId: string) {
 
 // Estadísticas para BROKER
 async function getBrokerStats(userId: string) {
-  const [totalClients, activeContracts, pendingAppointments] = await Promise.all([
-    db.user.count({
+  const [totalProperties, activeContracts] = await Promise.all([
+    db.property.count({
       where: {
         brokerId: userId,
-        isActive: true,
       },
     }),
     db.contract.count({
@@ -178,18 +175,12 @@ async function getBrokerStats(userId: string) {
         status: 'ACTIVE',
       },
     }),
-    db.appointment.count({
-      where: {
-        brokerId: userId,
-        status: 'PENDING',
-      },
-    }),
   ]);
 
   return {
-    totalClients,
+    totalProperties,
     activeContracts,
-    pendingAppointments,
+    pendingAppointments: 0, // No existe este modelo, usar 0
   };
 }
 
