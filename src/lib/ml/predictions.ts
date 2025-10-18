@@ -101,7 +101,9 @@ class PricePredictionModel {
       // Query para obtener datos históricos de propiedades
       const properties = await db.property.findMany({
         where: {
-          status: 'ACTIVE',
+          status: {
+            in: ['ACTIVE', 'RENTED', 'AVAILABLE'], // Incluir más estados para obtener más datos
+          },
         },
         select: {
           id: true,
@@ -301,7 +303,16 @@ class PricePredictionModel {
     }
 
     if (this.model.trainingData.length < 10) {
-      logger.warn('Datos de entrenamiento insuficientes para modelo ML');
+      // Si hay datos de ejemplo, es normal en desarrollo
+      if (this.model.trainingData.some(item => item.id.startsWith('sample-'))) {
+        logger.info(
+          'Modelo ML usando datos de ejemplo para desarrollo - se entrenará cuando haya más datos reales'
+        );
+      } else {
+        logger.warn(
+          'Datos de entrenamiento insuficientes para modelo ML - se necesita al menos 10 propiedades'
+        );
+      }
       return;
     }
 
@@ -631,12 +642,14 @@ export async function initializeMLModels(): Promise<void> {
 // Instancia global del modelo ML
 const mlModel = new PricePredictionModel();
 
-// Inicializar modelo al cargar el módulo
-mlModel.loadTrainingData().then(() => {
-  mlModel.train().catch(error => {
-    logger.error('Error inicializando modelo ML', { error });
+// Inicializar modelo al cargar el módulo (solo en producción o cuando se solicite explícitamente)
+if (process.env.NODE_ENV === 'production') {
+  mlModel.loadTrainingData().then(() => {
+    mlModel.train().catch(error => {
+      logger.error('Error inicializando modelo ML', { error });
+    });
   });
-});
+}
 
 // Función helper para obtener predicción de precio con modelo mejorado
 export async function predictPropertyPrice(
