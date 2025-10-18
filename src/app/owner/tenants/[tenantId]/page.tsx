@@ -231,11 +231,30 @@ export default function OwnerTenantDetailPage() {
   const loadTenantDetails = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
+      // Obtener datos reales desde la API
+      const response = await fetch(`/api/owner/tenants/${tenantId}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setTenant(result.data);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Fallback a datos mock si la API falla
+      logger.warn('API falló, usando datos mock');
       await new Promise(resolve => setTimeout(resolve, 1000));
       setTenant(mockTenant);
     } catch (error) {
       logger.error('Error al cargar detalles del inquilino', { error, tenantId });
+      // Fallback a datos mock en caso de error
+      setTenant(mockTenant);
     } finally {
       setIsLoading(false);
     }

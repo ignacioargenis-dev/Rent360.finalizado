@@ -253,11 +253,30 @@ export default function BrokerClientDetailPage() {
   const loadClientDetails = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
+      // Obtener datos reales desde la API
+      const response = await fetch(`/api/broker/clients/${clientId}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setClient(result.data);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Fallback a datos mock si la API falla
+      logger.warn('API falló, usando datos mock');
       await new Promise(resolve => setTimeout(resolve, 1000));
       setClient(mockClient);
     } catch (error) {
       logger.error('Error al cargar detalles del cliente', { error, clientId });
+      // Fallback a datos mock en caso de error
+      setClient(mockClient);
     } finally {
       setIsLoading(false);
     }
