@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
     else if (pendingTickets > 50) {
       systemHealth = 'critical';
     }
-    // Si hay usuarios y propiedades, el sistema está funcionando
-    else if (totalUsers > 0 && totalProperties > 0) {
+    // Si hay al menos 1 usuario, el sistema está funcionando (umbral más bajo)
+    else if (totalUsers > 0) {
       systemHealth = 'good';
     }
 

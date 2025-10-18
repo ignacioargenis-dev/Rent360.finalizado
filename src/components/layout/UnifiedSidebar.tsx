@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
+import { useSidebarStats } from '@/hooks/useSidebarStats';
 import {
   Home,
   Building,
@@ -97,7 +98,7 @@ const menuItems: RoleMenuItems = {
       title: 'Gestión de Usuarios',
       url: '/admin/users',
       icon: Users,
-      badge: '12',
+      badge: sidebarStats.totalUsers > 0 ? sidebarStats.totalUsers.toString() : undefined,
       badgeVariant: 'secondary',
     },
     {
@@ -133,21 +134,22 @@ const menuItems: RoleMenuItems = {
       title: 'Soporte',
       url: '/admin/tickets',
       icon: Ticket,
-      badge: '5',
+      badge: sidebarStats.pendingTickets > 0 ? sidebarStats.pendingTickets.toString() : undefined,
       badgeVariant: 'destructive',
     },
     {
       title: 'Casos Legales',
       url: '/admin/legal-cases',
       icon: Shield,
-      badge: '3',
+      badge: sidebarStats.legalCases > 0 ? sidebarStats.legalCases.toString() : undefined,
       badgeVariant: 'destructive',
     },
     {
       title: 'Disputas de Garantía',
       url: '/admin/disputes',
       icon: AlertTriangle,
-      badge: '2',
+      badge:
+        sidebarStats.warrantyDisputes > 0 ? sidebarStats.warrantyDisputes.toString() : undefined,
       badgeVariant: 'outline',
     },
     {
@@ -308,7 +310,7 @@ const menuItems: RoleMenuItems = {
       title: 'Propiedades',
       url: '/broker/properties',
       icon: Building,
-      badge: '8',
+      badge: sidebarStats.totalProperties > 0 ? sidebarStats.totalProperties.toString() : undefined,
       badgeVariant: 'default',
     },
     {
@@ -350,7 +352,10 @@ const menuItems: RoleMenuItems = {
       title: 'Mantenimiento',
       url: '/broker/maintenance',
       icon: Wrench,
-      badge: '3',
+      badge:
+        sidebarStats.maintenanceRequests > 0
+          ? sidebarStats.maintenanceRequests.toString()
+          : undefined,
       badgeVariant: 'outline',
     },
     {
@@ -451,21 +456,22 @@ const menuItems: RoleMenuItems = {
       title: 'Tickets',
       url: '/support/tickets',
       icon: Ticket,
-      badge: '12',
+      badge: sidebarStats.pendingTickets > 0 ? sidebarStats.pendingTickets.toString() : undefined,
       badgeVariant: 'destructive',
     },
     {
       title: 'Casos Legales',
       url: '/support/legal-cases',
       icon: FileText,
-      badge: '3',
+      badge: sidebarStats.legalCases > 0 ? sidebarStats.legalCases.toString() : undefined,
       badgeVariant: 'secondary',
     },
     {
       title: 'Disputas de Garantía',
       url: '/support/disputes',
       icon: AlertTriangle,
-      badge: '2',
+      badge:
+        sidebarStats.warrantyDisputes > 0 ? sidebarStats.warrantyDisputes.toString() : undefined,
       badgeVariant: 'outline',
     },
     {
@@ -541,7 +547,7 @@ const menuItems: RoleMenuItems = {
       title: 'Trabajos Activos',
       url: '/maintenance/jobs',
       icon: Wrench,
-      badge: '8',
+      badge: sidebarStats.activeRequests > 0 ? sidebarStats.activeRequests.toString() : undefined,
       badgeVariant: 'secondary',
     },
     {
@@ -591,10 +597,12 @@ export default function UnifiedSidebar({
   notificationCount = 0,
 }: UnifiedSidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Obtener estadísticas reales del sidebar
+  const sidebarStats = useSidebarStats();
 
   const handleLogout = async () => {
     try {
