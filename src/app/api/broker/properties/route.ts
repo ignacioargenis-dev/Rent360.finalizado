@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'BROKER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      brokerId: user.id
+      brokerId: user.id,
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
@@ -38,11 +38,11 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-          }
+          },
         },
         contracts: {
           where: {
-            status: 'ACTIVE'
+            status: 'ACTIVE',
           },
           include: {
             tenant: {
@@ -51,17 +51,17 @@ export async function GET(request: NextRequest) {
                 name: true,
                 email: true,
                 phone: true,
-              }
-            }
+              },
+            },
           },
           take: 1,
           orderBy: {
-            createdAt: 'desc'
-          }
-        }
+            createdAt: 'desc',
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
@@ -91,14 +91,16 @@ export async function GET(request: NextRequest) {
         description: property.description,
         features,
         images,
-        currentTenant: property.contracts[0]?.tenant ? {
-          name: property.contracts[0].tenant.name,
-          email: property.contracts[0].tenant.email,
-          phone: property.contracts[0].tenant.phone,
-          leaseStart: property.contracts[0].startDate.toISOString().split('T')[0],
-          leaseEnd: property.contracts[0].endDate.toISOString().split('T')[0],
-          monthlyRent: property.contracts[0].monthlyRent,
-        } : null,
+        currentTenant: property.contracts[0]?.tenant
+          ? {
+              name: property.contracts[0].tenant.name,
+              email: property.contracts[0].tenant.email,
+              phone: property.contracts[0].tenant.phone,
+              leaseStart: property.contracts[0].startDate.toISOString().split('T')[0],
+              leaseEnd: property.contracts[0].endDate.toISOString().split('T')[0],
+              monthlyRent: property.contracts[0].monthlyRent,
+            }
+          : null,
         maintenanceHistory: [], // Se puede implementar después
         paymentHistory: [], // Se puede implementar después
         // Información adicional
@@ -116,7 +118,7 @@ export async function GET(request: NextRequest) {
         balcony: property.balcony,
         terrace: property.terrace,
         concierge: property.concierge,
-        virtualTourEnabled: property.virtualTourEnabled,
+        virtualTourEnabled: property.virtualTourEnabled || false,
         virtualTourData: property.virtualTourData,
       };
     });
@@ -124,7 +126,7 @@ export async function GET(request: NextRequest) {
     logger.info('Propiedades de broker obtenidas', {
       brokerId: user.id,
       count: transformedProperties.length,
-      status
+      status,
     });
 
     return NextResponse.json({
@@ -134,19 +136,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: properties.length,
-        hasMore: properties.length === limit
-      }
+        hasMore: properties.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo propiedades de broker:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

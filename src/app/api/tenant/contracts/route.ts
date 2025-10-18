@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'TENANT') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de inquilino.' },
@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      tenantId: user.id
+      tenantId: user.id,
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
             concierge: true,
             virtualTourEnabled: true,
             virtualTourData: true,
-          }
+          },
         },
         owner: {
           select: {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-          }
+          },
         },
         broker: {
           select: {
@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-          }
-        }
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
@@ -95,7 +95,9 @@ export async function GET(request: NextRequest) {
     // Transformar datos al formato esperado
     const transformedContracts = contracts.map(contract => {
       const propertyImages = contract.property.images ? JSON.parse(contract.property.images) : [];
-      const propertyFeatures = contract.property.features ? JSON.parse(contract.property.features) : [];
+      const propertyFeatures = contract.property.features
+        ? JSON.parse(contract.property.features)
+        : [];
 
       return {
         id: contract.id,
@@ -145,21 +147,25 @@ export async function GET(request: NextRequest) {
           balcony: contract.property.balcony,
           terrace: contract.property.terrace,
           concierge: contract.property.concierge,
-          virtualTourEnabled: contract.property.virtualTourEnabled,
+          virtualTourEnabled: contract.property.virtualTourEnabled || false,
           virtualTourData: contract.property.virtualTourData,
         },
-        owner: contract.owner ? {
-          id: contract.owner.id,
-          name: contract.owner.name,
-          email: contract.owner.email,
-          phone: contract.owner.phone,
-        } : null,
-        broker: contract.broker ? {
-          id: contract.broker.id,
-          name: contract.broker.name,
-          email: contract.broker.email,
-          phone: contract.broker.phone,
-        } : null,
+        owner: contract.owner
+          ? {
+              id: contract.owner.id,
+              name: contract.owner.name,
+              email: contract.owner.email,
+              phone: contract.owner.phone,
+            }
+          : null,
+        broker: contract.broker
+          ? {
+              id: contract.broker.id,
+              name: contract.broker.name,
+              email: contract.broker.email,
+              phone: contract.broker.phone,
+            }
+          : null,
       };
     });
 
@@ -168,7 +174,7 @@ export async function GET(request: NextRequest) {
       count: transformedContracts.length,
       status,
       limit,
-      offset
+      offset,
     });
 
     return NextResponse.json({
@@ -178,19 +184,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: contracts.length,
-        hasMore: contracts.length === limit
-      }
+        hasMore: contracts.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo contratos de inquilino:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

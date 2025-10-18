@@ -178,7 +178,7 @@ export async function GET(request: NextRequest, { params }: { params: { property
       balcony: property.balcony,
       terrace: property.terrace,
       concierge: property.concierge,
-      virtualTourEnabled: property.virtualTourEnabled,
+      virtualTourEnabled: property.virtualTourEnabled || false,
       virtualTourData: property.virtualTourData,
     };
 
