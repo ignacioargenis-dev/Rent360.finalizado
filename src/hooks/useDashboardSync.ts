@@ -45,7 +45,7 @@ export const useAdminDashboardSync = (userId?: string) => {
     try {
       setStats(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch('/api/admin/system-metrics', {
+      const response = await fetch('/api/admin/dashboard-stats', {
         headers: {
           'Cache-Control': 'no-cache',
           Pragma: 'no-cache',

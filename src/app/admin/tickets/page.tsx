@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
@@ -215,7 +214,23 @@ export default function AdminTicketsPage() {
 
     const loadTicketData = async () => {
       try {
-        // Mock support tickets data
+        // Obtener datos reales desde la API
+        const response = await fetch('/api/admin/tickets/list', {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setTickets(result.data);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback a datos mock si la API falla
         const mockTickets: SupportTicket[] = [
           {
             id: '1',

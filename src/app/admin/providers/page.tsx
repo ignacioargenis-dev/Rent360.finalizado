@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 // Build fix - force update
 
 import React, { useState, useEffect } from 'react';
@@ -72,13 +71,29 @@ export default function ProveedoresPage() {
       setLoading(true);
       setError(null);
 
-      // Mock providers data for admin
+      // Obtener datos reales desde la API
+      const response = await fetch('/api/admin/providers/list', {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setData(result.data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback a datos mock si la API falla
       const mockProviders = {
         overview: {
           totalProviders: 45,
           activeProviders: 38,
           pendingProviders: 7,
-          topServices: ['Mantenimiento', 'Limpieza', 'Seguridad', 'Jardinería']
+          topServices: ['Mantenimiento', 'Limpieza', 'Seguridad', 'Jardinería'],
         },
         providers: [
           {
@@ -92,7 +107,7 @@ export default function ProveedoresPage() {
             rating: 4.5,
             completedJobs: 127,
             location: 'Santiago Centro',
-            registrationDate: '2023-01-15'
+            registrationDate: '2023-01-15',
           },
           {
             id: '2',
@@ -105,7 +120,7 @@ export default function ProveedoresPage() {
             rating: 4.2,
             completedJobs: 89,
             location: 'Providencia',
-            registrationDate: '2023-03-20'
+            registrationDate: '2023-03-20',
           },
           {
             id: '3',
@@ -118,7 +133,7 @@ export default function ProveedoresPage() {
             rating: 0,
             completedJobs: 0,
             location: 'Las Condes',
-            registrationDate: '2024-01-10'
+            registrationDate: '2024-01-10',
           },
           {
             id: '4',
@@ -131,7 +146,7 @@ export default function ProveedoresPage() {
             rating: 4.7,
             completedJobs: 156,
             location: 'Vitacura',
-            registrationDate: '2022-11-05'
+            registrationDate: '2022-11-05',
           },
           {
             id: '5',
@@ -144,9 +159,9 @@ export default function ProveedoresPage() {
             rating: 4.8,
             completedJobs: 203,
             location: 'Ñuñoa',
-            registrationDate: '2022-08-12'
-          }
-        ]
+            registrationDate: '2022-08-12',
+          },
+        ],
       };
 
       setData(mockProviders);
@@ -170,7 +185,16 @@ export default function ProveedoresPage() {
     }
 
     const csvContent = [
-      ['Nombre', 'Contacto', 'Email', 'Teléfono', 'Servicios', 'Estado', 'Calificación', 'Trabajos Completados']
+      [
+        'Nombre',
+        'Contacto',
+        'Email',
+        'Teléfono',
+        'Servicios',
+        'Estado',
+        'Calificación',
+        'Trabajos Completados',
+      ],
     ];
 
     data.providers.forEach((provider: any) => {
@@ -182,7 +206,7 @@ export default function ProveedoresPage() {
         provider.services.join('; '),
         provider.status === 'active' ? 'Activo' : 'Pendiente',
         provider.rating > 0 ? provider.rating.toString() : 'Sin calificar',
-        provider.completedJobs.toString()
+        provider.completedJobs.toString(),
       ]);
     });
 
@@ -272,9 +296,7 @@ export default function ProveedoresPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.pendingProviders || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren revisión
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren revisión</p>
             </CardContent>
           </Card>
 
@@ -307,7 +329,13 @@ export default function ProveedoresPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-lg">{provider.name}</h3>
-                          <Badge className={provider.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                          <Badge
+                            className={
+                              provider.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }
+                          >
                             {provider.status === 'active' ? 'Activo' : 'Pendiente'}
                           </Badge>
                         </div>
@@ -326,7 +354,8 @@ export default function ProveedoresPage() {
                             <span className="font-medium">Ubicación:</span> {provider.location}
                           </div>
                           <div>
-                            <span className="font-medium">Trabajos completados:</span> {provider.completedJobs}
+                            <span className="font-medium">Trabajos completados:</span>{' '}
+                            {provider.completedJobs}
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="font-medium">Calificación:</span>
@@ -349,7 +378,8 @@ export default function ProveedoresPage() {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                          Registrado: {new Date(provider.registrationDate).toLocaleDateString('es-CL')}
+                          Registrado:{' '}
+                          {new Date(provider.registrationDate).toLocaleDateString('es-CL')}
                         </div>
                       </div>
 
@@ -407,7 +437,9 @@ export default function ProveedoresPage() {
                 description="Buscar y filtrar proveedores"
                 onClick={() => {
                   // Focus on search input or open filters
-                  const searchInput = document.querySelector('input[placeholder*="Buscar"]') as HTMLInputElement;
+                  const searchInput = document.querySelector(
+                    'input[placeholder*="Buscar"]'
+                  ) as HTMLInputElement;
                   if (searchInput) {
                     searchInput.focus();
                   }

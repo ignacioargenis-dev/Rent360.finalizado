@@ -25,20 +25,20 @@ export async function GET(request: NextRequest) {
         }),
         // Contar todas las propiedades
         db.property.count(),
-        // Contar contratos activos (aquellos con status 'active' o similares)
+        // Contar contratos activos (aquellos con status 'ACTIVE')
         db.contract.count({
           where: {
-            status: 'active', // Ajustar según el enum real de contratos
+            status: 'ACTIVE', // Usar el valor correcto del enum
           },
         }),
         // Contar todos los pagos (para calcular revenue mensual)
         db.payment.count(),
-        // Contar tickets pendientes (aquellos con status 'open' o 'pending')
-        db.ticket?.count({
+        // Contar tickets pendientes (aquellos con status 'OPEN')
+        db.ticket.count({
           where: {
-            status: 'open', // Ajustar según el enum real de tickets
+            status: 'OPEN', // Usar el valor correcto del enum
           },
-        }) || 0, // Fallback si no existe tabla de tickets
+        }),
       ]);
 
     // Calcular revenue mensual (últimos 30 días)
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     const monthlyRevenue = await db.payment.aggregate({
       where: {
-        status: 'completed', // Ajustar según el enum real de pagos
+        status: 'PAID', // Usar el valor correcto del enum
         createdAt: {
           gte: thirtyDaysAgo,
         },

@@ -59,7 +59,25 @@ export default function AdminReportedPropertiesPage() {
 
   const fetchReports = async () => {
     try {
-      // Simular datos mientras no exista la API
+      setLoading(true);
+
+      // Obtener datos reales desde la API
+      const response = await fetch('/api/admin/properties/reports', {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setReports(result.data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback a datos mock si la API falla
       const mockReports: Report[] = [
         {
           id: '1',
