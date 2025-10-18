@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    logger.info('GET /api/admin/dashboard-stats - Iniciando consulta de estadísticas...');
+    logger.info('GET /api/admin/dashboard-stats - Iniciando consulta de estadísticas...', {
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+    });
 
     // Obtener estadísticas reales de la base de datos
     const [totalUsers, totalProperties, activeContracts, totalPayments, pendingTickets] =
@@ -30,6 +34,14 @@ export async function GET(request: NextRequest) {
         // Contar todos los tickets (ya que no hay ninguno, mostrar 0 es correcto)
         db.ticket.count(),
       ]);
+
+    logger.info('Consultas de base de datos completadas', {
+      totalUsers,
+      totalProperties,
+      activeContracts,
+      totalPayments,
+      pendingTickets,
+    });
 
     // Calcular revenue mensual (últimos 30 días)
     const thirtyDaysAgo = new Date();
