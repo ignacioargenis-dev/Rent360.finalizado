@@ -385,10 +385,33 @@ export default function AdminPropertiesPage() {
 
   const PropertyCard = ({ property }: { property: Property }) => (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="aspect-video bg-gray-200 relative">
-        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-          <Building className="w-16 h-16 text-blue-400" />
-        </div>
+      <div className="aspect-video bg-gray-200 relative overflow-hidden">
+        {(() => {
+          try {
+            const images = property.images ? JSON.parse(property.images) : [];
+            if (images && images.length > 0) {
+              return (
+                <img
+                  src={images[0]}
+                  alt={property.title}
+                  className="w-full h-full object-cover"
+                  onError={e => {
+                    // Fallback a placeholder si la imagen falla
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+              );
+            }
+          } catch (error) {
+            // Si hay error parseando, usar placeholder
+          }
+          return (
+            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+              <Building className="w-16 h-16 text-blue-400" />
+            </div>
+          );
+        })()}
         <div className="absolute top-2 right-2">{getStatusBadge(property.status)}</div>
       </div>
 
@@ -422,12 +445,12 @@ export default function AdminPropertiesPage() {
           <div>Estado: {property.status}</div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-2 text-xs">
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              className="h-auto p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex-1"
               onClick={() => router.push(`/admin/properties/${property.id}`)}
             >
               <Eye className="w-3 h-3 mr-1" />
@@ -436,7 +459,7 @@ export default function AdminPropertiesPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50"
+              className="h-auto p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 flex-1"
               onClick={() => router.push(`/admin/users/${property.ownerId}`)}
             >
               <Users className="w-3 h-3 mr-1" />
@@ -444,20 +467,24 @@ export default function AdminPropertiesPage() {
             </Button>
           </div>
 
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
               onClick={() => router.push(`/admin/properties/${property.id}`)}
+              className="flex-1"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-4 h-4 mr-1" />
+              Ver
             </Button>
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
               onClick={() => router.push(`/admin/properties/${property.id}/edit`)}
+              className="flex-1"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4 mr-1" />
+              Editar
             </Button>
           </div>
         </div>
@@ -540,7 +567,7 @@ export default function AdminPropertiesPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => window.open(`/admin/properties/${property.id}`, '_blank')}
+            onClick={() => router.push(`/admin/properties/${property.id}`)}
           >
             <Eye className="w-4 h-4 mr-2" />
             Ver
@@ -548,7 +575,7 @@ export default function AdminPropertiesPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => window.open(`/admin/properties/${property.id}/edit`, '_blank')}
+            onClick={() => router.push(`/admin/properties/${property.id}/edit`)}
           >
             <Edit className="w-4 h-4 mr-2" />
             Editar
