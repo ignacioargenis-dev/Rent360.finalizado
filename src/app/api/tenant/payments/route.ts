@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'TENANT') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de inquilino.' },
@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
     // Construir filtros
     const whereClause: any = {
       contract: {
-        tenantId: user.id
-      }
+        tenantId: user.id,
+      },
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
@@ -44,13 +44,13 @@ export async function GET(request: NextRequest) {
                 city: true,
                 commune: true,
                 region: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        dueDate: 'desc'
+        dueDate: 'desc',
       },
       take: limit,
       skip: offset,
@@ -60,43 +60,43 @@ export async function GET(request: NextRequest) {
     const totalPaid = await db.payment.aggregate({
       where: {
         contract: {
-          tenantId: user.id
+          tenantId: user.id,
         },
-        status: 'PAID'
+        status: 'PAID',
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     const totalPending = await db.payment.aggregate({
       where: {
         contract: {
-          tenantId: user.id
+          tenantId: user.id,
         },
         status: 'PENDING',
         dueDate: {
-          gte: new Date()
-        }
+          gte: new Date(),
+        },
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     const totalOverdue = await db.payment.aggregate({
       where: {
         contract: {
-          tenantId: user.id
+          tenantId: user.id,
         },
         status: 'PENDING',
         dueDate: {
-          lt: new Date()
-        }
+          lt: new Date(),
+        },
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     // Pagos del mes actual
@@ -105,16 +105,16 @@ export async function GET(request: NextRequest) {
     const thisMonthPaid = await db.payment.aggregate({
       where: {
         contract: {
-          tenantId: user.id
+          tenantId: user.id,
         },
         status: 'PAID',
-        paidAt: {
-          gte: currentMonth
-        }
+        paidDate: {
+          gte: currentMonth,
+        },
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     // Transformar datos al formato esperado
@@ -124,17 +124,17 @@ export async function GET(request: NextRequest) {
       amount: payment.amount,
       dueDate: payment.dueDate.toISOString(),
       status: payment.status.toLowerCase(),
-      description: payment.description,
+      description: payment.notes,
       method: payment.method,
       transactionId: payment.transactionId,
-      paidAt: payment.paidAt?.toISOString(),
+      paidAt: payment.paidDate?.toISOString(),
       createdAt: payment.createdAt.toISOString(),
       updatedAt: payment.updatedAt.toISOString(),
       property: {
         id: payment.contract.property.id,
         title: payment.contract.property.title,
         address: `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}`,
-      }
+      },
     }));
 
     const stats = {
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       tenantId: user.id,
       count: transformedPayments.length,
       status,
-      stats
+      stats,
     });
 
     return NextResponse.json({
@@ -159,19 +159,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: payments.length,
-        hasMore: payments.length === limit
-      }
+        hasMore: payments.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo pagos de inquilino:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

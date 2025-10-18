@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'RUNNER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de runner.' },
@@ -21,15 +21,15 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      assignedTo: user.id
+      assignedTo: user.id,
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
 
     // Obtener tareas del runner
-    const tasks = await db.task.findMany({
+    const tasks = await db.maintenance.findMany({
       where: whereClause,
       include: {
         property: {
@@ -40,19 +40,11 @@ export async function GET(request: NextRequest) {
             city: true,
             commune: true,
             region: true,
-          }
+          },
         },
-        assignedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          }
-        }
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
@@ -66,12 +58,12 @@ export async function GET(request: NextRequest) {
       tenantName: 'No disponible', // Se puede obtener del contrato activo
       tenantPhone: 'No disponible',
       tenantEmail: 'No disponible',
-      taskType: task.type.toLowerCase(),
+      taskType: task.category.toLowerCase(),
       priority: task.priority.toLowerCase(),
       status: task.status.toLowerCase(),
       scheduledDate: task.scheduledDate?.toISOString().split('T')[0],
       scheduledTime: task.scheduledTime,
-      estimatedDuration: task.estimatedDuration?.toString(),
+      estimatedDuration: '1',
       description: task.description,
       specialInstructions: task.notes,
       contactMethod: 'phone', // Por defecto
@@ -82,7 +74,7 @@ export async function GET(request: NextRequest) {
     logger.info('Tareas de runner obtenidas', {
       runnerId: user.id,
       count: transformedTasks.length,
-      status
+      status,
     });
 
     return NextResponse.json({
@@ -92,19 +84,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: tasks.length,
-        hasMore: tasks.length === limit
-      }
+        hasMore: tasks.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo tareas de runner:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

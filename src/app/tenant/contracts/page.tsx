@@ -4,16 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  FileText, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
-  User, 
+import {
+  FileText,
+  Calendar,
+  DollarSign,
+  MapPin,
+  User,
   Clock,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
@@ -73,7 +73,7 @@ interface Contract {
 export default function TenantContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
-  const { auth } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadContracts();
@@ -82,7 +82,7 @@ export default function TenantContractsPage() {
   const loadContracts = async () => {
     try {
       setLoading(true);
-      
+
       // Obtener datos reales desde la API
       const response = await fetch('/api/tenant/contracts', {
         headers: {
@@ -257,14 +257,14 @@ export default function TenantContractsPage() {
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No tienes contratos</h3>
             <p className="text-muted-foreground text-center max-w-md">
-              Cuando tengas contratos activos, aparecerán aquí. Puedes contactar a un corredor 
-              para encontrar propiedades disponibles.
+              Cuando tengas contratos activos, aparecerán aquí. Puedes contactar a un corredor para
+              encontrar propiedades disponibles.
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6">
-          {contracts.map((contract) => (
+          {contracts.map(contract => (
             <Card key={contract.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -272,15 +272,13 @@ export default function TenantContractsPage() {
                     {getStatusIcon(contract.status)}
                     <div>
                       <CardTitle className="text-lg">{contract.contractNumber}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {contract.property.title}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{contract.property.title}</p>
                     </div>
                   </div>
                   {getStatusBadge(contract.status)}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Información de la propiedad */}
                 <div className="grid gap-4 md:grid-cols-2">
@@ -294,7 +292,7 @@ export default function TenantContractsPage() {
                       <span>Propietario: {contract.ownerName}</span>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />

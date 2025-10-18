@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv'; // csv, excel, json
     const type = searchParams.get('type') || 'all'; // all, properties, contracts, payments, users
@@ -14,7 +14,15 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
 
     // Verificar permisos según el rol
-    const allowedRoles = ['ADMIN', 'OWNER', 'BROKER', 'TENANT', 'RUNNER', 'PROVIDER', 'MAINTENANCE'];
+    const allowedRoles = [
+      'ADMIN',
+      'OWNER',
+      'BROKER',
+      'TENANT',
+      'RUNNER',
+      'PROVIDER',
+      'MAINTENANCE',
+    ];
     if (!allowedRoles.includes(user.role)) {
       return NextResponse.json(
         { error: 'Acceso denegado. No tienes permisos para exportar datos.' },
@@ -37,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'properties') {
       if (['ADMIN', 'OWNER', 'BROKER'].includes(user.role)) {
         const whereClause: any = {};
-        
+
         if (user.role === 'OWNER') {
           whereClause.ownerId = user.id;
         }
@@ -56,16 +64,16 @@ export async function GET(request: NextRequest) {
                 name: true,
                 email: true,
                 phone: true,
-              }
+              },
             },
             broker: {
               select: {
                 name: true,
                 email: true,
                 phone: true,
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         exportData.properties = properties.map(property => ({
@@ -96,7 +104,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'contracts') {
       if (['ADMIN', 'OWNER', 'BROKER', 'TENANT'].includes(user.role)) {
         const whereClause: any = {};
-        
+
         if (user.role === 'OWNER') {
           whereClause.ownerId = user.id;
         }
@@ -120,30 +128,30 @@ export async function GET(request: NextRequest) {
                 city: true,
                 commune: true,
                 region: true,
-              }
+              },
             },
             tenant: {
               select: {
                 name: true,
                 email: true,
                 phone: true,
-              }
+              },
             },
             owner: {
               select: {
                 name: true,
                 email: true,
                 phone: true,
-              }
+              },
             },
             broker: {
               select: {
                 name: true,
                 email: true,
                 phone: true,
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         exportData.contracts = contracts.map(contract => ({
@@ -175,7 +183,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'payments') {
       if (['ADMIN', 'OWNER', 'TENANT', 'RUNNER', 'PROVIDER', 'MAINTENANCE'].includes(user.role)) {
         const whereClause: any = {};
-        
+
         if (user.role === 'OWNER') {
           whereClause.contract = { ownerId: user.id };
         }
@@ -187,15 +195,15 @@ export async function GET(request: NextRequest) {
             tasks: {
               some: {
                 assignedTo: user.id,
-                status: 'COMPLETED'
-              }
-            }
+                status: 'COMPLETED',
+              },
+            },
           };
         }
         if (user.role === 'PROVIDER' || user.role === 'MAINTENANCE') {
           whereClause.maintenanceRequest = {
             assignedProviderId: user.id,
-            status: 'COMPLETED'
+            status: 'COMPLETED',
           };
         }
         if (Object.keys(dateFilter).length > 0) {
@@ -214,45 +222,25 @@ export async function GET(request: NextRequest) {
                     city: true,
                     commune: true,
                     region: true,
-                  }
+                  },
                 },
                 tenant: {
                   select: {
                     name: true,
                     email: true,
                     phone: true,
-                  }
+                  },
                 },
                 owner: {
                   select: {
                     name: true,
                     email: true,
                     phone: true,
-                  }
-                }
-              }
-            },
-            maintenanceRequest: {
-              include: {
-                property: {
-                  select: {
-                    title: true,
-                    address: true,
-                    city: true,
-                    commune: true,
-                    region: true,
-                  }
+                  },
                 },
-                tenant: {
-                  select: {
-                    name: true,
-                    email: true,
-                    phone: true,
-                  }
-                }
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         exportData.payments = payments.map(payment => ({
@@ -260,19 +248,17 @@ export async function GET(request: NextRequest) {
           amount: payment.amount,
           status: payment.status,
           method: payment.method,
-          description: payment.description,
+          notes: payment.notes,
           transactionId: payment.transactionId,
           dueDate: payment.dueDate.toISOString(),
-          paidAt: payment.paidAt?.toISOString(),
-          propertyTitle: payment.contract?.property?.title || payment.maintenanceRequest?.property?.title,
-          propertyAddress: payment.contract?.property ? 
-            `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}` :
-            payment.maintenanceRequest?.property ?
-            `${payment.maintenanceRequest.property.address}, ${payment.maintenanceRequest.property.commune}, ${payment.maintenanceRequest.property.city}` :
-            'N/A',
-          tenantName: payment.contract?.tenant?.name || payment.maintenanceRequest?.tenant?.name,
-          tenantEmail: payment.contract?.tenant?.email || payment.maintenanceRequest?.tenant?.email,
-          tenantPhone: payment.contract?.tenant?.phone || payment.maintenanceRequest?.tenant?.phone,
+          paidDate: payment.paidDate?.toISOString(),
+          propertyTitle: payment.contract?.property?.title,
+          propertyAddress: payment.contract?.property
+            ? `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}`
+            : 'N/A',
+          tenantName: payment.contract?.tenant?.name,
+          tenantEmail: payment.contract?.tenant?.email,
+          tenantPhone: payment.contract?.tenant?.phone,
           ownerName: payment.contract?.owner?.name,
           ownerEmail: payment.contract?.owner?.email,
           ownerPhone: payment.contract?.owner?.phone,
@@ -300,7 +286,7 @@ export async function GET(request: NextRequest) {
             isActive: true,
             createdAt: true,
             updatedAt: true,
-          }
+          },
         });
 
         exportData.users = users.map(user => ({
@@ -324,18 +310,18 @@ export async function GET(request: NextRequest) {
     if (format === 'csv') {
       contentType = 'text/csv';
       filename += '.csv';
-      
+
       // Convertir a CSV
       const csvRows: string[] = [];
-      
+
       Object.keys(exportData).forEach(key => {
         if (exportData[key].length > 0) {
           csvRows.push(`\n=== ${key.toUpperCase()} ===\n`);
-          
+
           // Headers
           const headers = Object.keys(exportData[key][0]);
           csvRows.push(headers.join(','));
-          
+
           // Data rows
           exportData[key].forEach((row: any) => {
             const values = headers.map(header => {
@@ -350,7 +336,7 @@ export async function GET(request: NextRequest) {
           });
         }
       });
-      
+
       content = csvRows.join('\n');
     } else if (format === 'excel') {
       // Para Excel, devolver JSON que puede ser procesado por el frontend
@@ -368,7 +354,7 @@ export async function GET(request: NextRequest) {
       role: user.role,
       format,
       type,
-      records: Object.values(exportData).reduce((sum: number, arr: any) => sum + arr.length, 0)
+      records: Object.values(exportData).reduce((sum: number, arr: any) => sum + arr.length, 0),
     });
 
     return new NextResponse(content, {
@@ -379,16 +365,15 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'no-cache',
       },
     });
-
   } catch (error) {
     logger.error('Error exportando datos:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

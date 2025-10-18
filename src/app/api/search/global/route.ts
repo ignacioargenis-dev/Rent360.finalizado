@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'all'; // all, properties, users, contracts, payments
@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
           users: [],
           contracts: [],
           payments: [],
-          total: 0
-        }
+          total: 0,
+        },
       });
     }
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       users: [],
       contracts: [],
       payments: [],
-      total: 0
+      total: 0,
     };
 
     // Búsqueda de propiedades (solo para roles autorizados)
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
             { address: { contains: query, mode: 'insensitive' } },
             { city: { contains: query, mode: 'insensitive' } },
             { commune: { contains: query, mode: 'insensitive' } },
-          ]
+          ],
         };
 
         // Filtros por rol
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
             bathrooms: true,
             area: true,
           },
-          take: limit
+          take: limit,
         });
 
         searchResults.properties = properties.map(property => ({
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
           area: property.area,
-          url: `/properties/${property.id}`
+          url: `/properties/${property.id}`,
         }));
       }
     }
@@ -96,15 +96,12 @@ export async function GET(request: NextRequest) {
             { name: { contains: query, mode: 'insensitive' } },
             { email: { contains: query, mode: 'insensitive' } },
             { phone: { contains: query, mode: 'insensitive' } },
-          ]
+          ],
         };
 
         // Filtros por rol
         if (user.role === 'BROKER') {
-          whereClause.OR = [
-            { contracts: { some: { brokerId: user.id } } },
-            { brokerId: user.id }
-          ];
+          whereClause.OR = [{ contracts: { some: { brokerId: user.id } } }, { brokerId: user.id }];
         }
 
         const users = await db.user.findMany({
@@ -118,7 +115,7 @@ export async function GET(request: NextRequest) {
             isActive: true,
             createdAt: true,
           },
-          take: limit
+          take: limit,
         });
 
         searchResults.users = users.map(user => ({
@@ -129,7 +126,7 @@ export async function GET(request: NextRequest) {
           role: user.role,
           isActive: user.isActive,
           createdAt: user.createdAt.toISOString(),
-          url: `/users/${user.id}`
+          url: `/users/${user.id}`,
         }));
       }
     }
@@ -138,9 +135,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'contracts') {
       if (['ADMIN', 'OWNER', 'BROKER', 'TENANT'].includes(user.role)) {
         const whereClause: any = {
-          OR: [
-            { terms: { contains: query, mode: 'insensitive' } },
-          ]
+          OR: [{ terms: { contains: query, mode: 'insensitive' } }],
         };
 
         // Filtros por rol
@@ -164,24 +159,24 @@ export async function GET(request: NextRequest) {
                 address: true,
                 city: true,
                 commune: true,
-              }
+              },
             },
             tenant: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-              }
+              },
             },
             owner: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-              }
-            }
+              },
+            },
           },
-          take: limit
+          take: limit,
         });
 
         searchResults.contracts = contracts.map(contract => ({
@@ -194,7 +189,7 @@ export async function GET(request: NextRequest) {
           status: contract.status,
           startDate: contract.startDate.toISOString(),
           endDate: contract.endDate.toISOString(),
-          url: `/contracts/${contract.id}`
+          url: `/contracts/${contract.id}`,
         }));
       }
     }
@@ -206,7 +201,7 @@ export async function GET(request: NextRequest) {
           OR: [
             { description: { contains: query, mode: 'insensitive' } },
             { transactionId: { contains: query, mode: 'insensitive' } },
-          ]
+          ],
         };
 
         // Filtros por rol
@@ -229,12 +224,12 @@ export async function GET(request: NextRequest) {
                     address: true,
                     city: true,
                     commune: true,
-                  }
-                }
-              }
-            }
+                  },
+                },
+              },
+            },
           },
-          take: limit
+          take: limit,
         });
 
         searchResults.payments = payments.map(payment => ({
@@ -242,44 +237,44 @@ export async function GET(request: NextRequest) {
           amount: payment.amount,
           status: payment.status,
           dueDate: payment.dueDate.toISOString(),
-          paidAt: payment.paidAt?.toISOString(),
-          description: payment.description,
+          paidAt: payment.paidDate?.toISOString(),
+          description: payment.notes,
           transactionId: payment.transactionId,
           propertyTitle: payment.contract.property.title,
           propertyAddress: `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}`,
-          url: `/payments/${payment.id}`
+          url: `/payments/${payment.id}`,
         }));
       }
     }
 
     // Calcular total de resultados
-    searchResults.total = searchResults.properties.length + 
-                         searchResults.users.length + 
-                         searchResults.contracts.length + 
-                         searchResults.payments.length;
+    searchResults.total =
+      searchResults.properties.length +
+      searchResults.users.length +
+      searchResults.contracts.length +
+      searchResults.payments.length;
 
     logger.info('Búsqueda global realizada', {
       userId: user.id,
       role: user.role,
       query,
       type,
-      results: searchResults.total
+      results: searchResults.total,
     });
 
     return NextResponse.json({
       success: true,
-      data: searchResults
+      data: searchResults,
     });
-
   } catch (error) {
     logger.error('Error en búsqueda global:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

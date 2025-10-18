@@ -67,27 +67,28 @@ export default function GlobalSearch() {
   // Manejar teclas de navegación
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isOpen || !results) return;
+      if (!isOpen || !results) {
+        return;
+      }
 
       const allResults = getAllResults(results);
-      
+
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault();
-          setSelectedIndex(prev => 
-            prev < allResults.length - 1 ? prev + 1 : 0
-          );
+          setSelectedIndex(prev => (prev < allResults.length - 1 ? prev + 1 : 0));
           break;
         case 'ArrowUp':
           event.preventDefault();
-          setSelectedIndex(prev => 
-            prev > 0 ? prev - 1 : allResults.length - 1
-          );
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : allResults.length - 1));
           break;
         case 'Enter':
           event.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < allResults.length) {
-            handleResultClick(allResults[selectedIndex]);
+            const result = allResults[selectedIndex];
+            if (result) {
+              handleResultClick(result);
+            }
           }
           break;
         case 'Escape':
@@ -102,12 +103,16 @@ export default function GlobalSearch() {
   }, [isOpen, results, selectedIndex]);
 
   const performSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/search/global?q=${encodeURIComponent(searchQuery)}&limit=5`);
-      
+      const response = await fetch(
+        `/api/search/global?q=${encodeURIComponent(searchQuery)}&limit=5`
+      );
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -125,7 +130,7 @@ export default function GlobalSearch() {
 
   const getAllResults = (searchResults: SearchResults): SearchResult[] => {
     const allResults: SearchResult[] = [];
-    
+
     searchResults.properties.forEach(property => {
       allResults.push({
         id: property.id,
@@ -133,7 +138,7 @@ export default function GlobalSearch() {
         subtitle: property.address,
         url: property.url,
         type: 'property',
-        metadata: property
+        metadata: property,
       });
     });
 
@@ -144,7 +149,7 @@ export default function GlobalSearch() {
         subtitle: user.email,
         url: user.url,
         type: 'user',
-        metadata: user
+        metadata: user,
       });
     });
 
@@ -155,7 +160,7 @@ export default function GlobalSearch() {
         subtitle: `${contract.tenantName} - ${contract.propertyAddress}`,
         url: contract.url,
         type: 'contract',
-        metadata: contract
+        metadata: contract,
       });
     });
 
@@ -166,7 +171,7 @@ export default function GlobalSearch() {
         subtitle: `$${payment.amount.toLocaleString()} - ${payment.status}`,
         url: payment.url,
         type: 'payment',
-        metadata: payment
+        metadata: payment,
       });
     });
 
@@ -235,7 +240,7 @@ export default function GlobalSearch() {
           type="text"
           placeholder="Buscar propiedades, usuarios, contratos..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           onFocus={() => {
             if (results && results.total > 0) {
               setIsOpen(true);
@@ -267,9 +272,10 @@ export default function GlobalSearch() {
         <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-96 overflow-y-auto">
           <CardContent className="p-0">
             <div className="p-2 text-xs text-gray-500 border-b">
-              {results.total} resultado{results.total !== 1 ? 's' : ''} encontrado{results.total !== 1 ? 's' : ''}
+              {results.total} resultado{results.total !== 1 ? 's' : ''} encontrado
+              {results.total !== 1 ? 's' : ''}
             </div>
-            
+
             {getAllResults(results).map((result, index) => (
               <div
                 key={`${result.type}-${result.id}`}
@@ -279,22 +285,16 @@ export default function GlobalSearch() {
                 onClick={() => handleResultClick(result)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {getTypeIcon(result.type)}
-                  </div>
+                  <div className="flex-shrink-0 mt-0.5">{getTypeIcon(result.type)}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
-                        {result.title}
-                      </h4>
+                      <h4 className="text-sm font-medium text-gray-900 truncate">{result.title}</h4>
                       <Badge className={`text-xs ${getTypeColor(result.type)}`}>
                         {getTypeLabel(result.type)}
                       </Badge>
                     </div>
                     {result.subtitle && (
-                      <p className="text-xs text-gray-500 truncate">
-                        {result.subtitle}
-                      </p>
+                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
                     )}
                   </div>
                 </div>

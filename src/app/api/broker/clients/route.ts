@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'BROKER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
@@ -23,21 +23,25 @@ export async function GET(request: NextRequest) {
     // Construir filtros
     const whereClause: any = {
       OR: [
-        // Clientes que tienen contratos con este broker
+        // Clientes que tienen contratos con este broker como propietarios
         {
-          contracts: {
+          contractsAsOwner: {
             some: {
-              brokerId: user.id
-            }
-          }
+              brokerId: user.id,
+            },
+          },
         },
-        // Clientes que han sido asignados a este broker
+        // Clientes que tienen contratos con este broker como inquilinos
         {
-          brokerId: user.id
-        }
-      ]
+          contractsAsTenant: {
+            some: {
+              brokerId: user.id,
+            },
+          },
+        },
+      ],
     };
-    
+
     if (status !== 'all') {
       whereClause.isActive = status === 'active';
     }
@@ -50,9 +54,9 @@ export async function GET(request: NextRequest) {
     const clients = await db.user.findMany({
       where: whereClause,
       include: {
-        contracts: {
+        contractsAsOwner: {
           where: {
-            brokerId: user.id
+            brokerId: user.id,
           },
           include: {
             property: {
@@ -65,85 +69,154 @@ export async function GET(request: NextRequest) {
                 region: true,
                 price: true,
                 type: true,
-              }
-            }
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc'
-          }
-        }
+            createdAt: 'desc',
+          },
+        },
+        contractsAsTenant: {
+          where: {
+            brokerId: user.id,
+          },
+          include: {
+            property: {
+              select: {
+                id: true,
+                title: true,
+                address: true,
+                city: true,
+                commune: true,
+                region: true,
+                price: true,
+                type: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
     });
 
     // Transformar datos al formato esperado
-    const transformedClients = clients.map(client => ({
-      id: client.id,
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-      type: client.role.toLowerCase(),
-      status: client.isActive ? 'active' : 'inactive',
-      registrationDate: client.createdAt.toISOString().split('T')[0],
-      lastContact: client.updatedAt.toISOString().split('T')[0],
-      preferredContactMethod: 'email', // Por defecto
-      budget: {
-        min: 0,
-        max: 0,
-        currency: 'CLP',
+    const transformedClients = clients.map(client => {
+      // Combinar contratos como propietario y como inquilino
+      const allContracts = [...client.contractsAsOwner, ...client.contractsAsTenant];
+
+      return {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        type: client.role.toLowerCase(),
+        status: client.isActive ? 'active' : 'inactive',
+        registrationDate: client.createdAt.toISOString().split('T')[0],
+        lastContact: client.updatedAt.toISOString().split('T')[0],
+        preferredContactMethod: 'email', // Por defecto
+        budget: {
+          min: 0,
+          max: 0,
+          currency: 'CLP',
+        },
+        preferences: {
+          propertyType: [],
+          location: [],
+          amenities: [],
+        },
+        contracts: allContracts.map(contract => ({
+          id: contract.id,
+          contractNumber: contract.contractNumber,
+          property: {
+            id: contract.property.id,
+            title: contract.property.title,
+            address: contract.property.address,
+            city: contract.property.city,
+            commune: contract.property.commune,
+            region: contract.property.region,
+            price: contract.property.price,
+            type: contract.property.type,
+          },
+          monthlyRent: contract.monthlyRent,
+          status: contract.status.toLowerCase(),
+          startDate: contract.startDate.toISOString().split('T')[0],
+          endDate: contract.endDate.toISOString().split('T')[0],
+        })),
+        totalContracts: allContracts.length,
+        activeContracts: allContracts.filter(c => c.status === 'ACTIVE').length,
+        totalValue: allContracts.reduce((sum, contract) => sum + contract.monthlyRent, 0),
+        lastActivity: client.updatedAt.toISOString(),
+        notes: '', // Campo para notas del broker
+        tags: [], // Tags personalizados
+      };
+    });
+
+    // Calcular estadísticas
+    const totalClients = await db.user.count({
+      where: whereClause,
+    });
+
+    const activeClients = await db.user.count({
+      where: {
+        ...whereClause,
+        isActive: true,
       },
-      preferences: {
-        propertyType: [],
-        bedrooms: 0,
-        bathrooms: 0,
-        location: [],
-        features: [],
+    });
+
+    const totalContracts = await db.contract.count({
+      where: {
+        brokerId: user.id,
       },
-      documents: [], // Se puede implementar después
-      interactions: [], // Se puede implementar después
-      contracts: client.contracts.map(contract => ({
-        id: contract.id,
-        propertyTitle: contract.property.title,
-        propertyAddress: `${contract.property.address}, ${contract.property.commune}, ${contract.property.city}`,
-        monthlyRent: contract.monthlyRent,
-        startDate: contract.startDate.toISOString().split('T')[0],
-        endDate: contract.endDate.toISOString().split('T')[0],
-        status: contract.status.toLowerCase(),
-        commission: 0, // Calcular basado en configuración
-      })),
-    }));
+    });
+
+    const activeContracts = await db.contract.count({
+      where: {
+        brokerId: user.id,
+        status: 'ACTIVE',
+      },
+    });
+
+    const stats = {
+      totalClients,
+      activeClients,
+      totalContracts,
+      activeContracts,
+      conversionRate: totalClients > 0 ? (activeClients / totalClients) * 100 : 0,
+    };
 
     logger.info('Clientes de broker obtenidos', {
       brokerId: user.id,
       count: transformedClients.length,
-      status,
-      type
+      stats,
     });
 
     return NextResponse.json({
       success: true,
       data: transformedClients,
+      stats,
       pagination: {
         limit,
         offset,
-        total: clients.length,
-        hasMore: clients.length === limit
-      }
+        total: totalClients,
+        hasMore: offset + limit < totalClients,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo clientes de broker:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

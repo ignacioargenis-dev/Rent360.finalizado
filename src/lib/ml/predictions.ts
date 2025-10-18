@@ -771,7 +771,7 @@ function generateSmartRecommendations(
 
 // Función helper para obtener estadísticas de mercado reales con cache
 export async function getMarketStatistics(city?: string, commune?: string): Promise<MarketData[]> {
-  const cacheKey = CacheKeys.MARKET_STATS(city || 'all', commune);
+  const cacheKey = `${CacheKeys.MARKET_STATS}:${city || 'all'}:${commune || 'all'}`;
 
   return withCache(
     cacheKey,

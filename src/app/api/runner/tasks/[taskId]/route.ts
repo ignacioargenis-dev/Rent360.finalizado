@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest, { params }: { params: { taskId: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'RUNNER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de runner.' },
@@ -17,10 +17,10 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     const taskId = params.taskId;
 
     // Obtener detalles de la tarea
-    const task = await db.task.findUnique({
-      where: { 
+    const task = await db.maintenance.findUnique({
+      where: {
         id: taskId,
-        assignedTo: user.id // Asegurar que el runner es el asignado
+        assignedTo: user.id, // Asegurar que el runner es el asignado
       },
       include: {
         property: {
@@ -37,43 +37,11 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
                 name: true,
                 email: true,
                 phone: true,
-              }
-            }
-          }
-        },
-        assignedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          }
-        },
-        // Incluir inquilino actual si existe
-        property: {
-          include: {
-            contracts: {
-              where: {
-                status: 'ACTIVE'
               },
-              include: {
-                tenant: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    phone: true,
-                  }
-                }
-              },
-              take: 1,
-              orderBy: {
-                createdAt: 'desc'
-              }
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     });
 
     if (!task) {
@@ -89,22 +57,22 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
       propertyId: task.propertyId,
       propertyAddress: `${task.property.address}, ${task.property.commune}, ${task.property.city}`,
       propertyTitle: task.property.title,
-      tenantName: task.property.contracts[0]?.tenant?.name || 'No disponible',
-      tenantPhone: task.property.contracts[0]?.tenant?.phone || 'No disponible',
-      tenantEmail: task.property.contracts[0]?.tenant?.email || 'No disponible',
+      tenantName: 'No disponible',
+      tenantPhone: 'No disponible',
+      tenantEmail: 'No disponible',
       ownerName: task.property.owner.name,
       ownerPhone: task.property.owner.phone,
       ownerEmail: task.property.owner.email,
-      taskType: task.type.toLowerCase(),
+      taskType: task.category.toLowerCase(),
       priority: task.priority.toLowerCase(),
       status: task.status.toLowerCase(),
       scheduledDate: task.scheduledDate?.toISOString().split('T')[0],
       scheduledTime: task.scheduledTime,
-      estimatedDuration: task.estimatedDuration?.toString(),
+      estimatedDuration: '1',
       description: task.description,
       specialInstructions: task.notes,
       contactMethod: 'phone', // Por defecto
-      assignedBy: task.assignedBy.name,
+      assignedBy: 'Sistema',
       createdAt: task.createdAt.toISOString(),
       updatedAt: task.updatedAt.toISOString(),
     };
@@ -112,23 +80,22 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     logger.info('Detalles de tarea obtenidos', {
       runnerId: user.id,
       taskId,
-      status: task.status
+      status: task.status,
     });
 
     return NextResponse.json({
       success: true,
-      data: taskDetail
+      data: taskDetail,
     });
-
   } catch (error) {
     logger.error('Error obteniendo detalles de tarea:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );
@@ -138,7 +105,7 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
 export async function PUT(request: NextRequest, { params }: { params: { taskId: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'RUNNER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de runner.' },
@@ -151,11 +118,11 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
     const { status, notes, photos } = body;
 
     // Validar que la tarea existe y pertenece al runner
-    const existingTask = await db.task.findUnique({
-      where: { 
+    const existingTask = await db.maintenance.findUnique({
+      where: {
         id: taskId,
-        assignedTo: user.id
-      }
+        assignedTo: user.id,
+      },
     });
 
     if (!existingTask) {
@@ -166,21 +133,21 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
     }
 
     // Actualizar la tarea
-    const updatedTask = await db.task.update({
+    const updatedTask = await db.maintenance.update({
       where: { id: taskId },
       data: {
         ...(status && { status: status.toUpperCase() }),
         ...(notes && { notes }),
         ...(photos && { photos: JSON.stringify(photos) }),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     logger.info('Tarea actualizada', {
       runnerId: user.id,
       taskId,
       status: updatedTask.status,
-      changes: { status, notes, photos: photos?.length }
+      changes: { status, notes, photos: photos?.length },
     });
 
     return NextResponse.json({
@@ -189,20 +156,19 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
         id: updatedTask.id,
         status: updatedTask.status.toLowerCase(),
         notes: updatedTask.notes,
-        photos: updatedTask.photos ? JSON.parse(updatedTask.photos) : [],
-        updatedAt: updatedTask.updatedAt.toISOString()
-      }
+        photos: updatedTask.images ? JSON.parse(updatedTask.images) : [],
+        updatedAt: updatedTask.updatedAt.toISOString(),
+      },
     });
-
   } catch (error) {
     logger.error('Error actualizando tarea:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

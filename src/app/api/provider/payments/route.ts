@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
     // Construir filtros
     const whereClause: any = {
       // Los pagos del proveedor están relacionados con solicitudes completadas
-      maintenanceRequest: {
-        assignedProviderId: user.id,
-        status: 'COMPLETED'
-      }
+      maintenance: {
+        assignedTo: user.id,
+        status: 'COMPLETED',
+      },
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const payments = await db.payment.findMany({
       where: whereClause,
       include: {
-        maintenanceRequest: {
+        contract: {
           include: {
             property: {
               select: {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
                 city: true,
                 commune: true,
                 region: true,
-              }
+              },
             },
             tenant: {
               select: {
@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
                 name: true,
                 email: true,
                 phone: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        dueDate: 'desc'
+        dueDate: 'desc',
       },
       take: limit,
       skip: offset,
@@ -69,35 +69,29 @@ export async function GET(request: NextRequest) {
     // Calcular estadísticas
     const totalEarnings = await db.payment.aggregate({
       where: {
-        maintenanceRequest: {
-          assignedProviderId: user.id,
-          status: 'COMPLETED'
-        },
-        status: 'PAID'
+        payerId: user.id,
+        status: 'PAID',
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     const pendingPayments = await db.payment.aggregate({
       where: {
-        maintenanceRequest: {
-          assignedProviderId: user.id,
-          status: 'COMPLETED'
-        },
-        status: 'PENDING'
+        payerId: user.id,
+        status: 'PENDING',
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
-    const completedRequests = await db.maintenanceRequest.count({
+    const completedRequests = await db.maintenance.count({
       where: {
-        assignedProviderId: user.id,
-        status: 'COMPLETED'
-      }
+        assignedTo: user.id,
+        status: 'COMPLETED',
+      },
     });
 
     // Transformar datos al formato esperado
@@ -106,42 +100,43 @@ export async function GET(request: NextRequest) {
       amount: payment.amount,
       dueDate: payment.dueDate.toISOString(),
       status: payment.status.toLowerCase(),
-      description: payment.description,
+      notes: payment.notes,
       method: payment.method,
       transactionId: payment.transactionId,
-      paidAt: payment.paidAt?.toISOString(),
+      paidDate: payment.paidDate?.toISOString(),
       createdAt: payment.createdAt.toISOString(),
       updatedAt: payment.updatedAt.toISOString(),
       property: {
-        id: payment.maintenanceRequest.property.id,
-        title: payment.maintenanceRequest.property.title,
-        address: `${payment.maintenanceRequest.property.address}, ${payment.maintenanceRequest.property.commune}, ${payment.maintenanceRequest.property.city}`,
+        id: payment.contract.property.id,
+        title: payment.contract.property.title,
+        address: `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}`,
       },
       tenant: {
-        id: payment.maintenanceRequest.tenant.id,
-        name: payment.maintenanceRequest.tenant.name,
-        email: payment.maintenanceRequest.tenant.email,
-        phone: payment.maintenanceRequest.tenant.phone,
+        id: payment.contract.tenant.id,
+        name: payment.contract.tenant.name,
+        email: payment.contract.tenant.email,
+        phone: payment.contract.tenant.phone,
       },
-      request: {
-        id: payment.maintenanceRequest.id,
-        type: payment.maintenanceRequest.type,
-        title: payment.maintenanceRequest.title,
-        completedAt: payment.maintenanceRequest.completedAt?.toISOString(),
-      }
+      contract: {
+        id: payment.contract.id,
+        contractNumber: payment.contract.contractNumber,
+        status: payment.contract.status,
+        signedAt: payment.contract.signedAt?.toISOString(),
+      },
     }));
 
     const stats = {
       totalEarnings: totalEarnings._sum.amount || 0,
       pendingPayments: pendingPayments._sum.amount || 0,
       completedRequests,
-      averageEarning: completedRequests > 0 ? (totalEarnings._sum.amount || 0) / completedRequests : 0,
+      averageEarning:
+        completedRequests > 0 ? (totalEarnings._sum.amount || 0) / completedRequests : 0,
     };
 
     logger.info('Pagos de proveedor obtenidos', {
       providerId: user.id,
       count: transformedPayments.length,
-      stats
+      stats,
     });
 
     return NextResponse.json({
@@ -152,19 +147,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: payments.length,
-        hasMore: payments.length === limit
-      }
+        hasMore: payments.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo pagos de proveedor:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

@@ -48,7 +48,7 @@ export class AILearningSystem {
   } = {
     mostCommonQuestions: [],
     bestPerformingResponses: [],
-    userSatisfactionTrend: []
+    userSatisfactionTrend: [],
   };
 
   /**
@@ -58,7 +58,7 @@ export class AILearningSystem {
     const fullInteraction: LearningInteraction = {
       ...interaction,
       id: `interaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Almacenar interacción por usuario
@@ -79,7 +79,7 @@ export class AILearningSystem {
     logger.info('Interacción registrada para aprendizaje', {
       userId: interaction.userId,
       intent: interaction.intent,
-      confidence: interaction.confidence
+      confidence: interaction.confidence,
     });
   }
 
@@ -88,18 +88,20 @@ export class AILearningSystem {
    */
   private updateLearningPatterns(interaction: LearningInteraction): void {
     const patternKey = `${interaction.intent}_${interaction.userRole}`;
-    
+
     if (this.patterns.has(patternKey)) {
       const pattern = this.patterns.get(patternKey)!;
       pattern.frequency += 1;
       pattern.lastUsed = interaction.timestamp;
-      
+
       // Actualizar tasa de éxito basada en feedback
       if (interaction.userFeedback) {
         const isPositive = interaction.userFeedback === 'positive';
-        pattern.successRate = (pattern.successRate * (pattern.frequency - 1) + (isPositive ? 1 : 0)) / pattern.frequency;
+        pattern.successRate =
+          (pattern.successRate * (pattern.frequency - 1) + (isPositive ? 1 : 0)) /
+          pattern.frequency;
       }
-      
+
       // Ajustar confianza basada en el rendimiento
       if (pattern.successRate > 0.8) {
         pattern.confidence = Math.min(0.95, pattern.confidence + 0.01);
@@ -114,7 +116,7 @@ export class AILearningSystem {
         confidence: interaction.confidence,
         frequency: 1,
         lastUsed: interaction.timestamp,
-        successRate: interaction.userFeedback === 'positive' ? 1 : 0.5
+        successRate: interaction.userFeedback === 'positive' ? 1 : 0.5,
       });
     }
   }
@@ -131,12 +133,12 @@ export class AILearningSystem {
         averageSessionLength: 0,
         mostActiveHours: [],
         commonQuestions: [],
-        satisfactionScore: 0.5
+        satisfactionScore: 0.5,
       });
     }
 
     const behavior = this.userBehaviors.get(interaction.userId)!;
-    
+
     // Actualizar intenciones comunes
     if (!behavior.commonIntents.includes(interaction.intent)) {
       behavior.commonIntents.push(interaction.intent);
@@ -155,8 +157,12 @@ export class AILearningSystem {
 
     // Actualizar puntuación de satisfacción
     if (interaction.userFeedback) {
-      const feedbackScore = interaction.userFeedback === 'positive' ? 1 : 
-                           interaction.userFeedback === 'negative' ? 0 : 0.5;
+      const feedbackScore =
+        interaction.userFeedback === 'positive'
+          ? 1
+          : interaction.userFeedback === 'negative'
+            ? 0
+            : 0.5;
       behavior.satisfactionScore = (behavior.satisfactionScore + feedbackScore) / 2;
     }
   }
@@ -169,19 +175,19 @@ export class AILearningSystem {
     const existingQuestion = this.globalInsights.mostCommonQuestions.find(
       q => q.question === interaction.userMessage
     );
-    
+
     if (existingQuestion) {
       existingQuestion.frequency += 1;
     } else {
       this.globalInsights.mostCommonQuestions.push({
         question: interaction.userMessage,
-        frequency: 1
+        frequency: 1,
       });
     }
 
     // Ordenar por frecuencia
     this.globalInsights.mostCommonQuestions.sort((a, b) => b.frequency - a.frequency);
-    
+
     // Mantener solo las top 20
     this.globalInsights.mostCommonQuestions = this.globalInsights.mostCommonQuestions.slice(0, 20);
 
@@ -190,33 +196,39 @@ export class AILearningSystem {
       const existingResponse = this.globalInsights.bestPerformingResponses.find(
         r => r.response === interaction.botResponse
       );
-      
+
       if (existingResponse) {
         existingResponse.successRate = (existingResponse.successRate + 1) / 2;
       } else {
         this.globalInsights.bestPerformingResponses.push({
           response: interaction.botResponse,
-          successRate: 1
+          successRate: 1,
         });
       }
     }
 
     // Actualizar tendencia de satisfacción
-    const today = interaction.timestamp.toISOString().split('T')[0];
-    const existingTrend = this.globalInsights.userSatisfactionTrend.find(
-      t => t.date === today
-    );
-    
+    const today = interaction.timestamp.toISOString().split('T')[0] as string;
+    const existingTrend = this.globalInsights.userSatisfactionTrend.find(t => t.date === today);
+
     if (existingTrend) {
-      const feedbackScore = interaction.userFeedback === 'positive' ? 1 : 
-                           interaction.userFeedback === 'negative' ? 0 : 0.5;
+      const feedbackScore =
+        interaction.userFeedback === 'positive'
+          ? 1
+          : interaction.userFeedback === 'negative'
+            ? 0
+            : 0.5;
       existingTrend.score = (existingTrend.score + feedbackScore) / 2;
     } else {
-      const feedbackScore = interaction.userFeedback === 'positive' ? 1 : 
-                           interaction.userFeedback === 'negative' ? 0 : 0.5;
+      const feedbackScore =
+        interaction.userFeedback === 'positive'
+          ? 1
+          : interaction.userFeedback === 'negative'
+            ? 0
+            : 0.5;
       this.globalInsights.userSatisfactionTrend.push({
         date: today,
-        score: feedbackScore
+        score: feedbackScore,
       });
     }
   }
@@ -246,7 +258,7 @@ export class AILearningSystem {
       totalInteractions: Array.from(this.interactions.values()).flat().length,
       totalUsers: this.userBehaviors.size,
       averageSatisfaction: this.calculateAverageSatisfaction(),
-      topPerformingPatterns: this.getTopPerformingPatterns()
+      topPerformingPatterns: this.getTopPerformingPatterns(),
     };
   }
 
@@ -255,9 +267,14 @@ export class AILearningSystem {
    */
   private calculateAverageSatisfaction(): number {
     const behaviors = Array.from(this.userBehaviors.values());
-    if (behaviors.length === 0) return 0;
-    
-    const totalSatisfaction = behaviors.reduce((sum, behavior) => sum + behavior.satisfactionScore, 0);
+    if (behaviors.length === 0) {
+      return 0;
+    }
+
+    const totalSatisfaction = behaviors.reduce(
+      (sum, behavior) => sum + behavior.satisfactionScore,
+      0
+    );
     return totalSatisfaction / behaviors.length;
   }
 
@@ -279,22 +296,29 @@ export class AILearningSystem {
     const insights = this.getGlobalInsights();
 
     // Sugerir mejoras basadas en patrones de bajo rendimiento
-    const lowPerformingPatterns = Array.from(this.patterns.values())
-      .filter(pattern => pattern.successRate < 0.6 && pattern.frequency >= 5);
+    const lowPerformingPatterns = Array.from(this.patterns.values()).filter(
+      pattern => pattern.successRate < 0.6 && pattern.frequency >= 5
+    );
 
     if (lowPerformingPatterns.length > 0) {
-      suggestions.push(`Considerar mejorar las respuestas para: ${lowPerformingPatterns.map(p => p.intent).join(', ')}`);
+      suggestions.push(
+        `Considerar mejorar las respuestas para: ${lowPerformingPatterns.map(p => p.intent).join(', ')}`
+      );
     }
 
     // Sugerir mejoras basadas en preguntas frecuentes
     const topQuestions = this.globalInsights.mostCommonQuestions.slice(0, 5);
     if (topQuestions.length > 0) {
-      suggestions.push(`Crear respuestas predefinidas para las preguntas más frecuentes: ${topQuestions.map(q => q.question).join(', ')}`);
+      suggestions.push(
+        `Crear respuestas predefinidas para las preguntas más frecuentes: ${topQuestions.map(q => q.question).join(', ')}`
+      );
     }
 
     // Sugerir mejoras basadas en satisfacción
     if (insights.averageSatisfaction < 0.7) {
-      suggestions.push('La satisfacción general del usuario está por debajo del 70%. Considerar revisar las respuestas del chatbot.');
+      suggestions.push(
+        'La satisfacción general del usuario está por debajo del 70%. Considerar revisar las respuestas del chatbot.'
+      );
     }
 
     return suggestions;
@@ -313,7 +337,7 @@ export class AILearningSystem {
       interactions: Array.from(this.interactions.values()).flat(),
       patterns: Array.from(this.patterns.values()),
       userBehaviors: Array.from(this.userBehaviors.values()),
-      globalInsights: this.getGlobalInsights()
+      globalInsights: this.getGlobalInsights(),
     };
   }
 
@@ -344,7 +368,7 @@ export class AILearningSystem {
     logger.info('Datos de aprendizaje antiguos limpiados', {
       cutoffDate: cutoffDate.toISOString(),
       remainingInteractions: Array.from(this.interactions.values()).flat().length,
-      remainingPatterns: this.patterns.size
+      remainingPatterns: this.patterns.size,
     });
   }
 }

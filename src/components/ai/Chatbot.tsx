@@ -290,16 +290,16 @@ export default function Chatbot({
           confidence: result.confidence,
         },
         suggestions: result.suggestions,
-        actions: result.actions,
-        links: result.links,
-        followUp: result.followUp,
-        securityNote: result.securityNote,
+        actions: [],
+        links: [],
+        followUp: [],
+        securityNote: undefined,
         // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
-        agent: result.agent,
-        recommendations: result.recommendations,
-        sentiment: result.sentiment,
-        memoryContext: result.memoryContext,
-        learningInsights: result.learningInsights,
+        agent: undefined,
+        recommendations: [],
+        sentiment: undefined,
+        memoryContext: undefined,
+        learningInsights: undefined,
       };
     } catch (error) {
       logger.error('Error generando respuesta de IA:', {

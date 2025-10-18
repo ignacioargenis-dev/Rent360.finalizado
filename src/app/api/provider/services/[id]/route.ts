@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
@@ -17,21 +17,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const serviceId = params.id;
 
     // Obtener detalles del servicio
-    const service = await db.service.findUnique({
-      where: { 
+    const service = await db.serviceJob.findUnique({
+      where: {
         id: serviceId,
-        providerId: user.id // Asegurar que el proveedor es el dueño
+        serviceProviderId: user.id, // Asegurar que el proveedor es el dueño
       },
       include: {
-        provider: {
+        serviceProvider: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            phone: true,
-          }
-        }
-      }
+            businessName: true,
+            serviceTypes: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!service) {
@@ -42,56 +48,56 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Obtener estadísticas del servicio
-    const stats = await db.maintenanceRequest.aggregate({
+    const stats = await db.maintenance.aggregate({
       where: {
-        assignedProviderId: user.id,
-        type: service.category
+        assignedTo: user.id,
+        category: service.serviceType,
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
-    const completedRequests = await db.maintenanceRequest.count({
+    const completedRequests = await db.maintenance.count({
       where: {
-        assignedProviderId: user.id,
-        type: service.category,
-        status: 'COMPLETED'
-      }
+        assignedTo: user.id,
+        category: service.serviceType,
+        status: 'COMPLETED',
+      },
     });
 
     // Transformar datos al formato esperado
     const serviceDetail = {
       id: service.id,
-      name: service.name,
-      category: service.category,
+      name: service.title,
+      category: service.serviceType,
       description: service.description,
       shortDescription: service.description?.substring(0, 100) + '...',
       pricing: {
-        type: service.pricingType || 'fixed',
+        type: 'fixed',
         amount: service.basePrice || 0,
         currency: 'CLP',
-        minimumCharge: service.minimumCharge || 0,
+        minimumCharge: 0,
       },
       duration: {
-        estimated: service.estimatedDuration?.toString() || '1',
+        estimated: '1',
         unit: 'hours',
       },
-      features: service.features ? JSON.parse(service.features) : [],
-      requirements: service.requirements ? JSON.parse(service.requirements) : [],
+      features: [],
+      requirements: [],
       availability: {
-        active: service.isActive,
-        regions: service.regions ? JSON.parse(service.regions) : [],
-        emergency: service.emergencyService || false,
+        active: true,
+        regions: [],
+        emergency: false,
       },
       images: service.images ? JSON.parse(service.images) : [],
-      tags: service.tags ? JSON.parse(service.tags) : [],
+      tags: [],
       stats: {
-        views: service.views || 0,
+        views: 0,
         requests: stats._count.id || 0,
-        conversionRate: service.conversionRate || 0,
-        averageRating: service.averageRating || 0,
-        totalReviews: service.totalReviews || 0,
+        conversionRate: 0,
+        averageRating: 0,
+        totalReviews: 0,
         completedJobs: completedRequests,
       },
       createdAt: service.createdAt.toISOString(),
@@ -99,25 +105,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     };
 
     logger.info('Detalles de servicio obtenidos', {
-      providerId: user.id,
+      serviceProviderId: user.id,
       serviceId,
-      category: service.category
+      category: service.serviceType,
     });
 
     return NextResponse.json({
       success: true,
-      data: serviceDetail
+      data: serviceDetail,
     });
-
   } catch (error) {
     logger.error('Error obteniendo detalles de servicio:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );
@@ -127,7 +132,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
@@ -137,12 +142,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const serviceId = params.id;
     const body = await request.json();
-    const { 
-      name, 
-      category, 
-      description, 
-      basePrice, 
-      minimumCharge, 
+    const {
+      name,
+      category,
+      description,
+      basePrice,
+      minimumCharge,
       estimatedDuration,
       features,
       requirements,
@@ -150,15 +155,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       isActive,
       emergencyService,
       images,
-      tags
+      tags,
     } = body;
 
     // Validar que el servicio existe y pertenece al proveedor
-    const existingService = await db.service.findUnique({
-      where: { 
+    const existingService = await db.serviceJob.findUnique({
+      where: {
         id: serviceId,
-        providerId: user.id
-      }
+        serviceProviderId: user.id,
+      },
     });
 
     if (!existingService) {
@@ -169,7 +174,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Actualizar el servicio
-    const updatedService = await db.service.update({
+    const updatedService = await db.serviceJob.update({
       where: { id: serviceId },
       data: {
         ...(name && { name }),
@@ -185,36 +190,35 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         ...(emergencyService !== undefined && { emergencyService }),
         ...(images && { images: JSON.stringify(images) }),
         ...(tags && { tags: JSON.stringify(tags) }),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     logger.info('Servicio actualizado', {
-      providerId: user.id,
+      serviceProviderId: user.id,
       serviceId,
-      changes: { name, category, isActive }
+      changes: { name, category, isActive },
     });
 
     return NextResponse.json({
       success: true,
       data: {
         id: updatedService.id,
-        name: updatedService.name,
-        category: updatedService.category,
-        isActive: updatedService.isActive,
-        updatedAt: updatedService.updatedAt.toISOString()
-      }
+        name: updatedService.title,
+        category: updatedService.serviceType,
+        isActive: true,
+        updatedAt: updatedService.updatedAt.toISOString(),
+      },
     });
-
   } catch (error) {
     logger.error('Error actualizando servicio:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

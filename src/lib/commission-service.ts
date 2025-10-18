@@ -64,49 +64,52 @@ export class CommissionService {
     try {
       const cacheKey = CacheKeys.SYSTEM_METRICS + ':commission_config';
 
-      return await cacheManager.getOrSet(
-        cacheKey,
-        async () => {
-          const settings = await db.systemSetting.findMany({
-            where: {
-              category: 'commission',
-              isActive: true
-            }
-          });
+      // Verificar si existe en cache
+      const cached = cacheManager.get(cacheKey) as CommissionConfig | undefined;
+      if (cached) {
+        return cached;
+      }
 
-          const config: CommissionConfig = {
-            defaultCommissionRate: 5, // Por defecto 5%
-            commissionStructure: 'percentage',
-            minimumCommissionAmount: 50000, // $50.000 CLP mínimo
-            commissionPaymentMethod: 'bank_transfer',
-            commissionSchedule: 'monthly'
-          };
-
-          // Mapear configuraciones desde la base de datos
-          settings.forEach(setting => {
-            switch (setting.key) {
-              case 'defaultCommissionRate':
-                config.defaultCommissionRate = parseFloat(setting.value);
-                break;
-              case 'commissionStructure':
-                config.commissionStructure = setting.value as 'fixed' | 'percentage' | 'tiered';
-                break;
-              case 'minimumCommissionAmount':
-                config.minimumCommissionAmount = parseFloat(setting.value);
-                break;
-              case 'commissionPaymentMethod':
-                config.commissionPaymentMethod = setting.value;
-                break;
-              case 'commissionSchedule':
-                config.commissionSchedule = setting.value as 'immediate' | 'weekly' | 'monthly';
-                break;
-            }
-          });
-
-          return config;
+      // Si no existe, obtener de la base de datos
+      const settings = await db.systemSetting.findMany({
+        where: {
+          category: 'commission',
+          isActive: true,
         },
-        SYSTEM_METRICS_TTL
-      );
+      });
+
+      const config: CommissionConfig = {
+        defaultCommissionRate: 5, // Por defecto 5%
+        commissionStructure: 'percentage',
+        minimumCommissionAmount: 50000, // $50.000 CLP mínimo
+        commissionPaymentMethod: 'bank_transfer',
+        commissionSchedule: 'monthly',
+      };
+
+      // Mapear configuraciones desde la base de datos
+      settings.forEach(setting => {
+        switch (setting.key) {
+          case 'defaultCommissionRate':
+            config.defaultCommissionRate = parseFloat(setting.value);
+            break;
+          case 'commissionStructure':
+            config.commissionStructure = setting.value as 'fixed' | 'percentage' | 'tiered';
+            break;
+          case 'minimumCommissionAmount':
+            config.minimumCommissionAmount = parseFloat(setting.value);
+            break;
+          case 'commissionPaymentMethod':
+            config.commissionPaymentMethod = setting.value;
+            break;
+          case 'commissionSchedule':
+            config.commissionSchedule = setting.value as 'immediate' | 'weekly' | 'monthly';
+            break;
+        }
+      });
+
+      // Guardar en cache
+      cacheManager.set(cacheKey, config, SYSTEM_METRICS_TTL);
+      return config;
     } catch (error) {
       logger.error('Error obteniendo configuración de comisiones:', error as Error);
       throw new DatabaseError('Error al obtener configuración de comisiones');
@@ -130,17 +133,17 @@ export class CommissionService {
               id: true,
               price: true,
               type: true,
-              features: true
-            }
+              features: true,
+            },
           },
           broker: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       if (!contract) {
@@ -148,7 +151,10 @@ export class CommissionService {
       }
 
       if (!contract.brokerId) {
-        throw new BusinessLogicError('El contrato no tiene corredor asignado', 'NO_BROKER_ASSIGNED');
+        throw new BusinessLogicError(
+          'El contrato no tiene corredor asignado',
+          'NO_BROKER_ASSIGNED'
+        );
       }
 
       const brokerIdToUse = brokerId || contract.brokerId;
@@ -190,13 +196,13 @@ export class CommissionService {
             propertyType: contract.property?.type || 'apartment',
             propertyValue,
             baseCommission,
-            bonusCommission: totalBonus
-          }
+            bonusCommission: totalBonus,
+          },
         });
       } catch (notificationError) {
         logger.warn('Failed to send commission calculated notification', {
           brokerId: brokerIdToUse,
-          error: notificationError
+          error: notificationError,
         });
         // No fallar la operación por error en notificación
       }
@@ -213,8 +219,8 @@ export class CommissionService {
         breakdown: {
           baseAmount: baseCommission,
           bonuses,
-          deductions
-        }
+          deductions,
+        },
       };
     } catch (error) {
       logger.error('Error calculando comisión:', { contractId, brokerId, error });
@@ -273,7 +279,7 @@ export class CommissionService {
       bonuses.push({
         type: 'exclusive_contract',
         amount: baseCommission * 0.1,
-        reason: 'Bono por contrato exclusivo (10%)'
+        reason: 'Bono por contrato exclusivo (10%)',
       });
     }
 
@@ -282,7 +288,7 @@ export class CommissionService {
       bonuses.push({
         type: 'additional_services',
         amount: baseCommission * 0.05,
-        reason: 'Bono por servicios adicionales (5%)'
+        reason: 'Bono por servicios adicionales (5%)',
       });
     }
 
@@ -291,7 +297,7 @@ export class CommissionService {
       bonuses.push({
         type: 'premium_client',
         amount: baseCommission * 0.15,
-        reason: 'Bono por cliente premium (15%)'
+        reason: 'Bono por cliente premium (15%)',
       });
     }
 
@@ -300,7 +306,7 @@ export class CommissionService {
       bonuses.push({
         type: 'corporate_client',
         amount: baseCommission * 0.2,
-        reason: 'Bono por cliente corporativo (20%)'
+        reason: 'Bono por cliente corporativo (20%)',
       });
     }
 
@@ -310,7 +316,7 @@ export class CommissionService {
       bonuses.push({
         type: 'high_value_property',
         amount: baseCommission * 0.05,
-        reason: 'Bono por propiedad de alto valor (5%)'
+        reason: 'Bono por propiedad de alto valor (5%)',
       });
     }
 
@@ -336,7 +342,7 @@ export class CommissionService {
       deductions.push({
         type: 'payment_delay',
         amount: baseCommission * 0.1,
-        reason: 'Deducción por retraso en pagos (10%)'
+        reason: 'Deducción por retraso en pagos (10%)',
       });
     }
 
@@ -359,17 +365,17 @@ export class CommissionService {
           status: 'ACTIVE',
           startDate: {
             gte: startDate,
-            lte: endDate
-          }
+            lte: endDate,
+          },
         },
         include: {
           property: {
             select: {
               price: true,
-              type: true
-            }
-          }
-        }
+              type: true,
+            },
+          },
+        },
       });
 
       if (contracts.length === 0) {
@@ -394,20 +400,20 @@ export class CommissionService {
         amount: totalAmount,
         period: {
           startDate,
-          endDate
+          endDate,
         },
         commissions: commissionCalculations,
         status: 'pending',
         paymentMethod: config.commissionPaymentMethod,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Aquí se podría guardar en la base de datos
       logger.info('Payout de comisión generado:', {
         brokerId,
         amount: totalAmount,
-        contractCount: contracts.length
+        contractCount: contracts.length,
       });
 
       return payout;
@@ -439,23 +445,22 @@ export class CommissionService {
           metadata: {
             payoutId,
             processedAt: new Date(),
-            paymentMethod: 'bank_transfer'
-          }
+            paymentMethod: 'bank_transfer',
+          },
         });
       } catch (notificationError) {
         logger.warn('Failed to send commission paid notification', {
           brokerId,
           payoutId,
-          error: notificationError
+          error: notificationError,
         });
       }
 
       logger.info('Pago de comisión procesado exitosamente', {
         payoutId,
         brokerId,
-        amount
+        amount,
       });
-
     } catch (error) {
       logger.error('Error procesando pago de comisión:', { payoutId, error });
       throw new DatabaseError('Error al procesar pago de comisión');
@@ -471,7 +476,7 @@ export class CommissionService {
       const contracts = await db.contract.findMany({
         where: {
           brokerId,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         select: {
           id: true,
@@ -479,10 +484,10 @@ export class CommissionService {
           startDate: true,
           property: {
             select: {
-              type: true
-            }
-          }
-        }
+              type: true,
+            },
+          },
+        },
       });
 
       if (contracts.length === 0) {
@@ -491,7 +496,7 @@ export class CommissionService {
           totalCommissionValue: 0,
           averageCommission: 0,
           monthlyRevenue: 0,
-          contractsByType: {}
+          contractsByType: {},
         };
       }
 
@@ -517,7 +522,7 @@ export class CommissionService {
         averageCommission,
         monthlyRevenue,
         contractsByType,
-        commissionConfig: config
+        commissionConfig: config,
       };
     } catch (error) {
       logger.error('Error obteniendo estadísticas de comisión:', { brokerId, error });

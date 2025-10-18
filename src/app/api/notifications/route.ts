@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      userId: user.id
+      userId: user.id,
     };
-    
+
     if (unreadOnly) {
       whereClause.read = false;
     }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const notifications = await db.notification.findMany({
       where: whereClause,
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     const unreadCount = await db.notification.count({
       where: {
         userId: user.id,
-        read: false
-      }
+        isRead: false,
+      },
     });
 
     // Transformar datos al formato esperado
@@ -45,17 +45,16 @@ export async function GET(request: NextRequest) {
       title: notification.title,
       message: notification.message,
       type: notification.type,
-      read: notification.read,
+      read: notification.isRead,
       createdAt: notification.createdAt.toISOString(),
-      updatedAt: notification.updatedAt.toISOString(),
-      metadata: notification.metadata ? JSON.parse(notification.metadata) : null,
+      data: notification.data ? JSON.parse(notification.data) : null,
     }));
 
     logger.info('Notificaciones obtenidas', {
       userId: user.id,
       count: transformedNotifications.length,
       unreadCount,
-      unreadOnly
+      unreadOnly,
     });
 
     return NextResponse.json({
@@ -66,19 +65,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: notifications.length,
-        hasMore: notifications.length === limit
-      }
+        hasMore: notifications.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo notificaciones:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );
@@ -89,7 +87,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    
+
     const { title, message, type, metadata } = body;
 
     // Validar campos requeridos
@@ -107,15 +105,15 @@ export async function POST(request: NextRequest) {
         title,
         message,
         type,
-        metadata: metadata ? JSON.stringify(metadata) : null,
-        read: false
-      }
+        data: metadata ? JSON.stringify(metadata) : null,
+        isRead: false,
+      },
     });
 
     logger.info('Notificación creada', {
       userId: user.id,
       notificationId: notification.id,
-      type
+      type,
     });
 
     return NextResponse.json({
@@ -125,21 +123,20 @@ export async function POST(request: NextRequest) {
         title: notification.title,
         message: notification.message,
         type: notification.type,
-        read: notification.read,
+        read: notification.isRead,
         createdAt: notification.createdAt.toISOString(),
-        metadata: notification.metadata ? JSON.parse(notification.metadata) : null,
-      }
+        data: notification.data ? JSON.parse(notification.data) : null,
+      },
     });
-
   } catch (error) {
     logger.error('Error creando notificación:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );
@@ -150,7 +147,7 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    
+
     const { notificationId, read } = body;
 
     if (!notificationId || typeof read !== 'boolean') {
@@ -164,36 +161,35 @@ export async function PUT(request: NextRequest) {
     const notification = await db.notification.update({
       where: {
         id: notificationId,
-        userId: user.id // Asegurar que el usuario es el propietario
+        userId: user.id, // Asegurar que el usuario es el propietario
       },
       data: {
-        read
-      }
+        isRead: read,
+      },
     });
 
     logger.info('Notificación actualizada', {
       userId: user.id,
       notificationId,
-      read
+      read,
     });
 
     return NextResponse.json({
       success: true,
       data: {
         id: notification.id,
-        read: notification.read
-      }
+        read: notification.isRead,
+      },
     });
-
   } catch (error) {
     logger.error('Error actualizando notificación:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

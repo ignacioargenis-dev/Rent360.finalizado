@@ -3,19 +3,25 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  FileText, 
-  FileSpreadsheet, 
+import {
+  Download,
+  FileText,
+  FileSpreadsheet,
   Database,
   Calendar,
   Filter,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
 
@@ -26,7 +32,9 @@ interface DataExporterProps {
 
 export function DataExporter({ userRole, userId }: DataExporterProps) {
   const [format, setFormat] = useState<'csv' | 'excel' | 'json'>('csv');
-  const [dataType, setDataType] = useState<'all' | 'properties' | 'contracts' | 'payments' | 'users'>('all');
+  const [dataType, setDataType] = useState<
+    'all' | 'properties' | 'contracts' | 'payments' | 'users'
+  >('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isExporting, setIsExporting] = useState(false);
@@ -134,10 +142,10 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
       // Obtener el nombre del archivo del header Content-Disposition
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `rent360_export_${dataType}_${new Date().toISOString().split('T')[0]}`;
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
+        if (filenameMatch && filenameMatch[1]) {
           filename = filenameMatch[1];
         }
       }
@@ -154,16 +162,15 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
       window.URL.revokeObjectURL(url);
 
       setExportStatus('success');
-      
+
       logger.info('Datos exportados exitosamente', {
         userId,
         userRole,
         format,
         dataType,
         startDate,
-        endDate
+        endDate,
       });
-
     } catch (error) {
       logger.error('Error exportando datos:', error);
       setExportStatus('error');
@@ -213,9 +220,7 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
               </SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-sm text-muted-foreground">
-            {getFormatDescription(format)}
-          </p>
+          <p className="text-sm text-muted-foreground">{getFormatDescription(format)}</p>
         </div>
 
         {/* Tipo de datos */}
@@ -226,7 +231,7 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
               <SelectValue placeholder="Selecciona tipo de datos" />
             </SelectTrigger>
             <SelectContent>
-              {availableDataTypes.map((type) => {
+              {availableDataTypes.map(type => {
                 const Icon = type.icon;
                 return (
                   <SelectItem key={type.value} value={type.value}>
@@ -247,7 +252,7 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
             <Filter className="h-4 w-4" />
             <Label>Filtros de fecha (opcional)</Label>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Fecha inicio</Label>
@@ -255,7 +260,7 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={e => setStartDate(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -264,7 +269,7 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
                 id="endDate"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={e => setEndDate(e.target.value)}
               />
             </div>
           </div>
@@ -274,27 +279,19 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
         {exportStatus === 'success' && (
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
             <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-sm text-green-800">
-              Datos exportados exitosamente
-            </span>
+            <span className="text-sm text-green-800">Datos exportados exitosamente</span>
           </div>
         )}
 
         {exportStatus === 'error' && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
             <AlertCircle className="h-4 w-4 text-red-600" />
-            <span className="text-sm text-red-800">
-              {errorMessage}
-            </span>
+            <span className="text-sm text-red-800">{errorMessage}</span>
           </div>
         )}
 
         {/* Botón de exportación */}
-        <Button 
-          onClick={handleExport} 
-          disabled={isExporting}
-          className="w-full"
-        >
+        <Button onClick={handleExport} disabled={isExporting} className="w-full">
           {isExporting ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -310,7 +307,9 @@ export function DataExporter({ userRole, userId }: DataExporterProps) {
 
         {/* Información adicional */}
         <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Los datos exportados incluyen solo la información a la que tienes acceso según tu rol</p>
+          <p>
+            • Los datos exportados incluyen solo la información a la que tienes acceso según tu rol
+          </p>
           <p>• Los archivos se descargan automáticamente a tu carpeta de descargas</p>
           <p>• Para archivos grandes, la exportación puede tomar unos minutos</p>
         </div>

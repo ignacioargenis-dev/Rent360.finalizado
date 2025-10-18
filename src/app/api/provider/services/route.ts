@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger-minimal';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     if (user.role !== 'PROVIDER' && user.role !== 'MAINTENANCE') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de proveedor.' },
@@ -21,28 +21,34 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      providerId: user.id
+      serviceProviderId: user.id,
     };
-    
+
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
 
     // Obtener servicios del proveedor
-    const services = await db.service.findMany({
+    const services = await db.serviceJob.findMany({
       where: whereClause,
       include: {
-        provider: {
+        serviceProvider: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            phone: true,
-          }
-        }
+            businessName: true,
+            serviceTypes: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: limit,
       skip: offset,
@@ -51,44 +57,44 @@ export async function GET(request: NextRequest) {
     // Transformar datos al formato esperado
     const transformedServices = services.map(service => ({
       id: service.id,
-      name: service.name,
-      category: service.category,
+      name: service.title,
+      category: service.serviceType,
       description: service.description,
       shortDescription: service.description?.substring(0, 100) + '...',
       pricing: {
-        type: service.pricingType || 'fixed',
+        type: 'fixed',
         amount: service.basePrice || 0,
         currency: 'CLP',
-        minimumCharge: service.minimumCharge || 0,
+        minimumCharge: 0,
       },
       duration: {
-        estimated: service.estimatedDuration?.toString() || '1',
+        estimated: '1',
         unit: 'hours',
       },
-      features: service.features ? JSON.parse(service.features) : [],
-      requirements: service.requirements ? JSON.parse(service.requirements) : [],
+      features: [],
+      requirements: [],
       availability: {
-        active: service.isActive,
-        regions: service.regions ? JSON.parse(service.regions) : [],
-        emergency: service.emergencyService || false,
+        active: true,
+        regions: [],
+        emergency: false,
       },
       images: service.images ? JSON.parse(service.images) : [],
-      tags: service.tags ? JSON.parse(service.tags) : [],
+      tags: [],
       stats: {
-        views: service.views || 0,
-        requests: service.requests || 0,
-        conversionRate: service.conversionRate || 0,
-        averageRating: service.averageRating || 0,
-        totalReviews: service.totalReviews || 0,
+        views: 0,
+        requests: 0,
+        conversionRate: 0,
+        averageRating: 0,
+        totalReviews: 0,
       },
       createdAt: service.createdAt.toISOString(),
       updatedAt: service.updatedAt.toISOString(),
     }));
 
     logger.info('Servicios de proveedor obtenidos', {
-      providerId: user.id,
+      serviceProviderId: user.id,
       count: transformedServices.length,
-      status
+      status,
     });
 
     return NextResponse.json({
@@ -98,19 +104,18 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         total: services.length,
-        hasMore: services.length === limit
-      }
+        hasMore: services.length === limit,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo servicios de proveedor:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Error interno del servidor',
       },
       { status: 500 }
     );

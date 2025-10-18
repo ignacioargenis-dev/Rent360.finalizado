@@ -11,10 +11,11 @@ class MemoryCache {
   private maxSize: number;
   private defaultTTL: number;
 
-  constructor(maxSize: number = 1000, defaultTTL: number = 5 * 60 * 1000) { // 5 minutes default
+  constructor(maxSize: number = 1000, defaultTTL: number = 5 * 60 * 1000) {
+    // 5 minutes default
     this.maxSize = maxSize;
     this.defaultTTL = defaultTTL;
-    
+
     // Limpiar cache expirado cada minuto
     setInterval(() => {
       this.cleanExpired();
@@ -25,23 +26,25 @@ class MemoryCache {
     // Si el cache está lleno, eliminar el item más antiguo
     if (this.cache.size >= this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
     }
 
     const item: CacheItem<T> = {
       data,
       timestamp: Date.now(),
-      ttl: ttl || this.defaultTTL
+      ttl: ttl || this.defaultTTL,
     };
 
     this.cache.set(key, item);
-    
+
     logger.debug('Cache set', { key, ttl: item.ttl });
   }
 
   get<T>(key: string): T | null {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       logger.debug('Cache miss', { key });
       return null;
@@ -60,7 +63,7 @@ class MemoryCache {
 
   has(key: string): boolean {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return false;
     }
@@ -130,7 +133,7 @@ class MemoryCache {
       valid,
       expired,
       maxSize: this.maxSize,
-      usage: (this.cache.size / this.maxSize) * 100
+      usage: (this.cache.size / this.maxSize) * 100,
     };
   }
 }
@@ -140,9 +143,9 @@ export const cache = new MemoryCache();
 
 // Funciones de utilidad para cache con diferentes TTLs
 export const cacheTTL = {
-  SHORT: 1 * 60 * 1000,      // 1 minuto
-  MEDIUM: 5 * 60 * 1000,     // 5 minutos
-  LONG: 15 * 60 * 1000,      // 15 minutos
+  SHORT: 1 * 60 * 1000, // 1 minuto
+  MEDIUM: 5 * 60 * 1000, // 5 minutos
+  LONG: 15 * 60 * 1000, // 15 minutos
   VERY_LONG: 60 * 60 * 1000, // 1 hora
 };
 
@@ -152,7 +155,7 @@ export function generateCacheKey(prefix: string, params: Record<string, any>): s
     .sort()
     .map(key => `${key}:${params[key]}`)
     .join('|');
-  
+
   return `${prefix}:${sortedParams}`;
 }
 
@@ -230,7 +233,7 @@ export const CacheKeys = {
   SYSTEM_METRICS: 'system_metrics',
   USER_STATS: 'user_stats',
   MARKET_STATS: 'market_stats',
-  COMMISSION_DATA: 'commission_data'
+  COMMISSION_DATA: 'commission_data',
 };
 
 export const ANALYTICS_DASHBOARD_TTL = cacheTTL.MEDIUM;

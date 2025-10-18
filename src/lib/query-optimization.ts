@@ -6,7 +6,7 @@ import { withCache, CacheKeys, USER_STATS_TTL } from './cache';
 export class UserQueries {
   // Obtener usuario con todas las relaciones necesarias para el dashboard
   static async getUserWithStats(userId: string) {
-    const cacheKey = CacheKeys.USER_STATS(userId);
+    const cacheKey = `${CacheKeys.USER_STATS}:${userId}`;
 
     return withCache(
       cacheKey,
@@ -22,8 +22,8 @@ export class UserQueries {
                 status: true,
                 price: true,
                 city: true,
-                commune: true
-              }
+                commune: true,
+              },
             },
             contractsAsOwner: {
               select: {
@@ -34,10 +34,10 @@ export class UserQueries {
                   select: {
                     id: true,
                     name: true,
-                    email: true
-                  }
-                }
-              }
+                    email: true,
+                  },
+                },
+              },
             },
             contractsAsTenant: {
               select: {
@@ -53,27 +53,29 @@ export class UserQueries {
                       select: {
                         id: true,
                         name: true,
-                        email: true
-                      }
-                    }
-                  }
-                }
-              }
+                        email: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
             payments: {
               select: {
                 id: true,
                 amount: true,
                 status: true,
-                dueDate: true
+                dueDate: true,
               },
               orderBy: { dueDate: 'desc' },
-              take: 5
-            }
-          }
+              take: 5,
+            },
+          },
         });
 
-        if (!user) return null;
+        if (!user) {
+          return null;
+        }
 
         // Calcular estadísticas
         const stats = {
@@ -83,17 +85,17 @@ export class UserQueries {
           totalContracts: user.contractsAsOwner.length + user.contractsAsTenant.length,
           activeContracts: [
             ...user.contractsAsOwner.filter(c => c.status === 'ACTIVE'),
-            ...user.contractsAsTenant.filter(c => c.status === 'ACTIVE')
+            ...user.contractsAsTenant.filter(c => c.status === 'ACTIVE'),
           ].length,
           pendingPayments: user.payments.filter(p => p.status === 'PENDING').length,
           totalRevenue: user.contractsAsOwner
             .filter(c => c.status === 'ACTIVE')
-            .reduce((sum, c) => sum + c.monthlyRent, 0)
+            .reduce((sum, c) => sum + c.monthlyRent, 0),
         };
 
         return {
           ...user,
-          stats
+          stats,
         };
       },
       USER_STATS_TTL
@@ -109,20 +111,21 @@ export class UserQueries {
     limit?: number;
     offset?: number;
   }) {
-    const {
-      role,
-      isActive,
-      city,
-      commune,
-      limit = 50,
-      offset = 0
-    } = filters;
+    const { role, isActive, city, commune, limit = 50, offset = 0 } = filters;
 
     const where: any = {};
-    if (role) where.role = role;
-    if (isActive !== undefined) where.isActive = isActive;
-    if (city) where.city = city;
-    if (commune) where.commune = commune;
+    if (role) {
+      where.role = role;
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+    if (city) {
+      where.city = city;
+    }
+    if (commune) {
+      where.commune = commune;
+    }
 
     // Usar índices compuestos para mejor performance
     const users = await db.user.findMany({
@@ -142,13 +145,13 @@ export class UserQueries {
           select: {
             properties: true,
             contractsAsOwner: true,
-            contractsAsTenant: true
-          }
-        }
+            contractsAsTenant: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      skip: offset
+      skip: offset,
     });
 
     // Obtener total para paginación
@@ -161,8 +164,8 @@ export class UserQueries {
         limit,
         offset,
         hasNext: offset + limit < total,
-        hasPrev: offset > 0
-      }
+        hasPrev: offset > 0,
+      },
     };
   }
 }
@@ -194,27 +197,45 @@ export class PropertyQueries {
       maxArea,
       type,
       limit = 20,
-      offset = 0
+      offset = 0,
     } = filters;
 
     const where: any = {};
-    if (ownerId) where.ownerId = ownerId;
-    if (status) where.status = status;
-    if (city) where.city = city;
-    if (commune) where.commune = commune;
-    if (type) where.type = type;
+    if (ownerId) {
+      where.ownerId = ownerId;
+    }
+    if (status) {
+      where.status = status;
+    }
+    if (city) {
+      where.city = city;
+    }
+    if (commune) {
+      where.commune = commune;
+    }
+    if (type) {
+      where.type = type;
+    }
 
     // Filtros de rango
     if (minPrice || maxPrice) {
       where.price = {};
-      if (minPrice) where.price.gte = minPrice;
-      if (maxPrice) where.price.lte = maxPrice;
+      if (minPrice) {
+        where.price.gte = minPrice;
+      }
+      if (maxPrice) {
+        where.price.lte = maxPrice;
+      }
     }
 
     if (minArea || maxArea) {
       where.area = {};
-      if (minArea) where.area.gte = minArea;
-      if (maxArea) where.area.lte = maxArea;
+      if (minArea) {
+        where.area.gte = minArea;
+      }
+      if (maxArea) {
+        where.area.lte = maxArea;
+      }
     }
 
     // Consulta optimizada con índices
@@ -226,19 +247,19 @@ export class PropertyQueries {
             id: true,
             name: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         _count: {
           select: {
             contracts: true,
-            reviews: true
-          }
-        }
+            reviews: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      skip: offset
+      skip: offset,
     });
 
     const total = await db.user.count({ where });
@@ -250,8 +271,8 @@ export class PropertyQueries {
         limit,
         offset,
         hasNext: offset + limit < total,
-        hasPrev: offset > 0
-      }
+        hasPrev: offset > 0,
+      },
     };
   }
 
@@ -266,8 +287,8 @@ export class PropertyQueries {
             name: true,
             email: true,
             phone: true,
-            avatar: true
-          }
+            avatar: true,
+          },
         },
         contracts: {
           where: { status: 'ACTIVE' },
@@ -276,10 +297,10 @@ export class PropertyQueries {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
-            }
-          }
+                email: true,
+              },
+            },
+          },
         },
         reviews: {
           include: {
@@ -287,12 +308,12 @@ export class PropertyQueries {
               select: {
                 id: true,
                 name: true,
-                avatar: true
-              }
-            }
+                avatar: true,
+              },
+            },
           },
           orderBy: { createdAt: 'desc' },
-          take: 10
+          take: 10,
         },
         maintenance: {
           where: { status: 'PENDING' },
@@ -300,17 +321,17 @@ export class PropertyQueries {
             id: true,
             title: true,
             priority: true,
-            createdAt: true
-          }
+            createdAt: true,
+          },
         },
         _count: {
           select: {
             contracts: true,
             reviews: true,
-            visits: true
-          }
-        }
-      }
+            visits: true,
+          },
+        },
+      },
     });
   }
 }
@@ -327,12 +348,11 @@ export class ContractQueries {
     const { userId, status, limit = 20, offset = 0 } = filters;
 
     const where: any = {};
-    if (status) where.status = status;
+    if (status) {
+      where.status = status;
+    }
     if (userId) {
-      where.OR = [
-        { ownerId: userId },
-        { tenantId: userId }
-      ];
+      where.OR = [{ ownerId: userId }, { tenantId: userId }];
     }
 
     const contracts = await db.contract.findMany({
@@ -345,39 +365,39 @@ export class ContractQueries {
             address: true,
             city: true,
             commune: true,
-            images: true
-          }
+            images: true,
+          },
         },
         tenant: {
           select: {
             id: true,
             name: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         owner: {
           select: {
             id: true,
             name: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         payments: {
           where: { status: 'PENDING' },
           select: {
             id: true,
             amount: true,
-            dueDate: true
+            dueDate: true,
           },
           orderBy: { dueDate: 'asc' },
-          take: 3
-        }
+          take: 3,
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      skip: offset
+      skip: offset,
     });
 
     const total = await db.contract.count({ where });
@@ -389,8 +409,8 @@ export class ContractQueries {
         limit,
         offset,
         hasNext: offset + limit < total,
-        hasPrev: offset > 0
-      }
+        hasPrev: offset > 0,
+      },
     };
   }
 }
@@ -402,8 +422,8 @@ export class PaymentQueries {
     const where: any = {
       status: 'PENDING',
       dueDate: {
-        lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Próximos 30 días
-      }
+        lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Próximos 30 días
+      },
     };
 
     if (userId) {
@@ -420,48 +440,50 @@ export class PaymentQueries {
               select: {
                 id: true,
                 title: true,
-                address: true
-              }
+                address: true,
+              },
             },
             tenant: {
               select: {
                 id: true,
-                name: true
-              }
-            }
-          }
-        }
+                name: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { dueDate: 'asc' },
-      take: limit
+      take: limit,
     });
   }
 
   // Obtener estadísticas de pagos
   static async getPaymentStats(userId?: string) {
     const baseWhere: any = {};
-    if (userId) baseWhere.payerId = userId;
+    if (userId) {
+      baseWhere.payerId = userId;
+    }
 
     const [totalPayments, paidPayments, pendingPayments, overduePayments] = await Promise.all([
       db.payment.count({ where: baseWhere }),
       db.payment.count({
-        where: { ...baseWhere, status: 'PAID' }
+        where: { ...baseWhere, status: 'PAID' },
       }),
       db.payment.count({
-        where: { ...baseWhere, status: 'PENDING' }
+        where: { ...baseWhere, status: 'PENDING' },
       }),
       db.payment.count({
         where: {
           ...baseWhere,
           status: 'PENDING',
-          dueDate: { lt: new Date() }
-        }
-      })
+          dueDate: { lt: new Date() },
+        },
+      }),
     ]);
 
     const totalAmount = await db.payment.aggregate({
       where: { ...baseWhere, status: 'PAID' },
-      _sum: { amount: true }
+      _sum: { amount: true },
     });
 
     return {
@@ -470,7 +492,7 @@ export class PaymentQueries {
       pending: pendingPayments,
       overdue: overduePayments,
       totalPaidAmount: totalAmount._sum.amount || 0,
-      paymentRate: totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0
+      paymentRate: totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0,
     };
   }
 }
@@ -485,21 +507,21 @@ export async function preloadCommonData() {
       db.user.count({ where: { isActive: true } }),
       db.property.count({ where: { status: 'AVAILABLE' } }),
       db.contract.count({ where: { status: 'ACTIVE' } }),
-      db.payment.count({ where: { status: 'PENDING' } })
+      db.payment.count({ where: { status: 'PENDING' } }),
     ]);
 
     logger.info('Datos comunes pre-cargados', {
       activeUsers: globalStats[0],
       availableProperties: globalStats[1],
       activeContracts: globalStats[2],
-      pendingPayments: globalStats[3]
+      pendingPayments: globalStats[3],
     });
 
     return {
       activeUsers: globalStats[0],
       availableProperties: globalStats[1],
       activeContracts: globalStats[2],
-      pendingPayments: globalStats[3]
+      pendingPayments: globalStats[3],
     };
   } catch (error) {
     logger.error('Error pre-cargando datos comunes', { error });

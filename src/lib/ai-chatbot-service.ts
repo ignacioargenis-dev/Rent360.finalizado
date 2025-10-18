@@ -2330,7 +2330,7 @@ export class AIChatbotService {
           botResponse: contextualResponse,
           context: { source: 'training_data' },
           intent: intent || 'unknown',
-          confidence
+          confidence,
         });
 
         logger.info('Respuesta generada con datos de entrenamiento', {
@@ -2338,7 +2338,7 @@ export class AIChatbotService {
           userRole,
           intent,
           confidence,
-          trainingSource: 'specialized_dataset'
+          trainingSource: 'specialized_dataset',
         });
 
         return {
@@ -2349,17 +2349,27 @@ export class AIChatbotService {
           metadata: {
             source: 'training_data',
             dataset: 'specialized',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           },
-          trainingSource: 'specialized_dataset'
+          trainingSource: 'specialized_dataset',
         };
       }
 
       // Si no hay coincidencia específica, usar el método original
-      return await this.processMessage(userMessage, userRole, userId, conversationHistory);
+      const result = await this.processMessage(userMessage, userRole, userId, conversationHistory);
+      return {
+        ...result,
+        metadata: result.metadata || {},
+      };
     } catch (error) {
-      logger.error('Error procesando mensaje con datos de entrenamiento:', error);
-      return await this.processMessage(userMessage, userRole, userId, conversationHistory);
+      logger.error('Error procesando mensaje con datos de entrenamiento:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      const result = await this.processMessage(userMessage, userRole, userId, conversationHistory);
+      return {
+        ...result,
+        metadata: result.metadata || {},
+      };
     }
   }
 
