@@ -164,6 +164,16 @@ export async function POST(request: NextRequest) {
       ownerId = decoded.id;
     }
 
+    // Verificar configuración de aprobación automática
+    const autoApprovalSetting = await db.systemSetting.findFirst({
+      where: {
+        category: 'property_approval',
+        key: 'auto_approval_enabled',
+      },
+    });
+
+    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true';
+
     // Crear propiedad en la base de datos
     const newProperty = await db.property.create({
       data: {
@@ -179,7 +189,7 @@ export async function POST(request: NextRequest) {
         bathrooms,
         area,
         type,
-        status: 'PENDING',
+        status: isAutoApprovalEnabled ? 'AVAILABLE' : 'PENDING',
         features: features ? JSON.stringify(features) : null,
         ownerId,
         brokerId,

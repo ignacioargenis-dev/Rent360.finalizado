@@ -429,10 +429,18 @@ export default function AdminPropertiesPage() {
           </div>
 
           <div className="flex gap-1">
-            <Button size="sm" variant="ghost">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => window.open(`/admin/properties/${property.id}`, '_blank')}
+            >
               <Eye className="w-4 h-4" />
             </Button>
-            <Button size="sm" variant="ghost">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => window.open(`/admin/properties/${property.id}/edit`, '_blank')}
+            >
               <Edit className="w-4 h-4" />
             </Button>
           </div>
@@ -503,11 +511,19 @@ export default function AdminPropertiesPage() {
         </div>
 
         <div className="flex items-center gap-2 ml-4">
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(`/admin/properties/${property.id}`, '_blank')}
+          >
             <Eye className="w-4 h-4 mr-2" />
             Ver
           </Button>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(`/admin/properties/${property.id}/edit`, '_blank')}
+          >
             <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
