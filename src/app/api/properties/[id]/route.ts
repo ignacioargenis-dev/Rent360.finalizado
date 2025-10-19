@@ -144,6 +144,63 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+// Endpoint para incrementar vistas
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const propertyId = params.id;
+    const body = await request.json();
+
+    if (body.action === 'increment_views') {
+      // Incrementar el contador de vistas
+      const updatedProperty = await db.property.update({
+        where: { id: propertyId },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+
+      logger.info('Property views incremented', { propertyId, newViews: updatedProperty.views });
+
+      return NextResponse.json({
+        success: true,
+        views: updatedProperty.views,
+      });
+    }
+
+    if (body.action === 'increment_inquiries') {
+      // Incrementar el contador de consultas
+      const updatedProperty = await db.property.update({
+        where: { id: propertyId },
+        data: {
+          inquiries: {
+            increment: 1,
+          },
+        },
+      });
+
+      logger.info('Property inquiries incremented', {
+        propertyId,
+        newInquiries: updatedProperty.inquiries,
+      });
+
+      return NextResponse.json({
+        success: true,
+        inquiries: updatedProperty.inquiries,
+      });
+    }
+
+    return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
+  } catch (error) {
+    logger.error('Error updating property counters', {
+      error: error instanceof Error ? error.message : error,
+      propertyId: params.id,
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const propertyId = params.id;
@@ -151,7 +208,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     logger.info('Updating property', { propertyId, fields: Object.keys(body) });
 
-    // Preparar los datos para actualizar
+    // Preparar los datos para actualizar (solo campos que existen en el esquema)
     const updateData: any = {
       title: body.title,
       description: body.description,
@@ -163,7 +220,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       bathrooms: parseInt(body.bathrooms),
       area: parseFloat(body.area),
       price: parseFloat(body.price),
-      currency: body.currency || 'CLP',
       status: body.status,
       features: JSON.stringify(body.features || []),
       images: JSON.stringify(body.images || []),
@@ -217,7 +273,21 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       property: updatedProperty,
     });
   } catch (error) {
-    logger.error('Error updating property', { error, propertyId: params.id });
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    logger.error('Error updating property', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      propertyId: params.id,
+    });
+
+    // Proporcionar más detalles del error para debugging
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor',
+        details: errorMessage,
+        propertyId: params.id,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -68,6 +68,7 @@ export default function PublicPropertyDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const checkAuthStatus = async () => {
     try {
@@ -89,6 +90,19 @@ export default function PublicPropertyDetailPage() {
         const propertyData = await response.json();
         setProperty(propertyData);
         logger.info('Property details loaded', { propertyId });
+
+        // Incrementar vistas automáticamente
+        try {
+          await fetch(`/api/properties/${propertyId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'increment_views' }),
+          });
+        } catch (viewError) {
+          logger.error('Error incrementing views', { error: viewError, propertyId });
+        }
       } else if (response.status === 404) {
         setError('Propiedad no encontrada');
       } else {
@@ -107,7 +121,20 @@ export default function PublicPropertyDetailPage() {
     loadPropertyDetails();
   }, [propertyId, loadPropertyDetails]);
 
-  const handleContact = () => {
+  const handleContact = async () => {
+    // Incrementar consultas
+    try {
+      await fetch(`/api/properties/${propertyId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'increment_inquiries' }),
+      });
+    } catch (error) {
+      logger.error('Error incrementing inquiries', { error, propertyId });
+    }
+
     if (isAuthenticated) {
       // Usuario autenticado - mostrar opciones de contacto
       alert('Funcionalidad de contacto para usuarios autenticados');
@@ -117,13 +144,38 @@ export default function PublicPropertyDetailPage() {
     }
   };
 
-  const handleScheduleVisit = () => {
+  const handleScheduleVisit = async () => {
+    // Incrementar consultas
+    try {
+      await fetch(`/api/properties/${propertyId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'increment_inquiries' }),
+      });
+    } catch (error) {
+      logger.error('Error incrementing inquiries', { error, propertyId });
+    }
+
     if (isAuthenticated) {
       // Usuario autenticado - programar visita
       alert('Funcionalidad de programar visita para usuarios autenticados');
     } else {
       // Usuario no autenticado - redirigir a login
       router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  };
+
+  const nextImage = () => {
+    if (property?.images && property.images.length > 0) {
+      setCurrentImageIndex(prev => (prev + 1) % property.images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (property?.images && property.images.length > 0) {
+      setCurrentImageIndex(prev => (prev - 1 + property.images.length) % property.images.length);
     }
   };
 
@@ -222,22 +274,62 @@ export default function PublicPropertyDetailPage() {
               <CardContent className="p-0">
                 <div className="aspect-video bg-gray-200 relative overflow-hidden">
                   {property.images && property.images.length > 0 ? (
-                    <img
-                      src={property.images[0]}
-                      alt={property.title}
-                      className="w-full h-full object-cover"
-                      onError={e => {
-                        logger.error('Error loading image:', {
-                          image: property.images[0],
-                          error: e,
-                        });
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                        if (fallback) {
-                          fallback.style.display = 'flex';
-                        }
-                      }}
-                    />
+                    <>
+                      <img
+                        src={property.images[currentImageIndex]}
+                        alt={`${property.title} ${currentImageIndex + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          logger.error('Error loading image:', {
+                            image: property.images[currentImageIndex],
+                            error: e,
+                          });
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) {
+                            fallback.style.display = 'flex';
+                          }
+                        }}
+                      />
+
+                      {/* Navegación de imágenes */}
+                      {property.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={prevImage}
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={nextImage}
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                          >
+                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                          </button>
+
+                          {/* Indicadores de imagen */}
+                          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                            {property.images.map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentImageIndex(index)}
+                                className={`w-2 h-2 rounded-full transition-all ${
+                                  index === currentImageIndex
+                                    ? 'bg-white'
+                                    : 'bg-white bg-opacity-50'
+                                }`}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Contador de imágenes */}
+                          <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                            {currentImageIndex + 1} / {property.images.length}
+                          </div>
+                        </>
+                      )}
+                    </>
                   ) : null}
                   {(!property.images || property.images.length === 0) && (
                     <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
