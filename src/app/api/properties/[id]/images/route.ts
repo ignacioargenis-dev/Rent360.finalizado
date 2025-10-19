@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { ensurePropertyDirectory } from '@/lib/property-directory';
 
 /**
  * POST /api/properties/[id]/images
@@ -80,9 +81,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     }
 
-    // Crear directorio para las imágenes de la propiedad
-    const propertyDir = join(process.cwd(), 'public', 'uploads', 'properties', propertyId);
-    await mkdir(propertyDir, { recursive: true });
+    // Asegurar que el directorio de la propiedad existe
+    const propertyDir = await ensurePropertyDirectory(propertyId);
 
     const uploadedImages = [];
 

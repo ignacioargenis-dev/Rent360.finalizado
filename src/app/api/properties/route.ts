@@ -3,6 +3,7 @@ import { requireAnyRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
+import { ensurePropertyDirectory } from '@/lib/property-directory';
 
 // Validation schema
 const propertySchema = z.object({
@@ -215,6 +216,21 @@ export async function POST(request: NextRequest) {
         concierge,
       },
     });
+
+    // Crear directorio para las imágenes de la propiedad
+    try {
+      await ensurePropertyDirectory(newProperty.id);
+      logger.info('Property directory created during property creation', {
+        propertyId: newProperty.id,
+        title: newProperty.title,
+      });
+    } catch (error) {
+      logger.error('Error creating property directory during property creation', {
+        error,
+        propertyId: newProperty.id,
+      });
+      // No fallar la creación de la propiedad por este error
+    }
 
     // Procesar imágenes si existen
     const images = formData.getAll('images') as File[];
