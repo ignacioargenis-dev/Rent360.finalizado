@@ -132,6 +132,7 @@ export default function OwnerPropertyEditPage() {
   const [newImages, setNewImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   // Mock data for property
   const mockProperty: PropertyData = {
@@ -196,7 +197,15 @@ export default function OwnerPropertyEditPage() {
       });
 
       if (response.ok) {
-        const propertyData = await response.json();
+        const responseData = await response.json();
+
+        if (!responseData.success || !responseData.property) {
+          logger.error('Invalid response format from API', { responseData });
+          setError('Error al cargar los datos de la propiedad');
+          return;
+        }
+
+        const propertyData = responseData.property;
 
         // Transformar datos de la API al formato esperado por el formulario
         const transformedData: PropertyData = {
@@ -210,7 +219,7 @@ export default function OwnerPropertyEditPage() {
           bathrooms: propertyData.bathrooms,
           area: propertyData.area,
           monthlyRent: propertyData.price,
-          currency: propertyData.currency || 'CLP',
+          currency: 'CLP', // Valor fijo ya que no existe en el esquema
           status: propertyData.status,
           description: propertyData.description,
           features: propertyData.features || [],
@@ -244,19 +253,18 @@ export default function OwnerPropertyEditPage() {
         setFormData(transformedData);
         setImagePreviews(transformedData.images);
       } else {
+        const errorData = await response.json().catch(() => ({}));
         logger.error('Error loading property for edit:', {
           status: response.status,
           statusText: response.statusText,
+          propertyId,
+          errorData,
         });
-        // Fallback a datos mock si la API falla
-        setFormData(mockProperty);
-        setImagePreviews(mockProperty.images);
+        setError(`Error al cargar los datos: ${errorData.error || 'Error desconocido'}`);
       }
     } catch (error) {
       logger.error('Error al cargar datos de la propiedad', { error, propertyId });
-      // Fallback a datos mock si hay error
-      setFormData(mockProperty);
-      setImagePreviews(mockProperty.images);
+      setError('Error de conexión al cargar los datos');
     } finally {
       setIsLoading(false);
     }
@@ -444,6 +452,28 @@ export default function OwnerPropertyEditPage() {
         <div className="flex items-center justify-center min-h-screen">
           <RefreshCw className="w-8 h-8 animate-spin mr-2" />
           <span>Cargando datos de la propiedad...</span>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-screen text-red-500">
+          <AlertTriangle className="w-12 h-12 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Error</h1>
+          <p className="text-center mb-4">{error}</p>
+          <div className="flex gap-2">
+            <Button onClick={() => loadPropertyData()} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+            <Button onClick={() => router.push(`/owner/properties/${propertyId}`)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+          </div>
         </div>
       </UnifiedDashboardLayout>
     );

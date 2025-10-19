@@ -358,17 +358,17 @@ export default function PublicPropertyDetailPage() {
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <Bed className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                     <p className="text-sm text-gray-600">Dormitorios</p>
-                    <p className="font-semibold">{property.bedrooms}</p>
+                    <p className="font-semibold">{property.bedrooms || 0}</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <Bath className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                     <p className="text-sm text-gray-600">Baños</p>
-                    <p className="font-semibold">{property.bathrooms}</p>
+                    <p className="font-semibold">{property.bathrooms || 0}</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <Square className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                     <p className="text-sm text-gray-600">Superficie</p>
-                    <p className="font-semibold">{property.area} m²</p>
+                    <p className="font-semibold">{property.area || 0} m²</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <Home className="w-6 h-6 mx-auto mb-2 text-blue-600" />
@@ -413,12 +413,14 @@ export default function PublicPropertyDetailPage() {
               <CardContent className="space-y-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-600">
-                    ${property.price.toLocaleString()}
+                    ${(property.price || 0).toLocaleString()}
                   </p>
                   <p className="text-gray-600">por mes</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-semibold">${property.deposit.toLocaleString()}</p>
+                  <p className="text-lg font-semibold">
+                    ${(property.deposit || 0).toLocaleString()}
+                  </p>
                   <p className="text-gray-600">depósito</p>
                 </div>
                 <Separator />
@@ -451,24 +453,26 @@ export default function PublicPropertyDetailPage() {
                     <Users className="w-4 h-4 text-gray-500" />
                     <span className="text-sm">Vistas</span>
                   </div>
-                  <span className="font-semibold">{property.views}</span>
+                  <span className="font-semibold">{property.views || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-gray-500" />
                     <span className="text-sm">Consultas</span>
                   </div>
-                  <span className="font-semibold">{property.inquiries}</span>
+                  <span className="font-semibold">{property.inquiries || 0}</span>
                 </div>
-                {property.averageRating > 0 && (
+                {(property.averageRating || 0) > 0 && (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 text-gray-500" />
                       <span className="text-sm">Calificación</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold">{property.averageRating.toFixed(1)}</span>
-                      <span className="text-xs text-gray-500">({property.totalReviews})</span>
+                      <span className="font-semibold">
+                        {(property.averageRating || 0).toFixed(1)}
+                      </span>
+                      <span className="text-xs text-gray-500">({property.totalReviews || 0})</span>
                     </div>
                   </div>
                 )}
