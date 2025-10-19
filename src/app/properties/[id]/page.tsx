@@ -1,0 +1,383 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  ArrowLeft,
+  MapPin,
+  Bed,
+  Bath,
+  Square,
+  Car,
+  Wifi,
+  Shield,
+  Heart,
+  Share2,
+  Phone,
+  Mail,
+  Calendar,
+  DollarSign,
+  Home,
+  Camera,
+  Star,
+  Users,
+  Clock,
+} from 'lucide-react';
+import { logger } from '@/lib/logger-minimal';
+
+interface Property {
+  id: string;
+  title: string;
+  description: string;
+  address: string;
+  city: string;
+  commune: string;
+  region: string;
+  price: number;
+  deposit: number;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  type: string;
+  status: string;
+  features: string[];
+  images: string[];
+  owner?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  averageRating: number;
+  totalReviews: number;
+  views: number;
+  inquiries: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function PublicPropertyDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const propertyId = params.id as string;
+
+  const [property, setProperty] = useState<Property | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuthStatus();
+    loadPropertyDetails();
+  }, [propertyId, loadPropertyDetails]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      setIsAuthenticated(response.ok);
+    } catch (error) {
+      setIsAuthenticated(false);
+    }
+  };
+
+  const loadPropertyDetails = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/properties/${propertyId}`);
+
+      if (response.ok) {
+        const propertyData = await response.json();
+        setProperty(propertyData);
+        logger.info('Property details loaded', { propertyId });
+      } else if (response.status === 404) {
+        setError('Propiedad no encontrada');
+      } else {
+        setError('Error al cargar los detalles de la propiedad');
+      }
+    } catch (error) {
+      logger.error('Error loading property details', { error, propertyId });
+      setError('Error de conexión');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [propertyId]);
+
+  const handleContact = () => {
+    if (isAuthenticated) {
+      // Usuario autenticado - mostrar opciones de contacto
+      alert('Funcionalidad de contacto para usuarios autenticados');
+    } else {
+      // Usuario no autenticado - redirigir a login
+      router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  };
+
+  const handleScheduleVisit = () => {
+    if (isAuthenticated) {
+      // Usuario autenticado - programar visita
+      alert('Funcionalidad de programar visita para usuarios autenticados');
+    } else {
+      // Usuario no autenticado - redirigir a login
+      router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: property?.title || 'Propiedad en Rent360',
+        text: 'Mira esta propiedad que encontré en Rent360',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Enlace copiado al portapapeles');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'available':
+        return <Badge className="bg-green-100 text-green-800">Disponible</Badge>;
+      case 'rented':
+        return <Badge className="bg-red-100 text-red-800">Arrendada</Badge>;
+      case 'maintenance':
+        return <Badge className="bg-yellow-100 text-yellow-800">Mantenimiento</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando detalles de la propiedad...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !property) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Propiedad no encontrada</h1>
+          <p className="text-gray-600 mb-4">{error || 'La propiedad que buscas no existe'}</p>
+          <Button onClick={() => router.push('/properties/search')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver a la búsqueda
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={() => router.push('/properties/search')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+                <p className="text-gray-600 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {property.address}, {property.commune}, {property.city}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleShare}>
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartir
+              </Button>
+              <Button variant="outline">
+                <Heart className="w-4 h-4 mr-2" />
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Images */}
+            <Card>
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gray-200 relative overflow-hidden">
+                  {property.images && property.images.length > 0 ? (
+                    <img
+                      src={property.images[0]}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      onError={e => {
+                        logger.error('Error loading image:', {
+                          image: property.images[0],
+                          error: e,
+                        });
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          fallback.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  {(!property.images || property.images.length === 0) && (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                      <Home className="w-16 h-16 text-blue-400" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4">{getStatusBadge(property.status)}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Property Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Detalles de la Propiedad</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Bed className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-gray-600">Dormitorios</p>
+                    <p className="font-semibold">{property.bedrooms}</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Bath className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-gray-600">Baños</p>
+                    <p className="font-semibold">{property.bathrooms}</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Square className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-gray-600">Superficie</p>
+                    <p className="font-semibold">{property.area} m²</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Home className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-gray-600">Tipo</p>
+                    <p className="font-semibold">{property.type}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2">Descripción</h3>
+                  <p className="text-gray-700">{property.description}</p>
+                </div>
+
+                {property.features && property.features.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Características</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {property.features.map((feature, index) => (
+                        <Badge key={index} variant="outline">
+                          {feature}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Price Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Precio
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-600">
+                    ${property.price.toLocaleString()}
+                  </p>
+                  <p className="text-gray-600">por mes</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold">${property.deposit.toLocaleString()}</p>
+                  <p className="text-gray-600">depósito</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Button className="w-full" onClick={handleContact}>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Contactar
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={handleScheduleVisit}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Solicitar Visita
+                  </Button>
+                </div>
+                {!isAuthenticated && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Inicia sesión para contactar al propietario
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Property Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Estadísticas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">Vistas</span>
+                  </div>
+                  <span className="font-semibold">{property.views}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">Consultas</span>
+                  </div>
+                  <span className="font-semibold">{property.inquiries}</span>
+                </div>
+                {property.averageRating > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm">Calificación</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">{property.averageRating.toFixed(1)}</span>
+                      <span className="text-xs text-gray-500">({property.totalReviews})</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

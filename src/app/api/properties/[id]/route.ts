@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { handleApiError } from '@/lib/api-error-handler';
 import { logger } from '@/lib/logger-minimal';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
     const propertyId = params.id;
 
-    // Buscar la propiedad
+    logger.info('Fetching property details', { propertyId });
+
+    // Buscar la propiedad con información del propietario
     const property = await db.property.findUnique({
-      where: { id: propertyId },
+      where: {
+        id: propertyId,
+      },
       include: {
         owner: {
           select: {
@@ -36,28 +37,43 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         reviews: {
           select: {
             rating: true,
-            comment: true,
-            createdAt: true,
           },
         },
       },
     });
 
     if (!property) {
+      logger.warn('Property not found', { propertyId });
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
-    // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'ADMIN') {
-      if (user.role === 'OWNER' && property.ownerId !== user.id) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-      }
-      if (user.role === 'BROKER' && property.brokerId !== user.id) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-      }
-    }
+    // Transformar las imágenes para usar las rutas correctas de API
+    const transformedImages = property.images
+      ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
+          (img: string) => {
+            // Si la imagen ya tiene la ruta correcta de API, no hacer nada
+            if (img.startsWith('/api/uploads/')) {
+              return img;
+            }
+            // Si empieza con /images/, convertir a /api/uploads/
+            if (img.startsWith('/images/')) {
+              return img.replace('/images/', '/api/uploads/');
+            }
+            // Si empieza con /uploads/, convertir a /api/uploads/
+            if (img.startsWith('/uploads/')) {
+              return img.replace('/uploads/', '/api/uploads/');
+            }
+            // Si es una ruta relativa, asumir que está en uploads
+            if (!img.startsWith('http') && !img.startsWith('/')) {
+              return `/api/uploads/${img}`;
+            }
+            // Para cualquier otro caso, devolver tal como está
+            return img;
+          }
+        )
+      : [];
 
-    // Formatear respuesta
+    // Formatear la respuesta
     const formattedProperty = {
       id: property.id,
       title: property.title,
@@ -74,12 +90,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       type: property.type,
       status: property.status,
       features: property.features ? JSON.parse(property.features) : [],
-      images: property.images || [],
+      images: transformedImages,
       views: property.views,
       inquiries: property.inquiries,
       owner: property.owner,
       currentTenant: property.contracts[0]?.tenant || null,
-      reviews: property.reviews,
       averageRating:
         property.reviews.length > 0
           ? property.reviews.reduce((sum, review) => sum + review.rating, 0) /
@@ -88,115 +103,121 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       totalReviews: property.reviews.length,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
+
+      // Características adicionales
+      furnished: property.furnished || false,
+      petFriendly: property.petFriendly || false,
+      parkingSpaces: property.parkingSpaces || 0,
+      availableFrom: property.availableFrom,
+      floor: property.floor,
+      buildingName: property.buildingName,
+      yearBuilt: property.yearBuilt,
+
+      // Características del edificio/servicios
+      heating: property.heating || false,
+      cooling: property.cooling || false,
+      internet: property.internet || false,
+      elevator: property.elevator || false,
+      balcony: property.balcony || false,
+      terrace: property.terrace || false,
+      garden: property.garden || false,
+      pool: property.pool || false,
+      gym: property.gym || false,
+      security: property.security || false,
+      concierge: property.concierge || false,
+
+      // Campos adicionales
+      brokerId: property.brokerId,
+      currency: 'CLP', // Valor por defecto
     };
 
-    return NextResponse.json({ property: formattedProperty });
-  } catch (error) {
-    logger.error('Error fetching property:', {
-      error: error instanceof Error ? error.message : String(error),
+    logger.info('Property details fetched successfully', {
+      propertyId,
+      hasImages: transformedImages.length > 0,
+      ownerId: property.owner?.id,
     });
-    const errorResponse = handleApiError(error);
-    return errorResponse;
+
+    return NextResponse.json(formattedProperty);
+  } catch (error) {
+    logger.error('Error fetching property details', { error, propertyId: params.id });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
     const propertyId = params.id;
     const body = await request.json();
 
-    // Verificar que la propiedad existe
-    const existingProperty = await db.property.findUnique({
-      where: { id: propertyId },
-    });
+    logger.info('Updating property', { propertyId, fields: Object.keys(body) });
 
-    if (!existingProperty) {
-      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
-    }
+    // Preparar los datos para actualizar
+    const updateData: any = {
+      title: body.title,
+      description: body.description,
+      address: body.address,
+      city: body.city,
+      region: body.region,
+      type: body.type,
+      bedrooms: parseInt(body.bedrooms),
+      bathrooms: parseInt(body.bathrooms),
+      area: parseFloat(body.area),
+      price: parseFloat(body.price),
+      currency: body.currency || 'CLP',
+      status: body.status,
+      features: JSON.stringify(body.features || []),
+      images: JSON.stringify(body.images || []),
 
-    // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'ADMIN') {
-      if (user.role === 'OWNER' && existingProperty.ownerId !== user.id) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-      }
-    }
+      // Características básicas
+      furnished: Boolean(body.furnished),
+      petFriendly: Boolean(body.petFriendly),
+      parkingSpaces: parseInt(body.parkingSpaces) || 0,
+      availableFrom: body.availableFrom ? new Date(body.availableFrom) : null,
+      floor: body.floor ? parseInt(body.floor) : null,
+      buildingName: body.buildingName || null,
+      yearBuilt: body.yearBuilt ? parseInt(body.yearBuilt) : null,
+
+      // Características del edificio/servicios
+      heating: Boolean(body.heating),
+      cooling: Boolean(body.cooling),
+      internet: Boolean(body.internet),
+      elevator: Boolean(body.elevator),
+      balcony: Boolean(body.balcony),
+      terrace: Boolean(body.terrace),
+      garden: Boolean(body.garden),
+      pool: Boolean(body.pool),
+      gym: Boolean(body.gym),
+      security: Boolean(body.security),
+      concierge: Boolean(body.concierge),
+
+      updatedAt: new Date(),
+    };
 
     // Actualizar la propiedad
     const updatedProperty = await db.property.update({
-      where: { id: propertyId },
-      data: {
-        title: body.title,
-        description: body.description,
-        address: body.address,
-        city: body.city,
-        commune: body.commune,
-        region: body.region,
-        price: body.price,
-        deposit: body.deposit,
-        bedrooms: body.bedrooms,
-        bathrooms: body.bathrooms,
-        area: body.area,
-        type: body.type,
-        status: body.status,
-        features: body.features ? JSON.stringify(body.features) : null,
-        updatedAt: new Date(),
+      where: {
+        id: propertyId,
       },
+      data: updateData,
       include: {
         owner: {
           select: {
             id: true,
             name: true,
             email: true,
-            avatar: true,
           },
         },
       },
     });
 
+    logger.info('Property updated successfully', { propertyId });
+
     return NextResponse.json({
-      message: 'Propiedad actualizada exitosamente',
+      success: true,
       property: updatedProperty,
     });
   } catch (error) {
-    logger.error('Error updating property:', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    const errorResponse = handleApiError(error);
-    return errorResponse;
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const user = await requireAuth(request);
-    const propertyId = params.id;
-
-    // Verificar que la propiedad existe
-    const existingProperty = await db.property.findUnique({
-      where: { id: propertyId },
-    });
-
-    if (!existingProperty) {
-      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
-    }
-
-    // Solo admin puede eliminar propiedades
-    if (user.role !== 'ADMIN' && user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
-
-    // Eliminar la propiedad
-    await db.property.delete({
-      where: { id: propertyId },
-    });
-
-    return NextResponse.json({ message: 'Propiedad eliminada exitosamente' });
-  } catch (error) {
-    logger.error('Error deleting property:', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    const errorResponse = handleApiError(error);
-    return errorResponse;
+    logger.error('Error updating property', { error, propertyId: params.id });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
