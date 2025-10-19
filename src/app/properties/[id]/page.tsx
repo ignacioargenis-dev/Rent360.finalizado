@@ -69,11 +69,6 @@ export default function PublicPropertyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    checkAuthStatus();
-    loadPropertyDetails();
-  }, [propertyId, loadPropertyDetails]);
-
   const checkAuthStatus = async () => {
     try {
       const response = await fetch('/api/auth/me');
@@ -106,6 +101,11 @@ export default function PublicPropertyDetailPage() {
       setIsLoading(false);
     }
   }, [propertyId]);
+
+  useEffect(() => {
+    checkAuthStatus();
+    loadPropertyDetails();
+  }, [propertyId, loadPropertyDetails]);
 
   const handleContact = () => {
     if (isAuthenticated) {
