@@ -386,7 +386,6 @@ export default function OwnerPropertyEditPage() {
           bathrooms: formData.bathrooms,
           area: formData.area,
           price: formData.monthlyRent,
-          currency: formData.currency,
           status: formData.status,
           description: formData.description,
           features: formData.features,

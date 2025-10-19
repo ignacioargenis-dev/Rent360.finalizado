@@ -51,24 +51,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const transformedImages = property.images
       ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
           (img: string) => {
+            let transformedImg = img;
+
             // Si la imagen ya tiene la ruta correcta de API, no hacer nada
             if (img.startsWith('/api/uploads/')) {
-              return img;
+              transformedImg = img;
             }
             // Si empieza con /images/, convertir a /api/uploads/
-            if (img.startsWith('/images/')) {
-              return img.replace('/images/', '/api/uploads/');
+            else if (img.startsWith('/images/')) {
+              transformedImg = img.replace('/images/', '/api/uploads/');
             }
             // Si empieza con /uploads/, convertir a /api/uploads/
-            if (img.startsWith('/uploads/')) {
-              return img.replace('/uploads/', '/api/uploads/');
+            else if (img.startsWith('/uploads/')) {
+              transformedImg = img.replace('/uploads/', '/api/uploads/');
             }
             // Si es una ruta relativa, asumir que está en uploads
-            if (!img.startsWith('http') && !img.startsWith('/')) {
-              return `/api/uploads/${img}`;
+            else if (!img.startsWith('http') && !img.startsWith('/')) {
+              transformedImg = `/api/uploads/${img}`;
             }
-            // Para cualquier otro caso, devolver tal como está
-            return img;
+
+            // Agregar timestamp para evitar problemas de caché
+            const separator = transformedImg.includes('?') ? '&' : '?';
+            return `${transformedImg}${separator}t=${Date.now()}`;
           }
         )
       : [];
@@ -137,7 +141,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       ownerId: property.owner?.id,
     });
 
-    return NextResponse.json(formattedProperty);
+    return NextResponse.json({
+      success: true,
+      property: formattedProperty,
+    });
   } catch (error) {
     logger.error('Error fetching property details', { error, propertyId: params.id });
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });

@@ -62,8 +62,10 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
     return new Response(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400', // Cache por 24 horas
+        'Cache-Control': 'public, max-age=3600, must-revalidate', // Cache por 1 hora con revalidación
         'Content-Length': fileBuffer.length.toString(),
+        ETag: `"${filePath}-${fileBuffer.length}"`, // ETag para validación de caché
+        'Last-Modified': new Date().toUTCString(),
       },
     });
   } catch (error) {

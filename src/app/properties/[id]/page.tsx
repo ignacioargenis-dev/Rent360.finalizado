@@ -87,9 +87,16 @@ export default function PublicPropertyDetailPage() {
       const response = await fetch(`/api/properties/${propertyId}`);
 
       if (response.ok) {
-        const propertyData = await response.json();
-        setProperty(propertyData);
-        logger.info('Property details loaded', { propertyId });
+        const responseData = await response.json();
+        if (responseData.success && responseData.property) {
+          setProperty(responseData.property);
+          logger.info('Property details loaded', {
+            propertyId,
+            hasImages: responseData.property.images?.length || 0,
+          });
+        } else {
+          setError('Error al cargar los detalles de la propiedad');
+        }
 
         // Incrementar vistas automáticamente
         try {

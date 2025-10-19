@@ -12,7 +12,15 @@ import { join } from 'path';
  */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Verificar autenticación
+    let user;
+    try {
+      user = await requireAuth(request);
+    } catch (authError) {
+      logger.error('Authentication error in virtual tour upload', { error: authError });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const propertyId = params.id;
 
     if (!propertyId) {
