@@ -415,13 +415,37 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         where: { propertyId: propertyId },
       });
 
-      // Eliminar recordatorios
-      await tx.reminder.deleteMany({
-        where: { propertyId: propertyId },
+      // Eliminar recordatorios de pago relacionados
+      await tx.paymentReminder.deleteMany({
+        where: {
+          contract: {
+            propertyId: propertyId,
+          },
+        },
       });
 
       // Eliminar mensajes relacionados
       await tx.message.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar visitas programadas
+      await tx.visit.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar mantenimientos
+      await tx.maintenance.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar documentos
+      await tx.document.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar favoritos
+      await tx.propertyFavorite.deleteMany({
         where: { propertyId: propertyId },
       });
 
