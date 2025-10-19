@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,16 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, Upload, X, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import {
+  ArrowLeft,
+  Save,
+  Upload,
+  X,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  Camera,
+} from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
@@ -321,6 +331,37 @@ export default function OwnerPropertyEditPage() {
     setNewImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleRemoveExistingImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(
+        `/api/properties/${propertyId}/images?imageUrl=${encodeURIComponent(imageUrl)}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        }
+      );
+
+      if (response.ok) {
+        // Remover la imagen de la lista local
+        setFormData(prev => ({
+          ...prev,
+          images: prev.images.filter(img => img !== imageUrl),
+        }));
+        logger.info('Image removed successfully:', imageUrl);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        logger.error('Error removing image:', {
+          imageUrl,
+          error: errorData.error || 'Error desconocido',
+        });
+        alert(`Error al eliminar imagen: ${errorData.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      logger.error('Error removing image:', { error, imageUrl });
+      alert('Error de conexión al eliminar imagen');
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -368,15 +409,42 @@ export default function OwnerPropertyEditPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Función temporal para manejar imágenes hasta implementar API de subida
   const uploadNewImages = async (files: File[]): Promise<string[]> => {
-    // Por ahora, solo mostramos un mensaje de que las imágenes se guardarán
-    // TODO: Implementar API de subida de imágenes
-    logger.info(
-      'Images selected for upload:',
-      files.map(f => f.name)
-    );
-    return [];
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch(`/api/properties/${propertyId}/images`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.uploadedImages) {
+            // Agregar todas las URLs de las imágenes subidas
+            result.uploadedImages.forEach((img: any) => {
+              uploadedUrls.push(img.imageUrl);
+            });
+            logger.info('Image uploaded successfully:', file.name);
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          logger.error('Error uploading image:', {
+            filename: file.name,
+            error: errorData.error || 'Error desconocido',
+          });
+        }
+      } catch (error) {
+        logger.error('Error uploading image:', { error, filename: file.name });
+      }
+    }
+
+    return uploadedUrls;
   };
 
   const handleSave = async () => {
@@ -439,7 +507,20 @@ export default function OwnerPropertyEditPage() {
       });
 
       if (response.ok) {
-        logger.info('Propiedad actualizada exitosamente', { propertyId });
+        logger.info('Propiedad actualizada exitosamente', {
+          propertyId,
+          newImagesCount: uploadedImageUrls.length,
+        });
+
+        // Mostrar mensaje de éxito
+        if (uploadedImageUrls.length > 0) {
+          alert(
+            `Propiedad actualizada exitosamente. ${uploadedImageUrls.length} imagen(es) subida(s).`
+          );
+        } else {
+          alert('Propiedad actualizada exitosamente.');
+        }
+
         router.push(`/owner/properties/${propertyId}`);
       } else {
         const errorData = await response.json();
@@ -762,32 +843,74 @@ export default function OwnerPropertyEditPage() {
                   </div>
                 </div>
 
-                {/* Image Previews */}
-                <div className="space-y-2">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => handleRemoveImage(index)}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
+                {/* Existing Images */}
+                {formData.images && formData.images.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Imágenes Existentes</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {formData.images.map((imageUrl, index) => (
+                        <div key={`existing-${index}`} className="relative group">
+                          <Image
+                            src={imageUrl}
+                            alt={`Imagen existente ${index + 1}`}
+                            width={96}
+                            height={96}
+                            className="w-full h-24 object-cover rounded-lg"
+                            onError={e => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveExistingImage(imageUrl)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-
-                {imagePreviews.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No hay imágenes cargadas</p>
                   </div>
                 )}
+
+                {/* New Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Nuevas Imágenes</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={`new-${index}`} className="relative group">
+                          <Image
+                            src={preview}
+                            alt={`Nueva imagen ${index + 1}`}
+                            width={96}
+                            height={96}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveImage(index)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Images Message */}
+                {(!formData.images || formData.images.length === 0) &&
+                  imagePreviews.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Camera className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                      <p>No hay imágenes cargadas</p>
+                      <p className="text-sm">Sube imágenes para mostrar tu propiedad</p>
+                    </div>
+                  )}
               </CardContent>
             </Card>
 
