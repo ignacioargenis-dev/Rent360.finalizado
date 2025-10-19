@@ -392,6 +392,17 @@ export default function OwnerPropertyDetailPage() {
     loadPropertyDetails();
   }, [loadPropertyDetails]);
 
+  // Recargar datos cuando se navega desde la página de edición
+  useEffect(() => {
+    const handleFocus = () => {
+      // Recargar datos cuando la ventana recupera el foco (viene de otra página)
+      loadPropertyDetails();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadPropertyDetails]);
+
   const handleContactBroker = (method: 'email' | 'phone') => {
     if (!property?.broker) {
       return;
@@ -616,6 +627,10 @@ export default function OwnerPropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={loadPropertyDetails} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
             <Button variant="outline" onClick={handleEditProperty}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
