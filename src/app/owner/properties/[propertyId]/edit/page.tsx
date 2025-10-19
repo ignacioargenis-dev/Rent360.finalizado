@@ -491,7 +491,7 @@ export default function OwnerPropertyEditPage() {
           status: formData.status,
           description: formData.description,
           features: formData.features,
-          images: formData.images, // Usar las imágenes actualizadas
+          // No enviar imágenes aquí, se manejan por separado en la API de subida
           // Características básicas
           furnished: formData.furnished,
           petFriendly: formData.petFriendly,

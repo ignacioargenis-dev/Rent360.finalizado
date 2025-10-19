@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { requireAuth } from '@/lib/auth';
+import { rm } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -230,7 +234,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       price: parseFloat(body.price),
       status: body.status,
       features: JSON.stringify(body.features || []),
-      images: JSON.stringify(body.images || []),
+      // Solo actualizar imágenes si se proporcionan explícitamente
+      ...(body.images !== undefined && { images: JSON.stringify(body.images) }),
 
       // Características básicas
       furnished: Boolean(body.furnished),
@@ -294,6 +299,164 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         error: 'Error interno del servidor',
         details: errorMessage,
         propertyId: params.id,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/properties/[id]
+ * Elimina una propiedad y todos sus archivos asociados
+ */
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    // Verificar autenticación
+    let user;
+    try {
+      user = await requireAuth(request);
+    } catch (authError) {
+      logger.error('Authentication error in property deletion', { error: authError });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const propertyId = params.id;
+
+    if (!propertyId) {
+      return NextResponse.json({ error: 'ID de propiedad requerido' }, { status: 400 });
+    }
+
+    logger.info('Attempting to delete property', { propertyId, userId: user.id });
+
+    // Verificar que la propiedad existe y el usuario tiene permisos
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: {
+        id: true,
+        title: true,
+        ownerId: true,
+        brokerId: true,
+        images: true,
+      },
+    });
+
+    if (!property) {
+      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
+    }
+
+    // Verificar permisos (propietario, corredor o admin)
+    const hasAccess =
+      user.role === 'ADMIN' || property.ownerId === user.id || property.brokerId === user.id;
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para eliminar esta propiedad' },
+        { status: 403 }
+      );
+    }
+
+    // Verificar si la propiedad tiene contratos activos
+    const activeContracts = await db.contract.count({
+      where: {
+        propertyId: propertyId,
+        status: 'ACTIVE',
+      },
+    });
+
+    if (activeContracts > 0) {
+      return NextResponse.json(
+        {
+          error: 'No se puede eliminar la propiedad porque tiene contratos activos',
+          activeContracts,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Eliminar archivos físicos asociados
+    try {
+      const propertyDir = join(process.cwd(), 'public', 'uploads', 'properties', propertyId);
+
+      if (existsSync(propertyDir)) {
+        await rm(propertyDir, { recursive: true, force: true });
+        logger.info('Property directory deleted', { propertyId, path: propertyDir });
+      }
+
+      // Eliminar documentos asociados si existen
+      const documentsDir = join(process.cwd(), 'public', 'uploads', 'documents', propertyId);
+      if (existsSync(documentsDir)) {
+        await rm(documentsDir, { recursive: true, force: true });
+        logger.info('Property documents directory deleted', { propertyId, path: documentsDir });
+      }
+
+      // Eliminar tour virtual si existe
+      const virtualTourDir = join(process.cwd(), 'public', 'uploads', 'virtual-tours', propertyId);
+      if (existsSync(virtualTourDir)) {
+        await rm(virtualTourDir, { recursive: true, force: true });
+        logger.info('Property virtual tour directory deleted', {
+          propertyId,
+          path: virtualTourDir,
+        });
+      }
+    } catch (fileError) {
+      logger.error('Error deleting property files', { error: fileError, propertyId });
+      // Continuar con la eliminación de la base de datos aunque falle la eliminación de archivos
+    }
+
+    // Eliminar registros relacionados en la base de datos
+    await db.$transaction(async tx => {
+      // Eliminar reviews
+      await tx.review.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar contratos (inactivos)
+      await tx.contract.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar recordatorios
+      await tx.reminder.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar mensajes relacionados
+      await tx.message.deleteMany({
+        where: { propertyId: propertyId },
+      });
+
+      // Eliminar la propiedad
+      await tx.property.delete({
+        where: { id: propertyId },
+      });
+    });
+
+    logger.info('Property deleted successfully', {
+      propertyId,
+      title: property.title,
+      deletedBy: user.id,
+      userRole: user.role,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Propiedad eliminada exitosamente',
+      deletedProperty: {
+        id: property.id,
+        title: property.title,
+      },
+    });
+  } catch (error) {
+    logger.error('Error deleting property', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      propertyId: params.id,
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor al eliminar la propiedad',
+        details: error instanceof Error ? error.message : 'Error desconocido',
       },
       { status: 500 }
     );

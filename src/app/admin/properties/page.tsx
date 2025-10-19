@@ -34,6 +34,9 @@ import {
   List,
   CheckCircle,
   AlertCircle,
+  Trash2,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { User, Property } from '@/types';
 
@@ -62,6 +65,11 @@ export default function AdminPropertiesPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; property: Property | null }>({
+    show: false,
+    property: null,
+  });
 
   useEffect(() => {
     // Load user data
@@ -381,6 +389,48 @@ export default function AdminPropertiesPage() {
     }
   };
 
+  const handleDeleteProperty = async (property: Property) => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/properties/${property.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        logger.info('Property deleted successfully', { propertyId: property.id, result });
+
+        // Remover la propiedad de la lista local
+        setProperties(prev => prev.filter(p => p.id !== property.id));
+        setFilteredProperties(prev => prev.filter(p => p.id !== property.id));
+
+        setSuccessMessage(`✅ Propiedad "${property.title}" eliminada exitosamente.`);
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } else {
+        const errorData = await response.json();
+        logger.error('Error deleting property', {
+          propertyId: property.id,
+          error: errorData.error || 'Error desconocido',
+        });
+        setErrorMessage(
+          `❌ Error al eliminar la propiedad: ${errorData.error || 'Error desconocido'}`
+        );
+        setTimeout(() => setErrorMessage(''), 5000);
+      }
+    } catch (error) {
+      logger.error('Error deleting property', { error, propertyId: property.id });
+      setErrorMessage('❌ Error de conexión al eliminar la propiedad');
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirm({ show: false, property: null });
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -528,6 +578,15 @@ export default function AdminPropertiesPage() {
               <Edit className="w-4 h-4 mr-1" />
               Editar
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDeleteConfirm({ show: true, property })}
+              className="flex-1 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              Eliminar
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -625,6 +684,15 @@ export default function AdminPropertiesPage() {
           >
             <Edit className="w-4 h-4 mr-2" />
             Editar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDeleteConfirm({ show: true, property })}
+            className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Eliminar
           </Button>
           <Button size="sm" variant="ghost">
             <MoreHorizontal className="w-4 h-4" />
@@ -860,6 +928,63 @@ export default function AdminPropertiesPage() {
           onSubmit={handleCreateProperty}
           mode="create"
         />
+
+        {/* Modal de confirmación de eliminación */}
+        {deleteConfirm.show && deleteConfirm.property && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Eliminar Propiedad</h3>
+                  <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-2">
+                  ¿Estás seguro de que quieres eliminar la propiedad:
+                </p>
+                <p className="font-semibold text-gray-900">
+                  &ldquo;{deleteConfirm.property.title}&rdquo;
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm({ show: false, property: null })}
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteProperty(deleteConfirm.property!)}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isDeleting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </UnifiedDashboardLayout>
   );

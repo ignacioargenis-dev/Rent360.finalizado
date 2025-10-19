@@ -39,6 +39,7 @@ import {
   BarChart3,
   Wrench,
   Settings,
+  Trash2,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
@@ -150,6 +151,8 @@ export default function OwnerPropertyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -529,6 +532,47 @@ export default function OwnerPropertyDetailPage() {
     router.push(`/owner/maintenance/new?propertyId=${propertyId}`);
   };
 
+  const handleDeleteProperty = async () => {
+    if (!property) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        logger.info('Property deleted successfully', { propertyId, result });
+
+        // Mostrar mensaje de éxito
+        alert(`✅ Propiedad "${property.title}" eliminada exitosamente.`);
+
+        // Redirigir a la lista de propiedades
+        router.push('/owner/properties');
+      } else {
+        const errorData = await response.json();
+        logger.error('Error deleting property', {
+          propertyId,
+          error: errorData.error || 'Error desconocido',
+        });
+        alert(`❌ Error al eliminar la propiedad: ${errorData.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      logger.error('Error deleting property', { error, propertyId });
+      alert('❌ Error de conexión al eliminar la propiedad');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const handleViewContract = () => {
     if (property?.currentTenant) {
       // Buscar el contrato activo para esta propiedad
@@ -712,6 +756,14 @@ export default function OwnerPropertyDetailPage() {
             <Button variant="outline" onClick={handleRequestMaintenance}>
               <Wrench className="w-4 h-4 mr-2" />
               Solicitar Mantenimiento
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar
             </Button>
           </div>
         </div>
@@ -1294,6 +1346,61 @@ export default function OwnerPropertyDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Eliminar Propiedad</h3>
+                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                ¿Estás seguro de que quieres eliminar la propiedad:
+              </p>
+              <p className="font-semibold text-gray-900">&ldquo;{property?.title}&rdquo;</p>
+              <p className="text-sm text-gray-600 mt-2">
+                Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteProperty}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </UnifiedDashboardLayout>
   );
 }
