@@ -142,6 +142,8 @@ export default function PropertySearch() {
       }
 
       const data = await response.json();
+      console.log('Properties data received:', data);
+      console.log('First property images:', data.properties?.[0]?.images);
       setProperties(data.properties || []);
       setError(null);
     } catch (err) {
@@ -273,8 +275,20 @@ export default function PropertySearch() {
               src={property.images?.[0] || '/placeholder-property.jpg'}
               alt={property.title}
               className="w-full h-full object-cover"
+              onError={e => {
+                console.error('Error loading image:', property.images?.[0], e);
+                e.currentTarget.style.display = 'none';
+                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                if (fallback) {
+                  fallback.style.display = 'flex';
+                }
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', property.images?.[0]);
+              }}
             />
-          ) : (
+          ) : null}
+          {(!property.images || property.images.length === 0) && (
             <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
               <Home className="w-16 h-16 text-blue-400" />
             </div>
@@ -376,8 +390,20 @@ export default function PropertySearch() {
                 src={property.images?.[0] || '/placeholder-property.jpg'}
                 alt={property.title}
                 className="w-full h-full object-cover"
+                onError={e => {
+                  console.error('Error loading image in list:', property.images?.[0], e);
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully in list:', property.images?.[0]);
+                }}
               />
-            ) : (
+            ) : null}
+            {(!property.images || property.images.length === 0) && (
               <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                 <Home className="w-8 h-8 text-blue-400" />
               </div>
