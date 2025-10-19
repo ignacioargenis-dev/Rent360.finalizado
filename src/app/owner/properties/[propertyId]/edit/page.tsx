@@ -368,6 +368,17 @@ export default function OwnerPropertyEditPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Función temporal para manejar imágenes hasta implementar API de subida
+  const uploadNewImages = async (files: File[]): Promise<string[]> => {
+    // Por ahora, solo mostramos un mensaje de que las imágenes se guardarán
+    // TODO: Implementar API de subida de imágenes
+    logger.info(
+      'Images selected for upload:',
+      files.map(f => f.name)
+    );
+    return [];
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       return;
@@ -375,6 +386,12 @@ export default function OwnerPropertyEditPage() {
 
     setIsSaving(true);
     try {
+      // Subir nuevas imágenes primero
+      let uploadedImageUrls: string[] = [];
+      if (newImages.length > 0) {
+        uploadedImageUrls = await uploadNewImages(newImages);
+      }
+
       // ✅ CORREGIDO: Hacer llamada real a la API para actualizar la propiedad
       const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
       const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
@@ -397,7 +414,7 @@ export default function OwnerPropertyEditPage() {
           status: formData.status,
           description: formData.description,
           features: formData.features,
-          images: formData.images,
+          images: [...formData.images, ...uploadedImageUrls],
           // Características básicas
           furnished: formData.furnished,
           petFriendly: formData.petFriendly,
