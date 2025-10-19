@@ -70,9 +70,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
               transformedImg = `/api/uploads/${img}`;
             }
 
-            // Agregar timestamp para evitar problemas de caché
+            // Agregar timestamp único para cada imagen para evitar problemas de caché
             const separator = transformedImg.includes('?') ? '&' : '?';
-            return `${transformedImg}${separator}t=${Date.now()}`;
+            const uniqueTimestamp = Date.now() + Math.random();
+            return `${transformedImg}${separator}t=${uniqueTimestamp}`;
           }
         )
       : [];

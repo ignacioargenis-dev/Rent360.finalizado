@@ -409,11 +409,34 @@ export default function OwnerPropertyDetailPage() {
   useEffect(() => {
     const handleFocus = () => {
       // Recargar datos cuando la ventana recupera el foco (viene de otra página)
+      logger.info('Window focused, reloading property details');
       loadPropertyDetails();
     };
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Recargar cuando la página se vuelve visible
+        logger.info('Page visible, reloading property details');
+        loadPropertyDetails();
+      }
+    };
+
+    // Recargar automáticamente cada 30 segundos si la página está activa
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        logger.info('Auto-reload property details');
+        loadPropertyDetails();
+      }
+    }, 30000);
+
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
   }, [loadPropertyDetails]);
 
   const handleContactBroker = (method: 'email' | 'phone') => {
@@ -673,9 +696,14 @@ export default function OwnerPropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={loadPropertyDetails} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={loadPropertyDetails}
+              disabled={isLoading}
+              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            >
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Actualizar
+              {isLoading ? 'Actualizando...' : 'Actualizar Imágenes'}
             </Button>
             <Button variant="outline" onClick={handleEditProperty}>
               <Edit className="w-4 h-4 mr-2" />
@@ -730,20 +758,63 @@ export default function OwnerPropertyDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {property.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
+                {property.images && property.images.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {property.images.map((image, index) => (
+                      <div
+                        key={`${image}-${index}`}
+                        className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative group"
+                      >
+                        <img
+                          src={image}
+                          alt={`Propiedad ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                          onLoad={() => {
+                            logger.info('Image loaded successfully:', image);
+                          }}
+                          onError={e => {
+                            logger.error('Error loading image:', image);
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) {
+                              fallback.style.display = 'flex';
+                            }
+                          }}
+                        />
+                        {/* Fallback para imágenes que no cargan */}
+                        <div
+                          className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 text-sm font-medium"
+                          style={{ display: 'none' }}
+                        >
+                          <div className="text-center">
+                            <Camera className="w-8 h-8 mx-auto mb-2" />
+                            <p>Imagen no disponible</p>
+                          </div>
+                        </div>
+                        {/* Indicador de carga */}
+                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                            Imagen {index + 1}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Camera className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium mb-2">No hay imágenes disponibles</h3>
+                    <p className="text-sm">Esta propiedad no tiene imágenes cargadas.</p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => router.push(`/owner/properties/${propertyId}/edit`)}
                     >
-                      <img
-                        src={image}
-                        alt={`Propiedad ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                      />
-                    </div>
-                  ))}
-                </div>
+                      <Camera className="w-4 h-4 mr-2" />
+                      Agregar Imágenes
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

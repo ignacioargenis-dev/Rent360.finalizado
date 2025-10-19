@@ -454,10 +454,19 @@ export default function OwnerPropertyEditPage() {
 
     setIsSaving(true);
     try {
-      // Subir nuevas imágenes primero
-      let uploadedImageUrls: string[] = [];
+      // Subir nuevas imágenes primero si las hay
       if (newImages.length > 0) {
-        uploadedImageUrls = await uploadNewImages(newImages);
+        const uploadedImageUrls = await uploadNewImages(newImages);
+
+        // Actualizar el estado local con las nuevas URLs
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...uploadedImageUrls],
+        }));
+
+        // Limpiar las imágenes nuevas y previews
+        setNewImages([]);
+        setImagePreviews([]);
       }
 
       // ✅ CORREGIDO: Hacer llamada real a la API para actualizar la propiedad
@@ -482,7 +491,7 @@ export default function OwnerPropertyEditPage() {
           status: formData.status,
           description: formData.description,
           features: formData.features,
-          images: [...formData.images, ...uploadedImageUrls],
+          images: formData.images, // Usar las imágenes actualizadas
           // Características básicas
           furnished: formData.furnished,
           petFriendly: formData.petFriendly,
@@ -509,19 +518,22 @@ export default function OwnerPropertyEditPage() {
       if (response.ok) {
         logger.info('Propiedad actualizada exitosamente', {
           propertyId,
-          newImagesCount: uploadedImageUrls.length,
+          newImagesCount: newImages.length,
         });
 
         // Mostrar mensaje de éxito
-        if (uploadedImageUrls.length > 0) {
+        if (newImages.length > 0) {
           alert(
-            `Propiedad actualizada exitosamente. ${uploadedImageUrls.length} imagen(es) subida(s).`
+            `✅ Propiedad actualizada exitosamente.\n\n📸 ${newImages.length} imagen(es) subida(s) correctamente.\n\nLas imágenes ya están disponibles en la página de detalles.`
           );
         } else {
-          alert('Propiedad actualizada exitosamente.');
+          alert('✅ Propiedad actualizada exitosamente.');
         }
 
-        router.push(`/owner/properties/${propertyId}`);
+        // Pequeño delay para asegurar que el usuario vea el mensaje
+        setTimeout(() => {
+          router.push(`/owner/properties/${propertyId}`);
+        }, 1000);
       } else {
         const errorData = await response.json();
         logger.error('Error al guardar la propiedad', {
