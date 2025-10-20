@@ -980,10 +980,17 @@ export default function OwnerPropertyEditPage() {
                 )}
 
                 {/* Debug Info */}
-                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border-2 border-red-200">
+                  <div className="font-bold text-red-600 mb-1">
+                    🧪 DEBUG INFO - Copia esto en los logs:
+                  </div>
                   <div>newImages: {newImages.length} archivos</div>
                   <div>imagePreviews: {imagePreviews.length} previews</div>
                   <div>existingImages: {formData.images?.length || 0} existentes</div>
+                  <div>
+                    Estado actual:{' '}
+                    {newImages.length > 0 ? '✅ Listo para subir' : '❌ No hay imágenes nuevas'}
+                  </div>
                 </div>
 
                 {/* No Images Message */}
