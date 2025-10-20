@@ -200,6 +200,16 @@ export async function GET(request: NextRequest) {
             .map((img: string) => {
               const imgStr = String(img ?? '');
               const imgNoQuery = (imgStr.split('?')[0] ?? '') as string;
+
+              // Si es una URL de cloud storage, mantenerla tal como está
+              if (
+                imgNoQuery.includes('digitaloceanspaces.com') ||
+                imgNoQuery.includes('amazonaws.com')
+              ) {
+                return imgNoQuery;
+              }
+
+              // Para URLs locales, transformar a ruta /api/uploads
               let transformedImg = imgNoQuery;
               if (imgNoQuery && imgNoQuery.startsWith('/api/uploads/')) {
                 transformedImg = imgNoQuery;
@@ -217,6 +227,12 @@ export async function GET(request: NextRequest) {
               return transformedImg;
             })
             .filter((imgPath: string) => {
+              // Si es URL de cloud storage, siempre incluirla
+              if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
+                return true;
+              }
+
+              // Para URLs locales, verificar si el archivo existe
               try {
                 const logical = imgPath.replace(/^\/api\//, '');
                 const fullPath = require('path').join(
@@ -230,6 +246,12 @@ export async function GET(request: NextRequest) {
               }
             })
             .map((imgPath: string) => {
+              // No agregar timestamp a URLs de cloud storage
+              if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
+                return imgPath;
+              }
+
+              // Agregar timestamp solo a URLs locales
               const separator = imgPath.includes('?') ? '&' : '?';
               const uniqueTimestamp = Date.now() + Math.random();
               return `${imgPath}${separator}t=${uniqueTimestamp}`;

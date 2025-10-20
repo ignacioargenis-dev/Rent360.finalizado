@@ -51,17 +51,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
-    // Transformar las imágenes para usar las rutas correctas de API
+    // Obtener las imágenes de la propiedad
     const originalImages = property.images
       ? Array.isArray(property.images)
         ? property.images
         : JSON.parse(property.images)
       : [];
+
+    // Procesar las imágenes manteniendo URLs de cloud storage y transformando solo las locales
     const transformedImages = originalImages
       .map((img: string) => {
-        // Normalizar y transformar a ruta /api/uploads
         const imgStr = String(img ?? '');
         const imgNoQuery = (imgStr.split('?')[0] ?? '') as string;
+
+        // Si es una URL de cloud storage, mantenerla tal como está
+        if (imgNoQuery.includes('digitaloceanspaces.com') || imgNoQuery.includes('amazonaws.com')) {
+          return imgNoQuery;
+        }
+
+        // Para URLs locales, transformar a ruta /api/uploads
         let transformedImg = imgNoQuery;
         if (imgNoQuery && imgNoQuery.startsWith('/api/uploads/')) {
           transformedImg = imgNoQuery;
@@ -74,10 +82,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
         return transformedImg;
       })
-      // Filtrar imágenes cuyos archivos no existen físicamente
+      // Solo filtrar URLs locales que no existen físicamente, mantener URLs de cloud storage
       .filter((imgPath: string) => {
+        // Si es URL de cloud storage, siempre incluirla
+        if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
+          return true;
+        }
+
+        // Para URLs locales, verificar si el archivo existe
         try {
-          // Mapeo inverso de /api/uploads/* -> public/uploads/*
           const logical = imgPath.replace(/^\/api\//, '');
           const fullPath = require('path').join(
             process.cwd(),
@@ -89,8 +102,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           return false;
         }
       })
-      // Agregar timestamp único para cache busting
+      // Agregar timestamp único para cache busting solo a URLs locales
       .map((imgPath: string) => {
+        // No agregar timestamp a URLs de cloud storage
+        if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
+          return imgPath;
+        }
+
+        // Agregar timestamp solo a URLs locales
         const separator = imgPath.includes('?') ? '&' : '?';
         const uniqueTimestamp = Date.now() + Math.random();
         return `${imgPath}${separator}t=${uniqueTimestamp}`;
