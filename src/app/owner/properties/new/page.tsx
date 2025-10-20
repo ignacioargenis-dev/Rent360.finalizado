@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Plus,
   Save,
@@ -29,6 +31,9 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
+  FileText,
+  Shield,
+  Receipt,
 } from 'lucide-react';
 import { Property } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -74,6 +79,14 @@ interface PropertyFormData {
 
   images: File[];
   contactPreference: 'email' | 'phone' | 'whatsapp' | 'platform';
+
+  // Documentos de la propiedad
+  propertyDeed: File | null;
+  certificateOfTitle: File | null;
+  utilitiesBills: File[];
+  propertyTaxReceipt: File | null;
+  insurancePolicy: File | null;
+  otherDocuments: File[];
 }
 
 const propertyFeatures = [
@@ -439,6 +452,14 @@ export default function NewPropertyPage() {
 
     images: emptyImages,
     contactPreference: 'platform',
+
+    // Documentos de la propiedad
+    propertyDeed: null,
+    certificateOfTitle: null,
+    utilitiesBills: [],
+    propertyTaxReceipt: null,
+    insurancePolicy: null,
+    otherDocuments: [],
   });
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -615,6 +636,24 @@ export default function NewPropertyPage() {
     }));
   };
 
+  const handleDocumentUpload = (field: keyof PropertyFormData, files: FileList | null) => {
+    if (!files) {
+      return;
+    }
+
+    if (field === 'utilitiesBills' || field === 'otherDocuments') {
+      setFormData(prev => ({
+        ...prev,
+        [field]: Array.from(files),
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: files[0],
+      }));
+    }
+  };
+
   const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -681,6 +720,29 @@ export default function NewPropertyPage() {
       // Add images
       formData.images.forEach((image, index) => {
         formDataToSend.append('images', image);
+      });
+
+      // Add documents
+      if (formData.propertyDeed) {
+        formDataToSend.append('propertyDeed', formData.propertyDeed);
+      }
+      if (formData.certificateOfTitle) {
+        formDataToSend.append('certificateOfTitle', formData.certificateOfTitle);
+      }
+      if (formData.propertyTaxReceipt) {
+        formDataToSend.append('propertyTaxReceipt', formData.propertyTaxReceipt);
+      }
+      if (formData.insurancePolicy) {
+        formDataToSend.append('insurancePolicy', formData.insurancePolicy);
+      }
+
+      // Add multiple files
+      formData.utilitiesBills.forEach((bill, index) => {
+        formDataToSend.append('utilitiesBills', bill);
+      });
+
+      formData.otherDocuments.forEach((doc, index) => {
+        formDataToSend.append('otherDocuments', doc);
       });
 
       const response = await fetch(
@@ -1344,6 +1406,233 @@ export default function NewPropertyPage() {
                           <option value="phone">Teléfono</option>
                           <option value="whatsapp">WhatsApp</option>
                         </select>
+                      </div>
+
+                      {/* Documentos de la Propiedad */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Documentos de la Propiedad
+                          </h3>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Sube los documentos legales y administrativos de tu propiedad. Estos
+                          documentos son importantes para la verificación y el proceso de arriendo.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Escritura de Propiedad */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <FileText className="w-4 h-4 inline mr-1" />
+                              Escritura de Propiedad
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="propertyDeed" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivo PDF
+                                  </span>
+                                  <Input
+                                    id="propertyDeed"
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={e =>
+                                      handleDocumentUpload('propertyDeed', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.propertyDeed && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.propertyDeed.name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Certificado de Título */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <Shield className="w-4 h-4 inline mr-1" />
+                              Certificado de Título
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="certificateOfTitle" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivo PDF
+                                  </span>
+                                  <Input
+                                    id="certificateOfTitle"
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={e =>
+                                      handleDocumentUpload('certificateOfTitle', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.certificateOfTitle && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.certificateOfTitle.name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Recibo de Contribuciones */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <Receipt className="w-4 h-4 inline mr-1" />
+                              Recibo de Contribuciones
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="propertyTaxReceipt" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivo PDF
+                                  </span>
+                                  <Input
+                                    id="propertyTaxReceipt"
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={e =>
+                                      handleDocumentUpload('propertyTaxReceipt', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.propertyTaxReceipt && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.propertyTaxReceipt.name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Recibos de Servicios Básicos */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <Receipt className="w-4 h-4 inline mr-1" />
+                              Recibos de Servicios Básicos
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="utilitiesBills" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivos (luz, agua, gas, etc.)
+                                  </span>
+                                  <Input
+                                    id="utilitiesBills"
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={e =>
+                                      handleDocumentUpload('utilitiesBills', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.utilitiesBills.length > 0 && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.utilitiesBills.length} archivo(s) seleccionado(s)
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Póliza de Seguro */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <Shield className="w-4 h-4 inline mr-1" />
+                              Póliza de Seguro (Opcional)
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="insurancePolicy" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivo PDF
+                                  </span>
+                                  <Input
+                                    id="insurancePolicy"
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={e =>
+                                      handleDocumentUpload('insurancePolicy', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.insurancePolicy && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.insurancePolicy.name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Otros Documentos */}
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700 mb-2">
+                              <FileText className="w-4 h-4 inline mr-1" />
+                              Otros Documentos
+                            </Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              <div className="text-center">
+                                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                                <Label htmlFor="otherDocuments" className="cursor-pointer">
+                                  <span className="text-sm text-blue-600 hover:text-blue-800">
+                                    Seleccionar archivos adicionales
+                                  </span>
+                                  <Input
+                                    id="otherDocuments"
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    onChange={e =>
+                                      handleDocumentUpload('otherDocuments', e.target.files)
+                                    }
+                                    className="hidden"
+                                  />
+                                </Label>
+                                {formData.otherDocuments.length > 0 && (
+                                  <p className="text-sm text-green-600 mt-2">
+                                    ✓ {formData.otherDocuments.length} archivo(s) seleccionado(s)
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-medium text-yellow-800 mb-1">
+                                Documentos Obligatorios
+                              </h4>
+                              <ul className="text-sm text-yellow-700 space-y-1">
+                                <li>• Escritura de Propiedad</li>
+                                <li>• Certificado de Título</li>
+                                <li>• Recibo de Contribuciones</li>
+                                <li>• Recibos de Servicios Básicos</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
