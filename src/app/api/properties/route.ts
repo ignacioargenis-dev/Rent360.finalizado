@@ -474,24 +474,29 @@ export async function GET(request: NextRequest) {
       images: property.images
         ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
             (img: string) => {
+              let transformedImg = img;
+
               // Si la imagen ya tiene la ruta correcta de API, no hacer nada
               if (img.startsWith('/api/uploads/')) {
-                return img;
+                transformedImg = img;
               }
               // Si empieza con /images/, convertir a /api/uploads/
-              if (img.startsWith('/images/')) {
-                return img.replace('/images/', '/api/uploads/');
+              else if (img.startsWith('/images/')) {
+                transformedImg = img.replace('/images/', '/api/uploads/');
               }
               // Si empieza con /uploads/, convertir a /api/uploads/
-              if (img.startsWith('/uploads/')) {
-                return img.replace('/uploads/', '/api/uploads/');
+              else if (img.startsWith('/uploads/')) {
+                transformedImg = img.replace('/uploads/', '/api/uploads/');
               }
               // Si es una ruta relativa, asumir que está en uploads
-              if (!img.startsWith('http') && !img.startsWith('/')) {
-                return `/api/uploads/${img}`;
+              else if (!img.startsWith('http') && !img.startsWith('/')) {
+                transformedImg = `/api/uploads/${img}`;
               }
-              // Para cualquier otro caso, devolver tal como está
-              return img;
+
+              // Agregar timestamp único para cada imagen para evitar problemas de caché
+              const separator = transformedImg.includes('?') ? '&' : '?';
+              const uniqueTimestamp = Date.now() + Math.random();
+              return `${transformedImg}${separator}t=${uniqueTimestamp}`;
             }
           )
         : [],

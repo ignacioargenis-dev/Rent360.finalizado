@@ -153,6 +153,7 @@ export default function OwnerPropertyDetailPage() {
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -300,109 +301,117 @@ export default function OwnerPropertyDetailPage() {
     virtualTourData: null,
   };
 
-  const loadPropertyDetails = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // ✅ CORREGIDO: Cargar datos reales de la API
-      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-
-        if (!responseData.success || !responseData.property) {
-          logger.error('Invalid response format from API', { responseData });
-          setError('Error al cargar los datos de la propiedad');
-          return;
-        }
-
-        const propertyData = responseData.property;
-
-        // Transformar datos de la API al formato esperado
-        const transformedProperty: PropertyDetail = {
-          id: propertyData.id,
-          title: propertyData.title,
-          address: propertyData.address,
-          city: propertyData.city,
-          region: propertyData.region,
-          type: propertyData.type,
-          bedrooms: propertyData.bedrooms,
-          bathrooms: propertyData.bathrooms,
-          area: propertyData.area,
-          monthlyRent: propertyData.price,
-          currency: 'CLP', // Valor fijo ya que no existe en el esquema
-          status: propertyData.status,
-          description: propertyData.description,
-          features: propertyData.features || [],
-          images:
-            propertyData.images && propertyData.images.length > 0
-              ? propertyData.images
-              : ['/api/placeholder/600/400'], // Fallback a placeholder si no hay imágenes
-          currentTenant: propertyData.currentTenant || null,
-          broker: propertyData.broker || null,
-          maintenanceHistory: propertyData.maintenanceHistory || [],
-          financialData: propertyData.financialData || {
-            monthlyRevenue: propertyData.price || 0,
-            yearlyRevenue: (propertyData.price || 0) * 12,
-            occupancyRate: propertyData.status === 'rented' ? 100 : 0,
-            maintenanceCosts: 0,
-            netIncome: propertyData.price || 0,
-          },
-          documents: propertyData.documents || [],
-          notes: propertyData.notes || [],
-          furnished: propertyData.furnished || false,
-          petFriendly: propertyData.petFriendly || false,
-          parkingSpaces: propertyData.parkingSpaces || 0,
-          availableFrom: propertyData.availableFrom
-            ? new Date(propertyData.availableFrom)
-            : new Date(),
-          floor: propertyData.floor,
-          buildingName: propertyData.buildingName,
-          yearBuilt: propertyData.yearBuilt,
-
-          // Características del edificio/servicios
-          heating: propertyData.heating || false,
-          cooling: propertyData.cooling || false,
-          internet: propertyData.internet || false,
-          elevator: propertyData.elevator || false,
-          balcony: propertyData.balcony || false,
-          terrace: propertyData.terrace || false,
-          garden: propertyData.garden || false,
-          pool: propertyData.pool || false,
-          gym: propertyData.gym || false,
-          security: propertyData.security || false,
-          concierge: propertyData.concierge || false,
-
-          // Tour virtual
-          virtualTourEnabled: propertyData.virtualTourEnabled || false,
-          virtualTourData: propertyData.virtualTourData || null,
-        };
-
-        setProperty(transformedProperty);
+  const loadPropertyDetails = useCallback(
+    async (isAutoRefresh = false) => {
+      if (isAutoRefresh) {
+        setIsAutoRefreshing(true);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        logger.error('Error loading property:', {
-          status: response.status,
-          statusText: response.statusText,
-          propertyId,
-          errorData,
-        });
-        setError(`Error al cargar los datos: ${errorData.error || 'Error desconocido'}`);
+        setIsLoading(true);
       }
-    } catch (error) {
-      logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
-      setError('Error de conexión al cargar los datos');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [propertyId]);
+      try {
+        // ✅ CORREGIDO: Cargar datos reales de la API
+        const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+
+          if (!responseData.success || !responseData.property) {
+            logger.error('Invalid response format from API', { responseData });
+            setError('Error al cargar los datos de la propiedad');
+            return;
+          }
+
+          const propertyData = responseData.property;
+
+          // Transformar datos de la API al formato esperado
+          const transformedProperty: PropertyDetail = {
+            id: propertyData.id,
+            title: propertyData.title,
+            address: propertyData.address,
+            city: propertyData.city,
+            region: propertyData.region,
+            type: propertyData.type,
+            bedrooms: propertyData.bedrooms,
+            bathrooms: propertyData.bathrooms,
+            area: propertyData.area,
+            monthlyRent: propertyData.price,
+            currency: 'CLP', // Valor fijo ya que no existe en el esquema
+            status: propertyData.status,
+            description: propertyData.description,
+            features: propertyData.features || [],
+            images:
+              propertyData.images && propertyData.images.length > 0
+                ? propertyData.images
+                : ['/api/placeholder/600/400'], // Fallback a placeholder si no hay imágenes
+            currentTenant: propertyData.currentTenant || null,
+            broker: propertyData.broker || null,
+            maintenanceHistory: propertyData.maintenanceHistory || [],
+            financialData: propertyData.financialData || {
+              monthlyRevenue: propertyData.price || 0,
+              yearlyRevenue: (propertyData.price || 0) * 12,
+              occupancyRate: propertyData.status === 'rented' ? 100 : 0,
+              maintenanceCosts: 0,
+              netIncome: propertyData.price || 0,
+            },
+            documents: propertyData.documents || [],
+            notes: propertyData.notes || [],
+            furnished: propertyData.furnished || false,
+            petFriendly: propertyData.petFriendly || false,
+            parkingSpaces: propertyData.parkingSpaces || 0,
+            availableFrom: propertyData.availableFrom
+              ? new Date(propertyData.availableFrom)
+              : new Date(),
+            floor: propertyData.floor,
+            buildingName: propertyData.buildingName,
+            yearBuilt: propertyData.yearBuilt,
+
+            // Características del edificio/servicios
+            heating: propertyData.heating || false,
+            cooling: propertyData.cooling || false,
+            internet: propertyData.internet || false,
+            elevator: propertyData.elevator || false,
+            balcony: propertyData.balcony || false,
+            terrace: propertyData.terrace || false,
+            garden: propertyData.garden || false,
+            pool: propertyData.pool || false,
+            gym: propertyData.gym || false,
+            security: propertyData.security || false,
+            concierge: propertyData.concierge || false,
+
+            // Tour virtual
+            virtualTourEnabled: propertyData.virtualTourEnabled || false,
+            virtualTourData: propertyData.virtualTourData || null,
+          };
+
+          setProperty(transformedProperty);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          logger.error('Error loading property:', {
+            status: response.status,
+            statusText: response.statusText,
+            propertyId,
+            errorData,
+          });
+          setError(`Error al cargar los datos: ${errorData.error || 'Error desconocido'}`);
+        }
+      } catch (error) {
+        logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
+        setError('Error de conexión al cargar los datos');
+      } finally {
+        setIsLoading(false);
+        setIsAutoRefreshing(false);
+      }
+    },
+    [propertyId]
+  );
 
   useEffect(() => {
     loadPropertyDetails();
@@ -413,24 +422,24 @@ export default function OwnerPropertyDetailPage() {
     const handleFocus = () => {
       // Recargar datos cuando la ventana recupera el foco (viene de otra página)
       logger.info('Window focused, reloading property details');
-      loadPropertyDetails();
+      loadPropertyDetails(true);
     };
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         // Recargar cuando la página se vuelve visible
         logger.info('Page visible, reloading property details');
-        loadPropertyDetails();
+        loadPropertyDetails(true);
       }
     };
 
-    // Recargar automáticamente cada 30 segundos si la página está activa
+    // Recargar automáticamente cada 10 segundos si la página está activa
     const interval = setInterval(() => {
       if (!document.hidden) {
         logger.info('Auto-reload property details');
-        loadPropertyDetails();
+        loadPropertyDetails(true);
       }
-    }, 30000);
+    }, 10000);
 
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -740,15 +749,6 @@ export default function OwnerPropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={loadPropertyDetails}
-              disabled={isLoading}
-              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Actualizando...' : 'Actualizar Imágenes'}
-            </Button>
             <Button variant="outline" onClick={handleEditProperty}>
               <Edit className="w-4 h-4 mr-2" />
               Editar
@@ -807,6 +807,7 @@ export default function OwnerPropertyDetailPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Camera className="w-5 h-5" />
                   Imágenes de la Propiedad
+                  {isAutoRefreshing && <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />}
                 </CardTitle>
               </CardHeader>
               <CardContent>

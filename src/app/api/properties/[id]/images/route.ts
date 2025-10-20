@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
-import { writeFile } from 'fs/promises';
+import { writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { ensurePropertyDirectory } from '@/lib/property-directory';
@@ -261,11 +261,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
           filename
         );
         if (existsSync(filepath)) {
-          await writeFile(filepath, ''); // Vaciar el archivo
+          await rm(filepath); // Eliminar el archivo físicamente
+          logger.info('Archivo físico eliminado:', { filepath });
+        } else {
+          logger.warn('Archivo físico no encontrado para eliminar:', { filepath });
         }
       }
     } catch (fileError) {
       logger.error('Error eliminando archivo físico:', { error: fileError, imageUrl });
+      // No bloquear la respuesta si la eliminación física falla
     }
 
     logger.info('Imagen eliminada de propiedad', {
