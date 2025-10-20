@@ -198,8 +198,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const propertyId = params.id;
     const { searchParams } = new URL(request.url);
     const imageUrl = searchParams.get('imageUrl');
+    // Normalizar: eliminar query params para comparar contra lo almacenado en DB y para nombre de archivo
+    const normalizedImageUrl = imageUrl ? imageUrl.split('?')[0] : null;
 
-    if (!propertyId || !imageUrl) {
+    if (!propertyId || !normalizedImageUrl) {
       return NextResponse.json({ error: 'ID de propiedad e imagen requeridos' }, { status: 400 });
     }
 
@@ -237,7 +239,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       : [];
 
     // Filtrar la imagen a eliminar
-    const updatedImages = currentImages.filter((img: string) => img !== imageUrl);
+    const updatedImages = currentImages.filter(
+      (img: string) => img?.split('?')[0] !== normalizedImageUrl
+    );
 
     // Actualizar la propiedad
     await db.property.update({
@@ -250,7 +254,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Intentar eliminar el archivo físico
     try {
-      const filename = imageUrl.split('/').pop();
+      const filename = normalizedImageUrl.split('/').pop();
       if (filename) {
         const filepath = join(
           process.cwd(),
@@ -268,14 +272,17 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         }
       }
     } catch (fileError) {
-      logger.error('Error eliminando archivo físico:', { error: fileError, imageUrl });
+      logger.error('Error eliminando archivo físico:', {
+        error: fileError,
+        imageUrl: normalizedImageUrl,
+      });
       // No bloquear la respuesta si la eliminación física falla
     }
 
     logger.info('Imagen eliminada de propiedad', {
       propertyId,
       userId: user.id,
-      imageUrl,
+      imageUrl: normalizedImageUrl,
       remainingImages: updatedImages.length,
     });
 
