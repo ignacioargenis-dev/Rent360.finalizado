@@ -97,14 +97,36 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         // Generar nombre único para el archivo
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 15);
-        const extension = file.name.split('.').pop() || 'jpg';
+        const fileNameParts = file.name.split('.');
+        const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'jpg';
         const filename = `image_${i + 1}_${timestamp}_${randomId}.${extension}`;
         const filepath = join(propertyDir, filename);
+
+        logger.info('Preparando subir imagen', {
+          propertyId,
+          propertyDir,
+          filename,
+          filepath,
+          originalName: file.name,
+          fileSize: file.size,
+        });
 
         // Convertir File a Buffer y guardar
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         await writeFile(filepath, buffer);
+
+        // Verificar que el archivo se guardó correctamente
+        const fileExists = existsSync(filepath);
+        logger.info('Archivo escrito y verificado', {
+          filepath,
+          fileExists,
+          bufferSize: buffer.length,
+        });
+
+        if (!fileExists) {
+          throw new Error(`File was not written to disk: ${filepath}`);
+        }
 
         // Crear URL accesible desde el navegador
         const imageUrl = `/api/uploads/properties/${propertyId}/${filename}`;
@@ -117,10 +139,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           type: file.type,
         });
 
-        logger.info('Imagen de propiedad subida', {
+        logger.info('Imagen de propiedad subida exitosamente', {
           propertyId,
           userId: user.id,
           filename,
+          imageUrl,
           originalName: file.name,
           size: file.size,
         });
