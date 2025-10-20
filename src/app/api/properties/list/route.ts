@@ -199,15 +199,19 @@ export async function GET(request: NextRequest) {
         ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images))
             .map((img: string) => {
               const imgStr = String(img ?? '');
-              const imgNoQuery = imgStr.split('?')[0];
+              const imgNoQuery = (imgStr.split('?')[0] ?? '') as string;
               let transformedImg = imgNoQuery;
-              if (imgNoQuery.startsWith('/api/uploads/')) {
+              if (imgNoQuery && imgNoQuery.startsWith('/api/uploads/')) {
                 transformedImg = imgNoQuery;
-              } else if (imgNoQuery.startsWith('/images/')) {
+              } else if (imgNoQuery && imgNoQuery.startsWith('/images/')) {
                 transformedImg = imgNoQuery.replace('/images/', '/api/uploads/');
-              } else if (imgNoQuery.startsWith('/uploads/')) {
+              } else if (imgNoQuery && imgNoQuery.startsWith('/uploads/')) {
                 transformedImg = imgNoQuery.replace('/uploads/', '/api/uploads/');
-              } else if (!imgNoQuery.startsWith('http') && !imgNoQuery.startsWith('/')) {
+              } else if (
+                imgNoQuery &&
+                !imgNoQuery.startsWith('http') &&
+                !imgNoQuery.startsWith('/')
+              ) {
                 transformedImg = `/api/uploads/${imgNoQuery}`;
               }
               return transformedImg;
