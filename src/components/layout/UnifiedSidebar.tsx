@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
-import { useSidebarStats } from '@/hooks/useSidebarStats';
+// import { useSidebarStats } from '@/hooks/useSidebarStats';
 import {
   Home,
   Building,
@@ -65,8 +65,8 @@ interface RoleMenuItems {
   [key: string]: MenuItem[];
 }
 
-// Función para generar el menú dinámicamente con estadísticas reales
-const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
+// Función para generar el menú estático sin estadísticas dinámicas
+const getMenuItems = (): RoleMenuItems => ({
   guest: [
     {
       title: 'Inicio',
@@ -312,8 +312,6 @@ const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
       title: 'Propiedades',
       url: '/broker/properties',
       icon: Building,
-      badge: sidebarStats.totalProperties > 0 ? sidebarStats.totalProperties.toString() : undefined,
-      badgeVariant: 'default',
     },
     {
       title: 'Nueva Propiedad',
@@ -354,11 +352,6 @@ const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
       title: 'Mantenimiento',
       url: '/broker/maintenance',
       icon: Wrench,
-      badge:
-        sidebarStats.maintenanceRequests > 0
-          ? sidebarStats.maintenanceRequests.toString()
-          : undefined,
-      badgeVariant: 'outline',
     },
     {
       title: 'Comisiones',
@@ -549,8 +542,6 @@ const getMenuItems = (sidebarStats: any): RoleMenuItems => ({
       title: 'Trabajos Activos',
       url: '/maintenance/jobs',
       icon: Wrench,
-      badge: sidebarStats.activeRequests > 0 ? sidebarStats.activeRequests.toString() : undefined,
-      badgeVariant: 'secondary',
     },
     {
       title: 'Propiedades',
@@ -603,11 +594,8 @@ export default function UnifiedSidebar({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Obtener estadísticas reales del sidebar
-  const sidebarStats = useSidebarStats();
-
-  // Generar menú dinámicamente con estadísticas reales
-  const menuItems = getMenuItems(sidebarStats);
+  // Generar menú estático sin estadísticas dinámicas
+  const menuItems = getMenuItems();
 
   const handleLogout = async () => {
     try {
@@ -635,51 +623,8 @@ export default function UnifiedSidebar({
     }));
   };
 
-  // Determinar rol del usuario - usar el rol real del usuario SIEMPRE
-  let finalUserRole: string;
-
-  if (user && user.role) {
-    // VALIDACIÓN: El rol debe venir en MAYÚSCULAS desde el AuthProvider
-    if (user.role !== user.role.toUpperCase()) {
-      console.error('🚨 CRÍTICO: Rol NO está en MAYÚSCULAS en el Sidebar!', {
-        receivedRole: user.role,
-        expectedRole: user.role.toUpperCase(),
-        userEmail: user.email,
-      });
-    }
-
-    // Si tenemos información real del usuario, usarla exclusivamente
-    finalUserRole = user.role.toLowerCase();
-    console.log('📍 Sidebar - Usando rol del usuario autenticado:', {
-      receivedRole: user.role,
-      finalUserRole: finalUserRole,
-      email: user.email,
-      userId: user.id,
-    });
-  } else {
-    // Si no hay usuario autenticado, usar 'guest' para mostrar funcionalidad limitada
-    finalUserRole = 'guest';
-    console.log('📍 Sidebar - Usuario no autenticado, usando rol guest');
-  }
-
-  // Validar que el rol existe en menuItems
-  if (!(finalUserRole in menuItems)) {
-    console.warn(
-      `⚠️ Rol '${finalUserRole}' no encontrado en menuItems, usando 'tenant' como fallback`
-    );
-    finalUserRole = 'tenant'; // fallback seguro
-  }
-
-  // Log para debugging
-  console.log('📍 Sidebar - Rol final determinado:', {
-    userRole: user?.role,
-    finalUserRole,
-    userId: user?.id,
-    userEmail: user?.email,
-    hasUser: !!user,
-    menuItemsForRole: menuItems[finalUserRole]?.length || 0,
-  });
-
+  // Determinar rol del usuario de forma simple y estable
+  const finalUserRole = user?.role?.toLowerCase() || 'guest';
   const items = menuItems[finalUserRole] || menuItems.tenant || [];
 
   const isActiveRoute = (url: string) => {
