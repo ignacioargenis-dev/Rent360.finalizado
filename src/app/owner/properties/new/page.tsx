@@ -32,7 +32,6 @@ import {
   AlertCircle,
   Info,
   FileText,
-  Shield,
   Receipt,
 } from 'lucide-react';
 import { Property } from '@/types';
