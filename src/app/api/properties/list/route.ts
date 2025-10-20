@@ -198,7 +198,8 @@ export async function GET(request: NextRequest) {
       images: property.images
         ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images))
             .map((img: string) => {
-              const imgNoQuery = typeof img === 'string' ? img.split('?')[0] : '';
+              const imgStr = String(img ?? '');
+              const imgNoQuery = imgStr.split('?')[0];
               let transformedImg = imgNoQuery;
               if (imgNoQuery.startsWith('/api/uploads/')) {
                 transformedImg = imgNoQuery;

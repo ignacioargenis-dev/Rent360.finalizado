@@ -60,7 +60,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const transformedImages = originalImages
       .map((img: string) => {
         // Normalizar y transformar a ruta /api/uploads
-        const imgNoQuery = typeof img === 'string' ? img.split('?')[0] : '';
+        const imgStr = String(img ?? '');
+        const imgNoQuery = imgStr.split('?')[0];
         let transformedImg = imgNoQuery;
         if (imgNoQuery.startsWith('/api/uploads/')) {
           transformedImg = imgNoQuery;
