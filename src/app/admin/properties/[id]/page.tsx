@@ -18,7 +18,7 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     const loadProperty = async () => {
       try {
-        const response = await fetch(`/api/properties/${params.id}`);
+        const response = await fetch(`/api/properties/${params?.id}`);
         if (response.ok) {
           const data = await response.json();
           setProperty(data.property);
@@ -30,10 +30,10 @@ export default function PropertyDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       loadProperty();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   if (loading) {
     return (

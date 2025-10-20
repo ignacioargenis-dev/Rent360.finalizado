@@ -95,7 +95,7 @@ export default function OwnerPropertyEditPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const propertyId = params.propertyId as string;
+  const propertyId = params?.propertyId as string;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -524,9 +524,7 @@ export default function OwnerPropertyEditPage() {
         }));
         console.log('🔄 Updated formData.images to:', [...formData.images, ...uploadedImageUrls]);
 
-        // Limpiar las imágenes nuevas y previews
-        setNewImages([]);
-        setImagePreviews([]);
+        // Las imágenes nuevas se mantienen hasta completar toda la operación
       }
 
       // ✅ CORREGIDO: Hacer llamada real a la API para actualizar la propiedad

@@ -42,13 +42,23 @@ import { User, Property } from '@/types';
 
 import RecordModal from '@/components/forms/RecordModal';
 
+// Extensión de Property para incluir información del owner en admin
+interface AdminProperty extends Property {
+  owner?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
 export default function AdminPropertiesPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<AdminProperty[]>([]);
 
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<AdminProperty[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -66,7 +76,10 @@ export default function AdminPropertiesPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; property: Property | null }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    show: boolean;
+    property: AdminProperty | null;
+  }>({
     show: false,
     property: null,
   });
@@ -106,7 +119,7 @@ export default function AdminPropertiesPage() {
           const propertiesData = data.properties || [];
 
           // Transformar datos de la API al formato esperado
-          const transformedProperties: Property[] = propertiesData.map((property: any) => ({
+          const transformedProperties: AdminProperty[] = propertiesData.map((property: any) => ({
             id: property.id,
             title: property.title,
             description: property.description || '',
@@ -364,9 +377,17 @@ export default function AdminPropertiesPage() {
         images: emptyImages,
         features: emptyFeatures,
         ownerId: user?.id || 'user-admin',
+        owner: user
+          ? {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              avatar: user.avatar,
+            }
+          : undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as unknown as Property;
+      } as unknown as AdminProperty;
 
       // Add to properties list
       setProperties([newProperty, ...properties]);
@@ -389,7 +410,7 @@ export default function AdminPropertiesPage() {
     }
   };
 
-  const handleDeleteProperty = async (property: Property) => {
+  const handleDeleteProperty = async (property: AdminProperty) => {
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/properties/${property.id}`, {
@@ -463,7 +484,7 @@ export default function AdminPropertiesPage() {
     }
   };
 
-  const PropertyCard = ({ property }: { property: Property }) => (
+  const PropertyCard = ({ property }: { property: AdminProperty }) => (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-video bg-gray-200 relative overflow-hidden">
         {(() => {
@@ -528,8 +549,8 @@ export default function AdminPropertiesPage() {
         </div>
 
         <div className="text-xs text-gray-500 mb-3">
-          <div>Propietario: {(property as any).owner?.name || 'No disponible'}</div>
-          <div>Email: {(property as any).owner?.email || 'No disponible'}</div>
+          <div>Propietario: {property.owner?.name || 'No disponible'}</div>
+          <div>Email: {property.owner?.email || 'No disponible'}</div>
           <div>Estado: {property.status}</div>
         </div>
 
@@ -548,11 +569,8 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 flex-1"
-              onClick={() =>
-                (property as any).owner?.id &&
-                router.push(`/admin/users/${(property as any).owner.id}`)
-              }
-              disabled={!(property as any).owner?.id}
+              onClick={() => property.owner?.id && router.push(`/admin/users/${property.owner.id}`)}
+              disabled={!property.owner?.id}
             >
               <Users className="w-3 h-3 mr-1" />
               <span>Propietario</span>
@@ -593,7 +611,7 @@ export default function AdminPropertiesPage() {
     </Card>
   );
 
-  const PropertyListItem = ({ property }: { property: Property }) => (
+  const PropertyListItem = ({ property }: { property: AdminProperty }) => (
     <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -610,7 +628,7 @@ export default function AdminPropertiesPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Users className="w-4 h-4" />
-                <span>Propietario: {(property as any).owner?.name || 'No disponible'}</span>
+                <span>Propietario: {property.owner?.name || 'No disponible'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>Estado: {property.status}</span>
@@ -656,11 +674,8 @@ export default function AdminPropertiesPage() {
               variant="ghost"
               size="sm"
               className="h-auto p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-              onClick={() =>
-                (property as any).owner?.id &&
-                router.push(`/admin/users/${(property as any).owner.id}`)
-              }
-              disabled={!(property as any).owner?.id}
+              onClick={() => property.owner?.id && router.push(`/admin/users/${property.owner.id}`)}
+              disabled={!property.owner?.id}
             >
               <Users className="w-4 h-4 mr-1" />
               <span>Propietario</span>

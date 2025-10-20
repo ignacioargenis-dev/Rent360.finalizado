@@ -45,7 +45,7 @@ interface AppointmentForm {
 export default function EditAppointmentPage() {
   const router = useRouter();
   const params = useParams();
-  const appointmentId = params.appointmentId as string;
+  const appointmentId = params?.appointmentId as string;
 
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);

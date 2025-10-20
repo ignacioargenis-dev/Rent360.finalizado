@@ -18,7 +18,7 @@ export default function UserDetailPage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const response = await fetch(`/api/users/${params.id}`);
+        const response = await fetch(`/api/users/${params?.id}`);
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -30,10 +30,10 @@ export default function UserDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       loadUser();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   if (loading) {
     return (

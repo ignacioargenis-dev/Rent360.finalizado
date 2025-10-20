@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
@@ -41,7 +40,8 @@ interface ContractData {
 }
 
 export default function EditContractPage() {
-  const { contractId } = useParams();
+  const params = useParams();
+  const contractId = params?.contractId as string;
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

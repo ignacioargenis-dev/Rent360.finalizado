@@ -44,7 +44,7 @@ export default function PropertyEditPage() {
   useEffect(() => {
     const loadProperty = async () => {
       try {
-        const response = await fetch(`/api/properties/${params.id}`);
+        const response = await fetch(`/api/properties/${params?.id}`);
         if (response.ok) {
           const data = await response.json();
           setProperty(data.property);
@@ -71,17 +71,17 @@ export default function PropertyEditPage() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       loadProperty();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const response = await fetch(`/api/properties/${params.id}`, {
+      const response = await fetch(`/api/properties/${params?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export default function PropertyEditPage() {
       });
 
       if (response.ok) {
-        router.push(`/admin/properties/${params.id}`);
+        router.push(`/admin/properties/${params?.id}`);
       } else {
         console.error('Error updating property');
       }

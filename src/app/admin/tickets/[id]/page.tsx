@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import { logger } from '@/lib/logger-minimal';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,7 +42,7 @@ export default function AdminTicketDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const ticketId = params.id as string;
+  const ticketId = params?.id as string;
 
   const [ticket, setTicket] = useState<TicketType | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);

@@ -30,11 +30,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
-    // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'ADMIN') {
-      if (user.id !== userId) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-      }
+    // Verificar permisos - solo admin puede ver perfiles de otros usuarios
+    if (user.role !== 'ADMIN' && user.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Formatear respuesta (excluir información sensible)
@@ -79,11 +77,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
-    // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'ADMIN') {
-      if (user.id !== userId) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-      }
+    // Verificar permisos - solo admin puede ver perfiles de otros usuarios
+    if (user.role !== 'ADMIN' && user.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Actualizar el usuario
