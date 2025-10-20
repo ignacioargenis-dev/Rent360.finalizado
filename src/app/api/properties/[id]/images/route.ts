@@ -13,6 +13,9 @@ import { ensurePropertyDirectory } from '@/lib/property-directory';
  */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   console.log('🖼️ POST /api/properties/[id]/images called for property:', params.id);
+  console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()));
+  console.log('🔍 Request method:', request.method);
+  console.log('🔍 Request URL:', request.url);
 
   try {
     // Verificar autenticación
@@ -69,6 +72,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     console.log('📄 Parsing FormData...');
     const formData = await request.formData();
+    console.log(
+      '📋 FormData entries:',
+      Array.from(formData.entries()).map(([key, value]) => ({
+        key,
+        type: typeof value,
+        name: value instanceof File ? value.name : 'not a file',
+        size: value instanceof File ? value.size : 'not a file',
+      }))
+    );
+
     const files = formData.getAll('image') as File[];
     console.log(
       '📁 Files received:',
@@ -108,8 +121,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      console.log(`🔄 Processing file ${i + 1}/${files.length}:`, {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        isFile: file instanceof File,
+      });
 
       if (!file) {
+        console.log(`⚠️ File ${i + 1} is null/undefined, skipping`);
         continue;
       }
 
@@ -122,6 +142,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         const filename = `image_${i + 1}_${timestamp}_${randomId}.${extension}`;
         const filepath = join(propertyDir, filename);
 
+        console.log(`📝 Generated filename: ${filename}`);
+        console.log(`📂 Target filepath: ${filepath}`);
+        console.log(`📁 Property dir exists: ${existsSync(propertyDir)}`);
+
         logger.info('Preparando subir imagen', {
           propertyId,
           propertyDir,
@@ -131,17 +155,31 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           fileSize: file.size,
         });
 
+        console.log(`🔄 Converting file ${file.name} to buffer...`);
         // Convertir File a Buffer y guardar
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
+        console.log(`✅ Buffer created, size: ${buffer.length} bytes`);
+
+        console.log(`💾 Writing file to disk...`);
         await writeFile(filepath, buffer);
+        console.log(`✅ File write completed`);
 
         // Verificar que el archivo se guardó correctamente
         const fileExists = existsSync(filepath);
+        const fileStats = fileExists ? await import('fs').then(fs => fs.statSync(filepath)) : null;
+
+        console.log(`🔍 File verification:`, {
+          exists: fileExists,
+          size: fileStats?.size,
+          expectedSize: buffer.length,
+        });
+
         logger.info('Archivo escrito y verificado', {
           filepath,
           fileExists,
           bufferSize: buffer.length,
+          actualSize: fileStats?.size,
         });
 
         if (!fileExists) {
