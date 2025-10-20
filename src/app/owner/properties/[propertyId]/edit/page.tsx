@@ -307,20 +307,38 @@ export default function OwnerPropertyEditPage() {
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('📁 handleImageUpload called');
     const files = event.target.files;
+    console.log('📂 Files selected:', files?.length || 0);
+
     if (!files) {
+      console.log('⚠️ No files selected');
       return;
     }
 
     const newFiles = Array.from(files);
-    setNewImages(prev => [...prev, ...newFiles]);
+    console.log(
+      '📝 New files to add:',
+      newFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+    );
+
+    setNewImages(prev => {
+      const updated = [...prev, ...newFiles];
+      console.log('🔄 Updated newImages state:', updated.length, 'files');
+      return updated;
+    });
 
     // Create previews for new images
-    newFiles.forEach(file => {
+    newFiles.forEach((file, index) => {
+      console.log(`🖼️ Creating preview for file ${index + 1}: ${file.name}`);
       const reader = new FileReader();
       reader.onload = e => {
         const result = e.target?.result as string;
+        console.log(`✅ Preview created for ${file.name}, length: ${result.length}`);
         setImagePreviews(prev => [...prev, result]);
+      };
+      reader.onerror = e => {
+        console.error(`❌ Error creating preview for ${file.name}:`, e);
       };
       reader.readAsDataURL(file);
     });
@@ -459,15 +477,32 @@ export default function OwnerPropertyEditPage() {
   };
 
   const handleSave = async () => {
+    console.log('🚀 handleSave called!');
+    console.log('📊 State summary:', {
+      newImagesCount: newImages.length,
+      existingImagesCount: formData.images.length,
+      imagePreviewsCount: imagePreviews.length,
+      isSaving,
+    });
+
     console.log(
-      '💾 handleSave called, newImages:',
-      newImages.length,
-      'existing images:',
-      formData.images.length
+      '📁 newImages details:',
+      newImages.map((file, i) => ({
+        index: i,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      }))
     );
+
+    console.log('🖼️ formData.images:', formData.images);
+
     if (!validateForm()) {
+      console.log('❌ Form validation failed');
       return;
     }
+
+    console.log('✅ Form validation passed');
 
     setIsSaving(true);
     try {

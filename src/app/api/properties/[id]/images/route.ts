@@ -115,7 +115,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Asegurar que el directorio de la propiedad existe
+    console.log(`📁 Ensuring property directory exists for: ${propertyId}`);
     const propertyDir = await ensurePropertyDirectory(propertyId);
+    console.log(`✅ Property directory: ${propertyDir}`);
+    console.log(`📂 Directory exists check: ${existsSync(propertyDir)}`);
 
     const uploadedImages = [];
 
@@ -162,8 +165,20 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         console.log(`✅ Buffer created, size: ${buffer.length} bytes`);
 
         console.log(`💾 Writing file to disk...`);
-        await writeFile(filepath, buffer);
-        console.log(`✅ File write completed`);
+        console.log(`📋 Write parameters:`, {
+          filepath,
+          bufferSize: buffer.length,
+          propertyDir,
+          filename,
+        });
+
+        try {
+          await writeFile(filepath, buffer);
+          console.log(`✅ File write completed`);
+        } catch (writeError) {
+          console.error(`❌ Error during file write:`, writeError);
+          throw writeError;
+        }
 
         // Verificar que el archivo se guardó correctamente
         const fileExists = existsSync(filepath);
