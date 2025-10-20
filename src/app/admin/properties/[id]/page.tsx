@@ -21,6 +21,11 @@ export default function PropertyDetailPage() {
         const response = await fetch(`/api/properties/${params?.id}`);
         if (response.ok) {
           const data = await response.json();
+          console.log('📊 Datos de propiedad recibidos:', {
+            title: data.property.title,
+            imagesCount: data.property.images?.length || 0,
+            images: data.property.images,
+          });
           setProperty(data.property);
         }
       } catch (error) {
@@ -126,13 +131,9 @@ export default function PropertyDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {property.images &&
-                (Array.isArray(property.images) ? property.images.length > 0 : true) ? (
+                {property.images && property.images.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {(Array.isArray(property.images)
-                      ? property.images
-                      : JSON.parse(property.images)
-                    ).map((image: string, index: number) => (
+                    {property.images.map((image: string, index: number) => (
                       <div
                         key={index}
                         className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
@@ -141,7 +142,11 @@ export default function PropertyDetailPage() {
                           src={image}
                           alt={`${property.title} - Imagen ${index + 1}`}
                           className="w-full h-full object-cover"
+                          onLoad={() => {
+                            console.log('✅ Imagen cargada exitosamente:', image);
+                          }}
                           onError={e => {
+                            console.error('❌ Error cargando imagen:', image);
                             e.currentTarget.style.display = 'none';
                           }}
                         />
