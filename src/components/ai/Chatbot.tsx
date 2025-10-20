@@ -771,199 +771,197 @@ export default function Chatbot({
           </div>
         </CardHeader>
 
-        {!isMinimized && (
-          <>
-            <CardContent className="p-0 flex flex-col h-[400px]">
-              <ScrollArea className="flex-1 h-full">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    {messages.map(message => (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          'flex gap-3',
-                          message.type === 'user' ? 'justify-end' : 'justify-start'
-                        )}
-                      >
-                        {message.type === 'bot' && (
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Bot className="h-4 w-4 text-primary" />
-                          </div>
-                        )}
-
-                        <div
-                          className={cn(
-                            'max-w-[80%] rounded-lg px-3 py-2',
-                            message.type === 'user'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          )}
-                        >
-                          <p className="text-sm">{message.content}</p>
-
-                          {/* 🚀 AGENTE ESPECIALIZADO */}
-                          {message.agent && (
-                            <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                              <Bot className="w-4 h-4 text-blue-600" />
-                              <div className="flex-1">
-                                <span className="text-xs font-semibold text-blue-800">
-                                  {message.agent.name}
-                                </span>
-                                <span className="text-xs text-blue-600 ml-2">
-                                  {message.agent.specialty}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 🚀 RECOMENDACIONES INTELIGENTES */}
-                          {message.recommendations && message.recommendations.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              <div className="text-xs font-semibold text-green-700 mb-1">
-                                💡 Recomendaciones inteligentes:
-                              </div>
-                              {message.recommendations.slice(0, 2).map((rec, index) => (
-                                <Button
-                                  key={index}
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-start text-xs h-7 border-green-200 text-green-700 hover:bg-green-50"
-                                  onClick={() => handleQuickAction(rec.action)}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {rec.action}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* 🚀 ANÁLISIS DE SENTIMIENTOS */}
-                          {message.sentiment && message.sentiment.emotion !== 'neutral' && (
-                            <div className="mt-2 flex items-center gap-1">
-                              <span className="text-xs text-gray-500">
-                                {message.sentiment.emotion === 'joy' && '😊'}
-                                {message.sentiment.emotion === 'anger' && '😠'}
-                                {message.sentiment.emotion === 'fear' && '😨'}
-                                {message.sentiment.emotion === 'sadness' && '😢'}
-                                {message.sentiment.emotion === 'surprise' && '😮'}
-                                Detectado: {message.sentiment.emotion}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* 🚀 CONTEXTO DE MEMORIA */}
-                          {message.memoryContext &&
-                            message.memoryContext.previousTopics.length > 0 && (
-                              <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                                📝 Recordando conversaciones previas sobre:{' '}
-                                {message.memoryContext.previousTopics.join(', ')}
-                              </div>
-                            )}
-
-                          {/* 🚀 SUGERENCIAS TRADICIONALES */}
-                          {message.suggestions && message.suggestions.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {message.suggestions.map((suggestion, index) => (
-                                <Button
-                                  key={index}
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-start text-xs h-7"
-                                  onClick={() => handleQuickAction(suggestion)}
-                                >
-                                  {suggestion}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* 🚀 NOTA DE SEGURIDAD */}
-                          {message.securityNote && (
-                            <div className="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
-                              ⚠️ {message.securityNote}
-                            </div>
-                          )}
-
-                          {/* 🚀 PREGUNTAS DE SEGUIMIENTO */}
-                          {message.followUp && message.followUp.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              <div className="text-xs font-semibold text-blue-700 mb-1">
-                                💭 Puedes preguntarme:
-                              </div>
-                              {message.followUp.slice(0, 2).map((question, index) => (
-                                <Button
-                                  key={index}
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-start text-xs h-7 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                  onClick={() => setInputValue(question)}
-                                >
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  {question}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* 🚀 INDICADOR DE CONVERSACIÓN CONTINUA */}
-                          {message.type === 'bot' && !message.securityNote && (
-                            <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />
-                              Puedes seguir preguntando, estoy aquí para ayudarte
-                            </div>
-                          )}
-                        </div>
-
-                        {message.type === 'user' && (
-                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <User className="h-4 w-4 text-primary-foreground" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {isLoading && (
-                      <div className="flex gap-3 justify-start">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <CardContent className="p-0 flex flex-col h-[400px]">
+          {!isMinimized && (
+            <ScrollArea className="flex-1 h-full">
+              <div className="p-4">
+                <div className="space-y-4">
+                  {messages.map(message => (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        'flex gap-3',
+                        message.type === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.type === 'bot' && (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <Bot className="h-4 w-4 text-primary" />
                         </div>
-                        <div className="bg-muted rounded-lg px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Pensando...</span>
+                      )}
+
+                      <div
+                        className={cn(
+                          'max-w-[80%] rounded-lg px-3 py-2',
+                          message.type === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        )}
+                      >
+                        <p className="text-sm">{message.content}</p>
+
+                        {/* 🚀 AGENTE ESPECIALIZADO */}
+                        {message.agent && (
+                          <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                            <Bot className="w-4 h-4 text-blue-600" />
+                            <div className="flex-1">
+                              <span className="text-xs font-semibold text-blue-800">
+                                {message.agent.name}
+                              </span>
+                              <span className="text-xs text-blue-600 ml-2">
+                                {message.agent.specialty}
+                              </span>
+                            </div>
                           </div>
+                        )}
+
+                        {/* 🚀 RECOMENDACIONES INTELIGENTES */}
+                        {message.recommendations && message.recommendations.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs font-semibold text-green-700 mb-1">
+                              💡 Recomendaciones inteligentes:
+                            </div>
+                            {message.recommendations.slice(0, 2).map((rec, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                className="w-full justify-start text-xs h-7 border-green-200 text-green-700 hover:bg-green-50"
+                                onClick={() => handleQuickAction(rec.action)}
+                              >
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                {rec.action}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 🚀 ANÁLISIS DE SENTIMIENTOS */}
+                        {message.sentiment && message.sentiment.emotion !== 'neutral' && (
+                          <div className="mt-2 flex items-center gap-1">
+                            <span className="text-xs text-gray-500">
+                              {message.sentiment.emotion === 'joy' && '😊'}
+                              {message.sentiment.emotion === 'anger' && '😠'}
+                              {message.sentiment.emotion === 'fear' && '😨'}
+                              {message.sentiment.emotion === 'sadness' && '😢'}
+                              {message.sentiment.emotion === 'surprise' && '😮'}
+                              Detectado: {message.sentiment.emotion}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* 🚀 CONTEXTO DE MEMORIA */}
+                        {message.memoryContext &&
+                          message.memoryContext.previousTopics.length > 0 && (
+                            <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                              📝 Recordando conversaciones previas sobre:{' '}
+                              {message.memoryContext.previousTopics.join(', ')}
+                            </div>
+                          )}
+
+                        {/* 🚀 SUGERENCIAS TRADICIONALES */}
+                        {message.suggestions && message.suggestions.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.suggestions.map((suggestion, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                className="w-full justify-start text-xs h-7"
+                                onClick={() => handleQuickAction(suggestion)}
+                              >
+                                {suggestion}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 🚀 NOTA DE SEGURIDAD */}
+                        {message.securityNote && (
+                          <div className="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
+                            ⚠️ {message.securityNote}
+                          </div>
+                        )}
+
+                        {/* 🚀 PREGUNTAS DE SEGUIMIENTO */}
+                        {message.followUp && message.followUp.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs font-semibold text-blue-700 mb-1">
+                              💭 Puedes preguntarme:
+                            </div>
+                            {message.followUp.slice(0, 2).map((question, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                className="w-full justify-start text-xs h-7 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                onClick={() => setInputValue(question)}
+                              >
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                {question}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 🚀 INDICADOR DE CONVERSACIÓN CONTINUA */}
+                        {message.type === 'bot' && !message.securityNote && (
+                          <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            Puedes seguir preguntando, estoy aquí para ayudarte
+                          </div>
+                        )}
+                      </div>
+
+                      {message.type === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {isLoading && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="bg-muted rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Pensando...</span>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-              </ScrollArea>
-
-              <div className="p-4 border-t">
-                <div className="flex gap-2">
-                  <Input
-                    ref={inputRef}
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Pregúntame sobre casos legales, contratos, mora en pagos..."
-                    className="flex-1"
-                    disabled={isLoading}
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isLoading}
-                    size="icon"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
-            </CardContent>
-          </>
-        )}
+            </ScrollArea>
+          )}
+
+          <div className="p-4 border-t">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Pregúntame sobre casos legales, contratos, mora en pagos..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                size="icon"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

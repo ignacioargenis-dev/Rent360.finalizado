@@ -94,7 +94,6 @@ export default function PropertySearch() {
       setLoading(true);
       const params = new URLSearchParams({
         limit: '50',
-        status: 'AVAILABLE',
       });
 
       // Add search query if exists
