@@ -89,7 +89,7 @@ interface MaintenanceRequest {
 export default function BrokerMaintenanceDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const maintenanceId = params.id as string;
+  const maintenanceId = params?.id as string;
 
   const [user, setUser] = useState<UserType | null>(null);
   const [maintenanceRequest, setMaintenanceRequest] = useState<MaintenanceRequest | null>(null);

@@ -118,7 +118,7 @@ export default function BrokerClientDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const clientId = params.clientId as string;
+  const clientId = params?.clientId as string;
 
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);

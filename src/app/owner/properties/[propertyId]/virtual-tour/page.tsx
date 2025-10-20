@@ -68,7 +68,7 @@ export default function VirtualTourConfigPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const propertyId = params.propertyId as string;
+  const propertyId = params?.propertyId as string;
 
   const [tourConfig, setTourConfig] = useState<VirtualTourConfig>({
     propertyId,

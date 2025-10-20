@@ -107,9 +107,9 @@ export default function ChatPage() {
         await loadConversations();
 
         // Check for new message from URL params
-        const recipientId = searchParams.get('recipientId');
-        const propertyId = searchParams.get('propertyId');
-        const prefillMessage = searchParams.get('prefillMessage');
+        const recipientId = searchParams?.get('recipientId');
+        const propertyId = searchParams?.get('propertyId');
+        const prefillMessage = searchParams?.get('prefillMessage');
 
         if (recipientId) {
           await startNewConversation(

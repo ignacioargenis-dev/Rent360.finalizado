@@ -88,7 +88,7 @@ export default function BrokerContractDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const contractId = params.contractId as string;
+  const contractId = params?.contractId as string;
 
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);

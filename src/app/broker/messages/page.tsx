@@ -86,8 +86,8 @@ export default function BrokerMessagesPage() {
   useEffect(() => {
     // eslint-disable-line react-hooks/exhaustive-deps
     // Check if coming from a "new message" link
-    const isNewMessage = searchParams.get('new') === 'true';
-    const isQuickMessage = searchParams.get('quick') === 'true';
+    const isNewMessage = searchParams?.get('new') === 'true';
+    const isQuickMessage = searchParams?.get('quick') === 'true';
 
     if (isNewMessage || isQuickMessage) {
       // Handle quick messages first
@@ -533,265 +533,267 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-hidden">
           <div className="h-full flex flex-col p-6">
-        {/* Header with actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Centro de Mensajes</h1>
-            <p className="text-gray-600">
-              Mantén la comunicación con propietarios, inquilinos y proveedores
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button>
-              <Send className="w-4 h-4 mr-2" />
-              Nuevo Mensaje
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Mensajes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-6 h-6 text-blue-600" />
-                </div>
+            {/* Header with actions */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Centro de Mensajes</h1>
+                <p className="text-gray-600">
+                  Mantén la comunicación con propietarios, inquilinos y proveedores
+                </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">No Leídos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.unreadMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Urgentes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.urgentMessages}</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Tasa de Respuesta</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.responseRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar mensajes por remitente, asunto o contenido..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="unread">No leídos</SelectItem>
-                <SelectItem value="read">Leídos</SelectItem>
-                <SelectItem value="replied">Respondidos</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="inquiry">Consultas</SelectItem>
-                <SelectItem value="payment">Pagos</SelectItem>
-                <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                <SelectItem value="update">Actualizaciones</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Messages List */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-4">
-            {filteredMessages.map(message => (
-            <Card
-              key={message.id}
-              className={`border-l-4 ${message.status === 'unread' ? 'border-l-blue-500' : message.priority === 'urgent' ? 'border-l-red-500' : 'border-l-gray-400'}`}
-            >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div
-                      className={`p-3 rounded-lg ${message.status === 'unread' ? 'bg-blue-50' : 'bg-gray-50'}`}
-                    >
-                      <MessageSquare className="w-6 h-6 text-current" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{message.subject}</h3>
-                        {getStatusBadge(message.status)}
-                        {getPriorityBadge(message.priority)}
-                        {getTypeBadge(message.type)}
-                        {message.hasAttachments && (
-                          <Badge variant="outline" className="bg-purple-100 text-purple-800">
-                            📎 Adjunto
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                            <Users className="w-4 h-4" />
-                            <span>
-                              De: {message.senderName} (
-                              {message.senderType === 'owner'
-                                ? 'Propietario'
-                                : message.senderType === 'tenant'
-                                  ? 'Inquilino'
-                                  : message.senderType === 'prospect'
-                                    ? 'Prospecto'
-                                    : message.senderType === 'broker'
-                                      ? 'Corredor'
-                                      : 'Proveedor'}
-                              )
-                            </span>
-                          </div>
-                          {message.propertyTitle && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                              <Building className="w-4 h-4" />
-                              <span>{message.propertyTitle}</span>
-                            </div>
-                          )}
-                          {message.propertyAddress && (
-                            <p className="text-sm text-gray-600 ml-6">{message.propertyAddress}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>Enviado: {formatRelativeTime(message.createdAt)}</span>
-                          </div>
-                          {message.repliedAt && (
-                            <div className="flex items-center gap-2 text-sm text-green-600">
-                              <CheckCircle className="w-4 h-4" />
-                              <span>Respondido: {formatRelativeTime(message.repliedAt)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-600 line-clamp-2">{message.content}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewMessage(message.id)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleReplyMessage(message.id)}
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                    {message.status === 'unread' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleMarkAsRead(message.id)}
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Message Composer */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Enviar Nuevo Mensaje</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
               <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Escribe un mensaje..."
-                  className="flex-1"
-                  value={newMessageContent}
-                  onChange={e => setNewMessageContent(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
-                />
-                <Button onClick={handleSendMessage} disabled={!newMessageContent.trim()}>
+                <Button>
                   <Send className="w-4 h-4 mr-2" />
-                  Enviar
+                  Nuevo Mensaje
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-            {filteredMessages.length === 0 && (
-              <div className="text-center py-12">
-                <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay mensajes</h3>
-                <p className="text-gray-600">
-                  Los mensajes aparecerán aquí cuando llegue nueva comunicación
-                </p>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Mensajes</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalMessages}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6 text-blue-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">No Leídos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.unreadMessages}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                      <AlertCircle className="w-6 h-6 text-red-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Urgentes</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.urgentMessages}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-orange-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Tasa de Respuesta</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {stats.responseRate.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar mensajes por remitente, asunto o contenido..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            )}
+              <div className="flex gap-2">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="unread">No leídos</SelectItem>
+                    <SelectItem value="read">Leídos</SelectItem>
+                    <SelectItem value="replied">Respondidos</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="inquiry">Consultas</SelectItem>
+                    <SelectItem value="payment">Pagos</SelectItem>
+                    <SelectItem value="maintenance">Mantenimiento</SelectItem>
+                    <SelectItem value="update">Actualizaciones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="space-y-4">
+                {filteredMessages.map(message => (
+                  <Card
+                    key={message.id}
+                    className={`border-l-4 ${message.status === 'unread' ? 'border-l-blue-500' : message.priority === 'urgent' ? 'border-l-red-500' : 'border-l-gray-400'}`}
+                  >
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div
+                            className={`p-3 rounded-lg ${message.status === 'unread' ? 'bg-blue-50' : 'bg-gray-50'}`}
+                          >
+                            <MessageSquare className="w-6 h-6 text-current" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">{message.subject}</h3>
+                              {getStatusBadge(message.status)}
+                              {getPriorityBadge(message.priority)}
+                              {getTypeBadge(message.type)}
+                              {message.hasAttachments && (
+                                <Badge variant="outline" className="bg-purple-100 text-purple-800">
+                                  📎 Adjunto
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                  <Users className="w-4 h-4" />
+                                  <span>
+                                    De: {message.senderName} (
+                                    {message.senderType === 'owner'
+                                      ? 'Propietario'
+                                      : message.senderType === 'tenant'
+                                        ? 'Inquilino'
+                                        : message.senderType === 'prospect'
+                                          ? 'Prospecto'
+                                          : message.senderType === 'broker'
+                                            ? 'Corredor'
+                                            : 'Proveedor'}
+                                    )
+                                  </span>
+                                </div>
+                                {message.propertyTitle && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                    <Building className="w-4 h-4" />
+                                    <span>{message.propertyTitle}</span>
+                                  </div>
+                                )}
+                                {message.propertyAddress && (
+                                  <p className="text-sm text-gray-600 ml-6">
+                                    {message.propertyAddress}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>Enviado: {formatRelativeTime(message.createdAt)}</span>
+                                </div>
+                                {message.repliedAt && (
+                                  <div className="flex items-center gap-2 text-sm text-green-600">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>Respondido: {formatRelativeTime(message.repliedAt)}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <p className="text-sm text-gray-600 line-clamp-2">{message.content}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewMessage(message.id)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReplyMessage(message.id)}
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                          {message.status === 'unread' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMarkAsRead(message.id)}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Message Composer */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Enviar Nuevo Mensaje</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Escribe un mensaje..."
+                        className="flex-1"
+                        value={newMessageContent}
+                        onChange={e => setNewMessageContent(e.target.value)}
+                        onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+                      />
+                      <Button onClick={handleSendMessage} disabled={!newMessageContent.trim()}>
+                        <Send className="w-4 h-4 mr-2" />
+                        Enviar
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {filteredMessages.length === 0 && (
+                <div className="text-center py-12">
+                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay mensajes</h3>
+                  <p className="text-gray-600">
+                    Los mensajes aparecerán aquí cuando llegue nueva comunicación
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </UnifiedDashboardLayout>

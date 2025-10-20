@@ -63,7 +63,7 @@ export default function EditServicePage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
-  const serviceId = params.id as string;
+  const serviceId = params?.id as string;
 
   const [serviceData, setServiceData] = useState<ServiceData>({
     name: '',

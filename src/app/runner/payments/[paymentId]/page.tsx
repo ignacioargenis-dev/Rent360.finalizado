@@ -35,7 +35,8 @@ interface PaymentDetail {
 }
 
 export default function RunnerPaymentDetailPage() {
-  const { paymentId } = useParams();
+  const params = useParams();
+  const paymentId = params?.paymentId as string;
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);

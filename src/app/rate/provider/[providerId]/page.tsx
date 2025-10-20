@@ -26,7 +26,7 @@ interface JobDetails {
 export default function RateProviderPage() {
   const params = useParams();
   const router = useRouter();
-  const providerId = params.providerId as string;
+  const providerId = params?.providerId as string;
 
   const [user, setUser] = useState<any>(null);
   const [job, setJob] = useState<JobDetails | null>(null);

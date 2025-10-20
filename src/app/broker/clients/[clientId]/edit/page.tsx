@@ -59,7 +59,7 @@ interface ClientData {
 export default function EditClientPage() {
   const router = useRouter();
   const params = useParams();
-  const clientId = params.clientId as string;
+  const clientId = params?.clientId as string;
   const { user } = useAuth();
 
   const [formData, setFormData] = useState<ClientData>({

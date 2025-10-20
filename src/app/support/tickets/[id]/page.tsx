@@ -34,7 +34,7 @@ export default function TicketDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const ticketId = params.id as string;
+  const ticketId = params?.id as string;
 
   const [ticket, setTicket] = useState<TicketType | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
@@ -469,7 +469,7 @@ export default function TicketDetailsPage() {
                         )
                       ) {
                         try {
-                          const response = await fetch(`/api/tickets/${params.id}`, {
+                          const response = await fetch(`/api/tickets/${params?.id}`, {
                             method: 'DELETE',
                           });
 

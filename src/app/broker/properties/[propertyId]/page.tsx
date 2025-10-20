@@ -125,7 +125,7 @@ export default function BrokerPropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const propertyId = params.propertyId as string;
+  const propertyId = params?.propertyId as string;
 
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -56,7 +56,7 @@ interface ProviderProfile {
 export default function ProviderRatingsPage() {
   const params = useParams();
   const router = useRouter();
-  const providerId = params.providerId as string;
+  const providerId = params?.providerId as string;
 
   const [user, setUser] = useState<any>(null);
   const [provider, setProvider] = useState<ProviderProfile | null>(null);

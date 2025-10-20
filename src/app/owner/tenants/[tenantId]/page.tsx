@@ -109,7 +109,7 @@ export default function OwnerTenantDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const tenantId = params.tenantId as string;
+  const tenantId = params?.tenantId as string;
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);

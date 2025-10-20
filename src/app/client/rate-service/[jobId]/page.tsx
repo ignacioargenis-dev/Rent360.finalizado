@@ -59,7 +59,7 @@ interface RatingForm {
 export default function RateServicePage() {
   const params = useParams();
   const router = useRouter();
-  const jobId = params.jobId as string;
+  const jobId = params?.jobId as string;
 
   const [user, setUser] = useState<any>(null);
   const [job, setJob] = useState<JobDetails | null>(null);

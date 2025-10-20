@@ -52,7 +52,7 @@ export default function OwnerTenantEditPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const tenantId = params.tenantId as string;
+  const tenantId = params?.tenantId as string;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

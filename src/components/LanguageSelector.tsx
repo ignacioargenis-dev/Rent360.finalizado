@@ -26,6 +26,9 @@ export default function LanguageSelector() {
 
   const handleLanguageChange = (locale: string) => {
     // Remove current locale from pathname
+    if (!pathname) {
+      return;
+    }
     const segments = pathname.split('/');
     const currentLocaleIndex = segments.findIndex(segment => segment === currentLocale);
 
@@ -52,7 +55,7 @@ export default function LanguageSelector() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {languages.map((language) => (
+        {languages.map(language => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
@@ -60,9 +63,7 @@ export default function LanguageSelector() {
           >
             <span className="text-lg">{language.flag}</span>
             <span className="flex-1">{language.name}</span>
-            {currentLocale === language.code && (
-              <Check className="h-4 w-4 text-green-600" />
-            )}
+            {currentLocale === language.code && <Check className="h-4 w-4 text-green-600" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

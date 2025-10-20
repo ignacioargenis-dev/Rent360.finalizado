@@ -43,7 +43,8 @@ interface PaymentMethod {
 }
 
 export default function TenantPaymentProcessPage() {
-  const { paymentId } = useParams();
+  const params = useParams();
+  const paymentId = params?.paymentId as string;
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [payment, setPayment] = useState<PaymentData | null>(null);

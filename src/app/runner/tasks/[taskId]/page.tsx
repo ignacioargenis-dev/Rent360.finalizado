@@ -59,7 +59,7 @@ interface TaskUpdate {
 export default function TaskDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const taskId = params.taskId as string;
+  const taskId = params?.taskId as string;
   const { user } = useAuth();
 
   const [task, setTask] = useState<TaskDetails | null>(null);

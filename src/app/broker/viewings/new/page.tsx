@@ -94,7 +94,7 @@ export default function NewViewingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const propertyId = searchParams.get('propertyId');
+  const propertyId = searchParams?.get('propertyId');
 
   const [formData, setFormData] = useState<ViewingFormData>({
     propertyId: propertyId || '',

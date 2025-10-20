@@ -70,7 +70,7 @@ interface Prospect {
 export default function ProspectDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const prospectId = params.prospectId as string;
+  const prospectId = params?.prospectId as string;
 
   const [user, setUser] = useState<UserType | null>(null);
   const [prospect, setProspect] = useState<Prospect | null>(null);

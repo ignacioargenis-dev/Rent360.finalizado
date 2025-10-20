@@ -67,7 +67,7 @@ export default function ServiceRequestDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
-  const requestId = params.id as string;
+  const requestId = params?.id as string;
 
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [quote, setQuote] = useState<QuoteData>({

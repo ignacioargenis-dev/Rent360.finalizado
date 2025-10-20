@@ -64,7 +64,7 @@ export default function ServiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
-  const serviceId = params.id as string;
+  const serviceId = params?.id as string;
 
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);

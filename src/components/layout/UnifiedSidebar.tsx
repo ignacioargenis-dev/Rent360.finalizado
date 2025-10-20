@@ -683,7 +683,7 @@ export default function UnifiedSidebar({
   const items = menuItems[finalUserRole] || menuItems.tenant || [];
 
   const isActiveRoute = (url: string) => {
-    return pathname === url || pathname.startsWith(url + '/');
+    return pathname === url || (pathname && pathname.startsWith(url + '/'));
   };
 
   const renderMenuItem = (item: MenuItem, level = 0) => {

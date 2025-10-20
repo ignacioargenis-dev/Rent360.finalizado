@@ -58,7 +58,8 @@ interface PropertyDetail {
 }
 
 export default function SupportPropertyDetailPage() {
-  const { propertyId } = useParams();
+  const params = useParams();
+  const propertyId = params?.propertyId as string;
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [property, setProperty] = useState<PropertyDetail | null>(null);

@@ -54,7 +54,7 @@ interface AppointmentComment {
 export default function AppointmentDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const appointmentId = params.appointmentId as string;
+  const appointmentId = params?.appointmentId as string;
 
   const [user, setUser] = useState<UserType | null>(null);
   const [appointment, setAppointment] = useState<Appointment | null>(null);
