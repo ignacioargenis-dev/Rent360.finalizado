@@ -116,7 +116,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       images: transformedImages,
       views: property.views,
       inquiries: property.inquiries,
-      owner: property.owner,
+      owner: property.owner
+        ? {
+            id: property.owner.id,
+            name: property.owner.name,
+            email: property.owner.email,
+            avatar: property.owner.avatar,
+          }
+        : null,
       currentTenant: property.contracts[0]?.tenant || null,
       averageRating:
         property.reviews.length > 0

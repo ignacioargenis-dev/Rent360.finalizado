@@ -15,7 +15,9 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
     // Verificar que el archivo existe
     if (!existsSync(fullPath)) {
       console.log('❌ File not found at:', fullPath);
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      // En lugar de devolver 404 inmediatamente, devolver una imagen placeholder o null
+      // Esto evita errores 404 en el frontend cuando las imágenes no existen
+      return new Response(null, { status: 204 }); // No Content
     }
 
     const finalPath = fullPath;

@@ -237,7 +237,14 @@ export async function GET(request: NextRequest) {
         : [],
       views: property.views,
       inquiries: property.inquiries,
-      owner: property.owner,
+      owner: property.owner
+        ? {
+            id: property.owner.id,
+            name: property.owner.name,
+            email: property.owner.email,
+            avatar: property.owner.avatar,
+          }
+        : null,
       currentTenant: property.contracts[0]?.tenant || null,
       averageRating: safeAverage(property.reviews.map(review => review.rating)),
       totalReviews: property.reviews.length,
