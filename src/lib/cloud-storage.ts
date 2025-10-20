@@ -7,14 +7,21 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Configuración de DigitalOcean Spaces (compatible con S3)
-const s3Client = new S3Client({
+const s3ClientConfig: any = {
   region: process.env.DO_SPACES_REGION || 'nyc3',
-  endpoint: process.env.DO_SPACES_ENDPOINT || 'https://nyc3.digitaloceanspaces.com',
   credentials: {
     accessKeyId: process.env.DO_SPACES_ACCESS_KEY || '',
     secretAccessKey: process.env.DO_SPACES_SECRET_KEY || '',
   },
-});
+};
+
+if (process.env.DO_SPACES_ENDPOINT) {
+  s3ClientConfig.endpoint = process.env.DO_SPACES_ENDPOINT;
+} else {
+  s3ClientConfig.endpoint = 'https://nyc3.digitaloceanspaces.com';
+}
+
+const s3Client = new S3Client(s3ClientConfig);
 
 export interface CloudStorageConfig {
   bucket: string;
@@ -29,14 +36,19 @@ export class CloudStorageService {
   private bucket: string;
 
   constructor(config: CloudStorageConfig) {
-    this.client = new S3Client({
+    const clientConfig: any = {
       region: config.region,
-      endpoint: config.endpoint,
       credentials: {
         accessKeyId: config.accessKey,
         secretAccessKey: config.secretKey,
       },
-    });
+    };
+
+    if (config.endpoint) {
+      clientConfig.endpoint = config.endpoint;
+    }
+
+    this.client = new S3Client(clientConfig);
     this.bucket = config.bucket;
   }
 
