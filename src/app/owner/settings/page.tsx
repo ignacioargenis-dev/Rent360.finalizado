@@ -142,6 +142,7 @@ export default function OwnerSettingsPage() {
     'personal' | 'property' | 'legal'
   >('personal');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+  const [userProperties, setUserProperties] = useState<Array<{ id: string; title: string }>>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -168,6 +169,18 @@ export default function OwnerSettingsPage() {
               description: prev.profile.description, // Mantener descripción existente
             },
           }));
+
+          // Load user properties for document upload
+          const propertiesResponse = await fetch('/api/properties/list?limit=100');
+          if (propertiesResponse.ok) {
+            const propertiesData = await propertiesResponse.json();
+            setUserProperties(
+              propertiesData.properties.map((prop: any) => ({
+                id: prop.id,
+                title: prop.title,
+              }))
+            );
+          }
         } else {
           // Solo cargar settings mock si no se puede obtener datos del usuario
           await loadSettings();
@@ -1095,7 +1108,7 @@ export default function OwnerSettingsPage() {
 
         {/* Modal para subir documentos */}
         {showUploadModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Subir Documento</h3>
@@ -1135,9 +1148,17 @@ export default function OwnerSettingsPage() {
                         <SelectValue placeholder="Selecciona la propiedad" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">Departamento Las Condes</SelectItem>
-                        <SelectItem value="2">Oficina Providencia</SelectItem>
-                        <SelectItem value="3">Casa Vitacura</SelectItem>
+                        {userProperties.length > 0 ? (
+                          userProperties.map(property => (
+                            <SelectItem key={property.id} value={property.id}>
+                              {property.title}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-properties" disabled>
+                            No tienes propiedades registradas
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
