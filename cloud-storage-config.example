@@ -1,0 +1,26 @@
+# ==========================================
+# CLOUD STORAGE CONFIGURATION
+# ==========================================
+
+# DigitalOcean Spaces (Recomendado para DO App Platform)
+DO_SPACES_ACCESS_KEY=your_spaces_access_key_here
+DO_SPACES_SECRET_KEY=your_spaces_secret_key_here
+DO_SPACES_BUCKET=rent360-images
+DO_SPACES_REGION=nyc3
+DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+
+# AWS S3 (Alternativa)
+AWS_ACCESS_KEY_ID=your_aws_access_key_here
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=rent360-images
+
+# Cloudinary (Alternativa premium con optimización automática)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Configuración general
+CLOUD_STORAGE_PROVIDER=digitalocean_spaces  # opciones: digitalocean_spaces, aws_s3, cloudinary
+MAX_FILE_SIZE_MB=10
+ALLOWED_IMAGE_TYPES=image/jpeg,image/png,image/gif,image/webp,image/svg+xml
