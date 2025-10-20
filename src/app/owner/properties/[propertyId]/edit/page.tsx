@@ -868,6 +868,7 @@ export default function OwnerPropertyEditPage() {
                             width={96}
                             height={96}
                             className="w-full h-24 object-cover rounded-lg"
+                            unoptimized
                             onError={e => {
                               e.currentTarget.style.display = 'none';
                             }}
@@ -899,6 +900,7 @@ export default function OwnerPropertyEditPage() {
                             width={96}
                             height={96}
                             className="w-full h-24 object-cover rounded-lg"
+                            unoptimized
                           />
                           <Button
                             variant="destructive"
