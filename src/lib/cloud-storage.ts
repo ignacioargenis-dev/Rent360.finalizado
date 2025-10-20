@@ -196,6 +196,13 @@ export function extractKeyFromUrl(url: string): string | null {
       key = urlObj.pathname.substring(1); // Remover leading slash
     } else if (urlObj.hostname.includes('s3.')) {
       key = urlObj.pathname.substring(1); // Remover leading slash
+    } else if (urlObj.hostname.includes('cloudinary.com')) {
+      // Para Cloudinary: https://res.cloudinary.com/cloud/image/upload/v123/folder/file.jpg
+      const pathParts = urlObj.pathname.split('/');
+      const uploadIndex = pathParts.findIndex(part => part === 'upload');
+      if (uploadIndex !== -1 && uploadIndex < pathParts.length - 1) {
+        key = pathParts.slice(uploadIndex + 1).join('/');
+      }
     }
 
     return key || null;

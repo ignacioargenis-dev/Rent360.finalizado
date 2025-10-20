@@ -1,0 +1,15 @@
+# Configuración de DigitalOcean Spaces
+# Reemplaza con tus valores reales
+
+DO_SPACES_ACCESS_KEY=REEMPLAZA_CON_TU_ACCESS_KEY
+DO_SPACES_SECRET_KEY=REEMPLAZA_CON_TU_SECRET_KEY
+DO_SPACES_BUCKET=rent360-images
+DO_SPACES_REGION=nyc3
+DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+CLOUD_STORAGE_PROVIDER=digitalocean_spaces
+
+# Instrucciones:
+# 1. Obtén tus credenciales de https://cloud.digitalocean.com/account/api/spaces
+# 2. Reemplaza los valores arriba
+# 3. Ejecuta: node test-cloud-connection.js
+# 4. Migra imágenes: node migrate-images-to-cloud.js
