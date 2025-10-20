@@ -124,17 +124,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+
+      if (!file) {
+        console.log(`⚠️ File ${i + 1} is null/undefined, skipping`);
+        continue;
+      }
+
       console.log(`🔄 Processing file ${i + 1}/${files.length}:`, {
         name: file.name,
         size: file.size,
         type: file.type,
         isFile: file instanceof File,
       });
-
-      if (!file) {
-        console.log(`⚠️ File ${i + 1} is null/undefined, skipping`);
-        continue;
-      }
 
       try {
         // Generar nombre único para el archivo
