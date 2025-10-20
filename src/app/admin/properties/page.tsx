@@ -500,7 +500,11 @@ export default function AdminPropertiesPage() {
                   src={images[0]}
                   alt={property.title}
                   className="w-full h-full object-cover"
+                  onLoad={() => {
+                    console.log('✅ Imagen cargada exitosamente (admin list):', images[0]);
+                  }}
                   onError={e => {
+                    console.error('❌ Error cargando imagen (admin list):', images[0]);
                     // Fallback a placeholder si la imagen falla
                     e.currentTarget.style.display = 'none';
                     const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -512,6 +516,7 @@ export default function AdminPropertiesPage() {
               );
             }
           } catch (error) {
+            console.error('❌ Error parseando imágenes (admin list):', error);
             // Si hay error parseando, usar placeholder
           }
           return (

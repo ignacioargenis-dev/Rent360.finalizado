@@ -559,20 +559,34 @@ export default function BrokerContractDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {contract.propertyImages.map((image, index) => (
-                    <div
-                      key={index}
-                      className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
-                    >
-                      <img
-                        src={image}
-                        alt={`Propiedad ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
+                {contract.propertyImages && contract.propertyImages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {contract.propertyImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
+                      >
+                        <img
+                          src={image}
+                          alt={`Propiedad ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onLoad={() => {
+                            console.log('✅ Imagen cargada exitosamente (contract):', image);
+                          }}
+                          onError={e => {
+                            console.error('❌ Error cargando imagen (contract):', image);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Building className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <p>No hay imágenes disponibles</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

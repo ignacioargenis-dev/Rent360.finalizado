@@ -595,6 +595,13 @@ export default function BrokerMaintenanceDetailPage() {
                           alt={`Imagen ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80"
                           onClick={() => window.open(image, '_blank')}
+                          onLoad={() => {
+                            console.log('✅ Imagen cargada exitosamente (maintenance):', image);
+                          }}
+                          onError={e => {
+                            console.error('❌ Error cargando imagen (maintenance):', image);
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       ))}
                     </div>

@@ -590,20 +590,34 @@ export default function BrokerPropertyDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {property.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
-                    >
-                      <img
-                        src={image}
-                        alt={`Propiedad ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                      />
-                    </div>
-                  ))}
-                </div>
+                {property.images && property.images.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {property.images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
+                      >
+                        <img
+                          src={image}
+                          alt={`Propiedad ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                          onLoad={() => {
+                            console.log('✅ Imagen cargada exitosamente (broker):', image);
+                          }}
+                          onError={e => {
+                            console.error('❌ Error cargando imagen (broker):', image);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Camera className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <p>No hay imágenes disponibles</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
