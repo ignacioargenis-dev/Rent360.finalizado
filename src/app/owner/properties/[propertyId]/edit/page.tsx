@@ -902,7 +902,10 @@ export default function OwnerPropertyEditPage() {
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={handleImageUpload}
+                      onChange={e => {
+                        console.log('🎯 Input file onChange triggered');
+                        handleImageUpload(e);
+                      }}
                       className="hidden"
                     />
                     <Label htmlFor="image-upload">
@@ -950,7 +953,7 @@ export default function OwnerPropertyEditPage() {
                 {/* New Image Previews */}
                 {imagePreviews.length > 0 && (
                   <div className="space-y-2">
-                    <Label>Nuevas Imágenes</Label>
+                    <Label>Nuevas Imágenes ({imagePreviews.length})</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {imagePreviews.map((preview, index) => (
                         <div key={`new-${index}`} className="relative group">
@@ -975,6 +978,13 @@ export default function OwnerPropertyEditPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Debug Info */}
+                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <div>newImages: {newImages.length} archivos</div>
+                  <div>imagePreviews: {imagePreviews.length} previews</div>
+                  <div>existingImages: {formData.images?.length || 0} existentes</div>
+                </div>
 
                 {/* No Images Message */}
                 {(!formData.images || formData.images.length === 0) &&
