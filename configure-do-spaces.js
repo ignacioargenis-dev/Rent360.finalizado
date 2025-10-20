@@ -1,102 +1,116 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+const readline = require('readline');
 
-console.log('🚀 Configuración Rápida de DigitalOcean Spaces para Rent360\n');
-
-// Valores de ejemplo - el usuario debe reemplazarlos
-const config = {
-  DO_SPACES_ACCESS_KEY: process.env.DO_SPACES_ACCESS_KEY || 'REEMPLAZA_CON_TU_ACCESS_KEY',
-  DO_SPACES_SECRET_KEY: process.env.DO_SPACES_SECRET_KEY || 'REEMPLAZA_CON_TU_SECRET_KEY',
-  DO_SPACES_BUCKET: 'rent360-images',
-  DO_SPACES_REGION: 'nyc3',
-  DO_SPACES_ENDPOINT: 'https://nyc3.digitaloceanspaces.com',
-  CLOUD_STORAGE_PROVIDER: 'digitalocean_spaces',
-};
-
-console.log('📋 PASOS PARA CONFIGURAR DIGITALOCEAN SPACES:');
-console.log('=============================================\n');
-
-console.log('1. 🏗️  CREAR DIGITALOCEAN SPACE:');
-console.log('   • Ve a: https://cloud.digitalocean.com/spaces');
-console.log('   • Haz clic: "Create" → "Spaces"');
-console.log('   • Nombre: rent360-images');
-console.log('   • Región: NYC3 (o más cercana)');
-console.log('   • File listing: Private');
-console.log('   • CDN: Enabled (opcional - mejora velocidad)\n');
-
-console.log('2. 🔑 GENERAR ACCESS KEYS:');
-console.log('   • Ve a: https://cloud.digitalocean.com/account/api/spaces');
-console.log('   • Haz clic: "Generate New Key"');
-console.log('   • Nombre: "rent360-spaces-key"');
-console.log('   • Copia Access Key y Secret Key\n');
-
-console.log('3. ⚙️  CONFIGURAR CORS (IMPORTANTE):');
-console.log('   • Ve al Space creado → Settings → CORS Policies');
-console.log('   • Agrega esta política:');
-console.log(
-  JSON.stringify(
-    {
-      AllowedHeaders: ['*'],
-      AllowedMethods: ['GET', 'PUT', 'POST', 'DELETE'],
-      AllowedOrigins: ['*'],
-      ExposeHeaders: [],
-      MaxAgeSeconds: 3000,
-    },
-    null,
-    2
-  )
-);
-console.log('');
-
-console.log('4. 📝 CONFIGURAR VARIABLES DE ENTORNO:');
-console.log('   Reemplaza estas líneas en tu archivo .env:');
-
-// Mostrar configuración
-console.log('\n# DigitalOcean Spaces Configuration');
-Object.entries(config).forEach(([key, value]) => {
-  console.log(`${key}=${value}`);
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
 });
 
-console.log('\n5. 🧪 PROBAR CONEXIÓN:');
-console.log('   node test-cloud-connection.js');
+function question(prompt) {
+  return new Promise(resolve => {
+    rl.question(prompt, resolve);
+  });
+}
 
-console.log('\n6. 🚀 MIGRAR IMÁGENES EXISTENTES:');
-console.log('   node migrate-images-to-cloud.js');
+async function configureSpaces() {
+  console.log('🚀 Configuración de DigitalOcean Spaces para Rent360\n');
 
-console.log('\n7. 📦 ACTUALIZAR CÓDIGO DE PRODUCCIÓN:');
-console.log('   • Reemplazar: src/app/api/properties/[id]/images/route.ts');
-console.log('   • Con: src/app/api/properties/[id]/images/route-cloud.ts');
+  console.log('📋 Necesito la siguiente información de tu panel de DigitalOcean:\n');
 
-console.log('\n💰 COSTO ESTIMADO: ~$1.25/mes');
-console.log('⚡ BENEFICIO: 99.9% disponibilidad + escalabilidad infinita');
+  const spaceName = await question('🌐 Nombre del Space (ej: rent360-images): ');
+  const region = await question('🌍 Región del Space (ej: nyc3, fra1, sfo3): ');
+  const accessKey = await question('🔑 Access Key: ');
+  const secretKey = await question('🔐 Secret Key: ');
 
-console.log('\n📋 VERIFICACIÓN FINAL:');
-console.log('   ✅ Space creado en DigitalOcean');
-console.log('   ✅ Access Keys generadas');
-console.log('   ✅ CORS configurado');
-console.log('   ✅ Variables de entorno actualizadas');
-console.log('   ✅ Conexión probada exitosamente');
-console.log('   ✅ Imágenes migradas');
-console.log('   ✅ Código actualizado en producción');
+  console.log('\n📝 Configuración capturada:');
+  console.log(`   Space: ${spaceName}`);
+  console.log(`   Región: ${region}`);
+  console.log(`   Access Key: ${accessKey.substring(0, 10)}...`);
+  console.log(`   Secret Key: ${secretKey.substring(0, 10)}...`);
 
-console.log('\n🎯 ¡CONFIGURACIÓN COMPLETA!');
+  const confirm = await question('\n✅ ¿Es correcta esta información? (y/n): ');
 
-// Crear archivo de configuración de ejemplo
-const exampleConfig = `# Configuración de DigitalOcean Spaces
-# Reemplaza con tus valores reales
+  if (confirm.toLowerCase() !== 'y') {
+    console.log('❌ Configuración cancelada');
+    rl.close();
+    return;
+  }
 
-${Object.entries(config)
-  .map(([key, value]) => `${key}=${value}`)
-  .join('\n')}
+  // Crear archivo de configuración temporal
+  const config = {
+    DO_SPACES_ACCESS_KEY: accessKey,
+    DO_SPACES_SECRET_KEY: secretKey,
+    DO_SPACES_BUCKET: spaceName,
+    DO_SPACES_REGION: region,
+  };
 
-# Instrucciones:
-# 1. Obtén tus credenciales de https://cloud.digitalocean.com/account/api/spaces
-# 2. Reemplaza los valores arriba
-# 3. Ejecuta: node test-cloud-connection.js
-# 4. Migra imágenes: node migrate-images-to-cloud.js
-`;
+  console.log('\n🧪 Probando conexión...');
 
-fs.writeFileSync('digitalocean-spaces-setup.txt', exampleConfig);
-console.log('\n📄 Archivo de configuración creado: digitalocean-spaces-setup.txt');
+  // Configurar variables de entorno
+  process.env.DO_SPACES_ACCESS_KEY = accessKey;
+  process.env.DO_SPACES_SECRET_KEY = secretKey;
+  process.env.DO_SPACES_BUCKET = spaceName;
+  process.env.DO_SPACES_REGION = region;
+
+  // Probar conexión
+  try {
+    const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+    const s3Client = new S3Client({
+      endpoint: `https://${region}.digitaloceanspaces.com`,
+      region: region,
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
+    });
+
+    const testKey = `test-${Date.now()}.txt`;
+    const testContent = 'Test connection from Rent360';
+
+    // Subir archivo de prueba
+    const uploadCommand = new PutObjectCommand({
+      Bucket: spaceName,
+      Key: testKey,
+      Body: testContent,
+      ContentType: 'text/plain',
+    });
+
+    await s3Client.send(uploadCommand);
+    console.log('✅ Archivo de prueba subido exitosamente');
+
+    // Eliminar archivo de prueba
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: spaceName,
+      Key: testKey,
+    });
+
+    await s3Client.send(deleteCommand);
+    console.log('✅ Archivo de prueba eliminado');
+
+    console.log('\n🎉 ¡Conexión exitosa!');
+    console.log('\n📋 Para usar esta configuración en tu aplicación:');
+    console.log('1. Agrega estas variables a tu archivo .env:');
+    console.log(`   DO_SPACES_ACCESS_KEY=${accessKey}`);
+    console.log(`   DO_SPACES_SECRET_KEY=${secretKey}`);
+    console.log(`   DO_SPACES_BUCKET=${spaceName}`);
+    console.log(`   DO_SPACES_REGION=${region}`);
+
+    console.log('\n2. Ejecuta la migración de imágenes:');
+    console.log('   node migrate-images-to-cloud.js');
+
+    console.log('\n3. Actualiza tu aplicación para usar cloud storage');
+  } catch (error) {
+    console.error('\n❌ Error en la conexión:', error.message);
+    console.log('\n🔧 Verifica:');
+    console.log('1. Que el Space existe y tiene el nombre correcto');
+    console.log('2. Que las credenciales tienen permisos de Spaces');
+    console.log('3. Que la región es correcta');
+    console.log('4. Que no hay problemas de red/firewall');
+  }
+
+  rl.close();
+}
+
+configureSpaces();

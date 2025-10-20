@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
-import { getCloudStorageService, generateFileKey, extractKeyFromUrl } from '@/lib/cloud-storage';
-
-const maxFileSize = 10 * 1024 * 1024; // 10MB
-const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+import { writeFile, rm } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { ensurePropertyDirectory } from '@/lib/property-directory';
 
 /**
  * POST /api/properties/[id]/images
- * Sube imágenes para una propiedad específica usando cloud storage
+ * Sube imágenes para una propiedad específica
  */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   console.log('🖼️ POST /api/properties/[id]/images called for property:', params.id);
@@ -54,22 +54,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
-    // Verificar permisos: solo el owner, broker asignado, o admin pueden subir imágenes
-    const isOwner = user.id === property.ownerId;
-    const isBroker = user.id === property.brokerId;
-    const isAdmin = user.role === 'ADMIN';
+    console.log('✅ Property found:', property.title, 'owner:', property.ownerId);
 
-    if (!isOwner && !isBroker && !isAdmin) {
-      console.error('❌ User not authorized to upload images for this property');
+    // Verificar permisos (propietario, corredor o admin)
+    const hasAccess =
+      user.role === 'ADMIN' || property.ownerId === user.id || property.brokerId === user.id;
+
+    if (!hasAccess) {
+      console.error('❌ User does not have access:', user.id, 'vs owner:', property.ownerId);
       return NextResponse.json(
-        { error: 'No autorizado para subir imágenes a esta propiedad' },
+        { error: 'No tienes permisos para modificar esta propiedad' },
         { status: 403 }
       );
     }
 
-    console.log('✅ User authorized to upload images');
+    console.log('✅ User has access to property');
 
-    // Parsear FormData
     console.log('📄 Parsing FormData...');
     const formData = await request.formData();
     console.log(
@@ -83,18 +83,21 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     );
 
     const files = formData.getAll('image') as File[];
+    console.log(
+      '📁 Files received:',
+      files.length,
+      files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+    );
 
-    if (files.length === 0) {
-      console.error('❌ No files provided');
+    if (!files || files.length === 0) {
+      console.error('❌ No files in FormData');
       return NextResponse.json({ error: 'No se encontraron archivos para subir' }, { status: 400 });
     }
 
-    if (files.length > 10) {
-      console.error('❌ Too many files:', files.length);
-      return NextResponse.json({ error: 'Máximo 10 imágenes por propiedad' }, { status: 400 });
-    }
-
     // Validar archivos
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
     for (const file of files) {
       if (file.size > maxFileSize) {
         return NextResponse.json(
@@ -111,8 +114,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     }
 
-    console.log(`📤 Starting upload of ${files.length} files to cloud storage...`);
-    const cloudStorage = getCloudStorageService();
+    // Asegurar que el directorio de la propiedad existe
+    console.log(`📁 Ensuring property directory exists for: ${propertyId}`);
+    const propertyDir = await ensurePropertyDirectory(propertyId);
+    console.log(`✅ Property directory: ${propertyDir}`);
+    console.log(`📂 Directory exists check: ${existsSync(propertyDir)}`);
+
     const uploadedImages = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -137,49 +144,95 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         const fileNameParts = file.name.split('.');
         const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'jpg';
         const filename = `image_${i + 1}_${timestamp}_${randomId}.${extension}`;
-
-        // Generar key para cloud storage
-        const cloudKey = generateFileKey(propertyId, filename);
+        const filepath = join(propertyDir, filename);
 
         console.log(`📝 Generated filename: ${filename}`);
-        console.log(`☁️  Cloud key: ${cloudKey}`);
+        console.log(`📂 Target filepath: ${filepath}`);
+        console.log(`📁 Property dir exists: ${existsSync(propertyDir)}`);
 
-        logger.info('Preparando subir imagen a cloud', {
+        logger.info('Preparando subir imagen', {
           propertyId,
-          cloudKey,
+          propertyDir,
+          filename,
+          filepath,
           originalName: file.name,
           fileSize: file.size,
         });
 
-        // Subir a cloud storage
-        console.log(`📤 Uploading file to cloud storage...`);
-        const result = await cloudStorage.uploadFile(file, cloudKey, file.type);
+        console.log(`🔄 Converting file ${file.name} to buffer...`);
+        // Convertir File a Buffer y guardar
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        console.log(`✅ Buffer created, size: ${buffer.length} bytes`);
 
-        console.log(`✅ File uploaded successfully: ${result.url}`);
+        console.log(`💾 Writing file to disk...`);
+        console.log(`📋 Write parameters:`, {
+          filepath,
+          bufferSize: buffer.length,
+          propertyDir,
+          filename,
+        });
 
-        // Agregar URL a la lista de imágenes subidas
-        uploadedImages.push(result.url);
+        try {
+          await writeFile(filepath, buffer);
+          console.log(`✅ File write completed`);
+        } catch (writeError) {
+          console.error(`❌ Error during file write:`, writeError);
+          throw writeError;
+        }
 
-        logger.info('Imagen subida exitosamente a cloud', {
+        // Verificar que el archivo se guardó correctamente
+        const fileExists = existsSync(filepath);
+        const fileStats = fileExists ? await import('fs').then(fs => fs.statSync(filepath)) : null;
+
+        console.log(`🔍 File verification:`, {
+          exists: fileExists,
+          size: fileStats?.size,
+          expectedSize: buffer.length,
+        });
+
+        logger.info('Archivo escrito y verificado', {
+          filepath,
+          fileExists,
+          bufferSize: buffer.length,
+          actualSize: fileStats?.size,
+        });
+
+        if (!fileExists) {
+          throw new Error(`File was not written to disk: ${filepath}`);
+        }
+
+        // Crear URL accesible desde el navegador
+        const imageUrl = `/api/uploads/properties/${propertyId}/${filename}`;
+
+        uploadedImages.push({
+          filename,
+          imageUrl,
+          originalName: file.name,
+          size: file.size,
+          type: file.type,
+        });
+
+        logger.info('Imagen de propiedad subida exitosamente', {
           propertyId,
-          cloudKey,
-          url: result.url,
-          fileSize: file.size,
+          userId: user.id,
+          filename,
+          imageUrl,
+          originalName: file.name,
+          size: file.size,
         });
       } catch (fileError) {
-        console.error(`❌ Error uploading file ${file.name}:`, fileError);
-        logger.error('Error subiendo imagen a cloud', {
+        logger.error('Error subiendo imagen de propiedad:', {
           error: fileError,
           propertyId,
-          fileName: file.name,
+          filename: file.name,
         });
-        // Continuar con otros archivos en lugar de fallar completamente
+        // Continuar con los otros archivos
       }
     }
 
     if (uploadedImages.length === 0) {
-      console.error('❌ No files were uploaded successfully');
-      return NextResponse.json({ error: 'No se pudo subir ninguna imagen' }, { status: 500 });
+      return NextResponse.json({ error: 'No se pudieron subir las imágenes' }, { status: 500 });
     }
 
     // Obtener las imágenes actuales de la propiedad
@@ -188,16 +241,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       select: { images: true },
     });
 
-    const currentImages = currentProperty?.images
+    // Combinar imágenes existentes con las nuevas
+    const existingImages = currentProperty?.images
       ? Array.isArray(currentProperty.images)
         ? currentProperty.images
         : JSON.parse(currentProperty.images)
       : [];
 
-    // Combinar imágenes existentes con las nuevas
-    const allImages = [...currentImages, ...uploadedImages];
+    const allImages = [...existingImages, ...uploadedImages.map(img => img.imageUrl)];
 
-    // Actualizar la propiedad en la base de datos
+    // Actualizar la propiedad con las nuevas imágenes
     await db.property.update({
       where: { id: propertyId },
       data: {
@@ -212,34 +265,40 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       totalImagesCount: allImages.length,
     });
 
-    console.log(`✅ Successfully uploaded ${uploadedImages.length} images`);
-    console.log(`📊 Property now has ${allImages.length} total images`);
-
     return NextResponse.json({
       success: true,
-      message: `${uploadedImages.length} imagen(es) subida(s) exitosamente`,
       uploadedImages,
       totalImages: allImages.length,
+      message: `${uploadedImages.length} imagen(es) subida(s) exitosamente`,
     });
   } catch (error) {
-    console.error('❌ Unexpected error in image upload:', error);
-    logger.error('Unexpected error in property image upload', { error });
+    logger.error('Error subiendo imágenes de propiedad:', { error });
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/properties/[id]/images?imageUrl=...
+ * DELETE /api/properties/[id]/images
  * Elimina una imagen específica de una propiedad
  */
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Verificar autenticación
+    let user;
+    try {
+      user = await requireAuth(request);
+    } catch (authError) {
+      logger.error('Authentication error in property image delete', { error: authError });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const propertyId = params.id;
     const { searchParams } = new URL(request.url);
     const imageUrl = searchParams.get('imageUrl');
+    // Normalizar: eliminar query params para comparar contra lo almacenado en DB y para nombre de archivo
+    const normalizedImageUrl = imageUrl ? imageUrl.split('?')[0] : null;
 
-    if (!propertyId || !imageUrl) {
+    if (!propertyId || !normalizedImageUrl) {
       return NextResponse.json({ error: 'ID de propiedad e imagen requeridos' }, { status: 400 });
     }
 
@@ -248,7 +307,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       where: { id: propertyId },
       select: {
         id: true,
-        title: true,
         ownerId: true,
         brokerId: true,
         images: true,
@@ -259,54 +317,30 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
-    // Verificar permisos
-    const isOwner = user.id === property.ownerId;
-    const isBroker = user.id === property.brokerId;
-    const isAdmin = user.role === 'ADMIN';
+    // Verificar permisos (propietario, corredor o admin)
+    const hasAccess =
+      user.role === 'ADMIN' || property.ownerId === user.id || property.brokerId === user.id;
 
-    if (!isOwner && !isBroker && !isAdmin) {
-      return NextResponse.json({ error: 'No autorizado para eliminar imágenes' }, { status: 403 });
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para modificar esta propiedad' },
+        { status: 403 }
+      );
     }
 
+    // Obtener las imágenes actuales
     const currentImages = property.images
       ? Array.isArray(property.images)
         ? property.images
         : JSON.parse(property.images)
       : [];
 
-    // Normalizar URL para comparación (remover query params)
-    const normalizedImageUrl = imageUrl.split('?')[0];
-
     // Filtrar la imagen a eliminar
     const updatedImages = currentImages.filter(
       (img: string) => img?.split('?')[0] !== normalizedImageUrl
     );
 
-    // Si la imagen estaba en cloud storage, intentar eliminarla
-    if (
-      imageUrl.includes('digitaloceanspaces.com') ||
-      imageUrl.includes('s3.') ||
-      imageUrl.includes('cloudinary.com')
-    ) {
-      try {
-        const cloudStorage = getCloudStorageService();
-        const key = extractKeyFromUrl(imageUrl);
-
-        if (key) {
-          await cloudStorage.deleteFile(key);
-          logger.info('Imagen eliminada de cloud storage', { key, propertyId });
-        }
-      } catch (cloudError) {
-        logger.warn('Error eliminando imagen de cloud storage', {
-          error: cloudError,
-          imageUrl,
-          propertyId,
-        });
-        // No bloquear la eliminación de la BD si falla la eliminación en cloud
-      }
-    }
-
-    // Actualizar la propiedad en la base de datos
+    // Actualizar la propiedad
     await db.property.update({
       where: { id: propertyId },
       data: {
@@ -315,8 +349,36 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       },
     });
 
+    // Intentar eliminar el archivo físico
+    try {
+      const filename = normalizedImageUrl.split('/').pop();
+      if (filename) {
+        const filepath = join(
+          process.cwd(),
+          'public',
+          'uploads',
+          'properties',
+          propertyId,
+          filename
+        );
+        if (existsSync(filepath)) {
+          await rm(filepath); // Eliminar el archivo físicamente
+          logger.info('Archivo físico eliminado:', { filepath });
+        } else {
+          logger.warn('Archivo físico no encontrado para eliminar:', { filepath });
+        }
+      }
+    } catch (fileError) {
+      logger.error('Error eliminando archivo físico:', {
+        error: fileError,
+        imageUrl: normalizedImageUrl,
+      });
+      // No bloquear la respuesta si la eliminación física falla
+    }
+
     logger.info('Imagen eliminada de propiedad', {
       propertyId,
+      userId: user.id,
       imageUrl: normalizedImageUrl,
       remainingImages: updatedImages.length,
     });
@@ -327,7 +389,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       remainingImages: updatedImages.length,
     });
   } catch (error) {
-    logger.error('Error eliminando imagen de propiedad', { error });
+    logger.error('Error eliminando imagen de propiedad:', { error });
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
