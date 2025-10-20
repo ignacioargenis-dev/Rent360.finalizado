@@ -411,20 +411,26 @@ export default function OwnerPropertyEditPage() {
 
   const uploadNewImages = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
+    console.log('🚀 uploadNewImages called with', files.length, 'files for property', propertyId);
 
     for (const file of files) {
+      console.log('📤 Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
       const formData = new FormData();
       formData.append('image', file);
 
       try {
+        console.log('🌐 Making request to:', `/api/properties/${propertyId}/images`);
         const response = await fetch(`/api/properties/${propertyId}/images`, {
           method: 'POST',
           credentials: 'include',
           body: formData,
         });
 
+        console.log('📡 Response status:', response.status, response.statusText);
+
         if (response.ok) {
           const result = await response.json();
+          console.log('✅ Response data:', result);
           if (result.success && result.uploadedImages) {
             // Agregar todas las URLs de las imágenes subidas
             result.uploadedImages.forEach((img: any) => {
@@ -434,6 +440,11 @@ export default function OwnerPropertyEditPage() {
           }
         } else {
           const errorData = await response.json().catch(() => ({}));
+          console.error('❌ Upload failed:', {
+            filename: file.name,
+            status: response.status,
+            error: errorData,
+          });
           logger.error('Error uploading image:', {
             filename: file.name,
             error: errorData.error || 'Error desconocido',
@@ -448,6 +459,12 @@ export default function OwnerPropertyEditPage() {
   };
 
   const handleSave = async () => {
+    console.log(
+      '💾 handleSave called, newImages:',
+      newImages.length,
+      'existing images:',
+      formData.images.length
+    );
     if (!validateForm()) {
       return;
     }
@@ -456,13 +473,21 @@ export default function OwnerPropertyEditPage() {
     try {
       // Subir nuevas imágenes primero si las hay
       if (newImages.length > 0) {
+        console.log('🖼️ Starting image upload process for', newImages.length, 'images');
         const uploadedImageUrls = await uploadNewImages(newImages);
+        console.log(
+          '📸 Image upload completed, got',
+          uploadedImageUrls.length,
+          'URLs:',
+          uploadedImageUrls
+        );
 
         // Actualizar el estado local con las nuevas URLs
         setFormData(prev => ({
           ...prev,
           images: [...prev.images, ...uploadedImageUrls],
         }));
+        console.log('🔄 Updated formData.images to:', [...formData.images, ...uploadedImageUrls]);
 
         // Limpiar las imágenes nuevas y previews
         setNewImages([]);

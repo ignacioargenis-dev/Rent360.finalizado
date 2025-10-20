@@ -12,23 +12,30 @@ import { ensurePropertyDirectory } from '@/lib/property-directory';
  * Sube imágenes para una propiedad específica
  */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  console.log('🖼️ POST /api/properties/[id]/images called for property:', params.id);
+
   try {
     // Verificar autenticación
     let user;
     try {
       user = await requireAuth(request);
+      console.log('✅ User authenticated:', user.email, 'role:', user.role);
     } catch (authError) {
+      console.error('❌ Authentication error in property image upload', { error: authError });
       logger.error('Authentication error in property image upload', { error: authError });
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const propertyId = params.id;
+    console.log('🔍 Processing property ID:', propertyId);
 
     if (!propertyId) {
+      console.error('❌ No property ID provided');
       return NextResponse.json({ error: 'ID de propiedad requerido' }, { status: 400 });
     }
 
     // Verificar que la propiedad existe y el usuario tiene permisos
+    console.log('🔍 Looking up property in database...');
     const property = await db.property.findUnique({
       where: { id: propertyId },
       select: {
@@ -40,24 +47,37 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     if (!property) {
+      console.error('❌ Property not found:', propertyId);
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
+
+    console.log('✅ Property found:', property.title, 'owner:', property.ownerId);
 
     // Verificar permisos (propietario, corredor o admin)
     const hasAccess =
       user.role === 'ADMIN' || property.ownerId === user.id || property.brokerId === user.id;
 
     if (!hasAccess) {
+      console.error('❌ User does not have access:', user.id, 'vs owner:', property.ownerId);
       return NextResponse.json(
         { error: 'No tienes permisos para modificar esta propiedad' },
         { status: 403 }
       );
     }
 
+    console.log('✅ User has access to property');
+
+    console.log('📄 Parsing FormData...');
     const formData = await request.formData();
     const files = formData.getAll('image') as File[];
+    console.log(
+      '📁 Files received:',
+      files.length,
+      files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+    );
 
     if (!files || files.length === 0) {
+      console.error('❌ No files in FormData');
       return NextResponse.json({ error: 'No se encontraron archivos para subir' }, { status: 400 });
     }
 
