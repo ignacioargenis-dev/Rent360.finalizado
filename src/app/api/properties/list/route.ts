@@ -196,33 +196,39 @@ export async function GET(request: NextRequest) {
       status: property.status,
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images
-        ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
-            (img: string) => {
-              let transformedImg = img;
-
-              // Si la imagen ya tiene la ruta correcta de API, no hacer nada
-              if (img.startsWith('/api/uploads/')) {
-                transformedImg = img;
+        ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images))
+            .map((img: string) => {
+              const imgNoQuery = typeof img === 'string' ? img.split('?')[0] : '';
+              let transformedImg = imgNoQuery;
+              if (imgNoQuery.startsWith('/api/uploads/')) {
+                transformedImg = imgNoQuery;
+              } else if (imgNoQuery.startsWith('/images/')) {
+                transformedImg = imgNoQuery.replace('/images/', '/api/uploads/');
+              } else if (imgNoQuery.startsWith('/uploads/')) {
+                transformedImg = imgNoQuery.replace('/uploads/', '/api/uploads/');
+              } else if (!imgNoQuery.startsWith('http') && !imgNoQuery.startsWith('/')) {
+                transformedImg = `/api/uploads/${imgNoQuery}`;
               }
-              // Si empieza con /images/, convertir a /api/uploads/
-              else if (img.startsWith('/images/')) {
-                transformedImg = img.replace('/images/', '/api/uploads/');
+              return transformedImg;
+            })
+            .filter((imgPath: string) => {
+              try {
+                const logical = imgPath.replace(/^\/api\//, '');
+                const fullPath = require('path').join(
+                  process.cwd(),
+                  'public',
+                  logical.replace(/^uploads\//, 'uploads/')
+                );
+                return require('fs').existsSync(fullPath);
+              } catch {
+                return false;
               }
-              // Si empieza con /uploads/, convertir a /api/uploads/
-              else if (img.startsWith('/uploads/')) {
-                transformedImg = img.replace('/uploads/', '/api/uploads/');
-              }
-              // Si es una ruta relativa, asumir que está en uploads
-              else if (!img.startsWith('http') && !img.startsWith('/')) {
-                transformedImg = `/api/uploads/${img}`;
-              }
-
-              // Agregar timestamp único para cada imagen para evitar problemas de caché
-              const separator = transformedImg.includes('?') ? '&' : '?';
+            })
+            .map((imgPath: string) => {
+              const separator = imgPath.includes('?') ? '&' : '?';
               const uniqueTimestamp = Date.now() + Math.random();
-              return `${transformedImg}${separator}t=${uniqueTimestamp}`;
-            }
-          )
+              return `${imgPath}${separator}t=${uniqueTimestamp}`;
+            })
         : [],
       views: property.views,
       inquiries: property.inquiries,

@@ -52,35 +52,48 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Transformar las imágenes para usar las rutas correctas de API
-    const transformedImages = property.images
-      ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
-          (img: string) => {
-            let transformedImg = img;
-
-            // Si la imagen ya tiene la ruta correcta de API, no hacer nada
-            if (img.startsWith('/api/uploads/')) {
-              transformedImg = img;
-            }
-            // Si empieza con /images/, convertir a /api/uploads/
-            else if (img.startsWith('/images/')) {
-              transformedImg = img.replace('/images/', '/api/uploads/');
-            }
-            // Si empieza con /uploads/, convertir a /api/uploads/
-            else if (img.startsWith('/uploads/')) {
-              transformedImg = img.replace('/uploads/', '/api/uploads/');
-            }
-            // Si es una ruta relativa, asumir que está en uploads
-            else if (!img.startsWith('http') && !img.startsWith('/')) {
-              transformedImg = `/api/uploads/${img}`;
-            }
-
-            // Agregar timestamp único para cada imagen para evitar problemas de caché
-            const separator = transformedImg.includes('?') ? '&' : '?';
-            const uniqueTimestamp = Date.now() + Math.random();
-            return `${transformedImg}${separator}t=${uniqueTimestamp}`;
-          }
-        )
+    const originalImages = property.images
+      ? Array.isArray(property.images)
+        ? property.images
+        : JSON.parse(property.images)
       : [];
+    const transformedImages = originalImages
+      .map((img: string) => {
+        // Normalizar y transformar a ruta /api/uploads
+        const imgNoQuery = typeof img === 'string' ? img.split('?')[0] : '';
+        let transformedImg = imgNoQuery;
+        if (imgNoQuery.startsWith('/api/uploads/')) {
+          transformedImg = imgNoQuery;
+        } else if (imgNoQuery.startsWith('/images/')) {
+          transformedImg = imgNoQuery.replace('/images/', '/api/uploads/');
+        } else if (imgNoQuery.startsWith('/uploads/')) {
+          transformedImg = imgNoQuery.replace('/uploads/', '/api/uploads/');
+        } else if (!imgNoQuery.startsWith('http') && !imgNoQuery.startsWith('/')) {
+          transformedImg = `/api/uploads/${imgNoQuery}`;
+        }
+        return transformedImg;
+      })
+      // Filtrar imágenes cuyos archivos no existen físicamente
+      .filter((imgPath: string) => {
+        try {
+          // Mapeo inverso de /api/uploads/* -> public/uploads/*
+          const logical = imgPath.replace(/^\/api\//, '');
+          const fullPath = require('path').join(
+            process.cwd(),
+            'public',
+            logical.replace(/^uploads\//, 'uploads/')
+          );
+          return require('fs').existsSync(fullPath);
+        } catch {
+          return false;
+        }
+      })
+      // Agregar timestamp único para cache busting
+      .map((imgPath: string) => {
+        const separator = imgPath.includes('?') ? '&' : '?';
+        const uniqueTimestamp = Date.now() + Math.random();
+        return `${imgPath}${separator}t=${uniqueTimestamp}`;
+      });
 
     // Formatear la respuesta
     const formattedProperty = {
