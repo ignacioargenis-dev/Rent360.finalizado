@@ -122,7 +122,10 @@ export default function AnalyticsPage() {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
-      const analyticsData = await response.json();
+      const responseData = await response.json();
+
+      // La API devuelve { success: true, data: stats, cached: true }
+      const analyticsData = responseData.data || responseData;
       setData(analyticsData);
     } catch (error) {
       logger.error('Error loading analytics data:', {
@@ -182,15 +185,12 @@ export default function AnalyticsPage() {
 
     const csvContent = [
       ['Métrica', 'Valor'],
-      ['Propiedades Totales', data.overview.totalProperties.toString()],
-      ['Propiedades Ocupadas', data.overview.occupiedProperties.toString()],
-      ['Tasa de Ocupación', `${data.overview.occupancyRate}%`],
-      ['Ingresos Totales', formatCurrency(data.overview.totalRevenue)],
-      ['Ingresos Mensuales', formatCurrency(data.overview.monthlyRevenue)],
-      ['Renta Promedio', formatCurrency(data.overview.averageRent)],
-      ['Solicitudes de Mantenimiento', data.maintenanceRequests.toString()],
-      ['Retrasos de Pago', data.paymentDelays.toString()],
-      ['Satisfacción de Inquilinos', data.tenantSatisfaction.toString()],
+      ['Propiedades Totales', data.totalProperties?.toString() || '0'],
+      ['Contratos Activos', data.totalContracts?.toString() || '0'],
+      ['Pagos Totales', data.totalPayments?.toString() || '0'],
+      ['Ingresos Mensuales', formatCurrency(data.monthlyRevenue || 0)],
+      ['Tareas Completadas', data.completedTasks?.toString() || '0'],
+      ['Tareas Pendientes', data.pendingTasks?.toString() || '0'],
     ];
 
     const csvString = csvContent.map(row => row.join(',')).join('\n');
@@ -315,9 +315,9 @@ export default function AnalyticsPage() {
               <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.totalProperties || 0}</div>
+              <div className="text-2xl font-bold">{data?.totalProperties || 0}</div>
               <p className="text-xs text-muted-foreground">
-                {data?.overview.occupiedProperties || 0} ocupadas
+                {data?.totalContracts || 0} contratos activos
               </p>
             </CardContent>
           </Card>
@@ -328,7 +328,12 @@ export default function AnalyticsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.occupancyRate || 0}%</div>
+              <div className="text-2xl font-bold">
+                {data?.totalProperties > 0
+                  ? Math.round((data?.totalContracts / data?.totalProperties) * 100)
+                  : 0}
+                %
+              </div>
               <p className="text-xs text-muted-foreground">+2.1% desde el mes pasado</p>
             </CardContent>
           </Card>
@@ -339,9 +344,7 @@ export default function AnalyticsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(data?.overview.monthlyRevenue || 0)}
-              </div>
+              <div className="text-2xl font-bold">{formatCurrency(data?.monthlyRevenue || 0)}</div>
               <p className="text-xs text-muted-foreground">+5.2% desde el mes pasado</p>
             </CardContent>
           </Card>
@@ -353,7 +356,9 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(data?.overview.averageRent || 0)}
+                {formatCurrency(
+                  data?.totalContracts > 0 ? data?.monthlyRevenue / data?.totalContracts : 0
+                )}
               </div>
               <p className="text-xs text-muted-foreground">Por propiedad ocupada</p>
             </CardContent>
@@ -367,22 +372,14 @@ export default function AnalyticsPage() {
             <CardDescription>Ingresos mensuales de los últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-end justify-between space-x-2">
-              {data?.monthlyStats.map((stat: any, index: number) => (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="bg-blue-500 rounded-t w-full mb-2"
-                    style={{
-                      height: `${(stat.revenue / 5000000) * 200}px`,
-                      minHeight: '20px',
-                    }}
-                  ></div>
-                  <div className="text-xs text-gray-600 text-center">
-                    <div className="font-medium">{stat.month}</div>
-                    <div>{formatCurrency(stat.revenue)}</div>
-                  </div>
-                </div>
-              ))}
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p>Gráfico de evolución de ingresos</p>
+                <p className="text-sm">
+                  Datos disponibles: {formatCurrency(data?.monthlyRevenue || 0)}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -396,18 +393,11 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {data?.topProperties.map((property: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{property.name}</div>
-                      <div className="text-sm text-gray-600">{property.occupancy}% ocupación</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatCurrency(property.revenue)}</div>
-                      <div className="text-sm text-gray-600">mensual</div>
-                    </div>
-                  </div>
-                ))}
+                <div className="text-center text-gray-500 py-8">
+                  <Building className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>Análisis de propiedades</p>
+                  <p className="text-sm">Total: {data?.totalProperties || 0} propiedades</p>
+                </div>
               </div>
             </CardContent>
           </Card>
