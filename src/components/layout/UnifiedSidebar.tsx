@@ -99,8 +99,6 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Gestión de Usuarios',
       url: '/admin/users',
       icon: Users,
-      badge: sidebarStats.totalUsers > 0 ? sidebarStats.totalUsers.toString() : undefined,
-      badgeVariant: 'secondary',
     },
     {
       title: 'Propiedades',
@@ -136,23 +134,16 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Soporte',
       url: '/admin/tickets',
       icon: Ticket,
-      badge: sidebarStats.pendingTickets > 0 ? sidebarStats.pendingTickets.toString() : undefined,
-      badgeVariant: 'destructive',
     },
     {
       title: 'Casos Legales',
       url: '/admin/legal-cases',
       icon: Shield,
-      badge: sidebarStats.legalCases > 0 ? sidebarStats.legalCases.toString() : undefined,
-      badgeVariant: 'destructive',
     },
     {
       title: 'Disputas de Garantía',
       url: '/admin/disputes',
       icon: AlertTriangle,
-      badge:
-        sidebarStats.warrantyDisputes > 0 ? sidebarStats.warrantyDisputes.toString() : undefined,
-      badgeVariant: 'outline',
     },
     {
       title: 'Métricas del Sistema',
@@ -451,23 +442,16 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Tickets',
       url: '/support/tickets',
       icon: Ticket,
-      badge: sidebarStats.pendingTickets > 0 ? sidebarStats.pendingTickets.toString() : undefined,
-      badgeVariant: 'destructive',
     },
     {
       title: 'Casos Legales',
       url: '/support/legal-cases',
       icon: FileText,
-      badge: sidebarStats.legalCases > 0 ? sidebarStats.legalCases.toString() : undefined,
-      badgeVariant: 'secondary',
     },
     {
       title: 'Disputas de Garantía',
       url: '/support/disputes',
       icon: AlertTriangle,
-      badge:
-        sidebarStats.warrantyDisputes > 0 ? sidebarStats.warrantyDisputes.toString() : undefined,
-      badgeVariant: 'outline',
     },
     {
       title: 'Usuarios',
