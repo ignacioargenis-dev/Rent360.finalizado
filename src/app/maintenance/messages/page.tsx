@@ -77,6 +77,60 @@ export default function MaintenanceMessagesPage() {
       setLoading(true);
       setError(null);
 
+      // Fetch real conversations data from API
+      const response = await fetch('/api/messages/conversations?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match our interface
+      const transformedConversations: Conversation[] =
+        data.conversations?.map((conv: any) => ({
+          id: conv.id,
+          participantName: conv.participant?.name || 'Usuario desconocido',
+          participantType: conv.participant?.role?.toLowerCase() === 'owner' ? 'owner' : 'tenant',
+          propertyAddress: conv.property?.address || 'Dirección no disponible',
+          lastMessage: conv.lastMessage?.content || 'Sin mensajes',
+          lastMessageTime: conv.lastMessage?.createdAt || new Date().toISOString(),
+          unreadCount: conv.unreadCount || 0,
+          status: conv.status || 'active',
+          messages: [], // Will be loaded separately if needed
+        })) || [];
+
+      setConversations(transformedConversations);
+
+      logger.debug('Datos de conversaciones de mantenimiento cargados', {
+        conversationsCount: transformedConversations.length,
+      });
+    } catch (error) {
+      logger.error('Error cargando conversaciones de mantenimiento:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setError('Error al cargar las conversaciones');
+
+      // En caso de error, mostrar datos vacíos
+      setConversations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data for demonstration (commented out)
+  const loadConversationsMock = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
       // Mock data for demonstration
       const mockConversations: Conversation[] = [
         {
@@ -204,6 +258,45 @@ export default function MaintenanceMessagesPage() {
       setError('Error al cargar las conversaciones');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: selectedConversation.id,
+          content: newMessage,
+          type: 'maintenance',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      setNewMessage('');
+      setSuccessMessage('Mensaje enviado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Reload conversations to get updated data
+      loadConversations();
+    } catch (error) {
+      logger.error('Error sending message:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage('Error al enviar mensaje');
+      setTimeout(() => setErrorMessage(''), 3000);
     }
   };
 

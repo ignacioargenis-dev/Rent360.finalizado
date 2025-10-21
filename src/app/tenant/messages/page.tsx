@@ -160,7 +160,7 @@ export default function TenantMessagesPage() {
         credentials: 'include',
         body: JSON.stringify({
           content: newMessage,
-          recipientId: selectedConversation.clientId,
+          receiverId: selectedConversation.clientId,
         }),
       });
 

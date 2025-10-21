@@ -151,7 +151,7 @@ export default function RunnerMessagesPage() {
         credentials: 'include',
         body: JSON.stringify({
           content: newMessage,
-          recipientId: selectedConversation.clientId,
+          receiverId: selectedConversation.clientId,
         }),
       });
 

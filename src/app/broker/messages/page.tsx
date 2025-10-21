@@ -441,6 +441,25 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
       return;
     }
 
+    // Check if we have recipient data from sessionStorage (from contact buttons)
+    const recipientData = sessionStorage.getItem('newMessageRecipient');
+    let receiverId = 'system_broadcast';
+    let recipientName = 'Sistema';
+    let recipientType: 'owner' | 'tenant' | 'prospect' | 'provider' | 'broker' = 'owner';
+
+    if (recipientData) {
+      try {
+        const recipient = JSON.parse(recipientData);
+        receiverId = recipient.id;
+        recipientName = recipient.name;
+        recipientType = recipient.type;
+        // Clear the session storage after use
+        sessionStorage.removeItem('newMessageRecipient');
+      } catch (error) {
+        logger.error('Error parsing recipient data:', { error });
+      }
+    }
+
     try {
       // Send message via API
       const response = await fetch('/api/messages', {
@@ -449,8 +468,8 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          receiverId: 'system_broadcast', // For system messages, or select a specific recipient
-          subject: 'Mensaje del sistema',
+          receiverId: receiverId,
+          subject: recipientData ? 'Mensaje del corredor' : 'Mensaje del sistema',
           content: newMessageContent,
           type: 'direct',
         }),
@@ -465,9 +484,9 @@ ${message.contract ? `\nContrato: ${message.contract.contractNumber}` : ''}
             id: data.data.id,
             senderName: user?.name || 'Corredor',
             senderType: 'broker',
-            recipientName: 'Sistema',
-            recipientType: 'owner',
-            subject: 'Mensaje del sistema',
+            recipientName: recipientName,
+            recipientType: recipientType,
+            subject: recipientData ? 'Mensaje del corredor' : 'Mensaje del sistema',
             content: newMessageContent,
             propertyTitle: '',
             propertyAddress: '',
