@@ -124,11 +124,67 @@ export default function ServiceDetailPage() {
 
   const loadService = async () => {
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setService(mockService);
+      // Cargar datos reales desde la API
+      const response = await fetch(`/api/provider/services/${serviceId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match our interface
+      const transformedService = {
+        id: data.id,
+        title: data.title || 'Servicio no identificado',
+        description: data.description || 'Sin descripción',
+        category: data.category || 'General',
+        pricing: {
+          type: data.pricing?.type || 'fixed',
+          amount: data.pricing?.amount || 0,
+          currency: data.pricing?.currency || 'CLP',
+          minimumCharge: data.pricing?.minimumCharge || 0,
+        },
+        availability: {
+          active: data.availability?.active || false,
+          schedule: data.availability?.schedule || {},
+        },
+        location: {
+          city: data.location?.city || '',
+          region: data.location?.region || '',
+          serviceRadius: data.location?.serviceRadius || 0,
+        },
+        requirements: data.requirements || [],
+        images: data.images || ['/placeholder-service.jpg'],
+        rating: data.rating || 0,
+        reviewCount: data.reviewCount || 0,
+        completedJobs: data.completedJobs || 0,
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: data.updatedAt || new Date().toISOString(),
+      };
+
+      setService(transformedService);
+
+      logger.debug('Detalles de servicio de proveedor cargados', {
+        serviceId,
+        title: transformedService.title,
+        category: transformedService.category,
+      });
     } catch (error) {
-      logger.error('Error al cargar servicio', { error, serviceId });
+      logger.error('Error al cargar servicio', {
+        error: error instanceof Error ? error.message : String(error),
+        serviceId,
+      });
+
+      // En caso de error, mostrar datos vacíos
+      setService(null);
     } finally {
       setIsLoading(false);
     }

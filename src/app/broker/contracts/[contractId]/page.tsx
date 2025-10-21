@@ -197,11 +197,63 @@ export default function BrokerContractDetailPage() {
   const loadContractDetails = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setContract(mockContract);
+      // Cargar datos reales desde la API
+      const response = await fetch(`/api/contracts/${contractId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match our interface
+      const transformedContract: ContractDetail = {
+        id: data.id,
+        tenantName: data.tenant?.name || 'Inquilino no identificado',
+        tenantEmail: data.tenant?.email || '',
+        tenantPhone: data.tenant?.phone || '',
+        propertyAddress: data.property?.address || 'Dirección no disponible',
+        propertyType: data.property?.type || 'No especificado',
+        monthlyRent: data.rentAmount || 0,
+        currency: 'CLP',
+        startDate: data.startDate || new Date().toISOString(),
+        endDate: data.endDate || new Date().toISOString(),
+        status: data.status?.toLowerCase() || 'pending',
+        commission: data.commissionAmount || 0,
+        commissionPercentage: data.commissionPercentage || 0,
+        lastPaymentDate: data.lastPaymentDate || '',
+        nextPaymentDate: data.nextPaymentDate || '',
+        paymentHistory: data.paymentHistory || [],
+        documents: data.documents || [],
+        notes: data.notes || [],
+        propertyImages: data.property?.images || ['/placeholder-property.jpg'],
+        tenantRating: data.tenantRating || 0,
+        propertyRating: data.propertyRating || 0,
+        renewalDate: data.renewalDate,
+      };
+
+      setContract(transformedContract);
+
+      logger.debug('Detalles de contrato de corredor cargados', {
+        contractId,
+        tenantName: transformedContract.tenantName,
+        monthlyRent: transformedContract.monthlyRent,
+      });
     } catch (error) {
-      logger.error('Error al cargar detalles del contrato', { error, contractId });
+      logger.error('Error al cargar detalles del contrato', {
+        error: error instanceof Error ? error.message : String(error),
+        contractId,
+      });
+
+      // En caso de error, mostrar datos vacíos
+      setContract(null);
     } finally {
       setIsLoading(false);
     }

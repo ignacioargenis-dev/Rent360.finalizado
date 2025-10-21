@@ -58,32 +58,54 @@ export default function ProviderPaymentDetailPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for payment detail
-      const mockPayment: PaymentDetail = {
-        id: id,
-        jobTitle: 'Reparación de grifería',
-        clientName: 'María González',
-        clientEmail: 'maria@example.com',
-        amount: 85000,
-        status: 'paid',
-        paymentDate: '2024-01-15',
-        jobDate: '2024-01-10',
-        dueDate: '2024-01-15',
-        rating: 5,
-        description:
-          'Reparación completa de fuga de agua en cocina. Se cambió la junta del grifo y se verificó el sistema de tuberías.',
-        jobType: 'Plomería',
-        hoursWorked: 2.5,
+      // Cargar datos reales desde la API
+      const response = await fetch(`/api/provider/payments/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match our interface
+      const transformedPayment: PaymentDetail = {
+        id: data.id,
+        jobTitle: data.jobTitle || 'Trabajo no identificado',
+        clientName: data.client?.name || 'Cliente no identificado',
+        clientEmail: data.client?.email || '',
+        amount: data.amount || 0,
+        status: data.status?.toLowerCase() || 'pending',
+        paymentDate: data.paymentDate,
+        jobDate: data.jobDate || new Date().toISOString(),
+        dueDate: data.dueDate || new Date().toISOString(),
+        rating: data.rating || 0,
+        description: data.description || 'Sin descripción',
+        jobType: data.jobType || 'Servicio',
+        hoursWorked: data.hoursWorked || 0,
       };
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setPayment(mockPayment);
+      setPayment(transformedPayment);
+
+      logger.debug('Detalles de pago de proveedor cargados', {
+        paymentId: id,
+        jobTitle: transformedPayment.jobTitle,
+        amount: transformedPayment.amount,
+      });
     } catch (error) {
       logger.error('Error loading payment detail:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los detalles del pago');
+
+      // En caso de error, mostrar datos vacíos
+      setPayment(null);
     } finally {
       setLoading(false);
     }

@@ -92,6 +92,100 @@ export default function BrokerContractsPage() {
 
     const loadContractsData = async () => {
       try {
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/contracts?limit=100', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match our interface
+        const transformedContracts: BrokerContract[] =
+          data.contracts?.map((contract: any) => ({
+            id: contract.id,
+            propertyTitle: contract.property?.title || 'Propiedad no identificada',
+            propertyAddress: contract.property?.address || 'Dirección no disponible',
+            ownerName: contract.owner?.name || 'Propietario no identificado',
+            tenantName: contract.tenant?.name || 'Inquilino no identificado',
+            monthlyRent: contract.rentAmount || 0,
+            commissionEarned: contract.commissionAmount || 0,
+            status: contract.status?.toLowerCase() || 'pending',
+            startDate: contract.startDate || new Date().toISOString(),
+            endDate: contract.endDate || new Date().toISOString(),
+            daysUntilExpiration: contract.endDate
+              ? Math.ceil(
+                  (new Date(contract.endDate).getTime() - new Date().getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )
+              : 0,
+            lastPayment: contract.lastPaymentDate,
+            nextPayment: contract.nextPaymentDate,
+            createdAt: contract.createdAt || new Date().toISOString(),
+          })) || [];
+
+        setContracts(transformedContracts);
+
+        // Calculate stats from real data
+        const totalContracts = transformedContracts.length;
+        const activeContracts = transformedContracts.filter(c => c.status === 'active').length;
+        const pendingContracts = transformedContracts.filter(c => c.status === 'pending').length;
+        const expiredContracts = transformedContracts.filter(c => c.status === 'expired').length;
+        const totalMonthlyRevenue = transformedContracts.reduce((sum, c) => sum + c.monthlyRent, 0);
+        const totalCommissions = transformedContracts.reduce(
+          (sum, c) => sum + c.commissionEarned,
+          0
+        );
+        const averageRent = totalContracts > 0 ? totalMonthlyRevenue / totalContracts : 0;
+
+        setStats({
+          totalContracts,
+          activeContracts,
+          pendingContracts,
+          expiredContracts,
+          totalMonthlyRevenue,
+          totalCommissions,
+          averageRent,
+        });
+
+        logger.debug('Datos de contratos de corredor cargados', {
+          totalContracts,
+          activeContracts,
+          pendingContracts,
+          expiredContracts,
+        });
+      } catch (error) {
+        logger.error('Error loading broker contracts data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        // En caso de error, mostrar datos vacíos
+        setContracts([]);
+        setStats({
+          totalContracts: 0,
+          activeContracts: 0,
+          pendingContracts: 0,
+          expiredContracts: 0,
+          totalMonthlyRevenue: 0,
+          totalCommissions: 0,
+          averageRent: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Mock contracts data (commented out)
+    const loadContractsDataMock = async () => {
+      try {
         // Mock contracts data
         const mockContracts: BrokerContract[] = [
           {
