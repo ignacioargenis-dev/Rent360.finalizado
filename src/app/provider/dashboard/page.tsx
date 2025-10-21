@@ -73,6 +73,7 @@ export default function ProviderDashboard() {
 
   // Estados para formularios rápidos
   const [quickJobData, setQuickJobData] = useState({
+    clientEmail: '',
     clientName: '',
     serviceType: '',
     description: '',
@@ -82,6 +83,7 @@ export default function ProviderDashboard() {
   });
 
   const [quickQuoteData, setQuickQuoteData] = useState({
+    clientEmail: '',
     clientName: '',
     serviceType: '',
     description: '',
@@ -89,11 +91,51 @@ export default function ProviderDashboard() {
     hourlyRate: 25000,
     materials: '',
   });
+
+  // Estados para autocompletado de clientes
+  const [clientSuggestions, setClientSuggestions] = useState<{ email: string; name: string }[]>([]);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [showQuoteClientSuggestions, setShowQuoteClientSuggestions] = useState(false);
+
   const { user } = useAuth();
+
+  // Función para buscar clientes
+  const searchClients = async (query: string) => {
+    if (query.length < 2) {
+      setClientSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/users?search=${encodeURIComponent(query)}&role=tenant,owner,broker&limit=10`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const clients =
+          data.users?.map((user: any) => ({
+            email: user.email,
+            name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          })) || [];
+        setClientSuggestions(clients);
+      }
+    } catch (error) {
+      logger.error('Error searching clients:', { error });
+      setClientSuggestions([]);
+    }
+  };
 
   // Funciones para acciones rápidas
   const submitQuickJob = async () => {
-    if (!quickJobData.clientName || !quickJobData.serviceType || !quickJobData.description) {
+    if (!quickJobData.clientEmail || !quickJobData.serviceType || !quickJobData.description) {
       setErrorMessage('Por favor complete todos los campos obligatorios.');
       return;
     }
@@ -106,6 +148,7 @@ export default function ProviderDashboard() {
 
       setShowQuickJobModal(false);
       setQuickJobData({
+        clientEmail: '',
         clientName: '',
         serviceType: '',
         description: '',
@@ -123,7 +166,7 @@ export default function ProviderDashboard() {
   };
 
   const submitQuickQuote = async () => {
-    if (!quickQuoteData.clientName || !quickQuoteData.serviceType || !quickQuoteData.description) {
+    if (!quickQuoteData.clientEmail || !quickQuoteData.serviceType || !quickQuoteData.description) {
       setErrorMessage('Por favor complete todos los campos obligatorios.');
       return;
     }
@@ -140,6 +183,7 @@ export default function ProviderDashboard() {
 
       setShowQuickQuoteModal(false);
       setQuickQuoteData({
+        clientEmail: '',
         clientName: '',
         serviceType: '',
         description: '',
@@ -504,8 +548,23 @@ export default function ProviderDashboard() {
                       label="Soporte"
                       description="Centro de ayuda"
                       onClick={() => {
-                        // Abrir chat de soporte directo
-                        window.open('/support/chat', '_blank');
+                        // Crear datos del destinatario para soporte
+                        const recipientData = {
+                          id: 'support_team',
+                          name: 'Equipo de Soporte',
+                          email: 'soporte@rent360.cl',
+                          type: 'support',
+                          serviceType: 'soporte_tecnico',
+                        };
+
+                        // Guardar en sessionStorage para la página de mensajes
+                        sessionStorage.setItem(
+                          'newMessageRecipient',
+                          JSON.stringify(recipientData)
+                        );
+
+                        // Redirigir a la página de mensajes del proveedor
+                        router.push('/provider/messages?new=true');
                       }}
                       variant="outline"
                     />
@@ -566,14 +625,49 @@ export default function ProviderDashboard() {
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="quick-job-client">Nombre del Cliente</Label>
+              <div className="relative">
+                <Label htmlFor="quick-job-client">Email del Cliente</Label>
                 <Input
                   id="quick-job-client"
-                  placeholder="Juan Pérez"
-                  value={quickJobData.clientName}
-                  onChange={e => setQuickJobData(prev => ({ ...prev, clientName: e.target.value }))}
+                  placeholder="cliente@email.com"
+                  type="email"
+                  value={quickJobData.clientEmail}
+                  onChange={e => {
+                    const value = e.target.value;
+                    setQuickJobData(prev => ({ ...prev, clientEmail: value }));
+                    searchClients(value);
+                    setShowClientSuggestions(value.length >= 2);
+                  }}
+                  onFocus={() => {
+                    if (quickJobData.clientEmail.length >= 2) {
+                      setShowClientSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowClientSuggestions(false), 200);
+                  }}
                 />
+                {showClientSuggestions && clientSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {clientSuggestions.map((client, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        onClick={() => {
+                          setQuickJobData(prev => ({
+                            ...prev,
+                            clientEmail: client.email,
+                            clientName: client.name,
+                          }));
+                          setShowClientSuggestions(false);
+                        }}
+                      >
+                        <div className="font-medium">{client.name}</div>
+                        <div className="text-xs text-gray-500">{client.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -697,16 +791,49 @@ export default function ProviderDashboard() {
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="quick-quote-client">Nombre del Cliente</Label>
+              <div className="relative">
+                <Label htmlFor="quick-quote-client">Email del Cliente</Label>
                 <Input
                   id="quick-quote-client"
-                  placeholder="María González"
-                  value={quickQuoteData.clientName}
-                  onChange={e =>
-                    setQuickQuoteData(prev => ({ ...prev, clientName: e.target.value }))
-                  }
+                  placeholder="cliente@email.com"
+                  type="email"
+                  value={quickQuoteData.clientEmail}
+                  onChange={e => {
+                    const value = e.target.value;
+                    setQuickQuoteData(prev => ({ ...prev, clientEmail: value }));
+                    searchClients(value);
+                    setShowQuoteClientSuggestions(value.length >= 2);
+                  }}
+                  onFocus={() => {
+                    if (quickQuoteData.clientEmail.length >= 2) {
+                      setShowQuoteClientSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowQuoteClientSuggestions(false), 200);
+                  }}
                 />
+                {showQuoteClientSuggestions && clientSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {clientSuggestions.map((client, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        onClick={() => {
+                          setQuickQuoteData(prev => ({
+                            ...prev,
+                            clientEmail: client.email,
+                            clientName: client.name,
+                          }));
+                          setShowQuoteClientSuggestions(false);
+                        }}
+                      >
+                        <div className="font-medium">{client.name}</div>
+                        <div className="text-xs text-gray-500">{client.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

@@ -292,6 +292,30 @@ export default function ProviderProfilePage() {
     }
   };
 
+  const handleWorkingHoursChange = (
+    day: string,
+    field: 'open' | 'close' | 'closed',
+    value: string | boolean
+  ) => {
+    if (!profile) {
+      return;
+    }
+
+    setProfile(prev => ({
+      ...prev!,
+      operational: {
+        ...prev!.operational,
+        workingHours: {
+          ...prev!.operational.workingHours,
+          [day]: {
+            ...(prev!.operational.workingHours as any)[day],
+            [field]: value,
+          },
+        },
+      },
+    }));
+  };
+
   const getRatingStars = (rating: number) => {
     return (
       <div className="flex items-center gap-1">
@@ -898,17 +922,52 @@ export default function ProviderProfilePage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {Object.entries(profile.operational.workingHours).map(([day, hours]) => (
-                    <div
-                      key={day}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                    >
-                      <span className="font-medium capitalize">{day}</span>
-                      {hours.closed ? (
-                        <Badge variant="secondary">Cerrado</Badge>
-                      ) : (
-                        <span className="text-sm text-gray-600">
-                          {hours.open} - {hours.close}
-                        </span>
+                    <div key={day} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium capitalize">{day}</span>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`${day}-closed`}
+                            checked={hours.closed}
+                            onChange={e =>
+                              handleWorkingHoursChange(day, 'closed', e.target.checked)
+                            }
+                            className="rounded"
+                          />
+                          <label htmlFor={`${day}-closed`} className="text-sm text-gray-600">
+                            Cerrado
+                          </label>
+                        </div>
+                      </div>
+
+                      {!hours.closed && (
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1">
+                            <Label htmlFor={`${day}-open`} className="text-xs text-gray-500">
+                              Apertura
+                            </Label>
+                            <Input
+                              id={`${day}-open`}
+                              type="time"
+                              value={hours.open}
+                              onChange={e => handleWorkingHoursChange(day, 'open', e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label htmlFor={`${day}-close`} className="text-xs text-gray-500">
+                              Cierre
+                            </Label>
+                            <Input
+                              id={`${day}-close`}
+                              type="time"
+                              value={hours.close}
+                              onChange={e => handleWorkingHoursChange(day, 'close', e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                   ))}

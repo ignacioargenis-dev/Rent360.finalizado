@@ -422,17 +422,65 @@ export default function ServiceRequestDetailPage() {
                   </div>
                 )}
 
-                {/* Adjuntos */}
+                {/* Adjuntos/Imágenes */}
                 {request.attachments.length > 0 && (
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Adjuntos</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                      {request.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          <FileText className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-700">{attachment}</span>
-                        </div>
-                      ))}
+                    <Label className="text-sm font-medium text-gray-700">
+                      Imágenes del Trabajo
+                    </Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                      {request.attachments.map((attachment, index) => {
+                        // Verificar si es una imagen por la extensión
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment);
+
+                        if (isImage) {
+                          return (
+                            <div key={index} className="relative group">
+                              <img
+                                src={
+                                  attachment.startsWith('http')
+                                    ? attachment
+                                    : `/uploads/service-requests/${attachment}`
+                                }
+                                alt={`Imagen ${index + 1} del trabajo`}
+                                className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                                onError={e => {
+                                  // Si la imagen no se puede cargar, mostrar un placeholder
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/api/placeholder/200/128';
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                  onClick={() =>
+                                    window.open(
+                                      attachment.startsWith('http')
+                                        ? attachment
+                                        : `/uploads/service-requests/${attachment}`,
+                                      '_blank'
+                                    )
+                                  }
+                                >
+                                  Ver
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                            >
+                              <FileText className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-700">{attachment}</span>
+                            </div>
+                          );
+                        }
+                      })}
                     </div>
                   </div>
                 )}

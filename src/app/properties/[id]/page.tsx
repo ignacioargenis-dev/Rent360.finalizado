@@ -143,8 +143,66 @@ export default function PublicPropertyDetailPage() {
     }
 
     if (isAuthenticated) {
-      // Usuario autenticado - mostrar opciones de contacto
-      alert('Funcionalidad de contacto para usuarios autenticados');
+      // Usuario autenticado - obtener información del propietario y crear conversación
+      try {
+        // Obtener información del propietario desde la propiedad
+        const ownerInfo = property?.owner;
+
+        if (ownerInfo) {
+          // Crear datos del destinatario para la conversación
+          const recipientData = {
+            id: ownerInfo.id,
+            name: ownerInfo.name || 'Propietario',
+            email: ownerInfo.email || '',
+            type: 'owner',
+            propertyId: propertyId,
+            propertyTitle: property?.title || 'Propiedad',
+            propertyAddress: property?.address || 'Dirección no disponible',
+          };
+
+          // Guardar en sessionStorage para la página de mensajes
+          sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+
+          // Redirigir a la página de mensajes del inquilino
+          router.push('/tenant/messages?new=true');
+        } else {
+          // Si no hay información del propietario, intentar obtenerla de la API
+          const response = await fetch(`/api/properties/${propertyId}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const propertyData = await response.json();
+            const owner = propertyData.owner || propertyData.property?.owner;
+
+            if (owner) {
+              const recipientData = {
+                id: owner.id,
+                name: owner.name || 'Propietario',
+                email: owner.email || '',
+                type: 'owner',
+                propertyId: propertyId,
+                propertyTitle: propertyData.title || 'Propiedad',
+                propertyAddress: propertyData.address || 'Dirección no disponible',
+              };
+
+              sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+              router.push('/tenant/messages?new=true');
+            } else {
+              alert('No se pudo obtener la información del propietario');
+            }
+          } else {
+            alert('Error al obtener información del propietario');
+          }
+        }
+      } catch (error) {
+        logger.error('Error al contactar propietario:', { error, propertyId });
+        alert('Error al establecer contacto con el propietario');
+      }
     } else {
       // Usuario no autenticado - redirigir a login
       router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));

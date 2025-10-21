@@ -6,7 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Wrench, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
@@ -17,10 +23,12 @@ export default function RequestServicePage() {
     description: '',
     urgency: 'Media',
     preferredDate: '',
-    budget: ''
+    budget: '',
+    images: [] as File[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +41,7 @@ export default function RequestServicePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
@@ -44,7 +52,9 @@ export default function RequestServicePage() {
         alert(error.error || 'Error al enviar la solicitud');
       }
     } catch (error) {
-      logger.error('Error enviando solicitud de servicio:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error enviando solicitud de servicio:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       alert('Error al conectar con el servidor');
     } finally {
       setIsSubmitting(false);
@@ -53,6 +63,44 @@ export default function RequestServicePage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+
+    // Validar tipos de archivo
+    const validFiles = files.filter(file => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      return validTypes.includes(file.type);
+    });
+
+    if (validFiles.length !== files.length) {
+      alert('Solo se permiten imágenes en formato JPEG, PNG o WebP');
+      return;
+    }
+
+    // Validar tamaño (max 5MB por archivo)
+    const sizeValidFiles = validFiles.filter(file => {
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      return file.size <= maxSize;
+    });
+
+    if (sizeValidFiles.length !== validFiles.length) {
+      alert('Las imágenes no pueden superar los 5MB cada una');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...sizeValidFiles],
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
 
   if (submitted) {
@@ -65,8 +113,8 @@ export default function RequestServicePage() {
               <div>
                 <h2 className="text-2xl font-bold text-green-700">¡Solicitud Enviada!</h2>
                 <p className="text-muted-foreground mt-2">
-                  Tu solicitud de servicio ha sido enviada exitosamente.
-                  Los proveedores disponibles recibirán tu solicitud y te contactarán pronto.
+                  Tu solicitud de servicio ha sido enviada exitosamente. Los proveedores disponibles
+                  recibirán tu solicitud y te contactarán pronto.
                 </p>
               </div>
               <Button onClick={() => router.push('/')} className="w-full">
@@ -104,7 +152,10 @@ export default function RequestServicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="serviceType">Tipo de Servicio</Label>
-                  <Select value={formData.serviceType} onValueChange={(value) => handleChange('serviceType', value)}>
+                  <Select
+                    value={formData.serviceType}
+                    onValueChange={value => handleChange('serviceType', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un servicio" />
                     </SelectTrigger>
@@ -123,7 +174,10 @@ export default function RequestServicePage() {
 
                 <div>
                   <Label htmlFor="urgency">Urgencia</Label>
-                  <Select value={formData.urgency} onValueChange={(value) => handleChange('urgency', value)}>
+                  <Select
+                    value={formData.urgency}
+                    onValueChange={value => handleChange('urgency', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona urgencia" />
                     </SelectTrigger>
@@ -143,7 +197,7 @@ export default function RequestServicePage() {
                   id="description"
                   placeholder="Describe detalladamente el trabajo que necesitas realizar..."
                   value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
+                  onChange={e => handleChange('description', e.target.value)}
                   rows={4}
                   required
                 />
@@ -156,7 +210,7 @@ export default function RequestServicePage() {
                     id="preferredDate"
                     type="date"
                     value={formData.preferredDate}
-                    onChange={(e) => handleChange('preferredDate', e.target.value)}
+                    onChange={e => handleChange('preferredDate', e.target.value)}
                   />
                 </div>
 
@@ -170,10 +224,52 @@ export default function RequestServicePage() {
                       placeholder="0"
                       className="pl-9"
                       value={formData.budget}
-                      onChange={(e) => handleChange('budget', e.target.value)}
+                      onChange={e => handleChange('budget', e.target.value)}
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Sección de imágenes */}
+              <div>
+                <Label htmlFor="images">Imágenes del Trabajo (opcional)</Label>
+                <Input
+                  id="images"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="mt-1"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Sube fotos del problema o área a trabajar. Formatos: JPG, PNG, WebP. Máximo 5MB
+                  por imagen.
+                </p>
+
+                {/* Mostrar imágenes seleccionadas */}
+                {formData.images.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-2">Imágenes seleccionadas:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Imagen ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

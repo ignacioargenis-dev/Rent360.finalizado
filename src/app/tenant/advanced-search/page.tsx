@@ -157,6 +157,10 @@ export default function BúsquedaAvanzadaPage() {
       setLoading(true);
       setError(null);
 
+      logger.info('Iniciando carga de propiedades', {
+        endpoint: '/api/properties?limit=50&status=AVAILABLE',
+      });
+
       // Cargar propiedades reales desde la API
       const response = await fetch('/api/properties?limit=50&status=AVAILABLE', {
         method: 'GET',
@@ -167,11 +171,28 @@ export default function BúsquedaAvanzadaPage() {
         },
       });
 
+      logger.info('Respuesta de API de propiedades recibida', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
+
       if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('Error en respuesta de API de propiedades', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+        });
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+      logger.info('Datos de propiedades recibidos', {
+        hasProperties: !!data.properties,
+        propertiesCount: data.properties?.length || 0,
+        dataKeys: Object.keys(data),
+      });
 
       // Transformar datos de la API al formato esperado
       const transformedProperties: Property[] =
@@ -196,6 +217,12 @@ export default function BúsquedaAvanzadaPage() {
           ownerEmail: prop.owner?.email || '',
         })) || [];
 
+      logger.info('Propiedades transformadas', {
+        totalProperties: transformedProperties.length,
+        propertiesWithOwner: transformedProperties.filter(p => p.ownerId).length,
+        propertiesWithOwnerEmail: transformedProperties.filter(p => p.ownerEmail).length,
+      });
+
       setProperties(transformedProperties);
 
       // Load saved searches from localStorage
@@ -210,6 +237,7 @@ export default function BúsquedaAvanzadaPage() {
     } catch (error) {
       logger.error('Error cargando datos de búsqueda avanzada:', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       setError('Error al cargar los datos');
 
@@ -366,8 +394,18 @@ export default function BúsquedaAvanzadaPage() {
   const handleContactOwner = useCallback(
     async (property: Property) => {
       try {
+        logger.info('Iniciando contacto con propietario', {
+          propertyId: property.id,
+          hasOwnerId: !!property.ownerId,
+          hasOwnerEmail: !!property.ownerEmail,
+        });
+
         // Si no tenemos la información del propietario, obtenerla de la API
         if (!property.ownerId || !property.ownerEmail) {
+          logger.info('Obteniendo información del propietario desde API', {
+            propertyId: property.id,
+          });
+
           const response = await fetch(`/api/properties/${property.id}`, {
             method: 'GET',
             credentials: 'include',
@@ -376,11 +414,31 @@ export default function BúsquedaAvanzadaPage() {
             },
           });
 
+          logger.info('Respuesta de API recibida', {
+            propertyId: property.id,
+            status: response.status,
+            ok: response.ok,
+          });
+
           if (response.ok) {
             const propertyData = await response.json();
+            logger.info('Datos de propiedad recibidos', {
+              propertyId: property.id,
+              hasOwner: !!propertyData.owner,
+              hasPropertyOwner: !!propertyData.property?.owner,
+              propertyDataKeys: Object.keys(propertyData),
+            });
+
             const ownerInfo = propertyData.owner || propertyData.property?.owner;
 
             if (ownerInfo) {
+              logger.info('Información del propietario encontrada', {
+                propertyId: property.id,
+                ownerId: ownerInfo.id,
+                ownerName: ownerInfo.name,
+                ownerEmail: ownerInfo.email,
+              });
+
               const recipientData = {
                 id: ownerInfo.id,
                 name:
@@ -397,11 +455,31 @@ export default function BúsquedaAvanzadaPage() {
               sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
               router.push('/tenant/messages?new=true');
               return;
+            } else {
+              logger.warn('No se encontró información del propietario en la respuesta', {
+                propertyId: property.id,
+                propertyData,
+              });
             }
+          } else {
+            const errorText = await response.text();
+            logger.error('Error en respuesta de API', {
+              propertyId: property.id,
+              status: response.status,
+              statusText: response.statusText,
+              errorText,
+            });
           }
         }
 
         // Usar la información del propietario que ya tenemos
+        logger.info('Usando información del propietario existente', {
+          propertyId: property.id,
+          ownerId: property.ownerId,
+          ownerName: property.ownerName,
+          ownerEmail: property.ownerEmail,
+        });
+
         const recipientData = {
           id: property.ownerId || `owner_${property.id}`,
           name: property.ownerName || 'Propietario',
@@ -418,6 +496,7 @@ export default function BúsquedaAvanzadaPage() {
         logger.error('Error al obtener información del propietario:', {
           error: error instanceof Error ? error.message : String(error),
           propertyId: property.id,
+          stack: error instanceof Error ? error.stack : undefined,
         });
 
         // Fallback con datos básicos
