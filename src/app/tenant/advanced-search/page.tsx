@@ -76,6 +76,9 @@ interface Property {
   availableDate: string;
   latitude?: number;
   longitude?: number;
+  ownerId?: string;
+  ownerName?: string;
+  ownerEmail?: string;
 }
 
 interface SavedSearch {
@@ -187,6 +190,10 @@ export default function BúsquedaAvanzadaPage() {
           availableDate: prop.availableFrom || new Date().toISOString().split('T')[0],
           latitude: prop.latitude,
           longitude: prop.longitude,
+          ownerId: prop.ownerId,
+          ownerName:
+            prop.owner?.name || prop.owner?.firstName + ' ' + prop.owner?.lastName || 'Propietario',
+          ownerEmail: prop.owner?.email || '',
         })) || [];
 
       setProperties(transformedProperties);
@@ -357,20 +364,76 @@ export default function BúsquedaAvanzadaPage() {
   );
 
   const handleContactOwner = useCallback(
-    (property: Property) => {
-      // Crear conversación con el propietario usando el sistema de mensajería
-      const recipientData = {
-        id: `owner_${property.id}`,
-        name: 'Propietario',
-        email: 'owner@example.com',
-        type: 'owner' as const,
-        propertyId: property.id,
-        propertyTitle: property.title,
-        propertyAddress: property.address,
-      };
+    async (property: Property) => {
+      try {
+        // Si no tenemos la información del propietario, obtenerla de la API
+        if (!property.ownerId || !property.ownerEmail) {
+          const response = await fetch(`/api/properties/${property.id}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+            },
+          });
 
-      sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
-      router.push('/tenant/messages?new=true');
+          if (response.ok) {
+            const propertyData = await response.json();
+            const ownerInfo = propertyData.owner || propertyData.property?.owner;
+
+            if (ownerInfo) {
+              const recipientData = {
+                id: ownerInfo.id,
+                name:
+                  ownerInfo.name ||
+                  `${ownerInfo.firstName || ''} ${ownerInfo.lastName || ''}`.trim() ||
+                  'Propietario',
+                email: ownerInfo.email || '',
+                type: 'owner' as const,
+                propertyId: property.id,
+                propertyTitle: property.title,
+                propertyAddress: property.address,
+              };
+
+              sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+              router.push('/tenant/messages?new=true');
+              return;
+            }
+          }
+        }
+
+        // Usar la información del propietario que ya tenemos
+        const recipientData = {
+          id: property.ownerId || `owner_${property.id}`,
+          name: property.ownerName || 'Propietario',
+          email: property.ownerEmail || '',
+          type: 'owner' as const,
+          propertyId: property.id,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+        };
+
+        sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+        router.push('/tenant/messages?new=true');
+      } catch (error) {
+        logger.error('Error al obtener información del propietario:', {
+          error: error instanceof Error ? error.message : String(error),
+          propertyId: property.id,
+        });
+
+        // Fallback con datos básicos
+        const recipientData = {
+          id: `owner_${property.id}`,
+          name: 'Propietario',
+          email: '',
+          type: 'owner' as const,
+          propertyId: property.id,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+        };
+
+        sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+        router.push('/tenant/messages?new=true');
+      }
     },
     [router]
   );
