@@ -40,18 +40,25 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // ⚠️ TEMPORALMENTE DESHABILITADO: Middleware de seguridad y auth para debugging
-    // TODO: Re-habilitar cuando se confirme que el dashboard funciona
+    // ✅ RE-HABILITADO: Middleware de seguridad y auth para APIs críticas
+    // Aplicar middleware de seguridad solo para rutas que lo necesitan
+    if (
+      pathname.startsWith('/api/messages') ||
+      pathname.startsWith('/api/contracts') ||
+      pathname.startsWith('/api/payments') ||
+      pathname.startsWith('/api/properties') ||
+      pathname.startsWith('/api/users')
+    ) {
+      const securityResponse = await securityMiddleware(request);
+      if (securityResponse) {
+        return securityResponse;
+      }
 
-    // const securityResponse = await securityMiddleware(request);
-    // if (securityResponse) {
-    //   return securityResponse;
-    // }
-
-    // const authResponse = await authMiddleware(request);
-    // if (authResponse) {
-    //   return authResponse;
-    // }
+      const authResponse = await authMiddleware(request);
+      if (authResponse) {
+        return authResponse;
+      }
+    }
     // Determinar configuración de rate limiting basada en la ruta
     let rateLimitKey = 'default';
     for (const [route, config] of Object.entries(rateLimitConfigs)) {

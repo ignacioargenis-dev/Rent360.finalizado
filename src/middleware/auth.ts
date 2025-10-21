@@ -30,7 +30,7 @@ const PUBLIC_ROUTES = [
   '/[locale]/features',
   '/[locale]/demo-fase1',
   '/[locale]/offline',
-  '/[locale]/properties/search'
+  '/[locale]/properties/search',
 ];
 
 // Rutas que requieren roles específicos
@@ -42,7 +42,7 @@ const ROLE_REQUIREMENTS: { [key: string]: string[] } = {
   '/api/legal': ['ADMIN', 'LEGAL'],
   '/api/legal/': ['ADMIN', 'LEGAL'],
   '/api/financial': ['ADMIN', 'ACCOUNTANT'],
-  '/api/financial/': ['ADMIN', 'ACCOUNTANT']
+  '/api/financial/': ['ADMIN', 'ACCOUNTANT'],
 };
 
 // Extender interface de Request para incluir usuario
@@ -72,23 +72,34 @@ function getRequiredRoles(pathname: string): string[] | null {
   return null;
 }
 
-// Función para validar token (versión simplificada para Edge Runtime)
+// Función para validar token (compatible con Edge Runtime)
 async function validateToken(token: string): Promise<any> {
   try {
-    // Decodificar token base64 simple (para Edge Runtime)
-    const decoded = JSON.parse(atob(token));
-    
-    // Validar que el token tenga la estructura esperada
-    if (!decoded.userId || !decoded.email || !decoded.role) {
-      throw new Error('Invalid token structure');
+    // Para Edge Runtime, usar validación simple de JWT sin librerías externas
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid token format');
     }
 
-    // Validar expiración si existe
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+    // Decodificar payload (parte del medio)
+    const payload = JSON.parse(atob(parts[1] || ''));
+
+    // Validar expiración
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       throw new Error('Token expired');
     }
 
-    return decoded;
+    // Validar que el token tenga la estructura esperada
+    if (!payload.id || !payload.email || !payload.role) {
+      throw new Error('Invalid token structure');
+    }
+
+    return {
+      userId: payload.id,
+      email: payload.email,
+      role: payload.role,
+      name: payload.name,
+    };
   } catch (error) {
     throw new Error('Invalid token');
   }
@@ -107,11 +118,11 @@ async function validateWithAuthService(token: string, userId: string): Promise<b
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-Requested-With': 'XMLHttpRequest'
+        Authorization: `Bearer ${token}`,
+        'X-Requested-With': 'XMLHttpRequest',
       },
       body: JSON.stringify({ userId }),
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
@@ -119,17 +130,16 @@ async function validateWithAuthService(token: string, userId: string): Promise<b
     if (!response.ok) {
       logger.warn('Auth service validation failed', {
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
       });
       return false;
     }
 
     const data = await response.json();
     return data.success === true;
-
   } catch (error) {
     logger.error('Auth service communication error', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // En caso de error de comunicación, permitir la solicitud con token válido
@@ -141,9 +151,8 @@ async function validateWithAuthService(token: string, userId: string): Promise<b
 // Middleware de autenticación principal
 export async function authMiddleware(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
-  const clientIP = request.headers.get('x-forwarded-for') ||
-                   request.headers.get('x-real-ip') ||
-                   'unknown';
+  const clientIP =
+    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
   // Saltar autenticación para rutas públicas
@@ -156,29 +165,27 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     const authHeader = request.headers.get('authorization');
     const cookieToken = request.cookies.get('auth-token')?.value;
 
-    const token = authHeader?.startsWith('Bearer ')
-      ? authHeader.substring(7)
-      : cookieToken;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
 
     if (!token) {
       logger.warn('No authentication token provided', {
         pathname,
         clientIP,
-        userAgent
+        userAgent,
       });
 
       return new NextResponse(
         JSON.stringify({
           success: false,
           error: 'Authentication required',
-          message: 'No authentication token provided'
+          message: 'No authentication token provided',
         }),
         {
           status: 401,
           headers: {
             'Content-Type': 'application/json',
-            'WWW-Authenticate': 'Bearer'
-          }
+            'WWW-Authenticate': 'Bearer',
+          },
         }
       );
     }
@@ -194,18 +201,18 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
         userId: decoded.userId,
         email: decoded.email,
         pathname,
-        clientIP
+        clientIP,
       });
 
       return new NextResponse(
         JSON.stringify({
           success: false,
           error: 'Authentication failed',
-          message: 'Token validation failed'
+          message: 'Token validation failed',
         }),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -219,18 +226,18 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
         role: decoded.role,
         requiredRoles,
         pathname,
-        clientIP
+        clientIP,
       });
 
       return new NextResponse(
         JSON.stringify({
           success: false,
           error: 'Insufficient permissions',
-          message: `Role '${decoded.role}' does not have access to this resource`
+          message: `Role '${decoded.role}' does not have access to this resource`,
         }),
         {
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -240,7 +247,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
-      permissions: decoded.permissions || []
+      permissions: decoded.permissions || [],
     };
 
     // Log de acceso autorizado
@@ -250,12 +257,11 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       role: decoded.role,
       pathname,
       method: request.method,
-      clientIP
+      clientIP,
     });
 
     // Continuar con la solicitud
     return null;
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Authentication error';
 
@@ -263,18 +269,18 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       error: errorMessage,
       pathname,
       clientIP,
-      userAgent
+      userAgent,
     });
 
     return new NextResponse(
       JSON.stringify({
         success: false,
         error: 'Authentication error',
-        message: errorMessage
+        message: errorMessage,
       }),
       {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }
@@ -292,7 +298,7 @@ export async function ownershipMiddleware(
     return new NextResponse(
       JSON.stringify({
         success: false,
-        error: 'Authentication required'
+        error: 'Authentication required',
       }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
@@ -311,24 +317,23 @@ export async function ownershipMiddleware(
     logger.info('Resource ownership verified', {
       userId: user.userId,
       resourceType,
-      resourceId
+      resourceId,
     });
 
     return null;
-
   } catch (error) {
     logger.error('Resource ownership verification failed', {
       userId: user.userId,
       resourceType,
       resourceId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new NextResponse(
       JSON.stringify({
         success: false,
         error: 'Access denied',
-        message: 'You do not have permission to access this resource'
+        message: 'You do not have permission to access this resource',
       }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
     );
