@@ -141,52 +141,6 @@ export default function BúsquedaAvanzadaPage() {
     concierge: false,
   });
 
-  // Mock data
-  const mockProperties: Property[] = [
-    {
-      id: '1',
-      title: 'Moderno departamento en Las Condes',
-      address: 'Las Condes, Santiago',
-      price: 450000,
-      bedrooms: 2,
-      bathrooms: 1,
-      area: 65,
-      propertyType: 'DEPARTMENT',
-      images: ['/placeholder-property.jpg'],
-      features: ['parking', 'elevator', 'balcony'],
-      description: 'Hermoso departamento moderno con vista a la ciudad.',
-      availableDate: '2024-02-01',
-    },
-    {
-      id: '2',
-      title: 'Casa amplia en Vitacura',
-      address: 'Vitacura, Santiago',
-      price: 850000,
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 180,
-      propertyType: 'HOUSE',
-      images: ['/placeholder-property.jpg'],
-      features: ['parking', 'garden', 'pool', 'pets_allowed'],
-      description: 'Casa familiar espaciosa con jardín y piscina.',
-      availableDate: '2024-02-15',
-    },
-    {
-      id: '3',
-      title: 'Estudio céntrico en Providencia',
-      address: 'Providencia, Santiago',
-      price: 280000,
-      bedrooms: 1,
-      bathrooms: 1,
-      area: 35,
-      propertyType: 'STUDIO',
-      images: ['/placeholder-property.jpg'],
-      features: ['furnished', 'concierge', 'gym'],
-      description: 'Estudio moderno en el corazón de Providencia.',
-      availableDate: '2024-01-20',
-    },
-  ];
-
   useEffect(() => {
     loadPageData();
   }, []);
@@ -200,8 +154,42 @@ export default function BúsquedaAvanzadaPage() {
       setLoading(true);
       setError(null);
 
-      // Load properties
-      setProperties(mockProperties);
+      // Cargar propiedades reales desde la API
+      const response = await fetch('/api/properties?limit=50&status=AVAILABLE', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transformar datos de la API al formato esperado
+      const transformedProperties: Property[] =
+        data.properties?.map((prop: any) => ({
+          id: prop.id,
+          title: prop.title,
+          address: prop.address,
+          price: prop.price,
+          bedrooms: prop.bedrooms,
+          bathrooms: prop.bathrooms,
+          area: prop.area,
+          propertyType: prop.type,
+          images: prop.images || ['/placeholder-property.jpg'],
+          features: prop.features || [],
+          description: prop.description,
+          availableDate: prop.availableFrom || new Date().toISOString().split('T')[0],
+          latitude: prop.latitude,
+          longitude: prop.longitude,
+        })) || [];
+
+      setProperties(transformedProperties);
 
       // Load saved searches from localStorage
       const saved = localStorage.getItem('savedSearches');
@@ -209,12 +197,17 @@ export default function BúsquedaAvanzadaPage() {
         setSavedSearches(JSON.parse(saved));
       }
 
-      logger.debug('Datos de búsqueda avanzada cargados');
+      logger.debug('Datos de búsqueda avanzada cargados', {
+        propertiesCount: transformedProperties.length,
+      });
     } catch (error) {
       logger.error('Error cargando datos de búsqueda avanzada:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar los datos');
+
+      // En caso de error, mostrar datos vacíos
+      setProperties([]);
     } finally {
       setLoading(false);
     }
