@@ -202,9 +202,21 @@ export default function BrokerDashboardPage() {
             averageCommission: data.stats.averageCommission,
           });
         } else {
-          // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
-          logger.warn('API dashboard failed, using mock data');
-          await loadMockData();
+          // Si la API falla, mostrar datos vacíos en lugar de mock
+          logger.warn('API dashboard failed, showing empty data');
+          setProperties([]);
+          setClients([]);
+          setRecentActivities([]);
+          setStats({
+            totalProperties: 0,
+            activeClients: 0,
+            totalCommissions: 0,
+            monthlyRevenue: 0,
+            pendingAppointments: 0,
+            newInquiries: 0,
+            conversionRate: 0,
+            averageCommission: 0,
+          });
         }
 
         setLoading(false);
@@ -212,123 +224,22 @@ export default function BrokerDashboardPage() {
         logger.error('Error loading broker data:', {
           error: error instanceof Error ? error.message : String(error),
         });
-        // Fallback a datos mock en caso de error
-        await loadMockData();
+        // En caso de error, mostrar datos vacíos
+        setProperties([]);
+        setClients([]);
+        setRecentActivities([]);
+        setStats({
+          totalProperties: 0,
+          activeClients: 0,
+          totalCommissions: 0,
+          monthlyRevenue: 0,
+          pendingAppointments: 0,
+          newInquiries: 0,
+          conversionRate: 0,
+          averageCommission: 0,
+        });
         setLoading(false);
       }
-    };
-
-    const loadMockData = async () => {
-      // Datos mock como fallback
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          title: 'Departamento Moderno Providencia',
-          address: 'Av. Providencia 123, Providencia',
-          price: 450000,
-          status: 'available',
-          type: 'departamento',
-          owner: 'María González',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-          views: 45,
-          inquiries: 3,
-        },
-        {
-          id: '2',
-          title: 'Casa Familiar Las Condes',
-          address: 'Calle Las Condes 456, Las Condes',
-          price: 850000,
-          status: 'rented',
-          type: 'casa',
-          owner: 'Roberto Díaz',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-          views: 78,
-          inquiries: 5,
-        },
-        {
-          id: '3',
-          title: 'Oficina Corporativa Centro',
-          address: 'Av. Libertador 789, Santiago Centro',
-          price: 1200000,
-          status: 'pending',
-          type: 'oficina',
-          owner: 'Empresa ABC Ltda',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-          views: 23,
-          inquiries: 1,
-        },
-      ];
-
-      const mockClients: Client[] = [
-        {
-          id: '1',
-          name: 'María González',
-          email: 'maria@email.com',
-          type: 'owner',
-          status: 'active',
-          lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          properties: 3,
-        },
-        {
-          id: '2',
-          name: 'Carlos Ramírez',
-          email: 'carlos@email.com',
-          type: 'tenant',
-          status: 'prospect',
-          lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-          properties: 0,
-        },
-      ];
-
-      const mockActivities: RecentActivity[] = [
-        {
-          id: '1',
-          type: 'inquiry',
-          description: 'Nueva consulta por departamento Providencia',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        },
-        {
-          id: '2',
-          type: 'commission',
-          description: 'Comisión generada por arriendo Las Condes',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-          amount: 42500,
-        },
-        {
-          id: '3',
-          type: 'appointment',
-          description: 'Cita agendada con cliente prospecto',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-        },
-      ];
-
-      setProperties(mockProperties);
-      setClients(mockClients);
-      setRecentActivities(mockActivities);
-
-      // Calculate stats
-      const totalProperties = mockProperties.length;
-      const activeClients = mockClients.filter(c => c.status === 'active').length;
-      const totalCommissions = 125000;
-      const monthlyRevenue = 425000;
-      const pendingAppointments = 3;
-      const newInquiries = mockProperties.reduce((sum, p) => sum + p.inquiries, 0);
-      const conversionRate = 65; // percentage
-      const averageCommission =
-        totalCommissions / mockProperties.filter(p => p.status === 'rented').length;
-
-      const brokerStats: BrokerStats = {
-        totalProperties,
-        activeClients,
-        totalCommissions,
-        monthlyRevenue,
-        pendingAppointments,
-        newInquiries,
-        conversionRate,
-        averageCommission,
-      };
-
-      setStats(brokerStats);
     };
 
     loadUserData();
