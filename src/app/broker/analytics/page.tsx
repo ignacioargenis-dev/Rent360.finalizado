@@ -79,27 +79,43 @@ export default function BrokerAnalyticsPage() {
 
     const loadAnalyticsData = async () => {
       try {
-        // Mock analytics data
-        const mockPerformance: PerformanceData = {
-          propertyViews: 1250,
-          inquiriesGenerated: 89,
-          conversionRate: 7.1,
-          averageResponseTime: 2.3,
-          clientSatisfaction: 4.6,
-          monthlyRevenue: 425000,
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/analytics/dashboard-stats?period=6months', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const analyticsData = await response.json();
+
+        // Transformar datos de la API al formato esperado
+        const performanceData: PerformanceData = {
+          propertyViews: analyticsData.overview?.totalViews || 0,
+          inquiriesGenerated: analyticsData.overview?.totalInquiries || 0,
+          conversionRate: analyticsData.overview?.conversionRate || 0,
+          averageResponseTime: analyticsData.overview?.averageResponseTime || 0,
+          clientSatisfaction: analyticsData.overview?.clientSatisfaction || 0,
+          monthlyRevenue: analyticsData.overview?.monthlyRevenue || 0,
         };
 
-        const mockTrends: TrendData[] = [
-          { period: 'Enero', views: 980, inquiries: 65, conversions: 6, revenue: 380000 },
-          { period: 'Febrero', views: 1100, inquiries: 72, conversions: 7, revenue: 395000 },
-          { period: 'Marzo', views: 1180, inquiries: 78, conversions: 8, revenue: 410000 },
-          { period: 'Abril', views: 1220, inquiries: 82, conversions: 8, revenue: 418000 },
-          { period: 'Mayo', views: 1190, inquiries: 85, conversions: 9, revenue: 422000 },
-          { period: 'Junio', views: 1250, inquiries: 89, conversions: 9, revenue: 425000 },
-        ];
+        const trendData: TrendData[] =
+          analyticsData.monthlyStats?.map((stat: any) => ({
+            period: stat.month,
+            views: stat.views || 0,
+            inquiries: stat.inquiries || 0,
+            conversions: stat.conversions || 0,
+            revenue: stat.revenue || 0,
+          })) || [];
 
-        setPerformanceData(mockPerformance);
-        setTrendData(mockTrends);
+        setPerformanceData(performanceData);
+        setTrendData(trendData);
         setLoading(false);
       } catch (error) {
         logger.error('Error loading analytics data:', {

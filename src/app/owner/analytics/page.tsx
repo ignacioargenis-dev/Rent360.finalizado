@@ -108,43 +108,27 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock analytics data for owner
-      const mockAnalytics = {
-        overview: {
-          totalProperties: 12,
-          occupiedProperties: 10,
-          totalRevenue: 4500000,
-          monthlyRevenue: 375000,
-          occupancyRate: 83.3,
-          averageRent: 375000,
+      // Cargar datos reales desde la API
+      const response = await fetch('/api/analytics/dashboard-stats?period=6months', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        monthlyStats: [
-          { month: 'Ene', revenue: 4200000, occupancy: 85 },
-          { month: 'Feb', revenue: 4450000, occupancy: 88 },
-          { month: 'Mar', revenue: 4600000, occupancy: 90 },
-          { month: 'Abr', revenue: 4350000, occupancy: 82 },
-          { month: 'May', revenue: 4500000, occupancy: 83 },
-          { month: 'Jun', revenue: 4650000, occupancy: 87 },
-        ],
-        topProperties: [
-          { name: 'Departamento Las Condes', revenue: 550000, occupancy: 95 },
-          { name: 'Casa Providencia', revenue: 650000, occupancy: 100 },
-          { name: 'Estudio Centro', revenue: 320000, occupancy: 88 },
-        ],
-        tenantSatisfaction: 4.2,
-        maintenanceRequests: 8,
-        paymentDelays: 2,
-      };
+      });
 
-      setData(mockAnalytics);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const analyticsData = await response.json();
+      setData(analyticsData);
     } catch (error) {
-      logger.error('Error loading page data:', {
+      logger.error('Error loading analytics data:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setError('Error al cargar los datos');
+      setError('Error al cargar los datos de analytics');
     } finally {
       setLoading(false);
     }
