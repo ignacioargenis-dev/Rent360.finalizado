@@ -7,7 +7,7 @@ import { NotificationService } from '@/lib/notification-service';
 
 const messageSchema = z.object({
   receiverId: z.string(),
-  subject: z.string().min(1),
+  subject: z.string().min(1).optional(),
   content: z.string().min(1),
   type: z
     .enum(['direct', 'property_inquiry', 'contract_related', 'support'])
@@ -150,6 +150,9 @@ export async function POST(request: NextRequest) {
 
     const { receiverId, subject, content, type, propertyId, contractId } = validatedData;
 
+    // Generar subject automático si no se proporciona
+    const messageSubject = subject || `Mensaje de ${user.name || user.email}`;
+
     // Verificar que el receptor exista
     const receiver = await db.user.findUnique({
       where: { id: receiverId },
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
       data: {
         senderId: user.id,
         receiverId,
-        subject,
+        subject: messageSubject,
         content,
         type: type || 'direct',
         propertyId: propertyId || null,
