@@ -463,7 +463,7 @@ export default function BrokerDashboardPage() {
                 <CardDescription>Herramientas para gestionar tu negocio</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <QuickActionButton
                     icon={Plus}
                     label="Nueva Propiedad"
@@ -504,6 +504,13 @@ export default function BrokerDashboardPage() {
                     label="Reportes"
                     description="Estadísticas y análisis"
                     onClick={() => router.push('/broker/reports')}
+                  />
+
+                  <QuickActionButton
+                    icon={AlertTriangle}
+                    label="Soporte"
+                    description="Contactar soporte técnico"
+                    onClick={() => router.push('/support/tickets')}
                   />
                 </div>
               </CardContent>

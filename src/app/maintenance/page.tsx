@@ -572,7 +572,7 @@ Los cambios han sido guardados y notificados al propietario.`);
             <h2 className="text-2xl font-bold text-gray-800">Acciones Rápidas</h2>
             <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex-1 mx-4"></div>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Plus className="w-6 h-6 text-white" />
@@ -635,6 +635,21 @@ Los cambios han sido guardados y notificados al propietario.`);
                 className="text-orange-600 hover:text-orange-800 font-medium text-sm flex items-center"
               >
                 Ver reportes
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-red-200 group">
+              <div className="bg-gradient-to-br from-red-500 to-red-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <AlertTriangle className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Soporte</h3>
+              <p className="text-sm text-gray-600 mb-4">Contacta al equipo de soporte técnico</p>
+              <Link
+                href="/support/tickets"
+                className="text-red-600 hover:text-red-800 font-medium text-sm flex items-center"
+              >
+                Contactar soporte
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </div>

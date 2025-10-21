@@ -17,8 +17,15 @@ try {
 }
 
 try {
-  const { notificationService: notifications } = await import('@/lib/notifications');
+  const {
+    notificationService: notifications,
+    NotificationType,
+    NotificationPriority,
+  } = await import('@/lib/notifications');
   notificationService = notifications;
+  // Hacer disponibles globalmente para el resto del archivo
+  (global as any).NotificationType = NotificationType;
+  (global as any).NotificationPriority = NotificationPriority;
   logger.info('Notification service loaded successfully');
 } catch (error) {
   logger.warn('Notification service not available, continuing without notifications', { error });
@@ -193,10 +200,15 @@ async function loginHandler(request: NextRequest) {
       try {
         await notificationService.createSmartNotification(
           user.id,
-          'system_alert' as any,
-          {},
+          (global as any).NotificationType.SYSTEM_ALERT,
           {
-            priority: 'high' as any,
+            title: 'Bienvenido a Rent360',
+            message: `Hola ${user.name || user.email}, bienvenido a Rent360. Tu sesión ha sido iniciada correctamente.`,
+            severity: 'low',
+            timestamp: new Date().toISOString(),
+          },
+          {
+            priority: (global as any).NotificationPriority.MEDIUM,
             personalization: {
               action: 'login_success',
               timestamp: new Date().toISOString(),

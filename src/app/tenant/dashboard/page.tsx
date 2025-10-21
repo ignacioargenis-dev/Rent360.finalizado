@@ -691,6 +691,14 @@ export default function TenantDashboardPage() {
                   <Calendar className="w-4 h-4 mr-2" />
                   Calendario de Pagos
                 </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/support/tickets')}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Contactar Soporte
+                </Button>
               </CardContent>
             </Card>
 

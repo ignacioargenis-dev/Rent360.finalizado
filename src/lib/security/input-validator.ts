@@ -35,7 +35,10 @@ export const MALICIOUS_PATTERNS = [
 ];
 
 // Función para sanitizar strings
-export function sanitizeString(input: string, maxLength: number = SECURITY_LIMITS.MAX_STRING_LENGTH): string {
+export function sanitizeString(
+  input: string,
+  maxLength: number = SECURITY_LIMITS.MAX_STRING_LENGTH
+): string {
   if (!input || typeof input !== 'string') {
     return '';
   }
@@ -49,7 +52,7 @@ export function sanitizeString(input: string, maxLength: number = SECURITY_LIMIT
     logger.warn('String truncated due to length limit', {
       originalLength: input.length,
       maxLength,
-      context: 'input_sanitization'
+      context: 'input_sanitization',
     });
   }
 
@@ -59,7 +62,7 @@ export function sanitizeString(input: string, maxLength: number = SECURITY_LIMIT
       logger.warn('Malicious pattern detected and removed', {
         pattern: pattern.source,
         input: sanitized.substring(0, 100) + '...',
-        context: 'input_sanitization'
+        context: 'input_sanitization',
       });
       sanitized = sanitized.replace(pattern, '');
     }
@@ -93,7 +96,7 @@ export function sanitizeObject(obj: any, depth: number = 0): any {
       logger.warn('Array length limit exceeded', {
         length: obj.length,
         maxLength: SECURITY_LIMITS.MAX_ARRAY_LENGTH,
-        context: 'input_sanitization'
+        context: 'input_sanitization',
       });
       return obj.slice(0, SECURITY_LIMITS.MAX_ARRAY_LENGTH);
     }
@@ -111,7 +114,7 @@ export function sanitizeObject(obj: any, depth: number = 0): any {
         logger.warn('Object property name sanitized', {
           originalKey: key,
           sanitizedKey,
-          context: 'input_sanitization'
+          context: 'input_sanitization',
         });
       }
 
@@ -132,7 +135,7 @@ export function validateUploadedFile(file: File): { isValid: boolean; error?: st
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: 'File size exceeds maximum limit of 10MB'
+      error: 'File size exceeds maximum limit of 10MB',
     };
   }
 
@@ -145,13 +148,13 @@ export function validateUploadedFile(file: File): { isValid: boolean; error?: st
     'application/pdf',
     'text/plain',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
 
   if (!allowedTypes.includes(file.type)) {
     return {
       isValid: false,
-      error: `File type ${file.type} is not allowed`
+      error: `File type ${file.type} is not allowed`,
     };
   }
 
@@ -160,18 +163,28 @@ export function validateUploadedFile(file: File): { isValid: boolean; error?: st
   if (fileName !== file.name) {
     return {
       isValid: false,
-      error: 'File name contains invalid characters'
+      error: 'File name contains invalid characters',
     };
   }
 
   // Validar extensión
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf', '.txt', '.doc', '.docx'];
+  const allowedExtensions = [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+    '.gif',
+    '.pdf',
+    '.txt',
+    '.doc',
+    '.docx',
+  ];
   const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
 
   if (!allowedExtensions.includes(extension)) {
     return {
       isValid: false,
-      error: `File extension ${extension} is not allowed`
+      error: `File extension ${extension} is not allowed`,
     };
   }
 
@@ -213,7 +226,8 @@ export function validateEmailSecurity(email: string): { isValid: boolean; error?
   const sanitizedEmail = sanitizeString(email, 254); // RFC 5321 limita a 254 caracteres
 
   // Validar formato básico
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
   if (!emailRegex.test(sanitizedEmail)) {
     return { isValid: false, error: 'Invalid email format' };
@@ -243,11 +257,13 @@ export function validateEmailSecurity(email: string): { isValid: boolean; error?
     return { isValid: false, error: 'Domain part of email cannot be empty' };
   }
 
-  if (localPart.length > 64) { // RFC 5321
+  if (localPart.length > 64) {
+    // RFC 5321
     return { isValid: false, error: 'Local part of email is too long' };
   }
 
-  if (domainPart.length > 253) { // RFC 5321
+  if (domainPart.length > 253) {
+    // RFC 5321
     return { isValid: false, error: 'Domain part of email is too long' };
   }
 
@@ -255,7 +271,11 @@ export function validateEmailSecurity(email: string): { isValid: boolean; error?
 }
 
 // Middleware de validación de entrada
-export function validateInput(request: NextRequest): { isValid: boolean; sanitizedBody?: any; error?: string } {
+export function validateInput(request: NextRequest): {
+  isValid: boolean;
+  sanitizedBody?: any;
+  error?: string;
+} {
   try {
     // Validar Content-Type
     const contentType = request.headers.get('content-type') || '';
@@ -278,14 +298,17 @@ export function validateInput(request: NextRequest): { isValid: boolean; sanitiz
   } catch (error) {
     logger.error('Error validating input', {
       error: error instanceof Error ? error.message : String(error),
-      context: 'input_validation'
+      context: 'input_validation',
     });
     return { isValid: false, error: 'Input validation failed' };
   }
 }
 
 // Función para validar parámetros de consulta
-export function validateQueryParams(searchParams: URLSearchParams): { isValid: boolean; error?: string } {
+export function validateQueryParams(searchParams: URLSearchParams): {
+  isValid: boolean;
+  error?: string;
+} {
   // Validar que no haya parámetros duplicados
   const paramNames = Array.from(searchParams.keys());
   const uniqueParams = new Set(paramNames);
@@ -299,7 +322,7 @@ export function validateQueryParams(searchParams: URLSearchParams): { isValid: b
     if (value.length > SECURITY_LIMITS.MAX_FIELD_LENGTH) {
       return {
         isValid: false,
-        error: `Query parameter '${key}' is too long`
+        error: `Query parameter '${key}' is too long`,
       };
     }
 
@@ -309,7 +332,7 @@ export function validateQueryParams(searchParams: URLSearchParams): { isValid: b
       logger.warn('Query parameter sanitized', {
         parameter: key,
         originalValue: value,
-        context: 'query_validation'
+        context: 'query_validation',
       });
     }
   }
@@ -324,7 +347,7 @@ export function detectInjectionAttacks(input: string): { isSafe: boolean; threat
   // Patrones de SQL injection
   const sqlPatterns = [
     /(\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bcreate\b|\balter\b)/gi,
-    /('|(\\x27)|(\\x2D\\x2D)|(\\|\/\*|\*\/)|(\\x3B)|(\\x2B)|(\\x28)|(\\x29))/gi
+    /('|(\\x27)|(\\x2D\\x2D)|(\\|\/\*|\*\/)|(\\x3B)|(\\x2B)|(\\x28)|(\\x29))/gi,
   ];
 
   // Patrones de XSS
@@ -334,21 +357,16 @@ export function detectInjectionAttacks(input: string): { isSafe: boolean; threat
     /vbscript:/gi,
     /onload\s*=/gi,
     /onerror\s*=/gi,
-    /onclick\s*=/gi
+    /onclick\s*=/gi,
   ];
 
   // Patrones de Path Traversal
-  const traversalPatterns = [
-    /\.\./g,
-    /\.\//g,
-    /\/etc\/passwd/gi,
-    /\/etc\/shadow/gi
-  ];
+  const traversalPatterns = [/\.\./g, /\.\//g, /\/etc\/passwd/gi, /\/etc\/shadow/gi];
 
   const allPatterns = [
     ...sqlPatterns.map(p => ({ pattern: p, type: 'SQL Injection' })),
     ...xssPatterns.map(p => ({ pattern: p, type: 'XSS' })),
-    ...traversalPatterns.map(p => ({ pattern: p, type: 'Path Traversal' }))
+    ...traversalPatterns.map(p => ({ pattern: p, type: 'Path Traversal' })),
   ];
 
   for (const { pattern, type } of allPatterns) {
@@ -359,12 +377,15 @@ export function detectInjectionAttacks(input: string): { isSafe: boolean; threat
 
   return {
     isSafe: threats.length === 0,
-    threats
+    threats,
   };
 }
 
 // Función para validar headers de seguridad
-export function validateSecurityHeaders(request: NextRequest): { isValid: boolean; warnings: string[] } {
+export function validateSecurityHeaders(request: NextRequest): {
+  isValid: boolean;
+  warnings: string[];
+} {
   const warnings: string[] = [];
   let isValid = true;
 
@@ -389,17 +410,20 @@ export function validateSecurityHeaders(request: NextRequest): { isValid: boolea
       warnings.push('Missing Content-Length header');
     } else {
       const length = parseInt(contentLength);
-      if (length > 10 * 1024 * 1024) { // 10MB
+      if (length > 10 * 1024 * 1024) {
+        // 10MB
         warnings.push('Content-Length exceeds maximum allowed size');
         isValid = false;
       }
     }
   }
 
-  // Verificar Accept header
-  const accept = request.headers.get('accept');
-  if (!accept || !accept.includes('application/json')) {
-    warnings.push('Client does not accept JSON responses');
+  // Verificar Accept header solo para requests POST/PUT/PATCH
+  if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    const accept = request.headers.get('accept');
+    if (!accept || !accept.includes('application/json')) {
+      warnings.push('Client does not accept JSON responses');
+    }
   }
 
   if (warnings.length > 0) {
@@ -408,7 +432,7 @@ export function validateSecurityHeaders(request: NextRequest): { isValid: boolea
       method,
       url: request.url,
       userAgent: userAgent?.substring(0, 100),
-      context: 'security_validation'
+      context: 'security_validation',
     });
   }
 
