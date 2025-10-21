@@ -91,100 +91,142 @@ export default function OwnerReportsPage() {
   const [dateRange, setDateRange] = useState<string>('last30days');
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      setMetrics([
+    loadReportsData();
+  }, [dateRange]);
+
+  const loadReportsData = async () => {
+    try {
+      setLoading(true);
+
+      // Cargar datos reales desde la API
+      const response = await fetch(`/api/analytics/dashboard-stats?period=${dateRange}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transformar datos de la API al formato esperado
+      const transformedMetrics: ReportMetric[] = [
         {
           label: 'Ingresos Totales',
-          value: '$18.5M',
-          change: '+12.5%',
+          value: formatPrice(data.overview?.totalRevenue || 0),
+          change: '+12.5%', // TODO: Calcular cambio real
           trend: 'up',
           icon: DollarSign,
           color: 'text-green-600',
         },
         {
           label: 'Tasa de Ocupación',
-          value: '87%',
-          change: '+3.2%',
+          value: `${data.overview?.occupancyRate || 0}%`,
+          change: '+3.2%', // TODO: Calcular cambio real
           trend: 'up',
           icon: Home,
           color: 'text-blue-600',
         },
         {
           label: 'Satisfacción',
-          value: '4.7/5',
-          change: '+0.3',
+          value: `${data.tenantSatisfaction || 0}/5`,
+          change: '+0.3', // TODO: Calcular cambio real
           trend: 'up',
           icon: Star,
           color: 'text-yellow-600',
         },
         {
           label: 'Mantenimiento',
-          value: '$2.1M',
-          change: '-5.1%',
+          value: formatPrice(data.maintenanceRequests * 50000 || 0), // Estimación
+          change: '-5.1%', // TODO: Calcular cambio real
           trend: 'down',
           icon: AlertTriangle,
           color: 'text-red-600',
         },
-      ]);
+      ];
 
-      setPropertyPerformance([
-        {
-          id: '1',
-          title: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          occupancyRate: 95,
-          monthlyRevenue: 550000,
-          totalRevenue: 6600000,
-          averageRating: 4.8,
-          maintenanceCosts: 220000,
-          netProfit: 6380000,
-        },
-        {
-          id: '2',
-          title: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          occupancyRate: 100,
-          monthlyRevenue: 350000,
-          totalRevenue: 4200000,
-          averageRating: 4.6,
-          maintenanceCosts: 168000,
-          netProfit: 4032000,
-        },
-        {
-          id: '3',
-          title: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          occupancyRate: 75,
-          monthlyRevenue: 1200000,
-          totalRevenue: 10800000,
-          averageRating: 4.9,
-          maintenanceCosts: 648000,
-          netProfit: 10152000,
-        },
-      ]);
+      // Transformar propiedades de la API
+      const transformedProperties: PropertyPerformance[] =
+        data.properties?.map((prop: any) => ({
+          id: prop.id,
+          title: prop.title,
+          address: prop.address,
+          occupancyRate: prop.occupancyRate || 0,
+          monthlyRevenue: prop.monthlyRevenue || 0,
+          totalRevenue: prop.totalRevenue || 0,
+          averageRating: prop.averageRating || 0,
+          maintenanceCosts: prop.maintenanceCosts || 0,
+          netProfit: (prop.monthlyRevenue || 0) * 12 - (prop.maintenanceCosts || 0),
+        })) || [];
 
+      // Resumen financiero basado en datos reales
+      const transformedFinancialSummary: FinancialSummary = {
+        totalRevenue: data.overview?.totalRevenue || 0,
+        totalExpenses: data.maintenanceRequests * 50000 || 0, // Estimación
+        netProfit: (data.overview?.totalRevenue || 0) - (data.maintenanceRequests * 50000 || 0),
+        profitMargin:
+          data.overview?.totalRevenue > 0
+            ? ((data.overview.totalRevenue - (data.maintenanceRequests * 50000 || 0)) /
+                data.overview.totalRevenue) *
+              100
+            : 0,
+        yearOverYearGrowth: 15.3, // TODO: Calcular crecimiento real
+        averageOccupancyRate: data.overview?.occupancyRate || 0,
+      };
+
+      // Análisis de inquilinos basado en datos reales
+      const transformedTenantAnalysis: TenantAnalysis = {
+        totalTenants: data.overview?.totalTenants || 0,
+        averageTenure: 24, // TODO: Calcular desde datos reales
+        retentionRate: 92, // TODO: Calcular desde datos reales
+        satisfactionScore: data.tenantSatisfaction || 0,
+        topPerformers: [], // TODO: Obtener desde datos reales
+        atRiskTenants: [], // TODO: Obtener desde datos reales
+      };
+
+      setMetrics(transformedMetrics);
+      setPropertyPerformance(transformedProperties);
+      setFinancialSummary(transformedFinancialSummary);
+      setTenantAnalysis(transformedTenantAnalysis);
+
+      logger.debug('Datos de reportes cargados', {
+        totalRevenue: data.overview?.totalRevenue,
+        occupancyRate: data.overview?.occupancyRate,
+        propertiesCount: transformedProperties.length,
+      });
+    } catch (error) {
+      logger.error('Error cargando datos de reportes:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // En caso de error, mostrar datos vacíos
+      setMetrics([]);
+      setPropertyPerformance([]);
       setFinancialSummary({
-        totalRevenue: 21600000,
-        totalExpenses: 1036000,
-        netProfit: 20564000,
-        profitMargin: 95.2,
-        yearOverYearGrowth: 15.3,
-        averageOccupancyRate: 87,
+        totalRevenue: 0,
+        totalExpenses: 0,
+        netProfit: 0,
+        profitMargin: 0,
+        yearOverYearGrowth: 0,
+        averageOccupancyRate: 0,
       });
-
       setTenantAnalysis({
-        totalTenants: 156,
-        averageTenure: 24,
-        retentionRate: 92,
-        satisfactionScore: 4.7,
-        topPerformers: ['Carlos Ramírez', 'Ana Martínez', 'Empresa Soluciones Ltda.'],
-        atRiskTenants: ['Pedro Silva'],
+        totalTenants: 0,
+        averageTenure: 0,
+        retentionRate: 0,
+        satisfactionScore: 0,
+        topPerformers: [],
+        atRiskTenants: [],
       });
-
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {

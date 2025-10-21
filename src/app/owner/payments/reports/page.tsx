@@ -75,76 +75,63 @@ export default function OwnerPaymentsReportsPage() {
 
     const loadPaymentsData = async () => {
       try {
-        // Mock payment reports data
-        const mockReports: PaymentReport[] = [
-          {
-            period: 'Junio 2024',
-            totalReceived: 4250000,
-            expectedPayments: 4500000,
-            overduePayments: 150000,
-            paymentRate: 94.4,
-            averagePaymentDelay: 1.2,
-            propertiesPaid: 8,
-            totalProperties: 9,
+        // Cargar datos reales de pagos desde la API
+        const response = await fetch('/api/payments/reports', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
           },
-          {
-            period: 'Mayo 2024',
-            totalReceived: 3980000,
-            expectedPayments: 4100000,
-            overduePayments: 80000,
-            paymentRate: 97.1,
-            averagePaymentDelay: 0.8,
-            propertiesPaid: 7,
-            totalProperties: 8,
-          },
-          {
-            period: 'Abril 2024',
-            totalReceived: 4120000,
-            expectedPayments: 4200000,
-            overduePayments: 120000,
-            paymentRate: 95.2,
-            averagePaymentDelay: 1.5,
-            propertiesPaid: 9,
-            totalProperties: 10,
-          },
-        ];
+        });
 
-        const mockDetails: PaymentDetail[] = [
-          {
-            id: '1',
-            propertyTitle: 'Departamento Moderno Providencia',
-            tenantName: 'Carlos Ramírez',
-            amount: 450000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            status: 'paid',
-          },
-          {
-            id: '2',
-            propertyTitle: 'Casa Familiar Las Condes',
-            tenantName: 'Ana López',
-            amount: 850000,
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            status: 'overdue',
-            delayDays: 3,
-          },
-          {
-            id: '3',
-            propertyTitle: 'Oficina Corporativa Centro',
-            tenantName: 'Tech Solutions SpA',
-            amount: 1200000,
-            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-            status: 'pending',
-          },
-        ];
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
 
-        setReports(mockReports);
-        setPaymentDetails(mockDetails);
-        setLoading(false);
+        const data = await response.json();
+
+        // Transformar datos de la API al formato esperado
+        const transformedReports: PaymentReport[] =
+          data.reports?.map((report: any) => ({
+            period: report.period,
+            totalReceived: report.totalReceived || 0,
+            expectedPayments: report.expectedPayments || 0,
+            overduePayments: report.overduePayments || 0,
+            paymentRate: report.paymentRate || 0,
+            averagePaymentDelay: report.averagePaymentDelay || 0,
+            propertiesPaid: report.propertiesPaid || 0,
+            totalProperties: report.totalProperties || 0,
+          })) || [];
+
+        const transformedDetails: PaymentDetail[] =
+          data.paymentDetails?.map((payment: any) => ({
+            id: payment.id,
+            propertyTitle: payment.propertyTitle || 'Propiedad no identificada',
+            tenantName: payment.tenantName || 'Inquilino no identificado',
+            amount: payment.amount || 0,
+            dueDate: payment.dueDate,
+            paymentDate: payment.paymentDate,
+            status: payment.status || 'pending',
+            delayDays: payment.delayDays,
+          })) || [];
+
+        setReports(transformedReports);
+        setPaymentDetails(transformedDetails);
+
+        logger.debug('Datos de reportes de pagos cargados', {
+          reportsCount: transformedReports.length,
+          detailsCount: transformedDetails.length,
+        });
       } catch (error) {
         logger.error('Error loading payments data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+
+        // En caso de error, mostrar datos vacíos
+        setReports([]);
+        setPaymentDetails([]);
+      } finally {
         setLoading(false);
       }
     };
