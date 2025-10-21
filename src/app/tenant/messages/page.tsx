@@ -142,7 +142,7 @@ export default function TenantMessagesPage() {
       setError(null);
 
       // Fetch real messages data from API
-      const response = await fetch('/api/messages?limit=100', {
+      const response = await fetch('/api/messages/conversations', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -157,48 +157,38 @@ export default function TenantMessagesPage() {
 
       const data = await response.json();
 
-      // Transform API data to match our interface
-      const transformedMessages: Message[] = data.messages.map((message: any) => ({
-        id: message.id,
-        content: message.content || 'Sin contenido',
-        senderId: message.senderId || 'unknown',
-        senderName: message.senderName || 'Usuario desconocido',
-        senderRole: message.senderRole || 'USER',
-        timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-        isRead: message.isRead || false,
-        type: 'text',
-      }));
+      if (data.success && data.data) {
+        // Transform API conversations data to match our interface
+        const transformedConversations: Conversation[] = data.data.map((conv: any) => ({
+          id: conv.participant.id,
+          clientId: conv.participant.id,
+          clientName: conv.participant.name || 'Usuario desconocido',
+          clientRole: conv.participant.role || 'USER',
+          clientAvatar: conv.participant.avatar,
+          lastMessage: {
+            id: `msg_${Date.now()}`,
+            content: conv.lastMessage?.content || 'Sin contenido',
+            senderId: conv.participant.id,
+            senderName: conv.participant.name || 'Usuario desconocido',
+            senderRole: conv.participant.role || 'USER',
+            timestamp:
+              conv.lastMessage?.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0],
+            isRead: true,
+            type: 'text',
+          },
+          unreadCount: conv.unreadCount || 0,
+          status: 'active',
+        }));
 
-      // Group messages by conversation (simplified)
-      const conversationMap = new Map<string, Conversation>();
+        setConversations(transformedConversations);
 
-      transformedMessages.forEach(message => {
-        const convId = message.senderId;
-        if (!conversationMap.has(convId)) {
-          conversationMap.set(convId, {
-            id: convId,
-            clientId: message.senderId,
-            clientName: message.senderName,
-            clientRole: message.senderRole,
-            lastMessage: message,
-            unreadCount: message.isRead ? 0 : 1,
-            status: 'active',
-            lastActivity: message.timestamp,
-          });
-        } else {
-          const conv = conversationMap.get(convId)!;
-          if (new Date(message.timestamp) > new Date(conv.lastActivity)) {
-            conv.lastMessage = message;
-            conv.lastActivity = message.timestamp;
-          }
-          if (!message.isRead) {
-            conv.unreadCount++;
-          }
+        // Set messages from the first conversation if available
+        if (transformedConversations.length > 0) {
+          setSelectedConversation(transformedConversations[0] || null);
         }
-      });
-
-      setConversations(Array.from(conversationMap.values()));
-      setMessages(transformedMessages);
+      } else {
+        setConversations([]);
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -274,6 +264,44 @@ export default function TenantMessagesPage() {
       return [];
     }
     return messages.filter(msg => msg.senderId === selectedConversation.clientId);
+  };
+
+  const loadConversationMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/messages?receiverId=${conversationId}&limit=50`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.messages) {
+        const transformedMessages: Message[] = data.messages.map((message: any) => ({
+          id: message.id,
+          content: message.content || 'Sin contenido',
+          senderId: message.senderId || 'unknown',
+          senderName: message.senderName || 'Usuario desconocido',
+          senderRole: message.senderRole || 'USER',
+          timestamp: message.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          isRead: message.isRead || false,
+          type: 'text',
+        }));
+
+        setMessages(transformedMessages);
+      }
+    } catch (error) {
+      logger.error('Error loading conversation messages:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   };
 
   const filteredConversations = conversations.filter(conv => {
@@ -421,7 +449,10 @@ export default function TenantMessagesPage() {
                           ? 'bg-blue-50 border-blue-200'
                           : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => setSelectedConversation(conversation)}
+                      onClick={() => {
+                        setSelectedConversation(conversation);
+                        loadConversationMessages(conversation.clientId);
+                      }}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-3">
