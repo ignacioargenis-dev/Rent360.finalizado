@@ -1,0 +1,587 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { logger } from '@/lib/logger-minimal';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import {
+  MessageSquare,
+  Users,
+  Building,
+  Calendar,
+  Clock,
+  Eye,
+  Send,
+  Search,
+  Filter,
+  Phone,
+  Mail,
+  AlertCircle,
+  CheckCircle,
+  User,
+  Wrench,
+  DollarSign,
+} from 'lucide-react';
+import { User as UserType } from '@/types';
+
+interface Message {
+  id: string;
+  senderName: string;
+  senderType: 'owner' | 'tenant' | 'prospect' | 'provider' | 'broker' | 'admin' | 'support';
+  recipientName: string;
+  recipientType: 'owner' | 'tenant' | 'prospect' | 'provider' | 'broker' | 'admin' | 'support';
+  subject: string;
+  content: string;
+  propertyTitle?: string;
+  propertyAddress?: string;
+  type:
+    | 'inquiry'
+    | 'update'
+    | 'complaint'
+    | 'payment'
+    | 'maintenance'
+    | 'general'
+    | 'support'
+    | 'service_request';
+  status: 'unread' | 'read' | 'replied' | 'archived';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  createdAt: string;
+  repliedAt?: string;
+  hasAttachments: boolean;
+  serviceId?: string;
+  jobId?: string;
+}
+
+interface MessageStats {
+  totalMessages: number;
+  unreadMessages: number;
+  todayMessages: number;
+  urgentMessages: number;
+  responseRate: number;
+  averageResponseTime: number;
+  activeJobs: number;
+  completedJobs: number;
+}
+
+export default function ProviderMessagesPage() {
+  const searchParams = useSearchParams();
+  const [user, setUser] = useState<UserType | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [stats, setStats] = useState<MessageStats>({
+    totalMessages: 0,
+    unreadMessages: 0,
+    todayMessages: 0,
+    urgentMessages: 0,
+    responseRate: 0,
+    averageResponseTime: 0,
+    activeJobs: 0,
+    completedJobs: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [newMessageContent, setNewMessageContent] = useState('');
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
+  useEffect(() => {
+    loadPageData();
+  }, []);
+
+  const loadPageData = async () => {
+    try {
+      setLoading(true);
+
+      // Load user data
+      const userResponse = await fetch('/api/auth/me');
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData.user);
+      }
+
+      // Load messages data
+      const response = await fetch('/api/messages?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match our interface
+      const transformedMessages: Message[] =
+        data.messages?.map((message: any) => ({
+          id: message.id,
+          senderName: message.sender?.name || 'Usuario desconocido',
+          senderType: message.sender?.role?.toLowerCase() || 'user',
+          recipientName: message.receiver?.name || 'Usuario desconocido',
+          recipientType: message.receiver?.role?.toLowerCase() || 'user',
+          subject: message.subject || 'Sin asunto',
+          content: message.content || 'Sin contenido',
+          propertyTitle: message.property?.title || '',
+          propertyAddress: message.property?.address || '',
+          type: message.type || 'general',
+          status: message.isRead ? 'read' : 'unread',
+          priority: message.priority || 'normal',
+          createdAt: message.createdAt || new Date().toISOString(),
+          repliedAt: message.repliedAt,
+          hasAttachments: message.hasAttachments || false,
+          serviceId: message.serviceId,
+          jobId: message.jobId,
+        })) || [];
+
+      setMessages(transformedMessages);
+
+      // Calculate stats
+      const totalMessages = transformedMessages.length;
+      const unreadMessages = transformedMessages.filter(m => m.status === 'unread').length;
+      const todayMessages = transformedMessages.filter(m => {
+        const today = new Date().toDateString();
+        const messageDate = new Date(m.createdAt).toDateString();
+        return today === messageDate;
+      }).length;
+      const urgentMessages = transformedMessages.filter(m => m.priority === 'urgent').length;
+      const serviceMessages = transformedMessages.filter(
+        m => m.type === 'service_request' || m.type === 'maintenance'
+      ).length;
+
+      setStats({
+        totalMessages,
+        unreadMessages,
+        todayMessages,
+        urgentMessages,
+        responseRate: 96, // TODO: Calculate from real data
+        averageResponseTime: 2.1, // TODO: Calculate from real data
+        activeJobs: serviceMessages,
+        completedJobs: Math.floor(serviceMessages * 0.7), // TODO: Calculate from real data
+      });
+
+      logger.debug('Datos de mensajería de proveedor cargados', {
+        totalMessages,
+        unreadMessages,
+        todayMessages,
+        urgentMessages,
+        serviceMessages,
+      });
+    } catch (error) {
+      logger.error('Error loading provider messages data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Update local state
+      setMessages(prev =>
+        prev.map(msg => (msg.id === messageId ? { ...msg, status: 'read' } : msg))
+      );
+      setStats(prev => ({ ...prev, unreadMessages: prev.unreadMessages - 1 }));
+    } catch (error) {
+      logger.error('Error marking message as read:', { error });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessageContent.trim()) {
+      alert('Por favor escribe un mensaje antes de enviar');
+      return;
+    }
+
+    // Check if we have recipient data from sessionStorage (from contact buttons)
+    const recipientData = sessionStorage.getItem('newMessageRecipient');
+    let receiverId = 'system_broadcast';
+    let recipientName = 'Sistema';
+    let recipientType:
+      | 'owner'
+      | 'tenant'
+      | 'prospect'
+      | 'provider'
+      | 'broker'
+      | 'admin'
+      | 'support' = 'provider';
+
+    if (recipientData) {
+      try {
+        const recipient = JSON.parse(recipientData);
+        receiverId = recipient.id;
+        recipientName = recipient.name;
+        recipientType = recipient.type;
+        // Clear the session storage after use
+        sessionStorage.removeItem('newMessageRecipient');
+      } catch (error) {
+        logger.error('Error parsing recipient data:', { error });
+      }
+    }
+
+    try {
+      // Send message via API
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          receiverId: receiverId,
+          subject: recipientData ? 'Actualización de servicio' : 'Mensaje del sistema',
+          content: newMessageContent,
+          type: 'service_request',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.success) {
+          // Add message to list
+          const newMessageObj: Message = {
+            id: data.data.id,
+            senderName: user?.name || 'Proveedor',
+            senderType: 'provider',
+            recipientName: recipientName,
+            recipientType: recipientType,
+            subject: recipientData ? 'Actualización de servicio' : 'Mensaje del sistema',
+            content: newMessageContent,
+            propertyTitle: '',
+            propertyAddress: '',
+            type: 'service_request',
+            status: 'unread',
+            priority: 'normal',
+            createdAt: new Date().toISOString(),
+            hasAttachments: false,
+          };
+
+          setMessages(prev => [newMessageObj, ...prev]);
+          setNewMessageContent('');
+
+          // Update stats
+          setStats(prev => ({
+            ...prev,
+            totalMessages: prev.totalMessages + 1,
+            todayMessages: prev.todayMessages + 1,
+          }));
+
+          alert('Mensaje enviado exitosamente');
+        } else {
+          throw new Error(data.error || 'Error al enviar mensaje');
+        }
+      } else {
+        const error = await response.json();
+        alert(`Error al enviar mensaje: ${error.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      logger.error('Error sending message:', { error });
+      alert('Error al enviar mensaje. Por favor intenta nuevamente.');
+    }
+  };
+
+  const filteredMessages = messages.filter(message => {
+    const matchesSearch =
+      message.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      message.content.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = filterStatus === 'all' || message.status === filterStatus;
+    const matchesType = filterType === 'all' || message.type === filterType;
+
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  if (loading) {
+    return (
+      <UnifiedDashboardLayout
+        user={user}
+        title="Mensajes de Proveedor"
+        subtitle="Gestión de mensajes y servicios"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando mensajes de proveedor...</p>
+          </div>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  return (
+    <UnifiedDashboardLayout
+      user={user}
+      title="Mensajes de Proveedor"
+      subtitle="Gestión de mensajes y servicios"
+    >
+      <div className="space-y-6">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Mensajes</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalMessages}</div>
+              <p className="text-xs text-muted-foreground">+{stats.todayMessages} hoy</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Sin Leer</CardTitle>
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.unreadMessages}</div>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Trabajos Activos</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeJobs}</div>
+              <p className="text-xs text-muted-foreground">Servicios en curso</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completados</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.completedJobs}</div>
+              <p className="text-xs text-muted-foreground">Este mes</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters and Search */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtros y Búsqueda</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar mensajes de servicios..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="unread">Sin leer</SelectItem>
+                  <SelectItem value="read">Leídos</SelectItem>
+                  <SelectItem value="replied">Respondidos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="service_request">Solicitudes</SelectItem>
+                  <SelectItem value="maintenance">Mantenimiento</SelectItem>
+                  <SelectItem value="payment">Pagos</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Messages List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mensajes de Servicios ({filteredMessages.length})</CardTitle>
+            <CardDescription>
+              Gestiona todos los mensajes relacionados con servicios
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredMessages.length === 0 ? (
+                <div className="text-center py-12">
+                  <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No hay mensajes de servicios
+                  </h3>
+                  <p className="text-gray-600">
+                    No se encontraron mensajes que coincidan con los filtros seleccionados.
+                  </p>
+                </div>
+              ) : (
+                filteredMessages.map(message => (
+                  <div
+                    key={message.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      message.status === 'unread'
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedMessage(message);
+                      if (message.status === 'unread') {
+                        handleMarkAsRead(message.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium text-gray-900">{message.subject}</h3>
+                          {message.status === 'unread' && (
+                            <Badge variant="destructive" className="text-xs">
+                              Sin leer
+                            </Badge>
+                          )}
+                          {message.priority === 'urgent' && (
+                            <Badge variant="destructive" className="text-xs">
+                              Urgente
+                            </Badge>
+                          )}
+                          {message.type === 'service_request' && (
+                            <Badge variant="outline" className="text-xs">
+                              Solicitud
+                            </Badge>
+                          )}
+                          {message.type === 'maintenance' && (
+                            <Badge className="bg-orange-100 text-orange-800 text-xs">
+                              Mantenimiento
+                            </Badge>
+                          )}
+                          {message.type === 'payment' && (
+                            <Badge className="bg-green-100 text-green-800 text-xs">Pago</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{message.content}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {message.senderName} → {message.recipientName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(message.createdAt).toLocaleDateString('es-CL')}
+                          </span>
+                          {message.propertyTitle && (
+                            <span className="flex items-center gap-1">
+                              <Building className="w-3 h-3" />
+                              {message.propertyTitle}
+                            </span>
+                          )}
+                          {message.serviceId && (
+                            <span className="flex items-center gap-1">
+                              <Wrench className="w-3 h-3" />
+                              Servicio #{message.serviceId}
+                            </span>
+                          )}
+                          {message.jobId && (
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />
+                              Trabajo #{message.jobId}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (message.status === 'unread') {
+                              handleMarkAsRead(message.id);
+                            }
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* New Message */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Nueva Actualización de Servicio</CardTitle>
+            <CardDescription>Envía una actualización sobre un servicio a clientes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Actualización de Servicio
+                </label>
+                <textarea
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={4}
+                  placeholder="Escribe la actualización del servicio aquí..."
+                  value={newMessageContent}
+                  onChange={e => setNewMessageContent(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSendMessage} disabled={!newMessageContent.trim()}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar Actualización
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </UnifiedDashboardLayout>
+  );
+}
