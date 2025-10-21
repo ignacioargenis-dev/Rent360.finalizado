@@ -773,7 +773,7 @@ export default function Chatbot({
 
         <CardContent className="p-0 flex flex-col h-[400px]">
           {!isMinimized && (
-            <ScrollArea className="flex-1 h-full">
+            <ScrollArea className="flex-1 h-[320px]">
               <div className="p-4">
                 <div className="space-y-4">
                   {messages.map(message => (
@@ -941,26 +941,28 @@ export default function Chatbot({
             </ScrollArea>
           )}
 
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Pregúntame sobre casos legales, contratos, mora en pagos..."
-                className="flex-1"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-                size="icon"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+          {!isMinimized && (
+            <div className="p-4 border-t bg-white">
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Pregúntame sobre casos legales, contratos, mora en pagos..."
+                  className="flex-1"
+                  disabled={isLoading}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isLoading}
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

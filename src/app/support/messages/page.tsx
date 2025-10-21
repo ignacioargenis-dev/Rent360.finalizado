@@ -94,7 +94,78 @@ export default function SupportMessagesPage() {
 
   useEffect(() => {
     loadPageData();
-  }, []);
+
+    // Check if we need to create a new conversation
+    const isNewConversation = searchParams?.get('new') === 'true';
+    if (isNewConversation) {
+      handleNewConversation();
+    }
+  }, [searchParams]);
+
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new message object
+      const newMessage: Message = {
+        id: `msg_${Date.now()}`,
+        senderName: user?.name || 'Soporte',
+        senderType: 'support',
+        recipientName: recipientData.name,
+        recipientType:
+          recipientData.type === 'tenant'
+            ? 'tenant'
+            : recipientData.type === 'owner'
+              ? 'owner'
+              : recipientData.type === 'broker'
+                ? 'broker'
+                : recipientData.type === 'provider'
+                  ? 'provider'
+                  : 'tenant',
+        subject: `Soporte: ${recipientData.propertyTitle || recipientData.serviceType || 'consulta'}`,
+        content: `Hola ${recipientData.name}, estamos aquí para ayudarte con ${recipientData.propertyTitle ? `la propiedad "${recipientData.propertyTitle}"` : recipientData.serviceType ? `el servicio de ${recipientData.serviceType}` : 'tu consulta'}. ¿En qué podemos asistirte?`,
+        propertyTitle: recipientData.propertyTitle,
+        propertyAddress: recipientData.propertyAddress,
+        type: 'support',
+        status: 'unread',
+        priority: 'normal',
+        createdAt: new Date().toISOString(),
+        hasAttachments: false,
+        ticketId: recipientData.ticketId,
+      };
+
+      // Add to messages list
+      setMessages(prev => [newMessage, ...prev]);
+
+      // Select the new message
+      setSelectedMessage(newMessage);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación de soporte creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación de soporte:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   const loadPageData = async () => {
     try {

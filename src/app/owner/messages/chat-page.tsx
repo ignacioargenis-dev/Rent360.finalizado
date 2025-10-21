@@ -110,6 +110,7 @@ export default function ChatPage() {
         const recipientId = searchParams?.get('recipientId');
         const propertyId = searchParams?.get('propertyId');
         const prefillMessage = searchParams?.get('prefillMessage');
+        const isNewConversation = searchParams?.get('new') === 'true';
 
         if (recipientId) {
           await startNewConversation(
@@ -117,6 +118,11 @@ export default function ChatPage() {
             propertyId,
             prefillMessage ? decodeURIComponent(prefillMessage) : undefined
           );
+        }
+
+        // Handle new conversation from sessionStorage
+        if (isNewConversation) {
+          handleNewConversation();
         }
       } catch (error) {
         logger.error('Error loading data:', { error });
@@ -127,6 +133,75 @@ export default function ChatPage() {
 
     loadData();
   }, []);
+
+  // Handle new conversation from sessionStorage
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new conversation object
+      const newConversation: Conversation = {
+        id: `new_${Date.now()}`,
+        participant: {
+          id: recipientData.id,
+          name: recipientData.name,
+          email: recipientData.email || '',
+          role:
+            recipientData.type === 'tenant'
+              ? 'tenant'
+              : recipientData.type === 'broker'
+                ? 'broker'
+                : recipientData.type === 'runner'
+                  ? 'runner'
+                  : 'maintenance_provider',
+        },
+        lastMessage: {
+          id: `msg_${Date.now()}`,
+          senderId: user?.id || 'current_user',
+          receiverId: recipientData.id,
+          content: `Nueva conversación sobre: ${recipientData.propertyTitle || 'servicio'}`,
+          timestamp: new Date().toISOString(),
+          read: true,
+          messageType: 'text',
+        },
+        unreadCount: 0,
+        propertyId: recipientData.propertyId,
+        propertyTitle: recipientData.propertyTitle,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Add to conversations list
+      setConversations(prev => [newConversation, ...prev]);
+
+      // Select the new conversation
+      setSelectedConversation(newConversation);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   // Load conversations
   const loadConversations = async () => {

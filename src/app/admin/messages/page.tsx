@@ -81,7 +81,77 @@ export default function AdminMessagesPage() {
 
   useEffect(() => {
     loadPageData();
-  }, []);
+
+    // Check if we need to create a new conversation
+    const isNewConversation = searchParams?.get('new') === 'true';
+    if (isNewConversation) {
+      handleNewConversation();
+    }
+  }, [searchParams]);
+
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new message object
+      const newMessage: Message = {
+        id: `msg_${Date.now()}`,
+        senderName: user?.name || 'Administrador',
+        senderType: 'admin',
+        recipientName: recipientData.name,
+        recipientType:
+          recipientData.type === 'tenant'
+            ? 'tenant'
+            : recipientData.type === 'owner'
+              ? 'owner'
+              : recipientData.type === 'broker'
+                ? 'broker'
+                : recipientData.type === 'provider'
+                  ? 'provider'
+                  : 'tenant',
+        subject: `Administración: ${recipientData.propertyTitle || recipientData.serviceType || 'consulta'}`,
+        content: `Hola ${recipientData.name}, como administrador de la plataforma, estoy aquí para asistirte con ${recipientData.propertyTitle ? `la propiedad "${recipientData.propertyTitle}"` : recipientData.serviceType ? `el servicio de ${recipientData.serviceType}` : 'tu consulta'}. ¿Cómo puedo ayudarte?`,
+        propertyTitle: recipientData.propertyTitle,
+        propertyAddress: recipientData.propertyAddress,
+        type: 'general',
+        status: 'unread',
+        priority: 'normal',
+        createdAt: new Date().toISOString(),
+        hasAttachments: false,
+      };
+
+      // Add to messages list
+      setMessages(prev => [newMessage, ...prev]);
+
+      // Select the new message
+      setSelectedMessage(newMessage);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación de administración creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación de administración:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   const loadPageData = async () => {
     try {

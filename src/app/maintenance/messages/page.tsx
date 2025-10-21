@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ interface Conversation {
 }
 
 export default function MaintenanceMessagesPage() {
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -66,11 +68,67 @@ export default function MaintenanceMessagesPage() {
 
   useEffect(() => {
     loadConversations();
-  }, []);
+
+    // Check if we need to create a new conversation
+    const isNewConversation = searchParams?.get('new') === 'true';
+    if (isNewConversation) {
+      handleNewConversation();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     filterConversations();
   }, [conversations, searchTerm, statusFilter]);
+
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new conversation object
+      const newConversation: Conversation = {
+        id: `new_${Date.now()}`,
+        participantName: recipientData.name,
+        participantType: recipientData.type === 'tenant' ? 'tenant' : 'owner',
+        propertyAddress: recipientData.propertyAddress || 'Dirección no disponible',
+        lastMessage: `Nueva conversación sobre: ${recipientData.propertyTitle || recipientData.serviceType || 'mantenimiento'}`,
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
+        status: 'active',
+        messages: [],
+      };
+
+      // Add to conversations list
+      setConversations(prev => [newConversation, ...prev]);
+
+      // Select the new conversation
+      setSelectedConversation(newConversation);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación de mantenimiento creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación de mantenimiento:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   const loadConversations = async () => {
     try {

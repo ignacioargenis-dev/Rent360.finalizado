@@ -97,7 +97,77 @@ export default function ProviderMessagesPage() {
 
   useEffect(() => {
     loadPageData();
-  }, []);
+
+    // Check if we need to create a new conversation
+    const isNewConversation = searchParams?.get('new') === 'true';
+    if (isNewConversation) {
+      handleNewConversation();
+    }
+  }, [searchParams]);
+
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new message object
+      const newMessage: Message = {
+        id: `msg_${Date.now()}`,
+        senderName: user?.name || 'Proveedor',
+        senderType: 'provider',
+        recipientName: recipientData.name,
+        recipientType:
+          recipientData.type === 'tenant'
+            ? 'tenant'
+            : recipientData.type === 'owner'
+              ? 'owner'
+              : recipientData.type === 'broker'
+                ? 'broker'
+                : 'tenant',
+        subject: `Consulta sobre ${recipientData.propertyTitle || recipientData.serviceType || 'servicio'}`,
+        content: `Hola ${recipientData.name}, me gustaría contactarte sobre ${recipientData.propertyTitle ? `la propiedad "${recipientData.propertyTitle}"` : recipientData.serviceType ? `un servicio de ${recipientData.serviceType}` : 'tu servicio'}.`,
+        propertyTitle: recipientData.propertyTitle,
+        propertyAddress: recipientData.propertyAddress,
+        type: 'service_request',
+        status: 'unread',
+        priority: 'normal',
+        createdAt: new Date().toISOString(),
+        hasAttachments: false,
+        serviceId: recipientData.serviceId,
+        jobId: recipientData.jobId,
+      };
+
+      // Add to messages list
+      setMessages(prev => [newMessage, ...prev]);
+
+      // Select the new message
+      setSelectedMessage(newMessage);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   const loadPageData = async () => {
     try {

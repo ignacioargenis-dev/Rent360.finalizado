@@ -61,7 +61,71 @@ export default function RunnerMessagesPage() {
 
   useEffect(() => {
     loadPageData();
-  }, []);
+
+    // Check if we need to create a new conversation
+    const isNewConversation = searchParams?.get('new') === 'true';
+    if (isNewConversation) {
+      handleNewConversation();
+    }
+  }, [searchParams]);
+
+  const handleNewConversation = () => {
+    try {
+      // Get recipient data from sessionStorage
+      const recipientDataStr = sessionStorage.getItem('newMessageRecipient');
+      if (!recipientDataStr) {
+        logger.warn('No recipient data found in sessionStorage');
+        return;
+      }
+
+      const recipientData = JSON.parse(recipientDataStr);
+
+      // Create a new conversation object
+      const newConversation: Conversation = {
+        id: `new_${Date.now()}`,
+        clientId: recipientData.id,
+        clientName: recipientData.name,
+        clientRole: recipientData.type,
+        lastMessage: {
+          id: `msg_${Date.now()}`,
+          content: `Nueva conversación sobre: ${recipientData.propertyTitle || recipientData.serviceType || 'servicio'}`,
+          senderId: 'current_user',
+          senderName: 'Tú',
+          senderRole: 'runner',
+          timestamp: new Date().toISOString(),
+          isRead: true,
+          type: 'text',
+        },
+        unreadCount: 0,
+        status: 'active',
+        lastActivity: new Date().toISOString(),
+      };
+
+      // Add to conversations list
+      setConversations(prev => [newConversation, ...prev]);
+
+      // Select the new conversation
+      setSelectedConversation(newConversation);
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('newMessageRecipient');
+
+      // Update URL to remove the new parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('new');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      logger.info('Nueva conversación de runner creada', {
+        recipientId: recipientData.id,
+        recipientName: recipientData.name,
+        propertyTitle: recipientData.propertyTitle,
+      });
+    } catch (error) {
+      logger.error('Error creando nueva conversación de runner:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   const loadPageData = async () => {
     try {
