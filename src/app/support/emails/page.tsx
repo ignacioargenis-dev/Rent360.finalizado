@@ -99,8 +99,8 @@ export default function SupportEmailsPage() {
     bcc: '',
     subject: '',
     content: '',
-    priority: 'normal' as const,
-    category: 'support' as const,
+    priority: 'normal' as 'low' | 'normal' | 'high' | 'urgent',
+    category: 'support' as 'support' | 'billing' | 'technical' | 'general',
   });
 
   useEffect(() => {

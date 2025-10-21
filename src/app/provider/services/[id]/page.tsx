@@ -141,31 +141,41 @@ export default function ServiceDetailPage() {
       const data = await response.json();
 
       // Transform API data to match our interface
-      const transformedService = {
+      const transformedService: Service = {
         id: data.id,
-        title: data.title || 'Servicio no identificado',
-        description: data.description || 'Sin descripción',
+        name: data.title || data.name || 'Servicio no identificado',
         category: data.category || 'General',
+        description: data.description || 'Sin descripción',
+        shortDescription:
+          data.shortDescription ||
+          data.description?.substring(0, 100) + '...' ||
+          'Descripción breve',
         pricing: {
           type: data.pricing?.type || 'fixed',
           amount: data.pricing?.amount || 0,
           currency: data.pricing?.currency || 'CLP',
           minimumCharge: data.pricing?.minimumCharge || 0,
         },
+        duration: {
+          estimated: data.duration?.estimated || '2-4 horas',
+          unit: data.duration?.unit || 'hours',
+        },
+        features: data.features || ['Servicio profesional', 'Garantía incluida'],
+        requirements: data.requirements || [],
         availability: {
           active: data.availability?.active || false,
-          schedule: data.availability?.schedule || {},
+          regions: data.location?.region ? [data.location.region] : ['Santiago'],
+          emergency: data.availability?.emergency || false,
         },
-        location: {
-          city: data.location?.city || '',
-          region: data.location?.region || '',
-          serviceRadius: data.location?.serviceRadius || 0,
-        },
-        requirements: data.requirements || [],
         images: data.images || ['/placeholder-service.jpg'],
-        rating: data.rating || 0,
-        reviewCount: data.reviewCount || 0,
-        completedJobs: data.completedJobs || 0,
+        tags: data.tags || [data.category || 'General'],
+        stats: {
+          views: data.views || 0,
+          requests: data.requests || 0,
+          conversionRate: data.conversionRate || 0,
+          averageRating: data.rating || 0,
+          totalReviews: data.reviewCount || 0,
+        },
         createdAt: data.createdAt || new Date().toISOString(),
         updatedAt: data.updatedAt || new Date().toISOString(),
       };
@@ -174,7 +184,7 @@ export default function ServiceDetailPage() {
 
       logger.debug('Detalles de servicio de proveedor cargados', {
         serviceId,
-        title: transformedService.title,
+        name: transformedService.name,
         category: transformedService.category,
       });
     } catch (error) {

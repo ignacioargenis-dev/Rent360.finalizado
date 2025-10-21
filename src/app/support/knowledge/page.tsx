@@ -509,7 +509,7 @@ Si persisten los problemas, contacta a soporte:
       if (!acc[article.category]) {
         acc[article.category] = [];
       }
-      acc[article.category].push(article);
+      acc[article.category]!.push(article);
       return acc;
     },
     {} as Record<string, KnowledgeArticle[]>
