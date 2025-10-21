@@ -29,6 +29,11 @@ export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   const { pathname } = request.nextUrl;
 
+  logger.info('🔧 Middleware: Procesando request', {
+    pathname,
+    method: request.method,
+  });
+
   // Skip middleware para archivos estáticos y API de health
   if (
     pathname.startsWith('/_next') ||
@@ -36,6 +41,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/health')
   ) {
+    logger.info('🔧 Middleware: Saltando archivos estáticos', { pathname });
     return NextResponse.next();
   }
 
@@ -50,15 +56,23 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/users') ||
       pathname.startsWith('/api/support')
     ) {
+      logger.info('🔧 Middleware: Aplicando middleware de seguridad y auth', { pathname });
+
       const securityResponse = await securityMiddleware(request);
       if (securityResponse) {
+        logger.info('🔧 Middleware: Security middleware bloqueó la request', { pathname });
         return securityResponse;
       }
 
       const authResponse = await authMiddleware(request);
       if (authResponse) {
+        logger.info('🔧 Middleware: Auth middleware bloqueó la request', { pathname });
         return authResponse;
       }
+
+      logger.info('🔧 Middleware: Auth middleware completado exitosamente', { pathname });
+    } else {
+      logger.info('🔧 Middleware: Ruta no requiere auth middleware', { pathname });
     }
     // Determinar configuración de rate limiting basada en la ruta
     let rateLimitKey = 'default';
