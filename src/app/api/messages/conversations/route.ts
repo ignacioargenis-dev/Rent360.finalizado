@@ -13,8 +13,17 @@ export async function GET(request: NextRequest) {
     // Obtener usuario del middleware (ya validado)
     const user = (request as any).user;
 
+    logger.info('🔍 /api/messages/conversations: Verificando usuario', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      userRole: user?.role,
+    });
+
     if (!user) {
-      logger.error('No se encontró información de usuario en la request');
+      logger.error(
+        '🔍 /api/messages/conversations: No se encontró información de usuario en la request'
+      );
       return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
     }
 

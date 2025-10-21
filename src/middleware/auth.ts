@@ -155,8 +155,15 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
+  logger.info('🔐 AuthMiddleware: Procesando request', {
+    pathname,
+    method: request.method,
+    clientIP,
+  });
+
   // Saltar autenticación para rutas públicas
   if (isPublicRoute(pathname)) {
+    logger.info('🔐 AuthMiddleware: Ruta pública, saltando autenticación', { pathname });
     return null;
   }
 
@@ -165,10 +172,16 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     const authHeader = request.headers.get('authorization');
     const cookieToken = request.cookies.get('auth-token')?.value;
 
+    logger.info('🔐 AuthMiddleware: Tokens encontrados', {
+      hasAuthHeader: !!authHeader,
+      hasCookieToken: !!cookieToken,
+      cookieTokenLength: cookieToken?.length || 0,
+    });
+
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
 
     if (!token) {
-      logger.warn('No authentication token provided', {
+      logger.warn('🔐 AuthMiddleware: No authentication token provided', {
         pathname,
         clientIP,
         userAgent,
@@ -192,6 +205,12 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
 
     // Validar token
     const decoded = await validateToken(token);
+
+    logger.info('🔐 AuthMiddleware: Token validado exitosamente', {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    });
 
     // Validar con servicio de autenticación (si está disponible)
     // Comentado temporalmente para evitar bloqueos
@@ -253,8 +272,16 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       permissions: decoded.permissions || [],
     };
 
+    logger.info('🔐 AuthMiddleware: Usuario adjuntado a request', {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      pathname,
+      method: request.method,
+    });
+
     // Log de acceso autorizado
-    logger.info('Authenticated request authorized', {
+    logger.info('🔐 AuthMiddleware: Request autorizada', {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
