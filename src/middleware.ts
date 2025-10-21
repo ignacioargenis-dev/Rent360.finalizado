@@ -172,7 +172,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      * - Rutas públicas: /, /about, /features, /contact, /auth/*, /offline, /demo-fase1, /api/health, etc.
+     * - Rutas API públicas: /api/health, /api/auth/login, /api/auth/register, /api/auth/verify-email
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/|auth/|about|features|contact|offline|demo-fase1|api/health).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/|auth/|about|features|contact|offline|demo-fase1|api/health|api/auth/login|api/auth/register|api/auth/verify-email).*)',
   ],
 };
