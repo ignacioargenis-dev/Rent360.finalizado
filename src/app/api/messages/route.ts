@@ -19,7 +19,19 @@ const messageSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Intentar obtener usuario del middleware primero, luego fallback a requireAuth
+    let user = (request as any).user;
+
+    if (!user) {
+      // Fallback: usar requireAuth si el middleware no adjuntó la información
+      const decoded = await requireAuth(request);
+      user = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        name: decoded.name,
+      };
+    }
 
     // Obtener parámetros de consulta
     const { searchParams } = new URL(request.url);
@@ -130,7 +142,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Intentar obtener usuario del middleware primero, luego fallback a requireAuth
+    let user = (request as any).user;
+
+    if (!user) {
+      // Fallback: usar requireAuth si el middleware no adjuntó la información
+      const decoded = await requireAuth(request);
+      user = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        name: decoded.name,
+      };
+    }
 
     const data = await request.json();
 

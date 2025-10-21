@@ -10,7 +10,19 @@ import { handleApiError } from '@/lib/api-error-handler';
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Intentar obtener usuario del middleware primero, luego fallback a requireAuth
+    let user = (request as any).user;
+
+    if (!user) {
+      // Fallback: usar requireAuth si el middleware no adjuntó la información
+      const decoded = await requireAuth(request);
+      user = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        name: decoded.name,
+      };
+    }
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');

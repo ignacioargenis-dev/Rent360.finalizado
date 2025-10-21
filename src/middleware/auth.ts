@@ -244,9 +244,11 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
 
     // Adjuntar información del usuario a la request
     (request as any).user = {
-      userId: decoded.userId,
+      id: decoded.userId,
+      userId: decoded.userId, // Mantener compatibilidad
       email: decoded.email,
       role: decoded.role,
+      name: decoded.name,
       permissions: decoded.permissions || [],
     };
 
