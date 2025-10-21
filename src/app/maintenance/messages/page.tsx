@@ -319,64 +319,6 @@ export default function MaintenanceMessagesPage() {
     setFilteredConversations(filtered);
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) {
-      return;
-    }
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const newMsg: Message = {
-        id: Date.now().toString(),
-        senderName: 'Técnico Mantenimiento',
-        senderType: 'tenant', // Somos el técnico
-        propertyAddress: selectedConversation.propertyAddress,
-        subject: `Re: ${selectedConversation.messages[0]?.subject || 'Consulta'}`,
-        content: newMessage,
-        timestamp: new Date().toISOString(),
-        read: true,
-        priority: 'medium',
-      };
-
-      // Update conversation
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                lastMessage: newMessage,
-                lastMessageTime: new Date().toISOString(),
-                messages: [...conv.messages, newMsg],
-              }
-            : conv
-        )
-      );
-
-      // Update selected conversation
-      setSelectedConversation(prev =>
-        prev
-          ? {
-              ...prev,
-              lastMessage: newMessage,
-              lastMessageTime: new Date().toISOString(),
-              messages: [...prev.messages, newMsg],
-            }
-          : null
-      );
-
-      setNewMessage('');
-      setSuccessMessage('Mensaje enviado exitosamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error) {
-      logger.error('Error sending message:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      setErrorMessage('Error al enviar el mensaje');
-    }
-  };
-
   const markAsRead = (conversationId: string) => {
     setConversations(prev =>
       prev.map(conv =>
