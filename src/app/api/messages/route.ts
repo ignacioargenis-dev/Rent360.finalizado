@@ -130,20 +130,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Intentar obtener usuario autenticado, pero permitir continuar si falla (middleware deshabilitado)
-    let user;
-    try {
-      user = await requireAuth(request);
-    } catch (authError) {
-      // Si falla la autenticación, usar un usuario temporal para debugging
-      logger.warn('Autenticación falló, usando usuario temporal', { error: authError });
-      user = {
-        id: 'temp_user_' + Date.now(),
-        email: 'temp@rent360.cl',
-        role: 'TENANT',
-        name: 'Usuario Temporal',
-      };
-    }
+    const user = await requireAuth(request);
 
     const data = await request.json();
 
