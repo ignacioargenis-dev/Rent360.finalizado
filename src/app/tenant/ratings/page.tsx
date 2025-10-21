@@ -171,11 +171,13 @@ export default function CalificacionesPage() {
     },
   ];
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // eslint-disable-line react-hooks/exhaustive-deps
     loadPageData();
   }, []);
 
-  useEffect(() => { // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // eslint-disable-line react-hooks/exhaustive-deps
     applyFilters();
   }, [ratings, searchTerm, selectedType, selectedRating, sortBy, activeTab]);
 
@@ -189,7 +191,7 @@ export default function CalificacionesPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -199,28 +201,33 @@ export default function CalificacionesPage() {
       }
 
       const data = await response.json();
-      
+
+      // La API devuelve { success: true, data: ratings, pagination: {...} }
+      const ratingsData = data.data || [];
+
       // Transform API data to match our interface
-      const transformedRatings: Rating[] = data.ratings.map((rating: any) => ({
+      const transformedRatings: Rating[] = ratingsData.map((rating: any) => ({
         id: rating.id,
-        type: rating.type || 'property',
-        targetId: rating.targetId,
-        targetName: rating.targetName || 'Objeto no identificado',
-        rating: rating.rating || 0,
+        type: rating.contextType?.toLowerCase() || 'property',
+        targetId: rating.contextId || rating.propertyId || rating.contractId || 'unknown',
+        targetName:
+          rating.property?.title || rating.contract?.contractNumber || 'Objeto no identificado',
+        rating: rating.overallRating || 0,
         comment: rating.comment || 'Sin comentario',
         date: rating.createdAt,
-        category: rating.category || 'General',
-        verified: rating.verified || false,
-        helpful: rating.helpful || 0,
+        category: rating.contextType || 'General',
+        verified: rating.isVerified || false,
+        helpful: 0, // No disponible en la API actual
       }));
 
       setRatings(transformedRatings);
 
       // Calculate stats from real data
       const totalRatings = transformedRatings.length;
-      const averageRating = totalRatings > 0
-        ? transformedRatings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings
-        : 0;
+      const averageRating =
+        totalRatings > 0
+          ? transformedRatings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings
+          : 0;
       const ratingDistribution = transformedRatings.reduce(
         (dist, rating) => {
           dist[rating.rating] = (dist[rating.rating] || 0) + 1;
@@ -243,12 +250,31 @@ export default function CalificacionesPage() {
         recentActivity,
       });
 
-      logger.debug('Datos de calificaciones cargados');
+      logger.debug('Datos de calificaciones cargados', {
+        totalRatings,
+        averageRating: averageRating.toFixed(2),
+        recentActivity,
+      });
     } catch (error) {
       logger.error('Error cargando datos de calificaciones:', {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      setError('Error al cargar los datos');
+
+      // Mostrar mensaje de error más específico
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('403')) {
+          setError('No tienes permisos para ver estas calificaciones');
+        } else if (error.message.includes('404')) {
+          setError('No se encontraron calificaciones');
+        } else if (error.message.includes('500')) {
+          setError('Error del servidor. Intenta más tarde');
+        } else {
+          setError(`Error al cargar los datos: ${error.message}`);
+        }
+      } else {
+        setError('Error inesperado al cargar los datos');
+      }
     } finally {
       setLoading(false);
     }
@@ -317,21 +343,98 @@ export default function CalificacionesPage() {
 
       if (type === 'property') {
         mockResults = [
-          { id: 'prop1', name: 'Moderno departamento en Las Condes', type: 'property', address: 'Av. Las Condes 1234', ownerName: 'Carlos Rodríguez', contractActive: true, lastServiceDate: '2024-01-15' },
-          { id: 'prop2', name: 'Casa amplia en Vitacura', type: 'property', address: 'Calle Los Alpes 567', ownerName: 'María González', contractActive: true, lastServiceDate: '2024-02-20' },
-          { id: 'prop3', name: 'Estudio céntrico Santiago', type: 'property', address: 'Centro Histórico 890', ownerName: 'Juan Pérez', contractActive: false, lastServiceDate: '2023-12-10' },
-        ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.ownerName.toLowerCase().includes(searchTerm.toLowerCase()));
+          {
+            id: 'prop1',
+            name: 'Moderno departamento en Las Condes',
+            type: 'property',
+            address: 'Av. Las Condes 1234',
+            ownerName: 'Carlos Rodríguez',
+            contractActive: true,
+            lastServiceDate: '2024-01-15',
+          },
+          {
+            id: 'prop2',
+            name: 'Casa amplia en Vitacura',
+            type: 'property',
+            address: 'Calle Los Alpes 567',
+            ownerName: 'María González',
+            contractActive: true,
+            lastServiceDate: '2024-02-20',
+          },
+          {
+            id: 'prop3',
+            name: 'Estudio céntrico Santiago',
+            type: 'property',
+            address: 'Centro Histórico 890',
+            ownerName: 'Juan Pérez',
+            contractActive: false,
+            lastServiceDate: '2023-12-10',
+          },
+        ].filter(
+          item =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       } else if (type === 'maintenance') {
         mockResults = [
-          { id: 'serv1', name: 'Electricista Profesional - Juan Silva', type: 'maintenance', specialty: 'Reparaciones Eléctricas', company: 'ElectroServicios Ltda', lastServiceDate: '2024-01-10', canRate: true },
-          { id: 'serv2', name: 'Plomero Express - Carlos Muñoz', type: 'maintenance', specialty: 'Instalaciones Sanitarias', company: 'AguaClara SpA', lastServiceDate: '2024-02-05', canRate: true },
-          { id: 'serv3', name: 'Limpieza Profesional - Ana López', type: 'maintenance', specialty: 'Limpieza Residencial', company: 'CleanHome Chile', lastServiceDate: '2023-11-15', canRate: false },
-        ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.specialty.toLowerCase().includes(searchTerm.toLowerCase()));
+          {
+            id: 'serv1',
+            name: 'Electricista Profesional - Juan Silva',
+            type: 'maintenance',
+            specialty: 'Reparaciones Eléctricas',
+            company: 'ElectroServicios Ltda',
+            lastServiceDate: '2024-01-10',
+            canRate: true,
+          },
+          {
+            id: 'serv2',
+            name: 'Plomero Express - Carlos Muñoz',
+            type: 'maintenance',
+            specialty: 'Instalaciones Sanitarias',
+            company: 'AguaClara SpA',
+            lastServiceDate: '2024-02-05',
+            canRate: true,
+          },
+          {
+            id: 'serv3',
+            name: 'Limpieza Profesional - Ana López',
+            type: 'maintenance',
+            specialty: 'Limpieza Residencial',
+            company: 'CleanHome Chile',
+            lastServiceDate: '2023-11-15',
+            canRate: false,
+          },
+        ].filter(
+          item =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       } else if (type === 'broker') {
         mockResults = [
-          { id: 'owner1', name: 'Carlos Rodríguez', type: 'landlord', properties: ['Moderno departamento en Las Condes'], contractActive: true, lastInteraction: '2024-01-15' },
-          { id: 'owner2', name: 'María González', type: 'landlord', properties: ['Casa amplia en Vitacura'], contractActive: true, lastInteraction: '2024-02-20' },
-          { id: 'owner3', name: 'Juan Pérez', type: 'landlord', properties: ['Estudio céntrico Santiago'], contractActive: false, lastInteraction: '2023-12-10' },
+          {
+            id: 'owner1',
+            name: 'Carlos Rodríguez',
+            type: 'landlord',
+            properties: ['Moderno departamento en Las Condes'],
+            contractActive: true,
+            lastInteraction: '2024-01-15',
+          },
+          {
+            id: 'owner2',
+            name: 'María González',
+            type: 'landlord',
+            properties: ['Casa amplia en Vitacura'],
+            contractActive: true,
+            lastInteraction: '2024-02-20',
+          },
+          {
+            id: 'owner3',
+            name: 'Juan Pérez',
+            type: 'landlord',
+            properties: ['Estudio céntrico Santiago'],
+            contractActive: false,
+            lastInteraction: '2023-12-10',
+          },
         ].filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
       }
 
@@ -349,7 +452,9 @@ export default function CalificacionesPage() {
     const canRate = checkRatingEligibility(target);
 
     if (!canRate) {
-      setErrorMessage('No puedes calificar este elemento. Las calificaciones están limitadas a una vez por trimestre por contrato/servicio activo.');
+      setErrorMessage(
+        'No puedes calificar este elemento. Las calificaciones están limitadas a una vez por trimestre por contrato/servicio activo.'
+      );
       setTimeout(() => setErrorMessage(''), 5000);
       return;
     }
@@ -368,9 +473,8 @@ export default function CalificacionesPage() {
   const checkRatingEligibility = (target: any): boolean => {
     // Check if user has already rated this target in the current quarter
     const currentQuarter = getCurrentQuarter();
-    const existingRating = ratings.find(r =>
-      r.targetId === target.id &&
-      isInCurrentQuarter(r.date)
+    const existingRating = ratings.find(
+      r => r.targetId === target.id && isInCurrentQuarter(r.date)
     );
 
     if (existingRating) {
@@ -924,7 +1028,8 @@ export default function CalificacionesPage() {
           <DialogHeader>
             <DialogTitle>Crear Nueva Calificación</DialogTitle>
             <DialogDescription>
-              Comparte tu experiencia y ayuda a otros usuarios. Las calificaciones están limitadas a una vez por trimestre por contrato/servicio activo.
+              Comparte tu experiencia y ayuda a otros usuarios. Las calificaciones están limitadas a
+              una vez por trimestre por contrato/servicio activo.
             </DialogDescription>
           </DialogHeader>
 
@@ -982,7 +1087,7 @@ export default function CalificacionesPage() {
                       Buscando...
                     </div>
                   ) : searchResults.length > 0 ? (
-                    searchResults.map((result) => (
+                    searchResults.map(result => (
                       <div
                         key={result.id}
                         className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
@@ -990,17 +1095,29 @@ export default function CalificacionesPage() {
                       >
                         <div className="font-medium text-gray-900">{result.name}</div>
                         <div className="text-sm text-gray-600">
-                          {result.address || result.specialty || result.properties?.join(', ') || result.company}
+                          {result.address ||
+                            result.specialty ||
+                            result.properties?.join(', ') ||
+                            result.company}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           {result.contractActive !== undefined && (
-                            <Badge className={result.contractActive || result.canRate ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                              {result.contractActive || result.canRate ? 'Disponible para calificar' : 'No disponible'}
+                            <Badge
+                              className={
+                                result.contractActive || result.canRate
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }
+                            >
+                              {result.contractActive || result.canRate
+                                ? 'Disponible para calificar'
+                                : 'No disponible'}
                             </Badge>
                           )}
                           {result.lastServiceDate && (
                             <span className="text-xs text-gray-500">
-                              Último servicio: {new Date(result.lastServiceDate).toLocaleDateString('es-CL')}
+                              Último servicio:{' '}
+                              {new Date(result.lastServiceDate).toLocaleDateString('es-CL')}
                             </span>
                           )}
                         </div>
