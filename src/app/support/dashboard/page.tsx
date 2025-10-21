@@ -885,7 +885,7 @@ export default function SupportDashboard() {
                 <h2 className="text-xl font-bold text-white">Acciones Rápidas</h2>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <QuickActionButton
                     icon={Download}
                     label="Exportar Reporte"
@@ -903,13 +903,28 @@ export default function SupportDashboard() {
                           Fecha: new Date().toLocaleDateString('es-CL'),
                         },
                         {
-                          Métrica: 'Tiempo de Respuesta',
+                          Métrica: 'Tickets Resueltos',
+                          Valor: stats.resolvedTickets,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Tickets Pendientes',
+                          Valor: stats.pendingTickets,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Tiempo de Respuesta Promedio',
                           Valor: `${stats.averageResponseTime}h`,
                           Fecha: new Date().toLocaleDateString('es-CL'),
                         },
                         {
-                          Métrica: 'Satisfacción',
+                          Métrica: 'Satisfacción del Cliente',
                           Valor: `${stats.customerSatisfaction}/5`,
+                          Fecha: new Date().toLocaleDateString('es-CL'),
+                        },
+                        {
+                          Métrica: 'Tickets Escalados',
+                          Valor: stats.escalatedTickets,
                           Fecha: new Date().toLocaleDateString('es-CL'),
                         },
                       ];
@@ -930,6 +945,12 @@ export default function SupportDashboard() {
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
+
+                      logger.info('Reporte de soporte exportado', {
+                        totalTickets: stats.totalTickets,
+                        openTickets: stats.openTickets,
+                        resolvedTickets: stats.resolvedTickets,
+                      });
                     }}
                   />
 
@@ -938,8 +959,9 @@ export default function SupportDashboard() {
                     label="Centro de Llamadas"
                     description="Atención telefónica"
                     onClick={() => {
-                      // Open VoIP application or redirect to calls page
-                      window.open('/support/calls', '_blank');
+                      // Abrir sistema de llamadas VoIP
+                      router.push('/support/calls');
+                      logger.info('Acceso al centro de llamadas iniciado');
                     }}
                   />
 
@@ -948,8 +970,9 @@ export default function SupportDashboard() {
                     label="Gestión de Emails"
                     description="Bandeja de correos"
                     onClick={() => {
-                      // Open email management page
-                      window.open('/support/emails', '_blank');
+                      // Abrir gestión de emails
+                      router.push('/support/emails');
+                      logger.info('Acceso a gestión de emails iniciado');
                     }}
                   />
 
@@ -957,7 +980,11 @@ export default function SupportDashboard() {
                     icon={HelpCircle}
                     label="Base de Conocimiento"
                     description="Preguntas frecuentes"
-                    onClick={() => router.push('/support/knowledge')}
+                    onClick={() => {
+                      // Abrir base de conocimiento
+                      router.push('/support/knowledge');
+                      logger.info('Acceso a base de conocimiento iniciado');
+                    }}
                   />
                 </div>
               </div>
