@@ -25,8 +25,19 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, MessageSquare, Clock, CheckCircle, AlertCircle, Filter, Search } from 'lucide-react';
+import {
+  Plus,
+  MessageSquare,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Filter,
+  Search,
+  Check,
+  X,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
 interface SupportTicket {
   id: string;
@@ -199,6 +210,45 @@ export default function SupportTicketsPage() {
     }
   };
 
+  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
+    try {
+      const response = await fetch('/api/support/tickets', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ticketId,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        loadTickets();
+        // Actualizar el ticket seleccionado si es el mismo
+        if (selectedTicket && selectedTicket.id === ticketId) {
+          setSelectedTicket(prev =>
+            prev ? { ...prev, status: newStatus.toUpperCase() as any } : null
+          );
+        }
+        logger.info(`Ticket ${newStatus} exitosamente`);
+      } else {
+        logger.error('Error actualizando ticket:', { error: data.error });
+      }
+    } catch (error) {
+      logger.error('Error actualizando ticket:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'OPEN':
@@ -257,63 +307,186 @@ export default function SupportTicketsPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <UnifiedDashboardLayout>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Acceso Denegado</h1>
           <p className="text-gray-600">
             Debes iniciar sesión para acceder a los tickets de soporte.
           </p>
         </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tickets de Soporte</h1>
-          <p className="text-gray-600 mt-2">Gestiona tus solicitudes de ayuda y soporte técnico</p>
+    <UnifiedDashboardLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Tickets de Soporte</h1>
+            <p className="text-gray-600 mt-2">
+              Gestiona tus solicitudes de ayuda y soporte técnico
+            </p>
+          </div>
+
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Nuevo Ticket
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Ticket</DialogTitle>
+                <DialogDescription>
+                  Describe tu problema o consulta y nuestro equipo de soporte te ayudará.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="subject">Asunto</Label>
+                  <Input
+                    id="subject"
+                    placeholder="Resumen breve del problema"
+                    value={newTicket.subject}
+                    onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Categoría</Label>
+                  <Select
+                    value={newTicket.category}
+                    onValueChange={(value: any) =>
+                      setNewTicket(prev => ({ ...prev, category: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="technical">Técnico</SelectItem>
+                      <SelectItem value="billing">Facturación</SelectItem>
+                      <SelectItem value="bug_report">Reporte de Error</SelectItem>
+                      <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="priority">Prioridad</Label>
+                  <Select
+                    value={newTicket.priority}
+                    onValueChange={(value: any) =>
+                      setNewTicket(prev => ({ ...prev, priority: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Descripción</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe detalladamente tu problema o consulta..."
+                    rows={6}
+                    value={newTicket.description}
+                    onChange={e => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleCreateTicket}
+                    disabled={!newTicket.subject.trim() || !newTicket.description.trim()}
+                  >
+                    Crear Ticket
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Nuevo Ticket
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Ticket</DialogTitle>
-              <DialogDescription>
-                Describe tu problema o consulta y nuestro equipo de soporte te ayudará.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
+        {/* Filtros */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="subject">Asunto</Label>
-                <Input
-                  id="subject"
-                  placeholder="Resumen breve del problema"
-                  value={newTicket.subject}
-                  onChange={e => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
-                />
+                <Label htmlFor="search">Buscar</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="search"
+                    placeholder="Buscar en tickets..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
               <div>
-                <Label htmlFor="category">Categoría</Label>
-                <Select
-                  value={newTicket.category}
-                  onValueChange={(value: any) =>
-                    setNewTicket(prev => ({ ...prev, category: value }))
-                  }
-                >
+                <Label htmlFor="status">Estado</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="open">Abierto</SelectItem>
+                    <SelectItem value="in_progress">En Progreso</SelectItem>
+                    <SelectItem value="resolved">Resuelto</SelectItem>
+                    <SelectItem value="closed">Cerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="priority">Prioridad</Label>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="medium">Media</SelectItem>
+                    <SelectItem value="low">Baja</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="category">Categoría</Label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="general">General</SelectItem>
                     <SelectItem value="technical">Técnico</SelectItem>
                     <SelectItem value="billing">Facturación</SelectItem>
@@ -322,309 +495,241 @@ export default function SupportTicketsPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label htmlFor="priority">Prioridad</Label>
-                <Select
-                  value={newTicket.priority}
-                  onValueChange={(value: any) =>
-                    setNewTicket(prev => ({ ...prev, priority: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baja</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="urgent">Urgente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="description">Descripción</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe detalladamente tu problema o consulta..."
-                  rows={6}
-                  value={newTicket.description}
-                  onChange={e => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleCreateTicket}
-                  disabled={!newTicket.subject.trim() || !newTicket.description.trim()}
-                >
-                  Crear Ticket
-                </Button>
-              </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Filtros */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="search">Buscar</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Buscar en tickets..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="status">Estado</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="open">Abierto</SelectItem>
-                  <SelectItem value="in_progress">En Progreso</SelectItem>
-                  <SelectItem value="resolved">Resuelto</SelectItem>
-                  <SelectItem value="closed">Cerrado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="priority">Prioridad</Label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="urgent">Urgente</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="medium">Media</SelectItem>
-                  <SelectItem value="low">Baja</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="category">Categoría</Label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="technical">Técnico</SelectItem>
-                  <SelectItem value="billing">Facturación</SelectItem>
-                  <SelectItem value="bug_report">Reporte de Error</SelectItem>
-                  <SelectItem value="feature_request">Solicitud de Funcionalidad</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de tickets */}
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Cargando tickets...</p>
-        </div>
-      ) : filteredTickets.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tickets</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm ||
-              statusFilter !== 'all' ||
-              priorityFilter !== 'all' ||
-              categoryFilter !== 'all'
-                ? 'No se encontraron tickets que coincidan con los filtros aplicados.'
-                : 'Aún no has creado ningún ticket de soporte.'}
-            </p>
-            {!searchTerm &&
-              statusFilter === 'all' &&
-              priorityFilter === 'all' &&
-              categoryFilter === 'all' && (
-                <Button onClick={() => setShowCreateDialog(true)}>Crear tu primer ticket</Button>
-              )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredTickets.map(ticket => (
-            <Card
-              key={ticket.id}
-              className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {
-                setSelectedTicket(ticket);
-                setShowTicketDialog(true);
-              }}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      {getStatusIcon(ticket.status)}
-                      <h3 className="text-lg font-medium text-gray-900">{ticket.title}</h3>
-                      <Badge className={getStatusColor(ticket.status)}>
-                        {ticket.status === 'OPEN'
+
+        {/* Lista de tickets */}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Cargando tickets...</p>
+          </div>
+        ) : filteredTickets.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tickets</h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm ||
+                statusFilter !== 'all' ||
+                priorityFilter !== 'all' ||
+                categoryFilter !== 'all'
+                  ? 'No se encontraron tickets que coincidan con los filtros aplicados.'
+                  : 'Aún no has creado ningún ticket de soporte.'}
+              </p>
+              {!searchTerm &&
+                statusFilter === 'all' &&
+                priorityFilter === 'all' &&
+                categoryFilter === 'all' && (
+                  <Button onClick={() => setShowCreateDialog(true)}>Crear tu primer ticket</Button>
+                )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredTickets.map(ticket => (
+              <Card
+                key={ticket.id}
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  setSelectedTicket(ticket);
+                  setShowTicketDialog(true);
+                }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {getStatusIcon(ticket.status)}
+                        <h3 className="text-lg font-medium text-gray-900">{ticket.title}</h3>
+                        <Badge className={getStatusColor(ticket.status)}>
+                          {ticket.status === 'OPEN'
+                            ? 'Abierto'
+                            : ticket.status === 'IN_PROGRESS'
+                              ? 'En Progreso'
+                              : ticket.status === 'RESOLVED'
+                                ? 'Resuelto'
+                                : 'Cerrado'}
+                        </Badge>
+                        <Badge className={getPriorityColor(ticket.priority)}>
+                          {ticket.priority === 'URGENT'
+                            ? 'Urgente'
+                            : ticket.priority === 'HIGH'
+                              ? 'Alta'
+                              : ticket.priority === 'MEDIUM'
+                                ? 'Media'
+                                : 'Baja'}
+                        </Badge>
+                      </div>
+
+                      <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span>
+                          Creado: {new Date(ticket.createdAt).toLocaleDateString('es-CL')}
+                        </span>
+                        <span>
+                          Actualizado: {new Date(ticket.updatedAt).toLocaleDateString('es-CL')}
+                        </span>
+                        <span>Respuestas: {ticket.comments.length}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm">
+                        Ver Detalles
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Dialog para ver ticket */}
+        <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            {selectedTicket && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-3">
+                    {getStatusIcon(selectedTicket.status)}
+                    {selectedTicket.title}
+                  </DialogTitle>
+                  <DialogDescription>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className={getStatusColor(selectedTicket.status)}>
+                        {selectedTicket.status === 'OPEN'
                           ? 'Abierto'
-                          : ticket.status === 'IN_PROGRESS'
+                          : selectedTicket.status === 'IN_PROGRESS'
                             ? 'En Progreso'
-                            : ticket.status === 'RESOLVED'
+                            : selectedTicket.status === 'RESOLVED'
                               ? 'Resuelto'
                               : 'Cerrado'}
                       </Badge>
-                      <Badge className={getPriorityColor(ticket.priority)}>
-                        {ticket.priority === 'URGENT'
+                      <Badge className={getPriorityColor(selectedTicket.priority)}>
+                        {selectedTicket.priority === 'URGENT'
                           ? 'Urgente'
-                          : ticket.priority === 'HIGH'
+                          : selectedTicket.priority === 'HIGH'
                             ? 'Alta'
-                            : ticket.priority === 'MEDIUM'
+                            : selectedTicket.priority === 'MEDIUM'
                               ? 'Media'
                               : 'Baja'}
                       </Badge>
                     </div>
+                  </DialogDescription>
+                </DialogHeader>
 
-                    <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
-
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>Creado: {new Date(ticket.createdAt).toLocaleDateString('es-CL')}</span>
-                      <span>
-                        Actualizado: {new Date(ticket.updatedAt).toLocaleDateString('es-CL')}
-                      </span>
-                      <span>Respuestas: {ticket.comments.length}</span>
-                    </div>
+                <div className="space-y-6">
+                  {/* Descripción del ticket */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
+                    <p className="text-gray-600 whitespace-pre-wrap">
+                      {selectedTicket.description}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      Ver Detalles
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Dialog para ver ticket */}
-      <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          {selectedTicket && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  {getStatusIcon(selectedTicket.status)}
-                  {selectedTicket.title}
-                </DialogTitle>
-                <DialogDescription>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getStatusColor(selectedTicket.status)}>
-                      {selectedTicket.status === 'OPEN'
-                        ? 'Abierto'
-                        : selectedTicket.status === 'IN_PROGRESS'
-                          ? 'En Progreso'
-                          : selectedTicket.status === 'RESOLVED'
-                            ? 'Resuelto'
-                            : 'Cerrado'}
-                    </Badge>
-                    <Badge className={getPriorityColor(selectedTicket.priority)}>
-                      {selectedTicket.priority === 'URGENT'
-                        ? 'Urgente'
-                        : selectedTicket.priority === 'HIGH'
-                          ? 'Alta'
-                          : selectedTicket.priority === 'MEDIUM'
-                            ? 'Media'
-                            : 'Baja'}
-                    </Badge>
-                  </div>
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6">
-                {/* Descripción del ticket */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedTicket.description}</p>
-                </div>
-
-                {/* Respuestas */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Conversación</h4>
-                  <div className="space-y-4">
-                    {selectedTicket.comments.map(response => (
-                      <div key={response.id} className="border-l-4 border-blue-200 pl-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-gray-900">{response.user.name}</span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(response.createdAt).toLocaleString('es-CL')}
-                          </span>
-                          {response.isInternal && (
-                            <Badge variant="secondary" className="text-xs">
-                              Interno
-                            </Badge>
-                          )}
+                  {/* Respuestas */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4">Conversación</h4>
+                    <div className="space-y-4">
+                      {selectedTicket.comments.map(response => (
+                        <div key={response.id} className="border-l-4 border-blue-200 pl-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-gray-900">{response.user.name}</span>
+                            <span className="text-sm text-gray-500">
+                              {new Date(response.createdAt).toLocaleString('es-CL')}
+                            </span>
+                            {response.isInternal && (
+                              <Badge variant="secondary" className="text-xs">
+                                Interno
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-gray-600 whitespace-pre-wrap">{response.content}</p>
                         </div>
-                        <p className="text-gray-600 whitespace-pre-wrap">{response.content}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Formulario para responder */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Responder</h4>
-                  <div className="space-y-3">
-                    <Textarea
-                      placeholder="Escribe tu respuesta..."
-                      rows={4}
-                      value={newResponse}
-                      onChange={e => setNewResponse(e.target.value)}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
-                        Cerrar
-                      </Button>
-                      <Button
-                        onClick={handleSubmitResponse}
-                        disabled={!newResponse.trim() || submittingResponse}
-                      >
-                        {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
-                      </Button>
+                  {/* Formulario para responder */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Responder</h4>
+                    <div className="space-y-3">
+                      <Textarea
+                        placeholder="Escribe tu respuesta..."
+                        rows={4}
+                        value={newResponse}
+                        onChange={e => setNewResponse(e.target.value)}
+                      />
+                      <div className="flex justify-between">
+                        {/* Botones de acción para soporte/admin */}
+                        {['ADMIN', 'SUPPORT'].includes(user?.role || '') && (
+                          <div className="flex gap-2">
+                            {selectedTicket.status !== 'IN_PROGRESS' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateTicketStatus(selectedTicket.id, 'in_progress')
+                                }
+                                className="flex items-center gap-2"
+                              >
+                                <Clock className="h-4 w-4" />
+                                En Progreso
+                              </Button>
+                            )}
+                            {selectedTicket.status !== 'RESOLVED' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateTicketStatus(selectedTicket.id, 'resolved')
+                                }
+                                className="flex items-center gap-2 text-green-600 hover:text-green-700"
+                              >
+                                <Check className="h-4 w-4" />
+                                Marcar Resuelto
+                              </Button>
+                            )}
+                            {selectedTicket.status !== 'CLOSED' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateTicketStatus(selectedTicket.id, 'closed')
+                                }
+                                className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
+                              >
+                                <X className="h-4 w-4" />
+                                Cerrar
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => setShowTicketDialog(false)}>
+                            Cerrar
+                          </Button>
+                          <Button
+                            onClick={handleSubmitResponse}
+                            disabled={!newResponse.trim() || submittingResponse}
+                          >
+                            {submittingResponse ? 'Enviando...' : 'Enviar Respuesta'}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </UnifiedDashboardLayout>
   );
 }

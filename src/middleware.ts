@@ -47,7 +47,8 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/contracts') ||
       pathname.startsWith('/api/payments') ||
       pathname.startsWith('/api/properties') ||
-      pathname.startsWith('/api/users')
+      pathname.startsWith('/api/users') ||
+      pathname.startsWith('/api/support')
     ) {
       const securityResponse = await securityMiddleware(request);
       if (securityResponse) {

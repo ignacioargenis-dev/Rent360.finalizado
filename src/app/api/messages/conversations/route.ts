@@ -10,19 +10,19 @@ import { handleApiError } from '@/lib/api-error-handler';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Intentar obtener usuario del middleware primero, luego fallback a requireAuth
-    let user = (request as any).user;
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
 
     if (!user) {
-      // Fallback: usar requireAuth si el middleware no adjuntó la información
-      const decoded = await requireAuth(request);
-      user = {
-        id: decoded.id,
-        email: decoded.email,
-        role: decoded.role,
-        name: decoded.name,
-      };
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
     }
+
+    logger.info('Usuario autenticado para conversaciones:', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');

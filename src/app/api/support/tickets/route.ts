@@ -23,7 +23,13 @@ const updateTicketSchema = z.object({
 // GET /api/support/tickets - Obtener tickets
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
+
+    if (!user) {
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get('page') || '1');
@@ -117,7 +123,13 @@ export async function GET(request: NextRequest) {
 // POST /api/support/tickets - Crear ticket
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
+
+    if (!user) {
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
     const data = await request.json();
 
     const validatedData = createTicketSchema.parse(data);
@@ -184,7 +196,13 @@ export async function POST(request: NextRequest) {
 // PUT /api/support/tickets - Actualizar ticket
 export async function PUT(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
+
+    if (!user) {
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
     const data = await request.json();
 
     const { ticketId, ...requestData } = data;

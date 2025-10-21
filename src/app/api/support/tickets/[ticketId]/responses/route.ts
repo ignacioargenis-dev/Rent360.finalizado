@@ -12,7 +12,13 @@ const createResponseSchema = z.object({
 // GET /api/support/tickets/[ticketId]/responses - Obtener respuestas de un ticket
 export async function GET(request: NextRequest, { params }: { params: { ticketId: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
+
+    if (!user) {
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
     const { ticketId } = params;
 
     // Verificar que el ticket existe
@@ -76,7 +82,13 @@ export async function GET(request: NextRequest, { params }: { params: { ticketId
 // POST /api/support/tickets/[ticketId]/responses - Crear respuesta
 export async function POST(request: NextRequest, { params }: { params: { ticketId: string } }) {
   try {
-    const user = await requireAuth(request);
+    // Obtener usuario del middleware (ya validado)
+    const user = (request as any).user;
+
+    if (!user) {
+      logger.error('No se encontró información de usuario en la request');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
     const { ticketId } = params;
     const data = await request.json();
 
