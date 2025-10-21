@@ -136,7 +136,7 @@ export default function MaintenanceMessagesPage() {
       setError(null);
 
       // Fetch real conversations data from API
-      const response = await fetch('/api/messages/conversations?limit=100', {
+      const response = await fetch('/api/messages/conversations', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export default function MaintenanceMessagesPage() {
 
       // Transform API data to match our interface
       const transformedConversations: Conversation[] =
-        data.conversations?.map((conv: any) => ({
+        data.data?.map((conv: any) => ({
           id: conv.id,
           participantName: conv.participant?.name || 'Usuario desconocido',
           participantType: conv.participant?.role?.toLowerCase() === 'owner' ? 'owner' : 'tenant',
