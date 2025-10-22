@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger-minimal';
+import * as jwt from 'jsonwebtoken';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
@@ -72,33 +73,32 @@ function getRequiredRoles(pathname: string): string[] | null {
   return null;
 }
 
-// Función para validar token (compatible con Edge Runtime)
+// Función para validar token (usando jsonwebtoken como /api/auth/me)
 async function validateToken(token: string): Promise<any> {
   try {
-    // Para Edge Runtime, usar validación simple de JWT sin librerías externas
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid token format');
+    // Usar jwt.decode() para compatibilidad con Edge Runtime
+    // Esto es lo mismo que hace /api/auth/me
+    const decoded = jwt.decode(token) as any;
+
+    if (!decoded) {
+      throw new Error('Invalid token');
     }
 
-    // Decodificar payload (parte del medio) - Compatible con Edge Runtime
-    const payload = JSON.parse(atob(parts[1] || ''));
-
     // Validar expiración
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
       throw new Error('Token expired');
     }
 
     // Validar que el token tenga la estructura esperada
-    if (!payload.id || !payload.email || !payload.role) {
+    if (!decoded.id || !decoded.email || !decoded.role) {
       throw new Error('Invalid token structure');
     }
 
     return {
-      userId: payload.id,
-      email: payload.email,
-      role: payload.role,
-      name: payload.name,
+      userId: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
     };
   } catch (error) {
     throw new Error('Invalid token');
