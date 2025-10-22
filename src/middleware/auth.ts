@@ -178,6 +178,13 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       cookieTokenLength: cookieToken?.length || 0,
     });
 
+    // Debug adicional
+    console.log('🔐 AuthMiddleware DEBUG: Cookie token encontrada:', !!cookieToken);
+    if (cookieToken) {
+      console.log('🔐 AuthMiddleware DEBUG: Token length:', cookieToken.length);
+      console.log('🔐 AuthMiddleware DEBUG: Token preview:', cookieToken.substring(0, 50) + '...');
+    }
+
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
 
     if (!token) {
@@ -204,7 +211,9 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     }
 
     // Validar token
+    console.log('🔐 AuthMiddleware DEBUG: Validando token...');
     const decoded = await validateToken(token);
+    console.log('🔐 AuthMiddleware DEBUG: Token validado exitosamente:', decoded);
 
     logger.info('🔐 AuthMiddleware: Token validado exitosamente', {
       userId: decoded.userId,
