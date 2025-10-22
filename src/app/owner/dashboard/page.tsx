@@ -341,6 +341,9 @@ export default function OwnerDashboard() {
       // Usuario no autenticado, mostrar datos vacíos
       setLoading(false);
     }
+
+    // Siempre retornar función de cleanup
+    return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Solo depender del ID del usuario, no del objeto completo
 

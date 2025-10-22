@@ -123,6 +123,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   const [user, setUser] = useState<User | null>(null);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const router = useRouter();
 
