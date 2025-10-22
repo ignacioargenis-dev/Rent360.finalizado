@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
   console.log('🔧 Middleware: Procesando request', {
     pathname,
     method: request.method,
+    fullUrl: request.url,
   });
 
   // Rutas públicas que no requieren autenticación
@@ -28,6 +29,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Debug específico para rutas de mensajes
+  if (pathname.startsWith('/api/messages')) {
+    console.log('🔧 Middleware: Ruta de mensajes detectada, procesando autenticación');
+  }
+
   // Usar el middleware de autenticación correcto que decodifica JWT
   const authResponse = await authMiddleware(request);
   if (authResponse) {
@@ -46,6 +52,14 @@ export const config = {
     /*
      * Match all API routes for authentication
      */
-    '/api/:path*',
+    '/api/messages/:path*',
+    '/api/auth/:path*',
+    '/api/properties/:path*',
+    '/api/contracts/:path*',
+    '/api/users/:path*',
+    '/api/admin/:path*',
+    '/api/support/:path*',
+    '/api/legal/:path*',
+    '/api/financial/:path*',
   ],
 };
