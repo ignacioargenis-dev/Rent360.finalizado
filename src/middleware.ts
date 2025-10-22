@@ -79,6 +79,21 @@ export async function middleware(request: NextRequest) {
     '/api/monitoring/health',
   ];
 
+  // Rutas que manejan su propia autenticación (excluir del middleware)
+  const selfAuthenticatingRoutes = [
+    '/api/auth/me', // ✅ Esta ruta valida tokens internamente
+  ];
+
+  // Verificar si es una ruta que maneja su propia autenticación
+  const isSelfAuthenticatingRoute = selfAuthenticatingRoutes.some(route =>
+    pathname.startsWith(route)
+  );
+
+  if (isSelfAuthenticatingRoute) {
+    console.log('🔧 Middleware: Ruta auto-autenticada, saltando middleware completamente');
+    return NextResponse.next();
+  }
+
   // Verificar si es una ruta pública
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
