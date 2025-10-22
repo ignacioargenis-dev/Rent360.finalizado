@@ -82,7 +82,7 @@ async function validateToken(token: string): Promise<any> {
     }
 
     // Decodificar payload (parte del medio)
-    const payload = JSON.parse(atob(parts[1] || ''));
+    const payload = JSON.parse(Buffer.from(parts[1] || '', 'base64').toString());
 
     // Validar expiración
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
