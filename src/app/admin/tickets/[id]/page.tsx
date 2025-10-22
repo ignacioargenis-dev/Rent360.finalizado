@@ -295,15 +295,13 @@ export default function AdminTicketDetailsPage() {
                     <div>
                       <span className="text-gray-600">Creado:</span>
                       <span className="ml-2 font-medium">
-                        {ticket?.createdAt ? formatDate(ticket.createdAt.toISOString()) : ''}
+                        {ticket?.createdAt ? formatDate(ticket.createdAt) : ''}
                       </span>
                     </div>
                     {ticket?.resolvedAt && (
                       <div>
                         <span className="text-gray-600">Resuelto:</span>
-                        <span className="ml-2 font-medium">
-                          {formatDate(ticket.resolvedAt.toISOString())}
-                        </span>
+                        <span className="ml-2 font-medium">{formatDate(ticket.resolvedAt)}</span>
                       </div>
                     )}
                     {ticket?.assignedTo && (
@@ -346,7 +344,7 @@ export default function AdminTicketDetailsPage() {
                             )}
                           </div>
                           <span className="text-xs text-gray-500">
-                            {formatDate(comment.createdAt.toISOString())}
+                            {formatDate(comment.createdAt)}
                           </span>
                         </div>
                         <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
