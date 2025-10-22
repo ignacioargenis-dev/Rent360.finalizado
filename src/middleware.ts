@@ -4,18 +4,19 @@ import { authMiddleware } from '@/middleware/auth';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  console.log('🔧 Middleware: Procesando request', {
-    pathname,
-    method: request.method,
-  });
+  // Log básico para TODAS las requests
+  console.log(`🔧 MIDDLEWARE: ${request.method} ${pathname} - START`);
 
   // Debug específico para rutas de mensajes
   if (pathname.startsWith('/api/messages')) {
-    console.log('🔧 Middleware: Ruta de mensajes detectada, procesando autenticación', {
-      pathname,
-      method: request.method,
-      fullUrl: request.url,
-    });
+    console.log(`🔧 MIDDLEWARE: RUTA DE MENSAJES DETECTADA - ${pathname}`);
+    console.log(`🔧 MIDDLEWARE: Method: ${request.method}`);
+    console.log(`🔧 MIDDLEWARE: Full URL: ${request.url}`);
+    console.log(`🔧 MIDDLEWARE: Headers:`, Object.fromEntries(request.headers.entries()));
+    console.log(
+      `🔧 MIDDLEWARE: Cookies:`,
+      request.cookies.getAll().map(c => ({ name: c.name, value: c.value.length }))
+    );
   }
 
   // Rutas públicas que no requieren autenticación
@@ -38,18 +39,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Usar el middleware de autenticación correcto que decodifica JWT
-  console.log('🔧 Middleware: Ejecutando authMiddleware para', pathname);
+  console.log('🔧 MIDDLEWARE: Ejecutando authMiddleware para', pathname);
   const authResponse = await authMiddleware(request);
 
   if (authResponse) {
     // Si authMiddleware retorna una respuesta, significa que hay un error de autenticación
-    console.log('🔧 Middleware: Error de autenticación detectado');
-    console.log('🔧 Middleware: Auth response status:', authResponse.status);
-    console.log('🔧 Middleware: Auth response body:', await authResponse.text());
+    console.log('🔧 MIDDLEWARE: ERROR DE AUTENTICACIÓN DETECTADO');
+    console.log('🔧 MIDDLEWARE: Auth response status:', authResponse.status);
+    const responseBody = await authResponse.text();
+    console.log('🔧 MIDDLEWARE: Auth response body:', responseBody);
     return authResponse;
   }
 
-  console.log('🔧 Middleware: Autenticación exitosa, continuando...');
+  console.log('🔧 MIDDLEWARE: Autenticación exitosa, continuando...');
+  console.log('🔧 MIDDLEWARE: User attached:', (request as any).user ? 'YES' : 'NO');
   return NextResponse.next();
 }
 

@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
     // Obtener usuario del middleware (ya validado)
     const user = (request as any).user;
 
+    console.log('🔍 MESSAGES API: Iniciando GET /api/messages');
+    console.log('🔍 MESSAGES API: User from middleware:', user ? 'PRESENTE' : 'NO ENCONTRADO');
+    console.log('🔍 MESSAGES API: User details:', user);
+
     logger.info('🔍 /api/messages: Verificando usuario', {
       hasUser: !!user,
       userId: user?.id,
@@ -30,6 +34,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
+      console.error('🔍 MESSAGES API: NO SE ENCONTRÓ USUARIO EN REQUEST');
       logger.error('🔍 /api/messages: No se encontró información de usuario en la request');
       return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
     }

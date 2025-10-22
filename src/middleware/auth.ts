@@ -75,21 +75,21 @@ function getRequiredRoles(pathname: string): string[] | null {
 // Función para validar token (compatible con Edge Runtime)
 async function validateToken(token: string): Promise<any> {
   try {
-    logger.info('🔐 validateToken: Iniciando validación del token');
+    console.log('🔐 VALIDATE TOKEN: Iniciando validación del token');
 
     // Para Edge Runtime, usar decodificación manual compatible con navegador
     const parts = token.split('.');
-    logger.info('🔐 validateToken: Partes del token', { partsCount: parts.length });
+    console.log('🔐 VALIDATE TOKEN: Partes del token:', parts.length);
 
     if (parts.length !== 3) {
-      logger.error('🔐 validateToken: Token no tiene 3 partes');
+      console.error('🔐 VALIDATE TOKEN: Token no tiene 3 partes');
       throw new Error('Invalid token format');
     }
 
     // Decodificar payload (parte del medio) - Compatible con Edge Runtime
-    logger.info('🔐 validateToken: Decodificando payload');
+    console.log('🔐 VALIDATE TOKEN: Decodificando payload con atob()');
     const payload = JSON.parse(atob(parts[1] || ''));
-    logger.info('🔐 validateToken: Payload decodificado', {
+    console.log('🔐 VALIDATE TOKEN: Payload decodificado:', {
       userId: payload.id,
       email: payload.email,
       role: payload.role,
@@ -98,13 +98,13 @@ async function validateToken(token: string): Promise<any> {
 
     // Validar expiración
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      logger.error('🔐 validateToken: Token expirado');
+      console.error('🔐 VALIDATE TOKEN: Token expirado');
       throw new Error('Token expired');
     }
 
     // Validar que el token tenga la estructura esperada
     if (!payload.id || !payload.email || !payload.role) {
-      logger.error('🔐 validateToken: Token sin estructura válida', {
+      console.error('🔐 VALIDATE TOKEN: Token sin estructura válida:', {
         hasId: !!payload.id,
         hasEmail: !!payload.email,
         hasRole: !!payload.role,
@@ -112,7 +112,7 @@ async function validateToken(token: string): Promise<any> {
       throw new Error('Invalid token structure');
     }
 
-    logger.info('🔐 validateToken: Token validado exitosamente');
+    console.log('🔐 VALIDATE TOKEN: Token validado exitosamente');
     return {
       userId: payload.id,
       email: payload.email,
@@ -120,7 +120,7 @@ async function validateToken(token: string): Promise<any> {
       name: payload.name,
     };
   } catch (error) {
-    logger.error('🔐 validateToken: Error en validación', {
+    console.error('🔐 VALIDATE TOKEN: Error en validación:', {
       error: error instanceof Error ? error.message : String(error),
       tokenLength: token.length,
       tokenStart: token.substring(0, 50),
@@ -179,6 +179,10 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
+  console.log('🔐 AUTH MIDDLEWARE: INICIANDO para', pathname);
+  console.log('🔐 AUTH MIDDLEWARE: Method:', request.method);
+  console.log('🔐 AUTH MIDDLEWARE: Client IP:', clientIP);
+
   logger.info('🔐 AuthMiddleware: Procesando request', {
     pathname,
     method: request.method,
@@ -195,6 +199,11 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     // Obtener token de autenticación
     const authHeader = request.headers.get('authorization');
     const cookieToken = request.cookies.get('auth-token')?.value;
+
+    console.log('🔐 AUTH MIDDLEWARE: Buscando tokens...');
+    console.log('🔐 AUTH MIDDLEWARE: Auth Header:', !!authHeader);
+    console.log('🔐 AUTH MIDDLEWARE: Cookie Token Length:', cookieToken?.length || 0);
+    console.log('🔐 AUTH MIDDLEWARE: Cookie Token:', cookieToken ? 'PRESENTE' : 'NO ENCONTRADO');
 
     logger.info('🔐 AuthMiddleware: Tokens encontrados', {
       hasAuthHeader: !!authHeader,
@@ -303,6 +312,12 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       name: decoded.name,
       permissions: decoded.permissions || [],
     };
+
+    console.log('🔐 AUTH MIDDLEWARE: USUARIO ADJUNTADO A REQUEST:', {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    });
 
     logger.info('🔐 AuthMiddleware: Usuario adjuntado a request', {
       userId: decoded.userId,
