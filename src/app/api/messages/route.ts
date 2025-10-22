@@ -70,26 +70,46 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Construir filtro
-    const where: any = {
-      OR: [{ senderId: user.id }, { receiverId: user.id }],
-    };
+    let where: any = {};
 
+    // Si se especifica receiverId, buscar conversación entre user y receiverId
+    if (receiverId) {
+      console.log('🔍 MESSAGES API (GET): Buscando conversación con receiverId:', receiverId);
+      console.log('🔍 MESSAGES API (GET): Usuario actual:', user.id);
+
+      where = {
+        OR: [
+          // Mensajes enviados por el usuario actual al otro usuario
+          { senderId: user.id, receiverId: receiverId },
+          // Mensajes enviados por el otro usuario al usuario actual
+          { senderId: receiverId, receiverId: user.id },
+        ],
+      };
+
+      console.log('🔍 MESSAGES API (GET): Filtro de conversación construido');
+    } else {
+      // Sin receiverId específico, mostrar todos los mensajes del usuario
+      where = {
+        OR: [{ senderId: user.id }, { receiverId: user.id }],
+      };
+    }
+
+    // Filtros adicionales
     if (type) {
       where.type = type;
     }
 
-    if (senderId) {
+    if (senderId && !receiverId) {
+      // Solo aplicar senderId si no hay receiverId (para evitar conflictos)
       where.senderId = senderId;
-    }
-
-    if (receiverId) {
-      where.receiverId = receiverId;
     }
 
     if (unreadOnly) {
       where.receiverId = user.id;
       where.isRead = false;
     }
+
+    console.log('🔍 MESSAGES API (GET): Ejecutando query con filtro:', JSON.stringify(where));
 
     // Obtener mensajes
     const [messages, total] = await Promise.all([
@@ -135,7 +155,9 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          // Si es una conversación específica (receiverId), ordenar de más antiguo a más reciente
+          // Si es listado general, ordenar de más reciente a más antiguo
+          createdAt: receiverId ? 'asc' : 'desc',
         },
         skip,
         take: limit,
