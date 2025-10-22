@@ -86,6 +86,39 @@ export default function AdminTicketsPage() {
     router.push('/admin/tickets?filter=advanced');
   };
 
+  const calculateStats = (ticketList: SupportTicket[]): TicketStats => {
+    const openTickets = ticketList.filter(t => t.status === 'open').length;
+    const resolvedTickets = ticketList.filter(t => t.status === 'resolved').length;
+    const escalatedTickets = ticketList.filter(t => t.status === 'escalated').length;
+    const inProgressTickets = ticketList.filter(t => t.status === 'in_progress').length;
+
+    // Calcular tiempo promedio de resolución solo para tickets resueltos
+    const resolvedTimes = ticketList
+      .filter(t => t.status === 'resolved' && t.resolutionTime)
+      .map(t => t.resolutionTime!);
+    const averageResolutionTime =
+      resolvedTimes.length > 0
+        ? resolvedTimes.reduce((a, b) => a + b, 0) / resolvedTimes.length
+        : 0;
+
+    // Calcular satisfacción promedio
+    const satisfactionScores = ticketList.filter(t => t.satisfaction).map(t => t.satisfaction!);
+    const customerSatisfaction =
+      satisfactionScores.length > 0
+        ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
+        : 0;
+
+    return {
+      totalTickets: ticketList.length,
+      openTickets,
+      resolvedTickets,
+      pendingTickets: inProgressTickets,
+      averageResolutionTime: Math.round(averageResolutionTime * 10) / 10, // Redondear a 1 decimal
+      customerSatisfaction: Math.round(customerSatisfaction * 10) / 10, // Redondear a 1 decimal
+      escalatedTickets,
+    };
+  };
+
   const handleExportTickets = () => {
     // Export tickets data to CSV
     const csvData = tickets.map(ticket => ({
@@ -150,50 +183,82 @@ export default function AdminTicketsPage() {
     }
   };
 
-  const handleCloseTicket = (ticketId: string) => {
+  const handleCloseTicket = async (ticketId: string) => {
     // Close ticket with confirmation
     const ticket = tickets.find(t => t.id === ticketId);
-    if (ticket) {
-      if (confirm(`¿Está seguro de cerrar el ticket "${ticket.title}"?`)) {
-        // Simulate API call
-        setTimeout(() => {
-          setTickets(prevTickets =>
-            prevTickets.map(t =>
-              t.id === ticketId
-                ? { ...t, status: 'closed' as const, updatedAt: new Date().toISOString() }
-                : t
-            )
-          );
-          alert('Ticket cerrado exitosamente');
-        }, 500);
+    if (!ticket) {
+      return;
+    }
+
+    if (!confirm(`¿Está seguro de cerrar el ticket "${ticket.title}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'closed',
+        }),
+      });
+
+      if (response.ok) {
+        const updatedTicket = await response.json();
+        // Update local state
+        setTickets(prevTickets => prevTickets.map(t => (t.id === ticketId ? updatedTicket : t)));
+        // Recalculate stats
+        setStats(calculateStats(tickets.map(t => (t.id === ticketId ? updatedTicket : t))));
+        alert('Ticket cerrado exitosamente');
+      } else {
+        const errorData = await response.json();
+        alert(`Error al cerrar el ticket: ${errorData.error || 'Error desconocido'}`);
       }
+    } catch (error) {
+      logger.error('Error closing ticket:', error);
+      alert('Error al cerrar el ticket. Intente nuevamente.');
     }
   };
 
-  const handleResolveTicket = (ticketId: string) => {
+  const handleResolveTicket = async (ticketId: string) => {
     // Resolve ticket with resolution note
     const ticket = tickets.find(t => t.id === ticketId);
-    if (ticket) {
-      const resolution = prompt(`Ingrese la resolución para el ticket "${ticket.title}":`);
-      if (resolution) {
-        // Simulate API call
-        setTimeout(() => {
-          setTickets(prevTickets =>
-            prevTickets.map(t =>
-              t.id === ticketId
-                ? {
-                    ...t,
-                    status: 'resolved' as const,
-                    updatedAt: new Date().toISOString(),
-                    resolutionTime: 2.5,
-                    satisfaction: 4,
-                  }
-                : t
-            )
-          );
-          alert('Ticket resuelto exitosamente');
-        }, 500);
+    if (!ticket) {
+      return;
+    }
+
+    const resolution = prompt(`Ingrese la resolución para el ticket "${ticket.title}":`);
+    if (!resolution) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'resolved',
+        }),
+      });
+
+      if (response.ok) {
+        const updatedTicket = await response.json();
+        // Update local state
+        setTickets(prevTickets => prevTickets.map(t => (t.id === ticketId ? updatedTicket : t)));
+        // Recalculate stats
+        setStats(calculateStats(tickets.map(t => (t.id === ticketId ? updatedTicket : t))));
+        alert('Ticket resuelto exitosamente');
+      } else {
+        const errorData = await response.json();
+        alert(`Error al resolver el ticket: ${errorData.error || 'Error desconocido'}`);
       }
+    } catch (error) {
+      logger.error('Error resolving ticket:', error);
+      alert('Error al resolver el ticket. Intente nuevamente.');
     }
   };
 
@@ -225,6 +290,7 @@ export default function AdminTicketsPage() {
           const result = await response.json();
           if (result.success) {
             setTickets(result.data);
+            setStats(calculateStats(result.data));
             setLoading(false);
             return;
           }
@@ -304,24 +370,7 @@ export default function AdminTicketsPage() {
         ];
 
         setTickets(mockTickets);
-
-        // Calculate stats
-        const openTickets = mockTickets.filter(t => t.status === 'open').length;
-        const resolvedTickets = mockTickets.filter(t => t.status === 'resolved').length;
-        const escalatedTickets = mockTickets.filter(t => t.status === 'escalated').length;
-        const inProgressTickets = mockTickets.filter(t => t.status === 'in_progress').length;
-
-        const ticketStats: TicketStats = {
-          totalTickets: mockTickets.length,
-          openTickets,
-          resolvedTickets,
-          pendingTickets: inProgressTickets,
-          averageResolutionTime: 3.2,
-          customerSatisfaction: 4.6,
-          escalatedTickets,
-        };
-
-        setStats(ticketStats);
+        setStats(calculateStats(mockTickets));
         setLoading(false);
       } catch (error) {
         logger.error('Error loading ticket data:', {
