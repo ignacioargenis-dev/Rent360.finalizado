@@ -149,7 +149,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
-  console.log('🔐 AUTH MIDDLEWARE: INICIANDO para', pathname);
+  // Log INMEDIATO para confirmar que authMiddleware se está ejecutando
+  console.log('🔐 AUTH MIDDLEWARE: EJECUTÁNDOSE para', pathname);
   console.log('🔐 AUTH MIDDLEWARE: Method:', request.method);
   console.log('🔐 AUTH MIDDLEWARE: Client IP:', clientIP);
   console.log('🔐 AUTH MIDDLEWARE: Full URL:', request.url);
@@ -166,6 +167,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
   });
 
   // Saltar autenticación para rutas públicas
+  console.log('🔐 AUTH MIDDLEWARE: Verificando si es ruta pública...');
   if (isPublicRoute(pathname)) {
     console.log('🔐 AUTH MIDDLEWARE: RUTA PÚBLICA, SALTANDO AUTENTICACIÓN:', pathname);
     logger.info('🔐 AuthMiddleware: Ruta pública, saltando autenticación', { pathname });
@@ -179,10 +181,17 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     const authHeader = request.headers.get('authorization');
     const cookieToken = request.cookies.get('auth-token')?.value;
 
+    console.log('🔐 AUTH MIDDLEWARE: INICIANDO PROCESO DE AUTENTICACIÓN');
     console.log('🔐 AUTH MIDDLEWARE: Buscando tokens...');
     console.log('🔐 AUTH MIDDLEWARE: Auth Header:', !!authHeader);
     console.log('🔐 AUTH MIDDLEWARE: Cookie Token Length:', cookieToken?.length || 0);
     console.log('🔐 AUTH MIDDLEWARE: Cookie Token:', cookieToken ? 'PRESENTE' : 'NO ENCONTRADO');
+    console.log(
+      '🔐 AUTH MIDDLEWARE: All Cookies:',
+      request.cookies
+        .getAll()
+        .map(c => ({ name: c.name, hasValue: !!c.value, length: c.value?.length }))
+    );
 
     logger.info('🔐 AuthMiddleware: Tokens encontrados', {
       hasAuthHeader: !!authHeader,
@@ -194,7 +203,11 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
 
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
 
+    console.log('🔐 AUTH MIDDLEWARE: Token extraído:', token ? 'PRESENTE' : 'NO ENCONTRADO');
+    console.log('🔐 AUTH MIDDLEWARE: Token length:', token?.length);
+
     if (!token) {
+      console.log('🔐 AUTH MIDDLEWARE: NO HAY TOKEN - RETORNANDO 401');
       logger.warn('🔐 AuthMiddleware: No authentication token provided', {
         pathname,
         clientIP,
@@ -224,7 +237,9 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     }
 
     // Validar token
+    console.log('🔐 AUTH MIDDLEWARE: Ejecutando validateToken...');
     const decoded = await validateToken(token);
+    console.log('🔐 AUTH MIDDLEWARE: validateToken completado exitosamente');
 
     logger.info('🔐 AuthMiddleware: Token validado exitosamente', {
       userId: decoded.userId,
@@ -292,20 +307,6 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       permissions: decoded.permissions || [],
     };
 
-    console.log('🔐 AUTH MIDDLEWARE: USUARIO ADJUNTADO A REQUEST:', {
-      userId: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-    });
-
-    logger.info('🔐 AuthMiddleware: Usuario adjuntado a request', {
-      userId: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-      pathname,
-      method: request.method,
-    });
-
     // Log de acceso autorizado
     logger.info('🔐 AuthMiddleware: Request autorizada', {
       userId: decoded.userId,
@@ -318,6 +319,25 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
 
     // Continuar con la solicitud
     console.log('🔐 AUTH MIDDLEWARE: AUTENTICACIÓN EXITOSA - RETORNANDO NULL');
+    console.log('🔐 AUTH MIDDLEWARE: User object to attach:', {
+      id: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    });
+
+    // Adjuntar información del usuario a la request
+    (request as any).user = {
+      id: decoded.userId,
+      userId: decoded.userId, // Mantener compatibilidad
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+      permissions: decoded.permissions || [],
+    };
+
+    console.log('🔐 AUTH MIDDLEWARE: USUARIO ADJUNTADO A REQUEST - FINAL');
+    console.log('🔐 AUTH MIDDLEWARE: Request user:', (request as any).user);
+
     return null;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Authentication error';

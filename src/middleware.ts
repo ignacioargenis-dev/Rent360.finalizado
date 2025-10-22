@@ -4,6 +4,10 @@ import { authMiddleware } from '@/middleware/auth';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Log INMEDIATO para CONFIRMAR EJECUCIÓN - ANTES DE CUALQUIER OTRA COSA
+  console.log(`🔧 MIDDLEWARE EJECUTÁNDOSE: ${request.method} ${pathname}`);
+  console.log(`🔧 MIDDLEWARE MATCHER ACTIVO PARA: ${pathname}`);
+
   // Log básico para TODAS las requests - MÁS SIMPLE
   console.log(`🔧 MIDDLEWARE START: ${request.method} ${pathname}`);
   console.log(`🔧 MIDDLEWARE URL: ${request.url}`);
@@ -81,20 +85,13 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match API routes that need authentication
-     * Using simple patterns for Edge Runtime compatibility
+     * Match ALL API routes to ensure middleware runs
+     * Edge Runtime sometimes has issues with complex patterns
      */
-    '/api/messages/:path*',
-    '/api/auth/me',
-    '/api/properties/:path*',
-    '/api/contracts/:path*',
-    '/api/users/:path*',
-    '/api/admin/:path*',
-    '/api/support/:path*',
-    '/api/legal/:path*',
-    '/api/financial/:path*',
-    // Also match the specific endpoints being called
+    '/api/:path*',
+    // Also include the specific failing routes
     '/api/messages',
     '/api/messages/conversations',
+    '/api/messages/:path*',
   ],
 };
