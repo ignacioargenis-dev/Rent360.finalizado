@@ -59,7 +59,9 @@ declare module 'next/server' {
 
 // Función para verificar si una ruta es pública
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  const isPublic = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  console.log('🔐 IS PUBLIC ROUTE:', pathname, '->', isPublic);
+  return isPublic;
 }
 
 // Función para obtener el rol requerido para una ruta
@@ -88,13 +90,23 @@ async function validateToken(token: string): Promise<any> {
 
     // Decodificar payload (parte del medio) - Compatible con Edge Runtime
     console.log('🔐 VALIDATE TOKEN: Decodificando payload con atob()');
-    const payload = JSON.parse(atob(parts[1] || ''));
-    console.log('🔐 VALIDATE TOKEN: Payload decodificado:', {
-      userId: payload.id,
-      email: payload.email,
-      role: payload.role,
-      exp: payload.exp,
-    });
+    console.log('🔐 VALIDATE TOKEN: Part 1 (header):', parts[0]);
+    console.log('🔐 VALIDATE TOKEN: Part 2 (payload):', parts[1]);
+
+    try {
+      const decodedPayload = atob(parts[1] || '');
+      console.log('🔐 VALIDATE TOKEN: Payload decodificado (base64):', decodedPayload);
+      const payload = JSON.parse(decodedPayload);
+      console.log('🔐 VALIDATE TOKEN: Payload decodificado (JSON):', {
+        userId: payload.id,
+        email: payload.email,
+        role: payload.role,
+        exp: payload.exp,
+      });
+    } catch (decodeError) {
+      console.error('🔐 VALIDATE TOKEN: Error decodificando payload:', decodeError);
+      throw new Error('Invalid token format');
+    }
 
     // Validar expiración
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
@@ -129,49 +141,6 @@ async function validateToken(token: string): Promise<any> {
   }
 }
 
-// Función para validar token con el servicio de autenticación
-async function validateWithAuthService(token: string, userId: string): Promise<boolean> {
-  try {
-    const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
-
-    // Timeout de 5 segundos para evitar bloqueos
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(`${authServiceUrl}/api/v1/auth/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify({ userId }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      logger.warn('Auth service validation failed', {
-        status: response.status,
-        statusText: response.statusText,
-      });
-      return false;
-    }
-
-    const data = await response.json();
-    return data.success === true;
-  } catch (error) {
-    logger.error('Auth service communication error', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    // En caso de error de comunicación, permitir la solicitud con token válido
-    // para evitar bloqueos por fallos temporales del servicio
-    return true;
-  }
-}
-
 // Middleware de autenticación principal
 export async function authMiddleware(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
@@ -182,6 +151,12 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
   console.log('🔐 AUTH MIDDLEWARE: INICIANDO para', pathname);
   console.log('🔐 AUTH MIDDLEWARE: Method:', request.method);
   console.log('🔐 AUTH MIDDLEWARE: Client IP:', clientIP);
+  console.log('🔐 AUTH MIDDLEWARE: Full URL:', request.url);
+  console.log('🔐 AUTH MIDDLEWARE: Headers:', Object.fromEntries(request.headers.entries()));
+  console.log(
+    '🔐 AUTH MIDDLEWARE: Cookies:',
+    request.cookies.getAll().map(c => ({ name: c.name, value: c.value.length }))
+  );
 
   logger.info('🔐 AuthMiddleware: Procesando request', {
     pathname,
@@ -191,9 +166,12 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
 
   // Saltar autenticación para rutas públicas
   if (isPublicRoute(pathname)) {
+    console.log('🔐 AUTH MIDDLEWARE: RUTA PÚBLICA, SALTANDO AUTENTICACIÓN:', pathname);
     logger.info('🔐 AuthMiddleware: Ruta pública, saltando autenticación', { pathname });
     return null;
   }
+
+  console.log('🔐 AUTH MIDDLEWARE: RUTA NO PÚBLICA, PROCESANDO AUTENTICACIÓN:', pathname);
 
   try {
     // Obtener token de autenticación
@@ -338,6 +316,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     });
 
     // Continuar con la solicitud
+    console.log('🔐 AUTH MIDDLEWARE: AUTENTICACIÓN EXITOSA - RETORNANDO NULL');
     return null;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Authentication error';
