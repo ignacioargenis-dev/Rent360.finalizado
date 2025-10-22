@@ -1,5 +1,8 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar prerendering de páginas protegidas
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -88,21 +91,30 @@ export default function AdminUserReportsPage() {
       });
 
       if (!response.ok) {
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
       const data = await response.json();
       if (data.success && data.user) {
+        // Verificar que el usuario sea admin o support
+        if (data.user.role !== 'ADMIN' && data.user.role !== 'SUPPORT') {
+          logger.warn('User without proper role tried to access admin user reports', {
+            userId: data.user.id,
+            role: data.user.role,
+          });
+          router.push('/');
+          return;
+        }
         setUser(data.user);
       } else {
-        router.push('/login');
+        router.push('/auth/login');
       }
     } catch (error) {
       logger.error('Error loading user data:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      router.push('/login');
+      router.push('/auth/login');
     }
   };
 
