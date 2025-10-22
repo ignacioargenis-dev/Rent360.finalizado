@@ -121,7 +121,7 @@ export default function AdminTicketsPage() {
 
   const handleViewTicket = (ticketId: string) => {
     // Navigate to ticket detail view
-    window.open(`/admin/tickets/${ticketId}`, '_blank');
+    router.push(`/admin/tickets/${ticketId}`);
   };
 
   const handleAssignTicket = (ticketId: string) => {

@@ -57,14 +57,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'support' && ticket.userId !== user.id) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPPORT' && ticket.userId !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver este ticket' },
         { status: 403 }
       );
     }
 
-    return NextResponse.json({ ticket });
+    return NextResponse.json({
+      ticket,
+      comments: ticket.comments || [],
+    });
   } catch (error) {
     logger.error('Error al obtener ticket:', {
       error: error instanceof Error ? error.message : String(error),
@@ -161,7 +164,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Solo admin, support o el creador pueden eliminar tickets
-    if (user.role !== 'ADMIN' && user.role !== 'support' && existingTicket.userId !== user.id) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPPORT' && existingTicket.userId !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permisos para eliminar este ticket' },
         { status: 403 }
