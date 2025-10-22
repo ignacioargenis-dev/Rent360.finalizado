@@ -59,6 +59,18 @@ interface TicketStats {
   averageResolutionTime: number;
   customerSatisfaction: number;
   escalatedTickets: number;
+  // Nuevas propiedades de rendimiento
+  weekly?: {
+    resolved: number;
+    total: number;
+    resolutionRate: number;
+    changePercent: number;
+  };
+  monthly?: {
+    averageResolutionTime: number;
+    timeChangePercent: number;
+  };
+  satisfactionChange?: number;
 }
 
 export default function AdminTicketsPage() {
@@ -350,7 +362,7 @@ export default function AdminTicketsPage() {
             setTickets(ticketsResult.data);
 
             // Combinar estadísticas básicas y de rendimiento
-            let combinedStats = {};
+            let combinedStats: any = {};
 
             // Estadísticas básicas
             if (basicStatsResponse.ok) {
@@ -822,8 +834,9 @@ export default function AdminTicketsPage() {
                     <div className="text-right">
                       <p className="text-2xl font-bold text-green-800">{stats.resolvedTickets}</p>
                       <p className="text-xs text-green-600">
-                        {stats.weekly?.changePercent >= 0 ? '+' : ''}
-                        {stats.weekly?.changePercent || 0}% vs semana anterior
+                        {stats.weekly?.changePercent !== undefined &&
+                          (stats.weekly.changePercent >= 0 ? '+' : '')}
+                        {stats.weekly?.changePercent ?? 0}% vs semana anterior
                       </p>
                     </div>
                   </div>
@@ -838,8 +851,9 @@ export default function AdminTicketsPage() {
                         {stats.averageResolutionTime}h
                       </p>
                       <p className="text-xs text-blue-600">
-                        {stats.monthly?.timeChangePercent >= 0 ? '+' : ''}
-                        {stats.monthly?.timeChangePercent || 0}% vs mes anterior
+                        {stats.monthly?.timeChangePercent !== undefined &&
+                          (stats.monthly.timeChangePercent >= 0 ? '+' : '')}
+                        {stats.monthly?.timeChangePercent ?? 0}% vs mes anterior
                       </p>
                     </div>
                   </div>
