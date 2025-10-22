@@ -135,8 +135,8 @@ export default function AdminTicketDetailsPage() {
 
   const handleChangeStatus = async (newStatus: string) => {
     try {
-      const response = await fetch(`/api/tickets/${ticketId}/status`, {
-        method: 'POST',
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

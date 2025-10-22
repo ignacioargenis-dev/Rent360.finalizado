@@ -86,6 +86,27 @@ export default function AdminTicketsPage() {
     router.push('/admin/tickets?filter=advanced');
   };
 
+  const loadTicketStats = async () => {
+    try {
+      const response = await fetch('/api/admin/tickets/stats', {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setStats(result.data);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading ticket stats:', error);
+      // Fallback: recalculate locally if API fails
+      setStats(calculateStats(tickets));
+    }
+  };
+
   const calculateStats = (ticketList: SupportTicket[]): TicketStats => {
     const openTickets = ticketList.filter(t => t.status === 'open').length;
     const resolvedTickets = ticketList.filter(t => t.status === 'resolved').length;
@@ -209,8 +230,8 @@ export default function AdminTicketsPage() {
         const updatedTicket = await response.json();
         // Update local state
         setTickets(prevTickets => prevTickets.map(t => (t.id === ticketId ? updatedTicket : t)));
-        // Recalculate stats
-        setStats(calculateStats(tickets.map(t => (t.id === ticketId ? updatedTicket : t))));
+        // Reload stats from API
+        loadTicketStats();
         alert('Ticket cerrado exitosamente');
       } else {
         const errorData = await response.json();
@@ -249,8 +270,8 @@ export default function AdminTicketsPage() {
         const updatedTicket = await response.json();
         // Update local state
         setTickets(prevTickets => prevTickets.map(t => (t.id === ticketId ? updatedTicket : t)));
-        // Recalculate stats
-        setStats(calculateStats(tickets.map(t => (t.id === ticketId ? updatedTicket : t))));
+        // Reload stats from API
+        loadTicketStats();
         alert('Ticket resuelto exitosamente');
       } else {
         const errorData = await response.json();
@@ -280,17 +301,37 @@ export default function AdminTicketsPage() {
     const loadTicketData = async () => {
       try {
         // Obtener datos reales desde la API
-        const response = await fetch('/api/admin/tickets/list', {
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
+        const [ticketsResponse, statsResponse] = await Promise.all([
+          fetch('/api/admin/tickets/list', {
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }),
+          fetch('/api/admin/tickets/stats', {
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }),
+        ]);
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            setTickets(result.data);
-            setStats(calculateStats(result.data));
+        // Procesar respuesta de tickets
+        if (ticketsResponse.ok) {
+          const ticketsResult = await ticketsResponse.json();
+          if (ticketsResult.success) {
+            setTickets(ticketsResult.data);
+
+            // Procesar respuesta de estadísticas
+            if (statsResponse.ok) {
+              const statsResult = await statsResponse.json();
+              if (statsResult.success) {
+                setStats(statsResult.data);
+                setLoading(false);
+                return;
+              }
+            }
+
+            // Si las estadísticas fallan, usar cálculo local como fallback
+            setStats(calculateStats(ticketsResult.data));
             setLoading(false);
             return;
           }
