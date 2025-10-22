@@ -44,6 +44,7 @@ import {
   Activity,
   AlertTriangle,
   Phone,
+  Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +100,13 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Gestión de Usuarios',
       url: '/admin/users',
       icon: Users,
+    },
+    {
+      title: 'Reportes de Conducta',
+      url: '/admin/user-reports',
+      icon: Flag,
+      badge: 'Nuevo',
+      badgeVariant: 'destructive',
     },
     {
       title: 'Propiedades',
@@ -442,6 +450,13 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Tickets',
       url: '/support/tickets',
       icon: Ticket,
+    },
+    {
+      title: 'Reportes de Conducta',
+      url: '/support/user-reports',
+      icon: Flag,
+      badge: 'Nuevo',
+      badgeVariant: 'destructive',
     },
     {
       title: 'Casos Legales',
