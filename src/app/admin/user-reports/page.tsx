@@ -86,19 +86,35 @@ export default function AdminUserReportsPage() {
 
   const loadUserData = async () => {
     try {
+      console.log('🔍 Loading user data for admin user reports...');
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
       });
 
+      console.log('🔍 /api/auth/me response status:', response.status);
+      console.log('🔍 /api/auth/me response ok:', response.ok);
+
       if (!response.ok) {
+        console.log('❌ Response not ok, redirecting to login');
         router.push('/auth/login');
         return;
       }
 
       const data = await response.json();
+      console.log('🔍 /api/auth/me response data:', data);
+
       if (data.success && data.user) {
+        console.log('✅ User data received:', {
+          id: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+          roleType: typeof data.user.role,
+        });
+
         // Verificar que el usuario sea admin o support
         if (data.user.role !== 'ADMIN' && data.user.role !== 'SUPPORT') {
+          console.log('❌ User role not allowed:', data.user.role);
+          console.log('Expected roles: ADMIN or SUPPORT');
           logger.warn('User without proper role tried to access admin user reports', {
             userId: data.user.id,
             role: data.user.role,
@@ -106,11 +122,14 @@ export default function AdminUserReportsPage() {
           router.push('/');
           return;
         }
+        console.log('✅ User role is valid, setting user');
         setUser(data.user);
       } else {
+        console.log('❌ No success or no user data, redirecting to login');
         router.push('/auth/login');
       }
     } catch (error) {
+      console.log('❌ Error loading user data:', error);
       logger.error('Error loading user data:', {
         error: error instanceof Error ? error.message : String(error),
       });
