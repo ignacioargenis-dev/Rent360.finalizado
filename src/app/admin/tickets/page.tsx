@@ -88,22 +88,46 @@ export default function AdminTicketsPage() {
 
   const loadTicketStats = async () => {
     try {
-      const response = await fetch('/api/admin/tickets/stats', {
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
+      // Cargar tanto estadísticas básicas como de rendimiento
+      const [basicStatsResponse, performanceResponse] = await Promise.all([
+        fetch('/api/admin/tickets/stats', {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        }),
+        fetch('/api/admin/tickets/performance', {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        }),
+      ]);
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setStats(result.data);
+      let combinedStats = {};
+
+      // Estadísticas básicas
+      if (basicStatsResponse.ok) {
+        const basicStatsResult = await basicStatsResponse.json();
+        if (basicStatsResult.success) {
+          combinedStats = { ...combinedStats, ...basicStatsResult.data };
         }
+      }
+
+      // Estadísticas de rendimiento
+      if (performanceResponse.ok) {
+        const performanceResult = await performanceResponse.json();
+        if (performanceResult.success) {
+          combinedStats = { ...combinedStats, ...performanceResult.data };
+        }
+      }
+
+      // Si tenemos estadísticas, actualizar el estado
+      if (Object.keys(combinedStats).length > 0) {
+        setStats(prevStats => ({ ...prevStats, ...combinedStats }));
       }
     } catch (error) {
       logger.error('Error loading ticket stats:', error);
       // Fallback: recalculate locally if API fails
-      setStats(calculateStats(tickets));
+      setStats(prevStats => ({ ...prevStats, ...calculateStats(tickets) }));
     }
   };
 
@@ -300,14 +324,19 @@ export default function AdminTicketsPage() {
 
     const loadTicketData = async () => {
       try {
-        // Obtener datos reales desde la API
-        const [ticketsResponse, statsResponse] = await Promise.all([
+        // Obtener datos reales desde las APIs
+        const [ticketsResponse, basicStatsResponse, performanceResponse] = await Promise.all([
           fetch('/api/admin/tickets/list', {
             headers: {
               'Cache-Control': 'no-cache',
             },
           }),
           fetch('/api/admin/tickets/stats', {
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }),
+          fetch('/api/admin/tickets/performance', {
             headers: {
               'Cache-Control': 'no-cache',
             },
@@ -320,18 +349,31 @@ export default function AdminTicketsPage() {
           if (ticketsResult.success) {
             setTickets(ticketsResult.data);
 
-            // Procesar respuesta de estadísticas
-            if (statsResponse.ok) {
-              const statsResult = await statsResponse.json();
-              if (statsResult.success) {
-                setStats(statsResult.data);
-                setLoading(false);
-                return;
+            // Combinar estadísticas básicas y de rendimiento
+            let combinedStats = {};
+
+            // Estadísticas básicas
+            if (basicStatsResponse.ok) {
+              const basicStatsResult = await basicStatsResponse.json();
+              if (basicStatsResult.success) {
+                combinedStats = { ...combinedStats, ...basicStatsResult.data };
               }
             }
 
-            // Si las estadísticas fallan, usar cálculo local como fallback
-            setStats(calculateStats(ticketsResult.data));
+            // Estadísticas de rendimiento
+            if (performanceResponse.ok) {
+              const performanceResult = await performanceResponse.json();
+              if (performanceResult.success) {
+                combinedStats = { ...combinedStats, ...performanceResult.data };
+              }
+            }
+
+            // Si no tenemos estadísticas de las APIs, usar cálculo local
+            if (Object.keys(combinedStats).length === 0) {
+              combinedStats = calculateStats(ticketsResult.data);
+            }
+
+            setStats(combinedStats);
             setLoading(false);
             return;
           }
@@ -779,7 +821,10 @@ export default function AdminTicketsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-green-800">{stats.resolvedTickets}</p>
-                      <p className="text-xs text-green-600">+12% vs semana anterior</p>
+                      <p className="text-xs text-green-600">
+                        {stats.weekly?.changePercent >= 0 ? '+' : ''}
+                        {stats.weekly?.changePercent || 0}% vs semana anterior
+                      </p>
                     </div>
                   </div>
 
@@ -792,7 +837,10 @@ export default function AdminTicketsPage() {
                       <p className="text-2xl font-bold text-blue-800">
                         {stats.averageResolutionTime}h
                       </p>
-                      <p className="text-xs text-blue-600">-8% vs mes anterior</p>
+                      <p className="text-xs text-blue-600">
+                        {stats.monthly?.timeChangePercent >= 0 ? '+' : ''}
+                        {stats.monthly?.timeChangePercent || 0}% vs mes anterior
+                      </p>
                     </div>
                   </div>
 
@@ -805,7 +853,24 @@ export default function AdminTicketsPage() {
                       <p className="text-2xl font-bold text-purple-800">
                         {stats.customerSatisfaction}/5
                       </p>
-                      <p className="text-xs text-purple-600">⭐⭐⭐⭐⭐</p>
+                      <p className="text-xs text-purple-600">
+                        {'⭐'.repeat(Math.round(stats.customerSatisfaction || 0))}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-orange-800">Tasa de Resolución</p>
+                      <p className="text-xs text-orange-600">Esta semana</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-orange-800">
+                        {stats.weekly?.resolutionRate || 0}%
+                      </p>
+                      <p className="text-xs text-orange-600">
+                        {stats.weekly?.total || 0} tickets totales
+                      </p>
                     </div>
                   </div>
 
