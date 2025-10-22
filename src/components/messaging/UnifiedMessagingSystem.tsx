@@ -100,6 +100,10 @@ export default function UnifiedMessagingSystem({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados para polling inteligente basado en actividad
+  const [lastMessageTime, setLastMessageTime] = useState<number>(Date.now());
+  const [isConversationActive, setIsConversationActive] = useState(false);
+
   // Estadísticas
   const [stats, setStats] = useState({
     totalConversations: 0,
@@ -117,18 +121,34 @@ export default function UnifiedMessagingSystem({
     if (isNewConversation) {
       handleNewConversation();
     }
+  }, [searchParams]);
 
-    // Auto-refresh SILENCIOSO: Actualizar conversaciones y mensajes cada 10 segundos en segundo plano
+  // Polling inteligente: Solo actualiza cuando hay actividad reciente
+  useEffect(() => {
+    if (!selectedConversation) {
+      return;
+    }
+
+    // Determinar si la conversación está activa (mensajes recientes en los últimos 2 minutos)
+    const timeSinceLastMessage = Date.now() - lastMessageTime;
+    const isActive = timeSinceLastMessage < 120000; // 2 minutos
+    setIsConversationActive(isActive);
+
+    // Intervalo de polling basado en actividad:
+    // - Si hay actividad reciente: cada 3 segundos (conversación fluida)
+    // - Si no hay actividad: cada 30 segundos (mantener sincronizado pero sin saturar)
+    const pollInterval = isActive ? 3000 : 30000;
+
     const intervalId = setInterval(() => {
       // Refresh silencioso (sin spinner, sin interrumpir la experiencia)
       loadPageData(true);
       if (selectedConversation) {
         loadConversationMessages(selectedConversation.participantId);
       }
-    }, 10000); // 10 segundos
+    }, pollInterval);
 
     return () => clearInterval(intervalId);
-  }, [searchParams, selectedConversation]);
+  }, [selectedConversation, lastMessageTime]);
 
   useEffect(() => {
     scrollToBottom();
@@ -303,6 +323,11 @@ export default function UnifiedMessagingSystem({
           type: 'text',
         }));
 
+        // Si hay mensajes nuevos, actualizar el timestamp de última actividad
+        if (transformedMessages.length > messages.length) {
+          setLastMessageTime(Date.now());
+        }
+
         setMessages(transformedMessages);
       }
     } catch (error) {
@@ -337,6 +362,9 @@ export default function UnifiedMessagingSystem({
       }
 
       setNewMessage('');
+
+      // Marcar actividad reciente para activar polling rápido
+      setLastMessageTime(Date.now());
 
       // ✅ INMEDIATO: Recargar mensajes de la conversación actual (silencioso)
       if (selectedConversation) {
@@ -854,30 +882,46 @@ export default function UnifiedMessagingSystem({
 
       {/* Diálogo de Reporte de Usuario */}
       {showReportDialog && selectedConversation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-4 z-[9999]"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+          onClick={() => setShowReportDialog(false)}
+        >
+          <Card className="w-full max-w-md bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+            <CardHeader className="border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Reportar Usuario</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowReportDialog(false)}>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  Reportar Usuario
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReportDialog(false)}
+                  className="hover:bg-gray-100"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Estás reportando a: <strong>{selectedConversation.participantName}</strong>
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <p className="text-sm text-gray-700">
+                    Estás reportando a:{' '}
+                    <strong className="text-gray-900">
+                      {selectedConversation.participantName}
+                    </strong>
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Motivo del reporte</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Motivo del reporte *
+                  </label>
                   <select
                     value={reportReason}
                     onChange={e => setReportReason(e.target.value)}
-                    className="w-full border rounded-md px-3 py-2"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   >
                     <option value="">Selecciona un motivo</option>
                     <option value="spam">Spam</option>
@@ -890,14 +934,14 @@ export default function UnifiedMessagingSystem({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Descripción (mínimo 10 caracteres)
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Descripción (mínimo 10 caracteres) *
                   </label>
                   <textarea
                     value={reportDescription}
                     onChange={e => setReportDescription(e.target.value)}
-                    placeholder="Describe el problema..."
-                    className="w-full border rounded-md px-3 py-2 min-h-[100px]"
+                    placeholder="Describe el problema con el mayor detalle posible..."
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[120px] bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
                     maxLength={1000}
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -905,20 +949,31 @@ export default function UnifiedMessagingSystem({
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"
                     onClick={() => setShowReportDialog(false)}
-                    className="flex-1"
+                    className="flex-1 border-gray-300 hover:bg-gray-50"
+                    disabled={submittingReport}
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleReportUser}
                     disabled={!reportReason || reportDescription.length < 10 || submittingReport}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {submittingReport ? 'Enviando...' : 'Enviar Reporte'}
+                    {submittingReport ? (
+                      <>
+                        <Clock className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Flag className="h-4 w-4 mr-2" />
+                        Enviar Reporte
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
