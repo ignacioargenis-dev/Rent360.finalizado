@@ -65,8 +65,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     return NextResponse.json({
-      ticket,
-      comments: ticket.comments || [],
+      ticket: {
+        ...ticket,
+        createdAt: ticket.createdAt.toISOString(),
+        updatedAt: ticket.updatedAt.toISOString(),
+        resolvedAt: ticket.resolvedAt?.toISOString(),
+      },
+      comments:
+        ticket.comments?.map(comment => ({
+          ...comment,
+          createdAt: comment.createdAt.toISOString(),
+          updatedAt: comment.updatedAt.toISOString(),
+        })) || [],
     });
   } catch (error) {
     logger.error('Error al obtener ticket:', {
