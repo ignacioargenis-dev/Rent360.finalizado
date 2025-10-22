@@ -59,8 +59,16 @@ declare module 'next/server' {
 
 // Función para verificar si una ruta es pública
 function isPublicRoute(pathname: string): boolean {
-  const isPublic = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
-  console.log('🔐 IS PUBLIC ROUTE:', pathname, '->', isPublic);
+  console.log('🔐 IS PUBLIC ROUTE: Checking', pathname);
+  console.log('🔐 IS PUBLIC ROUTE: PUBLIC_ROUTES:', PUBLIC_ROUTES);
+
+  const isPublic = PUBLIC_ROUTES.some(route => {
+    const matches = pathname.startsWith(route);
+    console.log(`🔐 IS PUBLIC ROUTE: ${pathname} startsWith ${route} -> ${matches}`);
+    return matches;
+  });
+
+  console.log('🔐 IS PUBLIC ROUTE: Final result:', pathname, '->', isPublic);
   return isPublic;
 }
 
