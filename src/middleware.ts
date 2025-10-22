@@ -9,6 +9,15 @@ export async function middleware(request: NextRequest) {
     method: request.method,
   });
 
+  // Debug específico para rutas de mensajes
+  if (pathname.startsWith('/api/messages')) {
+    console.log('🔧 Middleware: Ruta de mensajes detectada, procesando autenticación', {
+      pathname,
+      method: request.method,
+      fullUrl: request.url,
+    });
+  }
+
   // Rutas públicas que no requieren autenticación
   const publicRoutes = [
     '/api/health',
@@ -29,11 +38,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Usar el middleware de autenticación correcto que decodifica JWT
+  console.log('🔧 Middleware: Ejecutando authMiddleware para', pathname);
   const authResponse = await authMiddleware(request);
+
   if (authResponse) {
     // Si authMiddleware retorna una respuesta, significa que hay un error de autenticación
     console.log('🔧 Middleware: Error de autenticación detectado');
     console.log('🔧 Middleware: Auth response status:', authResponse.status);
+    console.log('🔧 Middleware: Auth response body:', await authResponse.text());
     return authResponse;
   }
 

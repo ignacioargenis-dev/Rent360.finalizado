@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger-minimal';
-import * as jwt from 'jsonwebtoken';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
@@ -73,34 +72,59 @@ function getRequiredRoles(pathname: string): string[] | null {
   return null;
 }
 
-// Función para validar token (usando jsonwebtoken como /api/auth/me)
+// Función para validar token (compatible con Edge Runtime)
 async function validateToken(token: string): Promise<any> {
   try {
-    // Usar jwt.decode() para compatibilidad con Edge Runtime
-    // Esto es lo mismo que hace /api/auth/me
-    const decoded = jwt.decode(token) as any;
+    logger.info('🔐 validateToken: Iniciando validación del token');
 
-    if (!decoded) {
-      throw new Error('Invalid token');
+    // Para Edge Runtime, usar decodificación manual compatible con navegador
+    const parts = token.split('.');
+    logger.info('🔐 validateToken: Partes del token', { partsCount: parts.length });
+
+    if (parts.length !== 3) {
+      logger.error('🔐 validateToken: Token no tiene 3 partes');
+      throw new Error('Invalid token format');
     }
 
+    // Decodificar payload (parte del medio) - Compatible con Edge Runtime
+    logger.info('🔐 validateToken: Decodificando payload');
+    const payload = JSON.parse(atob(parts[1] || ''));
+    logger.info('🔐 validateToken: Payload decodificado', {
+      userId: payload.id,
+      email: payload.email,
+      role: payload.role,
+      exp: payload.exp,
+    });
+
     // Validar expiración
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      logger.error('🔐 validateToken: Token expirado');
       throw new Error('Token expired');
     }
 
     // Validar que el token tenga la estructura esperada
-    if (!decoded.id || !decoded.email || !decoded.role) {
+    if (!payload.id || !payload.email || !payload.role) {
+      logger.error('🔐 validateToken: Token sin estructura válida', {
+        hasId: !!payload.id,
+        hasEmail: !!payload.email,
+        hasRole: !!payload.role,
+      });
       throw new Error('Invalid token structure');
     }
 
+    logger.info('🔐 validateToken: Token validado exitosamente');
     return {
-      userId: decoded.id,
-      email: decoded.email,
-      role: decoded.role,
-      name: decoded.name,
+      userId: payload.id,
+      email: payload.email,
+      role: payload.role,
+      name: payload.name,
     };
   } catch (error) {
+    logger.error('🔐 validateToken: Error en validación', {
+      error: error instanceof Error ? error.message : String(error),
+      tokenLength: token.length,
+      tokenStart: token.substring(0, 50),
+    });
     throw new Error('Invalid token');
   }
 }
@@ -176,6 +200,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       hasAuthHeader: !!authHeader,
       hasCookieToken: !!cookieToken,
       cookieTokenLength: cookieToken?.length || 0,
+      pathname,
+      method: request.method,
     });
 
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
@@ -185,6 +211,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
         pathname,
         clientIP,
         userAgent,
+        hasAuthHeader: !!authHeader,
+        hasCookieToken: !!cookieToken,
       });
 
       return new NextResponse(
@@ -192,6 +220,10 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
           success: false,
           error: 'Authentication required',
           message: 'No authentication token provided',
+          debug: {
+            hasAuthHeader: !!authHeader,
+            hasCookieToken: !!cookieToken,
+          },
         }),
         {
           status: 401,
