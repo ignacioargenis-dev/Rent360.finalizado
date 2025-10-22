@@ -4,10 +4,16 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
+import { getUserFromRequest } from '@/lib/auth-token-validator';
 
-const markReadSchema = z.object({
-  messageIds: z.array(z.string()).min(1, 'Debe proporcionar al menos un ID de mensaje'),
-});
+const markReadSchema = z.union([
+  z.object({
+    messageIds: z.array(z.string()).min(1, 'Debe proporcionar al menos un ID de mensaje'),
+  }),
+  z.object({
+    senderId: z.string().min(1, 'Debe proporcionar un senderId'),
+  }),
+]);
 
 /**
  * POST /api/messages/mark-read
@@ -15,7 +21,19 @@ const markReadSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    // Usar validación directa de token para evitar problemas con middleware
+    const decoded = await getUserFromRequest(request);
+
+    if (!decoded) {
+      logger.error('/api/messages/mark-read: Token inválido o no presente');
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    }
+
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
 
     const body = await request.json();
 
@@ -33,79 +51,110 @@ export async function POST(request: NextRequest) {
       throw validationError;
     }
 
-    const { messageIds } = validatedData;
+    let updateResult;
 
-    // Verificar que todos los mensajes existen y pertenecen al usuario
-    const messages = await db.message.findMany({
-      where: {
-        id: { in: messageIds },
-        receiverId: user.id, // Solo mensajes recibidos por el usuario
-      },
-      select: {
-        id: true,
-        isRead: true,
-      },
-    });
-
-    // Verificar que se encontraron todos los mensajes
-    const foundIds = messages.map(m => m.id);
-    const notFoundIds = messageIds.filter(id => !foundIds.includes(id));
-
-    if (notFoundIds.length > 0) {
-      return NextResponse.json(
-        {
-          error: 'Algunos mensajes no fueron encontrados o no tienes acceso a ellos',
-          notFoundIds,
+    // Manejar dos casos: por messageIds o por senderId
+    if ('senderId' in validatedData) {
+      // Marcar todos los mensajes no leídos de un remitente específico
+      updateResult = await db.message.updateMany({
+        where: {
+          senderId: validatedData.senderId,
+          receiverId: user.id,
+          isRead: false,
         },
-        { status: 404 }
-      );
-    }
+        data: {
+          isRead: true,
+          readAt: new Date(),
+          status: 'READ',
+        },
+      });
 
-    // Filtrar mensajes que ya están leídos
-    const unreadMessages = messages.filter(m => !m.isRead);
-    const alreadyReadCount = messages.length - unreadMessages.length;
+      logger.info('Mensajes marcados como leídos por senderId', {
+        userId: user.id,
+        senderId: validatedData.senderId,
+        markedAsRead: updateResult.count,
+      });
 
-    if (unreadMessages.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'Todos los mensajes ya estaban marcados como leídos',
+        message: `${updateResult.count} mensaje(s) marcado(s) como leído(s)`,
         data: {
-          markedAsRead: 0,
+          markedAsRead: updateResult.count,
+        },
+      });
+    } else {
+      // Caso original: marcar por IDs específicos
+      const { messageIds } = validatedData;
+
+      // Verificar que todos los mensajes existen y pertenecen al usuario
+      const messages = await db.message.findMany({
+        where: {
+          id: { in: messageIds },
+          receiverId: user.id,
+        },
+        select: {
+          id: true,
+          isRead: true,
+        },
+      });
+
+      const foundIds = messages.map(m => m.id);
+      const notFoundIds = messageIds.filter(id => !foundIds.includes(id));
+
+      if (notFoundIds.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Algunos mensajes no fueron encontrados o no tienes acceso a ellos',
+            notFoundIds,
+          },
+          { status: 404 }
+        );
+      }
+
+      const unreadMessages = messages.filter(m => !m.isRead);
+      const alreadyReadCount = messages.length - unreadMessages.length;
+
+      if (unreadMessages.length === 0) {
+        return NextResponse.json({
+          success: true,
+          message: 'Todos los mensajes ya estaban marcados como leídos',
+          data: {
+            markedAsRead: 0,
+            alreadyRead: alreadyReadCount,
+            total: messages.length,
+          },
+        });
+      }
+
+      updateResult = await db.message.updateMany({
+        where: {
+          id: { in: unreadMessages.map(m => m.id) },
+          receiverId: user.id,
+        },
+        data: {
+          isRead: true,
+          readAt: new Date(),
+          status: 'READ',
+        },
+      });
+
+      logger.info('Mensajes marcados como leídos por IDs', {
+        userId: user.id,
+        markedAsRead: updateResult.count,
+        alreadyRead: alreadyReadCount,
+        totalRequested: messageIds.length,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${updateResult.count} mensaje(s) marcado(s) como leído(s)`,
+        data: {
+          markedAsRead: updateResult.count,
           alreadyRead: alreadyReadCount,
-          total: messages.length,
+          total: messageIds.length,
         },
       });
     }
-
-    // Marcar como leídos
-    const updateResult = await db.message.updateMany({
-      where: {
-        id: { in: unreadMessages.map(m => m.id) },
-        receiverId: user.id,
-      },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-        status: 'READ',
-      },
-    });
-
-    logger.info('Mensajes marcados como leídos', {
-      userId: user.id,
-      markedAsRead: updateResult.count,
-      alreadyRead: alreadyReadCount,
-      totalRequested: messageIds.length,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: `${updateResult.count} mensaje(s) marcado(s) como leído(s)`,
-      data: {
-        markedAsRead: updateResult.count,
-        alreadyRead: alreadyReadCount,
-        total: messageIds.length,
-      },
-    });
   } catch (error) {
     logger.error('Error marcando mensajes como leídos:', {
       error: error instanceof Error ? error.message : String(error),

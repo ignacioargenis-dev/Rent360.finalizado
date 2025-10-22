@@ -446,9 +446,34 @@ export default function UnifiedMessagingSystem({
     }
   };
 
-  const handleConversationSelect = (conversation: Conversation) => {
+  const handleConversationSelect = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
-    loadConversationMessages(conversation.participantId);
+    await loadConversationMessages(conversation.participantId);
+
+    // Marcar mensajes como leídos
+    await markMessagesAsRead(conversation.participantId);
+  };
+
+  const markMessagesAsRead = async (senderId: string) => {
+    try {
+      const response = await fetch('/api/messages/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ senderId }),
+      });
+
+      if (response.ok) {
+        // Recargar conversaciones para actualizar contador
+        await loadPageData(true);
+      }
+    } catch (error) {
+      logger.error('Error marking messages as read:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
