@@ -194,8 +194,9 @@ export default function AdminTicketDetailsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    return date.toLocaleString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
