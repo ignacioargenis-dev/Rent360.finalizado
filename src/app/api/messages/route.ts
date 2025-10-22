@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { z } from 'zod';
 import { NotificationService } from '@/lib/notification-service';
+import { getUserFromRequest } from '@/lib/auth-token-validator';
 
 const messageSchema = z.object({
   receiverId: z.string(),
@@ -19,27 +20,39 @@ const messageSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // Obtener usuario del middleware (ya validado)
-    const user = (request as any).user;
+    // Validar token directamente - NO depender del middleware
+    console.log('🔍 MESSAGES API: Iniciando validación de token (GET)');
+    const decoded = await getUserFromRequest(request);
 
-    console.log('🔍 MESSAGES API: Iniciando GET /api/messages');
-    console.log('🔍 MESSAGES API: User from middleware:', user ? 'PRESENTE' : 'NO ENCONTRADO');
-    console.log('🔍 MESSAGES API: User details:', user);
+    console.log(
+      '🔍 MESSAGES API: Resultado de validación (GET):',
+      decoded ? 'USUARIO VÁLIDO' : 'NO AUTORIZADO'
+    );
 
-    logger.info('🔍 /api/messages: Verificando usuario', {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      userRole: user?.role,
-    });
-
-    if (!user) {
-      console.error('🔍 MESSAGES API: NO SE ENCONTRÓ USUARIO EN REQUEST');
-      logger.error('🔍 /api/messages: No se encontró información de usuario en la request');
-      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    if (!decoded) {
+      console.error('🔍 MESSAGES API: NO SE PUDO VALIDAR TOKEN (GET)');
+      logger.error('🔍 /api/messages (GET): Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
     }
 
-    logger.info('Usuario autenticado para mensajes:', {
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ MESSAGES API: Usuario autenticado (GET):', user.email, 'ID:', user.id);
+
+    logger.info('Usuario autenticado para mensajes (GET):', {
       userId: user.id,
       email: user.email,
       role: user.role,
@@ -155,19 +168,37 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Intentar obtener usuario del middleware primero, luego fallback a requireAuth
-    let user = (request as any).user;
+    // Validar token directamente - NO depender del middleware
+    console.log('🔍 MESSAGES API: Iniciando validación de token (POST)');
+    const decoded = await getUserFromRequest(request);
 
-    if (!user) {
-      // Fallback: usar requireAuth si el middleware no adjuntó la información
-      const decoded = await requireAuth(request);
-      user = {
-        id: decoded.id,
-        email: decoded.email,
-        role: decoded.role,
-        name: decoded.name,
-      };
+    console.log(
+      '🔍 MESSAGES API: Resultado de validación (POST):',
+      decoded ? 'USUARIO VÁLIDO' : 'NO AUTORIZADO'
+    );
+
+    if (!decoded) {
+      console.error('🔍 MESSAGES API: NO SE PUDO VALIDAR TOKEN (POST)');
+      logger.error('🔍 /api/messages (POST): Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
+      );
     }
+
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ MESSAGES API: Usuario autenticado (POST):', user.email, 'ID:', user.id);
 
     const data = await request.json();
 

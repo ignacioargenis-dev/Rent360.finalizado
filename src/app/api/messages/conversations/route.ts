@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { getUserFromRequest } from '@/lib/auth-token-validator';
 
 /**
  * GET /api/messages/conversations
@@ -10,27 +11,37 @@ import { handleApiError } from '@/lib/api-error-handler';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Obtener usuario del middleware (ya validado)
-    const user = (request as any).user;
+    // Validar token directamente - NO depender del middleware
+    console.log('🔍 CONVERSATIONS API: Iniciando validación de token');
+    const decoded = await getUserFromRequest(request);
 
-    console.log('🔍 MESSAGES API: Iniciando /api/messages/conversations');
-    console.log('🔍 MESSAGES API: User from middleware:', user ? 'PRESENTE' : 'NO ENCONTRADO');
-    console.log('🔍 MESSAGES API: User details:', user);
+    console.log(
+      '🔍 CONVERSATIONS API: Resultado de validación:',
+      decoded ? 'USUARIO VÁLIDO' : 'NO AUTORIZADO'
+    );
 
-    logger.info('🔍 /api/messages/conversations: Verificando usuario', {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      userRole: user?.role,
-    });
-
-    if (!user) {
-      console.error('🔍 MESSAGES API: NO SE ENCONTRÓ USUARIO EN REQUEST');
-      logger.error(
-        '🔍 /api/messages/conversations: No se encontró información de usuario en la request'
+    if (!decoded) {
+      console.error('🔍 CONVERSATIONS API: NO SE PUDO VALIDAR TOKEN');
+      logger.error('🔍 /api/messages/conversations: Token inválido o no presente');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No autorizado',
+          message: 'Token de autenticación inválido o no presente',
+        },
+        { status: 401 }
       );
-      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
     }
+
+    // Crear objeto user compatible
+    const user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.name,
+    };
+
+    console.log('✅ CONVERSATIONS API: Usuario autenticado:', user.email, 'ID:', user.id);
 
     logger.info('Usuario autenticado para conversaciones:', {
       userId: user.id,
