@@ -47,9 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener reportes con información completa
     const [reports, total] = await Promise.all([
-      // TODO: Descomentar después de aplicar migración de Prisma en producción
-      // db.userReport.findMany({
-      (db as any).userReport.findMany({
+      db.userReport.findMany({
         where,
         include: {
           reporter: {
@@ -85,8 +83,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      // db.userReport.count({ where }),
-      (db as any).userReport.count({ where }),
+      db.userReport.count({ where }),
     ]);
 
     logger.info('API/admin/user-reports: Reports fetched successfully', {
@@ -161,7 +158,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Actualizar el reporte
-    const updatedReport = await (db as any).userReport.update({
+    const updatedReport = await db.userReport.update({
       where: { id: reportId },
       data: {
         status,
