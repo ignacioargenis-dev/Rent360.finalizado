@@ -159,6 +159,22 @@ export default function AdminDashboard() {
     refreshDashboard();
   };
 
+  const loadUnreadMessagesCount = async () => {
+    try {
+      const response = await fetch('/api/messages/unread-count');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUnreadMessagesCount(data.unreadCount);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading unread messages count:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
   useEffect(() => {
     // Load user data from API
     const loadUserData = async () => {
@@ -176,6 +192,14 @@ export default function AdminDashboard() {
     };
 
     loadUserData();
+    loadUnreadMessagesCount();
+
+    // Actualizar contador cada 30 segundos
+    const interval = setInterval(() => {
+      loadUnreadMessagesCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const getRoleDisplayName = (role: string) => {
@@ -330,6 +354,7 @@ export default function AdminDashboard() {
       title="Panel de Administración"
       subtitle="Gestiona todo el sistema Rent360"
       notificationCount={stats.pendingTickets}
+      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Connection Status & Refresh */}

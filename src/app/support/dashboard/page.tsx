@@ -104,9 +104,26 @@ export default function SupportDashboard() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [showTicketFilters, setShowTicketFilters] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const loadUnreadMessagesCount = async () => {
+    try {
+      const response = await fetch('/api/messages/unread-count');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUnreadMessagesCount(data.unreadCount);
+        }
+      }
+    } catch (error) {
+      logger.error('Error loading unread messages count:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 
   useEffect(() => {
     const loadSupportData = async () => {
@@ -490,6 +507,7 @@ export default function SupportDashboard() {
       user={user}
       title="Panel de Control de Soporte"
       subtitle="Gestiona tickets y métricas de soporte"
+      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Success Message */}

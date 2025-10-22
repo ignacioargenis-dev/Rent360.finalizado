@@ -89,6 +89,7 @@ export default function BrokerDashboardPage() {
     averageCommission: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -100,6 +101,22 @@ export default function BrokerDashboardPage() {
         }
       } catch (error) {
         logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    const loadUnreadMessagesCount = async () => {
+      try {
+        const response = await fetch('/api/messages/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setUnreadMessagesCount(data.unreadCount);
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading unread messages count:', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -244,6 +261,14 @@ export default function BrokerDashboardPage() {
 
     loadUserData();
     loadBrokerData();
+    loadUnreadMessagesCount();
+
+    // Actualizar contador cada 30 segundos
+    const interval = setInterval(() => {
+      loadUnreadMessagesCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const getStatusBadge = (status: string) => {
@@ -307,6 +332,7 @@ export default function BrokerDashboardPage() {
     <UnifiedDashboardLayout
       title="Panel del Corredor"
       subtitle="Gestiona tus propiedades, clientes y comisiones"
+      unreadMessagesCount={unreadMessagesCount}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Welcome Section */}
