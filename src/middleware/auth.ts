@@ -93,10 +93,11 @@ async function validateToken(token: string): Promise<any> {
     console.log('🔐 VALIDATE TOKEN: Part 1 (header):', parts[0]);
     console.log('🔐 VALIDATE TOKEN: Part 2 (payload):', parts[1]);
 
+    let payload: any;
     try {
       const decodedPayload = atob(parts[1] || '');
       console.log('🔐 VALIDATE TOKEN: Payload decodificado (base64):', decodedPayload);
-      const payload = JSON.parse(decodedPayload);
+      payload = JSON.parse(decodedPayload);
       console.log('🔐 VALIDATE TOKEN: Payload decodificado (JSON):', {
         userId: payload.id,
         email: payload.email,
