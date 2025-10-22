@@ -82,7 +82,8 @@ export default function UnifiedMessagingSystem({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Estados principales
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Solo para carga inicial
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Bandera para diferenciar carga inicial
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -108,7 +109,8 @@ export default function UnifiedMessagingSystem({
   });
 
   useEffect(() => {
-    loadPageData();
+    // Carga inicial (con spinner)
+    loadPageData(false);
 
     // Check if we need to create a new conversation
     const isNewConversation = searchParams?.get('new') === 'true';
@@ -116,9 +118,10 @@ export default function UnifiedMessagingSystem({
       handleNewConversation();
     }
 
-    // Auto-refresh: Actualizar conversaciones y mensajes cada 10 segundos
+    // Auto-refresh SILENCIOSO: Actualizar conversaciones y mensajes cada 10 segundos en segundo plano
     const intervalId = setInterval(() => {
-      loadPageData();
+      // Refresh silencioso (sin spinner, sin interrumpir la experiencia)
+      loadPageData(true);
       if (selectedConversation) {
         loadConversationMessages(selectedConversation.participantId);
       }
@@ -135,9 +138,12 @@ export default function UnifiedMessagingSystem({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadPageData = async () => {
+  const loadPageData = async (silent = false) => {
     try {
-      setLoading(true);
+      // Solo mostrar loading en carga inicial, no en refreshes silenciosos
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
 
       // Cargar conversaciones
@@ -209,9 +215,16 @@ export default function UnifiedMessagingSystem({
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setError('Error al cargar los datos');
+      // Solo mostrar error si no es un refresh silencioso
+      if (!silent) {
+        setError('Error al cargar los datos');
+      }
     } finally {
-      setLoading(false);
+      // Solo actualizar loading si no es un refresh silencioso
+      if (!silent) {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }
     }
   };
 
@@ -325,13 +338,13 @@ export default function UnifiedMessagingSystem({
 
       setNewMessage('');
 
-      // ✅ INMEDIATO: Recargar mensajes de la conversación actual
+      // ✅ INMEDIATO: Recargar mensajes de la conversación actual (silencioso)
       if (selectedConversation) {
         await loadConversationMessages(selectedConversation.participantId);
       }
 
-      // ✅ INMEDIATO: Recargar lista de conversaciones
-      await loadPageData();
+      // ✅ INMEDIATO: Recargar lista de conversaciones (silencioso - no interrumpe la experiencia)
+      await loadPageData(true);
     } catch (error) {
       logger.error('Error sending message:', {
         error: error instanceof Error ? error.message : String(error),
