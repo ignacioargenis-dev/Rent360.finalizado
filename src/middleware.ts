@@ -9,6 +9,25 @@ export async function middleware(request: NextRequest) {
     method: request.method,
   });
 
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = [
+    '/api/health',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/verify-email',
+    '/api/monitoring/health',
+  ];
+
+  // Verificar si es una ruta pública
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+
+  if (isPublicRoute) {
+    console.log('🔧 Middleware: Ruta pública, saltando autenticación');
+    return NextResponse.next();
+  }
+
   // Usar el middleware de autenticación correcto que decodifica JWT
   const authResponse = await authMiddleware(request);
   if (authResponse) {
@@ -25,17 +44,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match API routes specifically for authentication
+     * Match all API routes for authentication
      */
-    '/api/messages/:path*',
-    '/api/auth/me',
-    '/api/properties/:path*',
-    '/api/contracts/:path*',
-    '/api/users/:path*',
-    '/api/admin/:path*',
-    '/api/support/:path*',
-    '/api/legal/:path*',
-    '/api/financial/:path*',
-    // Add other protected API routes as needed
+    '/api/:path*',
   ],
 };
