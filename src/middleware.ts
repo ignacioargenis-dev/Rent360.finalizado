@@ -9,13 +9,6 @@ export async function middleware(request: NextRequest) {
     method: request.method,
   });
 
-  // Debug: mostrar cookies
-  const authToken = request.cookies.get('auth-token');
-  console.log('🔧 Middleware: Cookie auth-token encontrada:', !!authToken);
-  if (authToken) {
-    console.log('🔧 Middleware: Token length:', authToken.value.length);
-  }
-
   // Usar el middleware de autenticación correcto que decodifica JWT
   const authResponse = await authMiddleware(request);
   if (authResponse) {
@@ -30,5 +23,19 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|public/).*)'],
+  matcher: [
+    /*
+     * Match API routes specifically for authentication
+     */
+    '/api/messages/:path*',
+    '/api/auth/me',
+    '/api/properties/:path*',
+    '/api/contracts/:path*',
+    '/api/users/:path*',
+    '/api/admin/:path*',
+    '/api/support/:path*',
+    '/api/legal/:path*',
+    '/api/financial/:path*',
+    // Add other protected API routes as needed
+  ],
 };
