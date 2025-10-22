@@ -565,6 +565,7 @@ interface UnifiedSidebarProps {
   user?: UserType | null;
   showNotifications?: boolean;
   notificationCount?: number;
+  unreadMessagesCount?: number;
 }
 
 export default function UnifiedSidebar({
@@ -572,6 +573,7 @@ export default function UnifiedSidebar({
   user,
   showNotifications = true,
   notificationCount = 0,
+  unreadMessagesCount = 0,
 }: UnifiedSidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<{ [key: string]: boolean }>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -620,6 +622,10 @@ export default function UnifiedSidebar({
     const isOpen = openSubmenus[item.title];
     const isActive = isActiveRoute(item.url);
 
+    // Agregar badge dinámico para Mensajes
+    const showUnreadBadge = item.title === 'Mensajes' && unreadMessagesCount > 0;
+    const badgeText = showUnreadBadge ? String(unreadMessagesCount) : item.badge;
+
     return (
       <div key={item.title}>
         {hasSubmenu ? (
@@ -631,9 +637,12 @@ export default function UnifiedSidebar({
               <div className="flex items-center gap-2">
                 <item.icon className="w-4 h-4" />
                 <span>{item.title}</span>
-                {item.badge && (
-                  <Badge variant={item.badgeVariant || 'default'} className="ml-auto">
-                    {item.badge}
+                {badgeText && (
+                  <Badge
+                    variant={showUnreadBadge ? 'destructive' : item.badgeVariant || 'default'}
+                    className="ml-auto"
+                  >
+                    {badgeText}
                   </Badge>
                 )}
               </div>
@@ -668,9 +677,12 @@ export default function UnifiedSidebar({
           >
             <item.icon className="w-4 h-4" />
             <span>{item.title}</span>
-            {item.badge && (
-              <Badge variant={item.badgeVariant || 'default'} className="ml-auto">
-                {item.badge}
+            {badgeText && (
+              <Badge
+                variant={showUnreadBadge ? 'destructive' : item.badgeVariant || 'default'}
+                className="ml-auto"
+              >
+                {badgeText}
               </Badge>
             )}
           </Link>

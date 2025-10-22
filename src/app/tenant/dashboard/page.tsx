@@ -110,6 +110,26 @@ export default function TenantDashboardPage() {
       }
     };
 
+    const loadUnreadMessagesCount = async () => {
+      try {
+        const response = await fetch('/api/messages/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Actualizar solo el contador de mensajes no leídos
+            setStats(prev => ({
+              ...prev,
+              unreadMessages: data.unreadCount,
+            }));
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading unread messages count:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
     const loadTenantData = async () => {
       try {
         // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
@@ -217,6 +237,14 @@ export default function TenantDashboardPage() {
 
     loadUserData();
     loadTenantData();
+    loadUnreadMessagesCount();
+
+    // Actualizar contador cada 30 segundos
+    const interval = setInterval(() => {
+      loadUnreadMessagesCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const formatCurrency = (amount: number) => {
@@ -327,6 +355,7 @@ export default function TenantDashboardPage() {
       user={user}
       title="Panel de Control de Inquilino"
       subtitle="Gestiona tus contratos y pagos de arriendo"
+      unreadMessagesCount={stats.unreadMessages}
     >
       <div className="container mx-auto px-4 py-6">
         {/* Header with actions */}

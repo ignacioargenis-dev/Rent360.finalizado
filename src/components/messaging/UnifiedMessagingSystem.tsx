@@ -19,6 +19,9 @@ import {
   Clock,
   AlertCircle,
   Plus,
+  Flag,
+  Upload,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 
@@ -88,6 +91,14 @@ export default function UnifiedMessagingSystem({
   const [searchTerm, setSearchTerm] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
 
+  // Estados para funcionalidades adicionales
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Estadísticas
   const [stats, setStats] = useState({
     totalConversations: 0,
@@ -104,7 +115,17 @@ export default function UnifiedMessagingSystem({
     if (isNewConversation) {
       handleNewConversation();
     }
-  }, [searchParams]);
+
+    // Auto-refresh: Actualizar conversaciones y mensajes cada 10 segundos
+    const intervalId = setInterval(() => {
+      loadPageData();
+      if (selectedConversation) {
+        loadConversationMessages(selectedConversation.participantId);
+      }
+    }, 10000); // 10 segundos
+
+    return () => clearInterval(intervalId);
+  }, [searchParams, selectedConversation]);
 
   useEffect(() => {
     scrollToBottom();
@@ -304,19 +325,83 @@ export default function UnifiedMessagingSystem({
 
       setNewMessage('');
 
-      // Reload messages for the current conversation
+      // ✅ INMEDIATO: Recargar mensajes de la conversación actual
       if (selectedConversation) {
-        loadConversationMessages(selectedConversation.participantId);
+        await loadConversationMessages(selectedConversation.participantId);
       }
 
-      // Reload conversations to update last message
-      loadPageData();
+      // ✅ INMEDIATO: Recargar lista de conversaciones
+      await loadPageData();
     } catch (error) {
       logger.error('Error sending message:', {
         error: error instanceof Error ? error.message : String(error),
       });
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  // Función para manejar el reporte de usuario
+  const handleReportUser = async () => {
+    if (!selectedConversation || !reportReason || !reportDescription.trim()) {
+      return;
+    }
+
+    if (reportDescription.length < 10) {
+      alert('La descripción debe tener al menos 10 caracteres');
+      return;
+    }
+
+    try {
+      setSubmittingReport(true);
+      const response = await fetch('/api/messages/report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          reportedUserId: selectedConversation.participantId,
+          reason: reportReason,
+          description: reportDescription,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error enviando reporte');
+      }
+
+      alert('Reporte enviado exitosamente. Nuestro equipo lo revisará pronto.');
+      setShowReportDialog(false);
+      setReportReason('');
+      setReportDescription('');
+    } catch (error) {
+      logger.error('Error reporting user:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error enviando el reporte. Por favor intenta de nuevo.');
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
+  // Función para manejar la selección de archivo
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Verificar tamaño del archivo (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('El archivo es demasiado grande. Tamaño máximo: 10MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      // TODO: Implementar upload de archivo
+      alert(`Archivo seleccionado: ${file.name}\n(Funcionalidad de upload en desarrollo)`);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -614,6 +699,7 @@ export default function UnifiedMessagingSystem({
                         variant="outline"
                         size="sm"
                         onClick={() => onCall?.(selectedConversation.id)}
+                        title="Llamar"
                       >
                         <Phone className="h-4 w-4" />
                       </Button>
@@ -623,10 +709,20 @@ export default function UnifiedMessagingSystem({
                         variant="outline"
                         size="sm"
                         onClick={() => onEmail?.(selectedConversation.id)}
+                        title="Enviar email"
                       >
                         <Mail className="h-4 w-4" />
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowReportDialog(true)}
+                      title="Reportar usuario"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Flag className="h-4 w-4" />
+                    </Button>
                     {showResolveButton && (
                       <Button
                         size="sm"
@@ -640,31 +736,39 @@ export default function UnifiedMessagingSystem({
                 </div>
               </CardHeader>
 
-              {/* Messages */}
-              <CardContent className="flex-1 overflow-y-auto p-4">
+              {/* Messages - Con scroll mejorado (mensajes antiguos arriba) */}
+              <CardContent className="flex-1 overflow-y-auto p-4 max-h-[500px]">
                 <div className="space-y-4">
-                  {messages.map(message => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.senderId === user?.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium">{message.senderName}</span>
-                          <span className="text-xs opacity-75">
-                            {formatTimeAgo(message.timestamp)}
-                          </span>
-                        </div>
-                        <p className="text-sm">{message.content}</p>
-                      </div>
+                  {messages.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay mensajes en esta conversación</p>
+                      <p className="text-sm">Envía el primer mensaje</p>
                     </div>
-                  ))}
+                  ) : (
+                    messages.map(message => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            message.senderId === user?.id
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium">{message.senderName}</span>
+                            <span className="text-xs opacity-75">
+                              {formatTimeAgo(message.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               </CardContent>
@@ -672,7 +776,19 @@ export default function UnifiedMessagingSystem({
               {/* Message Input */}
               <div className="p-4 border-t">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Adjuntar archivo"
+                  >
                     <Paperclip className="h-4 w-4" />
                   </Button>
                   <Input
@@ -692,8 +808,17 @@ export default function UnifiedMessagingSystem({
                     disabled={!newMessage.trim() || sendingMessage}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    <Send className="h-4 w-4" />
-                    Enviar
+                    {sendingMessage ? (
+                      <>
+                        <Clock className="h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Enviar
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -713,6 +838,81 @@ export default function UnifiedMessagingSystem({
           )}
         </Card>
       </div>
+
+      {/* Diálogo de Reporte de Usuario */}
+      {showReportDialog && selectedConversation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Reportar Usuario</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setShowReportDialog(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Estás reportando a: <strong>{selectedConversation.participantName}</strong>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Motivo del reporte</label>
+                  <select
+                    value={reportReason}
+                    onChange={e => setReportReason(e.target.value)}
+                    className="w-full border rounded-md px-3 py-2"
+                  >
+                    <option value="">Selecciona un motivo</option>
+                    <option value="spam">Spam</option>
+                    <option value="harassment">Acoso</option>
+                    <option value="inappropriate_content">Contenido inapropiado</option>
+                    <option value="scam">Estafa</option>
+                    <option value="fake_profile">Perfil falso</option>
+                    <option value="other">Otro</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Descripción (mínimo 10 caracteres)
+                  </label>
+                  <textarea
+                    value={reportDescription}
+                    onChange={e => setReportDescription(e.target.value)}
+                    placeholder="Describe el problema..."
+                    className="w-full border rounded-md px-3 py-2 min-h-[100px]"
+                    maxLength={1000}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {reportDescription.length}/1000 caracteres
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReportDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleReportUser}
+                    disabled={!reportReason || reportDescription.length < 10 || submittingReport}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    {submittingReport ? 'Enviando...' : 'Enviar Reporte'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

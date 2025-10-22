@@ -75,6 +75,9 @@ model User {
   reviewsReceived Review[] @relation("ReviewReceived")
   messagesSent    Message[] @relation("MessageSent")
   messagesReceived Message[] @relation("MessageReceived")
+  reportsCreated  UserReport[] @relation("ReportsCreated")
+  reportsReceived UserReport[] @relation("ReportsReceived")
+  reportsReviewed UserReport[] @relation("ReportsReviewed")
   tickets         Ticket[]
   assignedTickets  Ticket[] @relation("AssignedTickets")
   ticketComments  TicketComment[]
@@ -390,6 +393,32 @@ model Message {
   @@index([propertyId])
   @@index([contractId])
   @@index([type])
+}
+
+// UserReport model - Reportes de usuarios
+model UserReport {
+  id              String   @id @default(cuid())
+  reporterId      String
+  reportedUserId  String
+  reason          String   // 'spam', 'harassment', 'inappropriate_content', 'scam', 'fake_profile', 'other'
+  description     String
+  status          String   @default("PENDING") // 'PENDING', 'REVIEWED', 'RESOLVED', 'DISMISSED'
+  adminNotes      String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  reporter        User     @relation("ReportsCreated", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser    User     @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reviewer        User?    @relation("ReportsReviewed", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@map("user_reports")
+  @@index([reporterId])
+  @@index([reportedUserId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // Ticket model
