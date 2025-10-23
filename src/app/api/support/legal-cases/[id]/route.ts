@@ -1,352 +1,347 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
-import { withRateLimit } from '@/lib/rate-limiter';
-import { cacheManager, createCacheKey } from '@/lib/cache-manager';
+import { z } from 'zod';
 
-// GET /api/support/legal-cases/[id] - Obtener detalles completos de un caso legal
-async function getLegalCaseDetails(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+const updateLegalCaseSchema = z.object({
+  status: z.enum(['PRE_JUDICIAL', 'JUDICIAL', 'EXECUTION', 'CLOSED']).optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
+  currentPhase: z.string().optional(),
+  nextDeadline: z.string().datetime().optional(),
+  notes: z.string().optional(),
+  legalFees: z.number().min(0).optional(),
+  courtFees: z.number().min(0).optional(),
+  accumulatedInterest: z.number().min(0).optional(),
+  extrajudicialSentDate: z.string().datetime().optional(),
+  demandFiledDate: z.string().datetime().optional(),
+  hearingDate: z.string().datetime().optional(),
+  judgmentDate: z.string().datetime().optional(),
+  evictionDate: z.string().datetime().optional(),
+  caseClosedDate: z.string().datetime().optional(),
+});
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
-    // Verificar que el usuario sea de soporte o admin
-    if (!['SUPPORT', 'ADMIN'].includes(user.role.toUpperCase())) {
+
+    if (user.role !== 'SUPPORT' && user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Acceso denegado. Solo usuarios de soporte pueden acceder a esta información.' },
+        { error: 'Acceso denegado. Se requieren permisos de soporte o administrador.' },
         { status: 403 }
       );
     }
 
-    const { id } = params;
+    const caseId = params.id;
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'ID del caso es requerido' },
-        { status: 400 }
-      );
-    }
+    const legalCase = await db.legalCase.findUnique({
+      where: { id: caseId },
+      include: {
+        contract: {
+          select: {
+            id: true,
+            contractNumber: true,
+            monthlyRent: true,
+            deposit: true,
+            startDate: true,
+            endDate: true,
+            property: {
+              select: {
+                id: true,
+                title: true,
+                address: true,
+                city: true,
+                commune: true,
+              },
+            },
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                rut: true,
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                amount: true,
+                dueDate: true,
+                paidDate: true,
+                status: true,
+              },
+              orderBy: { dueDate: 'desc' },
+              take: 10,
+            },
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            rut: true,
+            city: true,
+            commune: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            rut: true,
+          },
+        },
+        broker: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        extrajudicialNotices: {
+          orderBy: { sentDate: 'desc' },
+        },
+        courtProceedings: {
+          orderBy: { filedDate: 'desc' },
+        },
+        legalPayments: {
+          orderBy: { dueDate: 'desc' },
+        },
+        legalAuditLogs: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+        legalNotifications: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
 
-    // Crear clave de cache
-    const cacheKey = createCacheKey('support:legal-case-details', { id });
-    
-    // Intentar obtener del cache primero
-    let legalCase = cacheManager.get(cacheKey);
-    
     if (!legalCase) {
-      // Obtener caso legal con todas las relaciones
-      legalCase = await db.legalCase.findUnique({
-        where: { id },
-        include: {
-          contract: {
-            include: {
-              property: {
-                select: {
-                  id: true,
-                  title: true,
-                  address: true,
-                  city: true,
-                  commune: true,
-                  region: true,
-                  // postalCode: true, // Campo no existe en el esquema
-                  // propertyType: true, // Campo no existe en el esquema
-                  bedrooms: true,
-                  bathrooms: true,
-                  area: true,
-                  images: true
-                }
-              },
-              tenant: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                  // identificationNumber: true, // Campo no existe en el esquema
-                  // dateOfBirth: true, // Campo no existe en el esquema
-                  // emergencyContact: true, // Campo no existe en el esquema
-                  // bankAccount: true // Campo no existe en el esquema
-                }
-              },
-              owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                  // identificationNumber: true, // Campo no existe en el esquema
-                  // bankAccount: true, // Campo no existe en el esquema
-                  // address: true // Campo no existe en el esquema
-                }
-              },
-              broker: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                  // licenseNumber: true, // Campo no existe en el esquema
-                  // company: true // Campo no existe en el esquema
-                }
-              },
-              payments: {
-                where: {
-                  status: 'PENDING' // Cambiado de 'OVERDUE' que no existe en PaymentStatus
-                },
-                orderBy: { dueDate: 'asc' },
-                select: {
-                  id: true,
-                  amount: true,
-                  dueDate: true,
-                  status: true,
-                  // lateFees: true // Campo no existe en el esquema
-                }
-              }
-            }
-          },
-          extrajudicialNotices: {
-            orderBy: { createdAt: 'desc' },
-            // include: {
-            //   documents: { // Campo no existe en el esquema
-            //     select: {
-            //       id: true,
-            //       fileName: true,
-            //       fileType: true,
-            //       fileSize: true,
-            //       uploadedAt: true,
-            //       documentType: true
-            //     }
-            //   }
-            // }
-          },
-          legalDocuments: {
-            orderBy: { createdAt: 'desc' },
-            include: {
-              // uploadedBy: { // Campo no existe en el esquema
-              //   select: {
-              //     id: true,
-              //     name: true,
-              //     email: true,
-              //     role: true
-              //   }
-              // }
-            }
-          },
-          courtProceedings: {
-            orderBy: { createdAt: 'desc' },
-            include: {
-              // documents: { // Campo no existe en el esquema
-              //   select: {
-              //     id: true,
-              //     fileName: true,
-              //     fileType: true,
-              //     fileSize: true,
-              //     uploadedAt: true,
-              //     documentType: true
-              //     }
-              //   }
-            }
-          },
-          legalPayments: {
-            orderBy: { createdAt: 'desc' },
-            include: {
-              // paymentMethod: true // Campo no existe en el esquema
-            }
-          },
-          legalAuditLogs: {
-            orderBy: { createdAt: 'desc' },
-            take: 50,
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  role: true
-                }
-              }
-            }
-          },
-          legalNotifications: {
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (!legalCase) {
-        return NextResponse.json(
-          { error: 'Caso legal no encontrado' },
-          { status: 404 }
-        );
-      }
-
-      // Guardar en cache por 10 minutos
-      cacheManager.set(cacheKey, legalCase, 10 * 60 * 1000);
+      return NextResponse.json({ error: 'Caso legal no encontrado.' }, { status: 404 });
     }
 
-    logger.info('Detalles de caso legal obtenidos por soporte', {
-      context: 'support.legal-cases.details',
+    // Calcular métricas adicionales
+    const overduePayments = legalCase.contract.payments.filter(
+      p => p.status === 'OVERDUE' || (p.dueDate < new Date() && !p.paidDate)
+    );
+
+    const totalOverdue = overduePayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const daysSinceFirstDefault = Math.floor(
+      (Date.now() - new Date(legalCase.firstDefaultDate).getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    logger.info('Detalles completos de caso legal obtenidos por soporte', {
       userId: user.id,
-      userRole: user.role,
-      caseId: id
+      role: user.role,
+      caseId,
+      caseNumber: legalCase.caseNumber,
     });
 
     return NextResponse.json({
       success: true,
-      data: legalCase
+      data: {
+        ...legalCase,
+        metrics: {
+          overduePaymentsCount: overduePayments.length,
+          totalOverdueAmount: totalOverdue,
+          daysSinceFirstDefault,
+          hasCourtProceedings: legalCase.courtProceedings.length > 0,
+          pendingPayments: legalCase.legalPayments.filter(p => p.status === 'PENDING').length,
+        },
+      },
     });
-
   } catch (error) {
-    logger.error('Error al obtener detalles del caso legal para soporte', {
-      context: 'support.legal-cases.details',
-      error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error obteniendo detalles del caso legal para soporte:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
-// POST /api/support/legal-cases/[id]/add-note - Agregar nota interna
-async function updateLegalCase(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
-    
-    // Verificar que el usuario sea de soporte o admin
-    if (!['SUPPORT', 'ADMIN'].includes(user.role.toUpperCase())) {
+
+    if (user.role !== 'SUPPORT' && user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Acceso denegado. Solo usuarios de soporte pueden agregar notas.' },
+        { error: 'Acceso denegado. Se requieren permisos de soporte o administrador.' },
         { status: 403 }
       );
     }
 
-    const { id } = params;
+    const caseId = params.id;
     const body = await request.json();
-    const { note, isInternal = true } = body;
-
-    if (!id || !note) {
-      return NextResponse.json(
-        { error: 'ID del caso y nota son requeridos' },
-        { status: 400 }
-      );
-    }
+    const validatedData = updateLegalCaseSchema.parse(body);
 
     // Verificar que el caso existe
     const existingCase = await db.legalCase.findUnique({
-      where: { id },
-      select: { id: true, internalNotes: true }
+      where: { id: caseId },
     });
 
     if (!existingCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado.' }, { status: 404 });
     }
 
-    // Preparar la nueva nota
-    const timestamp = new Date().toISOString();
-    const userInfo = `${user.name} (${user.role})`;
-    const newNoteEntry = `[${timestamp}] ${userInfo}: ${note}\n`;
-    
-    const updatedNotes = existingCase.internalNotes 
-      ? existingCase.internalNotes + '\n' + newNoteEntry
-      : newNoteEntry;
+    // Preparar datos de actualización filtrando valores undefined
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
 
-    // Actualizar el caso con la nueva nota
+    // Solo incluir campos que tienen valores definidos
+    if (validatedData.status !== undefined) {
+      updateData.status = validatedData.status;
+    }
+    if (validatedData.priority !== undefined) {
+      updateData.priority = validatedData.priority;
+    }
+    if (validatedData.currentPhase !== undefined) {
+      updateData.currentPhase = validatedData.currentPhase;
+    }
+    if (validatedData.nextDeadline !== undefined) {
+      updateData.nextDeadline = validatedData.nextDeadline;
+    }
+    if (validatedData.notes !== undefined) {
+      updateData.notes = validatedData.notes;
+    }
+    if (validatedData.legalFees !== undefined) {
+      updateData.legalFees = validatedData.legalFees;
+    }
+    if (validatedData.courtFees !== undefined) {
+      updateData.courtFees = validatedData.courtFees;
+    }
+    if (validatedData.accumulatedInterest !== undefined) {
+      updateData.accumulatedInterest = validatedData.accumulatedInterest;
+    }
+    if (validatedData.extrajudicialSentDate !== undefined) {
+      updateData.extrajudicialSentDate = validatedData.extrajudicialSentDate;
+    }
+    if (validatedData.demandFiledDate !== undefined) {
+      updateData.demandFiledDate = validatedData.demandFiledDate;
+    }
+    if (validatedData.hearingDate !== undefined) {
+      updateData.hearingDate = validatedData.hearingDate;
+    }
+    if (validatedData.judgmentDate !== undefined) {
+      updateData.judgmentDate = validatedData.judgmentDate;
+    }
+    if (validatedData.evictionDate !== undefined) {
+      updateData.evictionDate = validatedData.evictionDate;
+    }
+    if (validatedData.caseClosedDate !== undefined) {
+      updateData.caseClosedDate = validatedData.caseClosedDate;
+    }
+
+    // Las fechas ya están convertidas en el paso anterior si eran válidas
+
+    // Recalcular totalAmount si se actualizan fees o interest
+    if (
+      validatedData.legalFees !== undefined ||
+      validatedData.courtFees !== undefined ||
+      validatedData.accumulatedInterest !== undefined
+    ) {
+      const legalFees = validatedData.legalFees ?? existingCase.legalFees;
+      const courtFees = validatedData.courtFees ?? existingCase.courtFees;
+      const accumulatedInterest =
+        validatedData.accumulatedInterest ?? existingCase.accumulatedInterest;
+
+      updateData.totalAmount = existingCase.totalDebt + legalFees + courtFees + accumulatedInterest;
+    }
+
+    // Si se marca como cerrado, establecer fecha de cierre
+    if (validatedData.status === 'CLOSED' && existingCase.status !== 'CLOSED') {
+      updateData.caseClosedDate = new Date();
+    }
+
+    // Actualizar caso legal
     const updatedCase = await db.legalCase.update({
-      where: { id },
-      data: {
-        internalNotes: updatedNotes
-      }
+      where: { id: caseId },
+      data: updateData,
+      include: {
+        contract: {
+          select: {
+            id: true,
+            contractNumber: true,
+            property: {
+              select: {
+                id: true,
+                title: true,
+                address: true,
+              },
+            },
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
-    // Crear log de auditoría
+    // Crear entrada de auditoría
     await db.legalAuditLog.create({
       data: {
-        legalCaseId: id,
+        legalCaseId: caseId,
         userId: user.id,
-        action: 'INTERNAL_NOTE_ADDED',
-        details: `Nota interna agregada: ${note.substring(0, 100)}${note.length > 100 ? '...' : ''}`,
-        previousValue: existingCase.internalNotes || '',
-        newValue: updatedNotes
-      }
+        action: 'CASE_UPDATED',
+        details: `Caso legal actualizado por ${user.role.toLowerCase()}`,
+        previousValue: JSON.stringify({
+          status: existingCase.status,
+          priority: existingCase.priority,
+          notes: existingCase.notes,
+        }),
+        newValue: JSON.stringify(updateData),
+      },
     });
 
-    // Limpiar cache relacionado
-    cacheManager.invalidateByTag('legal-cases');
-
-    logger.info('Nota interna agregada al caso legal', {
-      context: 'support.legal-cases.add-note',
+    logger.info('Caso legal actualizado por soporte/admin', {
       userId: user.id,
-      userRole: user.role,
-      caseId: id,
-      noteLength: note.length,
-      isInternal
+      role: user.role,
+      caseId,
+      caseNumber: updatedCase.caseNumber,
+      changes: validatedData,
     });
 
     return NextResponse.json({
       success: true,
-      data: {
-        id,
-        internalNotes: updatedNotes
-      },
-      message: 'Nota interna agregada exitosamente'
+      message: 'Caso legal actualizado exitosamente.',
+      data: updatedCase,
     });
-
   } catch (error) {
-    logger.error('Error al agregar nota interna al caso legal', {
-      context: 'support.legal-cases.add-note',
-      error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error actualizando caso legal por soporte:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
-
-// Exportar handlers con rate limiting
-// Wrapper para compatibilidad con withRateLimit
-const getLegalCaseDetailsWrapper = async (request: NextRequest) => {
-  const url = new URL(request.url);
-  const id = url.pathname.split('/').pop();
-  if (!id) {
-    return NextResponse.json({ error: 'ID no encontrado' }, { status: 400 });
-  }
-  return getLegalCaseDetails(request, { params: { id } });
-};
-
-const updateLegalCaseWrapper = async (request: NextRequest) => {
-  const url = new URL(request.url);
-  const id = url.pathname.split('/').pop();
-  if (!id) {
-    return NextResponse.json({ error: 'ID no encontrado' }, { status: 400 });
-  }
-  return updateLegalCase(request, { params: { id } });
-};
-
-export const GET = withRateLimit(getLegalCaseDetailsWrapper, 'api');
-export const POST = withRateLimit(updateLegalCaseWrapper, 'api');

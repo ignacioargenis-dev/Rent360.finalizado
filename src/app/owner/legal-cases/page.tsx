@@ -106,24 +106,36 @@ export default function LegalCasesPage() {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/owner/legal-cases?status=${statusFilter}&priority=${priorityFilter}`
+        `/api/owner/legal-cases?status=${statusFilter}&priority=${priorityFilter}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        }
       );
+
       if (response.ok) {
         const data = await response.json();
-        // Enhance mock data with additional fields for better UX
-        const enhancedCases = (data.legalCases || []).map((case_: LegalCase) => ({
-          ...case_,
-          riskLevel: getRiskLevel(case_),
-          mediationStatus: case_.status === 'PRE_JUDICIAL' ? 'AVAILABLE' : 'NOT_AVAILABLE',
-          nextDeadline: getNextDeadline(case_),
-          assignedLawyer: case_.status === 'JUDICIAL' ? 'Abogado Rent360' : undefined,
-          courtDate: case_.status === 'JUDICIAL' ? getCourtDate(case_) : undefined,
-          settlementOffer:
-            case_.status === 'PRE_JUDICIAL' ? Math.floor(case_.totalAmount * 0.8) : undefined,
-        }));
-        setLegalCases(enhancedCases);
+        if (data.success) {
+          // Enhance real data with additional fields for better UX
+          const enhancedCases = data.data.map((case_: any) => ({
+            ...case_,
+            riskLevel: getRiskLevel(case_),
+            mediationStatus: case_.status === 'PRE_JUDICIAL' ? 'AVAILABLE' : 'NOT_AVAILABLE',
+            nextDeadline: getNextDeadline(case_),
+            assignedLawyer: case_.status === 'JUDICIAL' ? 'Abogado Rent360' : undefined,
+            courtDate: case_.status === 'JUDICIAL' ? getCourtDate(case_) : undefined,
+            settlementOffer:
+              case_.status === 'PRE_JUDICIAL' ? Math.floor(case_.totalAmount * 0.8) : undefined,
+          }));
+          setLegalCases(enhancedCases);
+        } else {
+          throw new Error(data.error || 'Error al cargar casos legales');
+        }
       } else {
-        logger.error('Error loading legal cases:', { error: await response.text() });
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       logger.error('Error loading legal cases:', { error });
