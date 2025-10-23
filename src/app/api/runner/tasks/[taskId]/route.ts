@@ -65,14 +65,33 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
 
     if (visit.scheduledAt) {
       try {
-        const scheduledDateTime = new Date(visit.scheduledAt);
+        const dateValue = visit.scheduledAt;
+        const scheduledDateTime = new Date(dateValue);
+
+        // Verificaciones exhaustivas para TypeScript
         if (
           scheduledDateTime instanceof Date &&
           !isNaN(scheduledDateTime.getTime()) &&
-          scheduledDateTime.getTime() > 0
+          scheduledDateTime.getTime() > 0 &&
+          typeof scheduledDateTime.toISOString === 'function' &&
+          typeof scheduledDateTime.toTimeString === 'function'
         ) {
-          scheduledDate = scheduledDateTime!.toISOString().split('T')[0];
-          scheduledTime = scheduledDateTime!.toTimeString().split(' ')[0].substring(0, 5);
+          const isoString = scheduledDateTime.toISOString();
+          const timeString = scheduledDateTime.toTimeString();
+
+          if (isoString && timeString) {
+            const dateParts = isoString.split('T');
+            const timeParts = timeString.split(' ');
+
+            if (dateParts.length > 0 && timeParts.length > 0) {
+              const datePart = dateParts[0];
+              const timePart = timeParts[0];
+              if (datePart && timePart) {
+                scheduledDate = datePart;
+                scheduledTime = timePart.substring(0, 5);
+              }
+            }
+          }
         }
       } catch (error) {
         // Mantener valores por defecto si hay error en el parsing

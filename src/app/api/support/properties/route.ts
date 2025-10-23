@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             contracts: true,
-            maintenanceRequests: true,
-            reports: true,
+            maintenance: true,
+            visits: true,
           },
         },
       },
@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
       ownerName: property.owner?.name || 'Sin propietario',
       ownerEmail: property.owner?.email || 'Sin email',
       contractsCount: property._count.contracts,
-      maintenanceCount: property._count.maintenanceRequests,
-      reportsCount: property._count.reports,
+      maintenanceCount: property._count.maintenance,
+      visitsCount: property._count.visits,
       createdAt: property.createdAt.toISOString(),
     }));
 

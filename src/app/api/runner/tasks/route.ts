@@ -58,31 +58,67 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
+    // Función helper para manejar fechas de manera segura
+    const formatSafeDateTime = (scheduledAt: Date | null) => {
+      if (!scheduledAt) {
+        return { scheduledDate: new Date().toISOString().split('T')[0], scheduledTime: '00:00' };
+      }
+
+      try {
+        const dateObj = new Date(scheduledAt);
+        if (dateObj instanceof Date && !isNaN(dateObj.getTime()) && dateObj.getTime() > 0) {
+          const isoString = dateObj.toISOString();
+          const timeString = dateObj.toTimeString();
+          const dateParts = isoString.split('T');
+          const timeParts = timeString.split(' ');
+
+          if (dateParts.length > 0 && timeParts.length > 0) {
+            const datePart = dateParts[0];
+            const timePart = timeParts[0];
+            if (datePart && timePart) {
+              return {
+                scheduledDate: datePart,
+                scheduledTime: timePart.substring(0, 5),
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Error parsing scheduledAt date:', error);
+      }
+
+      return { scheduledDate: new Date().toISOString().split('T')[0], scheduledTime: '00:00' };
+    };
+
     // Transformar datos al formato esperado
-    const transformedTasks = visits.map(visit => ({
-      id: visit.id,
-      propertyId: visit.propertyId,
-      propertyTitle: visit.property.title,
-      propertyAddress: `${visit.property.address}, ${visit.property.commune}, ${visit.property.city}`,
-      tenantName: visit.tenant?.name || 'No asignado',
-      tenantPhone: visit.tenant?.phone || 'No disponible',
-      tenantEmail: visit.tenant?.email || 'No disponible',
-      taskType: 'property_visit', // Tipo de tarea para corredores
-      priority: 'medium', // Por defecto, podría calcularse basado en tiempo
-      status: visit.status.toLowerCase(),
-      scheduledDate: visit.scheduledAt.toISOString().split('T')[0],
-      scheduledTime: visit.scheduledAt.toTimeString().split(' ')[0].substring(0, 5),
-      estimatedDuration: visit.duration,
-      earnings: visit.earnings,
-      description: visit.notes || 'Visita programada para mostrar propiedad',
-      specialInstructions: visit.notes,
-      contactMethod: 'phone', // Por defecto
-      photosTaken: visit.photosTaken,
-      rating: visit.rating,
-      clientFeedback: visit.clientFeedback,
-      createdAt: visit.createdAt.toISOString(),
-      updatedAt: visit.updatedAt.toISOString(),
-    }));
+    const transformedTasks = visits.map(visit => {
+      const { scheduledDate, scheduledTime } = formatSafeDateTime(visit.scheduledAt);
+
+      return {
+        id: visit.id,
+        propertyId: visit.propertyId,
+        propertyTitle: visit.property.title,
+        propertyAddress: `${visit.property.address}, ${visit.property.commune}, ${visit.property.city}`,
+        tenantName: visit.tenant?.name || 'No asignado',
+        tenantPhone: visit.tenant?.phone || 'No disponible',
+        tenantEmail: visit.tenant?.email || 'No disponible',
+        taskType: 'property_visit', // Tipo de tarea para corredores
+        priority: 'medium', // Por defecto, podría calcularse basado en tiempo
+        status: visit.status.toLowerCase(),
+        scheduledDate,
+        scheduledTime,
+        estimatedDuration: visit.duration,
+        earnings: visit.earnings,
+        description: visit.notes || 'Visita programada para mostrar propiedad',
+        specialInstructions: visit.notes,
+        contactMethod: 'phone', // Por defecto
+        photosTaken: visit.photosTaken,
+        rating: visit.rating,
+        clientFeedback: visit.clientFeedback,
+        createdAt: visit.createdAt.toISOString(),
+        updatedAt: visit.updatedAt.toISOString(),
+      };
+    });
 
     logger.info('Tareas de runner obtenidas', {
       runnerId: user.id,
