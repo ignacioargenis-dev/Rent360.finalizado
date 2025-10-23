@@ -85,6 +85,14 @@ export default function RunnerEarningsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
+
   useEffect(() => {
     loadEarningsData();
   }, []);
@@ -248,43 +256,55 @@ Rent360 - ${new Date().getFullYear()}
   };
 
   const handleExportEarnings = () => {
-    // Export earnings data to CSV
-    if (filteredPayments.length === 0) {
-      logger.warn('No hay ingresos para exportar');
-      return;
+    logger.info('Abriendo opciones de exportación de ganancias');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando ganancias del runner', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/runner/earnings/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `ganancias_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de ganancias completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando ganancias:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar las ganancias. Por favor, intenta nuevamente.');
     }
-
-    const csvData = filteredPayments.map(payment => ({
-      ID: payment.id,
-      Propiedad: payment.propertyTitle,
-      Dirección: payment.propertyAddress,
-      Cliente: payment.clientName,
-      Monto: formatCurrency(payment.amount),
-      Estado:
-        payment.status === 'paid'
-          ? 'Pagado'
-          : payment.status === 'pending'
-            ? 'Pendiente'
-            : 'Vencido',
-      'Fecha Visita': formatDate(payment.visitDate),
-      'Fecha Pago': payment.paymentDate ? formatDate(payment.paymentDate) : 'Pendiente',
-      'Fecha Vencimiento': formatDate(payment.dueDate),
-      Calificación: payment.rating || 'N/A',
-    }));
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]!).join(',') +
-      '\n' +
-      csvData.map(row => Object.values(row).join(',')).join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ingresos_runner_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (loading) {

@@ -37,6 +37,14 @@ import {
   Users,
   AlertCircle,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 
@@ -77,6 +85,15 @@ export default function SupportPropertiesPage() {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Estados para el diálogo de exportación
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv',
+    status: 'all',
+    startDate: '',
+    endDate: '',
+  });
   const [selectedProperty, setSelectedProperty] = useState<PropertyReport | null>(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
@@ -265,8 +282,56 @@ export default function SupportPropertiesPage() {
     }
   };
 
-  const handleExportProperties = async () => {
-    await handleExportData();
+  const handleExportProperties = () => {
+    logger.info('Abriendo opciones de exportación de propiedades de soporte');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando propiedades de soporte', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/support/properties/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `propiedades_soporte_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de propiedades completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando propiedades:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar las propiedades. Por favor, intenta nuevamente.');
+    }
   };
 
   const handleResolveIssue = async (property: PropertyReport, issue: string) => {
@@ -954,6 +1019,86 @@ export default function SupportPropertiesPage() {
           </div>
         )}
       </div>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Propiedades de Soporte</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtros para exportar las propiedades.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions({ ...exportOptions, format: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions({ ...exportOptions, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="ACTIVE">Activa</SelectItem>
+                  <SelectItem value="INACTIVE">Inactiva</SelectItem>
+                  <SelectItem value="MAINTENANCE">En Mantenimiento</SelectItem>
+                  <SelectItem value="SOLD">Vendida</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start-date">Fecha Desde</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions({ ...exportOptions, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end-date">Fecha Hasta</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions({ ...exportOptions, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

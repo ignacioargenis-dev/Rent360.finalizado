@@ -33,6 +33,22 @@ import {
   ThumbsDown,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 export default function ProviderRequestsPage() {
   const router = useRouter();
@@ -41,6 +57,14 @@ export default function ProviderRequestsPage() {
   const [data, setData] = useState<any>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
 
   const [requests, setRequests] = useState<any[]>([
     {
@@ -204,35 +228,55 @@ export default function ProviderRequestsPage() {
   };
 
   const handleExportRequests = () => {
-    const csvContent = [
-      ['Título', 'Cliente', 'Servicio', 'Estado', 'Urgencia', 'Precio Estimado', 'Fecha Creación'],
-    ];
+    logger.info('Abriendo opciones de exportación de trabajos');
+    setShowExportDialog(true);
+  };
 
-    requests.forEach(request => {
-      csvContent.push([
-        request.title,
-        request.clientName,
-        request.serviceType,
-        request.status,
-        request.urgency,
-        request.estimatedPrice.toString(),
-        new Date(request.createdAt).toLocaleDateString('es-CL'),
-      ]);
-    });
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando trabajos del proveedor', exportOptions);
 
-    const csvString = csvContent.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `solicitudes_proveedor_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/provider/jobs/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `trabajos_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de trabajos completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando trabajos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los trabajos. Por favor, intenta nuevamente.');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -595,6 +639,114 @@ export default function ProviderRequestsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Trabajos</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra los trabajos que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los trabajos</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="ASSIGNED">Asignados</SelectItem>
+                    <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                    <SelectItem value="COMPLETED">Completados</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="export-start-date">Fecha Desde</Label>
+                  <Input
+                    id="export-start-date"
+                    type="date"
+                    value={exportOptions.startDate}
+                    onChange={e =>
+                      setExportOptions(prev => ({ ...prev, startDate: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                  <Input
+                    id="export-end-date"
+                    type="date"
+                    value={exportOptions.endDate}
+                    onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {requests.length} trabajos
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtrados por estado "${exportOptions.status}"`}
+                  {(exportOptions.startDate || exportOptions.endDate) &&
+                    ' en el rango de fechas seleccionado'}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                    startDate: '',
+                    endDate: '',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Trabajos
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

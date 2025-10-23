@@ -46,6 +46,22 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 export default function TareasPage() {
   const router = useRouter();
@@ -55,6 +71,13 @@ export default function TareasPage() {
   const [data, setData] = useState<any>(null);
 
   const [error, setError] = useState<string | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
 
   const fetchTasks = async () => {
     try {
@@ -67,7 +90,7 @@ export default function TareasPage() {
           pendingTasks: 6,
           inProgressTasks: 3,
           todayTasks: 5,
-          thisWeekTasks: 12
+          thisWeekTasks: 12,
         },
         tasks: [
           {
@@ -79,7 +102,7 @@ export default function TareasPage() {
             dueDate: '2024-01-15',
             propertyAddress: 'Av. Apoquindo 1234, Las Condes',
             clientName: 'María González',
-            estimatedDuration: '2 horas'
+            estimatedDuration: '2 horas',
           },
           {
             id: '2',
@@ -90,18 +113,19 @@ export default function TareasPage() {
             dueDate: '2024-01-18',
             propertyAddress: 'Providencia 5678',
             clientName: 'Propietario Casa Providencia',
-            estimatedDuration: '1.5 horas'
+            estimatedDuration: '1.5 horas',
           },
           {
             id: '3',
             title: 'Inspección mantenimiento - Edificio Centro',
-            description: 'Verificar estado de instalaciones y reportar necesidades de mantenimiento',
+            description:
+              'Verificar estado de instalaciones y reportar necesidades de mantenimiento',
             status: 'pending',
             priority: 'high',
             dueDate: '2024-01-20',
             propertyAddress: 'Centro 999, Santiago Centro',
             clientName: 'Administrador Edificio',
-            estimatedDuration: '3 horas'
+            estimatedDuration: '3 horas',
           },
           {
             id: '4',
@@ -112,7 +136,7 @@ export default function TareasPage() {
             dueDate: '2024-01-22',
             propertyAddress: 'Ñuñoa 4321',
             clientName: 'Carlos Rodríguez',
-            estimatedDuration: '30 minutos'
+            estimatedDuration: '30 minutos',
           },
           {
             id: '5',
@@ -123,9 +147,9 @@ export default function TareasPage() {
             dueDate: '2024-01-25',
             propertyAddress: 'Múltiples propiedades',
             clientName: 'Equipo de Ventas',
-            estimatedDuration: '4 horas'
-          }
-        ]
+            estimatedDuration: '4 horas',
+          },
+        ],
       };
 
       setData(mockTasks);
@@ -205,7 +229,7 @@ export default function TareasPage() {
       completed: { label: 'Completada', color: 'bg-green-100 text-green-800' },
       in_progress: { label: 'En Progreso', color: 'bg-blue-100 text-blue-800' },
       pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
-      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
+      cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-800' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -215,7 +239,7 @@ export default function TareasPage() {
     const priorityConfig = {
       high: { label: 'Alta', color: 'bg-red-100 text-red-800' },
       medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800' },
-      low: { label: 'Baja', color: 'bg-green-100 text-green-800' }
+      low: { label: 'Baja', color: 'bg-green-100 text-green-800' },
     };
     const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
     return <Badge className={config.color}>{config.label}</Badge>;
@@ -233,6 +257,58 @@ export default function TareasPage() {
     // In a real app, this would make an API call
     // For now, just refresh the data to simulate completion
     fetchTasks(); // Refresh data
+  };
+
+  const handleExportTasks = () => {
+    logger.info('Abriendo opciones de exportación de tareas');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando tareas del runner', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/runner/tasks/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `tareas_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de tareas completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando tareas:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar las tareas. Por favor, intenta nuevamente.');
+    }
   };
 
   return (
@@ -260,9 +336,7 @@ export default function TareasPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.inProgressTasks || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Activas actualmente
-              </p>
+              <p className="text-xs text-muted-foreground">Activas actualmente</p>
             </CardContent>
           </Card>
 
@@ -273,9 +347,7 @@ export default function TareasPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.pendingTasks || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Requieren atención
-              </p>
+              <p className="text-xs text-muted-foreground">Requieren atención</p>
             </CardContent>
           </Card>
 
@@ -286,9 +358,7 @@ export default function TareasPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data?.overview.todayTasks || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Para completar hoy
-              </p>
+              <p className="text-xs text-muted-foreground">Para completar hoy</p>
             </CardContent>
           </Card>
         </div>
@@ -337,20 +407,13 @@ export default function TareasPage() {
                       </div>
 
                       <div className="flex flex-col gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewTask(task.id)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleViewTask(task.id)}>
                           <Eye className="w-4 h-4 mr-2" />
                           Ver
                         </Button>
 
                         {task.status !== 'completed' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleMarkCompleted(task.id)}
-                          >
+                          <Button size="sm" onClick={() => handleMarkCompleted(task.id)}>
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Completar
                           </Button>
@@ -475,6 +538,113 @@ export default function TareasPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Tareas</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra las tareas que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las tareas</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                    <SelectItem value="COMPLETED">Completadas</SelectItem>
+                    <SelectItem value="CANCELLED">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="export-start-date">Fecha Desde</Label>
+                  <Input
+                    id="export-start-date"
+                    type="date"
+                    value={exportOptions.startDate}
+                    onChange={e =>
+                      setExportOptions(prev => ({ ...prev, startDate: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                  <Input
+                    id="export-end-date"
+                    type="date"
+                    value={exportOptions.endDate}
+                    onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {data?.tasks?.length || 0} tareas
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtradas por estado "${exportOptions.status}"`}
+                  {(exportOptions.startDate || exportOptions.endDate) &&
+                    ' en el rango de fechas seleccionado'}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                    startDate: '',
+                    endDate: '',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Tareas
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

@@ -5,7 +5,6 @@ import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -34,6 +33,15 @@ import {
   Eye,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface EarningsData {
   totalEarnings: number;
@@ -84,6 +92,14 @@ export default function ProviderEarningsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -224,46 +240,55 @@ export default function ProviderEarningsPage() {
   };
 
   const handleExportEarnings = () => {
-    // Export earnings data to CSV
-    if (filteredPayments.length === 0) {
-      setErrorMessage('No hay ingresos para exportar');
-      setTimeout(() => setErrorMessage(''), 5000);
-      return;
+    logger.info('Abriendo opciones de exportación de transacciones');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando transacciones del proveedor', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/provider/transactions/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `transacciones_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de transacciones completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando transacciones:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar las transacciones. Por favor, intenta nuevamente.');
     }
-
-    const csvData = filteredPayments.map(payment => ({
-      ID: payment.id,
-      Trabajo: payment.jobTitle,
-      Cliente: payment.clientName,
-      Monto: formatCurrency(payment.amount),
-      Estado:
-        payment.status === 'paid'
-          ? 'Pagado'
-          : payment.status === 'pending'
-            ? 'Pendiente'
-            : 'Vencido',
-      'Fecha Trabajo': formatDate(payment.jobDate),
-      'Fecha Pago': payment.paymentDate ? formatDate(payment.paymentDate) : 'Pendiente',
-      'Fecha Vencimiento': formatDate(payment.dueDate),
-      Calificación: payment.rating || 'N/A',
-    }));
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      Object.keys(csvData[0]!).join(',') +
-      '\n' +
-      csvData.map(row => Object.values(row).join(',')).join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `ingresos_proveedor_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -544,6 +569,112 @@ export default function ProviderEarningsPage() {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Transacciones</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra las transacciones que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las transacciones</SelectItem>
+                    <SelectItem value="COMPLETED">Completadas</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="CANCELLED">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="export-start-date">Fecha Desde</Label>
+                  <Input
+                    id="export-start-date"
+                    type="date"
+                    value={exportOptions.startDate}
+                    onChange={e =>
+                      setExportOptions(prev => ({ ...prev, startDate: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                  <Input
+                    id="export-end-date"
+                    type="date"
+                    value={exportOptions.endDate}
+                    onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {filteredPayments.length} transacciones
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtradas por estado "${exportOptions.status}"`}
+                  {(exportOptions.startDate || exportOptions.endDate) &&
+                    ' en el rango de fechas seleccionado'}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                    startDate: '',
+                    endDate: '',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Transacciones
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

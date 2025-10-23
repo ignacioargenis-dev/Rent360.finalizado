@@ -35,6 +35,7 @@ import {
   Search,
   Check,
   X,
+  Download,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -83,6 +84,17 @@ export default function SupportTicketsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Estados para el diálogo de exportación
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv',
+    status: 'all',
+    priority: 'all',
+    category: 'all',
+    startDate: '',
+    endDate: '',
+  });
 
   // Formulario para crear ticket
   const [newTicket, setNewTicket] = useState({
@@ -246,6 +258,66 @@ export default function SupportTicketsPage() {
       logger.error('Error actualizando ticket:', {
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  };
+
+  const handleExportTickets = () => {
+    logger.info('Abriendo opciones de exportación de tickets de soporte');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando tickets de soporte', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.priority !== 'all') {
+        params.append('priority', exportOptions.priority);
+      }
+      if (exportOptions.category !== 'all') {
+        params.append('category', exportOptions.category);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/support/tickets/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `tickets_soporte_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        priority: 'all',
+        category: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de tickets completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando tickets:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los tickets. Por favor, intenta nuevamente.');
     }
   };
 
@@ -727,6 +799,127 @@ export default function SupportTicketsPage() {
                 </div>
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Export Dialog */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Tickets de Soporte</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtros para exportar los tickets de soporte.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions({ ...exportOptions, format: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions({ ...exportOptions, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="OPEN">Abierto</SelectItem>
+                    <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                    <SelectItem value="RESOLVED">Resuelto</SelectItem>
+                    <SelectItem value="CLOSED">Cerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-priority">Prioridad</Label>
+                <Select
+                  value={exportOptions.priority}
+                  onValueChange={value => setExportOptions({ ...exportOptions, priority: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las prioridades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las prioridades</SelectItem>
+                    <SelectItem value="LOW">Baja</SelectItem>
+                    <SelectItem value="MEDIUM">Media</SelectItem>
+                    <SelectItem value="HIGH">Alta</SelectItem>
+                    <SelectItem value="URGENT">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-category">Categoría</Label>
+                <Select
+                  value={exportOptions.category}
+                  onValueChange={value => setExportOptions({ ...exportOptions, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las categorías" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las categorías</SelectItem>
+                    <SelectItem value="technical">Técnico</SelectItem>
+                    <SelectItem value="billing">Facturación</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="bug_report">Reporte de Bug</SelectItem>
+                    <SelectItem value="feature_request">Solicitud de Función</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-date">Fecha Desde</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={exportOptions.startDate}
+                    onChange={e =>
+                      setExportOptions({ ...exportOptions, startDate: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-date">Fecha Hasta</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={exportOptions.endDate}
+                    onChange={e => setExportOptions({ ...exportOptions, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleConfirmExport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

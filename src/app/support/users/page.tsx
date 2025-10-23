@@ -42,6 +42,14 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 
@@ -89,6 +97,16 @@ export default function SupportUsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Estados para el diálogo de exportación
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv',
+    role: 'all',
+    status: 'all',
+    startDate: '',
+    endDate: '',
+  });
   const [errorMessage, setErrorMessage] = useState('');
   const [creatingUser, setCreatingUser] = useState(false);
 
@@ -148,6 +166,62 @@ export default function SupportUsersPage() {
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setCreatingUser(false);
+    }
+  };
+
+  const handleExportUsers = () => {
+    logger.info('Abriendo opciones de exportación de usuarios de soporte');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando usuarios de soporte', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.role !== 'all') {
+        params.append('role', exportOptions.role);
+      }
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/support/users/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `usuarios_soporte_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        role: 'all',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de usuarios completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando usuarios:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los usuarios. Por favor, intenta nuevamente.');
     }
   };
 
@@ -531,7 +605,7 @@ export default function SupportUsersPage() {
                 <CardDescription>Lista de usuarios filtrados según tus criterios</CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleExportUsers}>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
@@ -838,6 +912,107 @@ export default function SupportUsersPage() {
           </div>
         </div>
       )}
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Usuarios</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtros para exportar los usuarios.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions({ ...exportOptions, format: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-role">Rol</Label>
+              <Select
+                value={exportOptions.role}
+                onValueChange={value => setExportOptions({ ...exportOptions, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los roles</SelectItem>
+                  <SelectItem value="TENANT">Inquilino</SelectItem>
+                  <SelectItem value="OWNER">Propietario</SelectItem>
+                  <SelectItem value="BROKER">Corredor</SelectItem>
+                  <SelectItem value="RUNNER">Runner</SelectItem>
+                  <SelectItem value="SUPPORT">Soporte</SelectItem>
+                  <SelectItem value="PROVIDER">Proveedor</SelectItem>
+                  <SelectItem value="MAINTENANCE">Mantenimiento</SelectItem>
+                  <SelectItem value="ADMIN">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions({ ...exportOptions, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start-date">Fecha Desde</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions({ ...exportOptions, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end-date">Fecha Hasta</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions({ ...exportOptions, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

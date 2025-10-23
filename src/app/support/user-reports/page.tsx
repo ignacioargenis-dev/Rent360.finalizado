@@ -11,6 +11,23 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Flag,
   AlertCircle,
   CheckCircle,
@@ -20,6 +37,7 @@ import {
   Mail,
   Calendar,
   Eye,
+  Download,
 } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
 
@@ -74,6 +92,15 @@ export default function SupportUserReportsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [updatingReportId, setUpdatingReportId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<string>('');
+
+  // Estados para el diálogo de exportación
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv',
+    status: 'all',
+    startDate: '',
+    endDate: '',
+  });
 
   const router = useRouter();
 
@@ -196,6 +223,58 @@ export default function SupportUserReportsPage() {
     }
   };
 
+  const handleExportReports = () => {
+    logger.info('Abriendo opciones de exportación de reportes de usuarios');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando reportes de usuarios', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/support/user-reports/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `reportes_usuarios_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de reportes completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando reportes:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los reportes. Por favor, intenta nuevamente.');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       PENDING: { label: 'Pendiente', variant: 'secondary' as const, icon: Clock },
@@ -262,6 +341,18 @@ export default function SupportUserReportsPage() {
                 {reports.length} reporte{reports.length !== 1 ? 's' : ''} en total
               </p>
             </div>
+          </div>
+
+          {/* Export Button */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExportReports}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Datos
+            </Button>
           </div>
         </div>
 
@@ -597,6 +688,86 @@ export default function SupportUserReportsPage() {
           </Card>
         </div>
       )}
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Reportes de Usuarios</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtros para exportar los reportes de usuarios.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions({ ...exportOptions, format: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions({ ...exportOptions, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="PENDING">Pendiente</SelectItem>
+                  <SelectItem value="REVIEWED">Revisado</SelectItem>
+                  <SelectItem value="RESOLVED">Resuelto</SelectItem>
+                  <SelectItem value="DISMISSED">Desestimado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start-date">Fecha Desde</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions({ ...exportOptions, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end-date">Fecha Hasta</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions({ ...exportOptions, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }
