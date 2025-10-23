@@ -75,18 +75,30 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const pendingExecution = service.executions[0];
+    if (!pendingExecution) {
+      return NextResponse.json(
+        { error: 'No se pudo encontrar la ejecución pendiente.' },
+        { status: 400 }
+      );
+    }
+
+    // Preparar datos de actualización filtrando valores undefined
+    const updateData: any = {
+      executedDate: new Date(),
+      status: 'COMPLETED',
+      actualCost: validatedData.actualCost,
+      executedBy: user.id,
+      updatedAt: new Date(),
+    };
+
+    if (validatedData.notes !== undefined) {
+      updateData.notes = validatedData.notes;
+    }
 
     // Ejecutar la instancia del servicio
     const executedService = await db.recurringServiceExecution.update({
       where: { id: pendingExecution.id },
-      data: {
-        executedDate: new Date(),
-        status: 'COMPLETED',
-        actualCost: validatedData.actualCost,
-        notes: validatedData.notes,
-        executedBy: user.id,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
 
     // Actualizar estadísticas del servicio recurrente
