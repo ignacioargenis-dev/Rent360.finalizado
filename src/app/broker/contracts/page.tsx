@@ -28,6 +28,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
@@ -441,6 +442,14 @@ export default function BrokerContractsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Contratos Gestionados</h1>
             <p className="text-gray-600">Administra los contratos de arriendo de tus propiedades</p>
+          </div>
+          <div className="flex gap-2">
+            <Link href="/broker/contracts/new">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Contrato
+              </Button>
+            </Link>
           </div>
         </div>
 

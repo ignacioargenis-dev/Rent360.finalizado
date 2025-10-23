@@ -253,15 +253,19 @@ model Contract {
   id             String        @id @default(cuid())
   contractNumber String        @unique
   propertyId     String
-  tenantId       String
-  ownerId        String
+  tenantId       String?
+  ownerId        String?
   brokerId       String?
   startDate      DateTime
   endDate        DateTime
   monthlyRent    Float
-  deposit        Float
+  depositAmount  Float
+  commission     Float?
   status         String @default("DRAFT")
   terms          String?
+  signatureStatus String @default("pending")
+  signatureToken String?
+  signatureExpiresAt DateTime?
   signedAt       DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
