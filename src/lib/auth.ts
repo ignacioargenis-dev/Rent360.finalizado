@@ -195,7 +195,7 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: 'lax',
     maxAge: 60 * 60, // 1 hora
     path: '/',
-    domain: isProduction ? '.rent360.cl' : undefined, // Dominio específico para producción
+    // No especificar domain para que use el dominio actual automáticamente
   });
 
   response.cookies.set('refresh-token', refreshToken, {
@@ -204,7 +204,7 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60, // 7 días
     path: '/',
-    domain: isProduction ? '.rent360.cl' : undefined, // Dominio específico para producción
+    // No especificar domain para que use el dominio actual automáticamente
   });
 
   console.error('✅ setAuthCookies: Cookies establecidas correctamente');
