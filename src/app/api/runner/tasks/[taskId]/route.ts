@@ -60,14 +60,14 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     }
 
     // Calcular fechas de manera segura
-    const scheduledDateTime = visit.scheduledAt ? new Date(visit.scheduledAt) : null;
-    const scheduledDate = scheduledDateTime
-      ? scheduledDateTime!.toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
+    let scheduledDate = new Date().toISOString().split('T')[0];
+    let scheduledTime = '00:00';
 
-    const scheduledTime = scheduledDateTime
-      ? scheduledDateTime!.toTimeString().split(' ')[0].substring(0, 5)
-      : '00:00';
+    if (visit.scheduledAt) {
+      const dateObj = new Date(visit.scheduledAt!);
+      scheduledDate = dateObj.toISOString().split('T')[0];
+      scheduledTime = dateObj.toTimeString().split(' ')[0].substring(0, 5);
+    }
 
     // Transformar datos al formato esperado
     const taskDetail = {
