@@ -30,9 +30,18 @@ import {
   Plus,
   Search,
   Filter,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface Property {
   id: string;
@@ -85,6 +94,11 @@ export default function OwnerPropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -271,6 +285,50 @@ export default function OwnerPropertiesPage() {
 
   const handleContactTenant = (tenantEmail: string) => {
     window.open(`mailto:${tenantEmail}`, '_blank');
+  };
+
+  const handleExportProperties = () => {
+    logger.info('Abriendo opciones de exportación de propiedades');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando propiedades del propietario', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/owner/properties/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `propiedades_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+      });
+
+      logger.info('Exportación de propiedades completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando propiedades:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar las propiedades. Por favor, intenta nuevamente.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -471,6 +529,10 @@ export default function OwnerPropertiesPage() {
                   <SelectItem value="OFFICE">Oficina</SelectItem>
                 </SelectContent>
               </Select>
+              <Button onClick={handleExportProperties} variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Datos
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -623,6 +685,86 @@ export default function OwnerPropertiesPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Propiedades</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra las propiedades que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las propiedades</SelectItem>
+                    <SelectItem value="RENTED">Arrendadas</SelectItem>
+                    <SelectItem value="AVAILABLE">Disponibles</SelectItem>
+                    <SelectItem value="VACANT">Vacantes</SelectItem>
+                    <SelectItem value="MAINTENANCE">En Mantenimiento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {filteredProperties.length} propiedades
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtradas por estado "${exportOptions.status}"`}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Propiedades
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

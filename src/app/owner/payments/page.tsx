@@ -84,6 +84,13 @@ export default function OwnerPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showManualPaymentDialog, setShowManualPaymentDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
 
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -155,42 +162,65 @@ export default function OwnerPaymentsPage() {
     logger.info('Filtros limpiados');
   };
 
-  const handleExportPayments = async () => {
+  const handleExportPayments = () => {
+    logger.info('Abriendo opciones de exportación de pagos');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
     try {
-      logger.info('Exportando datos de pagos');
-      setExporting(true);
+      logger.info('Exportando pagos del propietario', exportOptions);
 
-      // Simular procesamiento de exportación
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
 
-      // Crear y descargar archivo CSV
-      const csvContent = generateCSV(filteredPayments);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // Crear URL de descarga
+      const exportUrl = `/api/owner/payments/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
       const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `pagos_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
+      link.href = exportUrl;
+      link.download = `pagos_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
       showNotification(
         'Exportación Completada',
-        'Los datos de pagos han sido exportados exitosamente a un archivo CSV.',
+        `Los datos de pagos han sido exportados exitosamente en formato ${exportOptions.format.toUpperCase()}.`,
         'success'
       );
+
+      logger.info('Exportación de pagos completada exitosamente');
     } catch (error) {
       logger.error('Error exportando pagos:', {
         error: error instanceof Error ? error.message : String(error),
       });
       showNotification(
         'Error en Exportación',
-        'Ha ocurrido un error al exportar los datos. Por favor, inténtalo nuevamente.',
+        'Ha ocurrido un error al exportar los datos. Por favor, intenta nuevamente.',
         'error'
       );
-    } finally {
-      setExporting(false);
     }
   };
 
@@ -1473,6 +1503,113 @@ Rent360 - Sistema de Gestión Inmobiliaria
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de exportación */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Pagos</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtra los pagos que deseas exportar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato de Archivo</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Excel)</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Filtrar por Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los pagos</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="PAID">Pagados</SelectItem>
+                  <SelectItem value="OVERDUE">Vencidos</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="export-start-date">Fecha Desde</Label>
+                <input
+                  id="export-start-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                <input
+                  id="export-end-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Se exportarán {filteredPayments.length} pagos
+                {exportOptions.format === 'csv'
+                  ? ' en formato CSV compatible con Excel'
+                  : ' en formato JSON'}
+                {exportOptions.status !== 'all' &&
+                  ` filtrados por estado "${exportOptions.status}"`}
+                {(exportOptions.startDate || exportOptions.endDate) &&
+                  ' en el rango de fechas seleccionado'}
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowExportDialog(false);
+                setExportOptions({
+                  format: 'csv',
+                  status: 'all',
+                  startDate: '',
+                  endDate: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Pagos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UnifiedDashboardLayout>
   );
 }

@@ -32,10 +32,19 @@ import {
   XCircle,
   Loader2,
   X,
+  Download,
 } from 'lucide-react';
 import { User } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 export default function AdminUsersPage() {
   // ⚠️ NOTA: Los console.log aquí se ejecutan en SSR (servidor), no aparecen en el navegador
@@ -66,6 +75,13 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const [statusFilter, setStatusFilter] = useState<string>('all'); // 'all', 'active', 'inactive'
+
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    role: 'all', // filtro por rol
+    status: 'all', // filtro por estado
+  });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
@@ -516,6 +532,54 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleExportUsers = () => {
+    logger.info('Abriendo opciones de exportación de usuarios');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando usuarios del administrador', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.role !== 'all') {
+        params.append('role', exportOptions.role);
+      }
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/admin/users/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `usuarios_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        role: 'all',
+        status: 'all',
+      });
+
+      logger.info('Exportación de usuarios completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando usuarios:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los usuarios. Por favor, intenta nuevamente.');
+    }
+  };
+
   // Pagination
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -800,6 +864,11 @@ export default function AdminUsersPage() {
                 <Filter className="w-4 h-4 mr-2" />
                 Limpiar
               </Button>
+
+              <Button onClick={handleExportUsers} variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Datos
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1053,6 +1122,105 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Usuarios</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra los usuarios que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-role">Filtrar por Rol</Label>
+                <Select
+                  value={exportOptions.role}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, role: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los roles</SelectItem>
+                    <SelectItem value="ADMIN">Administrador</SelectItem>
+                    <SelectItem value="TENANT">Inquilino</SelectItem>
+                    <SelectItem value="OWNER">Propietario</SelectItem>
+                    <SelectItem value="BROKER">Corredor</SelectItem>
+                    <SelectItem value="RUNNER">Runner</SelectItem>
+                    <SelectItem value="SUPPORT">Soporte</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="active">Activos</SelectItem>
+                    <SelectItem value="inactive">Inactivos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {filteredUsers.length} usuarios
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.role !== 'all' && ` filtrados por rol "${exportOptions.role}"`}
+                  {exportOptions.status !== 'all' && ` y estado "${exportOptions.status}"`}.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    role: 'all',
+                    status: 'all',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Usuarios
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

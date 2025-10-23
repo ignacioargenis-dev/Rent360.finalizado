@@ -31,6 +31,14 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface BrokerContract {
   id: string;
@@ -74,6 +82,11 @@ export default function BrokerContractsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -353,6 +366,50 @@ export default function BrokerContractsPage() {
     }
   };
 
+  const handleExportContracts = () => {
+    logger.info('Abriendo opciones de exportación de contratos');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando contratos del corredor', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/broker/contracts/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `contratos_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+      });
+
+      logger.info('Exportación de contratos completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando contratos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los contratos. Por favor, intenta nuevamente.');
+    }
+  };
+
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch =
       contract.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -477,6 +534,10 @@ export default function BrokerContractsPage() {
               </SelectContent>
             </Select>
           </div>
+          <Button onClick={handleExportContracts} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar Datos
+          </Button>
         </div>
 
         {/* Contracts List */}
@@ -589,6 +650,86 @@ export default function BrokerContractsPage() {
             </p>
           </div>
         )}
+
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Contratos</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra los contratos que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los contratos</SelectItem>
+                    <SelectItem value="ACTIVE">Activos</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="EXPIRED">Vencidos</SelectItem>
+                    <SelectItem value="TERMINATED">Terminados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {filteredContracts.length} contratos
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtrados por estado "${exportOptions.status}"`}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Contratos
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );

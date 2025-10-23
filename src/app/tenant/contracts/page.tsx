@@ -14,9 +14,25 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Contract {
   id: string;
@@ -73,6 +89,11 @@ interface Contract {
 export default function TenantContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+  });
   const { user } = useAuth();
 
   useEffect(() => {
@@ -175,6 +196,50 @@ export default function TenantContractsPage() {
     }).format(price);
   };
 
+  const handleExportContracts = () => {
+    logger.info('Abriendo opciones de exportación de contratos');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando contratos del inquilino', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/tenant/contracts/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `contratos_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+      });
+
+      logger.info('Exportación de contratos completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando contratos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los contratos. Por favor, intenta nuevamente.');
+    }
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('es-CL', {
       year: 'numeric',
@@ -246,8 +311,16 @@ export default function TenantContractsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Mis Contratos</h1>
-        <div className="text-sm text-muted-foreground">
-          {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
+          </div>
+          {contracts.length > 0 && (
+            <Button onClick={handleExportContracts} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Datos
+            </Button>
+          )}
         </div>
       </div>
 
@@ -354,6 +427,86 @@ export default function TenantContractsPage() {
           ))}
         </div>
       )}
+
+      {/* Modal de exportación */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Contratos</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtra los contratos que deseas exportar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato de Archivo</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Excel)</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Filtrar por Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los contratos</SelectItem>
+                  <SelectItem value="ACTIVE">Activos</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="EXPIRED">Expirados</SelectItem>
+                  <SelectItem value="TERMINATED">Terminados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Se exportarán {contracts.length} contratos
+                {exportOptions.format === 'csv'
+                  ? ' en formato CSV compatible con Excel'
+                  : ' en formato JSON'}
+                {exportOptions.status !== 'all' &&
+                  ` filtrados por estado "${exportOptions.status}"`}
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowExportDialog(false);
+                setExportOptions({
+                  format: 'csv',
+                  status: 'all',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Contratos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

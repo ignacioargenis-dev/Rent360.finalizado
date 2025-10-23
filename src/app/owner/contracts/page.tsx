@@ -43,6 +43,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ContractWithDetails extends Contract {
   property?: Property;
@@ -58,6 +66,13 @@ export default function OwnerContractsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedContract, setSelectedContract] = useState<ContractWithDetails | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
+  });
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
 
   useEffect(() => {
@@ -193,6 +208,58 @@ export default function OwnerContractsPage() {
       }
     } catch (error) {
       alert('Error de conexión');
+    }
+  };
+
+  const handleExportData = () => {
+    logger.info('Abriendo opciones de exportación de contratos');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
+    try {
+      logger.info('Exportando contratos del propietario', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/owner/contracts/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `contratos_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación de contratos completada exitosamente');
+    } catch (error) {
+      logger.error('Error exportando contratos:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      alert('Error al exportar los contratos. Por favor, intenta nuevamente.');
     }
   };
 
@@ -385,6 +452,10 @@ export default function OwnerContractsPage() {
                   <option value="TERMINATED">Terminados</option>
                   <option value="DRAFT">Borradores</option>
                 </select>
+                <Button onClick={handleExportData} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar Datos
+                </Button>
                 <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualizar
@@ -553,6 +624,113 @@ export default function OwnerContractsPage() {
               onSignatureCancel={() => setShowSignatureDialog(false)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de exportación */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Contratos</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtra los contratos que deseas exportar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato de Archivo</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Excel)</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Filtrar por Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los contratos</SelectItem>
+                  <SelectItem value="ACTIVE">Activos</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="TERMINATED">Terminados</SelectItem>
+                  <SelectItem value="DRAFT">Borradores</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="export-start-date">Fecha Desde</Label>
+                <input
+                  id="export-start-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                <input
+                  id="export-end-date"
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Se exportarán {filteredContracts.length} contratos
+                {exportOptions.format === 'csv'
+                  ? ' en formato CSV compatible con Excel'
+                  : ' en formato JSON'}
+                {exportOptions.status !== 'all' &&
+                  ` filtrados por estado "${exportOptions.status}"`}
+                {(exportOptions.startDate || exportOptions.endDate) &&
+                  ' en el rango de fechas seleccionado'}
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowExportDialog(false);
+                setExportOptions({
+                  format: 'csv',
+                  status: 'all',
+                  startDate: '',
+                  endDate: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Contratos
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>
