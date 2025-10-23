@@ -191,18 +191,20 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
 
   response.cookies.set('auth-token', accessToken, {
     httpOnly: true,
-    secure: isSecure,
+    secure: isProduction, // Solo secure en HTTPS real
     sameSite: 'lax',
     maxAge: 60 * 60, // 1 hora
     path: '/',
+    domain: isProduction ? '.rent360.cl' : undefined, // Dominio específico para producción
   });
 
   response.cookies.set('refresh-token', refreshToken, {
     httpOnly: true,
-    secure: isSecure,
+    secure: isProduction, // Solo secure en HTTPS real
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60, // 7 días
     path: '/',
+    domain: isProduction ? '.rent360.cl' : undefined, // Dominio específico para producción
   });
 
   console.error('✅ setAuthCookies: Cookies establecidas correctamente');

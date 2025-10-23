@@ -155,9 +155,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match ALL API routes - simplest possible pattern
-     * Edge Runtime should recognize this basic pattern
+     * Match ALL API routes EXCEPT auth routes (which handle their own auth)
+     * Edge Runtime should recognize this pattern
      */
-    '/api/(.*)',
+    '/api/((?!auth/).*)',
   ],
 };

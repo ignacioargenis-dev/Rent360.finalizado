@@ -79,8 +79,14 @@ export default function SupportUserReportsPage() {
 
   useEffect(() => {
     loadUserData();
-    loadReports();
-  }, [statusFilter, reasonFilter]);
+  }, []); // Solo ejecutar loadUserData inicialmente
+
+  // Ejecutar loadReports solo cuando el usuario esté disponible
+  useEffect(() => {
+    if (user) {
+      loadReports();
+    }
+  }, [user, statusFilter, reasonFilter]);
 
   const loadUserData = async () => {
     try {
@@ -117,6 +123,11 @@ export default function SupportUserReportsPage() {
   };
 
   const loadReports = async () => {
+    if (!user) {
+      console.log('⚠️ loadReports: Usuario no disponible, saltando');
+      return;
+    }
+
     try {
       setLoading(true);
       const params = new URLSearchParams();

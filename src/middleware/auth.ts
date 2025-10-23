@@ -6,6 +6,7 @@ const PUBLIC_ROUTES = [
   // API públicas
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/me', // ✅ Esta ruta maneja su propia autenticación
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/verify-email',

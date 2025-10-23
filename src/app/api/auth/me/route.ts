@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
 
       // Devolver información actualizada del usuario desde la base de datos
       return NextResponse.json({
+        success: true,
         user: {
           id: user.id,
           email: user.email,
@@ -138,6 +139,7 @@ export async function GET(request: NextRequest) {
       console.error('❌ /api/auth/me: Error consultando base de datos:', dbError);
       // Fallback a datos del token si falla la consulta a la BD
       return NextResponse.json({
+        success: true,
         user: {
           id: decoded.id,
           email: decoded.email,
