@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
             commune: true,
           },
         },
-        requestedBy: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -103,8 +103,8 @@ export async function GET(request: NextRequest) {
         request.property?.address || '',
         request.property?.city || '',
         request.property?.commune || '',
-        request.requestedBy?.name || '',
-        request.requestedBy?.email || '',
+        request.requester?.name || '',
+        request.requester?.email || '',
         request.type,
         request.priority,
         `"${request.description.replace(/"/g, '""')}"`, // Escapar comillas en CSV
@@ -142,9 +142,9 @@ export async function GET(request: NextRequest) {
           commune: request.property?.commune,
         },
         tenant: {
-          id: request.requestedBy?.id,
-          name: request.requestedBy?.name,
-          email: request.requestedBy?.email,
+          id: request.requester?.id,
+          name: request.requester?.name,
+          email: request.requester?.email,
         },
         type: request.type,
         priority: request.priority,
