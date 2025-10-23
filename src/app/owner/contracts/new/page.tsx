@@ -104,21 +104,18 @@ export default function NewContractPage() {
   useEffect(() => {
     const loadTenants = async () => {
       try {
-        // Usar API de usuarios filtrando por rol TENANT
-        const response = await fetch('/api/users?role=TENANT&limit=50', {
-          credentials: 'include',
-        });
+        // Usar API específica para propietarios
+        const response = await fetch(
+          `/api/owner/search-tenants?search=${encodeURIComponent(searchTenant)}&limit=50`,
+          {
+            credentials: 'include',
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.users) {
-            const filteredTenants = data.users.filter(
-              (user: any) =>
-                user.name.toLowerCase().includes(searchTenant.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTenant.toLowerCase()) ||
-                (user.rut && user.rut.includes(searchTenant))
-            );
-            setTenants(filteredTenants);
+            setTenants(data.users);
           }
         } else {
           logger.warn('Could not load tenants from API, using empty list');
@@ -137,21 +134,18 @@ export default function NewContractPage() {
   useEffect(() => {
     const loadBrokers = async () => {
       try {
-        // Usar API de usuarios filtrando por rol BROKER
-        const response = await fetch('/api/users?role=BROKER&limit=50', {
-          credentials: 'include',
-        });
+        // Usar API específica para propietarios
+        const response = await fetch(
+          `/api/owner/search-brokers?search=${encodeURIComponent(searchBroker)}&limit=50`,
+          {
+            credentials: 'include',
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.users) {
-            const filteredBrokers = data.users.filter(
-              (user: any) =>
-                user.name.toLowerCase().includes(searchBroker.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchBroker.toLowerCase()) ||
-                (user.company && user.company.toLowerCase().includes(searchBroker.toLowerCase()))
-            );
-            setBrokers(filteredBrokers);
+            setBrokers(data.users);
           }
         } else {
           logger.warn('Could not load brokers from API, using empty list');
@@ -196,7 +190,7 @@ export default function NewContractPage() {
       };
 
       // Agregar broker si fue seleccionado
-      if (selectedBrokerId) {
+      if (selectedBrokerId && selectedBrokerId.trim() !== '') {
         contractData.brokerId = selectedBrokerId;
       }
 
@@ -380,7 +374,6 @@ export default function NewContractPage() {
                       <SelectValue placeholder="Sin corredor (contrato directo)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin corredor</SelectItem>
                       {brokers.map(broker => (
                         <SelectItem key={broker.id} value={broker.id}>
                           {broker.name} - {broker.email}

@@ -109,6 +109,7 @@ export default function MantenimientoPage() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [providerFilters, setProviderFilters] = useState({
@@ -131,7 +132,7 @@ export default function MantenimientoPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -141,23 +142,25 @@ export default function MantenimientoPage() {
       }
 
       const data = await response.json();
-      
+
       // Transform API data to match our interface
-      const transformedRequests: MaintenanceRequest[] = data.maintenanceRequests.map((request: any) => ({
-        id: request.id,
-        propertyId: request.propertyId,
-        propertyTitle: request.property?.title || 'Propiedad sin título',
-        tenantName: request.requestedBy?.name || 'Usuario no identificado',
-        type: request.type || 'REPAIR',
-        description: request.description || 'Sin descripción',
-        urgency: request.priority || 'MEDIUM',
-        status: request.status || 'PENDING',
-        estimatedCost: request.estimatedCost || 0,
-        createdAt: request.createdAt,
-        scheduledDate: request.scheduledDate,
-        completedDate: request.completedDate,
-        provider: request.assignedTo?.name || request.provider,
-      }));
+      const transformedRequests: MaintenanceRequest[] = data.maintenanceRequests.map(
+        (request: any) => ({
+          id: request.id,
+          propertyId: request.propertyId,
+          propertyTitle: request.property?.title || 'Propiedad sin título',
+          tenantName: request.requestedBy?.name || 'Usuario no identificado',
+          type: request.type || 'REPAIR',
+          description: request.description || 'Sin descripción',
+          urgency: request.priority || 'MEDIUM',
+          status: request.status || 'PENDING',
+          estimatedCost: request.estimatedCost || 0,
+          createdAt: request.createdAt,
+          scheduledDate: request.scheduledDate,
+          completedDate: request.completedDate,
+          provider: request.assignedTo?.name || request.provider,
+        })
+      );
 
       setMaintenanceRequests(transformedRequests);
 
@@ -181,7 +184,6 @@ export default function MantenimientoPage() {
         totalCost,
         monthlyCost,
       });
-
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
@@ -195,12 +197,13 @@ export default function MantenimientoPage() {
   // Funciones para acciones rápidas
   const handleNewRequest = () => {
     logger.info('Abriendo creación de nueva solicitud de mantenimiento');
-    // TODO: Implementar modal o navegación para nueva solicitud
+    // Navegar a la página de nueva solicitud de mantenimiento
+    window.location.href = '/maintenance/new';
   };
 
   const handleFilterRequests = () => {
-    logger.info('Alternando filtros de solicitudes');
-    // TODO: Implementar filtros avanzados
+    logger.info('Abriendo filtros de solicitudes');
+    setShowFilterDialog(true);
   };
 
   const handleExportData = async () => {
@@ -215,8 +218,9 @@ export default function MantenimientoPage() {
   };
 
   const handleViewReports = () => {
-    logger.info('Mostrando reportes de mantenimiento');
-    // TODO: Implementar vista de reportes
+    logger.info('Navegando a reportes de mantenimiento');
+    // Navegar a la página de reportes de mantenimiento
+    window.location.href = '/maintenance/reports';
   };
 
   const handleSettings = () => {
@@ -235,7 +239,7 @@ export default function MantenimientoPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -263,7 +267,7 @@ export default function MantenimientoPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -293,13 +297,15 @@ export default function MantenimientoPage() {
 
   const loadAvailableProviders = async () => {
     try {
-      if (!selectedRequest) return;
+      if (!selectedRequest) {
+        return;
+      }
 
       const response = await fetch(`/api/maintenance/${selectedRequest.id}/available-providers`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
       });
@@ -363,7 +369,7 @@ export default function MantenimientoPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -1039,6 +1045,61 @@ export default function MantenimientoPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de filtros */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filtrar Solicitudes</DialogTitle>
+            <DialogDescription>
+              Aplica filtros para encontrar solicitudes específicas de mantenimiento.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="filter-status">Estado</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="APPROVED">Aprobadas</SelectItem>
+                  <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                  <SelectItem value="COMPLETED">Completadas</SelectItem>
+                  <SelectItem value="REJECTED">Rechazadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filter-search">Buscar por descripción</Label>
+              <Input
+                id="filter-search"
+                placeholder="Ingrese palabras clave..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowFilterDialog(false);
+                setStatusFilter('all');
+                setSearchTerm('');
+              }}
+            >
+              Limpiar Filtros
+            </Button>
+            <Button onClick={() => setShowFilterDialog(false)}>Aplicar Filtros</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>
