@@ -14,7 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Calendar, DollarSign, FileText, Home, User, Users, Search } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  FileText,
+  Home,
+  User,
+  Users,
+  Search,
+  UserCheck,
+} from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
@@ -36,6 +46,14 @@ interface Tenant {
   rut?: string;
 }
 
+interface Broker {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+}
+
 export default function NewContractPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,8 +61,10 @@ export default function NewContractPage() {
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const [selectedBrokerId, setSelectedBrokerId] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [monthlyRent, setMonthlyRent] = useState<string>('');
@@ -52,6 +72,7 @@ export default function NewContractPage() {
   const [terms, setTerms] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [searchTenant, setSearchTenant] = useState<string>('');
+  const [searchBroker, setSearchBroker] = useState<string>('');
 
   // Cargar propiedades del propietario
   useEffect(() => {
@@ -79,43 +100,71 @@ export default function NewContractPage() {
     loadProperties();
   }, [user]);
 
-  // Cargar inquilinos (simulado - en producción vendría de una API)
+  // Cargar inquilinos reales
   useEffect(() => {
     const loadTenants = async () => {
       try {
-        // TODO: Implementar API real para buscar inquilinos
-        // Por ahora, datos de ejemplo
-        const mockTenants: Tenant[] = [
-          {
-            id: 'tenant-1',
-            name: 'María González',
-            email: 'maria@example.com',
-            phone: '+56912345678',
-            rut: '12.345.678-9',
-          },
-          {
-            id: 'tenant-2',
-            name: 'Carlos Rodríguez',
-            email: 'carlos@example.com',
-            phone: '+56987654321',
-            rut: '98.765.432-1',
-          },
-        ];
+        // Usar API de usuarios filtrando por rol TENANT
+        const response = await fetch('/api/users?role=TENANT&limit=50', {
+          credentials: 'include',
+        });
 
-        setTenants(
-          mockTenants.filter(
-            tenant =>
-              tenant.name.toLowerCase().includes(searchTenant.toLowerCase()) ||
-              tenant.email.toLowerCase().includes(searchTenant.toLowerCase())
-          )
-        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.users) {
+            const filteredTenants = data.users.filter(
+              (user: any) =>
+                user.name.toLowerCase().includes(searchTenant.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchTenant.toLowerCase()) ||
+                (user.rut && user.rut.includes(searchTenant))
+            );
+            setTenants(filteredTenants);
+          }
+        } else {
+          logger.warn('Could not load tenants from API, using empty list');
+          setTenants([]);
+        }
       } catch (error) {
         logger.error('Error loading tenants:', error);
+        setTenants([]);
       }
     };
 
     loadTenants();
   }, [searchTenant]);
+
+  // Cargar corredores/brokers reales
+  useEffect(() => {
+    const loadBrokers = async () => {
+      try {
+        // Usar API de usuarios filtrando por rol BROKER
+        const response = await fetch('/api/users?role=BROKER&limit=50', {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.users) {
+            const filteredBrokers = data.users.filter(
+              (user: any) =>
+                user.name.toLowerCase().includes(searchBroker.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchBroker.toLowerCase()) ||
+                (user.company && user.company.toLowerCase().includes(searchBroker.toLowerCase()))
+            );
+            setBrokers(filteredBrokers);
+          }
+        } else {
+          logger.warn('Could not load brokers from API, using empty list');
+          setBrokers([]);
+        }
+      } catch (error) {
+        logger.error('Error loading brokers:', error);
+        setBrokers([]);
+      }
+    };
+
+    loadBrokers();
+  }, [searchBroker]);
 
   // Establecer propiedad por defecto si viene en URL
   useEffect(() => {
@@ -136,7 +185,7 @@ export default function NewContractPage() {
     setLoading(true);
 
     try {
-      const contractData = {
+      const contractData: any = {
         propertyId: selectedPropertyId,
         tenantId: selectedTenantId,
         startDate,
@@ -145,6 +194,11 @@ export default function NewContractPage() {
         depositAmount: parseFloat(deposit) || 0,
         terms: terms || 'Contrato de arriendo estándar',
       };
+
+      // Agregar broker si fue seleccionado
+      if (selectedBrokerId) {
+        contractData.brokerId = selectedBrokerId;
+      }
 
       const response = await fetch('/api/contracts', {
         method: 'POST',
@@ -160,7 +214,7 @@ export default function NewContractPage() {
         logger.info('Contract created successfully', { contractId: result.contract?.id });
 
         alert(
-          '¡Contrato creado exitosamente! Se ha enviado una notificación al inquilino para revisión y firma.'
+          '¡Contrato creado exitosamente! El inquilino podrá revisarlo y firmarlo desde su panel de contratos.'
         );
         router.push('/owner/contracts');
       } else {
@@ -292,6 +346,77 @@ export default function NewContractPage() {
                     })()}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Información del Corredor (Opcional) */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5" />
+                  Corredor (Opcional)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="brokerSearch">Buscar Corredor</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="brokerSearch"
+                      placeholder="Nombre, email o empresa del corredor"
+                      value={searchBroker}
+                      onChange={e => setSearchBroker(e.target.value)}
+                    />
+                    <Button type="button" variant="outline" size="icon">
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Seleccionar Corredor</Label>
+                  <Select value={selectedBrokerId} onValueChange={setSelectedBrokerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin corredor (contrato directo)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Sin corredor</SelectItem>
+                      {brokers.map(broker => (
+                        <SelectItem key={broker.id} value={broker.id}>
+                          {broker.name} - {broker.email}
+                          {broker.company && ` (${broker.company})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedBrokerId && brokers.find(b => b.id === selectedBrokerId) && (
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    {(() => {
+                      const broker = brokers.find(b => b.id === selectedBrokerId);
+                      return broker ? (
+                        <>
+                          <h4 className="font-semibold">{broker.name}</h4>
+                          <p className="text-sm text-gray-600">{broker.email}</p>
+                          {broker.phone && (
+                            <p className="text-sm text-gray-600">📱 {broker.phone}</p>
+                          )}
+                          {broker.company && (
+                            <p className="text-sm text-gray-600">🏢 {broker.company}</p>
+                          )}
+                        </>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
+                <div className="text-sm text-gray-600">
+                  <p>
+                    💡 <strong>Nota:</strong> Si seleccionas un corredor, este podrá gestionar el
+                    contrato y recibir comisiones por el arriendo.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
