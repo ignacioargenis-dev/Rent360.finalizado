@@ -110,11 +110,18 @@ export default function MantenimientoPage() {
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showAssignProviderDialog, setShowAssignProviderDialog] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [availableProviders, setAvailableProviders] = useState<any[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [providerFilters, setProviderFilters] = useState({
     specialty: 'all',
     sortBy: 'rating', // 'rating', 'price_low', 'price_high', 'experience'
+  });
+  const [exportOptions, setExportOptions] = useState({
+    format: 'csv', // 'csv', 'json'
+    status: 'all', // filtro por estado
+    startDate: '',
+    endDate: '',
   });
 
   useEffect(() => {
@@ -206,14 +213,55 @@ export default function MantenimientoPage() {
     setShowFilterDialog(true);
   };
 
-  const handleExportData = async () => {
+  const handleExportData = () => {
+    logger.info('Abriendo opciones de exportación');
+    setShowExportDialog(true);
+  };
+
+  const handleConfirmExport = async () => {
     try {
-      logger.info('Exportando datos de mantenimiento');
-      alert('Datos exportados exitosamente');
+      logger.info('Exportando datos de mantenimiento', exportOptions);
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append('format', exportOptions.format);
+      if (exportOptions.status !== 'all') {
+        params.append('status', exportOptions.status);
+      }
+      if (exportOptions.startDate) {
+        params.append('startDate', exportOptions.startDate);
+      }
+      if (exportOptions.endDate) {
+        params.append('endDate', exportOptions.endDate);
+      }
+
+      // Crear URL de descarga
+      const exportUrl = `/api/owner/maintenance/export?${params.toString()}`;
+
+      // Crear enlace temporal para descarga
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `mantenimiento_${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportDialog(false);
+
+      // Resetear opciones de exportación
+      setExportOptions({
+        format: 'csv',
+        status: 'all',
+        startDate: '',
+        endDate: '',
+      });
+
+      logger.info('Exportación completada exitosamente');
     } catch (error) {
       logger.error('Error exportando datos:', {
         error: error instanceof Error ? error.message : String(error),
       });
+      alert('Error al exportar los datos. Por favor, intenta nuevamente.');
     }
   };
 
@@ -1099,6 +1147,113 @@ export default function MantenimientoPage() {
               Limpiar Filtros
             </Button>
             <Button onClick={() => setShowFilterDialog(false)}>Aplicar Filtros</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de exportación */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Datos de Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Selecciona el formato y filtra los datos que deseas exportar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="export-format">Formato de Archivo</Label>
+              <Select
+                value={exportOptions.format}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar formato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Excel)</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="export-status">Filtrar por Estado</Label>
+              <Select
+                value={exportOptions.status}
+                onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las solicitudes</SelectItem>
+                  <SelectItem value="PENDING">Pendientes</SelectItem>
+                  <SelectItem value="APPROVED">Aprobadas</SelectItem>
+                  <SelectItem value="IN_PROGRESS">En Progreso</SelectItem>
+                  <SelectItem value="COMPLETED">Completadas</SelectItem>
+                  <SelectItem value="REJECTED">Rechazadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="export-start-date">Fecha Desde</Label>
+                <Input
+                  id="export-start-date"
+                  type="date"
+                  value={exportOptions.startDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="export-end-date">Fecha Hasta</Label>
+                <Input
+                  id="export-end-date"
+                  type="date"
+                  value={exportOptions.endDate}
+                  onChange={e => setExportOptions(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Se exportarán {filteredRequests.length} solicitudes de
+                mantenimiento
+                {exportOptions.format === 'csv'
+                  ? ' en formato CSV compatible con Excel'
+                  : ' en formato JSON'}
+                {exportOptions.status !== 'all' &&
+                  ` filtradas por estado "${exportOptions.status}"`}
+                {(exportOptions.startDate || exportOptions.endDate) &&
+                  ' en el rango de fechas seleccionado'}
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowExportDialog(false);
+                setExportOptions({
+                  format: 'csv',
+                  status: 'all',
+                  startDate: '',
+                  endDate: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Datos
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
