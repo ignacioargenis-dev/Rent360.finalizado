@@ -376,12 +376,36 @@ export default function Chatbot({
       // Fallback a respuestas programáticas si falla la IA
       const input = userInput.toLowerCase();
 
-      if (input.includes('propiedad') || input.includes('casa') || input.includes('departamento')) {
+      // Consultas sobre propiedades específicas (solo si no son sobre corredores)
+      if (
+        (input.includes('propiedad') || input.includes('casa') || input.includes('departamento')) &&
+        !input.includes('corredor') &&
+        !input.includes('broker') &&
+        !input.includes('agente')
+      ) {
+        if (userRole === 'tenant') {
+          return {
+            content:
+              '¡Perfecto! Te ayudo a buscar la propiedad ideal. Como inquilino, puedes:\n\n🏠 **Buscar propiedades:** Ve a "Buscar Propiedades" y aplica filtros\n📍 **Por zona:** Especifica comuna y región\n💰 **Por presupuesto:** Define rango de precios\n⭐ **Ver reseñas:** Propiedades con calificaciones de inquilinos anteriores\n\n¿En qué zona te interesa buscar y cuál es tu presupuesto mensual?',
+            context: { intent: 'property_search' },
+            suggestions: ['Buscar propiedades', 'Filtrar por zona', 'Ver propiedades destacadas'],
+            actions: ['Ir a Buscar Propiedades', 'Ver mapa interactivo'],
+          };
+        }
+        if (userRole === 'owner') {
+          return {
+            content:
+              'Como propietario, puedes gestionar tus propiedades existentes o agregar nuevas. ¿Qué te gustaría hacer?\n\n➕ **Agregar propiedad:** Publica una nueva propiedad para arriendo\n📋 **Ver mis propiedades:** Gestiona propiedades existentes\n📊 **Ver analytics:** Estadísticas de ocupación y rentabilidad\n🔧 **Mantenimiento:** Gestiona solicitudes de reparación\n\n¿Quieres agregar una nueva propiedad o gestionar las existentes?',
+            context: { intent: 'property_management' },
+            suggestions: ['Agregar propiedad', 'Ver mis propiedades', 'Ver estadísticas'],
+            actions: ['Ir a Mis Propiedades', 'Agregar nueva propiedad'],
+          };
+        }
         return {
           content:
-            'Te ayudo a buscar propiedades. Puedo mostrarte opciones según tu ubicación, presupuesto y preferencias. ¿En qué zona te interesa vivir y cuál es tu presupuesto mensual?',
-          context: { intent: 'property_search' },
-          suggestions: ['Ver propiedades disponibles', 'Filtrar por zona', 'Calcular hipoteca'],
+            'Te ayudo con propiedades. Dependiendo de tu rol en Rent360:\n\n🏠 **Inquilinos:** Buscan y arriendan propiedades\n🏢 **Propietarios:** Gestionan y publican propiedades\n🏢 **Corredores:** Publican y promocionan propiedades\n\n¿Eres inquilino, propietario o corredor?',
+          context: { intent: 'property_info' },
+          suggestions: ['Soy inquilino', 'Soy propietario', 'Soy corredor'],
         };
       }
 
@@ -558,6 +582,46 @@ export default function Chatbot({
             'Casos legales',
             'Información legal',
           ],
+        };
+      }
+
+      // Consultas específicas sobre corredores/brokers (PRIORIDAD ALTA)
+      if (
+        (input.includes('contratar') || input.includes('contrato') || input.includes('buscar')) &&
+        (input.includes('corredor') || input.includes('broker') || input.includes('agente'))
+      ) {
+        if (userRole === 'owner') {
+          return {
+            content:
+              '¡Claro! Como propietario, contratar un corredor es muy sencillo en Rent360:\n\n🏠 **Proceso en 3 pasos:**\n\n1️⃣ **Publica tus propiedades** → Ve a "Mis Propiedades" y marca como "Disponible para corredores"\n2️⃣ **Los corredores te contactan** → Recibirás ofertas automáticamente por email y en la plataforma\n3️⃣ **Selecciona y contrata** → Revisa perfiles, comisiones y contrata al corredor que más te convenga\n\n💰 **Comisiones típicas:** 1-3% del valor del arriendo mensual\n⭐ **Ventajas:** Los corredores promocionan tus propiedades en múltiples canales\n\n¿Quieres que te ayude a publicar una propiedad ahora mismo o tienes alguna duda específica sobre corredores?',
+            context: { intent: 'hire_broker' },
+            suggestions: [
+              'Publicar propiedad para corredores',
+              'Ver corredores disponibles',
+              'Información sobre comisiones',
+              'Cómo elegir buen corredor',
+            ],
+            actions: ['Ir a Mis Propiedades', 'Ver corredores activos'],
+            followUp: [
+              '¿Qué tipo de propiedad quieres publicar?',
+              '¿Tienes experiencia previa con corredores?',
+              '¿Quieres comparar comisiones?',
+            ],
+          };
+        }
+        if (userRole === 'tenant') {
+          return {
+            content:
+              'Los corredores pueden ayudarte a encontrar mejores opciones de arriendo y negociar mejores condiciones. En Rent360 puedes:\n\n🔍 **Buscar propiedades con corredor:** Usa el filtro "Con corredor" al buscar\n💬 **Contactar corredores:** Todos los perfiles incluyen información de contacto\n📋 **Revisar credenciales:** Los corredores verificados tienen badge especial\n\n¿Te ayudo a buscar propiedades con corredores?',
+            context: { intent: 'find_broker' },
+            suggestions: ['Buscar con corredores', 'Ver corredores verificados'],
+          };
+        }
+        return {
+          content:
+            'Los corredores en Rent360 son profesionales certificados que te ayudan con arriendos. Dependiendo de tu rol:\n\n🏠 **Propietarios:** Publican y promocionan tus propiedades\n🏢 **Inquilinos:** Te ayudan a encontrar y negociar mejores arriendos\n\n¿Eres propietario o inquilino? Puedo darte información específica.',
+          context: { intent: 'broker_info' },
+          suggestions: ['Soy propietario', 'Soy inquilino', 'Información general'],
         };
       }
 

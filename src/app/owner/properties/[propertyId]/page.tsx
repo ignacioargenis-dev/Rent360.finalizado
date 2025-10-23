@@ -568,8 +568,8 @@ export default function OwnerPropertyDetailPage() {
         // Mostrar mensaje de éxito
         alert(`✅ Propiedad "${property.title}" eliminada exitosamente.`);
 
-        // Redirigir a la lista de propiedades
-        router.push('/owner/properties');
+        // Redirigir a la lista de propiedades con parámetro de refresh
+        router.push('/owner/properties?refresh=true&deleted=true');
       } else {
         const errorData = await response.json();
         logger.error('Error deleting property', {

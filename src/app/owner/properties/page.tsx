@@ -128,6 +128,7 @@ export default function OwnerPropertiesPage() {
         if (shouldRefresh) {
           const url = new URL(window.location.href);
           url.searchParams.delete('refresh');
+          url.searchParams.delete('deleted');
           window.history.replaceState({}, '', url.toString());
         }
       } catch (error) {

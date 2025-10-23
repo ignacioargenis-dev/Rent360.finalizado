@@ -11,6 +11,7 @@ const settingsSchema = z.object({
   finalReminderDays: z.number().min(1).max(30),
   emailTemplates: z.string(),
   smsEnabled: z.boolean(),
+  smsTemplate: z.string().optional(),
   includePropertyInfo: z.boolean(),
   includeOwnerContact: z.boolean(),
 });
@@ -45,6 +46,7 @@ export async function PUT(request: NextRequest) {
       finalReminderDays: validatedData.finalReminderDays,
       emailTemplate: validatedData.emailTemplates,
       smsEnabled: validatedData.smsEnabled,
+      smsTemplate: validatedData.smsTemplate || 'default',
       includePropertyInfo: validatedData.includePropertyInfo,
       includeOwnerContact: validatedData.includeOwnerContact,
       updatedAt: new Date().toISOString(),
@@ -126,6 +128,7 @@ export async function GET(request: NextRequest) {
       finalReminderDays: 1,
       emailTemplate: 'default',
       smsEnabled: false,
+      smsTemplate: 'default',
       includePropertyInfo: true,
       includeOwnerContact: true,
     };

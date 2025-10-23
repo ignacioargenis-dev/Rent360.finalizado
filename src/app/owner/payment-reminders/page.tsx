@@ -76,6 +76,7 @@ interface ReminderSettings {
   finalReminderDays: number;
   emailTemplates: boolean;
   smsEnabled: boolean;
+  smsTemplate?: string;
 }
 
 export default function OwnerPaymentRemindersPage() {
@@ -97,6 +98,7 @@ export default function OwnerPaymentRemindersPage() {
     finalReminderDays: 14,
     emailTemplates: true,
     smsEnabled: false,
+    smsTemplate: 'default',
   });
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
@@ -533,6 +535,7 @@ export default function OwnerPaymentRemindersPage() {
           finalReminderDays: reminderConfig.daysBeforeDueFinal,
           emailTemplates: reminderConfig.emailTemplate,
           smsEnabled: reminderConfig.smsTemplate !== 'disabled',
+          smsTemplate: reminderConfig.smsTemplate,
           includePropertyInfo: reminderConfig.includePropertyInfo,
           includeOwnerContact: reminderConfig.includeOwnerContact,
         }),
@@ -887,19 +890,24 @@ export default function OwnerPaymentRemindersPage() {
                       Enviar automáticamente
                     </Label>
                   </div>
-                  <Input
-                    type="number"
-                    value={reminderConfig.daysBeforeDueFirst}
-                    onChange={e =>
-                      setReminderConfig(prev => ({
-                        ...prev,
-                        daysBeforeDueFirst: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="Días antes del vencimiento"
-                    min="1"
-                    max="30"
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      value={reminderConfig.daysBeforeDueFirst}
+                      onChange={e =>
+                        setReminderConfig(prev => ({
+                          ...prev,
+                          daysBeforeDueFirst: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      placeholder="Ej: 3"
+                      min="1"
+                      max="30"
+                    />
+                    <p className="text-xs text-gray-600">
+                      Días antes del vencimiento del pago (ej: 3 = 3 días antes)
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="autoSecond">Segundo Recordatorio</Label>
@@ -917,19 +925,24 @@ export default function OwnerPaymentRemindersPage() {
                       Enviar automáticamente
                     </Label>
                   </div>
-                  <Input
-                    type="number"
-                    value={reminderConfig.daysBeforeDueSecond}
-                    onChange={e =>
-                      setReminderConfig(prev => ({
-                        ...prev,
-                        daysBeforeDueSecond: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="Días antes del vencimiento"
-                    min="1"
-                    max="30"
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      value={reminderConfig.daysBeforeDueSecond}
+                      onChange={e =>
+                        setReminderConfig(prev => ({
+                          ...prev,
+                          daysBeforeDueSecond: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      placeholder="Ej: 7"
+                      min="1"
+                      max="30"
+                    />
+                    <p className="text-xs text-gray-600">
+                      Días antes del vencimiento del pago (ej: 7 = 7 días antes)
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="autoFinal">Recordatorio Final</Label>
@@ -947,19 +960,24 @@ export default function OwnerPaymentRemindersPage() {
                       Enviar automáticamente
                     </Label>
                   </div>
-                  <Input
-                    type="number"
-                    value={reminderConfig.daysBeforeDueFinal}
-                    onChange={e =>
-                      setReminderConfig(prev => ({
-                        ...prev,
-                        daysBeforeDueFinal: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    placeholder="Días antes del vencimiento"
-                    min="1"
-                    max="30"
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      value={reminderConfig.daysBeforeDueFinal}
+                      onChange={e =>
+                        setReminderConfig(prev => ({
+                          ...prev,
+                          daysBeforeDueFinal: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      placeholder="Ej: 14"
+                      min="1"
+                      max="30"
+                    />
+                    <p className="text-xs text-gray-600">
+                      Días antes del vencimiento del pago (ej: 14 = 14 días antes)
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="autoUrgent">Recordatorio Urgente</Label>

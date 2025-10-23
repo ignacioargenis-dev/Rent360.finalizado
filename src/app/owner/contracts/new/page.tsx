@@ -53,6 +53,83 @@ interface Broker {
   phone?: string;
 }
 
+// Función para generar términos y condiciones base según legislación chilena
+const generateBaseContractTerms = (
+  propertyTitle: string = '[PROPIEDAD]',
+  tenantName: string = '[INQUILINO]',
+  ownerName: string = '[PROPIETARIO]',
+  startDate: string = '[FECHA_INICIO]',
+  endDate: string = '[FECHA_TERMINO]',
+  monthlyRent: string = '[RENTA_MENSUAL]',
+  deposit: string = '[DEPÓSITO]'
+) => {
+  return `CONTRATO DE ARRIENDO DE VIVIENDA
+
+Entre las partes que al final aparecen firmando, se ha convenido el siguiente contrato de arriendo de vivienda, regido por la Ley N° 18.101 y demás normas aplicables.
+
+PRIMERA: OBJETO DEL CONTRATO
+El ARRENDADOR da en arriendo al ARRENDATARIO, y este lo recibe, la propiedad ubicada en ${propertyTitle}, para ser destinada exclusivamente a habitación familiar.
+
+SEGUNDA: PLAZO DEL CONTRATO
+El presente contrato tendrá una duración de [DURACIÓN] meses, contados desde el ${startDate} hasta el ${endDate}, prorrogándose automáticamente por períodos iguales, salvo aviso de no renovación con anticipación de 90 días.
+
+TERCERA: RENTA Y FORMA DE PAGO
+El ARRENDATARIO pagará al ARRENDADOR una renta mensual de ${monthlyRent} pesos chilenos, pagadera por adelantado dentro de los primeros 5 días de cada mes.
+
+El primer pago deberá efectuarse al momento de suscribir el presente contrato.
+
+CUARTA: DEPÓSITO DE GARANTÍA
+El ARRENDATARIO entrega en este acto un depósito de garantía equivalente a ${deposit} pesos chilenos, equivalente a [MESES] meses de arriendo.
+
+El depósito será devuelto al ARRENDATARIO dentro del plazo de 60 días contados desde la efectiva restitución del inmueble, una vez deducidos los montos correspondientes a:
+
+- Arriendos impagos
+- Daños causados por uso indebido
+- Multas por infracciones contractuales
+- Gastos de reparación por deterioro anormal
+
+QUINTA: OBLIGACIONES DEL ARRENDADOR
+El ARRENDADOR se obliga a:
+1. Entregar el inmueble en perfectas condiciones de habitabilidad
+2. Mantener el inmueble en condiciones adecuadas durante el contrato
+3. Efectuar las reparaciones necesarias para el mantenimiento normal
+4. Respetar la privacidad del ARRENDATARIO
+5. Permitir el uso pacífico del inmueble
+
+SEXTA: OBLIGACIONES DEL ARRENDATARIO
+El ARRENDATARIO se obliga a:
+1. Pagar puntualmente la renta convenida
+2. Destinar el inmueble exclusivamente a habitación
+3. Conservar el inmueble en buen estado
+4. Permitir el acceso al inmueble para inspecciones con previo aviso de 24 horas
+5. No realizar modificaciones sin autorización escrita
+6. No subarrendar total o parcialmente el inmueble
+7. Comunicar inmediatamente cualquier daño o desperfecto
+
+SÉPTIMA: MORA EN EL PAGO
+Si el ARRENDATARIO incurriere en mora en el pago de la renta, se aplicarán intereses de mora conforme al artículo 47 de la Ley N° 18.101, equivalentes al 1.5% mensual sobre el monto adeudado.
+
+OCTAVA: TERMINACIÓN ANTICIPADA
+1. El ARRENDADOR podrá terminar el contrato por las causales establecidas en la Ley N° 18.101
+2. El ARRENDATARIO podrá terminar el contrato dando aviso con 30 días de anticipación
+3. En caso de venta del inmueble, el contrato continúa vigente con el nuevo propietario
+
+NOVENA: LEGISLACIÓN APLICABLE
+Este contrato se rige por las disposiciones de la Ley N° 18.101, Ley N° 21.461 ("Devuélveme mi Casa") y demás normas del Código Civil aplicables.
+
+DÉCIMA: DOMICILIO Y NOTIFICACIONES
+Para todos los efectos del presente contrato, las partes fijan domicilio en las direcciones que anteceden. Las notificaciones se efectuarán válidamente en dichos domicilios.
+
+EN FE DE LO CUAL, las partes firman el presente contrato en [LUGAR], a los [DÍAS] días del mes de [MES] de [AÑO].
+
+___________________________     ___________________________
+ARRENDADOR: ${ownerName}           ARRENDATARIO: ${tenantName}
+
+RUT: [RUT_ARRENDADOR]              RUT: [RUT_ARRENDATARIO]
+
+Domicilio: [DOMICILIO_ARRENDADOR]  Domicilio: [DOMICILIO_ARRENDATARIO]`;
+};
+
 export default function NewContractPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,6 +149,55 @@ export default function NewContractPage() {
   const [loading, setLoading] = useState(false);
   const [searchTenant, setSearchTenant] = useState<string>('');
   const [searchBroker, setSearchBroker] = useState<string>('');
+
+  // Inicializar términos y condiciones con contenido base
+  useEffect(() => {
+    if (terms === '') {
+      const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+      const selectedTenant = tenants.find(t => t.id === selectedTenantId);
+
+      const baseTerms = generateBaseContractTerms(
+        selectedProperty?.title || '[PROPIEDAD]',
+        selectedTenant?.name || '[INQUILINO]',
+        user?.name || '[PROPIETARIO]',
+        startDate || '[FECHA_INICIO]',
+        endDate || '[FECHA_TERMINO]',
+        monthlyRent || '[RENTA_MENSUAL]',
+        deposit || '[DEPÓSITO]'
+      );
+
+      setTerms(baseTerms);
+    }
+  }, [
+    properties,
+    tenants,
+    selectedPropertyId,
+    selectedTenantId,
+    startDate,
+    endDate,
+    monthlyRent,
+    deposit,
+    user,
+    terms,
+  ]);
+
+  // Función para actualizar términos cuando cambian los datos
+  const updateTermsWithData = () => {
+    const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+    const selectedTenant = tenants.find(t => t.id === selectedTenantId);
+
+    const updatedTerms = generateBaseContractTerms(
+      selectedProperty?.title || '[PROPIEDAD]',
+      selectedTenant?.name || '[INQUILINO]',
+      user?.name || '[PROPIETARIO]',
+      startDate || '[FECHA_INICIO]',
+      endDate || '[FECHA_TERMINO]',
+      monthlyRent || '[RENTA_MENSUAL]',
+      deposit || '[DEPÓSITO]'
+    );
+
+    setTerms(updatedTerms);
+  };
 
   // Cargar propiedades del propietario
   useEffect(() => {
@@ -466,13 +592,29 @@ export default function NewContractPage() {
               </div>
 
               <div>
-                <Label htmlFor="terms">Términos y Condiciones</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="terms">Términos y Condiciones</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={updateTermsWithData}
+                    className="text-xs"
+                  >
+                    🔄 Actualizar con datos
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-600 mb-2">
+                  Los términos se generan automáticamente según la legislación chilena (Ley 18.101).
+                  Puedes editarlos manualmente según tus necesidades específicas.
+                </div>
                 <Textarea
                   id="terms"
-                  placeholder="Describe los términos específicos del contrato..."
+                  placeholder="Los términos del contrato se generan automáticamente..."
                   value={terms}
                   onChange={e => setTerms(e.target.value)}
-                  rows={4}
+                  rows={12}
+                  className="font-mono text-sm"
                 />
               </div>
             </CardContent>
