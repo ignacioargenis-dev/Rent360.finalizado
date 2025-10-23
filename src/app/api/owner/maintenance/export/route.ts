@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         request.property?.commune || '',
         request.requester?.name || '',
         request.requester?.email || '',
-        request.type,
+        request.category,
         request.priority,
         `"${request.description.replace(/"/g, '""')}"`, // Escapar comillas en CSV
         request.status,
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
           name: request.requester?.name,
           email: request.requester?.email,
         },
-        type: request.type,
+        type: request.category,
         priority: request.priority,
         description: request.description,
         status: request.status,
