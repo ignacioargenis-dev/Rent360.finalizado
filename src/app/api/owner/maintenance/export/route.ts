@@ -62,11 +62,12 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
-        assignedTo: {
+        maintenanceProvider: {
           select: {
             id: true,
             name: true,
             email: true,
+            specialty: true,
           },
         },
       },
@@ -113,8 +114,8 @@ export async function GET(request: NextRequest) {
         new Date(request.createdAt).toISOString().split('T')[0],
         request.scheduledDate ? new Date(request.scheduledDate).toISOString().split('T')[0] : '',
         request.completedDate ? new Date(request.completedDate).toISOString().split('T')[0] : '',
-        request.assignedTo?.name || '',
-        request.assignedTo?.email || '',
+        request.maintenanceProvider?.name || '',
+        request.maintenanceProvider?.email || '',
       ]);
 
       const csvContent = [csvHeaders, ...csvRows]
@@ -154,11 +155,12 @@ export async function GET(request: NextRequest) {
         createdAt: request.createdAt,
         scheduledDate: request.scheduledDate,
         completedDate: request.completedDate,
-        provider: request.assignedTo
+        provider: request.maintenanceProvider
           ? {
-              id: request.assignedTo.id,
-              name: request.assignedTo.name,
-              email: request.assignedTo.email,
+              id: request.maintenanceProvider.id,
+              name: request.maintenanceProvider.name,
+              email: request.maintenanceProvider.email,
+              specialty: request.maintenanceProvider.specialty,
             }
           : null,
       }));
