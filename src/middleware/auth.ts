@@ -97,13 +97,13 @@ async function validateToken(token: string): Promise<any> {
     }
 
     // Decodificar payload (parte del medio) - Compatible con Edge Runtime
-    console.log('🔐 VALIDATE TOKEN: Decodificando payload con atob()');
+    console.log('🔐 VALIDATE TOKEN: Decodificando payload con Buffer.from()');
     console.log('🔐 VALIDATE TOKEN: Part 1 (header):', parts[0]);
     console.log('🔐 VALIDATE TOKEN: Part 2 (payload):', parts[1]);
 
     let payload: any;
     try {
-      const decodedPayload = atob(parts[1] || '');
+      const decodedPayload = Buffer.from(parts[1] || '', 'base64').toString();
       console.log('🔐 VALIDATE TOKEN: Payload decodificado (base64):', decodedPayload);
       payload = JSON.parse(decodedPayload);
       console.log('🔐 VALIDATE TOKEN: Payload decodificado (JSON):', {

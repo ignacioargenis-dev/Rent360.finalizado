@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.error('✅ /api/auth/me: Token encontrado, longitud:', token.length);
+    console.error('🔍 /api/auth/me: Primeros 50 caracteres del token:', token.substring(0, 50));
     console.error(
       '🔑 JWT_SECRET configurado:',
       !!process.env.JWT_SECRET,
@@ -58,8 +59,10 @@ export async function GET(request: NextRequest) {
       console.error(
         '✅ /api/auth/me: Token verificado exitosamente para usuario:',
         decoded.email,
-        'Rol:',
-        decoded.role
+        'Rol del token:',
+        decoded.role,
+        'Tipo del rol:',
+        typeof decoded.role
       );
     } catch (jwtError) {
       console.error(
@@ -111,7 +114,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
       }
 
-      console.error('✅ /api/auth/me: Usuario encontrado en BD:', user.email, 'Rol:', user.role);
+      console.error(
+        '✅ /api/auth/me: Usuario encontrado en BD:',
+        user.email,
+        'Rol de BD:',
+        user.role,
+        'Tipo:',
+        typeof user.role
+      );
 
       // Devolver información actualizada del usuario desde la base de datos
       return NextResponse.json({
