@@ -1235,6 +1235,75 @@ export class AIChatbotService {
   }
 
   /**
+   * 🚀 FASE 2: Genera resumen contextual basado en datos reales del usuario
+   */
+  private generateContextSummary(userRole: string, userData: any): string | null {
+    if (!userData) {
+      return null;
+    }
+
+    try {
+      switch (userRole) {
+        case 'owner':
+          const propertyCount = userData.properties?.length || 0;
+          const contractCount = userData.contracts?.length || 0;
+          const legalCasesCount = userData.legalCases?.length || 0;
+          const maintenanceCount = userData.maintenance?.length || 0;
+
+          return `Usuario es propietario con ${propertyCount} propiedades, ${contractCount} contratos activos, ${legalCasesCount} casos legales y ${maintenanceCount} solicitudes de mantenimiento.`;
+
+        case 'tenant':
+          const tenantContractCount = userData.contracts?.length || 0;
+          const pendingPayments =
+            userData.payments?.filter((p: any) => p.status === 'pending').length || 0;
+          const tenantMaintenanceCount = userData.maintenance?.length || 0;
+
+          return `Usuario es inquilino con ${tenantContractCount} contratos, ${pendingPayments} pagos pendientes y ${tenantMaintenanceCount} solicitudes de mantenimiento.`;
+
+        case 'broker':
+          const brokerContracts = userData.contracts?.length || 0;
+          const commissions = userData.commissions?.length || 0;
+          const brokerProperties = userData.properties?.length || 0;
+
+          return `Usuario es corredor con ${brokerContracts} contratos gestionados, ${commissions} comisiones activas y ${brokerProperties} propiedades publicadas.`;
+
+        case 'provider':
+          const transactions = userData.transactions?.length || 0;
+          const jobs = userData.tasks?.length || 0;
+
+          return `Usuario es proveedor con ${jobs} trabajos activos y ${transactions} transacciones completadas.`;
+
+        case 'runner':
+          const runnerTasks = userData.tasks?.length || 0;
+          const earnings = userData.earnings?.length || 0;
+
+          return `Usuario es runner con ${runnerTasks} tareas pendientes y ${earnings} ganancias registradas.`;
+
+        case 'support':
+          const tickets = userData.tickets?.length || 0;
+          const supportUsers = userData.users?.length || 0;
+          const supportProperties = userData.properties?.length || 0;
+
+          return `Usuario es soporte manejando ${tickets} tickets, ${supportUsers} usuarios y ${supportProperties} propiedades.`;
+
+        case 'admin':
+          const adminUsers = userData.users?.length || 0;
+          const systemStats = userData.stats;
+
+          return `Usuario es administrador supervisando ${adminUsers} usuarios del sistema.`;
+
+        default:
+          return null;
+      }
+    } catch (error) {
+      logger.warn('Error generando resumen contextual', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
+  /**
    * Extraer entidades del mensaje (roles, propiedades, montos, etc.)
    */
   private extractEntities(text: string, intent: string): Record<string, any> {
@@ -2295,7 +2364,12 @@ export class AIChatbotService {
     userMessage: string,
     userRole: string,
     userId: string,
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    context?: {
+      userData?: any;
+      memoryContext?: any;
+      userContext?: any;
+    }
   ): Promise<{
     response: string;
     confidence: number;
@@ -2305,38 +2379,58 @@ export class AIChatbotService {
     trainingSource?: string;
   }> {
     try {
-      // Primero intentar con datos de entrenamiento específicos
+      // 🚀 FASE 2: Usar datos reales del usuario para respuestas más contextuales
+      let enhancedPrompt = userMessage;
+
+      if (context?.userData) {
+        const contextSummary = this.generateContextSummary(userRole, context.userData);
+        if (contextSummary) {
+          enhancedPrompt = `${contextSummary}\n\nUsuario pregunta: ${userMessage}`;
+        }
+      }
+
+      // Primero intentar con datos de entrenamiento específicos mejorados
       const contextualResponse = TrainingDataManager.generateContextualResponse(
-        userMessage,
+        enhancedPrompt,
         userRole,
         'user_query'
       );
 
       if (contextualResponse) {
-        const confidence = TrainingDataManager.calculateConfidence(
+        let confidence = TrainingDataManager.calculateConfidence(
           userMessage,
           contextualResponse,
           userRole
         );
 
+        // 🚀 Aumentar confianza si tenemos datos reales del usuario
+        if (context?.userData) {
+          confidence = Math.min(0.95, confidence + 0.1);
+        }
+
         const suggestions = TrainingDataManager.getSuggestionsByRole(userRole);
         const intent = this.extractIntent(userMessage);
 
-        // Registrar interacción para aprendizaje
+        // 🚀 FASE 1: Registrar interacción para aprendizaje con contexto mejorado
         aiLearningSystem.recordInteraction({
           userId,
           userRole,
           userMessage,
           botResponse: contextualResponse,
-          context: { source: 'training_data' },
+          context: {
+            source: 'training_data',
+            hasRealData: !!context?.userData,
+            memoryTopics: context?.memoryContext?.previousTopics?.length || 0,
+          },
           intent: intent || 'unknown',
           confidence,
         });
 
-        logger.info('Respuesta generada con datos de entrenamiento', {
+        logger.info('Respuesta generada con datos de entrenamiento mejorados', {
           userId,
           userRole,
           intent,
+          hasRealData: !!context?.userData,
           confidence,
           trainingSource: 'specialized_dataset',
         });

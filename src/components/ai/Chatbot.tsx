@@ -28,6 +28,10 @@ import { cn } from '@/lib/utils';
 import { aiChatbotService } from '@/lib/ai-chatbot-service';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import { ChatbotContextService } from '@/lib/chatbot-context-service';
+import { ChatbotFeedbackService } from '@/lib/chatbot-feedback-service';
+import { ChatbotMemoryService } from '@/lib/chatbot-memory-service';
+import { aiLearningSystem } from '@/lib/ai-learning-system';
 
 interface SpecializedAgent {
   id: string;
@@ -266,10 +270,18 @@ export default function Chatbot({
     memoryContext?: MemoryContext | undefined;
     learningInsights?: LearningInsight[] | undefined;
   }> => {
-    // Obtener información del usuario autenticado al inicio
-    const user = auth?.user;
-    const userRole = user?.role?.toLowerCase() || 'guest';
-    const userId = user?.id || 'anonymous';
+    // 🚀 FASE 1: Mejor detección de roles con contexto real
+    const userContext = await ChatbotContextService.getUserContext(auth?.user);
+    const userRole = userContext.role;
+    const userId = userContext.id;
+
+    // 🚀 FASE 2: Obtener datos reales del usuario para respuestas contextuales
+    const userData = await ChatbotContextService.getUserData(userId, userRole);
+
+    // 🚀 FASE 2: Obtener contexto de memoria conversacional
+    const memoryContext = ChatbotMemoryService.getContextForInteraction(userId, 'unknown');
+
+    const startTime = Date.now();
 
     try {
       // 🚀 Usar el servicio de IA con datos de entrenamiento mejorados
@@ -280,26 +292,81 @@ export default function Chatbot({
         messages.slice(-10).map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
           content: msg.content,
-        }))
+        })),
+        {
+          userData,
+          memoryContext,
+          userContext,
+        }
       );
+
+      const responseTime = Date.now() - startTime;
+
+      // 🚀 FASE 1: Registrar interacción para aprendizaje
+      if (userId !== 'anonymous') {
+        try {
+          await aiLearningSystem.recordInteraction({
+            userId,
+            userRole,
+            userMessage: userInput,
+            botResponse: result.response,
+            intent: result.intent || 'unknown',
+            confidence: result.confidence,
+            context: {
+              userData,
+              responseTime,
+              conversationLength: messages.length,
+              hasRealData: !!userData,
+            },
+          });
+
+          // 🚀 FASE 2: Actualizar memoria conversacional
+          ChatbotMemoryService.updateMemory(userId, {
+            intent: result.intent || 'unknown',
+            confidence: result.confidence,
+            userMessage: userInput,
+            botResponse: result.response,
+            responseTime,
+            success: result.confidence > 0.7,
+            userRole,
+          });
+        } catch (learningError) {
+          logger.warn('Error registrando aprendizaje:', learningError);
+        }
+      }
+
+      // 🚀 FASE 2: Generar recomendaciones inteligentes basadas en datos reales
+      const recommendations = generateIntelligentRecommendations(
+        userRole,
+        userData,
+        result.intent || 'unknown'
+      );
+
+      // 🚀 FASE 3: Análisis de sentimientos básico
+      const sentiment = analyzeSentiment(userInput);
+
+      // 🚀 FASE 3: Insights de aprendizaje
+      const learningInsights = generateLearningInsights(userRole, result.confidence);
 
       return {
         content: result.response,
         context: {
           intent: result.intent,
           confidence: result.confidence,
+          userData: !!userData,
+          hasMemory: memoryContext.previousTopics.length > 0,
         },
         suggestions: result.suggestions,
-        actions: [],
-        links: [],
-        followUp: [],
-        securityNote: undefined,
+        actions: generateRoleActions(userRole, result.intent || 'unknown', userData),
+        links: generateRoleLinks(userRole, result.intent || 'unknown'),
+        followUp: generateFollowUpQuestions(userRole, result.intent || 'unknown', userData),
+        securityNote: generateSecurityNote(userRole, result.intent || 'unknown'),
         // 🚀 CAMPOS REVOLUCIONARIOS NUEVOS
-        agent: undefined,
-        recommendations: [],
-        sentiment: undefined,
-        memoryContext: undefined,
-        learningInsights: undefined,
+        agent: selectSpecializedAgent(userRole, result.intent || 'unknown'),
+        recommendations,
+        sentiment,
+        memoryContext,
+        learningInsights,
       };
     } catch (error) {
       logger.error('Error generando respuesta de IA:', {
@@ -668,6 +735,42 @@ export default function Chatbot({
     }
   };
 
+  // 🚀 FASE 1: Función de feedback
+  const handleFeedback = async (messageId: string, feedback: 'positive' | 'negative') => {
+    try {
+      const userContext = await ChatbotContextService.getUserContext(auth?.user);
+
+      ChatbotFeedbackService.submitFeedback({
+        messageId,
+        userId: userContext.id,
+        userRole: userContext.role,
+        feedback,
+      });
+
+      // Mostrar confirmación visual
+      const feedbackMessage: ChatbotMessage = {
+        id: `feedback_${Date.now()}`,
+        type: 'bot',
+        content:
+          feedback === 'positive'
+            ? '¡Gracias por tu feedback positivo! 😊 Me ayuda a mejorar mis respuestas.'
+            : 'Gracias por tu feedback. Trabajaré para mejorar mis respuestas. 🤝',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, feedbackMessage]);
+
+      logger.info('Feedback registrado', {
+        messageId,
+        userId: userContext.id,
+        feedback,
+        userRole: userContext.role,
+      });
+    } catch (error) {
+      logger.warn('Error registrando feedback:', error);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) {
       return;
@@ -736,6 +839,334 @@ export default function Chatbot({
       </div>
     );
   }
+
+  // 🚀 FUNCIONES AUXILIARES PARA LAS 3 FASES
+
+  const generateIntelligentRecommendations = (
+    userRole: string,
+    userData: any,
+    intent: string
+  ): IntelligentRecommendation[] => {
+    const recommendations: IntelligentRecommendation[] = [];
+
+    if (!userData) {
+      return recommendations;
+    }
+
+    switch (userRole) {
+      case 'owner':
+        if (intent === 'payment_default' && userData.contracts) {
+          const overdueContracts = userData.contracts.filter((c: any) => c.status === 'OVERDUE');
+          if (overdueContracts.length > 0) {
+            recommendations.push({
+              type: 'urgent',
+              item: overdueContracts[0],
+              relevanceScore: 0.9,
+              reason: 'Contrato con pagos atrasados',
+              action: 'Iniciar caso legal por mora',
+            });
+          }
+        }
+        if (userData.maintenance && userData.maintenance.length > 2) {
+          recommendations.push({
+            type: 'maintenance',
+            item: { count: userData.maintenance.length },
+            relevanceScore: 0.8,
+            reason: 'Múltiples solicitudes de mantenimiento pendientes',
+            action: 'Revisar solicitudes de mantenimiento',
+          });
+        }
+        break;
+
+      case 'tenant':
+        if (intent === 'maintenance' && userData.maintenance) {
+          const pendingRequests = userData.maintenance.filter((r: any) => r.status === 'PENDING');
+          if (pendingRequests.length > 0) {
+            recommendations.push({
+              type: 'follow_up',
+              item: pendingRequests[0],
+              relevanceScore: 0.85,
+              reason: 'Solicitud de mantenimiento pendiente',
+              action: 'Hacer seguimiento de mantenimiento',
+            });
+          }
+        }
+        break;
+
+      case 'broker':
+        if (userData.contracts && userData.contracts.length > 0) {
+          recommendations.push({
+            type: 'commission',
+            item: { potentialCommission: userData.contracts.length * 1000 },
+            relevanceScore: 0.75,
+            reason: 'Comisiones pendientes por cobrar',
+            action: 'Revisar estado de comisiones',
+          });
+        }
+        break;
+    }
+
+    return recommendations.slice(0, 3); // Máximo 3 recomendaciones
+  };
+
+  const analyzeSentiment = (message: string): SentimentAnalysis => {
+    const lowerMessage = message.toLowerCase();
+
+    // Palabras positivas
+    const positiveWords = ['gracias', 'excelente', 'perfecto', 'genial', 'bueno', 'feliz', 'ayuda'];
+    // Palabras negativas
+    const negativeWords = [
+      'problema',
+      'error',
+      'malo',
+      'terrible',
+      'horrible',
+      'frustrado',
+      'enojado',
+    ];
+    // Palabras de urgencia
+    const urgentWords = ['urgente', 'inmediato', 'rápido', 'ya', 'ahora', 'importante'];
+
+    const positiveCount = positiveWords.filter(word => lowerMessage.includes(word)).length;
+    const negativeCount = negativeWords.filter(word => lowerMessage.includes(word)).length;
+    const urgentCount = urgentWords.filter(word => lowerMessage.includes(word)).length;
+
+    let emotion = 'neutral';
+    let intensity = 0.5;
+    let confidence = 0.7;
+
+    if (positiveCount > negativeCount) {
+      emotion = 'joy';
+      intensity = Math.min(0.9, 0.5 + positiveCount * 0.1);
+    } else if (negativeCount > positiveCount) {
+      emotion = 'sadness';
+      intensity = Math.min(0.9, 0.5 + negativeCount * 0.1);
+    } else if (urgentCount > 0) {
+      emotion = 'fear';
+      intensity = Math.min(0.8, 0.4 + urgentCount * 0.1);
+    }
+
+    const keywords = [
+      ...positiveWords.filter(word => lowerMessage.includes(word)),
+      ...negativeWords.filter(word => lowerMessage.includes(word)),
+      ...urgentWords.filter(word => lowerMessage.includes(word)),
+    ];
+
+    return {
+      emotion,
+      intensity,
+      confidence,
+      keywords: keywords.slice(0, 5),
+    };
+  };
+
+  const generateLearningInsights = (userRole: string, confidence: number): LearningInsight[] => {
+    const insights: LearningInsight[] = [];
+
+    if (confidence < 0.6) {
+      insights.push({
+        type: 'improvement_needed',
+        insight: `Confianza baja (${(confidence * 100).toFixed(0)}%) en respuesta para ${userRole}`,
+        confidence: confidence,
+        action: 'Revisar dataset de entrenamiento para este rol',
+      });
+    }
+
+    if (confidence > 0.9) {
+      insights.push({
+        type: 'successful_pattern',
+        insight: `Patrón exitoso identificado para ${userRole}`,
+        confidence: confidence,
+        action: 'Reforzar este tipo de respuestas en el aprendizaje',
+      });
+    }
+
+    return insights;
+  };
+
+  const generateRoleActions = (userRole: string, intent: string, userData: any): string[] => {
+    const actions: string[] = [];
+
+    switch (userRole) {
+      case 'owner':
+        if (intent === 'payment_default') {
+          actions.push('Crear caso legal', 'Enviar notificación', 'Calcular intereses');
+        }
+        if (intent === 'maintenance') {
+          actions.push('Aprobar solicitud', 'Contactar proveedor');
+        }
+        if (intent === 'contracts') {
+          actions.push('Ver contrato completo', 'Descargar PDF', 'Renovar contrato');
+        }
+        break;
+
+      case 'tenant':
+        if (intent === 'payment') {
+          actions.push('Pagar ahora', 'Configurar débito automático');
+        }
+        if (intent === 'maintenance') {
+          actions.push('Subir fotos', 'Programar visita');
+        }
+        if (intent === 'contracts') {
+          actions.push('Ver términos', 'Contactar propietario');
+        }
+        break;
+
+      case 'broker':
+        if (intent === 'contracts') {
+          actions.push('Firmar contrato', 'Actualizar comisión');
+        }
+        if (intent === 'properties') {
+          actions.push('Publicar propiedad', 'Actualizar precio');
+        }
+        break;
+    }
+
+    return actions.slice(0, 3);
+  };
+
+  const generateRoleLinks = (userRole: string, intent: string): string[] => {
+    const links: string[] = [];
+
+    switch (userRole) {
+      case 'owner':
+        if (intent === 'properties') {
+          links.push('/owner/properties', '/owner/properties/new');
+        }
+        if (intent === 'contracts') {
+          links.push('/owner/contracts', '/owner/contracts/new');
+        }
+        if (intent === 'payments') {
+          links.push('/owner/payments');
+        }
+        break;
+
+      case 'tenant':
+        if (intent === 'properties') {
+          links.push('/properties/search');
+        }
+        if (intent === 'contracts') {
+          links.push('/tenant/contracts');
+        }
+        if (intent === 'payments') {
+          links.push('/tenant/payments');
+        }
+        break;
+
+      case 'broker':
+        if (intent === 'properties') {
+          links.push('/broker/properties');
+        }
+        if (intent === 'contracts') {
+          links.push('/broker/contracts');
+        }
+        if (intent === 'commissions') {
+          links.push('/broker/commissions');
+        }
+        break;
+    }
+
+    return links.slice(0, 2);
+  };
+
+  const generateFollowUpQuestions = (userRole: string, intent: string, userData: any): string[] => {
+    const questions: string[] = [];
+
+    switch (intent) {
+      case 'payment_default':
+        if (userRole === 'owner') {
+          questions.push(
+            '¿Cuántos meses de atraso tiene?',
+            '¿Ha intentado contactar al inquilino?',
+            '¿Necesita ayuda con la notificación legal?'
+          );
+        }
+        break;
+
+      case 'maintenance':
+        questions.push(
+          '¿Puede describir mejor el problema?',
+          '¿Tiene fotos del daño?',
+          '¿Es urgente o puede esperar?'
+        );
+        break;
+
+      case 'contracts':
+        if (userRole === 'tenant') {
+          questions.push(
+            '¿Qué aspecto del contrato necesita aclarar?',
+            '¿Hay algún problema con los términos?',
+            '¿Necesita renovar el contrato?'
+          );
+        }
+        break;
+    }
+
+    return questions.slice(0, 2);
+  };
+
+  const generateSecurityNote = (userRole: string, intent: string): string | undefined => {
+    if (intent === 'legal_cases' || intent === 'payment_default') {
+      return 'Recuerda que esta información es general. Para asesoría legal específica, consulta a un abogado calificado.';
+    }
+
+    if (intent === 'payment' && userRole === 'tenant') {
+      return 'Verifica siempre que estés pagando a través de métodos seguros y oficiales de Rent360.';
+    }
+
+    return undefined;
+  };
+
+  const selectSpecializedAgent = (
+    userRole: string,
+    intent: string
+  ): SpecializedAgent | undefined => {
+    // Agentes especializados por dominio
+    const agents: Record<string, SpecializedAgent> = {
+      legal: {
+        id: 'legal_expert',
+        name: 'Dra. Legal Rent360',
+        specialty: 'legal',
+        personality: 'Profesional, detallada, enfocada en cumplimiento legal chileno',
+        expertise: ['ley 18.101', 'desahucios', 'contratos', 'mora'],
+        language: 'es',
+        avatar: '⚖️',
+      },
+      technical: {
+        id: 'tech_support',
+        name: 'Soporte Técnico',
+        specialty: 'technical',
+        personality: 'Paciente, clara, orientada a soluciones prácticas',
+        expertise: ['sistema', 'errores', 'navegación', 'problemas técnicos'],
+        language: 'es',
+        avatar: '🛠️',
+      },
+      financial: {
+        id: 'finance_advisor',
+        name: 'Asesor Financiero',
+        specialty: 'financial',
+        personality: 'Precisa, confiable, enfocada en optimización financiera',
+        expertise: ['pagos', 'comisiones', 'presupuestos', 'finanzas'],
+        language: 'es',
+        avatar: '💰',
+      },
+    };
+
+    // Seleccionar agente basado en intent
+    if (intent.includes('legal') || intent.includes('contrato') || intent.includes('mora')) {
+      return agents.legal;
+    }
+
+    if (intent.includes('error') || intent.includes('problema') || intent.includes('no funciona')) {
+      return agents.technical;
+    }
+
+    if (intent.includes('pago') || intent.includes('dinero') || intent.includes('comisión')) {
+      return agents.financial;
+    }
+
+    return undefined;
+  };
 
   return (
     <div className={cn('fixed z-50', positionClasses[position])}>
@@ -903,6 +1334,31 @@ export default function Chatbot({
                             ))}
                           </div>
                         )}
+
+                        {/* 🚀 BOTONES DE FEEDBACK - FASE 1 */}
+                        {message.type === 'bot' &&
+                          message.id !== 'welcome' &&
+                          message.id !== 'typing' && (
+                            <div className="mt-2 flex items-center gap-1">
+                              <span className="text-xs text-gray-500 mr-2">¿Te fue útil?</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-xs text-green-600 hover:bg-green-50"
+                                onClick={() => handleFeedback(message.id, 'positive')}
+                              >
+                                👍 Sí
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-xs text-red-600 hover:bg-red-50"
+                                onClick={() => handleFeedback(message.id, 'negative')}
+                              >
+                                👎 No
+                              </Button>
+                            </div>
+                          )}
 
                         {/* 🚀 INDICADOR DE CONVERSACIÓN CONTINUA */}
                         {message.type === 'bot' && !message.securityNote && (
