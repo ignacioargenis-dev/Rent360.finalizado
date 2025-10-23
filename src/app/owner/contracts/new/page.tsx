@@ -119,7 +119,7 @@ export default function NewContractPage() {
 
   // Establecer propiedad por defecto si viene en URL
   useEffect(() => {
-    const propertyId = searchParams.get('propertyId');
+    const propertyId = searchParams?.get('propertyId');
     if (propertyId) {
       setSelectedPropertyId(propertyId);
     }
