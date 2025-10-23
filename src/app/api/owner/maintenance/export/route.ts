@@ -65,9 +65,14 @@ export async function GET(request: NextRequest) {
         maintenanceProvider: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            businessName: true,
             specialty: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -114,8 +119,8 @@ export async function GET(request: NextRequest) {
         new Date(request.createdAt).toISOString().split('T')[0],
         request.scheduledDate ? new Date(request.scheduledDate).toISOString().split('T')[0] : '',
         request.completedDate ? new Date(request.completedDate).toISOString().split('T')[0] : '',
-        request.maintenanceProvider?.name || '',
-        request.maintenanceProvider?.email || '',
+        request.maintenanceProvider?.user?.name || request.maintenanceProvider?.businessName || '',
+        request.maintenanceProvider?.user?.email || '',
       ]);
 
       const csvContent = [csvHeaders, ...csvRows]
@@ -158,9 +163,12 @@ export async function GET(request: NextRequest) {
         provider: request.maintenanceProvider
           ? {
               id: request.maintenanceProvider.id,
-              name: request.maintenanceProvider.name,
-              email: request.maintenanceProvider.email,
+              businessName: request.maintenanceProvider.businessName,
               specialty: request.maintenanceProvider.specialty,
+              user: {
+                name: request.maintenanceProvider.user?.name,
+                email: request.maintenanceProvider.user?.email,
+              },
             }
           : null,
       }));
