@@ -21,15 +21,15 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: any = {
-      assignedTo: user.id,
+      runnerId: user.id,
     };
 
     if (status !== 'all') {
       whereClause.status = status.toUpperCase();
     }
 
-    // Obtener tareas del runner
-    const tasks = await db.maintenance.findMany({
+    // Obtener visitas/tareas del runner
+    const visits = await db.visit.findMany({
       where: whereClause,
       include: {
         property: {
@@ -42,33 +42,46 @@ export async function GET(request: NextRequest) {
             region: true,
           },
         },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc',
+        scheduledAt: 'desc',
       },
       take: limit,
       skip: offset,
     });
 
     // Transformar datos al formato esperado
-    const transformedTasks = tasks.map(task => ({
-      id: task.id,
-      propertyId: task.propertyId,
-      propertyAddress: `${task.property.address}, ${task.property.commune}, ${task.property.city}`,
-      tenantName: 'No disponible', // Se puede obtener del contrato activo
-      tenantPhone: 'No disponible',
-      tenantEmail: 'No disponible',
-      taskType: task.category.toLowerCase(),
-      priority: task.priority.toLowerCase(),
-      status: task.status.toLowerCase(),
-      scheduledDate: task.scheduledDate?.toISOString().split('T')[0],
-      scheduledTime: task.scheduledTime,
-      estimatedDuration: '1',
-      description: task.description,
-      specialInstructions: task.notes,
+    const transformedTasks = visits.map(visit => ({
+      id: visit.id,
+      propertyId: visit.propertyId,
+      propertyTitle: visit.property.title,
+      propertyAddress: `${visit.property.address}, ${visit.property.commune}, ${visit.property.city}`,
+      tenantName: visit.tenant?.name || 'No asignado',
+      tenantPhone: visit.tenant?.phone || 'No disponible',
+      tenantEmail: visit.tenant?.email || 'No disponible',
+      taskType: 'property_visit', // Tipo de tarea para corredores
+      priority: 'medium', // Por defecto, podría calcularse basado en tiempo
+      status: visit.status.toLowerCase(),
+      scheduledDate: visit.scheduledAt.toISOString().split('T')[0],
+      scheduledTime: visit.scheduledAt.toTimeString().split(' ')[0].substring(0, 5),
+      estimatedDuration: visit.duration,
+      earnings: visit.earnings,
+      description: visit.notes || 'Visita programada para mostrar propiedad',
+      specialInstructions: visit.notes,
       contactMethod: 'phone', // Por defecto
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
+      photosTaken: visit.photosTaken,
+      rating: visit.rating,
+      clientFeedback: visit.clientFeedback,
+      createdAt: visit.createdAt.toISOString(),
+      updatedAt: visit.updatedAt.toISOString(),
     }));
 
     logger.info('Tareas de runner obtenidas', {
@@ -83,8 +96,8 @@ export async function GET(request: NextRequest) {
       pagination: {
         limit,
         offset,
-        total: tasks.length,
-        hasMore: tasks.length === limit,
+        total: visits.length,
+        hasMore: visits.length === limit,
       },
     });
   } catch (error) {

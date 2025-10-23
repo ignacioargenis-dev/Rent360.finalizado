@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 
@@ -23,64 +24,152 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    // Aquí iría la lógica para obtener transacciones del proveedor
-    // Por ahora devolvemos datos de ejemplo
-    const mockTransactions = [
-      {
-        id: 'txn_001',
-        amount: 150000,
-        commission: 15000,
-        netAmount: 135000,
-        status: 'COMPLETED',
-        paymentMethod: 'BANK_TRANSFER',
-        createdAt: new Date('2024-01-15'),
-        processedAt: new Date('2024-01-16'),
-        notes: 'Pago por servicios de mantenimiento',
-        providerType: user.role === 'MAINTENANCE_PROVIDER' ? 'MAINTENANCE' : 'SERVICE',
-        jobs: [
-          {
-            id: 'job_001',
-            type: 'maintenance',
-            amount: 75000,
-            date: new Date('2024-01-10'),
-            clientName: 'Juan Pérez'
-          },
-          {
-            id: 'job_002',
-            type: 'maintenance',
-            amount: 75000,
-            date: new Date('2024-01-12'),
-            clientName: 'María González'
-          }
-        ]
+    // Obtener datos completos del usuario para acceder a las relaciones
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: {
+        maintenanceProvider: true,
+        serviceProvider: true,
       },
-      {
-        id: 'txn_002',
-        amount: 80000,
-        commission: 8000,
-        netAmount: 72000,
-        status: 'PENDING',
-        paymentMethod: 'BANK_TRANSFER',
-        createdAt: new Date('2024-01-20'),
-        processedAt: null,
-        notes: 'Pago pendiente de aprobación',
-        providerType: user.role === 'MAINTENANCE_PROVIDER' ? 'MAINTENANCE' : 'SERVICE',
+    });
+
+    if (!fullUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
+    }
+
+    // Obtener transacciones reales del proveedor
+    let transactions: any[] = [];
+
+    if (user.role === 'MAINTENANCE_PROVIDER') {
+      if (!fullUser.maintenanceProvider?.id) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit, total: 0, totalPages: 0 },
+          summary: {
+            totalTransactions: 0,
+            totalAmount: 0,
+            completedTransactions: 0,
+            pendingTransactions: 0,
+          },
+        });
+      }
+
+      // Obtener trabajos de mantenimiento completados
+      const maintenanceJobs = await db.maintenance.findMany({
+        where: {
+          maintenanceProviderId: fullUser.maintenanceProvider.id,
+          status: 'COMPLETED',
+          ...(status && { status }),
+        },
+        include: {
+          property: {
+            select: {
+              title: true,
+              address: true,
+            },
+          },
+          requester: {
+            select: {
+              name: true,
+            },
+          },
+          transactions: true,
+        },
+        orderBy: {
+          completedDate: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+      transactions = maintenanceJobs.map(job => ({
+        id: `txn_maint_${job.id}`,
+        amount: job.actualCost || job.estimatedCost || 0,
+        commission: (job.actualCost || job.estimatedCost || 0) * 0.1, // 10% comisión
+        netAmount: (job.actualCost || job.estimatedCost || 0) * 0.9,
+        status: job.transactions[0]?.status || 'PENDING',
+        paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
+        createdAt: job.completedDate || job.createdAt,
+        processedAt: job.transactions[0]?.processedAt,
+        notes: `Trabajo de mantenimiento: ${job.title}`,
+        providerType: 'MAINTENANCE',
         jobs: [
           {
-            id: 'job_003',
-            type: 'service',
-            amount: 80000,
-            date: new Date('2024-01-18'),
-            clientName: 'Carlos Rodríguez'
-          }
-        ]
+            id: job.id,
+            type: 'maintenance',
+            amount: job.actualCost || job.estimatedCost || 0,
+            date: job.completedDate || job.createdAt,
+            clientName: job.requester.name,
+            propertyTitle: job.property.title,
+            propertyAddress: job.property.address,
+          },
+        ],
+      }));
+    } else if (user.role === 'SERVICE_PROVIDER') {
+      if (!fullUser.serviceProvider?.id) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit, total: 0, totalPages: 0 },
+          summary: {
+            totalTransactions: 0,
+            totalAmount: 0,
+            completedTransactions: 0,
+            pendingTransactions: 0,
+          },
+        });
       }
-    ];
+
+      // Obtener trabajos de servicio completados
+      const serviceJobs = await db.serviceJob.findMany({
+        where: {
+          serviceProviderId: fullUser.serviceProvider.id,
+          status: 'COMPLETED',
+          ...(status && { status }),
+        },
+        include: {
+          requester: {
+            select: {
+              name: true,
+            },
+          },
+          transactions: true,
+        },
+        orderBy: {
+          completedDate: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+      transactions = serviceJobs.map(job => ({
+        id: `txn_service_${job.id}`,
+        amount: job.finalPrice || job.basePrice,
+        commission: (job.finalPrice || job.basePrice) * 0.1, // 10% comisión
+        netAmount: (job.finalPrice || job.basePrice) * 0.9,
+        status: job.transactions[0]?.status || 'PENDING',
+        paymentMethod: job.transactions[0]?.paymentMethod || 'BANK_TRANSFER',
+        createdAt: job.completedDate || job.createdAt,
+        processedAt: job.transactions[0]?.processedAt,
+        notes: `Trabajo de servicio: ${job.title}`,
+        providerType: 'SERVICE',
+        jobs: [
+          {
+            id: job.id,
+            type: 'service',
+            amount: job.finalPrice || job.basePrice,
+            date: job.completedDate || job.createdAt,
+            clientName: job.requester.name,
+          },
+        ],
+      }));
+    }
 
     // Filtrar por estado si se especifica
-    let filteredTransactions = mockTransactions;
+    let filteredTransactions = transactions;
     if (status) {
-      filteredTransactions = mockTransactions.filter(t => t.status === status);
+      filteredTransactions = transactions.filter(t => t.status === status);
     }
 
     // Paginación
@@ -95,16 +184,15 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: filteredTransactions.length,
-        totalPages: Math.ceil(filteredTransactions.length / limit)
+        totalPages: Math.ceil(filteredTransactions.length / limit),
       },
       summary: {
         totalTransactions: filteredTransactions.length,
         totalAmount: filteredTransactions.reduce((sum, t) => sum + t.netAmount, 0),
         completedTransactions: filteredTransactions.filter(t => t.status === 'COMPLETED').length,
-        pendingTransactions: filteredTransactions.filter(t => t.status === 'PENDING').length
-      }
+        pendingTransactions: filteredTransactions.filter(t => t.status === 'PENDING').length,
+      },
     });
-
   } catch (error) {
     logger.error('Error obteniendo transacciones del proveedor:', { error });
     const errorResponse = handleApiError(error);

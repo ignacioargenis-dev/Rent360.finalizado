@@ -16,11 +16,11 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
 
     const taskId = params.taskId;
 
-    // Obtener detalles de la tarea
-    const task = await db.maintenance.findUnique({
+    // Obtener detalles de la visita/tarea
+    const visit = await db.visit.findUnique({
       where: {
         id: taskId,
-        assignedTo: user.id, // Asegurar que el runner es el asignado
+        runnerId: user.id, // Asegurar que el runner es el asignado
       },
       include: {
         property: {
@@ -41,46 +41,68 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
             },
           },
         },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
 
-    if (!task) {
+    if (!visit) {
       return NextResponse.json(
         { error: 'Tarea no encontrada o no tienes permisos para acceder' },
         { status: 404 }
       );
     }
 
+    // Calcular fechas de manera segura
+    const scheduledDateTime = visit.scheduledAt ? new Date(visit.scheduledAt) : null;
+    const scheduledDate = scheduledDateTime
+      ? scheduledDateTime!.toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
+    const scheduledTime = scheduledDateTime
+      ? scheduledDateTime!.toTimeString().split(' ')[0].substring(0, 5)
+      : '00:00';
+
     // Transformar datos al formato esperado
     const taskDetail = {
-      id: task.id,
-      propertyId: task.propertyId,
-      propertyAddress: `${task.property.address}, ${task.property.commune}, ${task.property.city}`,
-      propertyTitle: task.property.title,
-      tenantName: 'No disponible',
-      tenantPhone: 'No disponible',
-      tenantEmail: 'No disponible',
-      ownerName: task.property.owner.name,
-      ownerPhone: task.property.owner.phone,
-      ownerEmail: task.property.owner.email,
-      taskType: task.category.toLowerCase(),
-      priority: task.priority.toLowerCase(),
-      status: task.status.toLowerCase(),
-      scheduledDate: task.scheduledDate?.toISOString().split('T')[0],
-      scheduledTime: task.scheduledTime,
-      estimatedDuration: '1',
-      description: task.description,
-      specialInstructions: task.notes,
-      contactMethod: 'phone', // Por defecto
+      id: visit.id,
+      propertyId: visit.propertyId,
+      propertyAddress: `${visit.property.address}, ${visit.property.commune}, ${visit.property.city}`,
+      propertyTitle: visit.property.title,
+      tenantName: visit.tenant?.name || 'No asignado',
+      tenantPhone: visit.tenant?.phone || 'No disponible',
+      tenantEmail: visit.tenant?.email || 'No disponible',
+      ownerName: visit.property.owner?.name || 'Propietario no identificado',
+      ownerPhone: visit.property.owner?.phone || 'No disponible',
+      ownerEmail: visit.property.owner?.email || 'No disponible',
+      taskType: 'property_visit',
+      priority: 'medium',
+      status: visit.status.toLowerCase(),
+      scheduledDate,
+      scheduledTime,
+      estimatedDuration: visit.duration,
+      earnings: visit.earnings,
+      description: visit.notes || 'Visita programada para mostrar propiedad',
+      specialInstructions: visit.notes,
+      photosTaken: visit.photosTaken,
+      rating: visit.rating,
+      clientFeedback: visit.clientFeedback,
+      contactMethod: 'phone',
       assignedBy: 'Sistema',
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
+      createdAt: visit.createdAt.toISOString(),
+      updatedAt: visit.updatedAt.toISOString(),
     };
 
     logger.info('Detalles de tarea obtenidos', {
       runnerId: user.id,
       taskId,
-      status: task.status,
+      status: visit.status,
     });
 
     return NextResponse.json({
@@ -115,53 +137,57 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
 
     const taskId = params.taskId;
     const body = await request.json();
-    const { status, notes, photos } = body;
+    const { status, notes, photosTaken, rating, clientFeedback } = body;
 
-    // Validar que la tarea existe y pertenece al runner
-    const existingTask = await db.maintenance.findUnique({
+    // Validar que la visita existe y pertenece al runner
+    const existingVisit = await db.visit.findUnique({
       where: {
         id: taskId,
-        assignedTo: user.id,
+        runnerId: user.id,
       },
     });
 
-    if (!existingTask) {
+    if (!existingVisit) {
       return NextResponse.json(
-        { error: 'Tarea no encontrada o no tienes permisos para modificarla' },
+        { error: 'Visita no encontrada o no tienes permisos para modificarla' },
         { status: 404 }
       );
     }
 
-    // Actualizar la tarea
-    const updatedTask = await db.maintenance.update({
+    // Actualizar la visita
+    const updatedVisit = await db.visit.update({
       where: { id: taskId },
       data: {
         ...(status && { status: status.toUpperCase() }),
-        ...(notes && { notes }),
-        ...(photos && { photos: JSON.stringify(photos) }),
+        ...(notes !== undefined && { notes }),
+        ...(photosTaken !== undefined && { photosTaken }),
+        ...(rating !== undefined && { rating }),
+        ...(clientFeedback !== undefined && { clientFeedback }),
         updatedAt: new Date(),
       },
     });
 
-    logger.info('Tarea actualizada', {
+    logger.info('Visita actualizada', {
       runnerId: user.id,
       taskId,
-      status: updatedTask.status,
-      changes: { status, notes, photos: photos?.length },
+      status: updatedVisit.status,
+      changes: { status, notes, photosTaken, rating, clientFeedback },
     });
 
     return NextResponse.json({
       success: true,
       data: {
-        id: updatedTask.id,
-        status: updatedTask.status.toLowerCase(),
-        notes: updatedTask.notes,
-        photos: updatedTask.images ? JSON.parse(updatedTask.images) : [],
-        updatedAt: updatedTask.updatedAt.toISOString(),
+        id: updatedVisit.id,
+        status: updatedVisit.status.toLowerCase(),
+        notes: updatedVisit.notes,
+        photosTaken: updatedVisit.photosTaken,
+        rating: updatedVisit.rating,
+        clientFeedback: updatedVisit.clientFeedback,
+        updatedAt: updatedVisit.updatedAt.toISOString(),
       },
     });
   } catch (error) {
-    logger.error('Error actualizando tarea:', {
+    logger.error('Error actualizando visita:', {
       error: error instanceof Error ? error.message : String(error),
     });
 
