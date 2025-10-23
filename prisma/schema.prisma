@@ -116,6 +116,14 @@ model User {
   legalCasesAsTenant   LegalCase[] @relation("TenantLegalCases")
   legalCasesAsOwner    LegalCase[] @relation("OwnerLegalCases")
   legalCasesAsBroker   LegalCase[] @relation("BrokerLegalCases")
+
+  // Relaciones de servicios recurrentes
+  tenantRecurringServices RecurringService[] @relation("TenantRecurringServices")
+  ownerRecurringServices  RecurringService[] @relation("OwnerRecurringServices")
+  createdRecurringServices RecurringService[] @relation("RecurringServiceCreator")
+
+  // Relaciones de ejecuciones de servicios recurrentes
+  executedRecurringServices RecurringServiceExecution[]
   legalDocumentsUploaded LegalDocument[] @relation("LegalDocumentUploader")
   legalDocumentsVerified LegalDocument[] @relation("LegalDocumentVerifier")
   legalNotificationsSent LegalNotification[] @relation("LegalNotificationUser")
@@ -202,6 +210,9 @@ model Property {
   propertyImages    PropertyImage[]    // Imágenes de la propiedad
   documents         Document[]         // Documentos asociados a la propiedad
   paymentReminders  PaymentReminder[]  // Recordatorios de pago para esta propiedad
+
+  // Relaciones de servicios recurrentes
+  recurringServices RecurringService[]
 
   @@map("properties")
   @@index([ownerId])
@@ -1296,6 +1307,92 @@ model LegalNotification {
   @@index([userId])
   @@index([notificationType])
   @@index([sentAt])
+}
+
+// ============================================================================
+// SERVICIOS RECURRENTES
+// ============================================================================
+
+model RecurringService {
+  id                String           @id @default(cuid())
+  serviceId         String           // ID del servicio de mantenimiento
+  propertyId        String           // ID de la propiedad
+  tenantId          String           // ID del inquilino
+  ownerId           String           // ID del propietario
+
+  // Detalles del servicio recurrente
+  serviceType       String           // 'CLEANING', 'MAINTENANCE', 'INSPECTION', etc.
+  frequency         String           // 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'
+  description       String
+  basePrice         Float            @default(0)  // Precio base por servicio
+
+  // Programación
+  startDate         DateTime         // Fecha de inicio del servicio recurrente
+  endDate           DateTime?        // Fecha de fin (opcional)
+  nextExecutionDate DateTime         // Próxima fecha de ejecución
+  lastExecutedDate  DateTime?        // Última ejecución
+
+  // Estado y control
+  status            String           @default("ACTIVE") // 'ACTIVE', 'PAUSED', 'CANCELLED', 'COMPLETED'
+  isActive          Boolean          @default(true)
+  autoRenew         Boolean          @default(true)    // Renovar automáticamente
+
+  // Historial y estadísticas
+  totalExecutions   Int              @default(0)       // Total de ejecuciones realizadas
+  successfulExecutions Int           @default(0)       // Ejecuciones exitosas
+  failedExecutions  Int              @default(0)       // Ejecuciones fallidas
+
+  // Metadatos
+  notes             String?
+  createdBy         String           // Usuario que creó el servicio
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relaciones
+  property          Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant            User             @relation("TenantRecurringServices", fields: [tenantId], references: [id], onDelete: Cascade)
+  owner             User             @relation("OwnerRecurringServices", fields: [ownerId], references: [id], onDelete: Cascade)
+  creator           User             @relation("RecurringServiceCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  // Historial de ejecuciones individuales
+  executions        RecurringServiceExecution[]
+
+  @@map("recurring_services")
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([nextExecutionDate])
+  @@index([createdAt])
+}
+
+model RecurringServiceExecution {
+  id                String           @id @default(cuid())
+  recurringServiceId String          // ID del servicio recurrente
+
+  // Detalles de la ejecución
+  scheduledDate     DateTime         // Fecha programada
+  executedDate      DateTime?        // Fecha real de ejecución
+  status            String           @default("PENDING") // 'PENDING', 'COMPLETED', 'FAILED', 'CANCELLED'
+
+  // Resultados
+  actualCost        Float?           // Costo real de la ejecución
+  notes             String?          // Notas de la ejecución
+  executedBy        String?          // Usuario que ejecutó el servicio
+
+  // Metadatos
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relaciones
+  recurringService  RecurringService @relation(fields: [recurringServiceId], references: [id], onDelete: Cascade)
+  executor          User?            @relation(fields: [executedBy], references: [id], onDelete: SetNull)
+
+  @@map("recurring_service_executions")
+  @@index([recurringServiceId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([executedDate])
 }
 
 // ============================================================================
