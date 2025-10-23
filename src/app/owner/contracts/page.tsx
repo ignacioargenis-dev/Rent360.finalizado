@@ -410,10 +410,16 @@ export default function OwnerContractsPage() {
                       : 'Comienza creando tu primer contrato de arriendo'}
                   </p>
                   {!searchTerm && statusFilter === 'all' && (
-                    <Button onClick={() => router.push('/owner/properties')}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ver Propiedades
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => router.push('/owner/properties')}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Ver Propiedades
+                      </Button>
+                      <Button onClick={() => router.push('/owner/contracts/new')} variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear Contrato
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>

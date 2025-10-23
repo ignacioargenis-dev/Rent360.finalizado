@@ -72,7 +72,9 @@ export default function PublicPropertyDetailPage() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
       setIsAuthenticated(response.ok);
     } catch (error) {
       setIsAuthenticated(false);
@@ -218,16 +220,88 @@ export default function PublicPropertyDetailPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ action: 'increment_inquiries' }),
+        credentials: 'include',
       });
     } catch (error) {
       logger.error('Error incrementing inquiries', { error, propertyId });
     }
 
     if (isAuthenticated) {
-      // Usuario autenticado - programar visita
-      alert('Funcionalidad de programar visita para usuarios autenticados');
+      // Usuario autenticado - solicitar visita
+      try {
+        // Obtener información del usuario actual
+        const userResponse = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+
+        if (!userResponse.ok) {
+          alert(
+            'Error al obtener información del usuario. Por favor, intenta iniciar sesión nuevamente.'
+          );
+          router.push('/auth/login');
+          return;
+        }
+
+        const userData = await userResponse.json();
+        const currentUser = userData.user;
+
+        // Crear mensaje de solicitud de visita
+        const visitRequest = {
+          recipientId: property?.owner?.id,
+          propertyId: propertyId,
+          message: `Hola, estoy interesado en la propiedad "${property?.title}". Me gustaría programar una visita para conocerla mejor. ¿Podríamos coordinar una fecha conveniente?
+
+Propiedad: ${property?.title}
+Dirección: ${property?.address}, ${property?.city}
+Precio: $${property?.price?.toLocaleString()}
+
+Mis datos de contacto:
+Nombre: ${currentUser.name}
+Email: ${currentUser.email}
+Teléfono: ${currentUser.phone || 'No especificado'}
+
+Espero su respuesta. ¡Gracias!`,
+          type: 'property_inquiry',
+          priority: 'medium',
+          metadata: {
+            propertyId: propertyId,
+            inquiryType: 'visit_request',
+            propertyTitle: property?.title,
+            propertyAddress: property?.address,
+            propertyPrice: property?.price,
+          },
+        };
+
+        const messageResponse = await fetch('/api/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(visitRequest),
+        });
+
+        if (messageResponse.ok) {
+          alert(
+            '¡Solicitud de visita enviada exitosamente! El propietario se pondrá en contacto contigo pronto.'
+          );
+          logger.info('Visit request sent successfully', { propertyId, userId: currentUser.id });
+        } else {
+          const errorData = await messageResponse.json();
+          alert(`Error al enviar la solicitud: ${errorData.error || 'Error desconocido'}`);
+          logger.error('Error sending visit request', {
+            error: errorData,
+            propertyId,
+            userId: currentUser.id,
+          });
+        }
+      } catch (error) {
+        logger.error('Error in handleScheduleVisit', { error, propertyId });
+        alert('Error al procesar la solicitud de visita. Por favor, intenta nuevamente.');
+      }
     } else {
       // Usuario no autenticado - redirigir a login
+      alert('Para solicitar una visita, necesitas iniciar sesión primero.');
       router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
     }
   };

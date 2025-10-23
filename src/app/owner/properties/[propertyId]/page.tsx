@@ -541,6 +541,11 @@ export default function OwnerPropertyDetailPage() {
     router.push(`/owner/maintenance/new?propertyId=${propertyId}`);
   };
 
+  const handleSearchTenant = () => {
+    // Redirigir a la página de crear contrato con la propiedad preseleccionada
+    router.push(`/owner/contracts/new?propertyId=${propertyId}`);
+  };
+
   const handleDeleteProperty = async () => {
     if (!property) {
       return;
@@ -1185,9 +1190,9 @@ export default function OwnerPropertyDetailPage() {
                   <p className="text-gray-600 mb-4">
                     Esta propiedad no tiene un inquilino asignado actualmente.
                   </p>
-                  <Button>
+                  <Button onClick={() => handleSearchTenant()}>
                     <Users className="w-4 h-4 mr-2" />
-                    Buscar Inquilino
+                    Crear Contrato
                   </Button>
                 </CardContent>
               </Card>
