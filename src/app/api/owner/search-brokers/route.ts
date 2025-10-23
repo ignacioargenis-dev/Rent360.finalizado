@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
-          { company: { contains: search, mode: 'insensitive' } },
         ],
       },
       select: {
@@ -34,7 +33,6 @@ export async function GET(request: NextRequest) {
         name: true,
         email: true,
         phone: true,
-        company: true,
         avatar: true,
         createdAt: true,
       },

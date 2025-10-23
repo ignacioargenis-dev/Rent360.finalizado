@@ -51,7 +51,6 @@ interface Broker {
   name: string;
   email: string;
   phone?: string;
-  company?: string;
 }
 
 export default function NewContractPage() {
@@ -377,7 +376,6 @@ export default function NewContractPage() {
                       {brokers.map(broker => (
                         <SelectItem key={broker.id} value={broker.id}>
                           {broker.name} - {broker.email}
-                          {broker.company && ` (${broker.company})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -394,9 +392,6 @@ export default function NewContractPage() {
                           <p className="text-sm text-gray-600">{broker.email}</p>
                           {broker.phone && (
                             <p className="text-sm text-gray-600">📱 {broker.phone}</p>
-                          )}
-                          {broker.company && (
-                            <p className="text-sm text-gray-600">🏢 {broker.company}</p>
                           )}
                         </>
                       ) : null;
