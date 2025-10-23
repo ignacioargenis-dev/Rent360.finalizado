@@ -64,9 +64,20 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     let scheduledTime = '00:00';
 
     if (visit.scheduledAt) {
-      const dateObj = new Date(visit.scheduledAt!);
-      scheduledDate = dateObj.toISOString().split('T')[0];
-      scheduledTime = dateObj.toTimeString().split(' ')[0].substring(0, 5);
+      try {
+        const scheduledDateTime = new Date(visit.scheduledAt);
+        if (
+          scheduledDateTime instanceof Date &&
+          !isNaN(scheduledDateTime.getTime()) &&
+          scheduledDateTime.getTime() > 0
+        ) {
+          scheduledDate = scheduledDateTime!.toISOString().split('T')[0];
+          scheduledTime = scheduledDateTime!.toTimeString().split(' ')[0].substring(0, 5);
+        }
+      } catch (error) {
+        // Mantener valores por defecto si hay error en el parsing
+        console.warn('Error parsing scheduledAt date:', error);
+      }
     }
 
     // Transformar datos al formato esperado
