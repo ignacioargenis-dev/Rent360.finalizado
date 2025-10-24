@@ -168,8 +168,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       },
     });
 
-    // TODO: Enviar email de confirmación al propietario, inquilino y corredor
-    // Aquí iría la lógica para enviar emails de confirmación
+    // TODO: Integrar con el sistema de firma electrónica existente
+    // El sistema ya tiene proveedores configurados: FirmaPro, TrustFactory, FirmaYa
+    // Para contratos, se debe usar firma electrónica avanzada/calificada
 
     logger.info('Contrato firmado electrónicamente', {
       contractId,

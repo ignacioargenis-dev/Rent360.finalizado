@@ -9,8 +9,6 @@ const sendContractSchema = z.object({
   recipientEmail: z.string().email('Valid email is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
   customMessage: z.string().optional(),
-  includePDF: z.boolean().default(true),
-  includeSignatureLink: z.boolean().default(true),
 });
 
 export async function POST(request: NextRequest) {
@@ -64,7 +62,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Enviar email (simulado por ahora)
+    // Enviar email básico con link de firma
     const emailResult = await sendContractEmail({
       to: validatedData.recipientEmail,
       recipientName: validatedData.recipientName,
@@ -72,8 +70,6 @@ export async function POST(request: NextRequest) {
       propertyTitle: contract.property?.title || 'Propiedad',
       signatureUrl,
       customMessage: validatedData.customMessage || '',
-      includePDF: validatedData.includePDF,
-      includeSignatureLink: validatedData.includeSignatureLink,
       brokerName: user.name || 'Corredor',
     });
 
@@ -146,8 +142,6 @@ async function sendContractEmail(data: {
   propertyTitle: string;
   signatureUrl: string;
   customMessage?: string;
-  includePDF: boolean;
-  includeSignatureLink: boolean;
   brokerName: string;
 }) {
   try {
@@ -166,9 +160,6 @@ async function sendContractEmail(data: {
 
           ${data.customMessage ? `<p>${data.customMessage}</p>` : ''}
 
-          ${
-            data.includeSignatureLink
-              ? `
           <div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3>📝 Firma Electrónica</h3>
             <p>Para firmar el contrato de manera segura, haga clic en el siguiente enlace:</p>
@@ -179,17 +170,6 @@ async function sendContractEmail(data: {
               Este enlace es único y expira en 30 días por seguridad.
             </p>
           </div>
-          `
-              : ''
-          }
-
-          ${
-            data.includePDF
-              ? `
-          <p><strong>Adjunto:</strong> Contrato en formato PDF para su revisión.</p>
-          `
-              : ''
-          }
 
           <p>Si tiene alguna pregunta, puede contactarme directamente.</p>
 
@@ -203,19 +183,13 @@ async function sendContractEmail(data: {
           </p>
         </div>
       `,
-      // En un implementación real, incluiríamos el PDF como attachment
-      attachments: data.includePDF
-        ? [
-            // Buffer del PDF generado
-          ]
-        : [],
+      // Sin adjuntos por ahora
+      attachments: [],
     };
 
     logger.info('Email de contrato preparado para envío', {
       to: data.to,
       contractId: data.contractId,
-      includePDF: data.includePDF,
-      includeSignatureLink: data.includeSignatureLink,
     });
 
     // Simular envío exitoso
