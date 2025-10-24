@@ -99,7 +99,7 @@ export default function OwnerContractsPage() {
 
         // ✅ CORREGIDO: Cargar datos reales desde la API
         const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/owner/contracts?ownerId=${user.id}`, {
+        const response = await fetch(`${baseUrl}/api/owner/contracts`, {
           method: 'GET',
           credentials: 'include',
           headers: {

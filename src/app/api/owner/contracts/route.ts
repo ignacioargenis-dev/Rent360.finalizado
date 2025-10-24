@@ -14,21 +14,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const ownerId = searchParams.get('ownerId');
-
-    // Verify the requested ownerId matches the authenticated user
-    if (ownerId && ownerId !== user.id) {
-      return NextResponse.json(
-        { error: 'No tienes permisos para acceder a estos contratos.' },
-        { status: 403 }
-      );
-    }
-
-    // Get contracts for the owner
+    // Get contracts for the authenticated owner
+    // This API is specifically for owners, so we use the authenticated user's ID
     const contracts = await db.contract.findMany({
       where: {
-        ownerId: ownerId || user.id,
+        ownerId: user.id,
       },
       include: {
         property: {
