@@ -10,7 +10,6 @@ import { NotificationProvider } from '@/components/ui/notification-provider';
 import { NotificationToast } from '@/components/ui/notification-toast';
 // import { DataSyncProvider } from '@/components/providers/DataSyncProvider';
 import dynamic from 'next/dynamic';
-import { PWAResetButton } from '@/lib/pwa';
 
 // Lazy loading de componentes pesados
 const Chatbot = dynamic(() => import('@/components/ai/Chatbot'), {
@@ -114,7 +113,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Chatbot position="bottom-right" initialOpen={false} />
 
                 <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
-                <PWAResetButton />
                 <Toaster />
               </AuthProvider>
             </NotificationProvider>

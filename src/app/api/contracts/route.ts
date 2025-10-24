@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
       data: {
         propertyId: validatedData.propertyId,
         tenantId: validatedData.tenantId,
-        ownerId: property.ownerId,
+        ownerId: user.id, // ✅ Usar el ID del usuario autenticado (propietario)
         brokerId: validatedData.brokerId || null,
         startDate,
         endDate,

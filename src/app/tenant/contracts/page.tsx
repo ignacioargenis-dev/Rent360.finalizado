@@ -610,7 +610,20 @@ export default function TenantContractsPage() {
                     )}
 
                     {/* Contactar Propietario */}
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Implementar funcionalidad de contacto
+                        const ownerEmail = (contract as any).owner?.email;
+                        const ownerName = (contract as any).owner?.name;
+                        const subject = `Consulta sobre contrato ${contract.contractNumber}`;
+                        const body = `Hola ${ownerName},\n\nMe comunico respecto al contrato ${contract.contractNumber} para la propiedad ${(contract as any).property?.address || (contract as any).property?.title}.\n\n`;
+
+                        // Usar mailto para abrir cliente de email
+                        window.open(`mailto:${ownerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+                      }}
+                    >
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Contactar Propietario
                     </Button>
@@ -624,10 +637,39 @@ export default function TenantContractsPage() {
                   )}
 
                     {/* Descargar Contrato */}
-                  <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          // Implementar descarga del contrato
+                          const response = await fetch(`/api/contracts/${contract.id}/pdf`, {
+                            method: 'GET',
+                            credentials: 'include',
+                          });
+
+                          if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `contrato-${contract.contractNumber || contract.id}.html`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                          } else {
+                            alert('Error al descargar el contrato');
+                          }
+                        } catch (error) {
+                          console.error('Error descargando contrato:', error);
+                          alert('Error al descargar el contrato');
+                        }
+                      }}
+                    >
                       <Download className="w-4 h-4 mr-2" />
-                      Descargar PDF
-                  </Button>
+                      Descargar Contrato
+                    </Button>
                 </div>
               </CardContent>
             </Card>
