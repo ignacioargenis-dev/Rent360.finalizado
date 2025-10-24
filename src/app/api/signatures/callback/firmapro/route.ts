@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        if (signatureRequest) {
-          // Verificar si esta firma está relacionada con un contrato (por documentId)
+        if (signatureRequest && signatureRequest.contractId) {
+          // Esta firma está relacionada con un contrato
           const contract = await db.contract.findUnique({
-            where: { id: signatureRequest.documentId }
+            where: { id: signatureRequest.contractId }
           });
 
           if (contract) {

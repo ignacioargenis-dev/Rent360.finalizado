@@ -147,22 +147,59 @@ export async function POST(request: NextRequest) {
     // Validar datos de entrada
     const validatedData = createSignatureSchema.parse(body);
 
-    // Verificar que el documento existe
-    const document = await db.document.findUnique({
+    // Verificar que el documento o contrato existe
+    let document = await db.document.findUnique({
       where: { id: validatedData.documentId },
     });
 
+    let contract = null;
     if (!document) {
-      return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 });
+      // Si no es un documento, buscar si es un contrato
+      contract = await db.contract.findUnique({
+        where: { id: validatedData.documentId },
+        include: {
+          property: true,
+          tenant: true,
+          owner: true,
+        },
+      });
+
+      if (!contract) {
+        return NextResponse.json({ error: 'Documento o contrato no encontrado' }, { status: 404 });
+      }
     }
 
     // Verificar permisos básicos (documento debe existir)
     // Los documentos nuevos no tienen campo status, se asume que están activos
 
+    // Si es un contrato, crear firmantes automáticamente
+    let signersToUse = validatedData.signers;
+    if (contract && validatedData.signers.length === 0) {
+      // Crear firmantes automáticamente para el contrato
+      signersToUse = [
+        {
+          rut: contract.owner?.rut || contract.tenantRut || '', // Usar RUT del propietario o fallback
+          email: contract.owner?.email || '',
+          name: contract.owner?.name || '',
+          phone: contract.owner?.phone || '',
+          order: 1, // Propietario firma primero
+          isRequired: true,
+        },
+        {
+          rut: contract.tenantRut || '', // RUT del inquilino desde el contrato
+          email: contract.tenant?.email || '',
+          name: contract.tenant?.name || '',
+          phone: contract.tenant?.phone || '',
+          order: 2, // Inquilino firma segundo
+          isRequired: true,
+        },
+      ];
+    }
+
     // Crear solicitud de firma usando el servicio unificado
     const signatureResult = await signatureService.createSignatureRequest(
       validatedData.documentId,
-      validatedData.signers,
+      signersToUse,
       validatedData.provider
     );
 
@@ -190,15 +227,25 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         status: signatureResult.status,
         provider: signatureResult.provider,
+        contractId: contract ? validatedData.documentId : null, // Si es un contrato, guardar la referencia
         ...(signatureResult.metadata?.expiresAt && {
           expiresAt: new Date(signatureResult.metadata.expiresAt),
         }),
-        metadata: JSON.stringify(signatureResult.metadata || {}),
+        metadata: JSON.stringify({
+          ...(signatureResult.metadata || {}),
+          isContractSignature: !!contract,
+          contractData: contract ? {
+            id: contract.id,
+            propertyId: contract.propertyId,
+            tenantId: contract.tenantId,
+            ownerId: contract.ownerId,
+          } : null,
+        }),
         signers: {
-          create: validatedData.signers.map(signer => ({
+          create: signersToUse.map(signer => ({
             email: signer.email,
             name: signer.name || '',
-            role: determineSignerRole(signer, validatedData.signers.length),
+            role: determineSignerRole(signer, signersToUse.length),
             status: 'pending',
             metadata: JSON.stringify({
               rut: signer.rut,

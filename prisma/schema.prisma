@@ -292,6 +292,9 @@ model Contract {
   // Relaciones de recordatorios de pago
   paymentReminders PaymentReminder[]
 
+  // Relaciones de firmas electrónicas
+  signatureRequests SignatureRequest[]
+
   @@map("contracts")
   @@index([propertyId])
   @@index([tenantId])
@@ -1412,6 +1415,7 @@ model RecurringServiceExecution {
 model SignatureRequest {
   id                String          @id @default(cuid())
   documentId        String          // ID del documento a firmar
+  contractId        String?         // ID del contrato (si es firma de contrato)
   provider          String          // Proveedor de firma utilizado
   providerRequestId String?         // ID de la solicitud en el proveedor
   status            String          @default("pending")
@@ -1423,9 +1427,11 @@ model SignatureRequest {
 
   // Relaciones
   signers           SignatureSigner[]
+  contract          Contract?       @relation(fields: [contractId], references: [id])
 
   @@map("signature_requests")
   @@index([documentId])
+  @@index([contractId])
   @@index([status])
   @@index([createdAt])
 }
