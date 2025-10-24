@@ -1,3 +1,5 @@
+'use client';
+
 // PWA Service - Gestión de Progressive Web App
 import { logger } from './logger';
 import { useState, useEffect } from 'react'; // IMPORTAR ANTES DE USAR
@@ -25,6 +27,7 @@ class PWAService {
   private isInitialized = false;
   private isServiceWorkerSupported = false;
   private isServiceWorkerActive = false;
+  private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
   private config: PWAConfig = {
     name: 'Rent360 - Plataforma de Arrendamiento Inteligente',
     shortName: 'Rent360',
@@ -400,10 +403,88 @@ class PWAService {
     }
     return false;
   }
+
+  // Limpiar cache de la aplicación
+  async clearAppCache(): Promise<void> {
+    try {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => {
+            logger.info('PWA: Deleting cache', { cacheName });
+            return caches.delete(cacheName);
+          })
+        );
+        logger.info('PWA: All caches cleared successfully');
+      }
+    } catch (error) {
+      logger.error('PWA: Error clearing app cache', { error });
+    }
+  }
+
+  // Forzar actualización del Service Worker
+  async forceServiceWorkerUpdate(): Promise<void> {
+    try {
+      if (!this.serviceWorkerRegistration) {
+        logger.warn('PWA: No service worker registration found');
+        return;
+      }
+
+      logger.info('PWA: Forcing service worker update');
+
+      // Forzar check de actualización
+      await this.serviceWorkerRegistration.update();
+
+      // Si hay un waiting worker, activarlo
+      if (this.serviceWorkerRegistration.waiting) {
+        logger.info('PWA: Activating waiting service worker');
+        this.serviceWorkerRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      logger.info('PWA: Service worker update forced');
+    } catch (error) {
+      logger.error('PWA: Error forcing service worker update', { error });
+    }
+  }
+
+  // Método completo para resetear PWA (cache + service worker)
+  async resetPWA(): Promise<void> {
+    try {
+      logger.info('PWA: Starting complete PWA reset');
+
+      // 1. Limpiar todos los caches
+      await this.clearAppCache();
+
+      // 2. Forzar actualización del service worker
+      await this.forceServiceWorkerUpdate();
+
+      // 3. Recargar la página para aplicar cambios
+      logger.info('PWA: PWA reset complete, reloading page');
+      window.location.reload();
+
+    } catch (error) {
+      logger.error('PWA: Error during PWA reset', { error });
+      // Forzar recarga de todas formas
+      window.location.reload();
+    }
+  }
 }
 
 // Instancia singleton
 export const pwaService = new PWAService();
+
+// Función global para debugging - disponible en window.resetPWA()
+if (typeof window !== 'undefined') {
+  (window as any).resetPWA = () => {
+    console.log('🔄 Ejecutando resetPWA desde consola...');
+    return pwaService.resetPWA();
+  };
+
+  (window as any).clearAppCache = () => {
+    console.log('🗑️ Limpiando cache desde consola...');
+    return pwaService.clearAppCache();
+  };
+}
 
 // Hook personalizado para React
 export const usePWA = () => {
@@ -451,8 +532,77 @@ export const usePWA = () => {
     hasUpdate,
     showInstallPrompt: pwaService.showInstallPrompt.bind(pwaService),
     updateApp: pwaService.updateApp.bind(pwaService),
+    resetPWA: () => pwaService.resetPWA(),
     clearCache: pwaService.clearCache.bind(pwaService),
     shareData: pwaService.shareData.bind(pwaService),
     sendNotification: pwaService.sendNotification.bind(pwaService),
   };
 };
+
+// Componente React para debugging PWA - DISPONIBLE EN TODOS LOS ENTORNOS
+export const PWAResetButton = () => {
+  const { resetPWA } = usePWA();
+
+  return (
+    <button
+      onClick={resetPWA}
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        background: '#dc2626',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '8px 12px',
+        fontSize: '12px',
+        cursor: 'pointer',
+        zIndex: 9999,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        opacity: 0.8,
+      }}
+      title="Reset PWA Cache - Soluciona problemas de carga"
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+    >
+      🔄 Reset PWA
+    </button>
+  );
+};
+
+// Función de utilidad para detectar problemas de carga
+export const detectChunkLoadErrors = () => {
+  if (typeof window === 'undefined') return;
+
+  // Escuchar errores de carga de chunks
+  window.addEventListener('error', (event) => {
+    if (event.error && event.error.name === 'ChunkLoadError') {
+      console.warn('🚨 ChunkLoadError detectado - intentando reset automático...');
+      // Intentar reset automático después de un breve delay
+      setTimeout(() => {
+        if (confirm('Se detectó un problema de carga. ¿Desea resetear el cache y recargar?')) {
+          pwaService.resetPWA().catch(() => {
+            window.location.reload();
+          });
+        }
+      }, 1000);
+    }
+  });
+
+  // Escuchar errores no capturados
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && event.reason.message.includes('Loading chunk')) {
+      console.warn('🚨 Chunk loading error detectado - intentando reset automático...');
+      setTimeout(() => {
+        pwaService.resetPWA().catch(() => {
+          window.location.reload();
+        });
+      }, 1000);
+    }
+  });
+};
+
+// Inicializar detección automática de errores
+if (typeof window !== 'undefined') {
+  detectChunkLoadErrors();
+}
