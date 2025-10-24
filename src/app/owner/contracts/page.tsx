@@ -625,22 +625,37 @@ export default function OwnerContractsPage() {
 
       {/* Signature Dialog */}
       <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Firmar Contrato</DialogTitle>
             <DialogDescription>Firma digitalmente el contrato seleccionado</DialogDescription>
           </DialogHeader>
           {selectedContract && (
-            <ElectronicSignature
-              contractId={selectedContract.id}
-              documentName={`Contrato ${selectedContract.contractNumber}`}
-              documentHash={`hash-${selectedContract.id}`}
-              onSignatureComplete={() => {
-                setShowSignatureDialog(false);
-                window.location.reload();
-              }}
-              onSignatureCancel={() => setShowSignatureDialog(false)}
-            />
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 mb-1">Importante</p>
+                    <p className="text-blue-800">
+                      Al firmar este contrato, aceptas todos los términos y condiciones establecidos.
+                      Esta firma tiene valor legal y es vinculante.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <ElectronicSignature
+                contractId={selectedContract.id}
+                documentName={`Contrato de Arriendo - ${selectedContract.contractNumber || selectedContract.id}`}
+                documentHash={`hash-${selectedContract.id}`}
+                onSignatureComplete={() => {
+                  setShowSignatureDialog(false);
+                  window.location.reload();
+                }}
+                onSignatureCancel={() => setShowSignatureDialog(false)}
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -85,8 +85,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Nota: La actualización automática de contratos se maneja en otros endpoints
-    // El callback solo actualiza el estado de la firma
+    // Verificar si todas las firmas están completas y actualizar el contrato correspondiente
+    if (internalStatus === SignatureStatus.COMPLETED) {
+      try {
+        // Buscar la signature request y verificar si es para un contrato
+        const signatureRequest = await db.signatureRequest.findUnique({
+          where: { id: contractId },
+          include: {
+            signers: true
+          }
+        });
+
+        if (signatureRequest) {
+          // Verificar si esta firma está relacionada con un contrato (por documentId)
+          const contract = await db.contract.findUnique({
+            where: { id: signatureRequest.documentId }
+          });
+
+          if (contract) {
+            // Verificar si todas las firmas requeridas están completas
+            const completedSignatures = signatureRequest.signers.filter(signer => signer.status === 'signed');
+            const requiredSignatures = signatureRequest.signers.filter(signer => {
+              const metadata = signer.metadata ? JSON.parse(signer.metadata) : {};
+              return metadata.isRequired !== false; // Por defecto son requeridas
+            });
+
+            // Si todas las firmas requeridas están completas, activar el contrato
+            if (completedSignatures.length >= requiredSignatures.length) {
+              await db.contract.update({
+                where: { id: contract.id },
+                data: {
+                  status: 'ACTIVE',
+                  signedAt: new Date()
+                }
+              });
+
+              logger.info('Contrato activado automáticamente después de firmas completas:', {
+                contractId: contract.id,
+                signatureId: contractId,
+                completedSignatures: completedSignatures.length,
+                requiredSignatures: requiredSignatures.length
+              });
+            }
+          }
+        }
+      } catch (contractUpdateError) {
+        logger.error('Error actualizando contrato después de firmas:', {
+          error: contractUpdateError instanceof Error ? contractUpdateError.message : String(contractUpdateError),
+          contractId
+        });
+      }
+    }
 
     // Notificar a los usuarios interesados (implementar sistema de notificaciones)
 

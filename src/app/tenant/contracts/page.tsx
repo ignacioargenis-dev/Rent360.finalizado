@@ -31,6 +31,8 @@ import {
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
+import { Contract } from '@/types';
+import ElectronicSignature from '@/components/contracts/ElectronicSignature';
 import {
   Dialog,
   DialogContent,
@@ -48,57 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface Contract {
-  id: string;
-  contractNumber: string;
-  propertyId: string;
-  tenantId: string;
-  ownerId: string;
-  startDate: Date;
-  endDate: Date;
-  monthlyRent: number;
-  deposit: number;
-  status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'TERMINATED' | 'DRAFT';
-  brokerId?: string | null;
-  terms: string;
-  signedAt?: Date | null;
-  terminatedAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  property: {
-    id: string;
-    title: string;
-    description: string;
-    address: string;
-    city: string;
-    commune: string;
-    region: string;
-    price: number;
-    deposit: number;
-    bedrooms: number;
-    bathrooms: number;
-    area: number;
-    type: string;
-    status: string;
-    images: string[];
-    features: string[];
-    virtualTourEnabled: boolean;
-    virtualTourData: string | null;
-    owner: {
-      id: string;
-      name: string;
-      email: string;
-      phone: string;
-    };
-  };
-  tenant: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  ownerName: string;
-}
+// Usar el tipo Contract importado de @/types
 
 export default function TenantContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -140,11 +92,11 @@ export default function TenantContractsPage() {
             createdAt: contract.createdAt ? new Date(contract.createdAt) : new Date(),
             updatedAt: contract.updatedAt ? new Date(contract.updatedAt) : new Date(),
             property: {
-              ...contract.property,
+              ...(contract as any).property,
               // Asegurar que features sea un array
-              features: Array.isArray(contract.property?.features) ? contract.property.features : [],
+              features: Array.isArray((contract as any).property?.features) ? (contract as any).property.features : [],
               // Asegurar que availableFrom sea una fecha válida si existe
-              availableFrom: contract.property?.availableFrom ? new Date(contract.property.availableFrom) : null,
+              availableFrom: (contract as any).property?.availableFrom ? new Date((contract as any).property.availableFrom) : null,
             }
           }));
           setContracts(validatedContracts);
@@ -155,63 +107,9 @@ export default function TenantContractsPage() {
 
       // Fallback a datos mock si la API falla
       logger.warn('API falló, usando datos mock');
-      const emptyImages: string[] = [];
 
       setTimeout(() => {
-        setContracts([
-          {
-            id: 'pending-tenant-1',
-            contractNumber: 'CTR-2024-004',
-            propertyId: '4',
-            tenantId: '1',
-            ownerId: '6',
-            startDate: new Date('2024-03-01'),
-            endDate: new Date('2025-02-28'),
-            monthlyRent: 450000,
-            deposit: 450000,
-            status: 'PENDING' as any,
-            brokerId: null,
-            terms: 'Contrato residencial estándar - Pendiente de firma del propietario',
-            signedAt: null,
-            terminatedAt: null,
-            createdAt: new Date('2024-02-15'),
-            updatedAt: new Date('2024-02-15'),
-            property: {
-              id: '4',
-              title: 'Casa Ñuñoa',
-              description: 'Casa familiar moderna en Ñuñoa',
-              address: 'Av. Irarrázaval 2345, Ñuñoa',
-              city: 'Santiago',
-              commune: 'Ñuñoa',
-              region: 'Metropolitana',
-              price: 450000,
-              deposit: 450000,
-              bedrooms: 3,
-              bathrooms: 2,
-              area: 120,
-              type: 'Casa',
-              status: 'AVAILABLE',
-              images: emptyImages,
-              features: ['Estacionamiento', 'Jardín', 'Seguridad 24/7'],
-              virtualTourEnabled: false,
-              virtualTourData: null,
-              owner: {
-                id: '6',
-                name: 'Empresa Soluciones Ltda.',
-                email: 'contacto@empresasoluciones.cl',
-                phone: '+56 9 8765 4321',
-              },
-            },
-            tenant: {
-              id: '1',
-              name: 'María González',
-              email: 'maria.gonzalez@email.com',
-              phone: '+56 9 1234 5678',
-            },
-            ownerName: 'Empresa Soluciones Ltda.',
-          },
-        ]);
-
+        setContracts([]);
         setLoading(false);
       }, 1000);
     } catch (error) {
@@ -442,7 +340,7 @@ export default function TenantContractsPage() {
                     {getStatusIcon(contract.status)}
                     <div>
                       <CardTitle className="text-lg">{contract.contractNumber}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{contract.property.title}</p>
+                      <p className="text-sm text-muted-foreground">{(contract as any).property?.title || 'Propiedad'}</p>
                     </div>
                   </div>
                   {getStatusBadge(contract.status)}
@@ -452,14 +350,14 @@ export default function TenantContractsPage() {
               <CardContent className="space-y-4">
                 {/* Información de la propiedad */}
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{contract.property.address}</span>
-                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{(contract as any).property?.address || 'Dirección no disponible'}</span>
+                      </div>
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span>Propietario: {contract.ownerName}</span>
+                      <span>Propietario: {(contract as any).owner?.name}</span>
                     </div>
                   </div>
 
@@ -470,7 +368,7 @@ export default function TenantContractsPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>Depósito: {formatPrice(contract.deposit)}</span>
+                        <span>Depósito: {formatPrice((contract as any).depositAmount || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -497,8 +395,8 @@ export default function TenantContractsPage() {
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Características</h4>
                   <div className="flex flex-wrap gap-2">
-                      {contract.property?.features && contract.property.features.length > 0 ? (
-                        contract.property.features.map((feature, index) => (
+                      {(contract as any).property?.features && (contract as any).property.features.length > 0 ? (
+                        (contract as any).property.features.map((feature: string, index: number) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {feature}
                       </Badge>
@@ -506,7 +404,7 @@ export default function TenantContractsPage() {
                       ) : (
                         <span className="text-sm text-gray-500">Sin características especificadas</span>
                       )}
-                    </div>
+                  </div>
                 </div>
 
                 {/* Acciones */}
@@ -548,7 +446,7 @@ export default function TenantContractsPage() {
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-sm text-muted-foreground">Depósito:</span>
-                                  <span className="font-medium">{formatPrice(contract.deposit)}</span>
+                                  <span className="font-medium">{formatPrice((contract as any).depositAmount || 0)}</span>
                                 </div>
                               </CardContent>
                             </Card>
@@ -605,7 +503,7 @@ export default function TenantContractsPage() {
                                     <Home className="w-5 h-5 text-green-600" />
                                   </div>
                                   <div>
-                                    <p className="font-medium">{contract.ownerName || 'Propietario'}</p>
+                                    <p className="font-medium">{(contract as any).owner?.name || 'Propietario'}</p>
                                     <p className="text-sm text-muted-foreground">Propietario de la propiedad</p>
                                   </div>
                                 </div>
@@ -621,23 +519,23 @@ export default function TenantContractsPage() {
                             <CardContent className="space-y-4">
                               <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                  <h4 className="font-medium mb-2">{contract.property.title}</h4>
+                                  <h4 className="font-medium mb-2">{(contract as any).property?.title || 'Propiedad'}</h4>
                                   <div className="space-y-1 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2">
                                       <MapPin className="h-4 w-4" />
-                                      <span>{contract.property.address}</span>
+                                      <span>{(contract as any).property?.address || 'Dirección no disponible'}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Building className="h-4 w-4" />
-                                      <span>{contract.property.city}, {contract.property.commune}</span>
+                                      <span>{(contract as any).property?.city || 'Ciudad'}, {(contract as any).property?.commune || 'Comuna'}</span>
                                     </div>
                                   </div>
                                 </div>
                                 <div>
                                   <h4 className="font-medium mb-2">Características</h4>
                                   <div className="flex flex-wrap gap-2">
-                                    {contract.property?.features && contract.property.features.length > 0 ? (
-                                      contract.property.features.map((feature, index) => (
+                                    {(contract as any).property?.features && (contract as any).property.features.length > 0 ? (
+                                      (contract as any).property.features.map((feature: string, index: number) => (
                                         <Badge key={index} variant="outline" className="text-xs">
                                           {feature}
                                         </Badge>
@@ -670,12 +568,12 @@ export default function TenantContractsPage() {
                     {contract.status === 'DRAFT' && (
                       <Dialog>
                         <DialogTrigger asChild>
-                        <Button variant="default" size="sm">
-                          <Edit className="w-4 h-4 mr-2" />
-                          Firmar Contrato
-                        </Button>
+                          <Button variant="default" size="sm">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Firmar Contrato
+                          </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Firma Electrónica del Contrato</DialogTitle>
                             <DialogDescription>
@@ -697,24 +595,15 @@ export default function TenantContractsPage() {
                               </div>
                             </div>
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                              <Edit className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">Firma Electrónica</h3>
-                              <p className="text-gray-600 mb-4">
-                                Componente de firma electrónica en desarrollo.
-                                Esta funcionalidad estará disponible próximamente.
-                              </p>
-                              <Button
-                                onClick={() => {
-                                  alert('Firma simulada completada. El contrato será activado.');
-                                  refreshContracts();
-                                }}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Firmar Contrato (Simulado)
-                              </Button>
-                            </div>
+                            <ElectronicSignature
+                              contractId={contract.id}
+                              documentName={`Contrato de Arriendo - ${contract.contractNumber}`}
+                              documentHash={`hash-${contract.id}`}
+                              onSignatureComplete={() => {
+                                // Refrescar contratos después de firmar
+                                refreshContracts();
+                              }}
+                            />
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -730,7 +619,7 @@ export default function TenantContractsPage() {
                     {contract.status === 'ACTIVE' && (
                       <Button variant="outline" size="sm">
                         <AlertTriangle className="w-4 h-4 mr-2" />
-                        Solicitar Mantenimiento
+                      Solicitar Mantenimiento
                     </Button>
                   )}
 

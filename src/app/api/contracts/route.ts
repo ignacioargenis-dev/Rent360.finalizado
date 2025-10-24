@@ -310,6 +310,9 @@ export async function POST(request: NextRequest) {
       tenantId: contract.tenantId,
     });
 
+    // Nota: La firma electrónica se inicia manualmente por los usuarios usando el componente ElectronicSignature
+    // Esto permite mayor control sobre cuándo y cómo se inician las firmas
+
     return NextResponse.json(
       {
         message: 'Contrato creado exitosamente',
