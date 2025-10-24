@@ -876,7 +876,7 @@ export default function OwnerPropertiesPage() {
                 ¿Estás seguro de que quieres eliminar la propiedad:
               </p>
               <p className="font-semibold text-gray-900">
-                "{deleteConfirmProperty?.title}"
+                {deleteConfirmProperty?.title}
               </p>
               <p className="text-sm text-gray-600 mt-2">
                 Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
