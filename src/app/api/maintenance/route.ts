@@ -42,15 +42,15 @@ export async function GET(request: NextRequest) {
     // Construir filtros basados en el rol del usuario
     const where: any = {};
 
-    if (user.role === 'tenant') {
+    if (user.role === 'TENANT') {
       // Inquilinos solo ven sus propias solicitudes
       where.requestedBy = user.id;
-    } else if (user.role === 'owner') {
+    } else if (user.role === 'OWNER') {
       // Propietarios ven solicitudes de sus propiedades
       where.property = {
         ownerId: user.id,
       };
-    } else if (user.role === 'broker') {
+    } else if (user.role === 'BROKER') {
       // Brokers ven solicitudes de propiedades que manejan
       where.property = {
         brokerId: user.id,

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Verificar que sea un corredor
-    if (user.role !== 'broker') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }

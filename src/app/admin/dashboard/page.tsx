@@ -516,12 +516,12 @@ export default function AdminDashboard() {
                       {user ? `${user.name} (${user.role})` : 'No autenticado'}
                     </p>
                   </div>
-                  <Badge variant={user?.role === 'admin' ? 'default' : 'destructive'}>
+                  <Badge variant={user?.role === 'ADMIN' ? 'default' : 'destructive'}>
                     {user?.role || 'Sin rol'}
                   </Badge>
                 </div>
 
-                {user?.role !== 'admin' && (
+                {user?.role !== 'ADMIN' && (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">
                       ⚠️ Tu rol actual es <strong>{user?.role}</strong>. Si deberías ser
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                   >
                     Limpiar Sesión y Reintentar
                   </Button>
-                  {user?.role !== 'admin' && (
+                  {user?.role !== 'ADMIN' && (
                     <Button
                       variant="default"
                       onClick={async () => {
@@ -564,7 +564,7 @@ export default function AdminDashboard() {
                           const response = await fetch('/api/admin/user-role', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ role: 'admin' }),
+                            body: JSON.stringify({ role: 'ADMIN' }),
                           });
 
                           if (response.ok) {

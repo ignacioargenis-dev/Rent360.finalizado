@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== 'broker') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requiere rol de corredor.' },
         { status: 403 }

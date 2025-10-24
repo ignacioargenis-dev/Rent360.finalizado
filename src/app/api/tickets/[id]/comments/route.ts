@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'support' && ticket.userId !== user.id) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPPORT' && ticket.userId !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver este ticket' },
         { status: 403 }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && user.role !== 'support' && ticket.userId !== user.id) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPPORT' && ticket.userId !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permisos para comentar en este ticket' },
         { status: 403 }

@@ -18,41 +18,44 @@ const nextConfig = {
           }
         : false,
   },
-  // Configuración experimental
+  // Configuración experimental - simplificada para estabilidad
   experimental: {
     serverComponentsExternalPackages: ['sharp'],
     optimizeCss: false, // Deshabilitado para evitar problemas con Tailwind
     scrollRestoration: true,
+    // Deshabilitar características experimentales problemáticas
+    optimizePackageImports: false,
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
-  // ⚠️ TEMPORALMENTE DESHABILITADO: generateBuildId dinámico puede causar problemas con chunks
-  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-  // generateBuildId: async () => {
-  //   return 'build-' + Date.now();
-  // },
+  // GenerateBuildId fijo para estabilidad de chunks
+  generateBuildId: async () => {
+    return 'rent360-stable-v1.0';
+  },
   // ⚠️ TEMPORALMENTE DESHABILITADO: output standalone para debugging
   // TODO: Re-habilitar cuando se confirme que el dashboard funciona
   // output: 'standalone', // Deshabilitado para usar next start
   poweredByHeader: false,
-  // ⚠️ TEMPORALMENTE DESHABILITADO: Configuración webpack personalizada para debugging
-  // TODO: Re-habilitar cuando se confirme que el dashboard funciona
-  // webpack: (config, { isServer }) => {
-  //   // Solo mantener fallbacks críticos para evitar problemas de inicialización
-  //   if (!isServer) {
-  //     config.resolve.fallback = {
-  //       fs: false,
-  //       net: false,
-  //       tls: false,
-  //     };
-  //   }
+  // Configuración webpack simplificada para estabilidad
+  webpack: (config, { isServer }) => {
+    // Solo mantener fallbacks críticos para evitar problemas de inicialización
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
 
-  //   // Remover externals complejos que pueden causar problemas - simplificar configuración
-  //   config.externals = config.externals || [];
-  //   if (!isServer) {
-  //     config.externals.push('redis', 'sqlite3');
-  //   }
-
-  //   return config;
-  // },
+    // Configuración básica sin externals complejos
+    return config;
+  },
   // Configuración optimizada de imágenes
   images: {
     domains: [

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { role } = body;
 
-    if (!role || !['admin', 'tenant', 'owner', 'broker', 'provider', 'maintenance', 'runner', 'support'].includes(role)) {
+    if (!role || !['ADMIN', 'TENANT', 'OWNER', 'BROKER', 'PROVIDER', 'MAINTENANCE', 'RUNNER', 'SUPPORT'].includes(role.toUpperCase())) {
       return NextResponse.json(
         { error: 'Rol inválido' },
         { status: 400 }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         id: decoded.id,
         email: decoded.email,
         name: decoded.name,
-        role: role,
+        role: role.toUpperCase(),
         createdAt: decoded.createdAt,
       },
       process.env.JWT_SECRET,

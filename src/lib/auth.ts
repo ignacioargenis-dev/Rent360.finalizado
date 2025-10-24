@@ -187,24 +187,28 @@ export function setAuthCookies(response: any, accessToken: string, refreshToken:
   });
 
   // Usar la API nativa de Next.js response.cookies.set()
-  // Sin especificar 'domain' para que use el dominio actual automáticamente
+  // Configurar domain específico para producción en DigitalOcean
+
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: isSecure, // Siempre secure en producción/DigitalOcean
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+
+  // Configurar domain específico para DigitalOcean
+  if (isDigitalOcean) {
+    cookieOptions.domain = '.rent360management-2yxgz.ondigitalocean.app';
+  }
 
   response.cookies.set('auth-token', accessToken, {
-    httpOnly: true,
-    secure: isProduction, // Solo secure en HTTPS real
-    sameSite: 'lax',
+    ...cookieOptions,
     maxAge: 60 * 60, // 1 hora
-    path: '/',
-    // No especificar domain para que use el dominio actual automáticamente
   });
 
   response.cookies.set('refresh-token', refreshToken, {
-    httpOnly: true,
-    secure: isProduction, // Solo secure en HTTPS real
-    sameSite: 'lax',
+    ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60, // 7 días
-    path: '/',
-    // No especificar domain para que use el dominio actual automáticamente
   });
 
   console.error('✅ setAuthCookies: Cookies establecidas correctamente');
@@ -233,4 +237,16 @@ export function clearAuthCookies(response: any) {
   });
 
   console.error('✅ clearAuthCookies: Cookies limpiadas correctamente');
+}
+
+// Función para normalizar roles (asegura mayúsculas)
+export function normalizeRole(role: string): string {
+  if (!role) return role;
+  return role.toUpperCase();
+}
+
+// Función para verificar rol específico (normalizada)
+export function hasSpecificRole(user: any, expectedRole: string): boolean {
+  if (!user || !user.role) return false;
+  return normalizeRole(user.role) === normalizeRole(expectedRole);
 }

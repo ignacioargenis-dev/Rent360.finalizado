@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtrar según el rol
-    if (user.role !== 'ADMIN' && user.role !== 'support') {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPPORT') {
       where.userId = user.id;
     }
 
