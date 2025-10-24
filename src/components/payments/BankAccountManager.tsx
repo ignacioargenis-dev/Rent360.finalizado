@@ -374,7 +374,7 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un banco" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-48 overflow-y-auto">
                   {CHILEAN_BANKS.map(bank => (
                     <SelectItem key={bank.code} value={bank.code}>
                       {bank.name}

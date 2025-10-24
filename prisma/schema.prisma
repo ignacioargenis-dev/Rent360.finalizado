@@ -59,7 +59,7 @@ model User {
   updatedAt       DateTime  @updatedAt
 
   // Nuevos campos para cuentas bancarias
-  bankAccount     BankAccount?
+  bankAccounts    BankAccount[]
 
   // Relaciones existentes
   properties        Property[]
@@ -260,6 +260,9 @@ model Contract {
   endDate        DateTime
   monthlyRent    Float
   depositAmount  Float
+  tenantRut      String?       // RUT del inquilino
+  propertyAddress String?      // Dirección completa de la propiedad
+  propertyRolNumber String?    // Número de rol fiscal de la propiedad
   commission     Float?
   status         String @default("DRAFT")
   terms          String?
@@ -683,13 +686,14 @@ model Document {
 // Cuenta bancaria para todos los usuarios
 model BankAccount {
   id            String   @id @default(cuid())
-  userId        String   @unique
+  userId        String
   bank          String
   accountType   String
   accountNumber String
   holderName    String
   rut           String
   isVerified    Boolean  @default(false)
+  isPrimary     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -697,6 +701,7 @@ model BankAccount {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("bank_accounts")
+  @@index([userId])
 }
 
 // Prestador de Mantenimiento

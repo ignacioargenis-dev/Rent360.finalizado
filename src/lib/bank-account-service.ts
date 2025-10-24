@@ -180,36 +180,47 @@ export class BankAccountService {
         await this.unsetPrimaryAccount(userId);
       }
 
-      // Crear registro de cuenta bancaria
+      // Crear registro de cuenta bancaria en la base de datos
       const bankAccount = await db.$transaction(async (tx: any) => {
-        // Aquí iría la creación del registro en una tabla bank_accounts
-        // Por ahora, simulamos con un objeto
+        // Crear el registro en la tabla bank_accounts
+        const dbAccount = await tx.bankAccount.create({
+          data: {
+            userId,
+            bank: accountData.bankCode,
+            accountType: accountData.accountType,
+            accountNumber: accountData.accountNumber, // Guardar el número completo
+            holderName: accountData.accountHolder,
+            rut: accountData.rut || '',
+            isVerified: false,
+            isPrimary: accountData.isPrimary || false,
+          },
+        });
 
+        // Transformar al formato esperado
         const newAccount: BankAccountInfo = {
-          id: `ba_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          userId,
-          bankCode: accountData.bankCode,
+          id: dbAccount.id,
+          userId: dbAccount.userId,
+          bankCode: dbAccount.bank,
           bankName: bankInfo.name,
           country: 'CL',
-          accountType: accountData.accountType,
-          accountNumber: this.maskAccountNumber(accountData.accountNumber),
-          accountHolder: accountData.accountHolder,
-          rut: accountData.rut,
+          accountType: dbAccount.accountType as 'checking' | 'savings' | 'business',
+          accountNumber: this.maskAccountNumber(dbAccount.accountNumber),
+          accountHolder: dbAccount.holderName,
+          rut: dbAccount.rut,
           branchCode: accountData.branchCode,
           isPrimary: accountData.isPrimary || false,
-          isVerified: false,
+          isVerified: dbAccount.isVerified,
           verificationStatus: 'pending',
-          verificationMethod: 'api',
+          verificationMethod: 'manual',
           metadata: {
             verificationAttempts: 0,
             riskScore: 0,
           },
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: dbAccount.createdAt,
+          updatedAt: dbAccount.updatedAt,
         };
 
-        // En producción, guardar en BD
-        logger.info('Cuenta bancaria registrada', {
+        logger.info('Cuenta bancaria registrada en BD', {
           userId,
           bankCode: accountData.bankCode,
           accountType: accountData.accountType,
@@ -238,35 +249,33 @@ export class BankAccountService {
    */
   static async getUserBankAccounts(userId: string): Promise<BankAccountInfo[]> {
     try {
-      // En producción, consultar tabla bank_accounts
-      // Por ahora, retornar cuentas simuladas
+      // Consultar tabla bank_accounts real
+      const accounts = await db.bankAccount.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      });
 
-      const mockAccounts: BankAccountInfo[] = [
-        {
-          id: 'ba_001',
-          userId,
-          bankCode: '012',
-          bankName: 'Banco del Estado de Chile',
-          country: 'CL',
-          accountType: 'checking',
-          accountNumber: '****1234',
-          accountHolder: 'Usuario Demo',
-          rut: '12.345.678-9',
-          isPrimary: true,
-          isVerified: true,
-          verificationStatus: 'verified',
-          verificationMethod: 'api',
-          metadata: {
-            lastVerificationAttempt: new Date(),
-            verificationAttempts: 1,
-            riskScore: 0.1,
-          },
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 días atrás
-          updatedAt: new Date(),
+      // Transformar al formato esperado por el frontend
+      return accounts.map(account => ({
+        id: account.id,
+        userId: account.userId,
+        bankCode: account.bank, // El campo bank contiene el código
+        bankName: CHILEAN_BANK_CODES[account.bank as keyof typeof CHILEAN_BANK_CODES] || account.bank,
+        country: 'CL',
+        accountType: account.accountType as 'checking' | 'savings' | 'business',
+        accountNumber: this.maskAccountNumber(account.accountNumber),
+        accountHolder: account.holderName,
+        rut: account.rut,
+        isPrimary: account.isPrimary,
+        isVerified: account.isVerified,
+        verificationStatus: account.isVerified ? 'verified' : 'pending',
+        verificationMethod: 'manual',
+        metadata: {
+          verificationAttempts: 0,
         },
-      ];
-
-      return mockAccounts.filter(account => account.userId === userId);
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
+      }));
     } catch (error) {
       logger.error('Error obteniendo cuentas bancarias', {
         error: error instanceof Error ? error.message : String(error),
@@ -524,7 +533,12 @@ export class BankAccountService {
    * Quita la cuenta primaria anterior
    */
   private static async unsetPrimaryAccount(userId: string): Promise<void> {
-    // En producción, actualizar todas las cuentas del usuario
+    // Actualizar todas las cuentas del usuario para quitar la marca de primaria
+    await db.bankAccount.updateMany({
+      where: { userId, isPrimary: true },
+      data: { isPrimary: false },
+    });
+
     logger.info('Cuenta primaria anterior removida', { userId });
   }
 

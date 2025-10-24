@@ -26,6 +26,7 @@ import {
   RefreshCw,
   CreditCard,
   X,
+  Settings,
 } from 'lucide-react';
 import { Payment, Property, Contract } from '@/types';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
@@ -98,6 +99,7 @@ export default function OwnerPaymentsPage() {
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [showFiltersDialog, setShowFiltersDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -702,6 +704,18 @@ Rent360 - Sistema de Gestión Inmobiliaria
       />
 
       <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div></div>
+          <Button
+            variant="outline"
+            onClick={() => setShowConfigModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            Configuración
+          </Button>
+        </div>
+
         <Tabs defaultValue="payments" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="payments">Pagos Recibidos</TabsTrigger>
@@ -870,10 +884,10 @@ Rent360 - Sistema de Gestión Inmobiliaria
                   <div className="flex-1">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
+                      <Input
                         type="text"
                         placeholder="Buscar por propiedad o inquilino..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="pl-10 bg-white text-gray-900"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                       />
@@ -1608,6 +1622,135 @@ Rent360 - Sistema de Gestión Inmobiliaria
               Exportar Pagos
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Configuración de Pagos */}
+      <Dialog open={showConfigModal} onOpenChange={setShowConfigModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configuración de Pagos</DialogTitle>
+            <DialogDescription>
+              Configura los parámetros generales para la gestión de pagos
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Configuración de Plazos de Pago */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Plazos de Pago</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="gracePeriod">Período de Gracia (días)</Label>
+                    <Input
+                      id="gracePeriod"
+                      type="number"
+                      defaultValue="3"
+                      min="0"
+                      max="30"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lateFee">Multa por Atraso (%)</Label>
+                    <Input
+                      id="lateFee"
+                      type="number"
+                      defaultValue="5"
+                      min="0"
+                      max="50"
+                      step="0.1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Configuración de Métodos de Pago */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Métodos de Pago Aceptados</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="transfer" defaultChecked className="rounded" />
+                  <Label htmlFor="transfer">Transferencia Bancaria</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="cash" defaultChecked className="rounded" />
+                  <Label htmlFor="cash">Efectivo</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="check" className="rounded" />
+                  <Label htmlFor="check">Cheque</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="digital" defaultChecked className="rounded" />
+                  <Label htmlFor="digital">Pagos Digitales (Khipu, etc.)</Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Configuración de Recordatorios */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Recordatorios Automáticos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="autoReminders" defaultChecked className="rounded" />
+                  <Label htmlFor="autoReminders">Habilitar recordatorios automáticos</Label>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="firstReminder">Primer Recordatorio (días antes)</Label>
+                    <Input
+                      id="firstReminder"
+                      type="number"
+                      defaultValue="7"
+                      min="1"
+                      max="30"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="secondReminder">Segundo Recordatorio (días antes)</Label>
+                    <Input
+                      id="secondReminder"
+                      type="number"
+                      defaultValue="3"
+                      min="1"
+                      max="30"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="urgentReminder">Recordatorio Urgente (días antes)</Label>
+                    <Input
+                      id="urgentReminder"
+                      type="number"
+                      defaultValue="1"
+                      min="0"
+                      max="7"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfigModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => {
+              setSuccessMessage('Configuración de pagos guardada correctamente');
+              setShowConfigModal(false);
+              setTimeout(() => setSuccessMessage(''), 3000);
+            }}>
+              Guardar Configuración
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </UnifiedDashboardLayout>

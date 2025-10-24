@@ -31,6 +31,9 @@ import {
   Search,
   Filter,
   Download,
+  Trash2,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User } from '@/types';
@@ -99,6 +102,24 @@ export default function OwnerPropertiesPage() {
     format: 'csv', // 'csv', 'json'
     status: 'all', // filtro por estado
   });
+  const [justDeletedProperty, setJustDeletedProperty] = useState(false);
+  const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [deleteConfirmProperty, setDeleteConfirmProperty] = useState<Property | null>(null);
+
+  // Detectar si se regresa de eliminar una propiedad
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refresh = urlParams.get('refresh');
+    const deleted = urlParams.get('deleted');
+
+    if (refresh === 'true' && deleted === 'true') {
+      setJustDeletedProperty(true);
+      // Limpiar la URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Recargar datos inmediatamente
+      loadPropertiesData();
+    }
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -176,6 +197,66 @@ export default function OwnerPropertiesPage() {
 
     setFilteredProperties(filtered);
   }, [properties, searchTerm, statusFilter, typeFilter]);
+
+  const handleDeleteClick = (property: Property) => {
+    setDeleteConfirmProperty(property);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmProperty) return;
+
+    const propertyId = deleteConfirmProperty.id;
+    const propertyTitle = deleteConfirmProperty.title;
+    const propertyToDelete = deleteConfirmProperty;
+
+    // Cerrar modal
+    setDeleteConfirmProperty(null);
+
+    // Eliminar optimísticamente del estado local
+    setProperties(prev => prev.filter(p => p.id !== propertyId));
+    setDeletingPropertyId(propertyId);
+
+    try {
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        logger.info('Property deleted successfully', { propertyId });
+        // Mostrar mensaje de éxito
+        alert(`✅ Propiedad "${propertyTitle}" eliminada exitosamente.`);
+
+        // Recargar datos para asegurar consistencia
+        await loadPropertiesData();
+      } else {
+        // Si hay error, restaurar la propiedad
+        setProperties(prev => [...prev, propertyToDelete].sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ));
+
+        const errorData = await response.json().catch(() => ({}));
+        logger.error('Error deleting property', {
+          propertyId,
+          error: errorData.error || 'Error desconocido',
+        });
+        alert(`❌ Error al eliminar la propiedad: ${errorData.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      // Restaurar la propiedad en caso de error de red
+      setProperties(prev => [...prev, propertyToDelete].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ));
+
+      logger.error('Error deleting property', { error, propertyId });
+      alert('❌ Error de conexión al eliminar la propiedad');
+    } finally {
+      setDeletingPropertyId(null);
+    }
+  };
 
   const loadPropertiesData = async () => {
     try {
@@ -654,6 +735,16 @@ export default function OwnerPropertiesPage() {
                       <Edit className="w-4 h-4 mr-1" />
                       Editar
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300"
+                      onClick={() => handleDeleteClick(property)}
+                      disabled={deletingPropertyId === property.id}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      {deletingPropertyId === property.id ? 'Eliminando...' : 'Eliminar'}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -762,6 +853,61 @@ export default function OwnerPropertiesPage() {
               <Button onClick={handleConfirmExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar Propiedades
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de confirmación de eliminación */}
+        <Dialog open={!!deleteConfirmProperty} onOpenChange={() => setDeleteConfirmProperty(null)}>
+          <DialogContent className="max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Eliminar Propiedad</h3>
+                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                ¿Estás seguro de que quieres eliminar la propiedad:
+              </p>
+              <p className="font-semibold text-gray-900">
+                "{deleteConfirmProperty?.title}"
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmProperty(null)}
+                disabled={deletingPropertyId !== null}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={deletingPropertyId !== null}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deletingPropertyId ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </>
+                )}
               </Button>
             </div>
           </DialogContent>

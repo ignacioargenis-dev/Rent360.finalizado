@@ -283,28 +283,50 @@ export async function PUT(request: NextRequest) {
           where: { id: providerId },
           select: { userId: true },
         });
-        
+
         if (provider) {
-          result = await db.bankAccount.update({
+          // Buscar la cuenta bancaria primaria del usuario, o la primera si no hay primaria
+          const bankAccount = await db.bankAccount.findFirst({
             where: { userId: provider.userId },
-            data: {
-              isVerified: validatedData.isVerified,
-            },
+            orderBy: [
+              { isPrimary: 'desc' }, // Primero las primarias
+              { createdAt: 'asc' }   // Luego por antigüedad
+            ],
           });
+
+          if (bankAccount) {
+            result = await db.bankAccount.update({
+              where: { id: bankAccount.id },
+              data: {
+                isVerified: validatedData.isVerified,
+              },
+            });
+          }
         }
       } else {
         const provider = await db.serviceProvider.findUnique({
           where: { id: providerId },
           select: { userId: true },
         });
-        
+
         if (provider) {
-          result = await db.bankAccount.update({
+          // Buscar la cuenta bancaria primaria del usuario, o la primera si no hay primaria
+          const bankAccount = await db.bankAccount.findFirst({
             where: { userId: provider.userId },
-            data: {
-              isVerified: validatedData.isVerified,
-            },
+            orderBy: [
+              { isPrimary: 'desc' }, // Primero las primarias
+              { createdAt: 'asc' }   // Luego por antigüedad
+            ],
           });
+
+          if (bankAccount) {
+            result = await db.bankAccount.update({
+              where: { id: bankAccount.id },
+              data: {
+                isVerified: validatedData.isVerified,
+              },
+            });
+          }
         }
       }
     }

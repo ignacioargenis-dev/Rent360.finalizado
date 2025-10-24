@@ -18,11 +18,14 @@ const createContractSchema = z.object({
   propertyId: z.string().min(1, 'ID de propiedad requerido'),
   tenantId: z.string().min(1, 'ID de inquilino requerido'),
   brokerId: z.string().optional(), // ID del corredor (opcional)
-  startDate: z.string().datetime('Fecha de inicio inválida'),
-  endDate: z.string().datetime('Fecha de fin inválida'),
+  startDate: z.string().min(1, 'Fecha de inicio requerida'),
+  endDate: z.string().min(1, 'Fecha de fin requerida'),
   rentAmount: z.number().positive('El monto de renta debe ser positivo'),
   depositAmount: z.number().min(0, 'El depósito no puede ser negativo'),
   terms: z.string().min(10, 'Los términos deben tener al menos 10 caracteres'),
+  tenantRut: z.string().optional(), // RUT del inquilino
+  propertyAddress: z.string().optional(), // Dirección completa de la propiedad
+  propertyRolNumber: z.string().optional(), // Número de rol de la propiedad
   status: z
     .enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'TERMINATED', 'CANCELLED'])
     .default('DRAFT'),
@@ -244,14 +247,20 @@ export async function POST(request: NextRequest) {
     // Crear contrato
     const contract = await db.contract.create({
       data: {
-        ...validatedData,
+        propertyId: validatedData.propertyId,
+        tenantId: validatedData.tenantId,
         ownerId: property.ownerId,
+        brokerId: validatedData.brokerId || null,
         startDate,
         endDate,
-        contractNumber: `CON-${Date.now()}`,
         monthlyRent: validatedData.rentAmount,
         depositAmount: validatedData.depositAmount,
-        brokerId: validatedData.brokerId || null, // Asegurar null en lugar de undefined
+        tenantRut: validatedData.tenantRut || null,
+        propertyAddress: validatedData.propertyAddress || null,
+        propertyRolNumber: validatedData.propertyRolNumber || null,
+        terms: validatedData.terms,
+        status: validatedData.status,
+        contractNumber: `CON-${Date.now()}`,
       },
       include: {
         property: {

@@ -44,6 +44,9 @@ interface Tenant {
   email: string;
   phone?: string;
   rut?: string;
+  address?: string;
+  city?: string;
+  commune?: string;
 }
 
 interface Broker {
@@ -55,7 +58,8 @@ interface Broker {
 
 // Función para generar términos y condiciones base según legislación chilena
 const generateBaseContractTerms = (
-  propertyTitle: string = '[PROPIEDAD]',
+  propertyAddress: string = '[DIRECCIÓN_PROPIEDAD]',
+  propertyRol: string = '[ROL_PROPIEDAD]',
   tenantName: string = '[INQUILINO]',
   ownerName: string = '[PROPIETARIO]',
   startDate: string = '[FECHA_INICIO]',
@@ -68,7 +72,7 @@ const generateBaseContractTerms = (
 Entre las partes que al final aparecen firmando, se ha convenido el siguiente contrato de arriendo de vivienda, regido por la Ley N° 18.101 y demás normas aplicables.
 
 PRIMERA: OBJETO DEL CONTRATO
-El ARRENDADOR da en arriendo al ARRENDATARIO, y este lo recibe, la propiedad ubicada en ${propertyTitle}, para ser destinada exclusivamente a habitación familiar.
+El ARRENDADOR da en arriendo al ARRENDATARIO, y este lo recibe, la propiedad ubicada en ${propertyAddress}${propertyRol ? `, Rol N° ${propertyRol}` : ''}, para ser destinada exclusivamente a habitación familiar.
 
 SEGUNDA: PLAZO DEL CONTRATO
 El presente contrato tendrá una duración de [DURACIÓN] meses, contados desde el ${startDate} hasta el ${endDate}, prorrogándose automáticamente por períodos iguales, salvo aviso de no renovación con anticipación de 90 días.
@@ -145,6 +149,9 @@ export default function NewContractPage() {
   const [endDate, setEndDate] = useState<string>('');
   const [monthlyRent, setMonthlyRent] = useState<string>('');
   const [deposit, setDeposit] = useState<string>('');
+  const [propertyRolNumber, setPropertyRolNumber] = useState<string>('');
+  const [tenantRut, setTenantRut] = useState<string>('');
+  const [propertyAddress, setPropertyAddress] = useState<string>('');
   const [terms, setTerms] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [searchTenant, setSearchTenant] = useState<string>('');
@@ -157,7 +164,8 @@ export default function NewContractPage() {
       const selectedTenant = tenants.find(t => t.id === selectedTenantId);
 
       const baseTerms = generateBaseContractTerms(
-        selectedProperty?.title || '[PROPIEDAD]',
+        selectedProperty ? `${selectedProperty.address}, ${selectedProperty.city}` : '[DIRECCIÓN_PROPIEDAD]',
+        propertyRolNumber || '[ROL_PROPIEDAD]',
         selectedTenant?.name || '[INQUILINO]',
         user?.name || '[PROPIETARIO]',
         startDate || '[FECHA_INICIO]',
@@ -177,6 +185,7 @@ export default function NewContractPage() {
     endDate,
     monthlyRent,
     deposit,
+    propertyRolNumber,
     user,
     terms,
   ]);
@@ -187,7 +196,8 @@ export default function NewContractPage() {
     const selectedTenant = tenants.find(t => t.id === selectedTenantId);
 
     const updatedTerms = generateBaseContractTerms(
-      selectedProperty?.title || '[PROPIEDAD]',
+      selectedProperty ? `${selectedProperty.address}, ${selectedProperty.city}` : '[DIRECCIÓN_PROPIEDAD]',
+      propertyRolNumber || '[ROL_PROPIEDAD]',
       selectedTenant?.name || '[INQUILINO]',
       user?.name || '[PROPIETARIO]',
       startDate || '[FECHA_INICIO]',
@@ -293,6 +303,38 @@ export default function NewContractPage() {
     }
   }, [searchParams]);
 
+  // Auto-llenar dirección de la propiedad cuando se selecciona
+  useEffect(() => {
+    if (selectedPropertyId) {
+      const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+      if (selectedProperty) {
+        const fullAddress = `${selectedProperty.address}, ${selectedProperty.city}`;
+        setPropertyAddress(fullAddress);
+      }
+    } else {
+      setPropertyAddress('');
+    }
+  }, [selectedPropertyId, properties]);
+
+  // Auto-llenar RUT y domicilio del inquilino cuando se selecciona
+  useEffect(() => {
+    if (selectedTenantId) {
+      const selectedTenant = tenants.find(t => t.id === selectedTenantId);
+      if (selectedTenant) {
+        setTenantRut(selectedTenant.rut || '');
+        // Construir dirección completa del inquilino
+        const tenantAddress = [
+          selectedTenant.address,
+          selectedTenant.city,
+          selectedTenant.commune
+        ].filter(Boolean).join(', ');
+        // Aquí podríamos agregar el tenantAddress si queremos mostrarlo, pero por ahora solo usamos RUT
+      }
+    } else {
+      setTenantRut('');
+    }
+  }, [selectedTenantId, tenants]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -307,10 +349,13 @@ export default function NewContractPage() {
       const contractData: any = {
         propertyId: selectedPropertyId,
         tenantId: selectedTenantId,
+        tenantRut: tenantRut || null,
+        propertyAddress: propertyAddress || null,
         startDate,
         endDate,
         rentAmount: parseFloat(monthlyRent),
         depositAmount: parseFloat(deposit) || 0,
+        propertyRolNumber: propertyRolNumber || null,
         terms: terms || 'Contrato de arriendo estándar',
       };
 
@@ -399,10 +444,15 @@ export default function NewContractPage() {
                     <p className="text-sm text-gray-600">
                       {selectedProperty.address}, {selectedProperty.city}
                     </p>
-                    <div className="flex gap-4 mt-2 text-sm">
-                      <span>Renta: ${selectedProperty.price.toLocaleString()}</span>
-                      <span>Garantía: ${selectedProperty.deposit.toLocaleString()}</span>
-                    </div>
+                  <div className="flex gap-4 mt-2 text-sm">
+                    <span>Renta: ${selectedProperty.price.toLocaleString()}</span>
+                    <span>Garantía: ${selectedProperty.deposit.toLocaleString()}</span>
+                  </div>
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      <strong>Dirección completa:</strong> {propertyAddress}
+                    </p>
+                  </div>
                   </div>
                 )}
               </CardContent>
@@ -459,7 +509,7 @@ export default function NewContractPage() {
                           {tenant.phone && (
                             <p className="text-sm text-gray-600">📱 {tenant.phone}</p>
                           )}
-                          {tenant.rut && <p className="text-sm text-gray-600">🆔 {tenant.rut}</p>}
+                          {tenantRut && <p className="text-sm text-gray-600">🆔 RUT: {tenantRut}</p>}
                         </>
                       ) : null;
                     })()}
@@ -589,6 +639,19 @@ export default function NewContractPage() {
                     onChange={e => setDeposit(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="propertyRolNumber">Número de Rol de la Propiedad</Label>
+                <Input
+                  id="propertyRolNumber"
+                  placeholder="Ej: 123-456-789"
+                  value={propertyRolNumber}
+                  onChange={e => setPropertyRolNumber(e.target.value)}
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Número de rol fiscal de la propiedad (opcional, para identificación tributaria)
+                </p>
               </div>
 
               <div>

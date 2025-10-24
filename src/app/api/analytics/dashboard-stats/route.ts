@@ -169,6 +169,105 @@ async function fetchStatsData(user: any, period: string) {
       stats.monthlyRevenue = ownerRevenue._sum.amount || 0;
       stats.completedTasks = ownerCompletedTasks;
       stats.pendingTasks = ownerPendingTasks;
+
+      // Datos detallados para reportes
+      stats.properties = await db.property.findMany({
+        where: { ownerId: user.id },
+        select: {
+          id: true,
+          title: true,
+          address: true,
+          city: true,
+          price: true,
+          status: true,
+          createdAt: true,
+          _count: {
+            select: {
+              contracts: {
+                where: { status: 'ACTIVE' }
+              }
+            }
+          }
+        },
+        take: 10
+      }).then(properties => properties.map(prop => ({
+        title: prop.title,
+        location: `${prop.address}, ${prop.city}`,
+        revenue: prop.price,
+        occupancy: prop._count.contracts > 0 ? 100 : 0,
+        status: prop.status
+      })));
+
+      // Inquilinos activos
+      stats.tenants = await db.contract.findMany({
+        where: {
+          ownerId: user.id,
+          status: 'ACTIVE'
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          property: {
+            select: {
+              title: true
+            }
+          }
+        },
+        take: 20
+      }).then(contracts => contracts
+        .filter(contract => contract.tenant && contract.property) // Filtrar contratos sin tenant o property
+        .map(contract => ({
+          name: contract.tenant!.name,
+          email: contract.tenant!.email,
+          property: contract.property!.title,
+          status: 'ACTIVE'
+        })));
+
+      // Datos de mantenimiento
+      const maintenanceStats = await db.maintenance.aggregate({
+        where: { property: { ownerId: user.id } },
+        _count: { _all: true },
+        _avg: { estimatedCost: true }
+      });
+
+      stats.maintenanceRequests = await db.maintenance.count({
+        where: {
+          property: { ownerId: user.id },
+          status: { in: ['PENDING', 'IN_PROGRESS'] }
+        }
+      });
+
+      stats.maintenanceCompleted = await db.maintenance.count({
+        where: {
+          property: { ownerId: user.id },
+          status: 'COMPLETED'
+        }
+      });
+
+      stats.averageMaintenanceCost = maintenanceStats._avg.estimatedCost || 0;
+
+      // Datos financieros detallados
+      const paymentsByMonth = await db.payment.groupBy({
+        by: ['createdAt'],
+        where: {
+          contract: { ownerId: user.id },
+          status: 'PAID',
+          createdAt: { gte: startDate }
+        },
+        _sum: { amount: true },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      stats.financialData = paymentsByMonth.map(payment => ({
+        month: payment.createdAt.toISOString().slice(0, 7),
+        revenue: payment._sum.amount || 0
+      }));
+
       break;
 
     case 'BROKER':

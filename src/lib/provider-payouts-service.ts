@@ -313,26 +313,32 @@ export class ProviderPayoutsService {
           include: {
             user: {
               include: {
-                bankAccount: true
+                bankAccounts: {
+                  where: { isPrimary: true },
+                  take: 1
+                }
               }
             }
           }
         });
 
-        bankAccount = provider?.user?.bankAccount;
+        bankAccount = provider?.user?.bankAccounts?.[0];
       } else {
         const provider = await db.serviceProvider.findUnique({
           where: { id: payout.recipientId },
           include: {
             user: {
               include: {
-                bankAccount: true
+                bankAccounts: {
+                  where: { isPrimary: true },
+                  take: 1
+                }
               }
             }
           }
         });
 
-        bankAccount = provider?.user?.bankAccount;
+        bankAccount = provider?.user?.bankAccounts?.[0];
       }
 
       if (!bankAccount) {
@@ -386,7 +392,10 @@ export class ProviderPayoutsService {
             include: {
             user: {
               include: {
-                bankAccount: true
+                bankAccounts: {
+                  where: { isPrimary: true },
+                  take: 1
+                }
               }
             }
             }
@@ -395,7 +404,10 @@ export class ProviderPayoutsService {
             include: {
             user: {
               include: {
-                bankAccount: true
+                bankAccounts: {
+                  where: { isPrimary: true },
+                  take: 1
+                }
               }
             }
             }

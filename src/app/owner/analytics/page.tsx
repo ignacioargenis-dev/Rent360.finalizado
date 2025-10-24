@@ -562,21 +562,41 @@ export default function AnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-blue-50 rounded-lg">
                         <div className="text-2xl font-bold text-blue-600">
-                          {data?.tenantSatisfaction || 4.2}
-                        </div>
-                        <div className="text-sm text-gray-600">Satisfacción Promedio</div>
-                      </div>
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">
-                          {data?.tenants?.length || 12}
+                          {data?.tenants?.length || 0}
                         </div>
                         <div className="text-sm text-gray-600">Inquilinos Activos</div>
                       </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {data?.totalContracts || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Contratos Activos</div>
+                      </div>
                       <div className="text-center p-4 bg-yellow-50 rounded-lg">
                         <div className="text-2xl font-bold text-yellow-600">
-                          {data?.paymentDelays || 2}
+                          {data?.pendingTasks || 0}
                         </div>
-                        <div className="text-sm text-gray-600">Retrasos de Pago</div>
+                        <div className="text-sm text-gray-600">Tareas Pendientes</div>
+                      </div>
+                    </div>
+
+                    {/* Lista de inquilinos */}
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-3">Inquilinos Activos</h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {data?.tenants?.map((tenant: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="font-medium">{tenant.name}</p>
+                              <p className="text-sm text-gray-600">{tenant.property}</p>
+                            </div>
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              Activo
+                            </Badge>
+                          </div>
+                        )) || (
+                          <p className="text-gray-500 text-center py-4">No hay inquilinos activos</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -592,17 +612,40 @@ export default function AnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-red-50 rounded-lg">
                         <div className="text-2xl font-bold text-red-600">
-                          {data?.maintenanceRequests || 8}
+                          {data?.maintenanceRequests || 0}
                         </div>
                         <div className="text-sm text-gray-600">Solicitudes Pendientes</div>
                       </div>
-                      <div className="text-center p-4 bg-orange-50 rounded-lg">
-                        <div className="text-2xl font-bold text-orange-600">2.4 días</div>
-                        <div className="text-sm text-gray-600">Tiempo Promedio de Respuesta</div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {data?.maintenanceCompleted || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Solicitudes Completadas</div>
                       </div>
                       <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">94%</div>
-                        <div className="text-sm text-gray-600">Resolución Satisfactoria</div>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {data?.completedTasks ? Math.round((data.completedTasks / (data.completedTasks + data.pendingTasks || 1)) * 100) : 0}%
+                        </div>
+                        <div className="text-sm text-gray-600">Tasa de Resolución</div>
+                      </div>
+                    </div>
+
+                    {/* Costos de mantenimiento */}
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-3">Resumen de Costos</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-4 bg-gray-50 rounded-lg">
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatCurrency(data?.averageMaintenanceCost || 0)}
+                          </div>
+                          <div className="text-sm text-gray-600">Costo Promedio</div>
+                        </div>
+                        <div className="text-center p-4 bg-gray-50 rounded-lg">
+                          <div className="text-lg font-bold text-gray-900">
+                            {data?.totalProperties ? Math.round((data.completedTasks + data.pendingTasks) / data.totalProperties) : 0}
+                          </div>
+                          <div className="text-sm text-gray-600">Solicitudes por Propiedad</div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -618,35 +661,39 @@ export default function AnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <h4 className="font-semibold mb-3">Ingresos por Mes</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span>Enero 2024</span>
-                            <span className="font-semibold">{formatCurrency(4500000)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Febrero 2024</span>
-                            <span className="font-semibold">{formatCurrency(4800000)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Marzo 2024</span>
-                            <span className="font-semibold">{formatCurrency(5200000)}</span>
-                          </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {data?.financialData?.length > 0 ? (
+                            data.financialData.map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between">
+                                <span>{new Date(item.month + '-01').toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })}</span>
+                                <span className="font-semibold">{formatCurrency(item.revenue)}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500 text-center py-4">No hay datos de ingresos disponibles</p>
+                          )}
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-semibold mb-3">Gastos por Categoría</h4>
+                        <h4 className="font-semibold mb-3">Resumen Financiero</h4>
                         <div className="space-y-2">
                           <div className="flex justify-between">
-                            <span>Mantenimiento</span>
-                            <span className="font-semibold">{formatCurrency(800000)}</span>
+                            <span>Ingresos Totales</span>
+                            <span className="font-semibold text-green-600">{formatCurrency(data?.monthlyRevenue || 0)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Administración</span>
-                            <span className="font-semibold">{formatCurrency(600000)}</span>
+                            <span>Pagos Realizados</span>
+                            <span className="font-semibold text-blue-600">{data?.totalPayments || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Impuestos</span>
-                            <span className="font-semibold">{formatCurrency(1200000)}</span>
+                            <span>Propiedades Activas</span>
+                            <span className="font-semibold text-purple-600">{data?.totalProperties || 0}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="font-semibold">Ingreso Promedio por Propiedad</span>
+                            <span className="font-semibold">
+                              {data?.totalProperties ? formatCurrency((data.monthlyRevenue || 0) / data.totalProperties) : formatCurrency(0)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -793,18 +840,56 @@ export default function AnalyticsPage() {
                       <div className="flex justify-between">
                         <span>Mes actual</span>
                         <span className="font-semibold">
-                          {formatCurrency(data?.overview?.monthlyRevenue || 4800000)}
+                          {formatCurrency(data?.monthlyRevenue || 0)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Próximo mes (predicho)</span>
                         <span className="font-semibold text-blue-600">
-                          {formatCurrency(5200000)}
+                          {(() => {
+                            // Calcular predicción basada en tendencia histórica
+                            const currentRevenue = data?.monthlyRevenue || 0;
+                            const avgGrowthRate = data?.financialData?.length > 1
+                              ? data.financialData.reduce((acc: number, item: any, index: number, arr: any[]) => {
+                                  if (index === 0) return acc;
+                                  const prevRevenue = arr[index - 1].revenue;
+                                  const growth = prevRevenue > 0 ? ((item.revenue - prevRevenue) / prevRevenue) * 100 : 0;
+                                  return acc + growth;
+                                }, 0) / (data.financialData.length - 1)
+                              : 5; // Tasa de crecimiento por defecto del 5%
+                            return formatCurrency(currentRevenue * (1 + avgGrowthRate / 100));
+                          })()}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Crecimiento esperado</span>
-                        <span className="font-semibold text-green-600">+8.3%</span>
+                        <span className={`font-semibold ${
+                          (() => {
+                            const currentRevenue = data?.monthlyRevenue || 0;
+                            const avgGrowthRate = data?.financialData?.length > 1
+                              ? data.financialData.reduce((acc: number, item: any, index: number, arr: any[]) => {
+                                  if (index === 0) return acc;
+                                  const prevRevenue = arr[index - 1].revenue;
+                                  const growth = prevRevenue > 0 ? ((item.revenue - prevRevenue) / prevRevenue) * 100 : 0;
+                                  return acc + growth;
+                                }, 0) / (data.financialData.length - 1)
+                              : 5;
+                            return avgGrowthRate >= 0 ? 'text-green-600' : 'text-red-600';
+                          })()
+                        }`}>
+                          {(() => {
+                            const currentRevenue = data?.monthlyRevenue || 0;
+                            const avgGrowthRate = data?.financialData?.length > 1
+                              ? data.financialData.reduce((acc: number, item: any, index: number, arr: any[]) => {
+                                  if (index === 0) return acc;
+                                  const prevRevenue = arr[index - 1].revenue;
+                                  const growth = prevRevenue > 0 ? ((item.revenue - prevRevenue) / prevRevenue) * 100 : 0;
+                                  return acc + growth;
+                                }, 0) / (data.financialData.length - 1)
+                              : 5;
+                            return `${avgGrowthRate >= 0 ? '+' : ''}${avgGrowthRate.toFixed(1)}%`;
+                          })()}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -812,21 +897,31 @@ export default function AnalyticsPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Tendencias de Mercado</CardTitle>
+                    <CardTitle className="text-lg">Análisis de Propiedades</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span>Demanda actual</span>
-                        <Badge className="bg-green-100 text-green-800">Alta</Badge>
+                        <span>Propiedades activas</span>
+                        <span className="font-semibold text-blue-600">{data?.totalProperties || 0}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Precio promedio zona</span>
-                        <span className="font-semibold">{formatCurrency(450000)}</span>
+                        <span>Tasa de ocupación</span>
+                        <span className="font-semibold text-green-600">
+                          {data?.totalProperties && data?.totalContracts
+                            ? `${Math.round((data.totalContracts / data.totalProperties) * 100)}%`
+                            : '0%'
+                          }
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Tendencia precios</span>
-                        <span className="font-semibold text-green-600">↗️ +3.2%</span>
+                        <span>Ingreso promedio por propiedad</span>
+                        <span className="font-semibold">
+                          {data?.totalProperties && data?.monthlyRevenue
+                            ? formatCurrency(data.monthlyRevenue / data.totalProperties)
+                            : formatCurrency(0)
+                          }
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -835,28 +930,53 @@ export default function AnalyticsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Recomendaciones IA</CardTitle>
+                  <CardTitle className="text-lg">Recomendaciones Inteligentes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm">
-                        <strong>💡 Recomendación:</strong> Considera aumentar las rentas en un 5% en
-                        las propiedades con ocupación del 100% durante los últimos 6 meses.
-                      </p>
-                    </div>
-                    <div className="p-3 bg-yellow-50 rounded-lg">
-                      <p className="text-sm">
-                        <strong>⚠️ Alerta:</strong> 3 propiedades tienen riesgo de desocupación en
-                        los próximos 2 meses basado en patrones históricos.
-                      </p>
-                    </div>
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <p className="text-sm">
-                        <strong>✅ Oportunidad:</strong> El mercado muestra tendencia alcista.
-                        Considera adquirir nuevas propiedades en las zonas identificadas.
-                      </p>
-                    </div>
+                    {data?.totalProperties && data?.totalContracts && (
+                      <>
+                        {data.totalContracts / data.totalProperties >= 0.8 && (
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <p className="text-sm">
+                              <strong>✅ Excelente rendimiento:</strong> Tus propiedades tienen una alta tasa de ocupación.
+                              Considera aumentar las rentas gradualmente para maximizar ingresos.
+                            </p>
+                          </div>
+                        )}
+                        {data.totalContracts / data.totalProperties < 0.5 && (
+                          <div className="p-3 bg-yellow-50 rounded-lg">
+                            <p className="text-sm">
+                              <strong>⚠️ Atención:</strong> Algunas propiedades están desocupadas.
+                              Revisa los precios y considera actualizaciones para aumentar la demanda.
+                            </p>
+                          </div>
+                        )}
+                        {data?.maintenanceRequests > data?.totalProperties && (
+                          <div className="p-3 bg-orange-50 rounded-lg">
+                            <p className="text-sm">
+                              <strong>🔧 Mantenimiento:</strong> Tienes varias solicitudes de mantenimiento pendientes.
+                              Resolverlas rápidamente mejorará la satisfacción de los inquilinos.
+                            </p>
+                          </div>
+                        )}
+                        {data?.totalProperties >= 3 && (
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm">
+                              <strong>💡 Sugerencia:</strong> Con {data.totalProperties} propiedades,
+                              considera contratar un administrador profesional para optimizar la gestión.
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {(!data?.totalProperties || data.totalProperties === 0) && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm">
+                          <strong>📊 Sin datos suficientes:</strong> Agrega más propiedades para obtener recomendaciones personalizadas.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
