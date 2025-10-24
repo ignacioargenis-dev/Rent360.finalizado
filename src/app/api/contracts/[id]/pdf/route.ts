@@ -75,20 +75,45 @@ export async function GET(
       return NextResponse.json({ error: 'No tienes permisos para descargar este contrato' }, { status: 403 });
     }
 
-    // Generar HTML del contrato para descarga
+    // Generar HTML del contrato
     const htmlContent = generateContractHTML(contract);
 
-    // Por simplicidad, devolver el HTML como archivo descargable
-    // En producción, se debería usar una librería como puppeteer para convertir a PDF
-    const htmlBuffer = Buffer.from(htmlContent, 'utf-8');
-
-    // Devolver el HTML como archivo descargable
-    return new NextResponse(htmlBuffer, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="contrato-${contract.contractNumber || contract.id}.html"`,
-      },
+    // Usar puppeteer para generar PDF real
+    const puppeteer = await import('puppeteer');
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+
+    try {
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      // Generar PDF
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '1cm',
+          right: '1cm',
+          bottom: '1cm',
+          left: '1cm'
+        }
+      });
+
+      await browser.close();
+
+      // Devolver el PDF real
+      return new NextResponse(Buffer.from(pdfBuffer), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="contrato-${contract.contractNumber || contract.id}.pdf"`,
+        },
+      });
+    } catch (error) {
+      await browser.close();
+      throw error;
+    }
 
   } catch (error) {
     logger.error('Error generando PDF del contrato:', {

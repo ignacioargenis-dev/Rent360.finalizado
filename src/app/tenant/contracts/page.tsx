@@ -653,17 +653,17 @@ export default function TenantContractsPage() {
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `contrato-${contract.contractNumber || contract.id}.html`;
+                            a.download = `contrato-${contract.contractNumber || contract.id}.pdf`;
                             document.body.appendChild(a);
                             a.click();
                             window.URL.revokeObjectURL(url);
                             document.body.removeChild(a);
                           } else {
-                            alert('Error al descargar el contrato');
+                            alert('Error al descargar el PDF del contrato');
                           }
                         } catch (error) {
-                          console.error('Error descargando contrato:', error);
-                          alert('Error al descargar el contrato');
+                          console.error('Error descargando PDF del contrato:', error);
+                          alert('Error al descargar el PDF del contrato');
                         }
                       }}
                     >
