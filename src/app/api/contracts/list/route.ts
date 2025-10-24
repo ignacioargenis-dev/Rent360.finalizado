@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const { searchParams } = new URL(request.url);
-    
+
     // Parámetros de consulta
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -25,23 +25,20 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
-    
+
     // Construir filtros
     const where: any = {};
-    
+
     // Filtro por rol de usuario
     if (user.role === 'owner') {
       where.ownerId = user.id;
     } else if (user.role === 'tenant') {
       where.tenantId = user.id;
     } else if (user.role === UserRole.BROKER) {
-      where.OR = [
-        { brokerId: user.id },
-        { ownerId: user.id },
-      ];
+      where.OR = [{ brokerId: user.id }, { ownerId: user.id }];
     }
     // Admin puede ver todos los contratos
-    
+
     // Filtros de búsqueda
     if (search) {
       where.OR = [
@@ -52,39 +49,39 @@ export async function GET(request: NextRequest) {
         { tenant: { name: { contains: search, mode: 'insensitive' } } },
       ];
     }
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (propertyId) {
       where.propertyId = propertyId;
     }
-    
+
     if (ownerId) {
       where.ownerId = ownerId;
     }
-    
+
     if (tenantId) {
       where.tenantId = tenantId;
     }
-    
+
     if (brokerId) {
       where.brokerId = brokerId;
     }
-    
+
     if (startDate) {
       where.startDate = { gte: new Date(startDate) };
     }
-    
+
     if (endDate) {
       where.endDate = { lte: new Date(endDate) };
     }
-    
+
     // Ordenamiento
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
-    
+
     // Calcular offset para paginación
     const offset = (page - 1) * limit;
 
@@ -103,7 +100,7 @@ export async function GET(request: NextRequest) {
       startDate,
       endDate,
       sortBy,
-      sortOrder
+      sortOrder,
     });
 
     // Intentar obtener del cache primero
@@ -186,31 +183,31 @@ export async function GET(request: NextRequest) {
       }),
       db.contract.count({ where }),
     ]);
-    
+
     // Calcular estadísticas
     const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
     const totalMonthlyRent = safeSum(...contracts.map(c => c.monthlyRent));
-    const totalDeposits = safeSum(...contracts.map(c => c.deposit));
-    
+    const totalDeposits = safeSum(...contracts.map(c => c.depositAmount));
+
     // Formatear respuesta
     const formattedContracts = contracts.map(contract => {
       const totalPayments = contract.payments.length;
       const paidPayments = contract.payments.filter(p => p.status === 'COMPLETED').length;
       const pendingPayments = contract.payments.filter(p => p.status === 'PENDING').length;
-      const overduePayments = contract.payments.filter(p => 
-        p.status === 'PENDING' && new Date(p.dueDate) < new Date(),
+      const overduePayments = contract.payments.filter(
+        p => p.status === 'PENDING' && new Date(p.dueDate) < new Date()
       ).length;
-      
-      const totalPaid = safeSum(...contract.payments
-        .filter(p => p.status === 'COMPLETED')
-        .map(p => p.amount));
 
-      const totalPending = safeSum(...contract.payments
-        .filter(p => p.status === 'PENDING')
-        .map(p => p.amount));
-      
+      const totalPaid = safeSum(
+        ...contract.payments.filter(p => p.status === 'COMPLETED').map(p => p.amount)
+      );
+
+      const totalPending = safeSum(
+        ...contract.payments.filter(p => p.status === 'PENDING').map(p => p.amount)
+      );
+
       const isFullySigned = contract.signatures.length >= 2; // Owner + Tenant mínimo
-      
+
       return {
         id: contract.id,
         contractNumber: contract.contractNumber,
@@ -224,7 +221,7 @@ export async function GET(request: NextRequest) {
         startDate: contract.startDate,
         endDate: contract.endDate,
         monthlyRent: contract.monthlyRent,
-        deposit: contract.deposit,
+        deposit: contract.depositAmount,
         status: contract.status,
         terms: contract.terms,
         signedAt: contract.signedAt,
@@ -246,12 +243,11 @@ export async function GET(request: NextRequest) {
           signedAt: signature.signedAt,
         })),
         isFullySigned,
-        daysRemaining: contract.status === 'ACTIVE' 
-                  ? daysBetween(new Date(), new Date(contract.endDate))
-        : null,
+        daysRemaining:
+          contract.status === 'ACTIVE' ? daysBetween(new Date(), new Date(contract.endDate)) : null,
       };
     });
-    
+
     // Calcular información de paginación
     const totalPages = Math.ceil(totalCount / limit);
     const hasNextPage = page < totalPages;
@@ -277,18 +273,24 @@ export async function GET(request: NextRequest) {
     };
 
     // Guardar en cache con tags para invalidación
-    cacheManager.setWithTags(cacheKey, responseData, ['contracts', `user:${user.id}`], cacheConfigs.contract.ttl);
+    cacheManager.setWithTags(
+      cacheKey,
+      responseData,
+      ['contracts', `user:${user.id}`],
+      cacheConfigs.contract.ttl
+    );
 
     logger.debug('Contracts list guardado en cache', {
       cacheKey,
       contractsCount: formattedContracts.length,
-      ttl: cacheConfigs.contract.ttl
+      ttl: cacheConfigs.contract.ttl,
     });
 
     return NextResponse.json(responseData);
-    
   } catch (error) {
-    logger.error('Error fetching contracts:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error fetching contracts:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

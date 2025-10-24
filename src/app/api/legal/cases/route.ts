@@ -15,48 +15,52 @@ const createLegalCaseSchema = z.object({
     'RENT_INCREASE_DISPUTE',
     'SECURITY_DEPOSIT_DISPUTE',
     'UTILITY_PAYMENT_DISPUTE',
-    'OTHER'
+    'OTHER',
   ]),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL']).default('MEDIUM'),
   totalDebt: z.number().min(0, 'La deuda debe ser mayor o igual a 0'),
   interestRate: z.number().min(0).max(1).default(0.05),
   firstDefaultDate: z.string().datetime(),
   notes: z.string().optional(),
-  internalNotes: z.string().optional()
+  internalNotes: z.string().optional(),
 });
 
 const getLegalCasesSchema = z.object({
   page: z.string().default('1').transform(Number).pipe(z.number().min(1)),
   limit: z.string().default('10').transform(Number).pipe(z.number().min(1).max(100)),
-  status: z.enum([
-    'PRE_JUDICIAL',
-    'EXTRAJUDICIAL_NOTICE',
-    'WAITING_RESPONSE',
-    'DEMAND_PREPARATION',
-    'DEMAND_FILED',
-    'COURT_PROCESS',
-    'HEARING_SCHEDULED',
-    'JUDGMENT_PENDING',
-    'JUDGMENT_ISSUED',
-    'EVICTION_ORDERED',
-    'EVICTION_COMPLETED',
-    'PAYMENT_COLLECTION',
-    'CASE_CLOSED',
-    'SETTLEMENT_REACHED',
-    'DISMISSED'
-  ]).optional(),
-  caseType: z.enum([
-    'EVICTION_NON_PAYMENT',
-    'DAMAGE_CLAIM',
-    'BREACH_OF_CONTRACT',
-    'ILLEGAL_OCCUPATION',
-    'RENT_INCREASE_DISPUTE',
-    'SECURITY_DEPOSIT_DISPUTE',
-    'UTILITY_PAYMENT_DISPUTE',
-    'OTHER'
-  ]).optional(),
+  status: z
+    .enum([
+      'PRE_JUDICIAL',
+      'EXTRAJUDICIAL_NOTICE',
+      'WAITING_RESPONSE',
+      'DEMAND_PREPARATION',
+      'DEMAND_FILED',
+      'COURT_PROCESS',
+      'HEARING_SCHEDULED',
+      'JUDGMENT_PENDING',
+      'JUDGMENT_ISSUED',
+      'EVICTION_ORDERED',
+      'EVICTION_COMPLETED',
+      'PAYMENT_COLLECTION',
+      'CASE_CLOSED',
+      'SETTLEMENT_REACHED',
+      'DISMISSED',
+    ])
+    .optional(),
+  caseType: z
+    .enum([
+      'EVICTION_NON_PAYMENT',
+      'DAMAGE_CLAIM',
+      'BREACH_OF_CONTRACT',
+      'ILLEGAL_OCCUPATION',
+      'RENT_INCREASE_DISPUTE',
+      'SECURITY_DEPOSIT_DISPUTE',
+      'UTILITY_PAYMENT_DISPUTE',
+      'OTHER',
+    ])
+    .optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL']).optional(),
-  search: z.string().optional()
+  search: z.string().optional(),
 });
 
 // POST /api/legal/cases - Crear nuevo caso legal
@@ -74,19 +78,16 @@ export async function POST(request: NextRequest) {
       include: {
         tenant: true,
         owner: true,
-        broker: true
-      }
+        broker: true,
+      },
     });
 
     if (!contract) {
-      return NextResponse.json(
-        { error: 'Contrato no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo propietario, corredor o admin pueden crear casos legales
-    const canCreateCase = 
+    const canCreateCase =
       user.role === 'ADMIN' ||
       user.id === contract.ownerId ||
       (contract.brokerId && user.id === contract.brokerId);
@@ -103,9 +104,9 @@ export async function POST(request: NextRequest) {
       where: {
         contractId: validatedData.contractId,
         status: {
-          notIn: ['CASE_CLOSED', 'SETTLEMENT_REACHED', 'DISMISSED']
-        }
-      }
+          notIn: ['CASE_CLOSED', 'SETTLEMENT_REACHED', 'DISMISSED'],
+        },
+      },
     });
 
     if (existingCase) {
@@ -120,16 +121,19 @@ export async function POST(request: NextRequest) {
 
     // Calcular intereses acumulados
     const firstDefaultDate = new Date(validatedData.firstDefaultDate);
-    const monthsSinceDefault = Math.ceil((Date.now() - firstDefaultDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const accumulatedInterest = validatedData.totalDebt * validatedData.interestRate * monthsSinceDefault;
+    const monthsSinceDefault = Math.ceil(
+      (Date.now() - firstDefaultDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+    );
+    const accumulatedInterest =
+      validatedData.totalDebt * validatedData.interestRate * monthsSinceDefault;
 
     // Crear el caso legal
     const legalCase = await db.legalCase.create({
       data: {
         caseNumber,
         contractId: validatedData.contractId,
-        tenantId: contract.tenantId,
-        ownerId: contract.ownerId,
+        tenantId: contract.tenantId || '',
+        ownerId: contract.ownerId || '',
         brokerId: contract.brokerId,
         caseType: validatedData.caseType,
         priority: validatedData.priority,
@@ -141,8 +145,8 @@ export async function POST(request: NextRequest) {
         currentPhase: 'PRE_JUDICIAL',
         notes: validatedData.notes ?? null,
         internalNotes: validatedData.internalNotes ?? null,
-        nextDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) // 10 días para respuesta
-      }
+        nextDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 días para respuesta
+      },
     });
 
     // Crear log de auditoría
@@ -152,8 +156,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         action: 'CASE_CREATED',
         details: `Caso legal creado: ${validatedData.caseType}`,
-        newValue: JSON.stringify(legalCase)
-      }
+        newValue: JSON.stringify(legalCase),
+      },
     });
 
     // Enviar notificaciones
@@ -168,7 +172,7 @@ export async function POST(request: NextRequest) {
           priority: 'high',
           status: 'pending',
           actionRequired: true,
-          actionDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+          actionDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
         },
         {
           legalCaseId: legalCase.id,
@@ -177,24 +181,23 @@ export async function POST(request: NextRequest) {
           title: 'Caso Legal Creado',
           message: `Se ha creado exitosamente el caso legal. El siguiente paso es enviar la notificación extrajudicial.`,
           priority: 'medium',
-          status: 'pending'
-        }
-      ]
+          status: 'pending',
+        },
+      ],
     });
 
     logger.info('Caso legal creado exitosamente', {
       context: 'legal.cases.create',
       userId: user.id,
       caseId: legalCase.id,
-      caseNumber: legalCase.caseNumber
+      caseNumber: legalCase.caseNumber,
     });
 
     return NextResponse.json({
       success: true,
       data: legalCase,
-      message: 'Caso legal creado exitosamente'
+      message: 'Caso legal creado exitosamente',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -206,13 +209,10 @@ export async function POST(request: NextRequest) {
     logger.error('Error al crear caso legal', {
       context: 'legal.cases.create',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -221,13 +221,13 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     const { searchParams } = new URL(request.url);
-    
+
     // Validar parámetros de consulta
     const validatedParams = getLegalCasesSchema.parse(Object.fromEntries(searchParams));
-    
+
     // Construir filtros según el rol del usuario
     let whereClause: any = {};
-    
+
     if (user.role === 'ADMIN') {
       // Admin puede ver todos los casos
       if (validatedParams.status) {
@@ -276,10 +276,7 @@ export async function GET(request: NextRequest) {
         whereClause.priority = validatedParams.priority;
       }
     } else {
-      return NextResponse.json(
-        { error: 'Rol de usuario no válido' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Rol de usuario no válido' }, { status: 403 });
     }
 
     // Agregar búsqueda por texto si se proporciona
@@ -287,13 +284,13 @@ export async function GET(request: NextRequest) {
       whereClause.OR = [
         { caseNumber: { contains: validatedParams.search, mode: 'insensitive' } },
         { notes: { contains: validatedParams.search, mode: 'insensitive' } },
-        { internalNotes: { contains: validatedParams.search, mode: 'insensitive' } }
+        { internalNotes: { contains: validatedParams.search, mode: 'insensitive' } },
       ];
     }
 
     // Calcular paginación
     const skip = (validatedParams.page - 1) * validatedParams.limit;
-    
+
     // Obtener casos legales con relaciones
     const [legalCases, totalCount] = await Promise.all([
       db.legalCase.findMany({
@@ -305,57 +302,57 @@ export async function GET(request: NextRequest) {
                 select: {
                   title: true,
                   address: true,
-                  city: true
-                }
+                  city: true,
+                },
               },
               tenant: {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
+                  email: true,
+                },
               },
               owner: {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
+                  email: true,
+                },
               },
               broker: {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
-              }
-            }
+                  email: true,
+                },
+              },
+            },
           },
           extrajudicialNotices: {
             orderBy: { createdAt: 'desc' },
-            take: 1
+            take: 1,
           },
           legalDocuments: {
             orderBy: { createdAt: 'desc' },
-            take: 5
+            take: 5,
           },
           courtProceedings: {
             orderBy: { createdAt: 'desc' },
-            take: 1
-          }
+            take: 1,
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: validatedParams.limit
+        take: validatedParams.limit,
       }),
-      db.legalCase.count({ where: whereClause })
+      db.legalCase.count({ where: whereClause }),
     ]);
 
     // Calcular estadísticas básicas
     const stats = await db.legalCase.groupBy({
       by: ['status'],
       where: whereClause,
-      _count: true
+      _count: true,
     });
 
     logger.info('Casos legales obtenidos exitosamente', {
@@ -363,7 +360,7 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       count: legalCases.length,
       totalCount,
-      filters: validatedParams
+      filters: validatedParams,
     });
 
     return NextResponse.json({
@@ -374,15 +371,17 @@ export async function GET(request: NextRequest) {
           page: validatedParams.page,
           limit: validatedParams.limit,
           total: totalCount,
-          pages: Math.ceil(totalCount / validatedParams.limit)
+          pages: Math.ceil(totalCount / validatedParams.limit),
         },
-        stats: stats.reduce((acc, stat) => {
-          acc[stat.status] = stat._count;
-          return acc;
-        }, {} as Record<string, number>)
-      }
+        stats: stats.reduce(
+          (acc, stat) => {
+            acc[stat.status] = stat._count;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
+      },
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -394,12 +393,9 @@ export async function GET(request: NextRequest) {
     logger.error('Error al obtener casos legales', {
       context: 'legal.cases.list',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

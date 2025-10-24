@@ -86,7 +86,7 @@ async function analyzeContractRevenue(startDate: Date, endDate: Date) {
     },
     select: {
       monthlyRent: true,
-      deposit: true,
+      depositAmount: true,
       startDate: true,
       endDate: true,
       status: true,
@@ -110,7 +110,7 @@ async function analyzeContractRevenue(startDate: Date, endDate: Date) {
 
       acc[monthKey].contracts += 1;
       acc[monthKey].totalRent += contract.monthlyRent;
-      acc[monthKey].totalDeposit += contract.deposit;
+      acc[monthKey].totalDeposit += contract.depositAmount;
 
       if (contract.status === 'ACTIVE') {
         acc[monthKey].activeContracts += 1;

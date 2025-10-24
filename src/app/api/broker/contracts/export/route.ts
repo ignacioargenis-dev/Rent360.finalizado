@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
         contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
         contract.monthlyRent,
-        contract.deposit || 0,
+        contract.depositAmount || 0,
         contract.monthlyRent * 0.05, // 5% de comisión por defecto
         new Date(contract.createdAt).toISOString().split('T')[0],
       ]);
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         startDate: contract.startDate,
         endDate: contract.endDate,
         monthlyRent: contract.monthlyRent,
-        deposit: contract.deposit,
+        deposit: contract.depositAmount,
         brokerCommission: contract.monthlyRent * 0.05, // 5% de comisión por defecto
         terms: contract.terms,
         createdAt: contract.createdAt,

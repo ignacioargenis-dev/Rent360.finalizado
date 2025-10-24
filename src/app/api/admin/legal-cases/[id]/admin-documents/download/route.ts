@@ -91,10 +91,10 @@ DETALLES DEL CONTRATO:
 - ID del Contrato: ${legalCase.contract.id}
 - Propiedad: ${legalCase.contract.property.title}
 - Dirección: ${legalCase.contract.property.address}
-- Propietario: ${legalCase.contract.property.owner.name}
-- Email del Propietario: ${legalCase.contract.property.owner.email}
-- Inquilino: ${legalCase.contract.tenant.name}
-- Email del Inquilino: ${legalCase.contract.tenant.email}
+- Propietario: ${legalCase.contract.property.owner?.name || 'No especificado'}
+- Email del Propietario: ${legalCase.contract.property.owner?.email || 'No especificado'}
+- Inquilino: ${legalCase.contract.tenant?.name || 'No especificado'}
+- Email del Inquilino: ${legalCase.contract.tenant?.email || 'No especificado'}
 - Renta Mensual: $${legalCase.contract.monthlyRent}
 
 ESTADO ACTUAL:
@@ -122,18 +122,18 @@ PROPIEDAD: ${legalCase.contract.property.title}
 DIRECCIÓN: ${legalCase.contract.property.address}
 
 PROPIETARIO:
-- Nombre: ${legalCase.contract.property.owner.name}
-- Email: ${legalCase.contract.property.owner.email}
-- Teléfono: ${legalCase.contract.property.owner.phone || 'No disponible'}
+- Nombre: ${legalCase.contract.property.owner?.name || 'No especificado'}
+- Email: ${legalCase.contract.property.owner?.email || 'No especificado'}
+- Teléfono: ${legalCase.contract.property.owner?.phone || 'No disponible'}
 
 INQUILINO:
-- Nombre: ${legalCase.contract.tenant.name}
-- Email: ${legalCase.contract.tenant.email}
-- Teléfono: ${legalCase.contract.tenant.phone || 'No disponible'}
+- Nombre: ${legalCase.contract.tenant?.name || 'No especificado'}
+- Email: ${legalCase.contract.tenant?.email || 'No especificado'}
+- Teléfono: ${legalCase.contract.tenant?.phone || 'No disponible'}
 
 DETALLES FINANCIEROS:
 - Renta Mensual: $${legalCase.contract.monthlyRent}
-- Depósito: $${legalCase.contract.deposit || 'No especificado'}
+- Depósito: $${legalCase.contract.depositAmount || 'No especificado'}
 - Fecha de Inicio: ${legalCase.contract.startDate.toISOString().split('T')[0]}
 - Fecha de Fin: ${legalCase.contract.endDate?.toISOString().split('T')[0] || 'Indefinido'}
 

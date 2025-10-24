@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       tenantName: contract.tenant?.name || '',
       tenantEmail: contract.tenant?.email || '',
       monthlyRent: contract.monthlyRent,
-      deposit: contract.deposit,
+      deposit: contract.depositAmount,
       brokerCommission: contract.monthlyRent * 0.05, // 5% de comisión por defecto
       commissionPercentage: 5.0, // 5% por defecto
       status: contract.status,

@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
         endDate,
         contractNumber: `CON-${Date.now()}`,
         monthlyRent: validatedData.rentAmount,
-        deposit: validatedData.depositAmount,
+        depositAmount: validatedData.depositAmount,
         brokerId: validatedData.brokerId || null, // Asegurar null en lugar de undefined
       },
       include: {

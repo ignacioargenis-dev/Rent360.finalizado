@@ -13,7 +13,7 @@ const createCourtProceedingSchema = z.object({
     'SUMMARY_PROCEDURE',
     'EXECUTION_PROCEDURE',
     'APPEAL',
-    'OTHER'
+    'OTHER',
   ]),
   court: z.string().min(1, 'Nombre del tribunal es requerido'),
   judge: z.string().optional(),
@@ -21,52 +21,46 @@ const createCourtProceedingSchema = z.object({
   legalFees: z.number().min(0, 'Los honorarios legales deben ser mayor o igual a 0'),
   notes: z.string().optional(),
   nextAction: z.string().optional(),
-  nextDeadline: z.string().datetime().optional()
+  nextDeadline: z.string().datetime().optional(),
 });
 
 const updateCourtProceedingSchema = z.object({
-  status: z.enum([
-    'INITIATED',
-    'NOTIFIED',
-    'OPPOSITION_PERIOD',
-    'EVIDENCE_PERIOD',
-    'HEARING_SCHEDULED',
-    'HEARING_COMPLETED',
-    'JUDGMENT_PENDING',
-    'JUDGMENT_ISSUED',
-    'EXECUTION_PENDING',
-    'EXECUTION_COMPLETED',
-    'APPEALED',
-    'CLOSED'
-  ]).optional(),
+  status: z
+    .enum([
+      'INITIATED',
+      'NOTIFIED',
+      'OPPOSITION_PERIOD',
+      'EVIDENCE_PERIOD',
+      'HEARING_SCHEDULED',
+      'HEARING_COMPLETED',
+      'JUDGMENT_PENDING',
+      'JUDGMENT_ISSUED',
+      'EXECUTION_PENDING',
+      'EXECUTION_COMPLETED',
+      'APPEALED',
+      'CLOSED',
+    ])
+    .optional(),
   filedDate: z.string().datetime().optional(),
   notificationDate: z.string().datetime().optional(),
   oppositionDeadline: z.string().datetime().optional(),
   hearingDate: z.string().datetime().optional(),
   evidenceDeadline: z.string().datetime().optional(),
   judgmentDeadline: z.string().datetime().optional(),
-  outcome: z.enum([
-    'FAVORABLE',
-    'PARTIALLY_FAVORABLE',
-    'UNFAVORABLE',
-    'DISMISSED',
-    'SETTLEMENT',
-    'OTHER'
-  ]).optional(),
+  outcome: z
+    .enum(['FAVORABLE', 'PARTIALLY_FAVORABLE', 'UNFAVORABLE', 'DISMISSED', 'SETTLEMENT', 'OTHER'])
+    .optional(),
   judgmentText: z.string().optional(),
   judgmentDate: z.string().datetime().optional(),
   appealDeadline: z.string().datetime().optional(),
   appealFiled: z.boolean().optional(),
   notes: z.string().optional(),
   nextAction: z.string().optional(),
-  nextDeadline: z.string().datetime().optional()
+  nextDeadline: z.string().datetime().optional(),
 });
 
 // POST /api/legal/cases/[id]/court-proceedings - Crear procedimiento judicial
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
@@ -82,21 +76,18 @@ export async function POST(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo propietario, corredor o admin pueden crear procedimientos judiciales
-    const canCreateProceeding = 
+    const canCreateProceeding =
       user.role === 'ADMIN' ||
       user.id === legalCase.ownerId ||
       (legalCase.brokerId && user.id === legalCase.brokerId);
@@ -117,9 +108,10 @@ export async function POST(
     }
 
     // Generar número único de expediente si no se proporciona
-    const proceedingNumber = validatedData.proceedingType === 'MONITORIO_PROCEDURE' 
-      ? `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-      : `CP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const proceedingNumber =
+      validatedData.proceedingType === 'MONITORIO_PROCEDURE'
+        ? `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+        : `CP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
     // Crear el procedimiento judicial
     const courtProceeding = await db.courtProceeding.create({
@@ -134,8 +126,8 @@ export async function POST(
         totalCosts: validatedData.courtFees + validatedData.legalFees,
         notes: validatedData.notes ?? null,
         nextAction: validatedData.nextAction ?? null,
-        nextDeadline: validatedData.nextDeadline ? new Date(validatedData.nextDeadline) : null
-      }
+        nextDeadline: validatedData.nextDeadline ? new Date(validatedData.nextDeadline) : null,
+      },
     });
 
     // Actualizar el estado del caso legal
@@ -148,8 +140,10 @@ export async function POST(
         legalFees: validatedData.legalFees,
         courtFees: validatedData.courtFees,
         totalAmount: legalCase.totalAmount + validatedData.courtFees + validatedData.legalFees,
-        nextDeadline: validatedData.nextDeadline ? new Date(validatedData.nextDeadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 días por defecto
-      }
+        nextDeadline: validatedData.nextDeadline
+          ? new Date(validatedData.nextDeadline)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días por defecto
+      },
     });
 
     // Crear log de auditoría
@@ -159,8 +153,8 @@ export async function POST(
         userId: user.id,
         action: 'COURT_PROCEDING_CREATED',
         details: `Procedimiento judicial creado: ${validatedData.proceedingType}`,
-        newValue: JSON.stringify(courtProceeding)
-      }
+        newValue: JSON.stringify(courtProceeding),
+      },
     });
 
     // Enviar notificaciones
@@ -168,14 +162,16 @@ export async function POST(
       data: [
         {
           legalCaseId: params.id,
-          userId: legalCase.contract.tenantId,
+          userId: legalCase.contract.tenantId || '',
           notificationType: 'COURT_ORDER',
           title: 'Demanda Judicial Presentada',
           message: `Se ha presentado una demanda judicial relacionada con su contrato. Por favor revise los documentos y consulte con un abogado.`,
           priority: 'high',
           status: 'pending',
           actionRequired: true,
-          actionDeadline: validatedData.nextDeadline ? new Date(validatedData.nextDeadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          actionDeadline: validatedData.nextDeadline
+            ? new Date(validatedData.nextDeadline)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
         {
           legalCaseId: params.id,
@@ -184,9 +180,9 @@ export async function POST(
           title: 'Procedimiento Judicial Iniciado',
           message: `Se ha iniciado exitosamente el procedimiento judicial. El siguiente paso es esperar la notificación del tribunal.`,
           priority: 'medium',
-          status: 'pending'
-        }
-      ]
+          status: 'pending',
+        },
+      ],
     });
 
     logger.info('Procedimiento judicial creado exitosamente', {
@@ -194,15 +190,14 @@ export async function POST(
       userId: user.id,
       caseId: params.id,
       proceedingId: courtProceeding.id,
-      proceedingType: validatedData.proceedingType
+      proceedingType: validatedData.proceedingType,
     });
 
     return NextResponse.json({
       success: true,
       data: courtProceeding,
-      message: 'Procedimiento judicial creado exitosamente'
+      message: 'Procedimiento judicial creado exitosamente',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -214,21 +209,15 @@ export async function POST(
     logger.error('Error al crear procedimiento judicial', {
       context: 'legal.court-proceedings.create',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // GET /api/legal/cases/[id]/court-proceedings - Obtener procedimientos judiciales
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
 
@@ -240,21 +229,18 @@ export async function GET(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo participantes del caso pueden ver los procedimientos
-    const canViewProceedings = 
+    const canViewProceedings =
       user.role === 'ADMIN' ||
       user.id === legalCase.tenantId ||
       user.id === legalCase.ownerId ||
@@ -270,40 +256,33 @@ export async function GET(
     // Obtener procedimientos judiciales
     const courtProceedings = await db.courtProceeding.findMany({
       where: { legalCaseId: params.id },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     logger.info('Procedimientos judiciales obtenidos exitosamente', {
       context: 'legal.court-proceedings.list',
       userId: user.id,
       caseId: params.id,
-      count: courtProceedings.length
+      count: courtProceedings.length,
     });
 
     return NextResponse.json({
       success: true,
-      data: courtProceedings
+      data: courtProceedings,
     });
-
   } catch (error) {
     logger.error('Error al obtener procedimientos judiciales', {
       context: 'legal.court-proceedings.list',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // PUT /api/legal/cases/[id]/court-proceedings - Actualizar procedimiento judicial
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
@@ -319,21 +298,18 @@ export async function PUT(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo propietario, corredor o admin pueden actualizar procedimientos
-    const canUpdateProceeding = 
+    const canUpdateProceeding =
       user.role === 'ADMIN' ||
       user.id === legalCase.ownerId ||
       (legalCase.brokerId && user.id === legalCase.brokerId);
@@ -348,7 +324,7 @@ export async function PUT(
     // Obtener el procedimiento más reciente
     const latestProceeding = await db.courtProceeding.findFirst({
       where: { legalCaseId: params.id },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!latestProceeding) {
@@ -360,7 +336,7 @@ export async function PUT(
 
     // Preparar datos de actualización
     const updateData: any = {};
-    
+
     if (validatedData.status) {
       updateData.status = validatedData.status;
     }
@@ -410,36 +386,36 @@ export async function PUT(
     // Actualizar el procedimiento
     const updatedProceeding = await db.courtProceeding.update({
       where: { id: latestProceeding.id },
-      data: updateData
+      data: updateData,
     });
 
     // Actualizar el estado del caso legal según el estado del procedimiento
     let caseStatusUpdate: any = {};
-    
+
     if (validatedData.status === 'HEARING_SCHEDULED') {
       caseStatusUpdate = {
         status: 'HEARING_SCHEDULED',
         currentPhase: 'HEARING',
-        hearingDate: validatedData.hearingDate
+        hearingDate: validatedData.hearingDate,
       };
     } else if (validatedData.status === 'JUDGMENT_ISSUED') {
       caseStatusUpdate = {
         status: 'JUDGMENT_ISSUED',
         currentPhase: 'JUDGMENT',
-        judgmentDate: validatedData.judgmentDate
+        judgmentDate: validatedData.judgmentDate,
       };
     } else if (validatedData.status === 'EXECUTION_COMPLETED') {
       caseStatusUpdate = {
         status: 'EVICTION_ORDERED',
         currentPhase: 'EVICTION',
-        evictionDate: new Date()
+        evictionDate: new Date(),
       };
     }
 
     if (Object.keys(caseStatusUpdate).length > 0) {
       await db.legalCase.update({
         where: { id: params.id },
-        data: caseStatusUpdate
+        data: caseStatusUpdate,
       });
     }
 
@@ -451,8 +427,8 @@ export async function PUT(
         action: 'COURT_PROCEDING_UPDATED',
         details: `Procedimiento judicial actualizado: ${validatedData.status || 'varios campos'}`,
         previousValue: JSON.stringify(latestProceeding),
-        newValue: JSON.stringify(updatedProceeding)
-      }
+        newValue: JSON.stringify(updatedProceeding),
+      },
     });
 
     // Enviar notificaciones según el estado
@@ -461,14 +437,16 @@ export async function PUT(
         data: [
           {
             legalCaseId: params.id,
-            userId: legalCase.contract.tenantId,
+            userId: legalCase.contract.tenantId || '',
             notificationType: 'HEARING_SCHEDULED',
             title: 'Audiencia Programada',
             message: `Se ha programado una audiencia judicial para su caso. Por favor asista en la fecha y hora indicada.`,
             priority: 'high',
             status: 'pending',
             actionRequired: true,
-            ...(validatedData.hearingDate ? { actionDeadline: new Date(validatedData.hearingDate) } : {})
+            ...(validatedData.hearingDate
+              ? { actionDeadline: new Date(validatedData.hearingDate) }
+              : {}),
           },
           {
             legalCaseId: params.id,
@@ -479,22 +457,24 @@ export async function PUT(
             priority: 'high',
             status: 'pending',
             actionRequired: true,
-            ...(validatedData.hearingDate ? { actionDeadline: new Date(validatedData.hearingDate) } : {})
-          }
-        ]
+            ...(validatedData.hearingDate
+              ? { actionDeadline: new Date(validatedData.hearingDate) }
+              : {}),
+          },
+        ],
       });
     } else if (validatedData.status === 'JUDGMENT_ISSUED') {
       await db.legalNotification.createMany({
         data: [
           {
             legalCaseId: params.id,
-            userId: legalCase.contract.tenantId,
+            userId: legalCase.contract.tenantId || '',
             notificationType: 'JUDGMENT_ISSUED',
             title: 'Sentencia Emitida',
             message: `Se ha emitido la sentencia judicial para su caso. Por favor revise los detalles.`,
             priority: 'high',
             status: 'pending',
-            actionRequired: true
+            actionRequired: true,
           },
           {
             legalCaseId: params.id,
@@ -504,9 +484,9 @@ export async function PUT(
             message: `Se ha emitido la sentencia judicial para su caso. Por favor revise los detalles.`,
             priority: 'high',
             status: 'pending',
-            actionRequired: true
-          }
-        ]
+            actionRequired: true,
+          },
+        ],
       });
     }
 
@@ -514,15 +494,14 @@ export async function PUT(
       context: 'legal.court-proceedings.update',
       userId: user.id,
       caseId: params.id,
-      proceedingId: updatedProceeding.id
+      proceedingId: updatedProceeding.id,
     });
 
     return NextResponse.json({
       success: true,
       data: updatedProceeding,
-      message: 'Procedimiento judicial actualizado exitosamente'
+      message: 'Procedimiento judicial actualizado exitosamente',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -534,12 +513,9 @@ export async function PUT(
     logger.error('Error al actualizar procedimiento judicial', {
       context: 'legal.court-proceedings.update',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

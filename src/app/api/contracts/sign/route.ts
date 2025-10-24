@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     // Crear notificación
     await db.notification.create({
       data: {
-        userId: contract.ownerId,
+        userId: contract.ownerId || '',
         title: 'Contrato Firmado',
         message: `El contrato ${contract.contractNumber} ha sido firmado por ${user.name}`,
         type: 'CONTRACT' as any,

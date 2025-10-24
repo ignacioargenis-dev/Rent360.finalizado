@@ -548,7 +548,7 @@ export default function OwnerContractsPage() {
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <DollarSign className="w-4 h-4" />
-                              <span>Depósito: {formatPrice(contract.deposit || 0)}</span>
+                              <span>Depósito: {formatPrice(contract.depositAmount || 0)}</span>
                             </div>
                             {contract.signedAt && (
                               <div className="flex items-center gap-2 text-sm text-green-600">

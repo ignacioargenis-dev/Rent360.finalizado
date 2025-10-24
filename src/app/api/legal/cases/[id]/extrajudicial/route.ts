@@ -12,30 +12,25 @@ const createExtrajudicialNoticeSchema = z.object({
     'CONTRACT_VIOLATION',
     'EVICTION_WARNING',
     'FINAL_NOTICE',
-    'SETTLEMENT_OFFER'
+    'SETTLEMENT_OFFER',
   ]),
   deliveryMethod: z.enum([
     'CERTIFIED_MAIL',
     'NOTARIAL_NOTICE',
     'PERSONAL_DELIVERY',
     'ELECTRONIC_NOTICE',
-    'COURT_NOTICE'
+    'COURT_NOTICE',
   ]),
   content: z.string().min(10, 'El contenido debe tener al menos 10 caracteres'),
   amount: z.number().min(0, 'El monto debe ser mayor o igual a 0'),
   deadline: z.string().datetime(),
-  deliveryProof: z.string().optional()
+  deliveryProof: z.string().optional(),
 });
 
 const updateExtrajudicialNoticeSchema = z.object({
-  deliveryStatus: z.enum([
-    'PENDING',
-    'SENT',
-    'DELIVERED',
-    'RECEIVED',
-    'RETURNED',
-    'FAILED'
-  ]).optional(),
+  deliveryStatus: z
+    .enum(['PENDING', 'SENT', 'DELIVERED', 'RECEIVED', 'RETURNED', 'FAILED'])
+    .optional(),
   sentDate: z.string().datetime().optional(),
   deliveredDate: z.string().datetime().optional(),
   receivedBy: z.string().optional(),
@@ -44,14 +39,11 @@ const updateExtrajudicialNoticeSchema = z.object({
   responseContent: z.string().optional(),
   responseAmount: z.number().min(0).optional(),
   followUpSent: z.boolean().optional(),
-  escalationSent: z.boolean().optional()
+  escalationSent: z.boolean().optional(),
 });
 
 // POST /api/legal/cases/[id]/extrajudicial - Crear notificación extrajudicial
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
@@ -67,21 +59,18 @@ export async function POST(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo propietario, corredor o admin pueden crear notificaciones
-    const canCreateNotice = 
+    const canCreateNotice =
       user.role === 'ADMIN' ||
       user.id === legalCase.ownerId ||
       (legalCase.brokerId && user.id === legalCase.brokerId);
@@ -112,7 +101,7 @@ export async function POST(
       deliveryMethod: validatedData.deliveryMethod,
       content: validatedData.content,
       amount: validatedData.amount,
-      deadline: new Date(validatedData.deadline)
+      deadline: new Date(validatedData.deadline),
     };
 
     if (validatedData.deliveryProof !== undefined) {
@@ -121,7 +110,7 @@ export async function POST(
 
     // Crear la notificación extrajudicial
     const extrajudicialNotice = await db.extrajudicialNotice.create({
-      data: noticeData
+      data: noticeData,
     });
 
     // Actualizar el estado del caso legal
@@ -131,8 +120,8 @@ export async function POST(
         status: 'EXTRAJUDICIAL_NOTICE',
         extrajudicialSentDate: new Date(),
         currentPhase: 'EXTRAJUDICIAL',
-        nextDeadline: new Date(validatedData.deadline)
-      }
+        nextDeadline: new Date(validatedData.deadline),
+      },
     });
 
     // Crear log de auditoría
@@ -142,8 +131,8 @@ export async function POST(
         userId: user.id,
         action: 'EXTRAJUDICIAL_NOTICE_CREATED',
         details: `Notificación extrajudicial creada: ${validatedData.noticeType}`,
-        newValue: JSON.stringify(extrajudicialNotice)
-      }
+        newValue: JSON.stringify(extrajudicialNotice),
+      },
     });
 
     // Enviar notificaciones
@@ -151,14 +140,14 @@ export async function POST(
       data: [
         {
           legalCaseId: params.id,
-          userId: legalCase.contract.tenantId,
+          userId: legalCase.contract.tenantId || '',
           notificationType: 'ACTION_REQUIRED',
           title: 'Notificación Extrajudicial Recibida',
           message: `Ha recibido una notificación extrajudicial relacionada con su contrato. Por favor revise los detalles y responda antes de la fecha límite.`,
           priority: 'high',
           status: 'pending',
           actionRequired: true,
-          actionDeadline: new Date(validatedData.deadline)
+          actionDeadline: new Date(validatedData.deadline),
         },
         {
           legalCaseId: params.id,
@@ -167,9 +156,9 @@ export async function POST(
           title: 'Notificación Extrajudicial Enviada',
           message: `Se ha enviado exitosamente la notificación extrajudicial. El siguiente paso es esperar la respuesta del inquilino.`,
           priority: 'medium',
-          status: 'pending'
-        }
-      ]
+          status: 'pending',
+        },
+      ],
     });
 
     logger.info('Notificación extrajudicial creada exitosamente', {
@@ -177,15 +166,14 @@ export async function POST(
       userId: user.id,
       caseId: params.id,
       noticeId: extrajudicialNotice.id,
-      noticeNumber: extrajudicialNotice.noticeNumber
+      noticeNumber: extrajudicialNotice.noticeNumber,
     });
 
     return NextResponse.json({
       success: true,
       data: extrajudicialNotice,
-      message: 'Notificación extrajudicial creada exitosamente'
+      message: 'Notificación extrajudicial creada exitosamente',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -197,21 +185,15 @@ export async function POST(
     logger.error('Error al crear notificación extrajudicial', {
       context: 'legal.extrajudicial.create',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // GET /api/legal/cases/[id]/extrajudicial - Obtener notificaciones extrajudiciales
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
 
@@ -223,21 +205,18 @@ export async function GET(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo participantes del caso pueden ver las notificaciones
-    const canViewNotices = 
+    const canViewNotices =
       user.role === 'ADMIN' ||
       user.id === legalCase.tenantId ||
       user.id === legalCase.ownerId ||
@@ -253,40 +232,33 @@ export async function GET(
     // Obtener notificaciones extrajudiciales
     const extrajudicialNotices = await db.extrajudicialNotice.findMany({
       where: { legalCaseId: params.id },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     logger.info('Notificaciones extrajudiciales obtenidas exitosamente', {
       context: 'legal.extrajudicial.list',
       userId: user.id,
       caseId: params.id,
-      count: extrajudicialNotices.length
+      count: extrajudicialNotices.length,
     });
 
     return NextResponse.json({
       success: true,
-      data: extrajudicialNotices
+      data: extrajudicialNotices,
     });
-
   } catch (error) {
     logger.error('Error al obtener notificaciones extrajudiciales', {
       context: 'legal.extrajudicial.list',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // PUT /api/legal/cases/[id]/extrajudicial - Actualizar notificación extrajudicial
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
@@ -302,21 +274,18 @@ export async function PUT(
           include: {
             tenant: true,
             owner: true,
-            broker: true
-          }
-        }
-      }
+            broker: true,
+          },
+        },
+      },
     });
 
     if (!legalCase) {
-      return NextResponse.json(
-        { error: 'Caso legal no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Caso legal no encontrado' }, { status: 404 });
     }
 
     // Verificar permisos: solo propietario, corredor o admin pueden actualizar notificaciones
-    const canUpdateNotice = 
+    const canUpdateNotice =
       user.role === 'ADMIN' ||
       user.id === legalCase.ownerId ||
       (legalCase.brokerId && user.id === legalCase.brokerId);
@@ -331,7 +300,7 @@ export async function PUT(
     // Obtener la notificación más reciente
     const latestNotice = await db.extrajudicialNotice.findFirst({
       where: { legalCaseId: params.id },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!latestNotice) {
@@ -343,7 +312,7 @@ export async function PUT(
 
     // Preparar datos de actualización
     const updateData: any = {};
-    
+
     if (validatedData.deliveryStatus) {
       updateData.deliveryStatus = validatedData.deliveryStatus;
     }
@@ -378,7 +347,7 @@ export async function PUT(
     // Actualizar la notificación
     const updatedNotice = await db.extrajudicialNotice.update({
       where: { id: latestNotice.id },
-      data: updateData
+      data: updateData,
     });
 
     // Si se recibió respuesta, actualizar el estado del caso
@@ -388,8 +357,8 @@ export async function PUT(
         data: {
           status: 'WAITING_RESPONSE',
           currentPhase: 'EXTRAJUDICIAL',
-          nextDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 días para evaluar respuesta
-        }
+          nextDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 días para evaluar respuesta
+        },
       });
     }
 
@@ -401,8 +370,8 @@ export async function PUT(
         action: 'EXTRAJUDICIAL_NOTICE_UPDATED',
         details: `Notificación extrajudicial actualizada`,
         previousValue: JSON.stringify(latestNotice),
-        newValue: JSON.stringify(updatedNotice)
-      }
+        newValue: JSON.stringify(updatedNotice),
+      },
     });
 
     // Enviar notificaciones si es necesario
@@ -415,8 +384,8 @@ export async function PUT(
           title: 'Respuesta Recibida',
           message: `El inquilino ha respondido a la notificación extrajudicial. Por favor revise la respuesta.`,
           priority: 'medium',
-          status: 'pending'
-        }
+          status: 'pending',
+        },
       });
     }
 
@@ -424,15 +393,14 @@ export async function PUT(
       context: 'legal.extrajudicial.update',
       userId: user.id,
       caseId: params.id,
-      noticeId: updatedNotice.id
+      noticeId: updatedNotice.id,
     });
 
     return NextResponse.json({
       success: true,
       data: updatedNotice,
-      message: 'Notificación extrajudicial actualizada exitosamente'
+      message: 'Notificación extrajudicial actualizada exitosamente',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -444,12 +412,9 @@ export async function PUT(
     logger.error('Error al actualizar notificación extrajudicial', {
       context: 'legal.extrajudicial.update',
       error: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

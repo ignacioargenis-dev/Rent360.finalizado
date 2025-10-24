@@ -273,8 +273,8 @@ model Contract {
 
   // Relations
   property       Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenant         User          @relation("TenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
-  owner          User          @relation("OwnerContracts", fields: [ownerId], references: [id], onDelete: Cascade)
+  tenant         User?         @relation("TenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
+  owner          User?         @relation("OwnerContracts", fields: [ownerId], references: [id], onDelete: Cascade)
   broker         User?         @relation("BrokerContracts", fields: [brokerId], references: [id], onDelete: SetNull)
   payments       Payment[]
   reviews        Review[]

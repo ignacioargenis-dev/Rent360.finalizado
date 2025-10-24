@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
         contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
         contract.monthlyRent,
-        contract.deposit || 0,
+        contract.depositAmount || 0,
         new Date(contract.createdAt).toISOString().split('T')[0],
       ]);
 
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         startDate: contract.startDate,
         endDate: contract.endDate,
         monthlyRent: contract.monthlyRent,
-        deposit: contract.deposit,
+        deposit: contract.depositAmount,
         terms: contract.terms,
         createdAt: contract.createdAt,
         updatedAt: contract.updatedAt,
