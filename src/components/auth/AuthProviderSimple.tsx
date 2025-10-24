@@ -78,6 +78,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
         localStorage.removeItem('userLoginTime');
+
+        // SEGURIDAD: Limpiar cualquier credencial que pueda estar en la URL
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.has('email') || currentUrl.searchParams.has('password')) {
+          console.warn('🚨 SEGURIDAD: Credenciales detectadas en URL durante auth check - limpiando');
+          currentUrl.searchParams.delete('email');
+          currentUrl.searchParams.delete('password');
+          window.history.replaceState({}, '', currentUrl.pathname + currentUrl.hash);
+        }
       }
     } finally {
       setLoading(false);
@@ -142,6 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('🧹 localStorage limpiado antes del login');
       }
 
+      console.log('🔐 Iniciando login con email:', email);
+      console.log('🔐 URL de API:', `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`);
+
       const response = await fetch(
         `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/login`,
         {
@@ -155,9 +167,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       );
 
+      console.log('🔐 Respuesta de login - Status:', response.status, 'OK:', response.ok);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error en el login');
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        console.error('🔐 Login fallido - Status:', response.status, 'Error:', errorData);
+
+        // SEGURIDAD CRÍTICA: Nunca incluir datos sensibles en errores
+        const errorMessage = errorData.error || 'Error en el login';
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

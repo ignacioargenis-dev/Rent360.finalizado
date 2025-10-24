@@ -23,8 +23,6 @@ const nextConfig = {
     serverComponentsExternalPackages: ['sharp'],
     optimizeCss: false, // Deshabilitado para evitar problemas con Tailwind
     scrollRestoration: true,
-    // Deshabilitar características experimentales problemáticas
-    optimizePackageImports: false,
     turbo: {
       rules: {
         '*.svg': {

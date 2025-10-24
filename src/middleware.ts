@@ -2,7 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { authMiddleware } from '@/middleware/auth';
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // SEGURIDAD CRÍTICA: Detectar y prevenir credenciales en URL
+  const sensitiveParams = ['email', 'password', 'token', 'key'];
+  const hasSensitiveData = sensitiveParams.some(param => searchParams.has(param));
+
+  if (hasSensitiveData && pathname.includes('/auth/login')) {
+    console.warn('🚨 SEGURIDAD: Datos sensibles detectados en URL de login - redirigiendo a login limpio');
+    // Redirigir a login limpio sin parámetros
+    const cleanUrl = new URL(pathname, request.url);
+    return NextResponse.redirect(cleanUrl);
+  }
 
   // Log INMEDIATO para CONFIRMAR EJECUCIÓN - ANTES DE CUALQUIER OTRA COSA
   console.log(`🔧 MIDDLEWARE EJECUTÁNDOSE: ${request.method} ${pathname}`);

@@ -2,7 +2,7 @@
 
 import { logger } from '@/lib/logger-minimal';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,44 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
 
+  // PROTECCIÓN CRÍTICA: Prevenir que las credenciales aparezcan en la URL
+  useEffect(() => {
+    // Limpiar cualquier query parameter de la URL inmediatamente
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const hasCredentialsInUrl = url.searchParams.has('email') || url.searchParams.has('password');
+
+      if (hasCredentialsInUrl) {
+        console.warn('🚨 SEGURIDAD: Credenciales detectadas en URL - limpiando inmediatamente');
+        // Limpiar los parámetros de la URL sin recargar la página
+        url.searchParams.delete('email');
+        url.searchParams.delete('password');
+        window.history.replaceState({}, '', url.pathname + url.hash);
+
+        // Mostrar advertencia al usuario
+        setError('Se detectó un problema de seguridad. Las credenciales han sido limpiadas de la URL.');
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
+    // SEGURIDAD CRÍTICA: Verificar que no haya datos sensibles en la URL antes de proceder
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.has('email') || currentUrl.searchParams.has('password')) {
+        console.error('🚨 SEGURIDAD: Intento de envío con credenciales en URL - abortando');
+        setError('Error de seguridad detectado. Refresca la página e intenta nuevamente.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
+      console.log('🔐 Iniciando login desde formulario con email:', email);
       // Usar el método login del AuthProvider que maneja todo el flujo correctamente
       await login(email, password);
 
@@ -57,22 +89,24 @@ export default function LoginPage() {
   };
 
   const getDashboardUrl = (role: string) => {
-    switch (role.toLowerCase()) {
-      case 'admin':
+    // Normalizar rol a mayúsculas para comparación consistente
+    const normalizedRole = role.toUpperCase();
+    switch (normalizedRole) {
+      case 'ADMIN':
         return '/admin/dashboard';
-      case 'tenant':
+      case 'TENANT':
         return '/tenant/dashboard';
-      case 'owner':
+      case 'OWNER':
         return '/owner/dashboard';
-      case 'broker':
+      case 'BROKER':
         return '/broker/dashboard';
-      case 'runner':
+      case 'RUNNER':
         return '/runner/dashboard';
-      case 'support':
+      case 'SUPPORT':
         return '/support/dashboard';
-      case 'provider':
+      case 'PROVIDER':
         return '/provider/dashboard';
-      case 'maintenance':
+      case 'MAINTENANCE':
         return '/maintenance';
       default:
         return '/';
