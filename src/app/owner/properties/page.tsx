@@ -861,15 +861,17 @@ export default function OwnerPropertiesPage() {
         {/* Modal de confirmación de eliminación */}
         <Dialog open={!!deleteConfirmProperty} onOpenChange={() => setDeleteConfirmProperty(null)}>
           <DialogContent className="max-w-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Eliminar Propiedad</h3>
-                <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
-              </div>
-            </div>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                Eliminar Propiedad
+              </DialogTitle>
+              <DialogDescription>
+                Esta acción no se puede deshacer. Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
+              </DialogDescription>
+            </DialogHeader>
 
             <div className="mb-6">
               <p className="text-gray-700 mb-2">
@@ -877,9 +879,6 @@ export default function OwnerPropertiesPage() {
               </p>
               <p className="font-semibold text-gray-900">
                 {deleteConfirmProperty?.title}
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
               </p>
             </div>
 

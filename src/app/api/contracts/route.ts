@@ -20,7 +20,7 @@ const createContractSchema = z.object({
   brokerId: z.string().optional(), // ID del corredor (opcional)
   startDate: z.string().min(1, 'Fecha de inicio requerida'),
   endDate: z.string().min(1, 'Fecha de fin requerida'),
-  rentAmount: z.number().positive('El monto de renta debe ser positivo'),
+  monthlyRent: z.number().positive('El monto de renta debe ser positivo'),
   depositAmount: z.number().min(0, 'El depósito no puede ser negativo'),
   terms: z.string().min(10, 'Los términos deben tener al menos 10 caracteres'),
   tenantRut: z.string().optional(), // RUT del inquilino
@@ -35,7 +35,7 @@ const createContractSchema = z.object({
 const updateContractSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  rentAmount: z.number().positive().optional(),
+  monthlyRent: z.number().positive().optional(),
   depositAmount: z.number().min(0).optional(),
   terms: z.string().min(10).optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'TERMINATED', 'CANCELLED']).optional(),
@@ -112,11 +112,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (minRent) {
-      where.rentAmount = { gte: parseFloat(minRent) };
+      where.monthlyRent = { gte: parseFloat(minRent) };
     }
 
     if (maxRent) {
-      where.rentAmount = { ...where.rentAmount, lte: parseFloat(maxRent) };
+      where.monthlyRent = { ...where.monthlyRent, lte: parseFloat(maxRent) };
     }
 
     // Aplicar filtros según el rol del usuario
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
         brokerId: validatedData.brokerId || null,
         startDate,
         endDate,
-        monthlyRent: validatedData.rentAmount,
+        monthlyRent: validatedData.monthlyRent,
         depositAmount: validatedData.depositAmount,
         tenantRut: validatedData.tenantRut || null,
         propertyAddress: validatedData.propertyAddress || null,
@@ -400,8 +400,8 @@ export async function PUT(request: NextRequest) {
     if (validatedData.terms !== undefined) {
       prismaUpdateData.terms = validatedData.terms;
     }
-    if (validatedData.rentAmount !== undefined) {
-      prismaUpdateData.monthlyRent = validatedData.rentAmount;
+    if (validatedData.monthlyRent !== undefined) {
+      prismaUpdateData.monthlyRent = validatedData.monthlyRent;
     }
     if (validatedData.depositAmount !== undefined) {
       prismaUpdateData.deposit = validatedData.depositAmount;

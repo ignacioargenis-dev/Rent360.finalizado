@@ -74,9 +74,23 @@ export default function OwnerContractsPage() {
     endDate: '',
   });
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Detectar si viene de crear un contrato nuevo
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('refresh') === 'true') {
+      // Limpiar el parámetro de la URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      // Activar refresh
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, []);
 
   useEffect(() => {
     const loadContracts = async () => {
+      setLoading(true);
       try {
         if (!user?.id) {
           setLoading(false);
@@ -115,7 +129,7 @@ export default function OwnerContractsPage() {
     };
 
     loadContracts();
-  }, [user?.id]);
+  }, [user?.id, refreshTrigger]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -124,6 +138,10 @@ export default function OwnerContractsPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const refreshContracts = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const formatDate = (date: Date | string) => {

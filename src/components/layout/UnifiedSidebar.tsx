@@ -707,7 +707,7 @@ export default function UnifiedSidebar({
   };
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex min-h-screen w-full">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div

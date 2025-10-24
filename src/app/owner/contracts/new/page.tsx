@@ -353,7 +353,7 @@ export default function NewContractPage() {
         propertyAddress: propertyAddress || null,
         startDate,
         endDate,
-        rentAmount: parseFloat(monthlyRent),
+        monthlyRent: parseFloat(monthlyRent),
         depositAmount: parseFloat(deposit) || 0,
         propertyRolNumber: propertyRolNumber || null,
         terms: terms || 'Contrato de arriendo estándar',
@@ -380,7 +380,7 @@ export default function NewContractPage() {
         alert(
           '¡Contrato creado exitosamente! El inquilino podrá revisarlo y firmarlo desde su panel de contratos.'
         );
-        router.push('/owner/contracts');
+        router.push('/owner/contracts?refresh=true');
       } else {
         const errorData = await response.json();
         alert(`Error al crear contrato: ${errorData.error || 'Error desconocido'}`);
