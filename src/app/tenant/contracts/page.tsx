@@ -114,7 +114,25 @@ export default function TenantContractsPage() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          setContracts(result.data);
+          // Validar y transformar contratos para asegurar datos seguros
+          const validatedContracts = result.data.map((contract: any) => ({
+            ...contract,
+            // Asegurar que las fechas sean objetos Date válidos
+            startDate: contract.startDate ? new Date(contract.startDate) : new Date(),
+            endDate: contract.endDate ? new Date(contract.endDate) : new Date(),
+            signedAt: contract.signedAt ? new Date(contract.signedAt) : null,
+            terminatedAt: contract.terminatedAt ? new Date(contract.terminatedAt) : null,
+            createdAt: contract.createdAt ? new Date(contract.createdAt) : new Date(),
+            updatedAt: contract.updatedAt ? new Date(contract.updatedAt) : new Date(),
+            property: {
+              ...contract.property,
+              // Asegurar que features sea un array
+              features: Array.isArray(contract.property?.features) ? contract.property.features : [],
+              // Asegurar que availableFrom sea una fecha válida si existe
+              availableFrom: contract.property?.availableFrom ? new Date(contract.property.availableFrom) : null,
+            }
+          }));
+          setContracts(validatedContracts);
           setLoading(false);
           return;
         }
@@ -400,11 +418,15 @@ export default function TenantContractsPage() {
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Características</h4>
                   <div className="flex flex-wrap gap-2">
-                    {contract.property.features.map((feature, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                    ))}
+                    {contract.property?.features && contract.property.features.length > 0 ? (
+                      contract.property.features.map((feature, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {feature}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-500">Sin características especificadas</span>
+                    )}
                   </div>
                 </div>
 
