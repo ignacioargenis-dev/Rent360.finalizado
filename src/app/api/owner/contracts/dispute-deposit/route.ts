@@ -105,11 +105,11 @@ export async function POST(request: NextRequest) {
       depositRefund = await db.depositRefund.create({
         data: {
           contractId: contract.id,
-          tenantId: contract.tenantId,
-          ownerId: contract.ownerId,
+          tenantId: contract.tenantId || '',
+          ownerId: contract.ownerId || '',
           refundNumber: `REFUND-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-          originalDeposit: contract.deposit || 0,
-          requestedAmount: contract.deposit || 0,
+          originalDeposit: contract.depositAmount || 0,
+          requestedAmount: contract.depositAmount || 0,
           tenantClaimed: 0,
           ownerClaimed: 0,
           status: 'PENDING',
@@ -138,10 +138,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el monto en disputa no exceda el depósito
-    if (validatedData.disputedAmount > (contract.deposit || 0)) {
+    if (validatedData.disputedAmount > (contract.depositAmount || 0)) {
       return NextResponse.json(
         {
-          error: `El monto en disputa no puede exceder el depósito de garantía ($${contract.deposit?.toLocaleString() || 0}).`,
+          error: `El monto en disputa no puede exceder el depósito de garantía ($${contract.depositAmount?.toLocaleString() || 0}).`,
         },
         { status: 400 }
       );

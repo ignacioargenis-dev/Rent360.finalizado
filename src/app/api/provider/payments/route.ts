@@ -112,10 +112,10 @@ export async function GET(request: NextRequest) {
         address: `${payment.contract.property.address}, ${payment.contract.property.commune}, ${payment.contract.property.city}`,
       },
       tenant: {
-        id: payment.contract.tenant.id,
-        name: payment.contract.tenant.name,
-        email: payment.contract.tenant.email,
-        phone: payment.contract.tenant.phone,
+        id: payment.contract.tenant?.id || '',
+        name: payment.contract.tenant?.name || '',
+        email: payment.contract.tenant?.email || '',
+        phone: payment.contract.tenant?.phone || '',
       },
       contract: {
         id: payment.contract.id,

@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         // Crear el recordatorio
         const reminder = await db.paymentReminder.create({
           data: {
-            tenantId: payment.contract.tenant.id,
+            tenantId: payment.contract.tenant?.id || '',
             propertyId: payment.contract.property.id,
             contractId: payment.contract.id,
             ownerId: user.id,
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         logger.info('Recordatorio masivo creado:', {
           reminderId: reminder.id,
           paymentId: payment.id,
-          tenantId: payment.contract.tenant.id,
+          tenantId: payment.contract.tenant?.id || '',
         });
       } catch (error) {
         results.failed++;

@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       data: [
         {
           legalCaseId: legalCase.id,
-          userId: contract.tenantId,
+          userId: contract.tenantId || '',
           notificationType: 'ACTION_REQUIRED',
           title: 'Caso Legal Iniciado',
           message: `Se ha iniciado un caso legal relacionado con su contrato. Por favor revise los detalles.`,
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         },
         {
           legalCaseId: legalCase.id,
-          userId: contract.ownerId,
+          userId: contract.ownerId || '',
           notificationType: 'STATUS_UPDATE',
           title: 'Caso Legal Creado',
           message: `Se ha creado exitosamente el caso legal. El siguiente paso es enviar la notificación extrajudicial.`,

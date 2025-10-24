@@ -13,7 +13,7 @@ import {
   calculateBrokerageFee,
   calculateLatePaymentInterest,
   calculateProportionalRefund,
-  calculatePricePerSquareMeter
+  calculatePricePerSquareMeter,
 } from './math-utils';
 
 /**
@@ -44,7 +44,9 @@ export function validateCalculation(
     actual: roundToDecimal(actual),
     difference: roundToDecimal(difference),
     tolerance,
-    ...(difference > tolerance ? { error: `Diferencia ${difference} excede tolerancia ${tolerance}` } : {})
+    ...(difference > tolerance
+      ? { error: `Diferencia ${difference} excede tolerancia ${tolerance}` }
+      : {}),
   };
 }
 
@@ -59,7 +61,11 @@ export function validateSum(values: number[], expected: number): ValidationResul
 /**
  * Valida cálculos de porcentajes
  */
-export function validatePercentage(value: number, percentage: number, expected: number): ValidationResult {
+export function validatePercentage(
+  value: number,
+  percentage: number,
+  expected: number
+): ValidationResult {
   const actual = calculatePercentage(value, percentage);
   return validateCalculation(expected, actual);
 }
@@ -67,7 +73,11 @@ export function validatePercentage(value: number, percentage: number, expected: 
 /**
  * Valida cálculos de comisiones
  */
-export function validateBrokerageFee(monthlyRent: number, months: number, expected: number): ValidationResult {
+export function validateBrokerageFee(
+  monthlyRent: number,
+  months: number,
+  expected: number
+): ValidationResult {
   const actual = calculateBrokerageFee(monthlyRent, months);
   return validateCalculation(expected, actual);
 }
@@ -101,7 +111,11 @@ export function validateProportionalRefund(
 /**
  * Valida cálculos de precio por metro cuadrado
  */
-export function validatePricePerSquareMeter(price: number, area: number, expected: number): ValidationResult {
+export function validatePricePerSquareMeter(
+  price: number,
+  area: number,
+  expected: number
+): ValidationResult {
   const actual = calculatePricePerSquareMeter(price, area);
   return validateCalculation(expected, actual);
 }
@@ -158,7 +172,7 @@ export function runMathValidations(): {
         actual: result.actual,
         difference: result.difference,
         tolerance: result.tolerance,
-        error: result.error
+        error: result.error,
       });
     }
   });
@@ -167,14 +181,14 @@ export function runMathValidations(): {
     total: validations.length,
     passed,
     failed,
-    successRate: `${((passed / validations.length) * 100).toFixed(2)}%`
+    successRate: `${((passed / validations.length) * 100).toFixed(2)}%`,
   });
 
   return {
     total: validations.length,
     passed,
     failed,
-    results: validations
+    results: validations,
   };
 }
 
@@ -193,15 +207,15 @@ export async function validateContractCalculations(contractId: string): Promise<
       where: { id: contractId },
       include: {
         payments: true,
-        property: true
-      }
+        property: true,
+      },
     });
 
     if (!contract) {
       return {
         isValid: false,
         issues: ['Contrato no encontrado'],
-        summary: {}
+        summary: {},
       };
     }
 
@@ -209,18 +223,18 @@ export async function validateContractCalculations(contractId: string): Promise<
     const summary: Record<string, any> = {
       contractId,
       monthlyRent: contract.monthlyRent,
-      deposit: contract.deposit,
-      totalPayments: contract.payments.length
+      deposit: contract.depositAmount,
+      totalPayments: contract.payments.length,
     };
 
     // Validar total de pagos
-    const totalPaid = safeSum(...contract.payments
-      .filter(p => p.status === 'COMPLETED')
-      .map(p => p.amount));
+    const totalPaid = safeSum(
+      ...contract.payments.filter(p => p.status === 'COMPLETED').map(p => p.amount)
+    );
 
-    const totalPending = safeSum(...contract.payments
-      .filter(p => p.status === 'PENDING')
-      .map(p => p.amount));
+    const totalPending = safeSum(
+      ...contract.payments.filter(p => p.status === 'PENDING').map(p => p.amount)
+    );
 
     summary.totalPaid = totalPaid;
     summary.totalPending = totalPending;
@@ -229,21 +243,38 @@ export async function validateContractCalculations(contractId: string): Promise<
     const expectedTotalPayments = contract.monthlyRent * 12; // Asumiendo contrato de 1 año
     const totalPayments = totalPaid + totalPending;
 
-    if (totalPayments > expectedTotalPayments * 1.1) { // 10% de tolerancia
-      issues.push(`Total de pagos (${totalPayments}) excede el esperado (${expectedTotalPayments})`);
+    if (totalPayments > expectedTotalPayments * 1.1) {
+      // 10% de tolerancia
+      issues.push(
+        `Total de pagos (${totalPayments}) excede el esperado (${expectedTotalPayments})`
+      );
     }
 
     // Validar depósito razonable (máximo 2 meses de arriendo)
-    if (contract.deposit !== undefined && contract.monthlyRent !== undefined && contract.deposit > contract.monthlyRent * 2) {
-      issues.push(`Depósito (${contract.deposit}) excede 2 meses de arriendo (${contract.monthlyRent * 2})`);
+    if (
+      contract.depositAmount !== undefined &&
+      contract.monthlyRent !== undefined &&
+      contract.depositAmount > contract.monthlyRent * 2
+    ) {
+      issues.push(
+        `Depósito (${contract.depositAmount}) excede 2 meses de arriendo (${contract.monthlyRent * 2})`
+      );
     }
 
     // Validar precio por m² si hay información de área
-    if (contract.property?.area && contract.property.area > 0 && contract.monthlyRent !== undefined) {
-      const pricePerSqm = calculatePricePerSquareMeter(contract.monthlyRent * 12, contract.property.area);
+    if (
+      contract.property?.area &&
+      contract.property.area > 0 &&
+      contract.monthlyRent !== undefined
+    ) {
+      const pricePerSqm = calculatePricePerSquareMeter(
+        contract.monthlyRent * 12,
+        contract.property.area
+      );
       summary.pricePerSqm = pricePerSqm;
 
-      if (pricePerSqm > 100000) { // Muy alto para Santiago
+      if (pricePerSqm > 100000) {
+        // Muy alto para Santiago
         issues.push(`Precio por m² muy alto: ${pricePerSqm}`);
       }
     }
@@ -254,25 +285,24 @@ export async function validateContractCalculations(contractId: string): Promise<
       contractId,
       isValid,
       issuesCount: issues.length,
-      summary
+      summary,
     });
 
     return {
       isValid,
       issues,
-      summary
+      summary,
     };
-
   } catch (error) {
     logger.error('Error validando cálculos de contrato', {
       contractId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return {
       isValid: false,
       issues: ['Error interno en validación'],
-      summary: { contractId, error: 'Validation failed' }
+      summary: { contractId, error: 'Validation failed' },
     };
   }
 }
@@ -293,16 +323,16 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
       include: {
         reviews: true,
         contracts: {
-          where: { status: 'ACTIVE' }
-        }
-      }
+          where: { status: 'ACTIVE' },
+        },
+      },
     });
 
     if (!property) {
       return {
         isValid: false,
         issues: ['Propiedad no encontrada'],
-        summary: {}
+        summary: {},
       };
     }
 
@@ -312,12 +342,19 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
       price: property.price,
       deposit: property.deposit,
       area: property.area,
-      totalReviews: property.reviews?.length || 0
+      totalReviews: property.reviews?.length || 0,
     };
 
     // Validar relación precio/depósito (depósito máximo 2 meses)
-    if (property.deposit !== undefined && property.price !== undefined && property.deposit > property.price * 0.1) { // 10% del precio total
-      issues.push(`Depósito (${property.deposit}) excede 10% del precio total (${property.price * 0.1})`);
+    if (
+      property.deposit !== undefined &&
+      property.price !== undefined &&
+      property.deposit > property.price * 0.1
+    ) {
+      // 10% del precio total
+      issues.push(
+        `Depósito (${property.deposit}) excede 10% del precio total (${property.price * 0.1})`
+      );
     }
 
     // Validar precio por m² razonable
@@ -355,8 +392,14 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
       if (activeContract && activeContract.monthlyRent !== undefined) {
         const expectedMonthlyRent = Math.round(property.price / 12); // Aproximado
 
-        if (Math.abs(activeContract.monthlyRent - expectedMonthlyRent) / expectedMonthlyRent > 0.2) { // 20% de tolerancia
-          issues.push(`Renta mensual del contrato (${activeContract.monthlyRent}) no coincide con precio esperado (${expectedMonthlyRent})`);
+        if (
+          Math.abs(activeContract.monthlyRent - expectedMonthlyRent) / expectedMonthlyRent >
+          0.2
+        ) {
+          // 20% de tolerancia
+          issues.push(
+            `Renta mensual del contrato (${activeContract.monthlyRent}) no coincide con precio esperado (${expectedMonthlyRent})`
+          );
         }
       }
     }
@@ -367,25 +410,24 @@ export async function validatePropertyCalculations(propertyId: string): Promise<
       propertyId,
       isValid,
       issuesCount: issues.length,
-      summary
+      summary,
     });
 
     return {
       isValid,
       issues,
-      summary
+      summary,
     };
-
   } catch (error) {
     logger.error('Error validando cálculos de propiedad', {
       propertyId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return {
       isValid: false,
       issues: ['Error interno en validación'],
-      summary: { propertyId, error: 'Validation failed' }
+      summary: { propertyId, error: 'Validation failed' },
     };
   }
 }
@@ -424,7 +466,7 @@ export async function runCompleteValidation(): Promise<{
     const contracts = await db.contract.findMany({
       take: 100,
       orderBy: { createdAt: 'desc' },
-      select: { id: true }
+      select: { id: true },
     });
 
     for (const contract of contracts) {
@@ -450,7 +492,7 @@ export async function runCompleteValidation(): Promise<{
     const properties = await db.property.findMany({
       take: 100,
       orderBy: { createdAt: 'desc' },
-      select: { id: true }
+      select: { id: true },
     });
 
     for (const property of properties) {
@@ -474,13 +516,13 @@ export async function runCompleteValidation(): Promise<{
     mathValidations: {
       total: mathValidations.total,
       passed: mathValidations.passed,
-      failed: mathValidations.failed
+      failed: mathValidations.failed,
     },
     contractsValidated,
     contractsWithIssues,
     propertiesValidated,
     propertiesWithIssues,
-    totalIssues: issues.length
+    totalIssues: issues.length,
   });
 
   return {
@@ -491,8 +533,8 @@ export async function runCompleteValidation(): Promise<{
       contractsWithIssues,
       propertiesValidated,
       propertiesWithIssues,
-      totalIssues: issues.length
+      totalIssues: issues.length,
     },
-    issues
+    issues,
   };
 }

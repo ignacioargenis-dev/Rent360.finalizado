@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             id: true,
             contractNumber: true,
             monthlyRent: true,
-            deposit: true,
+            depositAmount: true,
             property: {
               select: {
                 id: true,

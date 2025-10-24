@@ -217,7 +217,7 @@ export default function NewBrokerContractPage() {
         setOwnerEmail(selectedProperty.ownerEmail || '');
         setOwnerPhone(selectedProperty.ownerPhone || '');
         setOwnerRUT(selectedProperty.ownerRUT || '');
-        setDeposit(selectedProperty.depositAmount?.toString() || '');
+        setDeposit(selectedProperty.deposit?.toString() || '');
       }
     }
   }, [searchParams, properties]);

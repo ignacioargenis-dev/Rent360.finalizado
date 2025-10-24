@@ -401,7 +401,7 @@ export default function NewContractPage() {
                     </p>
                     <div className="flex gap-4 mt-2 text-sm">
                       <span>Renta: ${selectedProperty.price.toLocaleString()}</span>
-                      <span>Garantía: ${selectedProperty.depositAmount.toLocaleString()}</span>
+                      <span>Garantía: ${selectedProperty.deposit.toLocaleString()}</span>
                     </div>
                   </div>
                 )}

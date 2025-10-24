@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         caseType: validatedData.caseType,
         contractId: validatedData.contractId,
         ownerId: user.id,
-        tenantId: contract.tenantId,
+        tenantId: contract.tenantId || '',
         brokerId: contract.brokerId,
         status: 'PRE_JUDICIAL',
         currentPhase: 'PRE_JUDICIAL',
