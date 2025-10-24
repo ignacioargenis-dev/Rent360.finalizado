@@ -120,19 +120,26 @@ export async function GET(request: NextRequest) {
     }
 
     // Aplicar filtros según el rol del usuario
-    if (user.role !== UserRole.ADMIN) {
+    if (user.role !== 'ADMIN') {
       switch (user.role) {
-        case UserRole.OWNER:
+        case 'OWNER':
           where.ownerId = user.id;
           break;
-        case UserRole.TENANT:
+        case 'TENANT':
           where.tenantId = user.id;
+          break;
+        case 'BROKER':
+          where.brokerId = user.id;
           break;
         case 'MAINTENANCE_PROVIDER':
         case 'SERVICE_PROVIDER':
           // Los proveedores pueden ver contratos de propiedades donde trabajan
           // Nota: providerId no existe en el modelo actual, se puede implementar más adelante
           where.id = 'none'; // No mostrar contratos por ahora
+          break;
+        default:
+          // Para otros roles, no mostrar contratos
+          where.id = 'none';
           break;
       }
     }
@@ -173,7 +180,7 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Solo admins y propietarios pueden crear contratos
-    if (user.role !== UserRole.ADMIN && user.role !== UserRole.OWNER) {
+    if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
       return NextResponse.json(
         { error: 'No tienes permisos para crear contratos' },
         { status: 403 }
@@ -200,7 +207,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Si es propietario, verificar que la propiedad le pertenece
-    if (user.role === UserRole.OWNER && property.ownerId !== user.id) {
+    if (user.role === 'OWNER' && property.ownerId !== user.id) {
       return NextResponse.json(
         { error: 'Solo puedes crear contratos para tus propias propiedades' },
         { status: 403 }
@@ -469,7 +476,7 @@ export async function DELETE(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Solo admins pueden eliminar contratos
-    if (user.role !== UserRole.ADMIN) {
+    if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'No tienes permisos para eliminar contratos' },
         { status: 403 }
