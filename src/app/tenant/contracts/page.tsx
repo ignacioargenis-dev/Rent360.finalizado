@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Forzar renderizado dinámico para evitar problemas de autenticación durante build
+export const dynamic = 'force-dynamic';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,17 +17,27 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   XCircle,
   Download,
+  PenTool,
+  Eye,
+  MessageSquare,
+  RefreshCw,
+  Building,
+  Home,
+  Edit,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -44,7 +58,7 @@ interface Contract {
   endDate: Date;
   monthlyRent: number;
   deposit: number;
-  status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'TERMINATED';
+  status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'TERMINATED' | 'DRAFT';
   brokerId?: string | null;
   terms: string;
   signedAt?: Date | null;
@@ -90,6 +104,7 @@ export default function TenantContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [exportOptions, setExportOptions] = useState({
     format: 'csv', // 'csv', 'json'
     status: 'all', // filtro por estado
@@ -98,7 +113,7 @@ export default function TenantContractsPage() {
 
   useEffect(() => {
     loadContracts();
-  }, []);
+  }, [refreshTrigger]);
 
   const loadContracts = async () => {
     try {
@@ -270,6 +285,8 @@ export default function TenantContractsPage() {
     switch (status) {
       case 'ACTIVE':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'DRAFT':
+        return <PenTool className="h-4 w-4 text-blue-600" />;
       case 'PENDING':
         return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'EXPIRED':
@@ -285,6 +302,8 @@ export default function TenantContractsPage() {
     switch (status) {
       case 'ACTIVE':
         return <Badge className="bg-green-100 text-green-800">Activo</Badge>;
+      case 'DRAFT':
+        return <Badge className="bg-blue-100 text-blue-800">Pendiente de Firma</Badge>;
       case 'PENDING':
         return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
       case 'EXPIRED':
@@ -298,45 +317,105 @@ export default function TenantContractsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Mis Contratos</h1>
+      <UnifiedDashboardLayout title="Mis Contratos" subtitle="Cargando...">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando contratos...</p>
+          </div>
         </div>
-        <div className="grid gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      </UnifiedDashboardLayout>
     );
   }
 
+  // Función para refrescar contratos
+  function refreshContracts() {
+    setRefreshTrigger(prev => prev + 1);
+  }
+
   return (
-    <div className="space-y-6">
+    <UnifiedDashboardLayout
+      title="Mis Contratos"
+      subtitle="Gestiona y firma tus contratos de arriendo"
+    >
+      <div className="space-y-6">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Contratos</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Contratos Activos</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'ACTIVE').length}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+        <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pendientes de Firma</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'DRAFT').length}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <PenTool className="w-6 h-6 text-yellow-600" />
+                </div>
+        </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => {
+                    if (!c.endDate) return false;
+                    const daysUntilExpiry = Math.ceil((new Date(c.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+                  }).length}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-orange-600" />
+                </div>
+                </div>
+              </CardContent>
+            </Card>
+        </div>
+
+        {/* Actions Bar */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Mis Contratos</h1>
-        <div className="flex items-center gap-4">
           <div className="text-sm text-muted-foreground">
-            {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
+            {contracts.length} contrato{contracts.length !== 1 ? 's' : ''} encontrado{contracts.length !== 1 ? 's' : ''}
           </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={refreshContracts} variant="outline" size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualizar
+            </Button>
           {contracts.length > 0 && (
             <Button onClick={handleExportContracts} variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
-              Exportar Datos
+                Exportar
             </Button>
           )}
         </div>
@@ -418,30 +497,247 @@ export default function TenantContractsPage() {
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Características</h4>
                   <div className="flex flex-wrap gap-2">
-                    {contract.property?.features && contract.property.features.length > 0 ? (
-                      contract.property.features.map((feature, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-sm text-gray-500">Sin características especificadas</span>
-                    )}
-                  </div>
+                      {contract.property?.features && contract.property.features.length > 0 ? (
+                        contract.property.features.map((feature, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {feature}
+                      </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">Sin características especificadas</span>
+                      )}
+                    </div>
                 </div>
 
                 {/* Acciones */}
-                <div className="border-t pt-4 flex gap-2">
+                  <div className="border-t pt-4 flex flex-wrap gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4 mr-2" />
                     Ver Detalles
                   </Button>
-                  {contract.status === 'ACTIVE' && (
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Detalles del Contrato {contract.contractNumber}</DialogTitle>
+                          <DialogDescription>
+                            Información completa del contrato de arriendo
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-6">
+                          {/* Información General */}
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-base">Información del Contrato</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Número:</span>
+                                  <span className="font-medium">{contract.contractNumber}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Estado:</span>
+                                  {getStatusBadge(contract.status)}
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Arriendo:</span>
+                                  <span className="font-medium">{formatPrice(contract.monthlyRent)}/mes</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Depósito:</span>
+                                  <span className="font-medium">{formatPrice(contract.deposit)}</span>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-base">Fechas Importantes</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Fecha Inicio:</span>
+                                  <span className="font-medium">{formatDate(contract.startDate)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Fecha Fin:</span>
+                                  <span className="font-medium">{formatDate(contract.endDate)}</span>
+                                </div>
+                                {contract.signedAt && (
+                                  <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">Firmado:</span>
+                                    <span className="font-medium">{formatDate(contract.signedAt)}</span>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </div>
+
+                          {/* Información de las Partes */}
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-base">Inquilino</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <User className="w-5 h-5 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{user?.name || 'Usuario'}</p>
+                                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-base">Propietario</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <Home className="w-5 h-5 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{contract.ownerName || 'Propietario'}</p>
+                                    <p className="text-sm text-muted-foreground">Propietario de la propiedad</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+
+                          {/* Información de la Propiedad */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-base">Información de la Propiedad</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <h4 className="font-medium mb-2">{contract.property.title}</h4>
+                                  <div className="space-y-1 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="h-4 w-4" />
+                                      <span>{contract.property.address}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Building className="h-4 w-4" />
+                                      <span>{contract.property.city}, {contract.property.commune}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium mb-2">Características</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {contract.property?.features && contract.property.features.length > 0 ? (
+                                      contract.property.features.map((feature, index) => (
+                                        <Badge key={index} variant="outline" className="text-xs">
+                                          {feature}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm text-muted-foreground">Sin características especificadas</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Términos del Contrato */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-base">Términos del Contrato</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {contract.terms}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Firma Electrónica */}
+                    {contract.status === 'DRAFT' && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                        <Button variant="default" size="sm">
+                          <Edit className="w-4 h-4 mr-2" />
+                          Firmar Contrato
+                        </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Firma Electrónica del Contrato</DialogTitle>
+                            <DialogDescription>
+                              Revisa y firma electrónicamente el contrato {contract.contractNumber}
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          <div className="space-y-4">
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <div className="flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-blue-600 mt-0.5" />
+                                <div className="text-sm">
+                                  <p className="font-medium text-blue-900 mb-1">Importante</p>
+                                  <p className="text-blue-800">
+                                    Al firmar este contrato, aceptas todos los términos y condiciones establecidos.
+                                    Esta firma tiene valor legal y es vinculante.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                              <Edit className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">Firma Electrónica</h3>
+                              <p className="text-gray-600 mb-4">
+                                Componente de firma electrónica en desarrollo.
+                                Esta funcionalidad estará disponible próximamente.
+                              </p>
+                              <Button
+                                onClick={() => {
+                                  alert('Firma simulada completada. El contrato será activado.');
+                                  refreshContracts();
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Firmar Contrato (Simulado)
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+
+                    {/* Contactar Propietario */}
                     <Button variant="outline" size="sm">
-                      Solicitar Mantenimiento
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Contactar Propietario
+                    </Button>
+
+                    {/* Solicitar Mantenimiento (solo contratos activos) */}
+                    {contract.status === 'ACTIVE' && (
+                      <Button variant="outline" size="sm">
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Solicitar Mantenimiento
                     </Button>
                   )}
+
+                    {/* Descargar Contrato */}
                   <Button variant="outline" size="sm">
-                    Contactar Propietario
+                      <Download className="w-4 h-4 mr-2" />
+                      Descargar PDF
                   </Button>
                 </div>
               </CardContent>
@@ -530,5 +826,6 @@ export default function TenantContractsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </UnifiedDashboardLayout>
   );
 }
