@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);

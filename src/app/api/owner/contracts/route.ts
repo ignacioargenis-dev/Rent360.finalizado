@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
@@ -20,8 +23,8 @@ export async function GET(request: NextRequest) {
     const contracts = await db.contract.findMany({
       where: {
         OR: [
-          { ownerId: user.id },                    // Contracts with ownerId set correctly
-          { property: { ownerId: user.id } },     // Contracts with ownerId null but property belongs to user
+          { ownerId: user.id }, // Contracts with ownerId set correctly
+          { property: { ownerId: user.id } }, // Contracts with ownerId null but property belongs to user
         ],
       },
       include: {

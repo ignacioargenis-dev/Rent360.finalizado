@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
 // Datos simulados para evitar errores durante build
 const getSimulatedMetrics = () => ({
   timestamp: Date.now(),
