@@ -395,11 +395,11 @@ export default function CalificacionesPage() {
   }
 
   const averageRating =
-    mockRatings.length > 0
-      ? mockRatings.reduce((sum, r) => sum + r.overallRating, 0) / mockRatings.length
+    ratings.length > 0
+      ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
       : 0;
 
-  const verifiedRatings = mockRatings.filter(r => r.verified).length;
+  const verifiedRatings = ratings.filter(r => r.verified).length;
 
   return (
     <UnifiedDashboardLayout
@@ -422,7 +422,7 @@ export default function CalificacionesPage() {
                   <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockRatings.length}</div>
+                  <div className="text-2xl font-bold">{ratings.length}</div>
                   <p className="text-xs text-muted-foreground">Reseñas recibidas</p>
                 </CardContent>
               </Card>
@@ -456,7 +456,7 @@ export default function CalificacionesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">{verifiedRatings}</div>
-                  <p className="text-xs text-muted-foreground">De {mockRatings.length} total</p>
+                  <p className="text-xs text-muted-foreground">De {ratings.length} total</p>
                 </CardContent>
               </Card>
 
@@ -467,7 +467,7 @@ export default function CalificacionesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-yellow-600">
-                    {mockRatings.filter(r => r.overallRating === 5).length}
+                    {ratings.filter(r => r.overallRating === 5).length}
                   </div>
                   <p className="text-xs text-muted-foreground">Reseñas perfectas</p>
                 </CardContent>
@@ -485,7 +485,7 @@ export default function CalificacionesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockRatings.map(rating => (
+                  {ratings.map(rating => (
                     <Card key={rating.id} className="border-l-4 border-l-blue-500">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -588,7 +588,7 @@ export default function CalificacionesPage() {
                   ))}
                 </div>
 
-                {mockRatings.length === 0 && (
+                {ratings.length === 0 && (
                   <div className="text-center py-12">
                     <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
