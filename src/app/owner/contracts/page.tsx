@@ -329,7 +329,7 @@ export default function OwnerContractsPage() {
       if (response.ok) {
         alert('Disputa iniciada exitosamente');
         // Recargar contratos
-        window.location.reload();
+        refreshContracts();
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || 'Error desconocido'}`);
@@ -429,7 +429,7 @@ export default function OwnerContractsPage() {
       if (response.ok) {
         alert('Caso legal iniciado exitosamente');
         // Recargar contratos
-        window.location.reload();
+        refreshContracts();
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || 'Error desconocido'}`);
@@ -584,7 +584,7 @@ export default function OwnerContractsPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Exportar Datos
                 </Button>
-                <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                <Button onClick={refreshContracts} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualizar
                 </Button>
@@ -761,7 +761,7 @@ export default function OwnerContractsPage() {
                 documentHash={`hash-${selectedContract.id}`}
                 onSignatureComplete={() => {
                   setShowSignatureDialog(false);
-                  window.location.reload();
+                  refreshContracts();
                 }}
                 onSignatureCancel={() => setShowSignatureDialog(false)}
               />
