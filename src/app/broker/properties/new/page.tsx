@@ -58,6 +58,7 @@ interface PropertyForm {
   city: string;
   region: string;
   price: string;
+  deposit: string;
   bedrooms: string;
   bathrooms: string;
   area: string;
@@ -228,6 +229,7 @@ export default function BrokerNewPropertyPage() {
     city: '',
     region: '',
     price: '',
+    deposit: '',
     bedrooms: '',
     bathrooms: '',
     area: '',
@@ -370,10 +372,11 @@ export default function BrokerNewPropertyPage() {
       formDataToSend.append('address', formData.address);
       formDataToSend.append('city', formData.city);
       formDataToSend.append('region', formData.region);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('bedrooms', formData.bedrooms);
-      formDataToSend.append('bathrooms', formData.bathrooms);
-      formDataToSend.append('area', formData.area);
+      formDataToSend.append('price', parseFloat(formData.price).toString());
+      formDataToSend.append('deposit', parseFloat(formData.deposit || '0').toString());
+      formDataToSend.append('bedrooms', parseInt(formData.bedrooms).toString());
+      formDataToSend.append('bathrooms', parseInt(formData.bathrooms).toString());
+      formDataToSend.append('area', parseInt(formData.area).toString());
       formDataToSend.append('description', formData.description);
       formDataToSend.append('type', formData.propertyType);
       formDataToSend.append('commune', formData.city); // Usar city como commune por ahora
@@ -588,6 +591,21 @@ export default function BrokerNewPropertyPage() {
                           placeholder="Ej: 500000"
                           value={formData.price}
                           onChange={e => handleInputChange('price', e.target.value)}
+                          className="mt-1 bg-white"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="deposit" className="text-sm font-medium">
+                          Depósito Garantía (CLP) *
+                        </Label>
+                        <Input
+                          id="deposit"
+                          type="number"
+                          placeholder="Ej: 500000"
+                          value={formData.deposit}
+                          onChange={e => handleInputChange('deposit', e.target.value)}
                           className="mt-1 bg-white"
                           required
                         />
