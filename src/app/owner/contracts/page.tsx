@@ -59,8 +59,10 @@ interface ContractWithDetails extends Contract {
 }
 
 export default function OwnerContractsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  console.log('🚀 OwnerContractsPage render - user:', user, 'authLoading:', authLoading);
   const [contracts, setContracts] = useState<ContractWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -166,8 +168,35 @@ export default function OwnerContractsPage() {
     contractsCount: contracts.length,
     filteredContractsCount: filteredContracts.length,
     userId: user?.id,
-    userRole: user?.role
+    userRole: user?.role,
+    authLoading
   });
+
+  // Mostrar loading mientras se verifica autenticación
+  if (authLoading) {
+    console.log('⏳ Mostrando loading - auth aún cargando');
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar que el usuario esté autenticado y sea propietario
+  if (!user) {
+    console.log('❌ No hay usuario autenticado, redirigiendo a login');
+    router.push('/auth/login');
+    return null;
+  }
+
+  if (user.role !== 'OWNER') {
+    console.log('❌ Usuario no es OWNER, redirigiendo a dashboard');
+    router.push('/owner/dashboard');
+    return null;
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
