@@ -179,7 +179,7 @@ export async function GET() {
       properties: {
         ownerProperties
       },
-      issues: []
+      issues: [] as string[]
     };
 
     // Análisis de problemas
