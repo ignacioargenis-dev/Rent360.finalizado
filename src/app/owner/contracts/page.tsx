@@ -74,6 +74,7 @@ export default function OwnerContractsPage() {
     endDate: '',
   });
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Estados para manejar redirecciones
@@ -269,7 +270,7 @@ export default function OwnerContractsPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusConfig = (status: string) => {
     const statusConfig = {
       ACTIVE: { label: 'Activo', color: 'bg-green-100 text-green-800' },
       PENDING: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
@@ -277,7 +278,11 @@ export default function OwnerContractsPage() {
       DRAFT: { label: 'Borrador', color: 'bg-blue-100 text-blue-800' },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const config = getStatusConfig(status);
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
@@ -684,12 +689,6 @@ export default function OwnerContractsPage() {
                                 <span>Firmado: {formatDate(contract.signedAt)}</span>
                               </div>
                             )}
-                            {contract.terms && (
-                              <div className="text-sm text-gray-600">
-                                <span className="font-medium">Términos: </span>
-                                {contract.terms}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -698,7 +697,10 @@ export default function OwnerContractsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setSelectedContract(contract)}
+                          onClick={() => {
+                            setSelectedContract(contract);
+                            setShowDetailsDialog(true);
+                          }}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -765,6 +767,163 @@ export default function OwnerContractsPage() {
                 }}
                 onSignatureCancel={() => setShowSignatureDialog(false)}
               />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles del Contrato</DialogTitle>
+            <DialogDescription>
+              Información completa del contrato {selectedContract?.contractNumber || selectedContract?.id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedContract && (
+            <div className="space-y-6">
+              {/* Información básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información del Contrato</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Número de Contrato:</span>
+                      <span>{selectedContract.contractNumber || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Estado:</span>
+                      <Badge className={getStatusConfig(selectedContract.status).color}>
+                        {getStatusConfig(selectedContract.status).label}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Fecha de Inicio:</span>
+                      <span>{formatDate(selectedContract.startDate)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Fecha de Fin:</span>
+                      <span>{formatDate(selectedContract.endDate)}</span>
+                    </div>
+                    {selectedContract.signedAt && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Fecha de Firma:</span>
+                        <span>{formatDate(selectedContract.signedAt)}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Información Financiera</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Renta Mensual:</span>
+                      <span className="font-semibold">{formatPrice(selectedContract.monthlyRent || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Depósito de Garantía:</span>
+                      <span className="font-semibold">{formatPrice(selectedContract.depositAmount || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Comisión:</span>
+                      <span>{selectedContract.commission ? formatPrice(selectedContract.commission) : 'N/A'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Información de las partes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Propiedad</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="font-medium">Título:</span>
+                      <p>{selectedContract.property?.title || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Dirección:</span>
+                      <p>{selectedContract.property?.address || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Propietario:</span>
+                      <p>{user?.name} ({user?.email})</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Inquilino</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="font-medium">Nombre:</span>
+                      <p>{selectedContract.tenantName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span>
+                      <p>{selectedContract.tenantEmail || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">RUT:</span>
+                      <p>{selectedContract.tenantRut || 'N/A'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Términos del contrato */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Términos del Contrato</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-mono">
+                      {selectedContract.terms || 'No se encontraron términos del contrato.'}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Acciones */}
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+                  Cerrar
+                </Button>
+                {selectedContract.status === 'PENDING' && (
+                  <Button
+                    onClick={() => {
+                      setShowDetailsDialog(false);
+                      setShowSignatureDialog(true);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Firmar Contrato
+                  </Button>
+                )}
+                {selectedContract.status === 'ACTIVE' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetailsDialog(false);
+                      handleDisputeDeposit(selectedContract);
+                    }}
+                  >
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Disputar Depósito
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
