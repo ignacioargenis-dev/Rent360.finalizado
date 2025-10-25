@@ -156,14 +156,34 @@ export default function OwnerContractsPage() {
   // Verificar que el usuario esté autenticado y sea propietario
   if (!user) {
     console.log('❌ No hay usuario autenticado, redirigiendo a login');
-    router.push('/auth/login');
-    return null;
+    // Usar useEffect para redireccionar después del render
+    useEffect(() => {
+      router.push('/auth/login');
+    }, [router]);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirigiendo al login...</p>
+        </div>
+      </div>
+    );
   }
 
   if (user.role !== 'OWNER') {
     console.log('❌ Usuario no es OWNER, redirigiendo a dashboard');
-    router.push('/owner/dashboard');
-    return null;
+    // Usar useEffect para redireccionar después del render
+    useEffect(() => {
+      router.push('/owner/dashboard');
+    }, [router]);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirigiendo...</p>
+        </div>
+      </div>
+    );
   }
 
   const formatPrice = (price: number) => {
