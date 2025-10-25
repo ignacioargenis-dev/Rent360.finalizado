@@ -76,10 +76,30 @@ export default function OwnerContractsPage() {
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [platformFeePercentage, setPlatformFeePercentage] = useState(5.0); // Por defecto 5%
 
   // Estados para manejar redirecciones
   const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
   const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
+
+  // Cargar configuración de plataforma
+  useEffect(() => {
+    const loadPlatformConfig = async () => {
+      try {
+        const response = await fetch('/api/admin/platform-retention-config', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const config = await response.json();
+          setPlatformFeePercentage(config.platformFeePercentage || 5.0);
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar configuración de plataforma, usando valor por defecto');
+      }
+    };
+
+    loadPlatformConfig();
+  }, []);
 
   // Detectar si viene de crear un contrato nuevo
   useEffect(() => {
@@ -704,7 +724,7 @@ export default function OwnerContractsPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {contract.status === 'PENDING' && (
+                        {(contract.status === 'DRAFT' || contract.status === 'PENDING') && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -831,8 +851,10 @@ export default function OwnerContractsPage() {
                       <span className="font-semibold">{formatPrice(selectedContract.depositAmount || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Comisión:</span>
-                      <span>{selectedContract.commission ? formatPrice(selectedContract.commission) : 'N/A'}</span>
+                      <span className="font-medium">Comisión Plataforma:</span>
+                      <span className="font-semibold text-blue-600">
+                        {formatPrice((selectedContract.monthlyRent || 0) * (platformFeePercentage / 100))} ({platformFeePercentage}%)
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -900,7 +922,7 @@ export default function OwnerContractsPage() {
                 <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
                   Cerrar
                 </Button>
-                {selectedContract.status === 'PENDING' && (
+                {(selectedContract.status === 'DRAFT' || selectedContract.status === 'PENDING') && (
                   <Button
                     onClick={() => {
                       setShowDetailsDialog(false);
