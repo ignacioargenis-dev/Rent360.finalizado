@@ -211,13 +211,8 @@ export default function CalificacionesPage() {
         date: rating.createdAt || rating.date,
       }));
 
-      // Si no hay datos reales, usar datos mock como fallback
-      if (transformedRatings.length === 0) {
-        logger.warn('No se encontraron calificaciones reales, usando datos mock como fallback');
-        setRatings(mockRatings);
-      } else {
-        setRatings(transformedRatings);
-      }
+      // Usar datos reales o array vacío si no hay calificaciones
+      setRatings(transformedRatings);
 
       // Fetch ratings that can be given (from contracts, maintenance, etc.)
       const contractsResponse = await fetch('/api/contracts?status=COMPLETED&limit=50', {
@@ -248,10 +243,9 @@ export default function CalificacionesPage() {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // En caso de error, usar datos mock como fallback
-      logger.warn('Usando datos mock como fallback debido a error en API');
-      setRatings(mockRatings);
-      setRatingsToGive(mockRatingsToGive);
+      // En caso de error, mostrar arrays vacíos
+      setRatings([]);
+      setRatingsToGive([]);
     } finally {
       setLoading(false);
     }
@@ -592,12 +586,19 @@ export default function CalificacionesPage() {
                   <div className="text-center py-12">
                     <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      No hay calificaciones aún
+                      Aún no tienes calificaciones
                     </h3>
-                    <p className="text-gray-600">
-                      Las calificaciones de tus inquilinos aparecerán aquí una vez que completen sus
-                      evaluaciones.
+                    <p className="text-gray-600 mb-3">
+                      Las calificaciones aparecerán aquí cuando completes contratos con inquilinos.
                     </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                      <p className="text-sm text-blue-800 font-medium mb-1">
+                        💡 Importante: Mantén calificaciones altas
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Las buenas calificaciones aumentan la confianza y te ayudan a conseguir más contratos.
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>

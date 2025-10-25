@@ -43,101 +43,7 @@ export default function ProviderRatingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
-  const [ratings, setRatings] = useState<any[]>([
-    {
-      id: '1',
-      clientName: 'María González',
-      clientAvatar: '/avatars/maria.jpg',
-      serviceType: 'Plomería',
-      rating: 5,
-      comment:
-        'Excelente trabajo. El técnico llegó puntual, fue muy profesional y solucionó el problema rápidamente. Muy recomendable.',
-      createdAt: '2024-01-15T14:30:00',
-      propertyAddress: 'Las Condes 1234, Santiago',
-      jobId: 'JOB-2024-001',
-      hasResponse: true,
-      response:
-        '¡Gracias María! Me alegra que haya quedado satisfecha con el servicio. Fue un placer ayudarla.',
-      responseDate: '2024-01-15T16:45:00',
-      verified: true,
-    },
-    {
-      id: '2',
-      clientName: 'Carlos Rodríguez',
-      clientAvatar: '/avatars/carlos.jpg',
-      serviceType: 'Electricidad',
-      rating: 5,
-      comment:
-        'Trabajo impecable. Instalaron todo el sistema eléctrico de mi departamento nuevo. Profesionales y puntuales.',
-      createdAt: '2024-01-14T11:20:00',
-      propertyAddress: 'Providencia 567, Santiago',
-      jobId: 'JOB-2024-002',
-      hasResponse: false,
-      verified: true,
-    },
-    {
-      id: '3',
-      clientName: 'Ana Silva',
-      clientAvatar: '/avatars/ana.jpg',
-      serviceType: 'Pintura',
-      rating: 4,
-      comment:
-        'Buen trabajo general. La pintura quedó bien, pero tardaron un poco más de lo esperado.',
-      createdAt: '2024-01-13T09:15:00',
-      propertyAddress: 'Ñuñoa 789, Santiago',
-      jobId: 'JOB-2024-003',
-      hasResponse: true,
-      response:
-        'Disculpe la demora Ana. Agradecemos su comprensión. Esperamos poder servirle nuevamente pronto.',
-      responseDate: '2024-01-13T15:30:00',
-      verified: true,
-    },
-    {
-      id: '4',
-      clientName: 'Pedro Morales',
-      clientAvatar: '/avatars/pedro.jpg',
-      serviceType: 'Jardinería',
-      rating: 5,
-      comment:
-        'Fantástico servicio. Mi jardín se ve increíble. Los profesionales fueron muy cuidadosos y detallistas.',
-      createdAt: '2024-01-12T16:45:00',
-      propertyAddress: 'Vitacura 345, Santiago',
-      jobId: 'JOB-2024-004',
-      hasResponse: false,
-      verified: true,
-    },
-    {
-      id: '5',
-      clientName: 'Sofía Vargas',
-      clientAvatar: '/avatars/sofia.jpg',
-      serviceType: 'Mantenimiento General',
-      rating: 3,
-      comment:
-        'El trabajo estuvo bien, pero el presupuesto inicial fue mucho más bajo que el final.',
-      createdAt: '2024-01-11T13:10:00',
-      propertyAddress: 'La Reina 456, Santiago',
-      jobId: 'JOB-2024-005',
-      hasResponse: true,
-      response:
-        'Lamentamos la diferencia en el presupuesto Sofía. Durante el trabajo se encontraron problemas adicionales que no estaban previstos inicialmente. Agradecemos su comprensión.',
-      responseDate: '2024-01-11T17:20:00',
-      verified: true,
-    },
-    {
-      id: '6',
-      clientName: 'Diego López',
-      clientAvatar: '/avatars/diego.jpg',
-      serviceType: 'Electricidad',
-      rating: 5,
-      comment:
-        'Servicio de primera. Solucionaron un problema complejo de manera rápida y eficiente.',
-      createdAt: '2024-01-10T10:30:00',
-      propertyAddress: 'Las Condes 890, Santiago',
-      jobId: 'JOB-2024-006',
-      hasResponse: false,
-      verified: false,
-    },
-  ]);
+  const [ratings, setRatings] = useState<any[]>([]);
   const [replyText, setReplyText] = useState('');
   const [selectedRatingId, setSelectedRatingId] = useState<string | null>(null);
 
@@ -153,9 +59,46 @@ export default function ProviderRatingsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock ratings overview data
+      // Intentar cargar datos reales desde la API
+      const response = await fetch('/api/ratings?limit=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const ratingsData = result.data || result.ratings || [];
+
+        // Transformar datos de la API al formato esperado
+        const transformedRatings = ratingsData.map((rating: any) => ({
+          id: rating.id,
+          clientName: rating.clientName || rating.client?.name || 'Cliente',
+          clientAvatar: rating.clientAvatar || rating.client?.avatar,
+          serviceType: rating.serviceType || rating.job?.serviceType || 'Servicio',
+          rating: rating.rating || rating.overallRating || 0,
+          comment: rating.comment || '',
+          createdAt: rating.createdAt || rating.date,
+          propertyAddress: rating.propertyAddress || rating.property?.address || '',
+          jobId: rating.jobId || rating.job?.id || '',
+          hasResponse: rating.hasResponse || !!rating.response,
+          response: rating.response || '',
+          responseDate: rating.responseDate,
+          verified: rating.verified || rating.isVerified || false,
+        }));
+
+        setRatings(transformedRatings);
+      } else {
+        // Si no hay datos reales, dejar array vacío
+        setRatings([]);
+      }
+
+      // Calcular métricas basadas en los ratings (pueden ser 0 si no hay datos)
       const overviewData = {
-        averageRating: ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length,
+        averageRating: ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0,
         totalRatings: ratings.length,
         fiveStarRatings: ratings.filter(r => r.rating === 5).length,
         withComments: ratings.filter(r => r.comment).length,
@@ -168,7 +111,16 @@ export default function ProviderRatingsPage() {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setError('Error al cargar los datos');
+      // En caso de error, mostrar datos vacíos con métricas en 0
+      setRatings([]);
+      setData({
+        averageRating: 0,
+        totalRatings: 0,
+        fiveStarRatings: 0,
+        withComments: 0,
+        verifiedRatings: 0,
+        respondedRatings: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -364,8 +316,8 @@ export default function ProviderRatingsPage() {
           {['all', 'responded', 'pending', 'low'].map(tabValue => (
             <TabsContent key={tabValue} value={tabValue}>
               <div className="space-y-4">
-                {ratings
-                  .filter(rating => {
+                {(() => {
+                  const filteredRatings = ratings.filter(rating => {
                     if (tabValue === 'all') {
                       return true;
                     }
@@ -379,8 +331,11 @@ export default function ProviderRatingsPage() {
                       return rating.rating <= 3;
                     }
                     return true;
-                  })
-                  .map(rating => (
+                  });
+
+                  return (
+                    <>
+                      {filteredRatings.map(rating => (
                     <Card key={rating.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
@@ -487,6 +442,29 @@ export default function ProviderRatingsPage() {
                       </CardContent>
                     </Card>
                   ))}
+
+                  {filteredRatings.length === 0 && (
+                    <div className="text-center py-12">
+                      <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Aún no tienes calificaciones
+                      </h3>
+                      <p className="text-gray-600 mb-3">
+                        Las calificaciones aparecerán aquí cuando completes trabajos para clientes.
+                      </p>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                        <p className="text-sm text-blue-800 font-medium mb-1">
+                          💡 Importante: Mantén calificaciones altas
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          Los clientes valoran la calidad del servicio. Buenas calificaciones te ayudan a conseguir más trabajos.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                    </>
+                  );
+                })()}
               </div>
             </TabsContent>
           ))}
