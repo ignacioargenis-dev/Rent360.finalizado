@@ -110,7 +110,17 @@ export default function OwnerContractsPage() {
 
         if (response.ok) {
           const data = await response.json();
-          setContracts(data.contracts || []);
+          console.log('🔍 Contratos cargados desde API:', data.contracts);
+
+          // ✅ CORREGIDO: Mapear contratos con información adicional del tenant
+          const contractsWithDetails = (data.contracts || []).map((contract: any) => ({
+            ...contract,
+            tenantName: contract.tenant?.name || 'Sin nombre',
+            tenantEmail: contract.tenant?.email || '',
+          }));
+
+          console.log('🔍 Contratos mapeados:', contractsWithDetails);
+          setContracts(contractsWithDetails);
         } else {
           logger.error('Error loading contracts from API:', {
             status: response.status,
@@ -179,7 +189,27 @@ export default function OwnerContractsPage() {
 
     const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const passesFilter = matchesSearch && matchesStatus;
+
+    // Debug log para cada contrato
+    console.log('🔍 Filtrando contrato:', {
+      contractNumber: contract.contractNumber,
+      status: contract.status,
+      tenantName: contract.tenantName,
+      propertyTitle: contract.property?.title,
+      matchesSearch,
+      matchesStatus,
+      passesFilter
+    });
+
+    return passesFilter;
+  });
+
+  console.log('🔍 Resultado final del filtro:', {
+    totalContracts: contracts.length,
+    filteredContracts: filteredContracts.length,
+    searchTerm,
+    statusFilter
   });
 
   // ✅ CORREGIDO: Calcular estadísticas basadas en datos reales
