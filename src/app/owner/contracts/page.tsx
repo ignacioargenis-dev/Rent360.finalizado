@@ -76,6 +76,10 @@ export default function OwnerContractsPage() {
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Estados para manejar redirecciones
+  const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
+  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
+
   // Detectar si viene de crear un contrato nuevo
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -87,6 +91,24 @@ export default function OwnerContractsPage() {
       setRefreshTrigger(prev => prev + 1);
     }
   }, []);
+
+  // Manejar redirecciones
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setShouldRedirectToLogin(true);
+    } else if (!authLoading && user && user.role !== 'OWNER') {
+      setShouldRedirectToDashboard(true);
+    }
+  }, [authLoading, user]);
+
+  // Ejecutar redirecciones
+  useEffect(() => {
+    if (shouldRedirectToLogin) {
+      router.push('/auth/login');
+    } else if (shouldRedirectToDashboard) {
+      router.push('/owner/dashboard');
+    }
+  }, [shouldRedirectToLogin, shouldRedirectToDashboard, router]);
 
   useEffect(() => {
     // Solo cargar contratos si el usuario está disponible y la autenticación terminó
@@ -142,7 +164,6 @@ export default function OwnerContractsPage() {
 
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
-    console.log('⏳ Mostrando loading - auth aún cargando');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -153,13 +174,8 @@ export default function OwnerContractsPage() {
     );
   }
 
-  // Verificar que el usuario esté autenticado y sea propietario
-  if (!user) {
-    console.log('❌ No hay usuario autenticado, redirigiendo a login');
-    // Usar useEffect para redireccionar después del render
-    useEffect(() => {
-      router.push('/auth/login');
-    }, [router]);
+  // Mostrar loading mientras se ejecuta la redirección
+  if (shouldRedirectToLogin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -170,12 +186,7 @@ export default function OwnerContractsPage() {
     );
   }
 
-  if (user.role !== 'OWNER') {
-    console.log('❌ Usuario no es OWNER, redirigiendo a dashboard');
-    // Usar useEffect para redireccionar después del render
-    useEffect(() => {
-      router.push('/owner/dashboard');
-    }, [router]);
+  if (shouldRedirectToDashboard) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
