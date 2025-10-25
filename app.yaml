@@ -17,15 +17,15 @@ services:
   - key: NEXT_TELEMETRY_DISABLED
     value: "1"
   # Variables de entorno críticas para la aplicación
-  # ⚠️ REEMPLAZA con tu URL real de PostgreSQL
+  # ✅ CONFIGURADO: Usando variable automática de DigitalOcean para base de datos
   - key: DATABASE_URL
-    value: "postgresql://rent360_user:REPLACE_WITH_YOUR_DB_PASSWORD@REPLACE_WITH_YOUR_DB_HOST:25060/rent360_prod"
+    value: "${rent360-db.DATABASE_URL}"
   - key: JWT_SECRET
-    value: "REPLACE_WITH_YOUR_OWN_JWT_SECRET_MIN_32_CHARS"
+    value: "e9d813f4345645052a1cd1abe705b96c064f75f4f4e2313443293f618eec722f"
   - key: JWT_REFRESH_SECRET
-    value: "REPLACE_WITH_YOUR_OWN_JWT_REFRESH_SECRET_MIN_32_CHARS"
+    value: "63bfba64e744e820bee5da89ffeb95851ff1d7d2f696277bc5d76c4b6c238fb8"
   - key: NEXTAUTH_SECRET
-    value: "REPLACE_WITH_YOUR_OWN_NEXTAUTH_SECRET_MIN_32_CHARS"
+    value: "178cc98439d47733e8a07ceea76c1d716bdde0e9d1b83d4600abc39c06c0e05e"
   - key: PORT
     value: "3000"
   health_check:
