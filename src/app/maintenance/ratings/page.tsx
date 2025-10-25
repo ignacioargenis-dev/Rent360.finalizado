@@ -312,9 +312,22 @@ export default function MaintenanceRatingsPage() {
             {/* Lista de calificaciones */}
             <div className="space-y-4">
               {filteredRatings.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No se encontraron calificaciones</p>
+                <div className="text-center py-12">
+                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Aún no tienes calificaciones
+                  </h3>
+                  <p className="text-gray-600 mb-3">
+                    Las calificaciones de tus trabajos aparecerán aquí cuando completes servicios.
+                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                    <p className="text-sm text-blue-800 font-medium mb-1">
+                      💡 Importante: Mantén un buen servicio
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Las buenas calificaciones son clave para conseguir más trabajos de mantenimiento.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 filteredRatings.map(rating => (

@@ -857,11 +857,21 @@ export default function CalificacionesPage() {
             <CardContent>
               {filteredRatings.length === 0 ? (
                 <div className="text-center py-12">
-                  <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay calificaciones</h3>
-                  <p className="text-gray-600 mb-4">
-                    Aún no has realizado calificaciones. ¡Comparte tu experiencia!
+                  <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Aún no tienes calificaciones realizadas
+                  </h3>
+                  <p className="text-gray-600 mb-3">
+                    Las calificaciones que realices aparecerán aquí.
                   </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto mb-6">
+                    <p className="text-sm text-blue-800 font-medium mb-1">
+                      💡 Importante: Tus calificaciones ayudan a la comunidad
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Calificar propiedades, servicios y proveedores mejora la calidad de la plataforma para todos.
+                    </p>
+                  </div>
                   <Button onClick={handleNewRating}>
                     <Plus className="w-4 h-4 mr-2" />
                     Realizar Primera Calificación
