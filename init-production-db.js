@@ -1,50 +1,13 @@
 // Script para inicializar la base de datos en producción
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const { Client } = require('pg');
 
 const prisma = new PrismaClient();
-
-async function createDatabaseIfNotExists() {
-  console.log('🔍 Verificando si la base de datos rent360_prod existe...');
-
-  // Crear cliente para conectarse a postgres (base de datos por defecto)
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL.replace('/rent360_prod', '/postgres'),
-  });
-
-  try {
-    await client.connect();
-    console.log('✅ Conectado a PostgreSQL');
-
-    // Verificar si la base de datos existe
-    const result = await client.query(
-      "SELECT 1 FROM pg_database WHERE datname = 'rent360_prod'"
-    );
-
-    if (result.rows.length === 0) {
-      console.log('📦 Creando base de datos rent360_prod...');
-      await client.query('CREATE DATABASE rent360_prod');
-      console.log('✅ Base de datos rent360_prod creada exitosamente');
-    } else {
-      console.log('✅ Base de datos rent360_prod ya existe');
-    }
-
-    await client.end();
-  } catch (error) {
-    console.error('❌ Error creando base de datos:', error.message);
-    await client.end();
-    throw error;
-  }
-}
 
 async function main() {
   console.log('🚀 Inicializando base de datos de producción...');
 
   try {
-    // Crear base de datos si no existe
-    await createDatabaseIfNotExists();
-
     // Verificar conexión a rent360_prod
     await prisma.$connect();
     console.log('✅ Conexión a base de datos rent360_prod exitosa');
