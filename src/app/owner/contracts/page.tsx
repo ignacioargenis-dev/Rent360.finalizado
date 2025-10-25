@@ -1,8 +1,5 @@
 'use client';
 
-// Forzar renderizado dinámico para evitar problemas de autenticación durante build
-export const dynamic = 'force-dynamic';
-
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +48,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Forzar renderizado dinámico para evitar problemas de autenticación durante build
+export const dynamic = 'force-dynamic';
 
 interface ContractWithDetails extends Contract {
   property?: Property;
