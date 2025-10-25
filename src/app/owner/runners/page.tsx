@@ -513,8 +513,8 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
 
         {/* Hire Modal */}
         {showHireModal && selectedRunner && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Contratar a {selectedRunner.name}</h3>
 
               <div className="space-y-4">
@@ -573,7 +573,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
                   <Label htmlFor="instructions">Instrucciones especiales</Label>
                   <textarea
                     id="instructions"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                     value={hireData.specialInstructions}
                     onChange={e =>

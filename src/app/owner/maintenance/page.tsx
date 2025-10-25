@@ -204,8 +204,9 @@ export default function MantenimientoPage() {
   // Funciones para acciones rápidas
   const handleNewRequest = () => {
     logger.info('Abriendo creación de nueva solicitud de mantenimiento');
-    // Navegar a la página de nueva solicitud de mantenimiento
-    window.location.href = '/maintenance/new';
+    // Las solicitudes de mantenimiento se crean desde las propiedades
+    alert('Para crear una nueva solicitud de mantenimiento, ve a la página de Propiedades y selecciona la propiedad correspondiente.');
+    window.location.href = '/owner/properties';
   };
 
   const handleFilterRequests = () => {
@@ -266,9 +267,9 @@ export default function MantenimientoPage() {
   };
 
   const handleViewReports = () => {
-    logger.info('Navegando a reportes de mantenimiento');
-    // Navegar a la página de reportes de mantenimiento
-    window.location.href = '/maintenance/reports';
+    logger.info('Navegando a reportes del propietario');
+    // Navegar a la página de reportes del propietario
+    window.location.href = '/owner/reports';
   };
 
   const handleSettings = () => {
