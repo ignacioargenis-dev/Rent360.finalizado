@@ -295,7 +295,23 @@ export default function BrokerPropertyDetailPage() {
       });
 
       if (response.ok) {
-        const propertyData = await response.json();
+        const responseData = await response.json();
+
+        if (!responseData.success || !responseData.property) {
+          logger.error('Invalid response format from API', { responseData });
+          setError('Error al cargar los datos de la propiedad');
+          return;
+        }
+
+        const propertyData = responseData.property;
+
+        logger.info('Datos de propiedad recibidos del API', {
+          propertyId,
+          hasTitle: !!propertyData.title,
+          hasAddress: !!propertyData.address,
+          hasPrice: !!propertyData.price,
+          propertyDataKeys: Object.keys(propertyData)
+        });
 
         // Transformar datos de la API al formato esperado
         const transformedProperty: PropertyDetail = {
@@ -336,6 +352,13 @@ export default function BrokerPropertyDetailPage() {
           virtualTourEnabled: propertyData.virtualTourEnabled || false,
           virtualTourData: propertyData.virtualTourData || null,
         };
+
+        logger.info('Propiedad transformada correctamente', {
+          id: transformedProperty.id,
+          title: transformedProperty.title,
+          address: transformedProperty.address,
+          price: transformedProperty.price
+        });
 
         setProperty(transformedProperty);
       } else {

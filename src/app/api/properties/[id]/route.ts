@@ -184,6 +184,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       propertyId,
       hasImages: transformedImages.length > 0,
       ownerId: property.owner?.id,
+      brokerId: property.brokerId,
+      title: property.title,
+      address: property.address,
+      price: property.price
     });
 
     return NextResponse.json({
