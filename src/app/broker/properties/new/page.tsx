@@ -430,7 +430,7 @@ export default function BrokerNewPropertyPage() {
         alert('Propiedad creada exitosamente con todos los documentos');
 
         // Redirect to the created property
-        router.push(`/broker/properties/${result.propertyId}`);
+        router.push(`/broker/properties/${result.property.id}`);
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Error al crear la propiedad');
@@ -656,50 +656,6 @@ export default function BrokerNewPropertyPage() {
                       </Select>
                     </div>
 
-                    {/* Features */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Características</Label>
-                      <div className="flex flex-wrap gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="furnished"
-                            checked={formData.furnished}
-                            onCheckedChange={checked =>
-                              handleInputChange('furnished', checked as boolean)
-                            }
-                          />
-                          <Label htmlFor="furnished" className="text-sm">
-                            Amoblado
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="parking"
-                            checked={formData.parking}
-                            onCheckedChange={checked =>
-                              handleInputChange('parking', checked as boolean)
-                            }
-                          />
-                          <Label htmlFor="parking" className="text-sm">
-                            Estacionamiento
-                          </Label>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="petsAllowed"
-                            checked={formData.petsAllowed}
-                            onCheckedChange={checked =>
-                              handleInputChange('petsAllowed', checked as boolean)
-                            }
-                          />
-                          <Label htmlFor="petsAllowed" className="text-sm">
-                            Mascotas permitidas
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Description */}
                     <div>

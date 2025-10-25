@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     logger.info('Obteniendo dashboard del corredor', { userId: user.id });
 
     // Obtener estadísticas del dashboard
-    const [contractStats, commissionData, recentActivity] = await Promise.all([
+    const [contractStats, propertyStats, commissionData, recentActivity] = await Promise.all([
       // Estadísticas de contratos
       Promise.all([
         // Propiedades totales gestionadas (contratos no draft)
@@ -39,6 +39,41 @@ export async function GET(request: NextRequest) {
         // Contratos totales
         db.contract.count({
           where: { brokerId: user.id },
+        }),
+      ]),
+
+      // Estadísticas de propiedades
+      Promise.all([
+        // Propiedades totales creadas por el broker
+        db.property.count({
+          where: { brokerId: user.id },
+        }),
+        // Propiedades disponibles
+        db.property.count({
+          where: {
+            brokerId: user.id,
+            status: 'AVAILABLE',
+          },
+        }),
+        // Propiedades rentadas (con contratos activos)
+        db.property.count({
+          where: {
+            brokerId: user.id,
+            contracts: {
+              some: {
+                status: 'ACTIVE',
+              },
+            },
+          },
+        }),
+        // Propiedades recientes (últimos 30 días)
+        db.property.count({
+          where: {
+            brokerId: user.id,
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
+          },
         }),
       ]),
 
@@ -73,7 +108,8 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const [totalProperties, activeContracts, totalContracts] = contractStats;
+    const [totalPropertiesManaged, activeContracts, totalContracts] = contractStats;
+    const [totalProperties, availableProperties, rentedProperties, recentPropertiesCount] = propertyStats;
     const [contractsForCommissions] = commissionData;
 
     // Calcular comisiones dinámicamente
@@ -113,25 +149,22 @@ export async function GET(request: NextRequest) {
           allContractCommissions.length
         : 0;
 
-    // Obtener propiedades recientes gestionadas por el corredor (a través de contratos)
-    const recentProperties = await db.contract.findMany({
-      where: {
-        brokerId: user.id,
-        status: { not: 'DRAFT' },
-      },
+    // Obtener propiedades recientes creadas por el corredor
+    const recentProperties = await db.property.findMany({
+      where: { brokerId: user.id },
       include: {
-        property: {
-          include: {
-            _count: {
-              select: {
-                contracts: true,
-              },
-            },
-          },
-        },
         owner: {
           select: {
             name: true,
+          },
+        },
+        _count: {
+          select: {
+            contracts: {
+              where: {
+                status: 'ACTIVE',
+              },
+            },
           },
         },
       },
@@ -196,15 +229,24 @@ export async function GET(request: NextRequest) {
       marketShare: 8.5, // porcentaje (mock por ahora)
     };
 
+    // Calcular valor total del portafolio (suma de precios de propiedades)
+    const portfolioValue = await db.property
+      .findMany({
+        where: { brokerId: user.id },
+        select: { price: true },
+      })
+      .then(properties => properties.reduce((sum, prop) => sum + (prop.price || 0), 0));
+
     // Calcular estadísticas adicionales
     const stats = {
-      totalProperties: totalProperties || 0,
-      activeListings: activeContracts || 0, // Usar contratos activos como listados activos
+      totalProperties: totalProperties || 0, // Propiedades totales creadas por el broker
+      activeListings: availableProperties || 0, // Propiedades disponibles
       totalContracts: totalContracts || 0,
       activeContracts: activeContracts || 0,
       totalCommissions: Math.round(totalCommissions),
       pendingCommissions: Math.round(pendingCommissions),
       monthlyRevenue: Math.round(monthlyRevenue),
+      portfolioValue: Math.round(portfolioValue), // Valor total del portafolio
       recentInquiries: recentInquiries || 0,
       conversionRate: Math.round(conversionRate * 100) / 100,
       averageCommission: Math.round(averageCommission),
@@ -213,17 +255,17 @@ export async function GET(request: NextRequest) {
     const dashboardData = {
       stats,
       performanceMetrics,
-      recentProperties: recentProperties.map(contract => ({
-        id: contract.property.id,
-        title: contract.property.title,
-        address: contract.property.address,
-        status: contract.property.status.toLowerCase(),
-        price: contract.property.price,
-        type: contract.property.type,
-        owner: contract.owner?.name || 'Sin propietario',
-        createdAt: contract.createdAt.toISOString(),
-        inquiriesCount: Math.floor(Math.random() * 10) + 1, // Mock data
-        contractsCount: contract.property._count.contracts,
+      recentProperties: recentProperties.map(property => ({
+        id: property.id,
+        title: property.title,
+        address: property.address,
+        status: property.status.toLowerCase(),
+        price: property.price,
+        type: property.type,
+        owner: property.owner?.name || 'Sin propietario',
+        createdAt: property.createdAt.toISOString(),
+        inquiriesCount: Math.floor(Math.random() * 10) + 1, // Mock data por ahora
+        contractsCount: property._count.contracts,
       })),
       recentContracts: recentContracts.map(contract => ({
         id: contract.id,

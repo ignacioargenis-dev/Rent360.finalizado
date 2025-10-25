@@ -62,6 +62,7 @@ interface BrokerStats {
   newInquiries: number;
   conversionRate: number;
   averageCommission: number;
+  portfolioValue: number;
 }
 
 interface RecentActivity {
@@ -87,6 +88,7 @@ export default function BrokerDashboardPage() {
     newInquiries: 0,
     conversionRate: 0,
     averageCommission: 0,
+    portfolioValue: 0,
   });
   const [loading, setLoading] = useState(true);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
@@ -157,6 +159,7 @@ export default function BrokerDashboardPage() {
             newInquiries: 0,
             conversionRate: 0,
             averageCommission: 0,
+            portfolioValue: 0,
           });
           setLoading(false);
           return;
@@ -214,7 +217,7 @@ export default function BrokerDashboardPage() {
 
           // Usar estadísticas reales de la API
           setStats({
-            totalProperties: data.stats.totalProperties,
+            totalProperties: data.stats.activeListings || data.stats.totalProperties, // Propiedades disponibles
             activeClients: data.stats.activeContracts,
             totalCommissions: data.stats.totalCommissions,
             monthlyRevenue: data.stats.monthlyRevenue,
@@ -222,6 +225,7 @@ export default function BrokerDashboardPage() {
             newInquiries: data.stats.recentInquiries,
             conversionRate: data.stats.conversionRate,
             averageCommission: data.stats.averageCommission,
+            portfolioValue: data.stats.portfolioValue || 0,
           });
 
           // Cargar métricas de rendimiento reales
@@ -253,6 +257,7 @@ export default function BrokerDashboardPage() {
             newInquiries: 0,
             conversionRate: 0,
             averageCommission: 0,
+            portfolioValue: 0,
           });
         }
 
@@ -274,6 +279,7 @@ export default function BrokerDashboardPage() {
           newInquiries: 0,
           conversionRate: 0,
           averageCommission: 0,
+          portfolioValue: 0,
         });
         setLoading(false);
       }
@@ -388,6 +394,20 @@ export default function BrokerDashboardPage() {
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <Users className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Valor Portafolio</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.portfolioValue)}</p>
+                </div>
+                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-indigo-600" />
                 </div>
               </div>
             </CardContent>
