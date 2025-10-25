@@ -385,11 +385,6 @@ export default function TenantContractsPage() {
                   </div>
                 </div>
 
-                {/* Términos del contrato */}
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Términos del Contrato</h4>
-                  <p className="text-sm text-muted-foreground">{contract.terms}</p>
-                </div>
 
                 {/* Características de la propiedad */}
                 <div className="border-t pt-4">
