@@ -89,17 +89,28 @@ export default function OwnerContractsPage() {
   }, []);
 
   useEffect(() => {
+    console.log('🔍 useEffect ejecutándose - Usuario actual:', user);
+    console.log('🔍 user?.id:', user?.id);
+    console.log('🔍 refreshTrigger:', refreshTrigger);
+
     const loadContracts = async () => {
+      console.log('🚀 Iniciando loadContracts');
       setLoading(true);
       try {
         if (!user?.id) {
+          console.log('❌ No hay user.id, terminando carga');
           setLoading(false);
           return;
         }
 
+        console.log('✅ Usuario válido, procediendo con carga de contratos');
+
         // ✅ CORREGIDO: Cargar datos reales desde la API
         const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/owner/contracts`, {
+        const apiUrl = `${baseUrl}/api/owner/contracts`;
+        console.log('🔗 URL de API a llamar:', apiUrl);
+
+        const response = await fetch(apiUrl, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -108,9 +119,12 @@ export default function OwnerContractsPage() {
           },
         });
 
+        console.log('📡 Respuesta de API - Status:', response.status, 'OK:', response.ok);
+
         if (response.ok) {
           const data = await response.json();
-          console.log('🔍 Contratos cargados desde API:', data.contracts);
+          console.log('🔍 Data completa de API:', data);
+          console.log('🔍 Contratos crudos desde API:', data.contracts);
 
           // ✅ CORREGIDO: Mapear contratos con información adicional del tenant
           const contractsWithDetails = (data.contracts || []).map((contract: any) => ({
@@ -119,27 +133,41 @@ export default function OwnerContractsPage() {
             tenantEmail: contract.tenant?.email || '',
           }));
 
-          console.log('🔍 Contratos mapeados:', contractsWithDetails);
+          console.log('🔍 Contratos mapeados con tenantName:', contractsWithDetails);
+          console.log('🔍 Número de contratos mapeados:', contractsWithDetails.length);
+
           setContracts(contractsWithDetails);
+          console.log('✅ setContracts ejecutado con', contractsWithDetails.length, 'contratos');
         } else {
-          logger.error('Error loading contracts from API:', {
+          console.error('❌ Error loading contracts from API:', {
             status: response.status,
             statusText: response.statusText,
           });
           setContracts([]);
         }
       } catch (error) {
+        console.error('💥 Error general en loadContracts:', error);
         logger.error('Error loading contracts:', {
           error: error instanceof Error ? error.message : String(error),
         });
         setContracts([]);
       } finally {
+        console.log('🏁 loadContracts finalizado, setLoading(false)');
         setLoading(false);
       }
     };
 
+    console.log('🔄 Ejecutando loadContracts()');
     loadContracts();
   }, [user?.id, refreshTrigger]);
+
+  console.log('🎨 Renderizando componente - Estado actual:', {
+    loading,
+    contractsCount: contracts.length,
+    filteredContractsCount: filteredContracts.length,
+    userId: user?.id,
+    userRole: user?.role
+  });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
