@@ -119,9 +119,16 @@ export default function OwnerContractsPage() {
     const loadContracts = async () => {
       setLoading(true);
       try {
+        console.log('🔍 [Owner Contracts] Iniciando carga de contratos...');
+        console.log('🔍 [Owner Contracts] Usuario actual:', user);
+
         // ✅ CORREGIDO: Cargar datos reales desde la API
         const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/owner/contracts`, {
+        const url = `${baseUrl}/api/owner/contracts`;
+
+        console.log('🔍 [Owner Contracts] URL de petición:', url);
+
+        const response = await fetch(url, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -130,8 +137,20 @@ export default function OwnerContractsPage() {
           },
         });
 
+        console.log('🔍 [Owner Contracts] Respuesta recibida:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        });
+
         if (response.ok) {
           const data = await response.json();
+
+          console.log('✅ [Owner Contracts] Datos recibidos:', {
+            totalContracts: data.total,
+            contractsLength: data.contracts?.length || 0,
+            contracts: data.contracts,
+          });
 
           // ✅ CORREGIDO: Mapear contratos con información adicional del tenant
           const contractsWithDetails = (data.contracts || []).map((contract: any) => ({
@@ -141,18 +160,44 @@ export default function OwnerContractsPage() {
           }));
 
           setContracts(contractsWithDetails);
+
+          if (contractsWithDetails.length === 0) {
+            console.log('ℹ️ [Owner Contracts] No se encontraron contratos');
+          }
         } else {
-          logger.error('Error loading contracts from API:', {
-            status: response.status,
-            statusText: response.statusText,
-          });
+          // Obtener detalles del error
+          let errorDetails = { status: response.status, statusText: response.statusText };
+          try {
+            const errorData = await response.json();
+            errorDetails = { ...errorDetails, ...errorData };
+          } catch (e) {
+            // No se pudo parsear el error
+          }
+
+          console.error('❌ [Owner Contracts] Error en la petición:', errorDetails);
+
+          logger.error('Error loading contracts from API:', errorDetails);
+
+          // Si es 401 o 403, probablemente la sesión expiró
+          if (response.status === 401 || response.status === 403) {
+            console.error('❌ [Owner Contracts] Sesión inválida o expirada');
+            alert('Tu sesión ha expirado. Serás redirigido al login.');
+            router.push('/auth/login');
+            return;
+          }
+
           setContracts([]);
+          alert(`Error al cargar contratos: ${errorDetails.statusText || 'Error desconocido'}`);
         }
       } catch (error) {
+        console.error('❌ [Owner Contracts] Error de red o excepción:', error);
+
         logger.error('Error loading contracts:', {
           error: error instanceof Error ? error.message : String(error),
         });
+
         setContracts([]);
+        alert('Error de conexión al cargar contratos. Verifica tu conexión a internet.');
       } finally {
         setLoading(false);
       }
@@ -160,7 +205,6 @@ export default function OwnerContractsPage() {
 
     loadContracts();
   }, [user?.id, authLoading, refreshTrigger]);
-
 
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
@@ -704,8 +748,8 @@ export default function OwnerContractsPage() {
                   <div className="text-sm">
                     <p className="font-medium text-blue-900 mb-1">Importante</p>
                     <p className="text-blue-800">
-                      Al firmar este contrato, aceptas todos los términos y condiciones establecidos.
-                      Esta firma tiene valor legal y es vinculante.
+                      Al firmar este contrato, aceptas todos los términos y condiciones
+                      establecidos. Esta firma tiene valor legal y es vinculante.
                     </p>
                   </div>
                 </div>
