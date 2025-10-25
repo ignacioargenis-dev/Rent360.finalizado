@@ -129,6 +129,7 @@ export default function BrokerPropertyDetailPage() {
 
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   // Mock data for property details
@@ -299,21 +300,21 @@ export default function BrokerPropertyDetailPage() {
         // Transformar datos de la API al formato esperado
         const transformedProperty: PropertyDetail = {
           id: propertyData.id,
-          title: propertyData.title,
-          address: propertyData.address,
-          city: propertyData.city,
-          region: propertyData.region,
-          type: propertyData.type,
-          bedrooms: propertyData.bedrooms,
-          bathrooms: propertyData.bathrooms,
-          area: propertyData.area,
-          price: propertyData.price,
+          title: propertyData.title || 'Sin título',
+          address: propertyData.address || 'Sin dirección',
+          city: propertyData.city || 'Sin ciudad',
+          region: propertyData.region || 'Sin región',
+          type: propertyData.type || 'Sin tipo',
+          bedrooms: propertyData.bedrooms || 0,
+          bathrooms: propertyData.bathrooms || 0,
+          area: propertyData.area || 0,
+          price: propertyData.price || 0,
           currency: propertyData.currency || 'CLP',
-          status: propertyData.status,
+          status: propertyData.status || 'available',
           ownerName: propertyData.owner?.name || 'Propietario',
           ownerEmail: propertyData.owner?.email || '',
           ownerPhone: propertyData.owner?.phone || '',
-          description: propertyData.description,
+          description: propertyData.description || 'Sin descripción',
           features: propertyData.features || [],
           images:
             propertyData.images && propertyData.images.length > 0
@@ -322,11 +323,10 @@ export default function BrokerPropertyDetailPage() {
           currentTenant: propertyData.currentTenant || null,
           maintenanceHistory: propertyData.maintenanceHistory || [],
           financialData: propertyData.financialData || {
-            monthlyRent: propertyData.price || 0,
-            deposit: propertyData.deposit || 0,
-            totalIncome: 0,
-            totalExpenses: 0,
-            netIncome: 0,
+            monthlyRevenue: propertyData.price || 0,
+            yearlyRevenue: (propertyData.price || 0) * 12,
+            occupancyRate: propertyData.status === 'rented' ? 100 : 0,
+            averageRating: propertyData.averageRating || 0,
           },
           documents: propertyData.documents || [],
           notes: propertyData.notes || '',
@@ -340,13 +340,17 @@ export default function BrokerPropertyDetailPage() {
         setProperty(transformedProperty);
       } else {
         console.error('Error loading property:', response.status, response.statusText);
-        // Fallback a datos mock si la API falla
-        setProperty(mockProperty);
+        const errorData = await response.json().catch(() => ({}));
+        logger.error('Error al cargar detalles de la propiedad', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        setError(`Error ${response.status}: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
       logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
-      // Fallback a datos mock si hay error
-      setProperty(mockProperty);
+      setError('Error al cargar los detalles de la propiedad. Intente nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -490,6 +494,24 @@ export default function BrokerPropertyDetailPage() {
         <div className="flex items-center justify-center min-h-screen">
           <RefreshCw className="w-8 h-8 animate-spin mr-2" />
           <span>Cargando detalles de la propiedad...</span>
+        </div>
+      </UnifiedDashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <UnifiedDashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Error al cargar propiedad</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+          </div>
         </div>
       </UnifiedDashboardLayout>
     );
