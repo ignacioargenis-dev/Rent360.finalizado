@@ -75,118 +75,45 @@ export default function BrokerReportsPage() {
 
     const loadReportsData = async () => {
       try {
-        // Mock reports data - comprehensive dataset
-        const mockReports: BrokerReport[] = [
-          // Monthly data (last 6 months)
-          {
-            period: 'Junio 2024',
-            propertiesManaged: 12,
-            newClients: 3,
-            totalRevenue: 4250000,
-            commissionsEarned: 1250000,
-            propertiesRented: 2,
-            maintenanceRequests: 8,
-            clientSatisfaction: 4.6,
-            marketPerformance: 8.5,
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/broker/reports', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
-          {
-            period: 'Mayo 2024',
-            propertiesManaged: 11,
-            newClients: 2,
-            totalRevenue: 3980000,
-            commissionsEarned: 1180000,
-            propertiesRented: 1,
-            maintenanceRequests: 6,
-            clientSatisfaction: 4.4,
-            marketPerformance: 7.8,
-          },
-          {
-            period: 'Abril 2024',
-            propertiesManaged: 10,
-            newClients: 4,
-            totalRevenue: 4120000,
-            commissionsEarned: 1220000,
-            propertiesRented: 3,
-            maintenanceRequests: 7,
-            clientSatisfaction: 4.5,
-            marketPerformance: 8.2,
-          },
-          {
-            period: 'Marzo 2024',
-            propertiesManaged: 9,
-            newClients: 1,
-            totalRevenue: 3890000,
-            commissionsEarned: 1150000,
-            propertiesRented: 2,
-            maintenanceRequests: 5,
-            clientSatisfaction: 4.3,
-            marketPerformance: 7.9,
-          },
-          {
-            period: 'Febrero 2024',
-            propertiesManaged: 8,
-            newClients: 3,
-            totalRevenue: 4010000,
-            commissionsEarned: 1190000,
-            propertiesRented: 1,
-            maintenanceRequests: 9,
-            clientSatisfaction: 4.4,
-            marketPerformance: 8.1,
-          },
-          {
-            period: 'Enero 2024',
-            propertiesManaged: 7,
-            newClients: 2,
-            totalRevenue: 3950000,
-            commissionsEarned: 1170000,
-            propertiesRented: 2,
-            maintenanceRequests: 6,
-            clientSatisfaction: 4.5,
-            marketPerformance: 8.0,
-          },
-          // Quarterly data (aggregated)
-          {
-            period: 'Q2 2024',
-            propertiesManaged: 33, // average of Q2 months
-            newClients: 9, // sum of Q2 months
-            totalRevenue: 12350000, // sum of Q2 months
-            commissionsEarned: 3650000, // sum of Q2 months
-            propertiesRented: 6, // sum of Q2 months
-            maintenanceRequests: 21, // sum of Q2 months
-            clientSatisfaction: 4.5, // average of Q2 months
-            marketPerformance: 8.2, // average of Q2 months
-          },
-          {
-            period: 'Q1 2024',
-            propertiesManaged: 24, // average of Q1 months
-            newClients: 6, // sum of Q1 months
-            totalRevenue: 11850000, // sum of Q1 months
-            commissionsEarned: 3510000, // sum of Q1 months
-            propertiesRented: 5, // sum of Q1 months
-            maintenanceRequests: 20, // sum of Q1 months
-            clientSatisfaction: 4.4, // average of Q1 months
-            marketPerformance: 8.0, // average of Q1 months
-          },
-          // Annual data
-          {
-            period: '2024',
-            propertiesManaged: 28, // average annual
-            newClients: 15, // sum annual
-            totalRevenue: 24200000, // sum annual
-            commissionsEarned: 7160000, // sum annual
-            propertiesRented: 11, // sum annual
-            maintenanceRequests: 41, // sum annual
-            clientSatisfaction: 4.45, // average annual
-            marketPerformance: 8.1, // average annual
-          },
-        ];
+          credentials: 'include',
+        });
 
-        setReports(mockReports);
+        if (response.ok) {
+          const data = await response.json();
+          const reportsData = data.reports || data.data || [];
+
+          // Transformar datos de la API al formato esperado
+          const transformedReports: BrokerReport[] = reportsData.map((report: any) => ({
+            period: report.period || report.date || 'Periodo',
+            propertiesManaged: report.propertiesManaged || report.properties || 0,
+            newClients: report.newClients || report.clients || 0,
+            totalRevenue: report.totalRevenue || report.revenue || 0,
+            commissionsEarned: report.commissionsEarned || report.commissions || 0,
+            propertiesRented: report.propertiesRented || report.rented || 0,
+            maintenanceRequests: report.maintenanceRequests || report.maintenance || 0,
+            clientSatisfaction: report.clientSatisfaction || report.satisfaction || 0,
+            marketPerformance: report.marketPerformance || report.performance || 0,
+          }));
+
+          setReports(transformedReports);
+        } else {
+          // Si no hay datos reales, mostrar array vacío
+          setReports([]);
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading reports data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        // En caso de error, mostrar array vacío
+        setReports([]);
         setLoading(false);
       }
     };

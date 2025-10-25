@@ -105,101 +105,95 @@ export default function BrokerCommissionsPage() {
 
     const loadCommissionsData = async () => {
       try {
-        // Mock commissions data
-        const mockCommissions: Commission[] = [
-          {
-            id: '1',
-            propertyTitle: 'Departamento Moderno Providencia',
-            propertyAddress: 'Av. Providencia 123, Providencia',
-            clientName: 'María González',
-            clientType: 'owner',
-            dealType: 'rental',
-            dealValue: 450000,
-            commissionRate: 50, // 50% of first month's rent
-            commissionAmount: 225000,
-            status: 'paid',
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/broker/commissions', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
-          {
-            id: '2',
-            propertyTitle: 'Casa Familiar Las Condes',
-            propertyAddress: 'Calle Las Condes 456, Las Condes',
-            clientName: 'Roberto Díaz',
-            clientType: 'owner',
-            dealType: 'rental',
-            dealValue: 850000,
-            commissionRate: 50,
-            commissionAmount: 425000,
-            status: 'pending',
-            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-          },
-          {
-            id: '3',
-            propertyTitle: 'Oficina Corporativa Centro',
-            propertyAddress: 'Av. Libertador 789, Santiago Centro',
-            clientName: 'Ana López',
-            clientType: 'owner',
-            dealType: 'rental',
-            dealValue: 1200000,
-            commissionRate: 30,
-            commissionAmount: 360000,
-            status: 'paid',
-            paymentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
-          },
-          {
-            id: '4',
-            propertyTitle: 'Local Comercial Ñuñoa',
-            propertyAddress: 'Irarrázaval 321, Ñuñoa',
-            clientName: 'Carlos Mendoza',
-            clientType: 'tenant',
-            dealType: 'rental',
-            dealValue: 350000,
-            commissionRate: 100, // Full month's rent for tenant placement
-            commissionAmount: 350000,
-            status: 'overdue',
-            dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString(),
-          },
-        ];
+          credentials: 'include',
+        });
 
-        setCommissions(mockCommissions);
+        if (response.ok) {
+          const data = await response.json();
+          const commissionsData = data.commissions || data.data || [];
 
-        // Calculate stats
-        const paidCommissions = mockCommissions.filter(c => c.status === 'paid').length;
-        const pendingCommissions = mockCommissions.filter(c => c.status === 'pending').length;
-        const overdueCommissions = mockCommissions.filter(c => c.status === 'overdue').length;
-        const totalEarnings = mockCommissions
-          .filter(c => c.status === 'paid')
-          .reduce((sum, c) => sum + c.commissionAmount, 0);
-        const averageCommission = paidCommissions > 0 ? totalEarnings / paidCommissions : 0;
+          // Transformar datos de la API al formato esperado
+          const transformedCommissions: Commission[] = commissionsData.map((commission: any) => ({
+            id: commission.id || commission.commissionId,
+            propertyTitle: commission.propertyTitle || commission.property?.title || 'Propiedad',
+            propertyAddress: commission.propertyAddress || commission.property?.address || '',
+            clientName: commission.clientName || commission.client?.name || 'Cliente',
+            clientType: commission.clientType || commission.client?.type || 'owner',
+            dealType: commission.dealType || commission.type || 'rental',
+            dealValue: commission.dealValue || commission.amount || 0,
+            commissionRate: commission.commissionRate || commission.rate || 0,
+            commissionAmount: commission.commissionAmount || commission.amount || 0,
+            status: commission.status || 'pending',
+            paymentDate: commission.paymentDate,
+            dueDate: commission.dueDate || commission.createdAt,
+            createdAt: commission.createdAt,
+            notes: commission.notes || '',
+          }));
 
-        const thisMonthEarnings = mockCommissions
-          .filter(
-            c =>
-              c.status === 'paid' && new Date(c.paymentDate!).getMonth() === new Date().getMonth()
-          )
-          .reduce((sum, c) => sum + c.commissionAmount, 0);
+          setCommissions(transformedCommissions);
 
-        const commissionStats: CommissionStats = {
-          totalCommissions: mockCommissions.length,
-          paidCommissions,
-          pendingCommissions,
-          overdueCommissions,
-          totalEarnings,
-          averageCommission,
-          thisMonthEarnings,
-        };
+          // Calculate stats from real data
+          const paidCommissions = transformedCommissions.filter(c => c.status === 'paid').length;
+          const pendingCommissions = transformedCommissions.filter(c => c.status === 'pending').length;
+          const overdueCommissions = transformedCommissions.filter(c => c.status === 'overdue').length;
+          const totalEarnings = transformedCommissions
+            .filter(c => c.status === 'paid')
+            .reduce((sum, c) => sum + c.commissionAmount, 0);
+          const averageCommission = paidCommissions > 0 ? totalEarnings / paidCommissions : 0;
 
-        setStats(commissionStats);
+          const thisMonthEarnings = transformedCommissions
+            .filter(
+              c =>
+                c.status === 'paid' && new Date(c.paymentDate!).getMonth() === new Date().getMonth()
+            )
+            .reduce((sum, c) => sum + c.commissionAmount, 0);
+
+          const commissionStats: CommissionStats = {
+            totalCommissions: transformedCommissions.length,
+            paidCommissions,
+            pendingCommissions,
+            overdueCommissions,
+            totalEarnings,
+            averageCommission,
+            thisMonthEarnings,
+          };
+
+          setStats(commissionStats);
+        } else {
+          // Si no hay datos reales, mostrar arrays vacíos
+          setCommissions([]);
+          setStats({
+            totalCommissions: 0,
+            paidCommissions: 0,
+            pendingCommissions: 0,
+            overdueCommissions: 0,
+            totalEarnings: 0,
+            averageCommission: 0,
+            thisMonthEarnings: 0,
+          });
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading commissions data:', {
           error: error instanceof Error ? error.message : String(error),
+        });
+        // En caso de error, mostrar datos vacíos
+        setCommissions([]);
+        setStats({
+          totalCommissions: 0,
+          paidCommissions: 0,
+          pendingCommissions: 0,
+          overdueCommissions: 0,
+          totalEarnings: 0,
+          averageCommission: 0,
+          thisMonthEarnings: 0,
         });
         setLoading(false);
       }

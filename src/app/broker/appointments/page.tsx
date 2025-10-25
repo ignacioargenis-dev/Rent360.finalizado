@@ -86,105 +86,98 @@ export default function BrokerAppointmentsPage() {
 
     const loadAppointmentsData = async () => {
       try {
-        // Mock appointments data
-        const mockAppointments: Appointment[] = [
-          {
-            id: '1',
-            clientName: 'María González',
-            clientEmail: 'maria@email.com',
-            clientPhone: '+56912345678',
-            propertyTitle: 'Departamento Moderno Providencia',
-            propertyAddress: 'Av. Providencia 123, Providencia',
-            dateTime: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(), // En 2 horas
-            type: 'viewing',
-            status: 'confirmed',
-            notes: 'Cliente interesado en vista panorámica',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/broker/appointments', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
-          {
-            id: '2',
-            clientName: 'Carlos Ramírez',
-            clientEmail: 'carlos@email.com',
-            clientPhone: '+56987654321',
-            propertyTitle: 'Casa Familiar Las Condes',
-            propertyAddress: 'Calle Las Condes 456, Las Condes',
-            dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Mañana
-            type: 'meeting',
-            status: 'scheduled',
-            notes: 'Reunión para discutir negociación',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-          },
-          {
-            id: '3',
-            clientName: 'Ana López',
-            clientEmail: 'ana@email.com',
-            clientPhone: '+56955556666',
-            propertyTitle: 'Oficina Corporativa Centro',
-            propertyAddress: 'Av. Libertador 789, Santiago Centro',
-            dateTime: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // Hace 4 horas
-            type: 'viewing',
-            status: 'completed',
-            notes: 'Vista completada, cliente muy interesado',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-          },
-          {
-            id: '4',
-            clientName: 'Roberto Díaz',
-            clientEmail: 'roberto@email.com',
-            clientPhone: '+56944443333',
-            propertyTitle: 'Local Comercial Ñuñoa',
-            propertyAddress: 'Irarrázaval 321, Ñuñoa',
-            dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), // En 3 días
-            type: 'valuation',
-            status: 'scheduled',
-            notes: 'Tasación solicitada por propietario',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-          },
-        ];
+          credentials: 'include',
+        });
 
-        setAppointments(mockAppointments);
+        if (response.ok) {
+          const data = await response.json();
+          const appointmentsData = data.appointments || data.data || [];
 
-        // Calculate stats
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+          // Transformar datos de la API al formato esperado
+          const transformedAppointments: Appointment[] = appointmentsData.map((appointment: any) => ({
+            id: appointment.id || appointment.appointmentId,
+            clientName: appointment.clientName || appointment.client?.name || 'Cliente',
+            clientEmail: appointment.clientEmail || appointment.client?.email || '',
+            clientPhone: appointment.clientPhone || appointment.client?.phone || '',
+            propertyTitle: appointment.propertyTitle || appointment.property?.title || 'Propiedad',
+            propertyAddress: appointment.propertyAddress || appointment.property?.address || '',
+            dateTime: appointment.dateTime || appointment.scheduledAt,
+            type: appointment.type || appointment.appointmentType || 'viewing',
+            status: appointment.status || 'scheduled',
+            notes: appointment.notes || '',
+            createdAt: appointment.createdAt,
+          }));
 
-        const todayAppointments = mockAppointments.filter(apt => {
-          const aptDate = new Date(apt.dateTime);
-          return aptDate.toDateString() === today.toDateString();
-        }).length;
+          setAppointments(transformedAppointments);
 
-        const thisWeekAppointments = mockAppointments.filter(apt => {
-          const aptDate = new Date(apt.dateTime);
-          return aptDate >= today && aptDate <= weekFromNow;
-        }).length;
+          // Calculate stats from real data
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        const pendingConfirmations = mockAppointments.filter(
-          apt => apt.status === 'scheduled'
-        ).length;
+          const todayAppointments = transformedAppointments.filter(apt => {
+            const aptDate = new Date(apt.dateTime);
+            return aptDate.toDateString() === today.toDateString();
+          }).length;
 
-        const completedThisMonth = mockAppointments.filter(apt => {
-          const aptDate = new Date(apt.dateTime);
-          return (
-            apt.status === 'completed' &&
-            aptDate.getMonth() === now.getMonth() &&
-            aptDate.getFullYear() === now.getFullYear()
-          );
-        }).length;
+          const thisWeekAppointments = transformedAppointments.filter(apt => {
+            const aptDate = new Date(apt.dateTime);
+            return aptDate >= today && aptDate <= weekFromNow;
+          }).length;
 
-        const appointmentStats: AppointmentStats = {
-          totalAppointments: mockAppointments.length,
-          todayAppointments,
-          thisWeekAppointments,
-          pendingConfirmations,
-          completedThisMonth,
-        };
+          const pendingConfirmations = transformedAppointments.filter(
+            apt => apt.status === 'scheduled'
+          ).length;
 
-        setStats(appointmentStats);
+          const completedThisMonth = transformedAppointments.filter(apt => {
+            const aptDate = new Date(apt.dateTime);
+            return (
+              apt.status === 'completed' &&
+              aptDate.getMonth() === now.getMonth() &&
+              aptDate.getFullYear() === now.getFullYear()
+            );
+          }).length;
+
+          const appointmentStats: AppointmentStats = {
+            totalAppointments: transformedAppointments.length,
+            todayAppointments,
+            thisWeekAppointments,
+            pendingConfirmations,
+            completedThisMonth,
+          };
+
+          setStats(appointmentStats);
+        } else {
+          // Si no hay datos reales, mostrar arrays vacíos
+          setAppointments([]);
+          setStats({
+            totalAppointments: 0,
+            todayAppointments: 0,
+            thisWeekAppointments: 0,
+            pendingConfirmations: 0,
+            completedThisMonth: 0,
+          });
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading appointments data:', {
           error: error instanceof Error ? error.message : String(error),
+        });
+        // En caso de error, mostrar arrays vacíos
+        setAppointments([]);
+        setStats({
+          totalAppointments: 0,
+          todayAppointments: 0,
+          thisWeekAppointments: 0,
+          pendingConfirmations: 0,
+          completedThisMonth: 0,
         });
         setLoading(false);
       }

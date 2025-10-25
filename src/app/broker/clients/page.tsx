@@ -91,89 +91,86 @@ export default function BrokerClientsPage() {
 
     const loadClientsData = async () => {
       try {
-        // Mock clients data
-        const mockClients: Client[] = [
-          {
-            id: '1',
-            name: 'María González',
-            email: 'maria@email.com',
-            phone: '+56912345678',
-            type: 'owner',
-            status: 'active',
-            propertiesCount: 3,
-            totalValue: 2500000,
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 180).toISOString(),
-            notes: 'Cliente muy interesado en vender su departamento',
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/broker/clients', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
-          {
-            id: '2',
-            name: 'Carlos Ramírez',
-            email: 'carlos@email.com',
-            phone: '+56987654321',
-            type: 'tenant',
-            status: 'prospect',
-            propertiesCount: 0,
-            totalValue: 0,
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            notes: 'Buscando departamento de 2 dormitorios en centro',
-          },
-          {
-            id: '3',
-            name: 'Ana López',
-            email: 'ana@email.com',
-            phone: '+56955556666',
-            type: 'owner',
-            status: 'active',
-            propertiesCount: 1,
-            totalValue: 1800000,
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
-            notes: 'Propietaria de local comercial, interesada en alquilar',
-          },
-          {
-            id: '4',
-            name: 'Roberto Díaz',
-            email: 'roberto@email.com',
-            phone: '+56944443333',
-            type: 'tenant',
-            status: 'active',
-            propertiesCount: 1,
-            totalValue: 450000,
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 120).toISOString(),
-            notes: 'Inquilino de departamento Providencia, pago al día',
-          },
-        ];
+          credentials: 'include',
+        });
 
-        setClients(mockClients);
+        if (response.ok) {
+          const data = await response.json();
+          const clientsData = data.clients || data.data || [];
 
-        // Calculate stats
-        const activeClients = mockClients.filter(c => c.status === 'active').length;
-        const prospectClients = mockClients.filter(c => c.status === 'prospect').length;
-        const totalPropertiesManaged = mockClients.reduce((sum, c) => sum + c.propertiesCount, 0);
-        const totalPortfolioValue = mockClients.reduce((sum, c) => sum + c.totalValue, 0);
-        const averageClientValue = activeClients > 0 ? totalPortfolioValue / activeClients : 0;
-        const newClientsThisMonth = mockClients.filter(
-          c => new Date(c.createdAt).getMonth() === new Date().getMonth()
-        ).length;
+          // Transformar datos de la API al formato esperado
+          const transformedClients: Client[] = clientsData.map((client: any) => ({
+            id: client.id || client.clientId,
+            name: client.name || client.clientName || 'Cliente',
+            email: client.email || '',
+            phone: client.phone || client.clientPhone || '',
+            type: client.type || client.clientType || 'owner',
+            status: client.status || 'active',
+            propertiesCount: client.propertiesCount || client.properties || 0,
+            totalValue: client.totalValue || client.portfolioValue || 0,
+            lastContact: client.lastContact || client.updatedAt,
+            createdAt: client.createdAt,
+            notes: client.notes || '',
+          }));
 
-        const clientStats: ClientStats = {
-          totalClients: mockClients.length,
-          activeClients,
-          prospectClients,
-          totalPropertiesManaged,
-          totalPortfolioValue,
-          averageClientValue,
-          newClientsThisMonth,
-        };
+          setClients(transformedClients);
 
-        setStats(clientStats);
+          // Calculate stats from real data
+          const activeClients = transformedClients.filter(c => c.status === 'active').length;
+          const prospectClients = transformedClients.filter(c => c.status === 'prospect').length;
+          const totalPropertiesManaged = transformedClients.reduce((sum, c) => sum + c.propertiesCount, 0);
+          const totalPortfolioValue = transformedClients.reduce((sum, c) => sum + c.totalValue, 0);
+          const averageClientValue = activeClients > 0 ? totalPortfolioValue / activeClients : 0;
+          const newClientsThisMonth = transformedClients.filter(
+            c => new Date(c.createdAt).getMonth() === new Date().getMonth()
+          ).length;
+
+          const clientStats: ClientStats = {
+            totalClients: transformedClients.length,
+            activeClients,
+            prospectClients,
+            totalPropertiesManaged,
+            totalPortfolioValue,
+            averageClientValue,
+            newClientsThisMonth,
+          };
+
+          setStats(clientStats);
+        } else {
+          // Si no hay datos reales, mostrar arrays vacíos
+          setClients([]);
+          setStats({
+            totalClients: 0,
+            activeClients: 0,
+            prospectClients: 0,
+            totalPropertiesManaged: 0,
+            totalPortfolioValue: 0,
+            averageClientValue: 0,
+            newClientsThisMonth: 0,
+          });
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading clients data:', {
           error: error instanceof Error ? error.message : String(error),
+        });
+        // En caso de error, mostrar arrays vacíos
+        setClients([]);
+        setStats({
+          totalClients: 0,
+          activeClients: 0,
+          prospectClients: 0,
+          totalPropertiesManaged: 0,
+          totalPortfolioValue: 0,
+          averageClientValue: 0,
+          newClientsThisMonth: 0,
         });
         setLoading(false);
       }

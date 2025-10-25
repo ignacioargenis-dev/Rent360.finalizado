@@ -32,8 +32,25 @@ import {
   Receipt,
   Zap,
   MoreHorizontal,
+  Car,
+  Warehouse,
+  Dumbbell,
+  Wifi,
+  Home,
+  Star,
 } from 'lucide-react';
 import { User } from '@/types';
+
+const propertyFeatures = [
+  { id: 'parking', label: 'Estacionamiento', icon: Car },
+  { id: 'storage', label: 'Bodega', icon: Warehouse },
+  { id: 'gym', label: 'Gimnasio', icon: Dumbbell },
+  { id: 'security', label: 'Seguridad 24/7', icon: Shield },
+  { id: 'wifi', label: 'WiFi', icon: Wifi },
+  { id: 'furnished', label: 'Amoblado', icon: Home },
+  { id: 'pets', label: 'Permitido mascotas', icon: Star },
+  { id: 'pool', label: 'Piscina', icon: Building },
+];
 
 interface PropertyForm {
   title: string;
@@ -46,6 +63,7 @@ interface PropertyForm {
   area: string;
   description: string;
   propertyType: string;
+  features: string[];
   furnished: boolean;
   parking: boolean;
   petsAllowed: boolean;
@@ -215,6 +233,7 @@ export default function BrokerNewPropertyPage() {
     area: '',
     description: '',
     propertyType: 'apartment',
+    features: [],
     furnished: false,
     parking: false,
     petsAllowed: false,
@@ -256,6 +275,15 @@ export default function BrokerNewPropertyPage() {
     setFormData(prev => ({
       ...prev,
       [field]: value,
+    }));
+  };
+
+  const toggleFeature = (featureId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.includes(featureId)
+        ? prev.features.filter(f => f !== featureId)
+        : [...prev.features, featureId],
     }));
   };
 
@@ -347,10 +375,12 @@ export default function BrokerNewPropertyPage() {
       formDataToSend.append('bathrooms', formData.bathrooms);
       formDataToSend.append('area', formData.area);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('propertyType', formData.propertyType);
+      formDataToSend.append('type', formData.propertyType);
+      formDataToSend.append('commune', formData.city); // Usar city como commune por ahora
+      formDataToSend.append('features', JSON.stringify(formData.features));
       formDataToSend.append('furnished', formData.furnished.toString());
-      formDataToSend.append('parking', formData.parking.toString());
-      formDataToSend.append('petsAllowed', formData.petsAllowed.toString());
+      formDataToSend.append('petFriendly', formData.petsAllowed.toString());
+      formDataToSend.append('parkingSpaces', formData.parking ? '1' : '0');
 
       // Add owner data
       formDataToSend.append('ownerName', formData.ownerName);
@@ -683,6 +713,34 @@ export default function BrokerNewPropertyPage() {
                         onChange={e => handleInputChange('description', e.target.value)}
                         className="mt-1 min-h-[120px]"
                       />
+                    </div>
+
+                    {/* Features */}
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">
+                        Características
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {propertyFeatures.map(feature => {
+                          const Icon = feature.icon;
+                          const isSelected = formData.features.includes(feature.id);
+                          return (
+                            <button
+                              key={feature.id}
+                              type="button"
+                              className={`p-3 border rounded-lg text-center transition-colors ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                  : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                              onClick={() => toggleFeature(feature.id)}
+                            >
+                              <Icon className="w-5 h-5 mx-auto mb-1" />
+                              <span className="text-xs">{feature.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

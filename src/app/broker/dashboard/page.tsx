@@ -90,6 +90,11 @@ export default function BrokerDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    averageResponseTime: '0 horas',
+    clientSatisfaction: '0/5 ⭐',
+    clientRetention: '0%',
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -218,6 +223,21 @@ export default function BrokerDashboardPage() {
             conversionRate: data.stats.conversionRate,
             averageCommission: data.stats.averageCommission,
           });
+
+          // Cargar métricas de rendimiento reales
+          try {
+            const performanceResponse = await fetch('/api/broker/performance-metrics');
+            if (performanceResponse.ok) {
+              const performanceData = await performanceResponse.json();
+              setPerformanceMetrics({
+                averageResponseTime: performanceData.averageResponseTime || '0 horas',
+                clientSatisfaction: performanceData.clientSatisfaction || '0/5 ⭐',
+                clientRetention: performanceData.clientRetention || '0%',
+              });
+            }
+          } catch (error) {
+            logger.warn('Could not load performance metrics, using defaults');
+          }
         } else {
           // Si la API falla, mostrar datos vacíos en lugar de mock
           logger.warn('API dashboard failed, showing empty data');
@@ -464,15 +484,15 @@ export default function BrokerDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tiempo de respuesta promedio:</span>
-                    <span className="font-medium">2.3 horas</span>
+                    <span className="font-medium">{performanceMetrics.averageResponseTime}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Satisfacción de clientes:</span>
-                    <span className="font-medium">4.7/5 ⭐</span>
+                    <span className="font-medium">{performanceMetrics.clientSatisfaction}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Retención de clientes:</span>
-                    <span className="font-medium">87%</span>
+                    <span className="font-medium">{performanceMetrics.clientRetention}</span>
                   </div>
                 </div>
               </div>

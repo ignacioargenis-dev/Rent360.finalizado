@@ -181,128 +181,91 @@ export default function BrokerActiveClientsPage() {
 
     const loadClientsData = async () => {
       try {
-        // Mock active clients data
-        const mockClients: ActiveClient[] = [
-          {
-            id: 'c1',
-            name: 'María González',
-            email: 'maria.gonzalez@email.com',
-            phone: '+56912345678',
-            propertyType: 'residential',
-            propertyValue: 150000000,
-            monthlyRent: 850000,
-            commissionRate: 5.0,
-            contractStart: new Date(Date.now() - 1000 * 60 * 60 * 24 * 180).toISOString(),
-            contractEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 185).toISOString(),
-            status: 'active',
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15).toISOString(),
-            totalCommission: 42500,
-            satisfactionScore: 95,
-            referralSource: 'Recomendación',
+        // Cargar datos reales desde la API
+        const response = await fetch('/api/broker/clients/active', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
-          {
-            id: 'c2',
-            name: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            phone: '+56987654321',
-            propertyType: 'commercial',
-            propertyValue: 280000000,
-            monthlyRent: 1200000,
-            commissionRate: 6.0,
-            contractStart: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
-            contractEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 275).toISOString(),
-            status: 'active',
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 25).toISOString(),
-            totalCommission: 72000,
-            satisfactionScore: 88,
-            referralSource: 'Sitio web',
-          },
-          {
-            id: 'c3',
-            name: 'Ana López',
-            email: 'ana.lopez@email.com',
-            phone: '+56955556666',
-            propertyType: 'office',
-            propertyValue: 200000000,
-            monthlyRent: 950000,
-            commissionRate: 4.5,
-            contractStart: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-            contractEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString(),
-            status: 'pending_renewal',
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10).toISOString(),
-            totalCommission: 42750,
-            satisfactionScore: 92,
-            referralSource: 'Redes sociales',
-          },
-          {
-            id: 'c4',
-            name: 'Pedro Martínez',
-            email: 'pedro.martinez@email.com',
-            phone: '+56977778888',
-            propertyType: 'residential',
-            propertyValue: 180000000,
-            monthlyRent: 750000,
-            commissionRate: 5.5,
-            contractStart: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            contractEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
-            status: 'expiring_soon',
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
-            totalCommission: 41250,
-            satisfactionScore: 87,
-            referralSource: 'Referido por cliente',
-          },
-          {
-            id: 'c5',
-            name: 'Laura Fernández',
-            email: 'laura.fernandez@email.com',
-            phone: '+56944443333',
-            propertyType: 'commercial',
-            propertyValue: 320000000,
-            monthlyRent: 1400000,
-            commissionRate: 5.0,
-            contractStart: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-            status: 'active',
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-            nextPayment: new Date(Date.now() + 1000 * 60 * 60 * 24 * 20).toISOString(),
-            totalCommission: 70000,
-            satisfactionScore: 96,
-            referralSource: 'Anuncio clasificado',
-          },
-        ];
+          credentials: 'include',
+        });
 
-        setClients(mockClients);
-        setFilteredClients(mockClients);
+        if (response.ok) {
+          const data = await response.json();
+          const clientsData = data.clients || data.data || [];
 
-        // Calculate stats
-        const totalActiveClients = mockClients.filter(c => c.status === 'active').length;
-        const totalCommission = mockClients.reduce((sum, c) => sum + c.totalCommission, 0);
-        const averageCommission = totalCommission / mockClients.length;
-        const expiringContracts = mockClients.filter(
-          c =>
-            c.contractEnd &&
-            new Date(c.contractEnd) < new Date(Date.now() + 1000 * 60 * 60 * 24 * 60)
-        ).length;
-        const newClientsThisMonth = mockClients.filter(
-          c => new Date(c.contractStart) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30)
-        ).length;
+          // Transformar datos de la API al formato esperado
+          const transformedClients: ActiveClient[] = clientsData.map((client: any) => ({
+            id: client.id || client.clientId,
+            name: client.name || client.clientName || 'Cliente',
+            email: client.email || '',
+            phone: client.phone || client.clientPhone || '',
+            propertyType: client.propertyType || client.property?.type || 'residential',
+            propertyValue: client.propertyValue || client.property?.value || 0,
+            monthlyRent: client.monthlyRent || client.rent || undefined,
+            commissionRate: client.commissionRate || client.commission || 0,
+            contractStart: client.contractStart || client.startDate,
+            contractEnd: client.contractEnd || client.endDate,
+            status: client.status || 'active',
+            lastContact: client.lastContact || client.updatedAt,
+            nextPayment: client.nextPayment || client.paymentDate,
+            totalCommission: client.totalCommission || client.commissionTotal || 0,
+            satisfactionScore: client.satisfactionScore || client.satisfaction || 0,
+            referralSource: client.referralSource || client.referral || '',
+          }));
 
-        const clientStats: ClientStats = {
-          totalActiveClients,
-          totalCommission,
-          averageCommission,
-          expiringContracts,
-          newClientsThisMonth,
-        };
+          setClients(transformedClients);
+          setFilteredClients(transformedClients);
 
-        setStats(clientStats);
+          // Calculate stats from real data
+          const totalActiveClients = transformedClients.filter(c => c.status === 'active').length;
+          const totalCommission = transformedClients.reduce((sum, c) => sum + c.totalCommission, 0);
+          const averageCommission = transformedClients.length > 0 ? totalCommission / transformedClients.length : 0;
+          const expiringContracts = transformedClients.filter(
+            c =>
+              c.contractEnd &&
+              new Date(c.contractEnd) < new Date(Date.now() + 1000 * 60 * 60 * 24 * 60)
+          ).length;
+          const newClientsThisMonth = transformedClients.filter(
+            c => new Date(c.contractStart) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30)
+          ).length;
+
+          const clientStats: ClientStats = {
+            totalActiveClients,
+            totalCommission,
+            averageCommission,
+            expiringContracts,
+            newClientsThisMonth,
+          };
+
+          setStats(clientStats);
+        } else {
+          // Si no hay datos reales, mostrar arrays vacíos
+          setClients([]);
+          setFilteredClients([]);
+          setStats({
+            totalActiveClients: 0,
+            totalCommission: 0,
+            averageCommission: 0,
+            expiringContracts: 0,
+            newClientsThisMonth: 0,
+          });
+        }
         setLoading(false);
       } catch (error) {
         logger.error('Error loading clients data:', {
           error: error instanceof Error ? error.message : String(error),
+        });
+        // En caso de error, mostrar arrays vacíos
+        setClients([]);
+        setFilteredClients([]);
+        setStats({
+          totalActiveClients: 0,
+          totalCommission: 0,
+          averageCommission: 0,
+          expiringContracts: 0,
+          newClientsThisMonth: 0,
         });
         setLoading(false);
       }
