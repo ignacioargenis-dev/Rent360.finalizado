@@ -15,10 +15,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get contracts for the authenticated owner
-    // This API is specifically for owners, so we use the authenticated user's ID
+    // Use OR condition to find contracts that belong to the owner either directly (ownerId)
+    // or through property ownership (for contracts where ownerId might be null)
     const contracts = await db.contract.findMany({
       where: {
-        ownerId: user.id,
+        OR: [
+          { ownerId: user.id },                    // Contracts with ownerId set correctly
+          { property: { ownerId: user.id } },     // Contracts with ownerId null but property belongs to user
+        ],
       },
       include: {
         property: {
