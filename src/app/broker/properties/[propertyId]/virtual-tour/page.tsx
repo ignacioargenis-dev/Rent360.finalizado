@@ -176,7 +176,10 @@ export default function BrokerVirtualTourPage() {
     setScenes(scenes.filter(scene => scene.id !== sceneId));
     if (activeScene === sceneId && scenes.length > 1) {
       const remainingScenes = scenes.filter(scene => scene.id !== sceneId);
-      setActiveScene(remainingScenes[0].id);
+      const firstScene = remainingScenes[0];
+      if (firstScene) {
+        setActiveScene(firstScene.id);
+      }
     }
   };
 
