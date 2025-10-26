@@ -310,7 +310,10 @@ export default function BrokerPropertyDetailPage() {
           hasTitle: !!propertyData.title,
           hasAddress: !!propertyData.address,
           hasPrice: !!propertyData.price,
-          propertyDataKeys: Object.keys(propertyData)
+          hasImages: !!(propertyData.images && propertyData.images.length > 0),
+          imageCount: propertyData.images ? propertyData.images.length : 0,
+          images: propertyData.images ? propertyData.images.slice(0, 3) : [], // Primeras 3 URLs
+          propertyDataKeys: Object.keys(propertyData),
         });
 
         // Transformar datos de la API al formato esperado
@@ -357,7 +360,10 @@ export default function BrokerPropertyDetailPage() {
           id: transformedProperty.id,
           title: transformedProperty.title,
           address: transformedProperty.address,
-          price: transformedProperty.price
+          price: transformedProperty.price,
+          hasImages: !!(transformedProperty.images && transformedProperty.images.length > 0),
+          imageCount: transformedProperty.images ? transformedProperty.images.length : 0,
+          images: transformedProperty.images ? transformedProperty.images.slice(0, 3) : [],
         });
 
         setProperty(transformedProperty);
@@ -367,7 +373,7 @@ export default function BrokerPropertyDetailPage() {
         logger.error('Error al cargar detalles de la propiedad', {
           status: response.status,
           statusText: response.statusText,
-          error: errorData
+          error: errorData,
         });
         setError(`Error ${response.status}: ${errorData.error || response.statusText}`);
       }
@@ -587,6 +593,13 @@ export default function BrokerPropertyDetailPage() {
               <Calendar className="w-4 h-4 mr-2" />
               Programar Visita
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/broker/properties/${propertyId}/virtual-tour`)}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Tour Virtual
+            </Button>
           </div>
         </div>
 
@@ -639,21 +652,35 @@ export default function BrokerPropertyDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {property.images.map((image, index) => (
                       <div
-                        key={index}
-                        className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
+                        key={`${image}-${index}`}
+                        className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative group"
                       >
                         <img
                           src={image}
                           alt={`Propiedad ${index + 1}`}
                           className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
                           onLoad={() => {
-                            console.log('✅ Imagen cargada exitosamente (broker):', image);
+                            logger.info('✅ Imagen cargada exitosamente (broker):', image);
                           }}
                           onError={e => {
-                            console.error('❌ Error cargando imagen (broker):', image);
+                            logger.error('❌ Error cargando imagen (broker):', image);
                             e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) {
+                              fallback.style.display = 'flex';
+                            }
                           }}
                         />
+                        {/* Fallback para imágenes que no cargan */}
+                        <div
+                          className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-600 text-sm font-medium"
+                          style={{ display: 'none' }}
+                        >
+                          <div className="text-center">
+                            <Camera className="w-6 h-6 mx-auto mb-1" />
+                            <span>Imagen no disponible</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

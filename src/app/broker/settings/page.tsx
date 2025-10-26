@@ -225,16 +225,30 @@ export default function BrokerSettings() {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+
+          // Actualizar settings con datos reales del usuario
+          setSettings(prevSettings => ({
+            ...prevSettings,
+            profile: {
+              ...prevSettings.profile,
+              firstName: data.user.name?.split(' ')[0] || 'Sin nombre',
+              lastName: data.user.name?.split(' ').slice(1).join(' ') || 'Sin apellido',
+              email: data.user.email || '',
+              phone: data.user.phone || '',
+              avatar: data.user.avatar || '/avatar.jpg',
+            },
+          }));
         }
       } catch (error) {
         logger.error('Error loading user data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     loadUserData();
-    setLoading(false);
   }, []);
 
   const saveSettings = async () => {

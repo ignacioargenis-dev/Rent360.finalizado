@@ -183,11 +183,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     logger.info('Property details fetched successfully', {
       propertyId,
       hasImages: transformedImages.length > 0,
+      imageCount: transformedImages.length,
+      images: transformedImages.slice(0, 3), // Mostrar primeras 3 URLs
       ownerId: property.owner?.id,
       brokerId: property.brokerId,
       title: property.title,
       address: property.address,
-      price: property.price
+      price: property.price,
     });
 
     return NextResponse.json({
