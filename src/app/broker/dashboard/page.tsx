@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+// Configuración para renderizado dinámico - datos en tiempo real
+export const dynamic = 'force-dynamic';
+export const revalidate = 30; // Revalidar cada 30 segundos para datos frescos
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -404,7 +408,9 @@ export default function BrokerDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Valor Portafolio</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.portfolioValue)}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(stats.portfolioValue)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-indigo-600" />

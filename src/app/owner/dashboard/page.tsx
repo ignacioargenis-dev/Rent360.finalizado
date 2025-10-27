@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-// Forzar renderizado dinámico para evitar problemas de autenticación durante build
+// Forzar renderizado dinámico para datos en tiempo real
 export const dynamic = 'force-dynamic';
+export const revalidate = 30; // Revalidar cada 30 segundos para datos frescos
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

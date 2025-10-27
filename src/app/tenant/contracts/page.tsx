@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Forzar renderizado dinámico para evitar problemas de autenticación durante build
+// Forzar renderizado dinámico para contratos actualizados constantemente
 export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Revalidar cada minuto para contratos actualizados
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -94,10 +95,14 @@ export default function TenantContractsPage() {
             property: {
               ...(contract as any).property,
               // Asegurar que features sea un array
-              features: Array.isArray((contract as any).property?.features) ? (contract as any).property.features : [],
+              features: Array.isArray((contract as any).property?.features)
+                ? (contract as any).property.features
+                : [],
               // Asegurar que availableFrom sea una fecha válida si existe
-              availableFrom: (contract as any).property?.availableFrom ? new Date((contract as any).property.availableFrom) : null,
-            }
+              availableFrom: (contract as any).property?.availableFrom
+                ? new Date((contract as any).property.availableFrom)
+                : null,
+            },
           }));
           setContracts(validatedContracts);
           setLoading(false);
@@ -258,7 +263,9 @@ export default function TenantContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Contratos Activos</p>
-                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'ACTIVE').length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {contracts.filter(c => c.status === 'ACTIVE').length}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -269,147 +276,167 @@ export default function TenantContractsPage() {
 
           <Card>
             <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pendientes de Firma</p>
-                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'DRAFT').length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {contracts.filter(c => c.status === 'DRAFT').length}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <PenTool className="w-6 h-6 text-yellow-600" />
                 </div>
-        </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
-                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => {
-                    if (!c.endDate) return false;
-                    const daysUntilExpiry = Math.ceil((new Date(c.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
-                  }).length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {
+                      contracts.filter(c => {
+                        if (!c.endDate) {
+                          return false;
+                        }
+                        const daysUntilExpiry = Math.ceil(
+                          (new Date(c.endDate).getTime() - new Date().getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+                      }).length
+                    }
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-orange-600" />
                 </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Actions Bar */}
-      <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {contracts.length} contrato{contracts.length !== 1 ? 's' : ''} encontrado{contracts.length !== 1 ? 's' : ''}
+            {contracts.length} contrato{contracts.length !== 1 ? 's' : ''} encontrado
+            {contracts.length !== 1 ? 's' : ''}
           </div>
           <div className="flex items-center gap-3">
             <Button onClick={refreshContracts} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualizar
             </Button>
-          {contracts.length > 0 && (
-            <Button onClick={handleExportContracts} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
+            {contracts.length > 0 && (
+              <Button onClick={handleExportContracts} variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
                 Exportar
-            </Button>
-          )}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {contracts.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No tienes contratos</h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              Cuando tengas contratos activos, aparecerán aquí. Puedes contactar a un corredor para
-              encontrar propiedades disponibles.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {contracts.map(contract => (
-            <Card key={contract.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(contract.status)}
-                    <div>
-                      <CardTitle className="text-lg">{contract.contractNumber}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{(contract as any).property?.title || 'Propiedad'}</p>
+        {contracts.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No tienes contratos</h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                Cuando tengas contratos activos, aparecerán aquí. Puedes contactar a un corredor
+                para encontrar propiedades disponibles.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {contracts.map(contract => (
+              <Card key={contract.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(contract.status)}
+                      <div>
+                        <CardTitle className="text-lg">{contract.contractNumber}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          {(contract as any).property?.title || 'Propiedad'}
+                        </p>
+                      </div>
                     </div>
+                    {getStatusBadge(contract.status)}
                   </div>
-                  {getStatusBadge(contract.status)}
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className="space-y-4">
-                {/* Información de la propiedad */}
-                <div className="grid gap-4 md:grid-cols-2">
+                <CardContent className="space-y-4">
+                  {/* Información de la propiedad */}
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{(contract as any).property?.address || 'Dirección no disponible'}</span>
+                        <span>
+                          {(contract as any).property?.address || 'Dirección no disponible'}
+                        </span>
                       </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>Propietario: {(contract as any).owner?.name}</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>Propietario: {(contract as any).owner?.name}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>Arriendo: {formatPrice(contract.monthlyRent)}/mes</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span>Arriendo: {formatPrice(contract.monthlyRent)}/mes</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                         <span>Depósito: {formatPrice((contract as any).depositAmount || 0)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Fechas del contrato */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Inicio: {formatDate(contract.startDate)}</span>
+                  {/* Fechas del contrato */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>Inicio: {formatDate(contract.startDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>Fin: {formatDate(contract.endDate)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Fin: {formatDate(contract.endDate)}</span>
-                  </div>
-                </div>
 
-
-                {/* Características de la propiedad */}
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Características</h4>
-                  <div className="flex flex-wrap gap-2">
-                      {(contract as any).property?.features && (contract as any).property.features.length > 0 ? (
-                        (contract as any).property.features.map((feature: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                        ))
+                  {/* Características de la propiedad */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-2">Características</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(contract as any).property?.features &&
+                      (contract as any).property.features.length > 0 ? (
+                        (contract as any).property.features.map(
+                          (feature: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {feature}
+                            </Badge>
+                          )
+                        )
                       ) : (
-                        <span className="text-sm text-gray-500">Sin características especificadas</span>
+                        <span className="text-sm text-gray-500">
+                          Sin características especificadas
+                        </span>
                       )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Acciones */}
+                  {/* Acciones */}
                   <div className="border-t pt-4 flex flex-wrap gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm">
                           <Eye className="w-4 h-4 mr-2" />
-                    Ver Detalles
-                  </Button>
+                          Ver Detalles
+                        </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
@@ -424,7 +451,9 @@ export default function TenantContractsPage() {
                           <div className="grid gap-4 md:grid-cols-2">
                             <Card>
                               <CardHeader>
-                                <CardTitle className="text-base">Información del Contrato</CardTitle>
+                                <CardTitle className="text-base">
+                                  Información del Contrato
+                                </CardTitle>
                               </CardHeader>
                               <CardContent className="space-y-2">
                                 <div className="flex justify-between">
@@ -437,11 +466,15 @@ export default function TenantContractsPage() {
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-sm text-muted-foreground">Arriendo:</span>
-                                  <span className="font-medium">{formatPrice(contract.monthlyRent)}/mes</span>
+                                  <span className="font-medium">
+                                    {formatPrice(contract.monthlyRent)}/mes
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-sm text-muted-foreground">Depósito:</span>
-                                  <span className="font-medium">{formatPrice((contract as any).depositAmount || 0)}</span>
+                                  <span className="font-medium">
+                                    {formatPrice((contract as any).depositAmount || 0)}
+                                  </span>
                                 </div>
                               </CardContent>
                             </Card>
@@ -452,17 +485,25 @@ export default function TenantContractsPage() {
                               </CardHeader>
                               <CardContent className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-sm text-muted-foreground">Fecha Inicio:</span>
-                                  <span className="font-medium">{formatDate(contract.startDate)}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    Fecha Inicio:
+                                  </span>
+                                  <span className="font-medium">
+                                    {formatDate(contract.startDate)}
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-sm text-muted-foreground">Fecha Fin:</span>
-                                  <span className="font-medium">{formatDate(contract.endDate)}</span>
+                                  <span className="font-medium">
+                                    {formatDate(contract.endDate)}
+                                  </span>
                                 </div>
                                 {contract.signedAt && (
                                   <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Firmado:</span>
-                                    <span className="font-medium">{formatDate(contract.signedAt)}</span>
+                                    <span className="font-medium">
+                                      {formatDate(contract.signedAt)}
+                                    </span>
                                   </div>
                                 )}
                               </CardContent>
@@ -498,8 +539,12 @@ export default function TenantContractsPage() {
                                     <Home className="w-5 h-5 text-green-600" />
                                   </div>
                                   <div>
-                                    <p className="font-medium">{(contract as any).owner?.name || 'Propietario'}</p>
-                                    <p className="text-sm text-muted-foreground">Propietario de la propiedad</p>
+                                    <p className="font-medium">
+                                      {(contract as any).owner?.name || 'Propietario'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Propietario de la propiedad
+                                    </p>
                                   </div>
                                 </div>
                               </CardContent>
@@ -509,34 +554,49 @@ export default function TenantContractsPage() {
                           {/* Información de la Propiedad */}
                           <Card>
                             <CardHeader>
-                              <CardTitle className="text-base">Información de la Propiedad</CardTitle>
+                              <CardTitle className="text-base">
+                                Información de la Propiedad
+                              </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                               <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                  <h4 className="font-medium mb-2">{(contract as any).property?.title || 'Propiedad'}</h4>
+                                  <h4 className="font-medium mb-2">
+                                    {(contract as any).property?.title || 'Propiedad'}
+                                  </h4>
                                   <div className="space-y-1 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2">
                                       <MapPin className="h-4 w-4" />
-                                      <span>{(contract as any).property?.address || 'Dirección no disponible'}</span>
+                                      <span>
+                                        {(contract as any).property?.address ||
+                                          'Dirección no disponible'}
+                                      </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Building className="h-4 w-4" />
-                                      <span>{(contract as any).property?.city || 'Ciudad'}, {(contract as any).property?.commune || 'Comuna'}</span>
+                                      <span>
+                                        {(contract as any).property?.city || 'Ciudad'},{' '}
+                                        {(contract as any).property?.commune || 'Comuna'}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
                                 <div>
                                   <h4 className="font-medium mb-2">Características</h4>
                                   <div className="flex flex-wrap gap-2">
-                                    {(contract as any).property?.features && (contract as any).property.features.length > 0 ? (
-                                      (contract as any).property.features.map((feature: string, index: number) => (
-                                        <Badge key={index} variant="outline" className="text-xs">
-                                          {feature}
-                                        </Badge>
-                                      ))
+                                    {(contract as any).property?.features &&
+                                    (contract as any).property.features.length > 0 ? (
+                                      (contract as any).property.features.map(
+                                        (feature: string, index: number) => (
+                                          <Badge key={index} variant="outline" className="text-xs">
+                                            {feature}
+                                          </Badge>
+                                        )
+                                      )
                                     ) : (
-                                      <span className="text-sm text-muted-foreground">Sin características especificadas</span>
+                                      <span className="text-sm text-muted-foreground">
+                                        Sin características especificadas
+                                      </span>
                                     )}
                                   </div>
                                 </div>
@@ -583,8 +643,9 @@ export default function TenantContractsPage() {
                                 <div className="text-sm">
                                   <p className="font-medium text-blue-900 mb-1">Importante</p>
                                   <p className="text-blue-800">
-                                    Al firmar este contrato, aceptas todos los términos y condiciones establecidos.
-                                    Esta firma tiene valor legal y es vinculante.
+                                    Al firmar este contrato, aceptas todos los términos y
+                                    condiciones establecidos. Esta firma tiene valor legal y es
+                                    vinculante.
                                   </p>
                                 </div>
                               </div>
@@ -616,7 +677,9 @@ export default function TenantContractsPage() {
                         const body = `Hola ${ownerName},\n\nMe comunico respecto al contrato ${contract.contractNumber} para la propiedad ${(contract as any).property?.address || (contract as any).property?.title}.\n\n`;
 
                         // Usar mailto para abrir cliente de email
-                        window.open(`mailto:${ownerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+                        window.open(
+                          `mailto:${ownerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+                        );
                       }}
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
@@ -627,9 +690,9 @@ export default function TenantContractsPage() {
                     {contract.status === 'ACTIVE' && (
                       <Button variant="outline" size="sm">
                         <AlertTriangle className="w-4 h-4 mr-2" />
-                      Solicitar Mantenimiento
-                    </Button>
-                  )}
+                        Solicitar Mantenimiento
+                      </Button>
+                    )}
 
                     {/* Descargar Contrato */}
                     <Button
@@ -665,93 +728,93 @@ export default function TenantContractsPage() {
                       <Download className="w-4 h-4 mr-2" />
                       Descargar Contrato
                     </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Modal de exportación */}
-      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Exportar Contratos</DialogTitle>
-            <DialogDescription>
-              Selecciona el formato y filtra los contratos que deseas exportar.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="export-format">Formato de Archivo</Label>
-              <Select
-                value={exportOptions.format}
-                onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar formato" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="csv">CSV (Excel)</SelectItem>
-                  <SelectItem value="json">JSON</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="export-status">Filtrar por Estado</Label>
-              <Select
-                value={exportOptions.status}
-                onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los contratos</SelectItem>
-                  <SelectItem value="ACTIVE">Activos</SelectItem>
-                  <SelectItem value="PENDING">Pendientes</SelectItem>
-                  <SelectItem value="EXPIRED">Expirados</SelectItem>
-                  <SelectItem value="TERMINATED">Terminados</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> Se exportarán {contracts.length} contratos
-                {exportOptions.format === 'csv'
-                  ? ' en formato CSV compatible con Excel'
-                  : ' en formato JSON'}
-                {exportOptions.status !== 'all' &&
-                  ` filtrados por estado "${exportOptions.status}"`}
-                .
-              </p>
-            </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        )}
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowExportDialog(false);
-                setExportOptions({
-                  format: 'csv',
-                  status: 'all',
-                });
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirmExport}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar Contratos
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* Modal de exportación */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Exportar Contratos</DialogTitle>
+              <DialogDescription>
+                Selecciona el formato y filtra los contratos que deseas exportar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="export-format">Formato de Archivo</Label>
+                <Select
+                  value={exportOptions.format}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, format: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV (Excel)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="export-status">Filtrar por Estado</Label>
+                <Select
+                  value={exportOptions.status}
+                  onValueChange={value => setExportOptions(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los contratos</SelectItem>
+                    <SelectItem value="ACTIVE">Activos</SelectItem>
+                    <SelectItem value="PENDING">Pendientes</SelectItem>
+                    <SelectItem value="EXPIRED">Expirados</SelectItem>
+                    <SelectItem value="TERMINATED">Terminados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Se exportarán {contracts.length} contratos
+                  {exportOptions.format === 'csv'
+                    ? ' en formato CSV compatible con Excel'
+                    : ' en formato JSON'}
+                  {exportOptions.status !== 'all' &&
+                    ` filtrados por estado "${exportOptions.status}"`}
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  setExportOptions({
+                    format: 'csv',
+                    status: 'all',
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Contratos
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </UnifiedDashboardLayout>
   );
 }

@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Configuración para renderizado dinámico - contratos actualizados constantemente
+export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Revalidar cada minuto para contratos actualizados
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,8 +53,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Forzar renderizado dinámico para evitar problemas de autenticación durante build
-export const dynamic = 'force-dynamic';
+// Configuración dinámica ya definida arriba
 
 interface ContractWithDetails extends Contract {
   property?: Property;
@@ -798,7 +801,8 @@ export default function OwnerContractsPage() {
           <DialogHeader>
             <DialogTitle>Detalles del Contrato</DialogTitle>
             <DialogDescription>
-              Información completa del contrato {selectedContract?.contractNumber || selectedContract?.id}
+              Información completa del contrato{' '}
+              {selectedContract?.contractNumber || selectedContract?.id}
             </DialogDescription>
           </DialogHeader>
           {selectedContract && (
@@ -844,16 +848,23 @@ export default function OwnerContractsPage() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="font-medium">Renta Mensual:</span>
-                      <span className="font-semibold">{formatPrice(selectedContract.monthlyRent || 0)}</span>
+                      <span className="font-semibold">
+                        {formatPrice(selectedContract.monthlyRent || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Depósito de Garantía:</span>
-                      <span className="font-semibold">{formatPrice(selectedContract.depositAmount || 0)}</span>
+                      <span className="font-semibold">
+                        {formatPrice(selectedContract.depositAmount || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Comisión Plataforma:</span>
                       <span className="font-semibold text-blue-600">
-                        {formatPrice((selectedContract.monthlyRent || 0) * (platformFeePercentage / 100))} ({platformFeePercentage}%)
+                        {formatPrice(
+                          (selectedContract.monthlyRent || 0) * (platformFeePercentage / 100)
+                        )}{' '}
+                        ({platformFeePercentage}%)
                       </span>
                     </div>
                   </CardContent>
@@ -877,7 +888,9 @@ export default function OwnerContractsPage() {
                     </div>
                     <div>
                       <span className="font-medium">Propietario:</span>
-                      <p>{user?.name} ({user?.email})</p>
+                      <p>
+                        {user?.name} ({user?.email})
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

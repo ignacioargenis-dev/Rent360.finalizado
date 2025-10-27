@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Configuración para renderizado dinámico - configuración personalizada del usuario
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // No cache para configuración personal
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

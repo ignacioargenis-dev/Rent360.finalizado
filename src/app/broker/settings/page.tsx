@@ -2,6 +2,10 @@
 
 import { logger } from '@/lib/logger-minimal';
 
+// Configuración para renderizado dinámico - configuración personalizada del usuario
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // No cache para configuración personal
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Configuración para renderizado dinámico - datos en tiempo real
+export const dynamic = 'force-dynamic';
+export const revalidate = 30; // Revalidar cada 30 segundos para datos frescos
 import { logger } from '@/lib/logger-minimal';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';

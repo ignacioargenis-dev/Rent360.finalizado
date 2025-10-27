@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Forzar renderizado dinámico para evitar problemas de autenticación durante build
+// Forzar renderizado dinámico para datos actualizados constantemente
 export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Revalidar cada minuto para propiedades actualizadas
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -203,7 +204,9 @@ export default function OwnerPropertiesPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deleteConfirmProperty) return;
+    if (!deleteConfirmProperty) {
+      return;
+    }
 
     const propertyId = deleteConfirmProperty.id;
     const propertyTitle = deleteConfirmProperty.title;
@@ -234,9 +237,11 @@ export default function OwnerPropertiesPage() {
         await loadPropertiesData();
       } else {
         // Si hay error, restaurar la propiedad
-        setProperties(prev => [...prev, propertyToDelete].sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ));
+        setProperties(prev =>
+          [...prev, propertyToDelete].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        );
 
         const errorData = await response.json().catch(() => ({}));
         logger.error('Error deleting property', {
@@ -247,9 +252,11 @@ export default function OwnerPropertiesPage() {
       }
     } catch (error) {
       // Restaurar la propiedad en caso de error de red
-      setProperties(prev => [...prev, propertyToDelete].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ));
+      setProperties(prev =>
+        [...prev, propertyToDelete].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
 
       logger.error('Error deleting property', { error, propertyId });
       alert('❌ Error de conexión al eliminar la propiedad');
@@ -869,7 +876,8 @@ export default function OwnerPropertiesPage() {
                 Eliminar Propiedad
               </DialogTitle>
               <DialogDescription>
-                Esta acción no se puede deshacer. Se eliminarán todos los archivos, imágenes, documentos y datos asociados.
+                Esta acción no se puede deshacer. Se eliminarán todos los archivos, imágenes,
+                documentos y datos asociados.
               </DialogDescription>
             </DialogHeader>
 
@@ -877,9 +885,7 @@ export default function OwnerPropertiesPage() {
               <p className="text-gray-700 mb-2">
                 ¿Estás seguro de que quieres eliminar la propiedad:
               </p>
-              <p className="font-semibold text-gray-900">
-                {deleteConfirmProperty?.title}
-              </p>
+              <p className="font-semibold text-gray-900">{deleteConfirmProperty?.title}</p>
             </div>
 
             <div className="flex gap-3 justify-end">

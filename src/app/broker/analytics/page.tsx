@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+// Configuración para renderizado dinámico - analytics con datos en tiempo real
+export const dynamic = 'force-dynamic';
+export const revalidate = 120; // Revalidar cada 2 minutos para analytics actualizados
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

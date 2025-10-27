@@ -1,6 +1,8 @@
 'use client';
 
-// Build fix - force update
+// Configuración para renderizado dinámico - configuración personalizada del usuario
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // No cache para configuración personal
 
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
