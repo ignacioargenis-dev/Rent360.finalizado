@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { ensurePropertyDirectory } from '@/lib/property-directory';
 import { getCloudStorageService, generateFileKey } from '@/lib/cloud-storage';
 
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
 // Validation schema
 const propertySchema = z.object({
   title: z
@@ -56,13 +59,23 @@ const propertySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🏠 [PROPERTIES] Iniciando POST /api/properties');
+
     // Verificar autenticación y roles permitidos (OWNER, ADMIN, BROKER)
     const decoded = await requireAnyRole(request, ['OWNER', 'ADMIN', 'BROKER']);
+
+    console.log('✅ [PROPERTIES] Usuario autenticado:', {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    });
 
     const startTime = Date.now();
 
     // Parsear FormData para archivos
+    console.log('📋 [PROPERTIES] Parseando FormData...');
     const formData = await request.formData();
+    console.log('✅ [PROPERTIES] FormData parseado correctamente');
 
     // Extraer datos del formulario
     const title = formData.get('title') as string;
@@ -109,6 +122,7 @@ export async function POST(request: NextRequest) {
     const concierge = formData.get('concierge') === 'true';
 
     // Validar datos con Zod
+    console.log('🔍 [PROPERTIES] Validando datos con Zod...');
     const propertyData = {
       title,
       description,
@@ -145,11 +159,25 @@ export async function POST(request: NextRequest) {
       concierge,
     };
 
+    console.log('📝 [PROPERTIES] Datos a validar:', {
+      title,
+      type,
+      price,
+      bedrooms,
+      bathrooms,
+      area,
+      city,
+      commune,
+    });
+
     const validationResult = propertySchema.safeParse(propertyData);
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map(err => err.message);
+      console.error('❌ [PROPERTIES] Error de validación:', errorMessages);
       return NextResponse.json({ error: errorMessages.join(', ') }, { status: 400 });
     }
+
+    console.log('✅ [PROPERTIES] Validación exitosa');
 
     // Determinar el ownerId basado en el rol del usuario
     let ownerId: string | null;
@@ -219,6 +247,9 @@ export async function POST(request: NextRequest) {
     const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true';
 
     // Crear propiedad en la base de datos
+    console.log('💾 [PROPERTIES] Creando propiedad en la base de datos...');
+    console.log('📊 [PROPERTIES] OwnerId:', ownerId, 'BrokerId:', brokerId);
+
     const newProperty = await db.property.create({
       data: {
         title: title.trim(),
@@ -258,6 +289,12 @@ export async function POST(request: NextRequest) {
         security,
         concierge,
       },
+    });
+
+    console.log('✅ [PROPERTIES] Propiedad creada exitosamente:', {
+      propertyId: newProperty.id,
+      title: newProperty.title,
+      status: newProperty.status,
     });
 
     // Procesar imágenes si existen usando cloud storage
@@ -370,19 +407,23 @@ export async function POST(request: NextRequest) {
         'Propiedad creada exitosamente. Será revisada por nuestro equipo antes de ser publicada.',
     });
   } catch (error) {
+    console.error('❌ [PROPERTIES] Error crítico:', error);
+
     logger.error('Error creating property:', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
+    // Retornar error detallado para debug
     return NextResponse.json(
       {
+        success: false,
         error: 'Error interno del servidor',
-        message:
-          process.env.NODE_ENV === 'development'
-            ? error instanceof Error
-              ? error.message
-              : String(error)
-            : 'Error interno del servidor',
+        message: error instanceof Error ? error.message : String(error),
+        details:
+          process.env.NODE_ENV === 'development' && error instanceof Error
+            ? error.stack
+            : undefined,
       },
       { status: 500 }
     );
