@@ -203,6 +203,61 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       });
     }
 
+    // ✅ NUEVO: Manejar cambios de status de propiedades (para aprobación/rechazo)
+    if (body.status) {
+      // Verificar autenticación como admin
+      const user = await requireAuth(request);
+
+      if (user.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: 'Solo los administradores pueden cambiar el status de las propiedades' },
+          { status: 403 }
+        );
+      }
+
+      // Validar que el status sea válido
+      const validStatuses = ['PENDING', 'AVAILABLE', 'REJECTED', 'SOLD', 'RENTED'];
+      if (!validStatuses.includes(body.status)) {
+        return NextResponse.json(
+          { error: `Status no válido. Debe ser uno de: ${validStatuses.join(', ')}` },
+          { status: 400 }
+        );
+      }
+
+      // Actualizar el status de la propiedad
+      const updatedProperty = await db.property.update({
+        where: { id: propertyId },
+        data: { status: body.status },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      logger.info('Property status updated by admin', {
+        propertyId,
+        newStatus: body.status,
+        adminId: user.id,
+        adminEmail: user.email,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Propiedad ${body.status === 'AVAILABLE' ? 'aprobada' : body.status === 'REJECTED' ? 'rechazada' : 'actualizada'} exitosamente`,
+        property: {
+          id: updatedProperty.id,
+          title: updatedProperty.title,
+          status: updatedProperty.status,
+          owner: updatedProperty.owner,
+        },
+      });
+    }
+
     return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
   } catch (error) {
     logger.error('Error updating property counters', {
