@@ -50,6 +50,7 @@ import {
   Target,
   Plus,
   Building,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { User as UserType } from '@/types';
@@ -215,6 +216,7 @@ export default function BrokerSettings() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -489,6 +491,121 @@ export default function BrokerSettings() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Solo se permiten archivos de imagen (JPG, PNG, GIF)');
+      setTimeout(() => setErrorMessage(''), 5000);
+      return;
+    }
+
+    // Validar tamaño (5MB máximo)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setErrorMessage('El archivo es demasiado grande. Máximo 5MB permitido.');
+      setTimeout(() => setErrorMessage(''), 5000);
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      logger.info('Subiendo avatar:', { fileName: file.name, size: file.size });
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el avatar');
+      }
+
+      const data = await response.json();
+
+      // Actualizar el usuario en el estado local
+      if (user) {
+        setUser({
+          ...user,
+          avatar: data.avatar.url,
+        });
+      }
+
+      logger.info('Avatar subido exitosamente');
+      setSuccessMessage('Foto de perfil actualizada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Resetear el input file
+      event.target.value = '';
+    } catch (error) {
+      logger.error('Error subiendo avatar:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al subir la foto de perfil. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      logger.info('Eliminando avatar');
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar el avatar');
+      }
+
+      // Actualizar el usuario en el estado local
+      if (user) {
+        setUser({
+          ...user,
+          avatar: null,
+        });
+      }
+
+      logger.info('Avatar eliminado exitosamente');
+      setSuccessMessage('Foto de perfil eliminada exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error eliminando avatar:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al eliminar la foto de perfil. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -739,19 +856,59 @@ export default function BrokerSettings() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-4">
-                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="w-8 h-8 text-gray-400" />
+                      <div className="relative">
+                        {user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="Foto de perfil"
+                            className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+                            <User className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Subir Foto
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-2" />
-                          Ver
-                        </Button>
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            className="hidden"
+                            disabled={uploadingAvatar}
+                          />
+                          <Button size="sm" variant="outline" disabled={uploadingAvatar} asChild>
+                            <span>
+                              {uploadingAvatar ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4 mr-2" />
+                              )}
+                              {uploadingAvatar ? 'Subiendo...' : 'Subir Foto'}
+                            </span>
+                          </Button>
+                        </label>
+                        {user?.avatar && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => user.avatar && window.open(user.avatar, '_blank')}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={handleAvatarDelete}>
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </Button>
+                          </>
+                        )}
                       </div>
+                    </div>
+                    <div className="mt-3 text-xs text-gray-500">
+                      Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB.
                     </div>
                   </CardContent>
                 </Card>
@@ -1048,15 +1205,19 @@ export default function BrokerSettings() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tipo de Cuenta
                         </label>
-                        <select
+                        <Select
                           value={settings.payment.accountType}
-                          onChange={e => updatePayment('accountType', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onValueChange={value => updatePayment('accountType', value)}
                         >
-                          <option value="Cuenta Corriente">Cuenta Corriente</option>
-                          <option value="Cuenta Ahorro">Cuenta Ahorro</option>
-                          <option value="Cuenta Vista">Cuenta Vista</option>
-                        </select>
+                          <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <SelectValue placeholder="Seleccionar tipo de cuenta" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cuenta Corriente">Cuenta Corriente</SelectItem>
+                            <SelectItem value="Cuenta Ahorro">Cuenta Ahorro</SelectItem>
+                            <SelectItem value="Cuenta Vista">Cuenta Vista</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -1137,26 +1298,34 @@ export default function BrokerSettings() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Tema</label>
-                      <select
+                      <Select
                         value={settings.appearance.theme}
-                        onChange={e => updateAppearance('theme', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onValueChange={value => updateAppearance('theme', value)}
                       >
-                        <option value="light">Claro</option>
-                        <option value="dark">Oscuro</option>
-                        <option value="auto">Automático</option>
-                      </select>
+                        <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Seleccionar tema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Claro</SelectItem>
+                          <SelectItem value="dark">Oscuro</SelectItem>
+                          <SelectItem value="auto">Automático</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
-                      <select
+                      <Select
                         value={settings.appearance.language}
-                        onChange={e => updateAppearance('language', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onValueChange={value => updateAppearance('language', value)}
                       >
-                        <option value="es">Español</option>
-                        <option value="en">English</option>
-                      </select>
+                        <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Seleccionar idioma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -1165,29 +1334,37 @@ export default function BrokerSettings() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Formato de Fecha
                       </label>
-                      <select
+                      <Select
                         value={settings.appearance.dateFormat}
-                        onChange={e => updateAppearance('dateFormat', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onValueChange={value => updateAppearance('dateFormat', value)}
                       >
-                        <option value="dd/mm/yyyy">DD/MM/YYYY</option>
-                        <option value="mm/dd/yyyy">MM/DD/YYYY</option>
-                        <option value="yyyy-mm-dd">YYYY-MM-DD</option>
-                      </select>
+                        <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Seleccionar formato" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                          <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                          <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Zona Horaria
                       </label>
-                      <select
+                      <Select
                         value={settings.appearance.timezone}
-                        onChange={e => updateAppearance('timezone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onValueChange={value => updateAppearance('timezone', value)}
                       >
-                        <option value="America/Santiago">Santiago (GMT-3)</option>
-                        <option value="America/New_York">New York (GMT-5)</option>
-                        <option value="Europe/Madrid">Madrid (GMT+1)</option>
-                      </select>
+                        <SelectTrigger className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Seleccionar zona horaria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="America/Santiago">Santiago (GMT-3)</SelectItem>
+                          <SelectItem value="America/New_York">New York (GMT-5)</SelectItem>
+                          <SelectItem value="Europe/Madrid">Madrid (GMT+1)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </CardContent>
