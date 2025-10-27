@@ -90,170 +90,65 @@ export default function BrokerProspectsPage() {
 
     const loadProspectsData = async () => {
       try {
-        const mockProspects: Prospect[] = [
-          {
-            id: '1',
-            name: 'María González',
-            email: 'maria.gonzalez@email.com',
-            phone: '+56912345678',
-            interestedIn: ['apartment', 'house'],
-            budget: { min: 300000, max: 600000 },
-            preferredLocation: 'Las Condes',
-            status: 'active',
-            source: 'website',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            notes: 'Busca departamento de 2 dormitorios, buena ubicación',
-            engagementScore: 85,
-            responseTime: 2.5,
-            conversionProbability: 78,
-            budgetFlexibility: 4,
-            urgencyLevel: 'high',
-            competitorActivity: 2,
-            propertyViews: 15,
-            emailOpens: 8,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-            behavioralScore: 82,
-            demographicFit: 88,
-            marketTiming: 'hot',
+        const response = await fetch('/api/broker/clients/prospects', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
           },
-          {
-            id: '2',
-            name: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            phone: '+56987654321',
-            interestedIn: ['apartment'],
-            budget: { min: 200000, max: 400000 },
-            preferredLocation: 'Providencia',
-            status: 'contacted',
-            source: 'referral',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            notes: 'Interesado en inversiones, primera reunión programada',
-            engagementScore: 92,
-            responseTime: 1.2,
-            conversionProbability: 85,
-            budgetFlexibility: 3,
-            urgencyLevel: 'urgent',
-            competitorActivity: 0,
-            propertyViews: 23,
-            emailOpens: 12,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            behavioralScore: 95,
-            demographicFit: 92,
-            marketTiming: 'hot',
-          },
-          {
-            id: '3',
-            name: 'Ana Silva',
-            email: 'ana.silva@email.com',
-            phone: '+56955556666',
-            interestedIn: ['office'],
-            budget: { min: 500000, max: 1000000 },
-            preferredLocation: 'Centro',
-            status: 'qualified',
-            source: 'social',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            notes: 'Busca oficina para empresa tech, presupuesto flexible',
-            engagementScore: 76,
-            responseTime: 4.1,
-            conversionProbability: 65,
-            budgetFlexibility: 5,
-            urgencyLevel: 'medium',
-            competitorActivity: 5,
-            propertyViews: 8,
-            emailOpens: 5,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-            behavioralScore: 68,
-            demographicFit: 75,
-            marketTiming: 'warm',
-          },
-          {
-            id: '4',
-            name: 'Roberto Díaz',
-            email: 'roberto.diaz@email.com',
-            phone: '+56977778888',
-            interestedIn: ['house', 'land'],
-            budget: { min: 800000, max: 1500000 },
-            preferredLocation: 'Colina',
-            status: 'active',
-            source: 'advertising',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            notes: 'Busca casa familiar grande, inversión a largo plazo',
-            engagementScore: 88,
-            responseTime: 3.2,
-            conversionProbability: 72,
-            budgetFlexibility: 2,
-            urgencyLevel: 'high',
-            competitorActivity: 1,
-            propertyViews: 18,
-            emailOpens: 9,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-            behavioralScore: 78,
-            demographicFit: 85,
-            marketTiming: 'hot',
-          },
-          {
-            id: '5',
-            name: 'Patricia Morales',
-            email: 'patricia.morales@email.com',
-            phone: '+56944443333',
-            interestedIn: ['apartment'],
-            budget: { min: 150000, max: 250000 },
-            preferredLocation: 'Ñuñoa',
-            status: 'lost',
-            source: 'website',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-            notes: 'Presupuesto limitado, perdió interés por precios altos',
-            engagementScore: 45,
-            responseTime: 24.0,
-            conversionProbability: 15,
-            budgetFlexibility: 1,
-            urgencyLevel: 'low',
-            competitorActivity: 8,
-            propertyViews: 3,
-            emailOpens: 1,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-            behavioralScore: 35,
-            demographicFit: 55,
-            marketTiming: 'cold',
-          },
-          {
-            id: '6',
-            name: 'Jorge Martínez',
-            email: 'jorge.martinez@email.com',
-            phone: '+56911112222',
-            interestedIn: ['house'],
-            budget: { min: 600000, max: 900000 },
-            preferredLocation: 'Vitacura',
-            status: 'qualified',
-            source: 'referral',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-            lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-            notes: 'Cliente premium, referenciado por cliente existente',
-            engagementScore: 96,
-            responseTime: 0.8,
-            conversionProbability: 94,
-            budgetFlexibility: 4,
-            urgencyLevel: 'urgent',
-            competitorActivity: 0,
-            propertyViews: 32,
-            emailOpens: 15,
-            lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
-            behavioralScore: 98,
-            demographicFit: 96,
-            marketTiming: 'hot',
-          },
-        ];
+        });
 
-        setProspects(mockProspects);
-        setFilteredProspects(mockProspects);
-        setLoading(false);
+        if (response.ok) {
+          const data = await response.json();
+          const prospectsData = data.data || [];
+
+          // Transformar datos de la API al formato esperado por el componente
+          const transformedProspects: Prospect[] = prospectsData.map((prospect: any) => ({
+            id: prospect.id,
+            name: prospect.name,
+            email: prospect.email,
+            phone: prospect.phone,
+            interestedIn: prospect.interestedIn || [],
+            budget: prospect.budget || { min: 0, max: 0 },
+            preferredLocation: prospect.preferredLocation || '',
+            status: prospect.status || 'active',
+            source: prospect.source || 'website',
+            createdAt: prospect.createdAt,
+            lastContact: prospect.lastContact || prospect.createdAt,
+            notes: prospect.notes || '',
+            // Advanced analytics (mock por ahora)
+            engagementScore: Math.floor(Math.random() * 40) + 60, // 60-100
+            responseTime: Math.random() * 10 + 1, // 1-11 horas
+            conversionProbability: Math.floor(Math.random() * 40) + 60, // 60-100
+            budgetFlexibility: Math.floor(Math.random() * 5) + 1, // 1-5
+            urgencyLevel: ['low', 'medium', 'high', 'urgent'][Math.floor(Math.random() * 4)],
+            competitorActivity: Math.floor(Math.random() * 10), // 0-9
+            propertyViews: Math.floor(Math.random() * 50) + 1, // 1-50
+            emailOpens: Math.floor(Math.random() * 20) + 1, // 1-20
+            lastActivity: prospect.lastContact || prospect.createdAt,
+            behavioralScore: Math.floor(Math.random() * 40) + 60, // 60-100
+            demographicFit: Math.floor(Math.random() * 40) + 60, // 60-100
+            marketTiming: ['cold', 'warm', 'hot'][Math.floor(Math.random() * 3)],
+            matchingScore: Math.floor(Math.random() * 40) + 60, // 60-100
+            conversionProbability: Math.random() * 0.5 + 0.3, // 0.3-0.8
+            engagementLevel: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
+            preferredContactMethod: ['email', 'phone', 'whatsapp'][Math.floor(Math.random() * 3)],
+            followUpDate: null,
+            leadQuality: ['cold', 'warm', 'hot'][Math.floor(Math.random() * 3)],
+          }));
+
+          setProspects(transformedProspects);
+          setFilteredProspects(transformedProspects);
+        } else {
+          console.error('Error loading prospects data:', response.status);
+          setProspects([]);
+          setFilteredProspects([]);
+        }
       } catch (error) {
         console.error('Error loading prospects data:', error);
+        setProspects([]);
+        setFilteredProspects([]);
+      } finally {
         setLoading(false);
       }
     };

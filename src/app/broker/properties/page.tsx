@@ -124,7 +124,7 @@ export default function BrokerPropertiesPage() {
             type: property.type,
             status: property.status,
             price: property.price,
-            ownerName: property.owner?.name || 'Propietario',
+            ownerName: property.owner?.name || 'No asignado',
             tenantName: property.currentTenant?.name || undefined,
             commissionEarned: property.commissionEarned || 0,
             views: property.views || 0,
