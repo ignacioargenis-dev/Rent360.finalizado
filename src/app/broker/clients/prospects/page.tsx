@@ -115,11 +115,20 @@ export default function BrokerProspectsPage() {
           // Transformar datos de la API al formato esperado por el componente
           const transformedProspects: Prospect[] = prospectsData.map((prospect: any) => {
             // Calcular analytics basados en datos reales del prospect
-            const totalProperties = prospect.totalProperties || 0;
-            const totalContracts = prospect.totalContracts || 0;
+            const totalProperties = Number(prospect.totalProperties) || 0;
+            const totalContracts = Number(prospect.totalContracts) || 0;
             const daysSinceCreation = Math.floor(
               (Date.now() - new Date(prospect.createdAt).getTime()) / (1000 * 60 * 60 * 24)
             );
+
+            // Log para debugging
+            console.log('Prospect data:', {
+              id: prospect.id,
+              name: prospect.name,
+              totalProperties,
+              totalContracts,
+              daysSinceCreation,
+            });
 
             return {
               id: prospect.id,

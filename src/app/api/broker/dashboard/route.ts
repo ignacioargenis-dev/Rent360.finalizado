@@ -16,7 +16,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    logger.info('Obteniendo dashboard del corredor', { userId: user.id });
+    logger.info('Obteniendo dashboard del corredor', {
+      userId: user.id,
+      userRole: user.role,
+      userName: user.name,
+      userEmail: user.email,
+    });
 
     // Obtener estadísticas del dashboard
     const [contractStats, propertyStats, commissionData, recentActivity] = await Promise.all([
@@ -45,9 +50,14 @@ export async function GET(request: NextRequest) {
       // Estadísticas de propiedades
       Promise.all([
         // Propiedades totales creadas por el broker
-        db.property.count({
-          where: { brokerId: user.id },
-        }),
+        db.property
+          .count({
+            where: { brokerId: user.id },
+          })
+          .then(count => {
+            logger.info('Total properties for broker', { brokerId: user.id, count });
+            return count;
+          }),
         // Propiedades disponibles
         db.property.count({
           where: {
@@ -109,7 +119,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const [totalPropertiesManaged, activeContracts, totalContracts] = contractStats;
-    const [totalProperties, availableProperties, rentedProperties, recentPropertiesCount] = propertyStats;
+    const [totalProperties, availableProperties, rentedProperties, recentPropertiesCount] =
+      propertyStats;
     const [contractsForCommissions] = commissionData;
 
     // Calcular comisiones dinámicamente
@@ -300,6 +311,13 @@ export async function GET(request: NextRequest) {
         totalProperties: stats.totalProperties,
         activeContracts: stats.activeContracts,
         monthlyRevenue: stats.monthlyRevenue,
+        portfolioValue: stats.portfolioValue,
+      },
+      rawCounts: {
+        totalProperties: totalProperties,
+        availableProperties,
+        rentedProperties,
+        recentPropertiesCount,
       },
     });
 

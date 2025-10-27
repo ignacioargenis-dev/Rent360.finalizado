@@ -234,7 +234,12 @@ export default function BrokerPropertiesPage() {
       bodega: { label: 'Bodega', icon: '📦' },
     };
 
-    const config = typeConfig[type as keyof typeof typeConfig] || typeConfig.departamento;
+    // Normalizar el tipo para manejar variaciones
+    const normalizedType = type?.toLowerCase()?.trim();
+    const config = typeConfig[normalizedType as keyof typeof typeConfig] || {
+      label: type || 'Propiedad',
+      icon: '🏠',
+    };
 
     return (
       <Badge variant="outline" className="bg-gray-100 text-gray-800">
