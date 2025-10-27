@@ -173,7 +173,7 @@ export default function PerfilPage() {
           name: 'Carlos Mendoza',
           email: 'carlos.mendoza@email.com',
           phone: '+56 9 8765 4321',
-          avatar: '/avatars/carlos.jpg',
+          avatar: '',
           location: 'Santiago Centro',
           joinDate: '2023-03-15',
           status: 'active',

@@ -163,7 +163,7 @@ export default function BrokerSettings() {
       email: 'carlos.rodriguez@rent360.cl',
       phone: '+56 9 1234 5678',
       bio: 'Corredor de propiedades con más de 8 años de experiencia en el mercado inmobiliario. Especializado en propiedades residenciales y comerciales en Santiago.',
-      avatar: '/avatar.jpg',
+      avatar: '',
       license: 'COR-12345',
       specialization: ['Residencial', 'Comercial', 'Inversiones'],
       languages: ['Español', 'Inglés'],
@@ -243,7 +243,7 @@ export default function BrokerSettings() {
               lastName: userData.user.name?.split(' ').slice(1).join(' ') || 'Sin apellido',
               email: userData.user.email || '',
               phone: userData.user.phone || '',
-              avatar: userData.user.avatar || '/avatar.jpg',
+              avatar: userData.user.avatar || '',
             },
           }));
         }
@@ -861,7 +861,7 @@ export default function BrokerSettings() {
                   <CardContent>
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        {user?.avatar ? (
+                        {user?.avatar && user.avatar.trim() !== '' ? (
                           <img
                             src={user.avatar}
                             alt="Foto de perfil"
@@ -893,12 +893,16 @@ export default function BrokerSettings() {
                             </span>
                           </Button>
                         </label>
-                        {user?.avatar && (
+                        {user?.avatar && user.avatar.trim() !== '' && (
                           <>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => user.avatar && window.open(user.avatar, '_blank')}
+                              onClick={() =>
+                                user.avatar &&
+                                user.avatar.trim() !== '' &&
+                                window.open(user.avatar, '_blank')
+                              }
                             >
                               <Eye className="w-4 h-4 mr-2" />
                               Ver
