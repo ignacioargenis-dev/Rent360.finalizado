@@ -152,27 +152,44 @@ export async function POST(request: NextRequest) {
     }
 
     // Determinar el ownerId basado en el rol del usuario
-    let ownerId: string;
+    let ownerId: string | null;
     let brokerId: string | null = null;
 
     if (decoded.role === 'OWNER') {
       // Si es OWNER, él mismo es el propietario
       ownerId = decoded.id;
     } else if (decoded.role === 'BROKER') {
-      // Si es BROKER, debe especificar el propietario real
-      // Por ahora, requerir que se pase ownerId en el formData, o usar un valor temporal
+      // Si es BROKER, puede especificar el propietario real o crear propiedades sin propietario asignado
       const specifiedOwnerId = formData.get('ownerId') as string;
       if (specifiedOwnerId && specifiedOwnerId.trim()) {
+        // Verificar que el propietario especificado existe
+        const ownerExists = await db.user.findUnique({
+          where: { id: specifiedOwnerId.trim() },
+          select: { id: true, role: true },
+        });
+
+        if (!ownerExists) {
+          return NextResponse.json(
+            { error: 'El propietario especificado no existe en el sistema' },
+            { status: 400 }
+          );
+        }
+
+        if (ownerExists.role !== 'OWNER') {
+          return NextResponse.json(
+            { error: 'El usuario especificado no tiene rol de propietario' },
+            { status: 400 }
+          );
+        }
+
         ownerId = specifiedOwnerId.trim();
       } else {
-        // Si no se especifica propietario, el broker no puede crear propiedades sin asignar a un owner
-        return NextResponse.json(
-          {
-            error:
-              'Como corredor, debe especificar el ID del propietario (ownerId) para la propiedad',
-          },
-          { status: 400 }
-        );
+        // Propiedad sin propietario asignado - común cuando los corredores traen propiedades de propietarios externos
+        ownerId = null;
+        logger.info('Broker creating property without assigned owner', {
+          brokerId: decoded.id,
+          propertyTitle: title,
+        });
       }
       brokerId = decoded.id; // El broker se asigna como broker
     } else if (decoded.role === 'ADMIN') {

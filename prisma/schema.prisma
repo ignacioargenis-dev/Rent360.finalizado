@@ -166,7 +166,7 @@ model Property {
   features    String?       // JSON array of features
   views       Int           @default(0) // Número de vistas de la propiedad
   inquiries   Int           @default(0) // Número de consultas/inquiries
-  ownerId     String
+  ownerId     String?
   brokerId    String?       // Corredor que gestiona la propiedad (opcional)
   createdBy   String        // Usuario que creó la propiedad
   createdAt   DateTime      @default(now())
@@ -197,7 +197,7 @@ model Property {
   virtualTourData    String?   // JSON con datos del tour virtual
 
   // Relations
-  owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner             User?              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   broker            User?              @relation("BrokerProperties", fields: [brokerId], references: [id], onDelete: SetNull)
   creator           User               @relation("PropertyCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   propertyFavorites PropertyFavorite[]
