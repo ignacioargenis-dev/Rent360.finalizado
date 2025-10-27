@@ -150,6 +150,7 @@ interface BrokerSettings {
 
 export default function BrokerSettings() {
   const [user, setUser] = useState<UserType | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [settings, setSettings] = useState<BrokerSettings>({
     profile: {
       firstName: 'Carlos',
@@ -219,28 +220,43 @@ export default function BrokerSettings() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
+        // Cargar datos del usuario
+        const userResponse = await fetch('/api/auth/me');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
 
           // Actualizar settings con datos reales del usuario
           setSettings(prevSettings => ({
             ...prevSettings,
             profile: {
               ...prevSettings.profile,
-              firstName: data.user.name?.split(' ')[0] || 'Sin nombre',
-              lastName: data.user.name?.split(' ').slice(1).join(' ') || 'Sin apellido',
-              email: data.user.email || '',
-              phone: data.user.phone || '',
-              avatar: data.user.avatar || '/avatar.jpg',
+              firstName: userData.user.name?.split(' ')[0] || 'Sin nombre',
+              lastName: userData.user.name?.split(' ').slice(1).join(' ') || 'Sin apellido',
+              email: userData.user.email || '',
+              phone: userData.user.phone || '',
+              avatar: userData.user.avatar || '/avatar.jpg',
             },
           }));
         }
+
+        // Cargar datos del dashboard del corredor
+        const dashboardResponse = await fetch('/api/broker/dashboard', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (dashboardResponse.ok) {
+          const dashboardInfo = await dashboardResponse.json();
+          setDashboardData(dashboardInfo.data);
+        }
       } catch (error) {
-        logger.error('Error loading user data:', {
+        logger.error('Error loading data:', {
           error: error instanceof Error ? error.message : String(error),
         });
       } finally {
@@ -248,7 +264,7 @@ export default function BrokerSettings() {
       }
     };
 
-    loadUserData();
+    loadData();
   }, []);
 
   const saveSettings = async () => {
@@ -630,6 +646,7 @@ export default function BrokerSettings() {
                           value={settings.profile.firstName}
                           onChange={e => updateProfile('firstName', e.target.value)}
                           placeholder="Ingresa tu nombre"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -641,6 +658,7 @@ export default function BrokerSettings() {
                           value={settings.profile.lastName}
                           onChange={e => updateProfile('lastName', e.target.value)}
                           placeholder="Ingresa tu apellido"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -655,6 +673,7 @@ export default function BrokerSettings() {
                           value={settings.profile.email}
                           onChange={e => updateProfile('email', e.target.value)}
                           placeholder="correo@ejemplo.com"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -666,6 +685,7 @@ export default function BrokerSettings() {
                           value={settings.profile.phone}
                           onChange={e => updateProfile('phone', e.target.value)}
                           placeholder="+56912345678"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -679,6 +699,7 @@ export default function BrokerSettings() {
                         onChange={e => updateProfile('bio', e.target.value)}
                         rows={4}
                         placeholder="Describe tu experiencia y especialización inmobiliaria..."
+                        className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
 
@@ -692,6 +713,7 @@ export default function BrokerSettings() {
                           value={settings.profile.license}
                           onChange={e => updateProfile('license', e.target.value)}
                           placeholder="Número de licencia"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -703,6 +725,7 @@ export default function BrokerSettings() {
                           value={settings.profile.experience}
                           onChange={e => updateProfile('experience', parseInt(e.target.value))}
                           placeholder="Años de experiencia"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -1018,6 +1041,7 @@ export default function BrokerSettings() {
                           value={settings.payment.bankName}
                           onChange={e => updatePayment('bankName', e.target.value)}
                           placeholder="Nombre del banco"
+                          className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -1045,6 +1069,7 @@ export default function BrokerSettings() {
                         value={settings.payment.bankAccount}
                         onChange={e => updatePayment('bankAccount', e.target.value)}
                         placeholder="Número de cuenta bancaria"
+                        className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
 
@@ -1055,6 +1080,7 @@ export default function BrokerSettings() {
                         value={settings.payment.taxId}
                         onChange={e => updatePayment('taxId', e.target.value)}
                         placeholder="12.345.678-9"
+                        className="bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
 
@@ -1191,7 +1217,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('monthlyProperties', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                         />
                       </div>
@@ -1205,7 +1231,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('monthlyRevenue', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                           step="100000"
                         />
@@ -1220,7 +1246,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('monthlyClients', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           min="0"
                         />
                       </div>
@@ -1241,7 +1267,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('yearlyProperties', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                         />
                       </div>
@@ -1255,7 +1281,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('yearlyRevenue', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                           step="1000000"
                         />
@@ -1270,7 +1296,7 @@ export default function BrokerSettings() {
                           onChange={e =>
                             updateGoals('yearlyClients', parseInt(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                         />
                       </div>
@@ -1290,7 +1316,7 @@ export default function BrokerSettings() {
                         onChange={e =>
                           updateGoals('commissionTarget', parseInt(e.target.value) || 0)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         min="0"
                         step="10000"
                       />
@@ -1962,22 +1988,31 @@ export default function BrokerSettings() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Propiedades</span>
-                    <Badge>24</Badge>
+                    <Badge>{dashboardData?.stats?.totalProperties || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Clientes</span>
-                    <Badge>156</Badge>
+                    <span className="text-sm text-gray-600">Contratos Activos</span>
+                    <Badge>{dashboardData?.stats?.activeContracts || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Contratos</span>
-                    <Badge>89</Badge>
+                    <span className="text-sm text-gray-600">Comisiones ($)</span>
+                    <Badge>
+                      {new Intl.NumberFormat('es-CL', {
+                        style: 'currency',
+                        currency: 'CLP',
+                        minimumFractionDigits: 0,
+                      }).format(dashboardData?.stats?.pendingCommissions || 0)}
+                    </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Rating</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm">4.8</span>
-                    </div>
+                    <span className="text-sm text-gray-600">Valor Portafolio</span>
+                    <Badge>
+                      {new Intl.NumberFormat('es-CL', {
+                        style: 'currency',
+                        currency: 'CLP',
+                        minimumFractionDigits: 0,
+                      }).format(dashboardData?.stats?.portfolioValue || 0)}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -1999,12 +2034,28 @@ export default function BrokerSettings() {
                     <span className="text-sm">Perfil completo</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="text-sm">Pagos activos</span>
+                    {dashboardData?.stats?.activeContracts > 0 ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    )}
+                    <span className="text-sm">
+                      {dashboardData?.stats?.activeContracts > 0
+                        ? `${dashboardData.stats.activeContracts} contratos activos`
+                        : 'Sin contratos activos'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                    <span className="text-sm">2 documentos pendientes</span>
+                    {dashboardData?.stats?.pendingCommissions > 0 ? (
+                      <CheckCircle className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-gray-400" />
+                    )}
+                    <span className="text-sm">
+                      {dashboardData?.stats?.pendingCommissions > 0
+                        ? `Comisiones pendientes: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(dashboardData.stats.pendingCommissions)}`
+                        : 'Sin comisiones pendientes'}
+                    </span>
                   </div>
                 </div>
               </CardContent>

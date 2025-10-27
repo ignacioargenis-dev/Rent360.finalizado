@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,7 @@ interface ClientStats {
 }
 
 export default function BrokerClientsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserType | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<ClientStats>({
@@ -125,7 +127,10 @@ export default function BrokerClientsPage() {
           // Calculate stats from real data
           const activeClients = transformedClients.filter(c => c.status === 'active').length;
           const prospectClients = transformedClients.filter(c => c.status === 'prospect').length;
-          const totalPropertiesManaged = transformedClients.reduce((sum, c) => sum + c.propertiesCount, 0);
+          const totalPropertiesManaged = transformedClients.reduce(
+            (sum, c) => sum + c.propertiesCount,
+            0
+          );
           const totalPortfolioValue = transformedClients.reduce((sum, c) => sum + c.totalValue, 0);
           const averageClientValue = activeClients > 0 ? totalPortfolioValue / activeClients : 0;
           const newClientsThisMonth = transformedClients.filter(
@@ -248,7 +253,7 @@ export default function BrokerClientsPage() {
 
   const handleNewClient = () => {
     // Navigate to new client creation page
-    window.open('/broker/clients/new', '_blank');
+    router.push('/broker/clients/new');
   };
 
   const handleViewClient = (clientId: string) => {

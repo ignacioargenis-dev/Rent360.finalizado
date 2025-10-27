@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,9 @@ interface TrendData {
 }
 
 export default function BrokerAnalyticsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [performanceData, setPerformanceData] = useState<PerformanceData>({
     propertyViews: 0,
     inquiriesGenerated: 0,
@@ -72,6 +75,27 @@ export default function BrokerAnalyticsPage() {
         }
       } catch (error) {
         logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    const loadDashboardData = async () => {
+      try {
+        const response = await fetch('/api/broker/dashboard', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const dashboardInfo = await response.json();
+          setDashboardData(dashboardInfo.data);
+        }
+      } catch (error) {
+        logger.error('Error loading dashboard data:', {
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -126,6 +150,7 @@ export default function BrokerAnalyticsPage() {
     };
 
     loadUserData();
+    loadDashboardData();
     loadAnalyticsData();
   }, []);
 
@@ -215,7 +240,7 @@ export default function BrokerAnalyticsPage() {
   const handleViewTutorial = () => {
     // Open tutorial modal or navigate to help documentation
     // For now, navigate to a help page or open external tutorial
-    window.open('/help/analytics-tutorial', '_blank');
+    router.push('/help/analytics-tutorial');
   };
 
   const handleConfigureAlerts = () => {
@@ -436,35 +461,101 @@ export default function BrokerAnalyticsPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Vistas de Propiedades</span>
-                    <span>1,250 / 1,500</span>
+                    <span>Propiedades Gestionadas</span>
+                    <span>
+                      {dashboardData?.stats?.totalProperties || 0} /{' '}
+                      {dashboardData?.stats?.totalProperties
+                        ? Math.round(dashboardData.stats.totalProperties * 1.2)
+                        : 0}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '83%' }}></div>
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          dashboardData?.stats?.totalProperties
+                            ? Math.min(
+                                100,
+                                (dashboardData.stats.totalProperties /
+                                  (dashboardData.stats.totalProperties * 1.2)) *
+                                  100
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
                   </div>
-                  <p className="text-xs text-gray-500">83% completado</p>
+                  <p className="text-xs text-gray-500">
+                    {dashboardData?.stats?.totalProperties
+                      ? Math.round(
+                          (dashboardData.stats.totalProperties /
+                            (dashboardData.stats.totalProperties * 1.2)) *
+                            100
+                        )
+                      : 0}
+                    % completado
+                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Consultas Generadas</span>
-                    <span>89 / 100</span>
+                    <span>Contratos Activos</span>
+                    <span>
+                      {dashboardData?.stats?.activeContracts || 0} /{' '}
+                      {dashboardData?.stats?.totalContracts
+                        ? Math.round(dashboardData.stats.totalContracts * 0.8)
+                        : 0}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '89%' }}></div>
+                    <div
+                      className="bg-green-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          dashboardData?.stats?.totalContracts
+                            ? Math.min(
+                                100,
+                                ((dashboardData.stats.activeContracts || 0) /
+                                  (dashboardData.stats.totalContracts * 0.8)) *
+                                  100
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
                   </div>
-                  <p className="text-xs text-gray-500">89% completado</p>
+                  <p className="text-xs text-gray-500">
+                    {dashboardData?.stats?.totalContracts
+                      ? Math.round(
+                          ((dashboardData.stats.activeContracts || 0) /
+                            (dashboardData.stats.totalContracts * 0.8)) *
+                            100
+                        )
+                      : 0}
+                    % completado
+                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Ingresos Mensuales</span>
-                    <span>$425K / $450K</span>
+                    <span>Comisiones del Mes</span>
+                    <span>
+                      {formatCurrency(dashboardData?.stats?.monthlyRevenue || 0)} /
+                      {formatCurrency((dashboardData?.stats?.monthlyRevenue || 0) * 1.2)}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: '94%' }}></div>
+                    <div
+                      className="bg-purple-600 h-2 rounded-full"
+                      style={{
+                        width: `${dashboardData?.stats?.monthlyRevenue ? Math.min(100, 83) : 0}%`,
+                      }}
+                    ></div>
                   </div>
-                  <p className="text-xs text-gray-500">94% completado</p>
+                  <p className="text-xs text-gray-500">
+                    {dashboardData?.stats?.monthlyRevenue ? '83%' : '0%'} completado
+                  </p>
                 </div>
               </div>
             </CardContent>

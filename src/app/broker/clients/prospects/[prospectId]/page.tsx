@@ -251,7 +251,7 @@ export default function ProspectDetailPage() {
       };
 
       sessionStorage.setItem('prospectToConvert', JSON.stringify(clientData));
-      router.push('/broker/clients/new?from=prospect');
+      router.push('/broker/clients/new');
     } catch (error) {
       logger.error('Error converting prospect:', { error });
       setSuccessMessage('Error al convertir el prospecto');
