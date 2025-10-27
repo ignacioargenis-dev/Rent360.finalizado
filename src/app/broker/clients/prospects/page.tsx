@@ -130,7 +130,6 @@ export default function BrokerProspectsPage() {
             demographicFit: Math.floor(Math.random() * 40) + 60, // 60-100
             marketTiming: ['cold', 'warm', 'hot'][Math.floor(Math.random() * 3)],
             matchingScore: Math.floor(Math.random() * 40) + 60, // 60-100
-            conversionProbability: Math.random() * 0.5 + 0.3, // 0.3-0.8
             engagementLevel: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
             preferredContactMethod: ['email', 'phone', 'whatsapp'][Math.floor(Math.random() * 3)],
             followUpDate: null,
