@@ -1,21 +1,24 @@
 // ============================================================================
-// 🚨 SCRIPT PARA CREAR USUARIOS REALES EN DIGITALOCEAN
+// 👑 SCRIPT PARA CREAR USUARIO ADMINISTRADOR EN DIGITALOCEAN
 // ============================================================================
 //
-// IMPORTANTE: Los usuarios mencionados NO existen actualmente en DigitalOcean
+// PROPÓSITO: Crear el primer usuario administrador real en producción
 //
-// VERIFICACIÓN REALIZADA:
-// - Base de datos actual: DigitalOcean PostgreSQL
-// - Usuarios encontrados: 6 (solo datos mock)
-// - Usuarios buscados: ignacio.antonio.b@hotmail.com, ingerlisesg@gmail.com, lucbjork@gmail.com
-// - Resultado: ❌ NO ENCONTRADOS
+// VERIFICACIÓN PREVIA:
+// - Base de datos: DigitalOcean PostgreSQL ✅
+// - Usuarios existentes: 6 (solo mock data) ❌
+// - Usuario admin buscado: admin@sendspress.cl ❌ NO EXISTE
+// - Usuario corredor: corredor@gmail.com ✅ EXISTE (sin actividad)
 //
-// POSIBLES EXPLICACIONES:
-// 1. Los usuarios existen en otra base de datos PostgreSQL
-// 2. Configuración anterior apuntaba a otra BD
-// 3. Problema de cache/autenticación en navegador
+// ESTRATEGIA:
+// 1. Crear usuario administrador con permisos completos
+// 2. El admin podrá crear los demás usuarios desde el panel
+// 3. Gestionar roles y permisos desde la interfaz administrativa
 //
-// SOLUCIÓN: Crear los usuarios en DigitalOcean con este script
+// SEGURIDAD:
+// - Usar email real del administrador
+// - Contraseña fuerte y única
+// - Cambiar contraseña inmediatamente después del primer login
 //
 // ============================================================================
 
@@ -40,35 +43,24 @@ if (fs.existsSync(envLocalPath)) {
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// ⚠️ DATOS DE USUARIOS REALES - AJUSTAR SEGÚN INFORMACIÓN REAL
-// Los usuarios mencionados NO existen actualmente en DigitalOcean
-const realUsers = [
-  {
-    email: 'ignacio.antonio.b@hotmail.com',
-    name: 'Ignacio Antonio', // ← AJUSTAR: Nombre real del usuario
-    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
-    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
-    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
-  },
-  {
-    email: 'ingerlisesg@gmail.com',
-    name: 'Inger Lise', // ← AJUSTAR: Nombre real del usuario
-    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
-    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
-    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
-  },
-  {
-    email: 'lucbjork@gmail.com',
-    name: 'Lucas Bjork', // ← AJUSTAR: Nombre real del usuario
-    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
-    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
-    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
-  },
+// 🎯 USUARIO ADMINISTRADOR PRINCIPAL - CONFIGURAR CON DATOS REALES
+const adminUser = {
+  email: 'admin@rent360.cl', // ← CONFIGURAR: Email real del administrador
+  name: 'Administrador Rent360', // ← CONFIGURAR: Nombre real
+  role: 'ADMIN',
+  phone: '+569XXXXXXXX', // ← CONFIGURAR: Teléfono real del admin
+  password: 'AdminRent3602024!', // ← CONFIGURAR: Contraseña segura para el admin
+};
+
+// ⚠️ USUARIOS ADICIONALES - COMPLETAR DESPUÉS
+// Estos usuarios se pueden crear desde el panel de admin una vez que el admin principal exista
+const additionalUsers = [
+  // Por ahora vacío - se crearán desde el panel de administración
 ];
 
 async function createRealUsers() {
   try {
-    console.log('🚀 Creando usuarios reales en DigitalOcean...\n');
+    console.log('🚀 Creando usuario administrador en DigitalOcean...\n');
 
     await prisma.$connect();
     console.log('✅ Conexión a DigitalOcean exitosa\n');
@@ -76,9 +68,13 @@ async function createRealUsers() {
     const initialCount = await prisma.user.count();
     console.log(`👥 Usuarios iniciales: ${initialCount}\n`);
 
-    const createdUsers = [];
+    // PRIMERO: Crear usuario administrador
+    console.log('👑 CREANDO USUARIO ADMINISTRADOR...\n');
 
-    for (const userData of realUsers) {
+    const createdUsers = [];
+    const usersToCreate = [adminUser, ...additionalUsers];
+
+    for (const userData of usersToCreate) {
       try {
         // Verificar si el usuario ya existe
         const existingUser = await prisma.user.findUnique({
@@ -132,38 +128,34 @@ async function createRealUsers() {
     console.log(`📈 Usuarios creados: ${createdUsers.length}\n`);
 
     if (createdUsers.length > 0) {
-      console.log('🎯 Usuarios creados exitosamente:');
+      console.log('🎯 USUARIOS CREADOS EXITOSAMENTE:');
       createdUsers.forEach((user, index) => {
         console.log(`${index + 1}. ${user.email} - ${user.name} - ${user.role}`);
-        console.log(`   📧 Email: ${user.email}`);
-        console.log(`   📱 Teléfono: ${user.phone}`);
-        console.log(`   🔑 Contraseña temporal: temporal123`);
+        console.log(`   ├─ Email: ${user.email}`);
+        console.log(`   ├─ Rol: ${user.role}`);
+        console.log(`   ├─ Teléfono: ${user.phone}`);
+        console.log(
+          `   └─ Contraseña: ${user.role === 'ADMIN' ? '[CONFIGURADA EN SCRIPT]' : 'temporal123'}`
+        );
         console.log(`   ⚠️  IMPORTANTE: Cambiar contraseña al iniciar sesión\n`);
       });
 
-      // Verificar que aparecen en prospects
-      const prospects = await prisma.user.findMany({
-        where: {
-          role: { in: ['OWNER', 'TENANT'] },
-          isActive: true,
-          email: { in: createdUsers.map(u => u.email) },
-        },
-        select: {
-          email: true,
-          name: true,
-          role: true,
-        },
-      });
+      // Verificar acceso al panel de administración
+      const adminCreated = createdUsers.find(u => u.role === 'ADMIN');
+      if (adminCreated) {
+        console.log('👑 USUARIO ADMINISTRADOR CREADO:');
+        console.log('   📧 Email:', adminCreated.email);
+        console.log('   🔑 Password: [Configurada en el script]');
+        console.log('   🎛️  Panel Admin: https://rent360management-2yxgz.ondigitalocean.app/admin');
+        console.log('   👥 Crear usuarios: Admin → Users → Create User\n');
+      }
 
-      console.log('🎯 Verificación en lista de prospects:');
-      prospects.forEach(user => {
-        console.log(`✅ ${user.email} - ${user.name} - ${user.role}`);
-      });
-
-      console.log('\n🚀 ¡MIGRACIÓN COMPLETADA!');
-      console.log(
-        'Los usuarios reales ahora existen en DigitalOcean y aparecerán en la lista de prospects.'
-      );
+      console.log('🚀 ¡USUARIO ADMINISTRADOR LISTO!');
+      console.log('Ahora puedes:');
+      console.log('   1. Iniciar sesión como admin');
+      console.log('   2. Acceder al panel de administración');
+      console.log('   3. Crear los demás usuarios desde el admin panel');
+      console.log('   4. Gestionar permisos y roles');
     } else {
       console.log('❌ No se crearon nuevos usuarios');
     }
@@ -185,12 +177,37 @@ console.log('\n🔑 Contraseña temporal para todos: temporal123\n');
 
 console.log('❓ ¿Desea continuar? (Modifique el script y cambie los datos si es necesario)\n');
 
+// ============================================================================
+// 🎯 INSTRUCCIONES PARA CREAR USUARIO ADMINISTRADOR
+// ============================================================================
+
+console.log('📋 CONFIGURACIÓN ACTUAL DEL ADMIN:');
+console.log(`   👑 Email: ${adminUser.email}`);
+console.log(`   👤 Nombre: ${adminUser.name}`);
+console.log(`   🔐 Password: ${adminUser.password}`);
+console.log(`   📱 Teléfono: ${adminUser.phone}`);
+console.log('');
+
+console.log('⚙️  PASOS PARA EJECUTAR:');
+console.log('1. Configure los datos reales del admin en la variable adminUser');
+console.log('2. Elija una contraseña segura para el administrador');
+console.log('3. Descomente la línea createRealUsers() al final del script');
+console.log('4. Ejecute: node create-real-users.js');
+console.log('');
+
+console.log('🎛️  DESPUÉS DE CREAR EL ADMIN:');
+console.log('1. Inicie sesión en: https://rent360management-2yxgz.ondigitalocean.app/auth/login');
+console.log('2. Use las credenciales del admin');
+console.log('3. Acceda al panel: /admin');
+console.log('4. Cree los demás usuarios desde Admin → Users');
+console.log('5. Configure roles y permisos');
+console.log('');
+
+console.log('🔒 SEGURIDAD:');
+console.log('- Cambie la contraseña del admin inmediatamente');
+console.log('- Use una contraseña fuerte y única');
+console.log('- Active 2FA si está disponible');
+console.log('');
+
 // Nota: Para ejecutar, descomente la línea siguiente:
 // createRealUsers();
-
-console.log('💡 INSTRUCCIONES:');
-console.log('1. Revise y ajuste los datos de los usuarios en el array realUsers');
-console.log('2. Descomente la línea createRealUsers() al final del script');
-console.log('3. Ejecute: node create-real-users.js');
-console.log('4. Los usuarios podrán iniciar sesión con contraseña temporal123');
-console.log('5. Deben cambiar su contraseña inmediatamente después del primer login');
