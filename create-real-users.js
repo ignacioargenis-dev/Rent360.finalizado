@@ -1,4 +1,24 @@
-// Script para crear los usuarios reales en DigitalOcean
+// ============================================================================
+// 🚨 SCRIPT PARA CREAR USUARIOS REALES EN DIGITALOCEAN
+// ============================================================================
+//
+// IMPORTANTE: Los usuarios mencionados NO existen actualmente en DigitalOcean
+//
+// VERIFICACIÓN REALIZADA:
+// - Base de datos actual: DigitalOcean PostgreSQL
+// - Usuarios encontrados: 6 (solo datos mock)
+// - Usuarios buscados: ignacio.antonio.b@hotmail.com, ingerlisesg@gmail.com, lucbjork@gmail.com
+// - Resultado: ❌ NO ENCONTRADOS
+//
+// POSIBLES EXPLICACIONES:
+// 1. Los usuarios existen en otra base de datos PostgreSQL
+// 2. Configuración anterior apuntaba a otra BD
+// 3. Problema de cache/autenticación en navegador
+//
+// SOLUCIÓN: Crear los usuarios en DigitalOcean con este script
+//
+// ============================================================================
+
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -20,28 +40,29 @@ if (fs.existsSync(envLocalPath)) {
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Datos de los usuarios reales (necesitan ser completados por el usuario)
+// ⚠️ DATOS DE USUARIOS REALES - AJUSTAR SEGÚN INFORMACIÓN REAL
+// Los usuarios mencionados NO existen actualmente en DigitalOcean
 const realUsers = [
   {
     email: 'ignacio.antonio.b@hotmail.com',
-    name: 'Ignacio Antonio', // Ajustar según el nombre real
-    role: 'OWNER', // Ajustar según el rol real
-    phone: '+56912345678', // Ajustar según teléfono real
-    password: 'temporal123', // Contraseña temporal - debe ser cambiada
+    name: 'Ignacio Antonio', // ← AJUSTAR: Nombre real del usuario
+    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
+    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
+    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
   },
   {
     email: 'ingerlisesg@gmail.com',
-    name: 'Inger Lise', // Ajustar según el nombre real
-    role: 'OWNER', // Ajustar según el rol real
-    phone: '+56987654321', // Ajustar según teléfono real
-    password: 'temporal123', // Contraseña temporal - debe ser cambiada
+    name: 'Inger Lise', // ← AJUSTAR: Nombre real del usuario
+    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
+    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
+    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
   },
   {
     email: 'lucbjork@gmail.com',
-    name: 'Lucas Bjork', // Ajustar según el nombre real
-    role: 'OWNER', // Ajustar según el rol real
-    phone: '+56911223344', // Ajustar según teléfono real
-    password: 'temporal123', // Contraseña temporal - debe ser cambiada
+    name: 'Lucas Bjork', // ← AJUSTAR: Nombre real del usuario
+    role: 'OWNER', // ← AJUSTAR: OWNER/TENANT/BROKER según corresponda
+    phone: '+569XXXXXXXX', // ← AJUSTAR: Teléfono real con formato chileno
+    password: 'temporal123', // Contraseña temporal - CAMBIAR INMEDIATAMENTE
   },
 ];
 
