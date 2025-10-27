@@ -174,13 +174,26 @@ let cloudStorageService: CloudStorageService | null = null;
 
 export function getCloudStorageService(): CloudStorageService {
   if (!cloudStorageService) {
+    // Verificar que las credenciales estén configuradas
+    const accessKey = process.env.DO_SPACES_ACCESS_KEY || '';
+    const secretKey = process.env.DO_SPACES_SECRET_KEY || '';
+    const bucket = process.env.DO_SPACES_BUCKET || 'rent360-images';
+    const region = process.env.DO_SPACES_REGION || 'nyc3';
+    const endpoint = process.env.DO_SPACES_ENDPOINT || `https://nyc3.digitaloceanspaces.com`;
+
+    if (!accessKey || !secretKey) {
+      throw new Error(
+        'Cloud storage credentials not configured. Please set DO_SPACES_ACCESS_KEY and DO_SPACES_SECRET_KEY environment variables.'
+      );
+    }
+
     // Configuración por defecto para DigitalOcean Spaces
     const config: CloudStorageConfig = {
-      bucket: process.env.DO_SPACES_BUCKET || 'rent360-images',
-      region: process.env.DO_SPACES_REGION || 'nyc3',
-      accessKey: process.env.DO_SPACES_ACCESS_KEY || '',
-      secretKey: process.env.DO_SPACES_SECRET_KEY || '',
-      endpoint: process.env.DO_SPACES_ENDPOINT || `https://nyc3.digitaloceanspaces.com`,
+      bucket,
+      region,
+      accessKey,
+      secretKey,
+      endpoint,
     };
 
     cloudStorageService = new CloudStorageService(config);

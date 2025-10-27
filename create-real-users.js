@@ -45,11 +45,11 @@ const prisma = new PrismaClient();
 
 // 🎯 USUARIO ADMINISTRADOR PRINCIPAL - CONFIGURAR CON DATOS REALES
 const adminUser = {
-  email: 'admin@rent360.cl', // ← CONFIGURAR: Email real del administrador
-  name: 'Administrador Rent360', // ← CONFIGURAR: Nombre real
+  email: 'ignacio.antonio.b@hotmail.com', // ← CONFIGURAR: Email real del administrador
+  name: 'Administrador Ignacio Rent360', // ← CONFIGURAR: Nombre real
   role: 'ADMIN',
-  phone: '+569XXXXXXXX', // ← CONFIGURAR: Teléfono real del admin
-  password: 'AdminRent3602024!', // ← CONFIGURAR: Contraseña segura para el admin
+  phone: '+56992008007', // ← CONFIGURAR: Teléfono real del admin
+  password: 'Admin1042!', // ← CONFIGURAR: Contraseña segura para el admin
 };
 
 // ⚠️ USUARIOS ADICIONALES - COMPLETAR DESPUÉS
@@ -170,10 +170,11 @@ async function createRealUsers() {
 // Ejecutar solo si se confirma
 console.log('⚠️  ATENCIÓN: Este script creará usuarios reales en DigitalOcean');
 console.log('📝 Datos de usuarios a crear:');
-realUsers.forEach((user, index) => {
+const usersToShow = [adminUser, ...additionalUsers];
+usersToShow.forEach((user, index) => {
   console.log(`${index + 1}. ${user.email} - ${user.name} - ${user.role}`);
 });
-console.log('\n🔑 Contraseña temporal para todos: temporal123\n');
+console.log('\n🔑 Contraseña del admin: [Configurada en el script]\n');
 
 console.log('❓ ¿Desea continuar? (Modifique el script y cambie los datos si es necesario)\n');
 
@@ -210,4 +211,4 @@ console.log('- Active 2FA si está disponible');
 console.log('');
 
 // Nota: Para ejecutar, descomente la línea siguiente:
-// createRealUsers();
+createRealUsers();
