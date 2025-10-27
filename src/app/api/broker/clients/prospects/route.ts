@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Por ahora, devolver una lista vacía ya que no hay modelo de prospects
     // En el futuro, esto debería consultar una tabla de prospects
-    const prospects = [];
+    const prospects: any[] = [];
 
     logger.info('Prospects obtenidos para broker', {
       brokerId: user.id,
