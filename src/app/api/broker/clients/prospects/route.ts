@@ -14,9 +14,60 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Por ahora, devolver una lista vacía ya que no hay modelo de prospects
-    // En el futuro, esto debería consultar una tabla de prospects
-    const prospects: any[] = [];
+    // Consultar usuarios OWNER que no están asociados con este corredor como prospects potenciales
+    const prospectsRaw = await db.user.findMany({
+      where: {
+        role: 'OWNER',
+        // Excluir usuarios que ya tienen propiedades con este corredor
+        NOT: {
+          properties: {
+            some: {
+              brokerId: user.id,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        createdAt: true,
+        // Obtener estadísticas de interacciones
+        _count: {
+          select: {
+            properties: true,
+            contractsAsOwner: true,
+            contractsAsTenant: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 50, // Limitar a 50 prospects por página
+    });
+
+    // Transformar los datos al formato esperado por el frontend
+    const prospects = prospectsRaw.map(prospect => ({
+      id: prospect.id,
+      name: prospect.name,
+      email: prospect.email,
+      phone: prospect.phone || '',
+      interestedIn: [], // No tenemos esta info aún
+      budget: { min: 0, max: 0 }, // No tenemos esta info aún
+      preferredLocation: '', // No tenemos esta info aún
+      status: 'active',
+      source: 'website',
+      createdAt: prospect.createdAt.toISOString(),
+      lastContact: prospect.createdAt.toISOString(),
+      notes: '',
+      avatar: prospect.avatar,
+      // Calcular algunos analytics basados en datos reales
+      totalProperties: prospect._count.properties,
+      totalContracts: prospect._count.contractsAsOwner + prospect._count.contractsAsTenant,
+    }));
 
     logger.info('Prospects obtenidos para broker', {
       brokerId: user.id,
