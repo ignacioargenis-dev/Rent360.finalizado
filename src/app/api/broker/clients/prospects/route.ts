@@ -8,9 +8,17 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 [PROSPECTS] Iniciando GET /api/broker/clients/prospects');
+
     const user = await requireAuth(request);
+    console.log('✅ [PROSPECTS] Usuario autenticado:', {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     if (user.role !== 'BROKER') {
+      console.log('❌ [PROSPECTS] Usuario no es BROKER');
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
@@ -21,6 +29,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchQuery = searchParams.get('search') || '';
     const limit = parseInt(searchParams.get('limit') || '100');
+
+    console.log('📋 [PROSPECTS] Parámetros de búsqueda:', { searchQuery, limit });
 
     // Construir condiciones de búsqueda
     const whereConditions: any = {
@@ -38,6 +48,11 @@ export async function GET(request: NextRequest) {
         { email: { contains: searchQuery, mode: 'insensitive' } },
       ];
     }
+
+    console.log(
+      '🔎 [PROSPECTS] Condiciones de búsqueda:',
+      JSON.stringify(whereConditions, null, 2)
+    );
 
     // Consultar TODOS los usuarios activos del sistema (OWNER y TENANT) como prospects potenciales
     const prospectsRaw = await db.user.findMany({
@@ -77,6 +92,19 @@ export async function GET(request: NextRequest) {
       },
       take: limit,
     });
+
+    console.log('📊 [PROSPECTS] Usuarios encontrados:', prospectsRaw.length);
+    console.log(
+      '👥 [PROSPECTS] Primeros 3 usuarios:',
+      prospectsRaw.slice(0, 3).map(p => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        role: p.role,
+        properties: p._count.properties,
+        contracts: p._count.contractsAsOwner + p._count.contractsAsTenant,
+      }))
+    );
 
     // Transformar los datos al formato esperado por el frontend
     const prospects = prospectsRaw.map(prospect => {
@@ -118,6 +146,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log('✅ [PROSPECTS] Prospects transformados:', prospects.length);
+    console.log('📤 [PROSPECTS] Enviando respuesta JSON');
+
     logger.info('Prospects obtenidos para broker', {
       brokerId: user.id,
       count: prospects.length,
@@ -127,21 +158,24 @@ export async function GET(request: NextRequest) {
       success: true,
       data: prospects,
       pagination: {
-        limit: 50,
+        limit: limit,
         offset: 0,
         total: prospects.length,
         hasMore: false,
       },
     });
   } catch (error) {
+    console.error('❌ [PROSPECTS] Error:', error);
     logger.error('Error obteniendo prospects:', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
       {
         success: false,
         error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
