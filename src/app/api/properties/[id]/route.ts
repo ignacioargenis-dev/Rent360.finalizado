@@ -58,62 +58,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         : JSON.parse(property.images)
       : [];
 
-    // Procesar las imágenes manteniendo URLs de cloud storage y transformando solo las locales
+    // Todas las imágenes ahora usan cloud storage - mantener URLs tal como están
     const transformedImages = originalImages
       .map((img: string) => {
         const imgStr = String(img ?? '');
+        // Remover cualquier query parameter de cache busting anterior
         const imgNoQuery = (imgStr.split('?')[0] ?? '') as string;
-
-        // Si es una URL de cloud storage, mantenerla tal como está
-        if (imgNoQuery.includes('digitaloceanspaces.com') || imgNoQuery.includes('amazonaws.com')) {
-          return imgNoQuery;
-        }
-
-        // Para URLs locales, transformar a ruta /api/uploads
-        let transformedImg = imgNoQuery;
-        if (imgNoQuery && imgNoQuery.startsWith('/api/uploads/')) {
-          transformedImg = imgNoQuery;
-        } else if (imgNoQuery && imgNoQuery.startsWith('/images/')) {
-          transformedImg = imgNoQuery.replace('/images/', '/api/uploads/');
-        } else if (imgNoQuery && imgNoQuery.startsWith('/uploads/')) {
-          transformedImg = imgNoQuery.replace('/uploads/', '/api/uploads/');
-        } else if (imgNoQuery && !imgNoQuery.startsWith('http') && !imgNoQuery.startsWith('/')) {
-          transformedImg = `/api/uploads/${imgNoQuery}`;
-        }
-        return transformedImg;
+        return imgNoQuery;
       })
-      // Solo filtrar URLs locales que no existen físicamente, mantener URLs de cloud storage
-      .filter((imgPath: string) => {
-        // Si es URL de cloud storage, siempre incluirla
-        if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
-          return true;
-        }
-
-        // Para URLs locales, verificar si el archivo existe
-        try {
-          const logical = imgPath.replace(/^\/api\//, '');
-          const fullPath = require('path').join(
-            process.cwd(),
-            'public',
-            logical.replace(/^uploads\//, 'uploads/')
-          );
-          return require('fs').existsSync(fullPath);
-        } catch {
-          return false;
-        }
-      })
-      // Agregar timestamp único para cache busting solo a URLs locales
-      .map((imgPath: string) => {
-        // No agregar timestamp a URLs de cloud storage
-        if (imgPath.includes('digitaloceanspaces.com') || imgPath.includes('amazonaws.com')) {
-          return imgPath;
-        }
-
-        // Agregar timestamp solo a URLs locales
-        const separator = imgPath.includes('?') ? '&' : '?';
-        const uniqueTimestamp = Date.now() + Math.random();
-        return `${imgPath}${separator}t=${uniqueTimestamp}`;
-      });
+      // Filtrar URLs vacías o inválidas
+      .filter((imgPath: string) => imgPath && imgPath.trim().length > 0);
 
     // Formatear la respuesta
     const formattedProperty = {

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAnyRole } from '@/lib/auth';
+import { requireAnyRole, requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
 import { ensurePropertyDirectory } from '@/lib/property-directory';
+import { getCloudStorageService, generateFileKey } from '@/lib/cloud-storage';
 
 // Validation schema
 const propertySchema = z.object({
@@ -157,10 +158,35 @@ export async function POST(request: NextRequest) {
     if (decoded.role === 'OWNER') {
       // Si es OWNER, él mismo es el propietario
       ownerId = decoded.id;
-    } else if (decoded.role === 'BROKER' || decoded.role === 'ADMIN') {
-      // Si es BROKER o ADMIN, debe especificar el propietario (o usar su propio ID como fallback)
-      ownerId = decoded.id; // Por ahora usar el ID del usuario, pero esto debería cambiarse para permitir especificar otro propietario
-      brokerId = decoded.role === 'BROKER' ? decoded.id : null;
+    } else if (decoded.role === 'BROKER') {
+      // Si es BROKER, debe especificar el propietario real
+      // Por ahora, requerir que se pase ownerId en el formData, o usar un valor temporal
+      const specifiedOwnerId = formData.get('ownerId') as string;
+      if (specifiedOwnerId && specifiedOwnerId.trim()) {
+        ownerId = specifiedOwnerId.trim();
+      } else {
+        // Si no se especifica propietario, el broker no puede crear propiedades sin asignar a un owner
+        return NextResponse.json(
+          {
+            error:
+              'Como corredor, debe especificar el ID del propietario (ownerId) para la propiedad',
+          },
+          { status: 400 }
+        );
+      }
+      brokerId = decoded.id; // El broker se asigna como broker
+    } else if (decoded.role === 'ADMIN') {
+      // Si es ADMIN, puede crear propiedades para cualquier propietario
+      const specifiedOwnerId = formData.get('ownerId') as string;
+      if (specifiedOwnerId && specifiedOwnerId.trim()) {
+        ownerId = specifiedOwnerId.trim();
+      } else {
+        // Admin puede crear propiedades sin propietario especificado (para testing)
+        ownerId = decoded.id;
+      }
+      // Admin no se asigna como broker a menos que lo especifique
+      const specifiedBrokerId = formData.get('brokerId') as string;
+      brokerId = specifiedBrokerId && specifiedBrokerId.trim() ? specifiedBrokerId.trim() : null;
     } else {
       ownerId = decoded.id;
     }
@@ -217,65 +243,71 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Crear directorio para las imágenes de la propiedad
-    try {
-      await ensurePropertyDirectory(newProperty.id);
-      logger.info('Property directory created during property creation', {
-        propertyId: newProperty.id,
-        title: newProperty.title,
-      });
-    } catch (error) {
-      logger.error('Error creating property directory during property creation', {
-        error,
-        propertyId: newProperty.id,
-      });
-      // No fallar la creación de la propiedad por este error
-    }
-
-    // Procesar imágenes si existen
+    // Procesar imágenes si existen usando cloud storage
     const images = formData.getAll('images') as File[];
     if (images && images.length > 0) {
-      const imageUrls: string[] = [];
+      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+      const cloudStorage = getCloudStorageService();
+      const uploadedImages: string[] = [];
 
-      for (const image of images) {
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+
         if (image instanceof File) {
           try {
+            // Validar archivo
+            if (image.size > maxFileSize) {
+              logger.warn('Image file too large, skipping', {
+                propertyId: newProperty.id,
+                fileName: image.name,
+                fileSize: image.size,
+                maxSize: maxFileSize,
+              });
+              continue;
+            }
+
+            if (!allowedTypes.includes(image.type)) {
+              logger.warn('Invalid image type, skipping', {
+                propertyId: newProperty.id,
+                fileName: image.name,
+                fileType: image.type,
+                allowedTypes,
+              });
+              continue;
+            }
+
             // Generar nombre único para la imagen
             const timestamp = Date.now();
             const randomId = Math.random().toString(36).substring(2, 15);
-            const extension = image.name.split('.').pop() || 'jpg';
-            const filename = `${timestamp}-${randomId}.${extension}`;
+            const fileNameParts = image.name.split('.');
+            const extension = fileNameParts.length > 1 ? fileNameParts.pop() : 'jpg';
+            const filename = `image_${i + 1}_${timestamp}_${randomId}.${extension}`;
 
-            // Crear directorio específico para la propiedad si no existe
-            const propertyUploadDir = `public/uploads/properties/${newProperty.id}`;
-            const fs = require('fs').promises;
-            const path = require('path');
+            // Generar key para cloud storage
+            const cloudKey = generateFileKey(newProperty.id, filename);
 
-            try {
-              await fs.mkdir(propertyUploadDir, { recursive: true });
-            } catch (error) {
-              // El directorio ya existe o hay otro error
-            }
-
-            const filepath = path.join(propertyUploadDir, filename);
-
-            // Convertir File a Buffer y guardar
-            const bytes = await image.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            await fs.writeFile(filepath, buffer);
-
-            // Crear URL accesible desde el navegador
-            const imageUrl = `/uploads/properties/${newProperty.id}/${filename}`;
-            imageUrls.push(imageUrl);
-
-            logger.info('Image saved successfully', {
+            logger.info('Uploading image to cloud storage', {
               propertyId: newProperty.id,
-              filename,
+              cloudKey,
               originalName: image.name,
-              size: image.size,
+              fileSize: image.size,
+            });
+
+            // Subir a cloud storage
+            const result = await cloudStorage.uploadFile(image, cloudKey, image.type);
+
+            // Agregar URL a la lista de imágenes subidas
+            uploadedImages.push(result.url);
+
+            logger.info('Image uploaded successfully to cloud storage', {
+              propertyId: newProperty.id,
+              cloudKey,
+              url: result.url,
+              fileSize: image.size,
             });
           } catch (imageError) {
-            logger.error('Error saving image', {
+            logger.error('Error uploading image to cloud storage', {
               error: imageError instanceof Error ? imageError.message : String(imageError),
               propertyId: newProperty.id,
               imageName: image.name,
@@ -285,11 +317,17 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Actualizar propiedad con URLs de imágenes
-      if (imageUrls.length > 0) {
+      // Actualizar propiedad con URLs de imágenes de cloud storage
+      if (uploadedImages.length > 0) {
         await db.property.update({
           where: { id: newProperty.id },
-          data: { images: JSON.stringify(imageUrls) },
+          data: { images: JSON.stringify(uploadedImages) },
+        });
+
+        logger.info('Property updated with cloud storage image URLs', {
+          propertyId: newProperty.id,
+          uploadedCount: uploadedImages.length,
+          totalImages: uploadedImages.length,
         });
       }
     }
@@ -336,6 +374,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Verificar autenticación
+    const user = await requireAuth(request);
+
     const startTime = Date.now();
 
     // Obtener parámetros de consulta
@@ -472,33 +513,14 @@ export async function GET(request: NextRequest) {
       status: property.status,
       features: property.features ? JSON.parse(property.features) : [],
       images: property.images
-        ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images)).map(
-            (img: string) => {
-              let transformedImg = img;
-
-              // Si la imagen ya tiene la ruta correcta de API, no hacer nada
-              if (img.startsWith('/api/uploads/')) {
-                transformedImg = img;
-              }
-              // Si empieza con /images/, convertir a /api/uploads/
-              else if (img.startsWith('/images/')) {
-                transformedImg = img.replace('/images/', '/api/uploads/');
-              }
-              // Si empieza con /uploads/, convertir a /api/uploads/
-              else if (img.startsWith('/uploads/')) {
-                transformedImg = img.replace('/uploads/', '/api/uploads/');
-              }
-              // Si es una ruta relativa, asumir que está en uploads
-              else if (!img.startsWith('http') && !img.startsWith('/')) {
-                transformedImg = `/api/uploads/${img}`;
-              }
-
-              // Agregar timestamp único para cada imagen para evitar problemas de caché
-              const separator = transformedImg.includes('?') ? '&' : '?';
-              const uniqueTimestamp = Date.now() + Math.random();
-              return `${transformedImg}${separator}t=${uniqueTimestamp}`;
-            }
-          )
+        ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images))
+            .map((img: string) => {
+              // Todas las imágenes ahora usan cloud storage - mantener URLs tal como están
+              const imgStr = String(img ?? '');
+              // Remover cualquier query parameter de cache busting anterior
+              return (imgStr.split('?')[0] ?? '') as string;
+            })
+            .filter((imgPath: string) => imgPath && imgPath.trim().length > 0)
         : [],
       views: property.views,
       inquiries: property.inquiries,
