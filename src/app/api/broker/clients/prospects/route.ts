@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
@@ -14,26 +17,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Consultar usuarios OWNER que no están asociados con este corredor como prospects potenciales
-    const prospectsRaw = await db.user.findMany({
-      where: {
-        role: 'OWNER',
-        // Excluir usuarios que ya tienen propiedades con este corredor
-        NOT: {
-          properties: {
-            some: {
-              brokerId: user.id,
-            },
-          },
-        },
+    // Obtener parámetros de búsqueda
+    const { searchParams } = new URL(request.url);
+    const searchQuery = searchParams.get('search') || '';
+    const limit = parseInt(searchParams.get('limit') || '100');
+
+    // Construir condiciones de búsqueda
+    const whereConditions: any = {
+      // Excluir el broker mismo y otros brokers
+      role: {
+        in: ['OWNER', 'TENANT'],
       },
+      isActive: true,
+    };
+
+    // Si hay búsqueda, filtrar por nombre o email
+    if (searchQuery.trim()) {
+      whereConditions.OR = [
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+        { email: { contains: searchQuery, mode: 'insensitive' } },
+      ];
+    }
+
+    // Consultar TODOS los usuarios activos del sistema (OWNER y TENANT) como prospects potenciales
+    const prospectsRaw = await db.user.findMany({
+      where: whereConditions,
       select: {
         id: true,
         name: true,
         email: true,
         phone: true,
         avatar: true,
+        role: true,
         createdAt: true,
+        updatedAt: true,
         // Obtener estadísticas de interacciones
         _count: {
           select: {
@@ -42,32 +59,64 @@ export async function GET(request: NextRequest) {
             contractsAsTenant: true,
           },
         },
+        // Obtener propiedades para análisis
+        properties: {
+          select: {
+            id: true,
+            type: true,
+            city: true,
+            commune: true,
+            price: true,
+            status: true,
+          },
+          take: 5,
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
-      take: 50, // Limitar a 50 prospects por página
+      take: limit,
     });
 
     // Transformar los datos al formato esperado por el frontend
-    const prospects = prospectsRaw.map(prospect => ({
-      id: prospect.id,
-      name: prospect.name,
-      email: prospect.email,
-      phone: prospect.phone || '',
-      interestedIn: [], // No tenemos esta info aún
-      budget: { min: 0, max: 0 }, // No tenemos esta info aún
-      preferredLocation: '', // No tenemos esta info aún
-      status: 'active',
-      source: 'website',
-      createdAt: prospect.createdAt.toISOString(),
-      lastContact: prospect.createdAt.toISOString(),
-      notes: '',
-      avatar: prospect.avatar,
-      // Calcular algunos analytics basados en datos reales
-      totalProperties: prospect._count.properties,
-      totalContracts: prospect._count.contractsAsOwner + prospect._count.contractsAsTenant,
-    }));
+    const prospects = prospectsRaw.map(prospect => {
+      // Calcular ubicaciones preferidas basadas en propiedades existentes
+      const locations = prospect.properties
+        .map(p => p.commune || p.city)
+        .filter((v, i, a) => v && a.indexOf(v) === i);
+      const preferredLocation = locations.length > 0 ? locations[0] : '';
+
+      // Calcular tipos de propiedades de interés
+      const interestedIn = prospect.properties
+        .map(p => p.type.toLowerCase())
+        .filter((v, i, a) => v && a.indexOf(v) === i);
+
+      // Calcular presupuesto basado en propiedades existentes
+      const prices = prospect.properties.map(p => Number(p.price) || 0).filter(p => p > 0);
+      const budget = {
+        min: prices.length > 0 ? Math.min(...prices) : 0,
+        max: prices.length > 0 ? Math.max(...prices) : 0,
+      };
+
+      return {
+        id: prospect.id,
+        name: prospect.name,
+        email: prospect.email,
+        phone: prospect.phone || '',
+        interestedIn: interestedIn.length > 0 ? interestedIn : ['apartment'],
+        budget,
+        preferredLocation,
+        status: 'active',
+        source: 'website',
+        createdAt: prospect.createdAt.toISOString(),
+        lastContact: prospect.updatedAt.toISOString(),
+        notes: `Usuario ${prospect.role} en el sistema`,
+        avatar: prospect.avatar,
+        // Calcular algunos analytics basados en datos reales
+        totalProperties: prospect._count.properties,
+        totalContracts: prospect._count.contractsAsOwner + prospect._count.contractsAsTenant,
+      };
+    });
 
     logger.info('Prospects obtenidos para broker', {
       brokerId: user.id,

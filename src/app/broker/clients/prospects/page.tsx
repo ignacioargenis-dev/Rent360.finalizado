@@ -13,6 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
   Users,
@@ -84,6 +94,18 @@ export default function BrokerProspectsPage() {
   const [matchingScoreThreshold, setMatchingScoreThreshold] = useState(70);
   const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
+  const [showAddProspectModal, setShowAddProspectModal] = useState(false);
+  const [submittingProspect, setSubmittingProspect] = useState(false);
+  const [newProspectForm, setNewProspectForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    interestedIn: [] as string[],
+    budget: { min: 0, max: 0 },
+    preferredLocation: '',
+    source: 'website',
+    notes: '',
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -460,6 +482,151 @@ export default function BrokerProspectsPage() {
     setShowAdvancedAnalytics(!showAdvancedAnalytics);
   };
 
+  // Handle add prospect modal
+  const handleOpenAddProspectModal = () => {
+    setNewProspectForm({
+      name: '',
+      email: '',
+      phone: '',
+      interestedIn: [],
+      budget: { min: 0, max: 0 },
+      preferredLocation: '',
+      source: 'website',
+      notes: '',
+    });
+    setShowAddProspectModal(true);
+  };
+
+  const handleCloseAddProspectModal = () => {
+    setShowAddProspectModal(false);
+  };
+
+  const handleSubmitNewProspect = async () => {
+    // Validar campos requeridos
+    if (!newProspectForm.name || !newProspectForm.email || !newProspectForm.phone) {
+      alert('Por favor complete todos los campos requeridos: Nombre, Email y Teléfono');
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newProspectForm.email)) {
+      alert('Por favor ingrese un email válido');
+      return;
+    }
+
+    setSubmittingProspect(true);
+
+    try {
+      const response = await fetch('/api/broker/clients/prospects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(newProspectForm),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Prospecto "${newProspectForm.name}" agregado exitosamente!`);
+        setShowAddProspectModal(false);
+
+        // Recargar la lista de prospectos
+        const prospectsResponse = await fetch('/api/broker/clients/prospects', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (prospectsResponse.ok) {
+          const data = await prospectsResponse.json();
+          const prospectsData = data.data || [];
+
+          const transformedProspects: Prospect[] = prospectsData.map((prospect: any) => {
+            const totalProperties = Number(prospect.totalProperties) || 0;
+            const totalContracts = Number(prospect.totalContracts) || 0;
+            const daysSinceCreation = Math.floor(
+              (Date.now() - new Date(prospect.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            return {
+              id: prospect.id,
+              name: prospect.name,
+              email: prospect.email,
+              phone: prospect.phone || '',
+              interestedIn: prospect.interestedIn || [],
+              budget: prospect.budget || { min: 0, max: 0 },
+              preferredLocation: prospect.preferredLocation || '',
+              status: prospect.status || 'active',
+              source: prospect.source || 'website',
+              createdAt: prospect.createdAt,
+              lastContact: prospect.lastContact || prospect.createdAt,
+              notes: prospect.notes || '',
+              avatar: prospect.avatar,
+              engagementScore: Math.min(
+                100,
+                Math.max(20, 40 + totalProperties * 10 + totalContracts * 15)
+              ),
+              responseTime: Math.max(0.5, Math.min(24, 2 + daysSinceCreation * 0.1)),
+              conversionProbability: Math.min(
+                95,
+                Math.max(5, 20 + totalProperties * 8 + totalContracts * 12)
+              ),
+              budgetFlexibility: Math.min(5, Math.max(1, 1 + Math.floor(totalProperties / 2))),
+              urgencyLevel:
+                totalContracts > 2
+                  ? 'urgent'
+                  : totalProperties > 1
+                    ? 'high'
+                    : totalProperties > 0
+                      ? 'medium'
+                      : 'low',
+              competitorActivity: Math.floor(Math.random() * Math.min(10, totalProperties + 1)),
+              propertyViews: Math.max(1, totalProperties * 5 + Math.floor(Math.random() * 20)),
+              emailOpens: Math.max(
+                1,
+                Math.floor(totalProperties * 2) + Math.floor(Math.random() * 10)
+              ),
+              lastActivity: prospect.lastContact || prospect.createdAt,
+              behavioralScore: Math.min(
+                100,
+                Math.max(30, 50 + totalProperties * 5 + totalContracts * 8)
+              ),
+              demographicFit: Math.min(100, Math.max(40, 60 + Math.floor(Math.random() * 20))),
+              marketTiming:
+                daysSinceCreation < 7 ? 'hot' : daysSinceCreation < 30 ? 'warm' : 'cold',
+              matchingScore: Math.min(
+                100,
+                Math.max(25, 40 + totalProperties * 6 + totalContracts * 10)
+              ),
+              engagementLevel: totalContracts > 1 ? 'high' : totalProperties > 0 ? 'medium' : 'low',
+              preferredContactMethod: ['email', 'phone', 'whatsapp'][Math.floor(Math.random() * 3)],
+              followUpDate: null,
+              leadQuality: totalContracts > 1 ? 'hot' : totalProperties > 0 ? 'warm' : 'cold',
+              totalProperties: totalProperties,
+              totalContracts: totalContracts,
+              daysSinceCreation: daysSinceCreation,
+            };
+          });
+
+          setProspects(transformedProspects);
+          setFilteredProspects(transformedProspects);
+        }
+      } else {
+        const error = await response.json();
+        alert(`❌ Error al agregar prospecto: ${error.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting prospect:', error);
+      alert('❌ Error al agregar prospecto. Por favor intente nuevamente.');
+    } finally {
+      setSubmittingProspect(false);
+    }
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Prospectos" subtitle="Cargando información...">
@@ -489,7 +656,7 @@ export default function BrokerProspectsPage() {
             <Button variant="outline" onClick={toggleAdvancedAnalytics}>
               📊 {showAdvancedAnalytics ? 'Ocultar' : 'Mostrar'} Analytics Avanzados
             </Button>
-            <Button>
+            <Button onClick={handleOpenAddProspectModal}>
               <UserPlus className="w-4 h-4 mr-2" />
               Agregar Prospecto
             </Button>
@@ -563,9 +730,12 @@ export default function BrokerProspectsPage() {
                       Tiempo Promedio de Respuesta
                     </p>
                     <p className="text-lg font-bold text-blue-900">
-                      {Math.round(
-                        prospects.reduce((sum, p) => sum + p.responseTime, 0) / prospects.length
-                      )}
+                      {prospects.length > 0
+                        ? Math.round(
+                            prospects.reduce((sum, p) => sum + (p.responseTime || 0), 0) /
+                              prospects.length
+                          )
+                        : 0}
                       h
                     </p>
                   </div>
@@ -582,9 +752,12 @@ export default function BrokerProspectsPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Tasa de Engagement</p>
                     <p className="text-lg font-bold text-green-900">
-                      {Math.round(
-                        prospects.reduce((sum, p) => sum + p.engagementScore, 0) / prospects.length
-                      )}
+                      {prospects.length > 0
+                        ? Math.round(
+                            prospects.reduce((sum, p) => sum + (p.engagementScore || 0), 0) /
+                              prospects.length
+                          )
+                        : 0}
                       %
                     </p>
                   </div>
@@ -601,10 +774,12 @@ export default function BrokerProspectsPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Actividad Competidores</p>
                     <p className="text-lg font-bold text-red-900">
-                      {Math.round(
-                        prospects.reduce((sum, p) => sum + p.competitorActivity, 0) /
-                          prospects.length
-                      )}
+                      {prospects.length > 0
+                        ? Math.round(
+                            prospects.reduce((sum, p) => sum + (p.competitorActivity || 0), 0) /
+                              prospects.length
+                          )
+                        : 0}
                     </p>
                   </div>
                   <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -620,10 +795,12 @@ export default function BrokerProspectsPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Lead Scoring Promedio</p>
                     <p className="text-lg font-bold text-purple-900">
-                      {Math.round(
-                        prospects.reduce((sum, p) => sum + calculateMatchingScore(p), 0) /
-                          prospects.length
-                      )}
+                      {prospects.length > 0
+                        ? Math.round(
+                            prospects.reduce((sum, p) => sum + calculateMatchingScore(p), 0) /
+                              prospects.length
+                          )
+                        : 0}
                       %
                     </p>
                   </div>
@@ -1097,6 +1274,187 @@ export default function BrokerProspectsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Add Prospect Modal */}
+        <Dialog open={showAddProspectModal} onOpenChange={setShowAddProspectModal}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <UserPlus className="w-6 h-6 text-blue-600" />
+                Agregar Nuevo Prospecto
+              </DialogTitle>
+              <DialogDescription>
+                Complete la información del nuevo prospecto para agregarlo a su lista de leads
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Información Básica */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">
+                  📋 Información Básica
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-name">
+                      Nombre Completo <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="prospect-name"
+                      placeholder="Ej: Juan Pérez"
+                      value={newProspectForm.name}
+                      onChange={e =>
+                        setNewProspectForm({ ...newProspectForm, name: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-email">
+                      Email <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="prospect-email"
+                      type="email"
+                      placeholder="Ej: juan@example.com"
+                      value={newProspectForm.email}
+                      onChange={e =>
+                        setNewProspectForm({ ...newProspectForm, email: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-phone">
+                      Teléfono <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="prospect-phone"
+                      placeholder="Ej: +56912345678"
+                      value={newProspectForm.phone}
+                      onChange={e =>
+                        setNewProspectForm({ ...newProspectForm, phone: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-source">Fuente de Captación</Label>
+                    <Select
+                      value={newProspectForm.source}
+                      onValueChange={value =>
+                        setNewProspectForm({ ...newProspectForm, source: value })
+                      }
+                    >
+                      <SelectTrigger id="prospect-source">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">🌐 Sitio web</SelectItem>
+                        <SelectItem value="referral">🤝 Referencia</SelectItem>
+                        <SelectItem value="social">📱 Redes sociales</SelectItem>
+                        <SelectItem value="advertising">📢 Publicidad</SelectItem>
+                        <SelectItem value="other">❓ Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preferencias */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">
+                  🎯 Preferencias de Búsqueda
+                </h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="prospect-location">Ubicación Preferida</Label>
+                  <Input
+                    id="prospect-location"
+                    placeholder="Ej: Las Condes, Santiago"
+                    value={newProspectForm.preferredLocation}
+                    onChange={e =>
+                      setNewProspectForm({ ...newProspectForm, preferredLocation: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-budget-min">Presupuesto Mínimo (CLP)</Label>
+                    <Input
+                      id="prospect-budget-min"
+                      type="number"
+                      placeholder="Ej: 300000"
+                      value={newProspectForm.budget.min || ''}
+                      onChange={e =>
+                        setNewProspectForm({
+                          ...newProspectForm,
+                          budget: { ...newProspectForm.budget, min: Number(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="prospect-budget-max">Presupuesto Máximo (CLP)</Label>
+                    <Input
+                      id="prospect-budget-max"
+                      type="number"
+                      placeholder="Ej: 500000"
+                      value={newProspectForm.budget.max || ''}
+                      onChange={e =>
+                        setNewProspectForm({
+                          ...newProspectForm,
+                          budget: { ...newProspectForm.budget, max: Number(e.target.value) || 0 },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="prospect-notes">Notas Adicionales</Label>
+                  <Textarea
+                    id="prospect-notes"
+                    placeholder="Ej: Cliente potencial interesado en departamentos de 2 dormitorios..."
+                    rows={3}
+                    value={newProspectForm.notes}
+                    onChange={e =>
+                      setNewProspectForm({ ...newProspectForm, notes: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={handleCloseAddProspectModal}
+                disabled={submittingProspect}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmitNewProspect} disabled={submittingProspect}>
+                {submittingProspect ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Agregar Prospecto
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );
