@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
         properties: {
           select: {
             id: true,
+            title: true,
+            address: true,
             type: true,
             city: true,
             commune: true,
