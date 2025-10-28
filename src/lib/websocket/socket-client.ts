@@ -22,24 +22,31 @@ class WebSocketClient {
   private _isConnected = false;
 
   connect(token?: string): void {
-    if (this.socket?.connected) return;
+    if (this.socket?.connected) {
+      return;
+    }
 
-    const serverUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
+    // Usar la URL actual del navegador en lugar de localhost hardcodeado
+    const serverUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
     this.socket = io(serverUrl, {
       auth: {
-        token: token || localStorage.getItem('authToken')
+        token: token || localStorage.getItem('authToken'),
       },
       transports: ['websocket', 'polling'],
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
     });
 
     this.setupEventHandlers();
   }
 
   private setupEventHandlers(): void {
-    if (!this.socket) return;
+    if (!this.socket) {
+      return;
+    }
 
     this.socket.on('connect', () => {
       logger.info('WebSocket connected');
@@ -50,7 +57,7 @@ class WebSocketClient {
       this.emitEvent('connect');
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', reason => {
       logger.warn('WebSocket disconnected', { reason });
       this._isConnected = false;
 
@@ -62,38 +69,40 @@ class WebSocketClient {
       this.emitEvent('disconnect');
     });
 
-    this.socket.on('connect_error', (error) => {
-      logger.error('WebSocket connection error', { error: error instanceof Error ? error.message : String(error) });
+    this.socket.on('connect_error', error => {
+      logger.error('WebSocket connection error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       this.attemptReconnect();
     });
 
     // Manejadores de eventos de negocio
-    this.socket.on('notification', (data) => {
+    this.socket.on('notification', data => {
       logger.info('Notification received', { data });
       this.emitEvent('notification', data);
     });
 
-    this.socket.on('contract-update', (data) => {
+    this.socket.on('contract-update', data => {
       logger.info('Contract update received', { data });
       this.emitEvent('contract-update', data);
     });
 
-    this.socket.on('payment-update', (data) => {
+    this.socket.on('payment-update', data => {
       logger.info('Payment update received', { data });
       this.emitEvent('payment-update', data);
     });
 
-    this.socket.on('new-message', (data) => {
+    this.socket.on('new-message', data => {
       logger.info('New message received', { data });
       this.emitEvent('new-message', data);
     });
 
-    this.socket.on('system-alert', (data) => {
+    this.socket.on('system-alert', data => {
       logger.info('System alert received', { data });
       this.emitEvent('system-alert', data);
     });
 
-    this.socket.on('pong', (data) => {
+    this.socket.on('pong', data => {
       this.emitEvent('pong', data);
     });
   }
@@ -107,7 +116,9 @@ class WebSocketClient {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-    logger.info(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    logger.info(
+      `Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`
+    );
 
     setTimeout(() => {
       if (this.socket && !this.socket.connected) {
@@ -125,7 +136,9 @@ class WebSocketClient {
   }
 
   off<T extends keyof SocketEvents>(event: T, callback?: SocketEvents[T]): void {
-    if (!this.eventListeners.has(event)) return;
+    if (!this.eventListeners.has(event)) {
+      return;
+    }
 
     const listeners = this.eventListeners.get(event)!;
     if (callback) {
@@ -170,7 +183,7 @@ class WebSocketClient {
         toUserId,
         message,
         conversationId,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
   }
@@ -179,7 +192,7 @@ class WebSocketClient {
     if (this.socket?.connected) {
       this.socket.emit('update-presence', {
         status,
-        lastSeen: new Date()
+        lastSeen: new Date(),
       });
     }
   }
@@ -258,7 +271,7 @@ export function useWebSocket() {
     joinRoom: websocketClient.joinRoom.bind(websocketClient),
     leaveRoom: websocketClient.leaveRoom.bind(websocketClient),
     updatePresence: websocketClient.updatePresence.bind(websocketClient),
-    clearNotifications: () => setNotifications([])
+    clearNotifications: () => setNotifications([]),
   };
 }
 

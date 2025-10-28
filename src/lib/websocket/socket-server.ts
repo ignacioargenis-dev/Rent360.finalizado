@@ -10,7 +10,12 @@ interface AuthenticatedSocket extends Socket {
 
 interface NotificationData {
   id: string;
-  type: 'contract_created' | 'payment_received' | 'message_received' | 'property_updated' | 'system_alert';
+  type:
+    | 'contract_created'
+    | 'payment_received'
+    | 'message_received'
+    | 'property_updated'
+    | 'system_alert';
   title: string;
   message: string;
   data?: any;
@@ -27,8 +32,12 @@ class WebSocketServer {
   initialize(httpServer: HTTPServer): void {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-        credentials: true
+        origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+          'http://localhost:3000',
+          'https://localhost:3000',
+          'https://rent360management-2yxgz.ondigitalocean.app',
+        ],
+        credentials: true,
       },
       transports: ['websocket', 'polling'],
       // Configuración del servidor
@@ -36,7 +45,7 @@ class WebSocketServer {
       pingInterval: 25000, // 25 segundos
       upgradeTimeout: 10000,
       maxHttpBufferSize: 1e8,
-      allowEIO3: true
+      allowEIO3: true,
     });
 
     this.setupMiddleware();
@@ -46,7 +55,9 @@ class WebSocketServer {
   }
 
   private setupMiddleware(): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     // Middleware de autenticación
     this.io.use(async (socket: AuthenticatedSocket, next) => {
@@ -58,7 +69,10 @@ class WebSocketServer {
         }
 
         // Verificar token JWT
-        const decoded = jwt.verify(token as string, process.env.JWT_SECRET || 'default-secret') as any;
+        const decoded = jwt.verify(
+          token as string,
+          process.env.JWT_SECRET || 'default-secret'
+        ) as any;
 
         // Adjuntar información del usuario al socket
         socket.userId = decoded.userId;
@@ -73,7 +87,9 @@ class WebSocketServer {
   }
 
   private setupEventHandlers(): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     this.io.on('connection', (socket: AuthenticatedSocket) => {
       const userId = socket.userId!;
@@ -82,7 +98,7 @@ class WebSocketServer {
       logger.info('User connected to WebSocket', {
         userId,
         userRole,
-        socketId: socket.id
+        socketId: socket.id,
       });
 
       // Registrar usuario conectado
@@ -118,11 +134,11 @@ class WebSocketServer {
       });
 
       // Manejar desconexión
-      socket.on('disconnect', (reason) => {
+      socket.on('disconnect', reason => {
         logger.info('User disconnected from WebSocket', {
           userId,
           reason,
-          socketId: socket.id
+          socketId: socket.id,
         });
 
         this.connectedUsers.delete(userId);
@@ -132,11 +148,13 @@ class WebSocketServer {
 
   // Enviar notificación a un usuario específico
   sendToUser(userId: string, event: string, data: any): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     this.io.to(`user:${userId}`).emit(event, {
       ...data,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     logger.info('Notification sent to user', { userId, event });
@@ -144,11 +162,13 @@ class WebSocketServer {
 
   // Enviar notificación a todos los usuarios con un rol específico
   sendToRole(role: string, event: string, data: any): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     this.io.to(`role:${role}`).emit(event, {
       ...data,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     logger.info('Notification sent to role', { role, event });
@@ -156,11 +176,13 @@ class WebSocketServer {
 
   // Enviar notificación a todos los usuarios conectados
   broadcast(event: string, data: any): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     this.io.emit(event, {
       ...data,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     logger.info('Broadcast notification sent', { event });
@@ -168,11 +190,13 @@ class WebSocketServer {
 
   // Enviar notificación a una sala específica
   sendToRoom(roomName: string, event: string, data: any): void {
-    if (!this.io) return;
+    if (!this.io) {
+      return;
+    }
 
     this.io.to(roomName).emit(event, {
       ...data,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     logger.info('Notification sent to room', { roomName, event });
@@ -187,7 +211,7 @@ class WebSocketServer {
       fromUserId: socket.userId,
       message,
       conversationId,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     // Confirmar envío al remitente
@@ -195,13 +219,13 @@ class WebSocketServer {
       toUserId,
       message,
       conversationId,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     logger.info('Chat message sent', {
       fromUserId: socket.userId,
       toUserId,
-      conversationId
+      conversationId,
     });
   }
 
@@ -213,12 +237,12 @@ class WebSocketServer {
     socket.to('presence-updates').emit('user-presence-changed', {
       userId: socket.userId,
       status,
-      lastSeen: lastSeen || new Date()
+      lastSeen: lastSeen || new Date(),
     });
 
     logger.info('User presence updated', {
       userId: socket.userId,
-      status
+      status,
     });
   }
 
@@ -233,14 +257,14 @@ class WebSocketServer {
     }
 
     const rooms = this.io.sockets.adapter.rooms;
-    const activeRooms = Array.from(rooms.keys()).filter(room =>
-      !room.startsWith('/#') // Excluir rooms de socket individuales
+    const activeRooms = Array.from(rooms.keys()).filter(
+      room => !room.startsWith('/#') // Excluir rooms de socket individuales
     ).length;
 
     return {
       totalConnections: this.io.sockets.sockets.size,
       connectedUsers: this.connectedUsers.size,
-      activeRooms
+      activeRooms,
     };
   }
 
