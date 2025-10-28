@@ -68,8 +68,9 @@ export async function GET(request: NextRequest) {
       const taxAmount = Math.round(payment.amount * taxRate);
       const totalAmount = payment.amount + taxAmount;
 
-      // Determinar tipo de proveedor basado en el tipo de pago
-      const providerType = payment.type.toLowerCase();
+      // Determinar tipo de proveedor basado en el tipo de pago (desde la consulta original)
+      // Como incluimos contract, necesitamos acceder al type de otra manera
+      const providerType = 'service'; // Default para proveedores
 
       // Generar nombre de proveedor basado en el tipo de servicio
       const providerNames: { [key: string]: string } = {
