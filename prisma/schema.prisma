@@ -145,6 +145,15 @@ model User {
   prospectActivities       ProspectActivity[] @relation("BrokerProspectActivities")
   clientActivities         ClientActivity[] @relation("BrokerClientActivities")
   brokerPropertyShares     ProspectPropertyShare[] @relation("BrokerPropertyShares")
+  
+  // Sistema de captación de clientes
+  serviceRequests          BrokerServiceRequest[] @relation("UserServiceRequests")
+  assignedServiceRequests  BrokerServiceRequest[] @relation("AssignedServiceRequests")
+  requestResponses         BrokerRequestResponse[] @relation("BrokerResponses")
+  invitationsSent          BrokerInvitation[] @relation("BrokerInvitationsSent")
+  invitationsReceived      BrokerInvitation[] @relation("BrokerInvitationsReceived")
+  brokerRecommendations    BrokerLeadRecommendation[] @relation("BrokerRecommendations")
+  userRecommendations      BrokerLeadRecommendation[] @relation("UserRecommendations")
 
   @@map("users")
   @@index([email])
@@ -1854,6 +1863,10 @@ model BrokerProspect {
   sharedProperties  ProspectPropertyShare[]
   convertedClient   BrokerClient? @relation("ConvertedProspect", fields: [convertedToClientId], references: [id], onDelete: SetNull)
   
+  // Sistema de captación
+  fromInvitations   BrokerInvitation[] @relation("InvitationProspect")
+  fromRecommendations BrokerLeadRecommendation[] @relation("RecommendationProspect")
+  
   @@map("broker_prospects")
   @@index([brokerId])
   @@index([userId])
@@ -2110,5 +2123,252 @@ enum ClientStatus {
   INACTIVE    // Inactivo temporalmente
   SUSPENDED   // Suspendido
   TERMINATED  // Terminado
+}
+
+// ============================================
+// SISTEMA DE CAPTACIÓN DE CLIENTES
+// ============================================
+
+// Solicitudes de servicio de usuarios hacia corredores
+model BrokerServiceRequest {
+  id                String   @id @default(cuid())
+  userId            String   // Usuario que solicita servicio
+  userType          RequestUserType // OWNER, TENANT
+  
+  // Detalles de la solicitud
+  requestType       RequestType  // PROPERTY_MANAGEMENT, PROPERTY_SALE, PROPERTY_SEARCH, TENANT_SEARCH, CONSULTATION
+  title             String
+  description       String
+  budget            Json?    // { min, max } si aplica
+  urgency           RequestUrgency @default(NORMAL) // LOW, NORMAL, HIGH, URGENT
+  
+  // Ubicación/alcance
+  locations         String?  // JSON array de ubicaciones de interés
+  propertyTypes     String?  // JSON array de tipos de propiedades
+  
+  // Estado
+  status            RequestStatus @default(OPEN) // OPEN, IN_PROGRESS, ASSIGNED, CLOSED, CANCELLED
+  
+  // Asignación
+  assignedBrokerId  String?  // Corredor asignado (si aplica)
+  assignedAt        DateTime?
+  
+  // Respuestas de corredores
+  responseCount     Int      @default(0)
+  viewCount         Int      @default(0)
+  
+  // Fechas
+  expiresAt         DateTime? // Fecha de expiración de la solicitud
+  closedAt          DateTime?
+  
+  // Metadata
+  metadata          Json?    // Información adicional
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  user              User     @relation("UserServiceRequests", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBroker    User?    @relation("AssignedServiceRequests", fields: [assignedBrokerId], references: [id], onDelete: SetNull)
+  responses         BrokerRequestResponse[]
+  
+  @@map("broker_service_requests")
+  @@index([userId])
+  @@index([assignedBrokerId])
+  @@index([status])
+  @@index([userType])
+  @@index([requestType])
+  @@index([urgency])
+  @@index([createdAt])
+}
+
+// Respuestas de corredores a solicitudes
+model BrokerRequestResponse {
+  id                String   @id @default(cuid())
+  requestId         String
+  brokerId          String
+  
+  // Propuesta
+  message           String
+  proposedServices  String?  // JSON array de servicios propuestos
+  proposedRate      Float?   // Comisión propuesta
+  
+  // Estado
+  status            ResponseStatus @default(SENT) // SENT, VIEWED, ACCEPTED, REJECTED
+  viewedAt          DateTime?
+  respondedAt       DateTime?
+  
+  // Metadata
+  metadata          Json?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  request           BrokerServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  broker            User                 @relation("BrokerResponses", fields: [brokerId], references: [id], onDelete: Cascade)
+  
+  @@unique([requestId, brokerId]) // Un corredor solo puede responder una vez
+  @@map("broker_request_responses")
+  @@index([requestId])
+  @@index([brokerId])
+  @@index([status])
+}
+
+// Invitaciones de corredores a usuarios
+model BrokerInvitation {
+  id                String   @id @default(cuid())
+  brokerId          String   // Corredor que envía la invitación
+  userId            String   // Usuario invitado
+  
+  // Tipo de invitación
+  invitationType    InvitationType // SERVICE_OFFER, PROPERTY_MANAGEMENT, PROPERTY_VIEWING, CONSULTATION
+  
+  // Mensaje personalizado
+  subject           String
+  message           String
+  
+  // Servicios ofrecidos
+  servicesOffered   String?  // JSON array de servicios
+  proposedRate      Float?   // Comisión propuesta
+  
+  // Estado
+  status            InvitationStatus @default(SENT) // SENT, VIEWED, ACCEPTED, REJECTED, EXPIRED
+  
+  // Tracking
+  viewedAt          DateTime?
+  respondedAt       DateTime?
+  expiresAt         DateTime? // Fecha de expiración
+  
+  // Respuesta del usuario
+  userResponse      String?  // Respuesta del usuario (si rechaza)
+  
+  // Conversión
+  convertedToProspect Boolean @default(false)
+  prospectId        String?  // Si se convirtió en prospect
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  broker            User     @relation("BrokerInvitationsSent", fields: [brokerId], references: [id], onDelete: Cascade)
+  user              User     @relation("BrokerInvitationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  prospect          BrokerProspect? @relation("InvitationProspect", fields: [prospectId], references: [id], onDelete: SetNull)
+  
+  @@map("broker_invitations")
+  @@index([brokerId])
+  @@index([userId])
+  @@index([status])
+  @@index([invitationType])
+  @@index([createdAt])
+}
+
+// Recomendaciones inteligentes del sistema
+model BrokerLeadRecommendation {
+  id                String   @id @default(cuid())
+  brokerId          String   // Corredor al que se recomienda
+  recommendedUserId String   // Usuario recomendado
+  
+  // Tipo de lead
+  leadType          ProspectType // OWNER_LEAD, TENANT_LEAD
+  
+  // Scoring y razones
+  matchScore        Float    // 0-100 score de match
+  reasons           String   // JSON array de razones del match
+  
+  // Datos del usuario recomendado
+  userData          Json     // Snapshot de datos relevantes
+  
+  // Estado
+  status            RecommendationStatus @default(NEW) // NEW, VIEWED, CONTACTED, CONVERTED, DISMISSED
+  
+  // Tracking
+  viewedAt          DateTime?
+  contactedAt       DateTime?
+  dismissedAt       DateTime?
+  
+  // Conversión
+  convertedToProspect Boolean @default(false)
+  prospectId        String?
+  
+  // Validez
+  expiresAt         DateTime // Las recomendaciones expiran
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  broker            User     @relation("BrokerRecommendations", fields: [brokerId], references: [id], onDelete: Cascade)
+  recommendedUser   User     @relation("UserRecommendations", fields: [recommendedUserId], references: [id], onDelete: Cascade)
+  prospect          BrokerProspect? @relation("RecommendationProspect", fields: [prospectId], references: [id], onDelete: SetNull)
+  
+  @@unique([brokerId, recommendedUserId]) // No duplicar recomendaciones
+  @@map("broker_lead_recommendations")
+  @@index([brokerId])
+  @@index([recommendedUserId])
+  @@index([status])
+  @@index([leadType])
+  @@index([matchScore])
+  @@index([expiresAt])
+}
+
+// Enums para el sistema de captación
+
+enum RequestUserType {
+  OWNER
+  TENANT
+}
+
+enum RequestType {
+  PROPERTY_MANAGEMENT  // Gestión de propiedad
+  PROPERTY_SALE        // Venta de propiedad
+  PROPERTY_SEARCH      // Búsqueda de propiedad para arrendar
+  TENANT_SEARCH        // Búsqueda de inquilinos
+  CONSULTATION         // Consultoría
+}
+
+enum RequestUrgency {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum RequestStatus {
+  OPEN       // Abierta, esperando respuestas
+  IN_PROGRESS // En progreso
+  ASSIGNED   // Asignada a un corredor
+  CLOSED     // Cerrada/completada
+  CANCELLED  // Cancelada
+}
+
+enum ResponseStatus {
+  SENT       // Enviada
+  VIEWED     // Vista por el usuario
+  ACCEPTED   // Aceptada
+  REJECTED   // Rechazada
+}
+
+enum InvitationType {
+  SERVICE_OFFER        // Oferta general de servicios
+  PROPERTY_MANAGEMENT  // Oferta de gestión de propiedad
+  PROPERTY_VIEWING     // Invitación a ver propiedades
+  CONSULTATION         // Consultoría gratuita
+}
+
+enum InvitationStatus {
+  SENT       // Enviada
+  VIEWED     // Vista por el usuario
+  ACCEPTED   // Aceptada
+  REJECTED   // Rechazada
+  EXPIRED    // Expirada
+}
+
+enum RecommendationStatus {
+  NEW        // Nueva recomendación
+  VIEWED     // Vista por el corredor
+  CONTACTED  // Corredor contactó al usuario
+  CONVERTED  // Convertida en prospect
+  DISMISSED  // Descartada
 }
 
