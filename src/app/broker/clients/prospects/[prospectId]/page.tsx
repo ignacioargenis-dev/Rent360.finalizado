@@ -10,11 +10,13 @@ import { useRouter, useParams } from 'next/navigation';
 export default function ProspectDetailRedirect() {
   const router = useRouter();
   const params = useParams();
-  const prospectId = params.prospectId as string;
+  const prospectId = params?.prospectId as string;
 
   useEffect(() => {
     // Redirigir inmediatamente a la nueva ubicación manteniendo el ID
-    router.replace(`/broker/prospects/${prospectId}`);
+    if (prospectId) {
+      router.replace(`/broker/prospects/${prospectId}`);
+    }
   }, [router, prospectId]);
 
   // Mostrar mensaje mientras redirige
