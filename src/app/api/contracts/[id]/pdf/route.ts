@@ -4,8 +4,13 @@ import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  let userId: string | undefined;
+  let userRole: string | undefined;
+
   try {
     const user = await requireAuth(request);
+    userId = user.id;
+    userRole = user.role;
 
     if (!user) {
       return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 });
@@ -156,8 +161,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       contractId: params.id,
-      userId: user.id,
-      userRole: user.role,
+      userId,
+      userRole,
       nodeEnv: process.env.NODE_ENV,
     });
 
