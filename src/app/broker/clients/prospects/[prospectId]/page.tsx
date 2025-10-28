@@ -138,7 +138,7 @@ export default function ProspectDetailPage() {
           },
           preferredLocation: data.city || data.commune || data.region || 'Sin especificar',
           status: 'active', // Por defecto para usuarios reales
-          source: 'platform', // Fuente: plataforma Rent360
+          source: 'website', // Fuente: plataforma Rent360
           createdAt: data.createdAt,
           lastContact: data.updatedAt || data.createdAt,
           notes: `Usuario registrado en Rent360. ${data.stats?.totalProperties || 0} propiedades publicadas. ${data.stats?.totalContracts || 0} contratos realizados.`,

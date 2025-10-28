@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
         budget,
         preferredLocation,
         status: 'active',
-        source: 'platform',
+        source: 'website',
         createdAt: prospect.createdAt.toISOString(),
         lastContact: prospect.updatedAt.toISOString(),
         notes: `Usuario ${prospect.role} en Rent360`,
