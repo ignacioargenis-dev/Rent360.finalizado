@@ -131,18 +131,48 @@ export async function GET(request: NextRequest) {
         name: prospect.name,
         email: prospect.email,
         phone: prospect.phone || '',
+        role: prospect.role, // OWNER or TENANT
         interestedIn: interestedIn.length > 0 ? interestedIn : ['apartment'],
         budget,
         preferredLocation,
         status: 'active',
-        source: 'website',
+        source: 'platform',
         createdAt: prospect.createdAt.toISOString(),
         lastContact: prospect.updatedAt.toISOString(),
-        notes: `Usuario ${prospect.role} en el sistema`,
+        notes: `Usuario ${prospect.role} en Rent360`,
         avatar: prospect.avatar,
-        // Calcular algunos analytics basados en datos reales
-        totalProperties: prospect._count.properties,
-        totalContracts: prospect._count.contractsAsOwner + prospect._count.contractsAsTenant,
+        // Información específica por rol
+        ...(prospect.role === 'OWNER'
+          ? {
+              // Para propietarios: información de su portafolio
+              portfolioStats: {
+                totalProperties: prospect._count.properties,
+                totalValue: prospect.properties.reduce((sum, p) => sum + (Number(p.price) || 0), 0),
+                averagePrice:
+                  prospect._count.properties > 0
+                    ? prospect.properties.reduce((sum, p) => sum + (Number(p.price) || 0), 0) /
+                      prospect._count.properties
+                    : 0,
+                activeListings: prospect.properties.filter(p => p.status === 'AVAILABLE').length,
+              },
+              recentProperties: prospect.properties.slice(0, 3).map(p => ({
+                id: p.id,
+                title: p.title,
+                address: p.address,
+                price: p.price,
+                status: p.status,
+                type: p.type,
+              })),
+            }
+          : {
+              // Para inquilinos: información de búsqueda
+              searchProfile: {
+                totalContracts: prospect._count.contractsAsTenant,
+                activeTenancies: prospect.contractsAsTenant.filter(c => c.status === 'ACTIVE')
+                  .length,
+                rentalHistory: prospect.contractsAsTenant.length,
+              },
+            }),
       };
     });
 

@@ -38,6 +38,8 @@ import {
   Home,
   Phone,
   UserCheck,
+  Settings,
+  Building,
 } from 'lucide-react';
 import { User } from '@/types';
 
@@ -46,6 +48,7 @@ interface Prospect {
   name: string;
   email: string;
   phone: string;
+  role: 'OWNER' | 'TENANT'; // Nuevo campo para distinguir el tipo de usuario
   interestedIn: string[];
   budget: {
     min: number;
@@ -53,7 +56,7 @@ interface Prospect {
   };
   preferredLocation: string;
   status: 'active' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: 'website' | 'referral' | 'social' | 'advertising' | 'other';
+  source: 'platform' | 'website' | 'referral' | 'social' | 'advertising' | 'other';
   createdAt: string;
   lastContact: string;
   notes: string;
@@ -80,6 +83,26 @@ interface Prospect {
   totalProperties?: number;
   totalContracts?: number;
   daysSinceCreation?: number;
+  // Información específica por rol
+  portfolioStats?: {
+    totalProperties: number;
+    totalValue: number;
+    averagePrice: number;
+    activeListings: number;
+  };
+  recentProperties?: Array<{
+    id: string;
+    title: string;
+    address: string;
+    price: number;
+    status: string;
+    type: string;
+  }>;
+  searchProfile?: {
+    totalContracts: number;
+    activeTenancies: number;
+    rentalHistory: number;
+  };
 }
 
 export default function BrokerProspectsPage() {
@@ -157,15 +180,28 @@ export default function BrokerProspectsPage() {
               name: prospect.name,
               email: prospect.email,
               phone: prospect.phone || '',
+              role: prospect.role || 'TENANT', // OWNER or TENANT
               interestedIn: prospect.interestedIn || [],
               budget: prospect.budget || { min: 0, max: 0 },
               preferredLocation: prospect.preferredLocation || '',
               status: prospect.status || 'active',
-              source: prospect.source || 'website',
+              source: prospect.source || 'platform',
               createdAt: prospect.createdAt,
               lastContact: prospect.lastContact || prospect.createdAt,
               notes: prospect.notes || '',
               avatar: prospect.avatar,
+              // Información específica por rol
+              ...(prospect.role === 'OWNER' && prospect.portfolioStats
+                ? {
+                    portfolioStats: prospect.portfolioStats,
+                    recentProperties: prospect.recentProperties,
+                  }
+                : {}),
+              ...(prospect.role === 'TENANT' && prospect.searchProfile
+                ? {
+                    searchProfile: prospect.searchProfile,
+                  }
+                : {}),
               // Advanced analytics calculados inteligentemente
               engagementScore: Math.min(
                 100,
@@ -460,20 +496,68 @@ export default function BrokerProspectsPage() {
     router.push(`/broker/analytics/market-analysis?focus=${encodeURIComponent(location)}`);
   };
 
-  const handleConvertProspect = (prospect: Prospect) => {
-    // In a real app, this would convert the prospect to a client
-    // For now, we'll simulate the conversion and update the status
+  // Funciones específicas por rol
+  const handleManageProperties = (prospect: Prospect) => {
+    // Para propietarios: redirigir a gestión de sus propiedades
+    router.push(`/broker/properties?ownerId=${prospect.id}`);
+  };
+
+  const handleOfferServices = (prospect: Prospect) => {
+    // Para propietarios: mostrar servicios disponibles
+    alert(
+      `Mostrando servicios disponibles para ${prospect.name}.\n\nServicios disponibles:\n• Gestión de propiedades\n• Marketing inmobiliario\n• Mantenimiento\n• Administración de contratos\n• Consultoría legal`
+    );
+  };
+
+  const handleShowProperties = (prospect: Prospect) => {
+    // Para inquilinos: mostrar propiedades que coincidan con su perfil
+    router.push(
+      `/broker/properties?search=${encodeURIComponent(prospect.preferredLocation)}&minPrice=${prospect.budget.min}&maxPrice=${prospect.budget.max}`
+    );
+  };
+
+  const handleScheduleVisit = (prospect: Prospect) => {
+    // Para inquilinos: agendar visita a propiedades
+    alert(
+      `Agendando visita para ${prospect.name}.\n\nSe enviará una invitación por email con las propiedades disponibles en ${prospect.preferredLocation} dentro del rango de precio ${prospect.budget.min.toLocaleString()} - ${prospect.budget.max.toLocaleString()} CLP.`
+    );
+  };
+
+  const handleConvertProspect = async (prospect: Prospect) => {
+    const actionText =
+      prospect.role === 'OWNER'
+        ? `convertir a ${prospect.name} en cliente propietario`
+        : `convertir a ${prospect.name} en cliente inquilino`;
+
+    const benefitsText =
+      prospect.role === 'OWNER'
+        ? `\n\nBeneficios para el cliente:\n• Gestión profesional de sus propiedades\n• Mayor visibilidad de sus inmuebles\n• Soporte en contratos y trámites\n• Acceso a servicios de mantenimiento\n• Marketing inmobiliario especializado`
+        : `\n\nBeneficios para el cliente:\n• Acceso prioritario a propiedades\n• Asesoría personalizada en búsqueda\n• Apoyo en negociación de contratos\n• Seguimiento post-alquiler\n• Descuentos en servicios adicionales`;
+
     if (
       confirm(
-        `¿Convertir a ${prospect.name} en cliente? Esto actualizará su estado y permitirá gestión completa.`
+        `¿Estás seguro de ${actionText}?${benefitsText}\n\nEsta acción establecerá una relación comercial formal.`
       )
     ) {
-      // Update prospect status (in real app, this would be an API call)
-      setProspects(prev =>
-        prev.map(p => (p.id === prospect.id ? { ...p, status: 'converted' as const } : p))
-      );
+      try {
+        // Actualizar el estado del prospecto a 'converted'
+        setProspects(prev =>
+          prev.map(p => (p.id === prospect.id ? { ...p, status: 'converted' as const } : p))
+        );
 
-      alert(`¡${prospect.name} ha sido convertido exitosamente a cliente!`);
+        // En una implementación real, aquí haríamos una llamada a la API para:
+        // 1. Crear una relación broker-cliente en la base de datos
+        // 2. Enviar email de bienvenida al cliente
+        // 3. Actualizar métricas del broker
+        // 4. Notificar al equipo de soporte
+
+        alert(
+          `¡${prospect.name} ha sido convertido exitosamente a cliente!\n\nSe ha establecido la relación comercial y se enviará un email de bienvenida con información detallada sobre los servicios disponibles.`
+        );
+      } catch (error) {
+        logger.error('Error convirtiendo prospecto:', { error, prospectId: prospect.id });
+        alert('Error al convertir el prospecto. Por favor, inténtalo nuevamente.');
+      }
     }
   };
 
@@ -1047,6 +1131,16 @@ export default function BrokerProspectsPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-semibold text-gray-900">{prospect.name}</h3>
+                            <Badge
+                              variant={prospect.role === 'OWNER' ? 'default' : 'secondary'}
+                              className={
+                                prospect.role === 'OWNER'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-green-100 text-green-800'
+                              }
+                            >
+                              {prospect.role === 'OWNER' ? '🏠 Propietario' : '🏢 Inquilino'}
+                            </Badge>
                             {getStatusBadge(prospect.status)}
                             <Badge
                               variant="outline"
@@ -1197,6 +1291,7 @@ export default function BrokerProspectsPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleViewProspect(prospect.id)}
+                            title="Ver detalles completos"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -1204,9 +1299,54 @@ export default function BrokerProspectsPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleContactProspect(prospect)}
+                            title="Contactar al prospecto"
                           >
                             <Mail className="w-4 h-4" />
                           </Button>
+
+                          {/* Acciones específicas por rol */}
+                          {prospect.role === 'OWNER' ? (
+                            // Acciones para propietarios
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleManageProperties(prospect)}
+                                title="Gestionar propiedades"
+                              >
+                                <Home className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOfferServices(prospect)}
+                                title="Ofrecer servicios"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            // Acciones para inquilinos
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleShowProperties(prospect)}
+                                title="Mostrar propiedades disponibles"
+                              >
+                                <Building className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleScheduleVisit(prospect)}
+                                title="Agendar visita"
+                              >
+                                <Calendar className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+
                           {prospect.status !== 'converted' && prospect.status !== 'lost' && (
                             <Button
                               size="sm"

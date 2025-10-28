@@ -40,6 +40,7 @@ import {
   TrendingUp,
   Clock,
   UserCheck,
+  Target,
 } from 'lucide-react';
 import { User as UserType } from '@/types';
 
@@ -364,6 +365,19 @@ export default function ProspectDetailPage() {
               </div>
 
               <div>
+                <Label className="text-sm font-medium text-gray-600">Tipo de Usuario</Label>
+                <Badge
+                  className={
+                    prospect.role === 'OWNER'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-green-100 text-green-800'
+                  }
+                >
+                  {prospect.role === 'OWNER' ? '🏠 Propietario' : '🏢 Inquilino'}
+                </Badge>
+              </div>
+
+              <div>
                 <Label className="text-sm font-medium text-gray-600">Estado</Label>
                 <div className="mt-1">{getStatusBadge(prospect.status)}</div>
               </div>
@@ -414,42 +428,158 @@ export default function ProspectDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Property Interests */}
+          {/* Role-specific Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Home className="w-5 h-5" />
-                Intereses
+                {prospect.role === 'OWNER' ? (
+                  <>
+                    <TrendingUp className="w-5 h-5" />
+                    Portafolio Inmobiliario
+                  </>
+                ) : (
+                  <>
+                    <Target className="w-5 h-5" />
+                    Perfil de Búsqueda
+                  </>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-600">Tipo de Propiedad</Label>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {prospect.interestedIn.map(type => (
-                    <Badge key={type} variant="outline">
-                      {type}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+              {prospect.role === 'OWNER' && prospect.portfolioStats ? (
+                // Información para propietarios
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Total Propiedades</Label>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {prospect.portfolioStats.totalProperties}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Valor Total</Label>
+                      <p className="text-lg font-semibold text-green-600">
+                        {formatCurrency(prospect.portfolioStats.totalValue)}
+                      </p>
+                    </div>
+                  </div>
 
-              <div>
-                <Label className="text-sm font-medium text-gray-600">Presupuesto</Label>
-                <p className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4" />
-                  {formatCurrency(prospect.budget.min)} - {formatCurrency(prospect.budget.max)}
-                </p>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Precio Promedio</Label>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(prospect.portfolioStats.averagePrice)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Propiedades Activas
+                      </Label>
+                      <p className="text-lg font-semibold text-blue-600">
+                        {prospect.portfolioStats.activeListings}
+                      </p>
+                    </div>
+                  </div>
 
-              {prospect.followUpDate && (
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Próximo Seguimiento</Label>
-                  <p className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(prospect.followUpDate).toLocaleDateString('es-CL')}
-                  </p>
-                </div>
+                  {prospect.recentProperties && prospect.recentProperties.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Propiedades Recientes
+                      </Label>
+                      <div className="mt-2 space-y-2">
+                        {prospect.recentProperties.map(property => (
+                          <div
+                            key={property.id}
+                            className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                          >
+                            <div>
+                              <p className="font-medium text-sm">{property.title}</p>
+                              <p className="text-xs text-gray-600">{property.address}</p>
+                            </div>
+                            <Badge
+                              variant={property.status === 'AVAILABLE' ? 'default' : 'secondary'}
+                            >
+                              {property.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : prospect.role === 'TENANT' && prospect.searchProfile ? (
+                // Información para inquilinos
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Contratos Activos</Label>
+                      <p className="text-2xl font-bold text-green-600">
+                        {prospect.searchProfile.activeTenancies}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Historial de Alquileres
+                      </Label>
+                      <p className="text-lg font-semibold">
+                        {prospect.searchProfile.rentalHistory}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Intereses de Propiedad
+                    </Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {prospect.interestedIn.map(type => (
+                        <Badge key={type} variant="outline">
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Rango de Presupuesto
+                    </Label>
+                    <p className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      {formatCurrency(prospect.budget.min)} - {formatCurrency(prospect.budget.max)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Ubicación Preferida</Label>
+                    <p className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {prospect.preferredLocation}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                // Fallback para datos antiguos
+                <>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Tipo de Propiedad</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {prospect.interestedIn.map(type => (
+                        <Badge key={type} variant="outline">
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Presupuesto</Label>
+                    <p className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      {formatCurrency(prospect.budget.min)} - {formatCurrency(prospect.budget.max)}
+                    </p>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
