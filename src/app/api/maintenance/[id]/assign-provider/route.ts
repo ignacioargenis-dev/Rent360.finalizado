@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
-import { NotificationService } from '@/lib/notification-service';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 
 /**
  * POST /api/maintenance/[id]/assign-provider
@@ -120,15 +120,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Notificar al prestador
     try {
-      await NotificationService.notifyMaintenanceProviderAssigned({
-        recipientId: provider.user.id,
-        recipientName: provider.user.name,
-        recipientEmail: provider.user.email,
-        maintenanceId: maintenance.id,
-        maintenanceTitle: maintenance.title,
-        propertyAddress: maintenance.property.address,
-        assignedBy: user.name || 'Sistema',
-        notes: notes || '',
+      await NotificationService.create({
+        userId: provider.user.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: 'Nuevo Trabajo de Mantenimiento Asignado',
+        message: `Se te ha asignado el mantenimiento: ${maintenance.title}`,
+        link: `/maintenance/jobs/${maintenance.id}`,
+        metadata: {
+          maintenanceId: maintenance.id,
+          maintenanceTitle: maintenance.title,
+          propertyAddress: maintenance.property.address,
+          assignedBy: user.name || 'Sistema',
+          notes: notes || '',
+        },
       });
     } catch (notificationError) {
       logger.error('Error enviando notificación al prestador:', {
@@ -141,15 +145,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Notificar al solicitante
     try {
-      await NotificationService.notifyMaintenanceAssigned({
-        recipientId: maintenance.requester.id,
-        recipientName: maintenance.requester.name,
-        recipientEmail: maintenance.requester.email,
-        maintenanceId: maintenance.id,
-        maintenanceTitle: maintenance.title,
-        providerName: provider.businessName,
-        providerPhone: provider.user.phone || '',
-        assignedBy: user.name || 'Sistema',
+      await NotificationService.create({
+        userId: maintenance.requester.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: 'Prestador Asignado a tu Solicitud de Mantenimiento',
+        message: `Se ha asignado un prestador a tu solicitud: ${maintenance.title}`,
+        link: `/maintenance/${maintenance.id}`,
+        metadata: {
+          maintenanceId: maintenance.id,
+          maintenanceTitle: maintenance.title,
+          providerName: provider.businessName,
+          providerPhone: provider.user.phone || '',
+          assignedBy: user.name || 'Sistema',
+        },
       });
     } catch (notificationError) {
       logger.error('Error enviando notificación al solicitante:', {

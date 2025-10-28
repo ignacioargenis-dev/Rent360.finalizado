@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
@@ -22,20 +21,16 @@ const responseSchema = z.object({
 
 export async function POST(request: NextRequest, { params }: { params: { requestId: string } }) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden responder solicitudes' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
     const { requestId } = params;
     const body = await request.json();
     const data = responseSchema.parse(body);
@@ -129,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
           brokerId,
           message: data.message,
           proposedServices: data.proposedServices ? JSON.stringify(data.proposedServices) : null,
-          proposedRate: data.proposedRate,
+          proposedRate: data.proposedRate ?? null,
           status: 'SENT',
         },
       });
@@ -150,7 +145,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
     // Enviar notificación al usuario
     await NotificationService.notifyServiceRequestResponse({
       userId: serviceRequest.userId,
-      brokerName: session.user.name || 'Un corredor',
+      brokerName: user.name || 'Un corredor',
       brokerId,
       requestId,
       requestTitle: serviceRequest.title,
@@ -198,20 +193,16 @@ export async function POST(request: NextRequest, { params }: { params: { request
  */
 export async function GET(request: NextRequest, { params }: { params: { requestId: string } }) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
     const { requestId } = params;
 
     const response = await db.brokerRequestResponse.findUnique({

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API para búsqueda inteligente de usuarios (propietarios e inquilinos)
@@ -29,13 +29,9 @@ const searchSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== '') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
@@ -43,32 +39,27 @@ export async function GET(request: NextRequest) {
     }
 
     // Parsear parámetros de búsqueda
-    const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
 
-    // Convertir strings booleanos
-    if (searchParams.hasProperties) {
-      searchParams.hasProperties = searchParams.hasProperties === 'true';
-    }
-    if (searchParams.noBroker) {
-      searchParams.noBroker = searchParams.noBroker === 'true';
-    }
-    if (searchParams.minProperties) {
-      searchParams.minProperties = parseInt(searchParams.minProperties);
-    }
-    if (searchParams.maxProperties) {
-      searchParams.maxProperties = parseInt(searchParams.maxProperties);
-    }
-    if (searchParams.limit) {
-      searchParams.limit = parseInt(searchParams.limit);
-    }
-    if (searchParams.offset) {
-      searchParams.offset = parseInt(searchParams.offset);
-    }
+    // Convertir parámetros con tipos apropiados
+    const hasProperties = rawParams.hasProperties === 'true';
+    const noBroker = rawParams.noBroker === 'true';
+    const minProperties = rawParams.minProperties ? parseInt(rawParams.minProperties) : undefined;
+    const maxProperties = rawParams.maxProperties ? parseInt(rawParams.maxProperties) : undefined;
+    const limit = rawParams.limit ? parseInt(rawParams.limit) : 20;
+    const offset = rawParams.offset ? parseInt(rawParams.offset) : 0;
 
-    const params = searchSchema.parse(searchParams);
+    const params = searchSchema.parse({
+      hasProperties,
+      noBroker,
+      minProperties,
+      maxProperties,
+      limit,
+      offset,
+    });
 
     logger.info('🔍 Broker searching for users', {
-      brokerId: session.user.id,
+      brokerId: user.id,
       params,
     });
 
@@ -77,7 +68,7 @@ export async function GET(request: NextRequest) {
       isActive: true,
       emailVerified: true,
       id: {
-        not: session.user.id, // Excluir al corredor actual
+        not: user.id, // Excluir al corredor actual
       },
     };
 

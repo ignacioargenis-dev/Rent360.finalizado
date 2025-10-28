@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API para acciones sobre recomendaciones individuales
@@ -19,13 +18,9 @@ export async function PATCH(
   { params }: { params: { recommendationId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
@@ -36,7 +31,7 @@ export async function PATCH(
     const body = await request.json();
     const { action, prospectId } = actionSchema.parse(body);
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
 
     logger.info('🔄 Updating recommendation', {
       brokerId,
@@ -172,13 +167,9 @@ export async function DELETE(
   { params }: { params: { recommendationId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
@@ -186,7 +177,7 @@ export async function DELETE(
     }
 
     const { recommendationId } = params;
-    const brokerId = session.user.id;
+    const brokerId = user.id;
 
     // Verificar permisos
     const recommendation = await db.brokerLeadRecommendation.findUnique({

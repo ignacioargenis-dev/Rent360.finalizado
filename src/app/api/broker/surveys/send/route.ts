@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
-import { NotificationService } from '@/lib/notification-service';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 import { z } from 'zod';
 
 const sendSurveySchema = z.object({
@@ -144,14 +144,18 @@ export async function POST(request: NextRequest) {
         });
 
         // Send notification
-        await NotificationService.notifyNewMessage({
-          recipientId: client.id,
-          senderId: user.id,
-          senderName: user.name,
-          subject: subject,
-          content: content,
-          messageId: surveyMessage.id,
-          type: 'survey',
+        await NotificationService.create({
+          userId: client.id,
+          type: NotificationType.NEW_MESSAGE,
+          title: 'Nueva Encuesta Recibida',
+          message: `Has recibido una nueva encuesta: ${subject}`,
+          link: `/messages/${surveyMessage.id}`,
+          metadata: {
+            messageId: surveyMessage.id,
+            senderId: user.id,
+            senderName: user.name,
+            type: 'survey',
+          },
         });
 
         sentCount++;

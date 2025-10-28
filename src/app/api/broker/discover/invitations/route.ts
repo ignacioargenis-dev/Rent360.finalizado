@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { CommissionValidator } from '@/lib/commission-validator';
 import { NotificationService } from '@/lib/notification-service';
 
@@ -31,20 +30,16 @@ const invitationSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
     const status = request.nextUrl.searchParams.get('status');
     const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20');
     const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0');
@@ -121,20 +116,16 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden enviar invitaciones' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
     const body = await request.json();
     const data = invitationSchema.parse(body);
 
@@ -228,7 +219,7 @@ export async function POST(request: NextRequest) {
         subject: data.subject,
         message: data.message,
         servicesOffered: data.servicesOffered ? JSON.stringify(data.servicesOffered) : null,
-        proposedRate: data.proposedRate,
+        proposedRate: data.proposedRate ?? null,
         expiresAt,
         status: 'SENT',
       },
@@ -248,7 +239,7 @@ export async function POST(request: NextRequest) {
     // Enviar notificación al usuario
     await NotificationService.notifyInvitationReceived({
       userId: data.userId,
-      brokerName: session.user.name || 'Un corredor',
+      brokerName: user.name || 'Un corredor',
       brokerId,
       invitationType: data.invitationType,
       invitationId: invitation.id,

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { NotificationService } from '@/lib/notification-service';
 
 /**
@@ -13,20 +13,16 @@ import { NotificationService } from '@/lib/notification-service';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== '') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
     const params = {
       status: request.nextUrl.searchParams.get('status') || undefined,
       limit: parseInt(request.nextUrl.searchParams.get('limit') || '10'),
@@ -104,20 +100,16 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== '') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
 
     logger.info('🤖 Generating recommendations for broker', { brokerId });
 
@@ -157,7 +149,7 @@ export async function POST(request: NextRequest) {
         // Que tengan propiedades
         properties: {
           some: {
-            isActive: true,
+            status: 'AVAILABLE',
           },
         },
       },
@@ -179,12 +171,12 @@ export async function POST(request: NextRequest) {
           },
         },
         properties: {
-          where: { isActive: true },
+          where: { status: 'AVAILABLE' },
           take: 5,
           select: {
             id: true,
             title: true,
-            propertyType: true,
+            type: true,
             city: true,
             commune: true,
             price: true,
@@ -307,7 +299,7 @@ export async function POST(request: NextRequest) {
         newRecommendations.push({
           brokerId,
           recommendedUserId: owner.id,
-          leadType: 'OWNER_LEAD',
+          leadType: 'OWNER_LEAD' as const,
           matchScore: Math.min(100, matchScore),
           reasons: JSON.stringify(reasons),
           userData: JSON.stringify({
@@ -320,7 +312,7 @@ export async function POST(request: NextRequest) {
             contracts: owner._count.contractsAsOwner,
           }),
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-          status: 'NEW',
+          status: 'NEW' as const,
         });
       }
     }
@@ -365,7 +357,7 @@ export async function POST(request: NextRequest) {
         newRecommendations.push({
           brokerId,
           recommendedUserId: tenant.id,
-          leadType: 'TENANT_LEAD',
+          leadType: 'TENANT_LEAD' as const,
           matchScore: Math.min(100, matchScore),
           reasons: JSON.stringify(reasons),
           userData: JSON.stringify({
@@ -378,7 +370,7 @@ export async function POST(request: NextRequest) {
             visits: tenant._count.visitsAsTenant,
           }),
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
-          status: 'NEW',
+          status: 'NEW' as const,
         });
       }
     }

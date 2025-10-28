@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 import { NotificationService } from '@/lib/notification-service';
 
 /**
@@ -19,11 +18,7 @@ export async function PATCH(
   { params }: { params: { requestId: string; responseId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const { requestId, responseId } = params;
     const body = await request.json();
@@ -55,7 +50,7 @@ export async function PATCH(
       );
     }
 
-    if (serviceRequest.userId !== session.user.id) {
+    if (serviceRequest.userId !== user.id) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para gestionar esta solicitud' },
         { status: 403 }
@@ -71,7 +66,7 @@ export async function PATCH(
     }
 
     logger.info('🔄 User updating broker response', {
-      userId: session.user.id,
+      userId: user.id,
       requestId,
       responseId,
       action,
@@ -110,8 +105,8 @@ export async function PATCH(
         // Notificar al corredor
         await NotificationService.notifyResponseAccepted({
           brokerId: response.brokerId,
-          userName: session.user.name || 'Un usuario',
-          userId: session.user.id,
+          userName: user.name || 'Un usuario',
+          userId: user.id,
           requestId,
           requestTitle: serviceRequest.title,
         }).catch(err => {
@@ -130,8 +125,8 @@ export async function PATCH(
         // Notificar al corredor
         await NotificationService.notifyResponseRejected({
           brokerId: response.brokerId,
-          userName: session.user.name || 'Un usuario',
-          userId: session.user.id,
+          userName: user.name || 'Un usuario',
+          userId: user.id,
           requestId,
         }).catch(err => {
           logger.error('Error sending rejection notification', { error: err });
@@ -158,7 +153,7 @@ export async function PATCH(
     });
 
     logger.info('✅ Response updated', {
-      userId: session.user.id,
+      userId: user.id,
       responseId,
       action,
       newStatus: updated.status,

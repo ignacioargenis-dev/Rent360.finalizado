@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API para gestionar una solicitud específica
@@ -19,11 +18,7 @@ const updateRequestSchema = z.object({
  */
 export async function GET(request: NextRequest, { params }: { params: { requestId: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const { requestId } = params;
 
@@ -72,7 +67,7 @@ export async function GET(request: NextRequest, { params }: { params: { requestI
     }
 
     // Verificar permisos: solo el creador puede verla
-    if (serviceRequest.userId !== session.user.id) {
+    if (serviceRequest.userId !== user.id) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para ver esta solicitud' },
         { status: 403 }
@@ -101,11 +96,7 @@ export async function GET(request: NextRequest, { params }: { params: { requestI
  */
 export async function PATCH(request: NextRequest, { params }: { params: { requestId: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const { requestId } = params;
     const body = await request.json();
@@ -123,7 +114,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { reques
       );
     }
 
-    if (serviceRequest.userId !== session.user.id) {
+    if (serviceRequest.userId !== user.id) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para modificar esta solicitud' },
         { status: 403 }
@@ -162,7 +153,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { reques
     });
 
     logger.info('✅ Service request updated', {
-      userId: session.user.id,
+      userId: user.id,
       requestId,
       updates: data,
     });
@@ -197,11 +188,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { reques
  */
 export async function DELETE(request: NextRequest, { params }: { params: { requestId: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const { requestId } = params;
 
@@ -217,7 +204,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { reque
       );
     }
 
-    if (serviceRequest.userId !== session.user.id) {
+    if (serviceRequest.userId !== user.id) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para eliminar esta solicitud' },
         { status: 403 }
@@ -230,7 +217,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { reque
     });
 
     logger.info('🗑️ Service request deleted', {
-      userId: session.user.id,
+      userId: user.id,
       requestId,
     });
 

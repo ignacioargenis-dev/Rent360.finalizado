@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
+import { requireAuth } from '@/lib/auth';
 import { NotificationService } from '@/lib/notification-service';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API para gestionar notificaciones del usuario
@@ -13,11 +13,7 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const userId = session.user.id;
     const notifications = await NotificationService.getUnread(userId);
@@ -45,11 +41,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const body = await request.json();
     const { action } = body;

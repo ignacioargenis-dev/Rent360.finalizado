@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API del Marketplace de Solicitudes de Servicio
@@ -15,20 +15,16 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth(request);
 
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'BROKER') {
+    if (user.role !== '') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder al marketplace' },
         { status: 403 }
       );
     }
 
-    const brokerId = session.user.id;
+    const brokerId = user.id;
 
     // Parámetros de filtro
     const userType = request.nextUrl.searchParams.get('userType');

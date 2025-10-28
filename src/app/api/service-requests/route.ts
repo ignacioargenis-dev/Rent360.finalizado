@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
+import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger-minimal';
 
 /**
  * API para que propietarios e inquilinos creen solicitudes de servicio
@@ -37,11 +37,7 @@ const createRequestSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     // Solo OWNER y TENANT pueden ver sus solicitudes
     if (session.user.role !== 'OWNER' && session.user.role !== 'TENANT') {
@@ -117,11 +113,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     // Solo OWNER y TENANT pueden crear solicitudes
     if (session.user.role !== 'OWNER' && session.user.role !== 'TENANT') {
