@@ -575,9 +575,12 @@ export class ProviderPayoutsService {
         });
       }
 
-      await NotificationService.notifyCommissionPaid({
-        brokerId: providerUser.id,
+      await NotificationService.notifyProviderPayoutApproved({
+        providerId: providerUser.id,
         amount: transaction.amount,
+        serviceType: transaction.providerType === 'MAINTENANCE' ? 'mantenimiento' : 'servicio',
+        payoutId: transaction.id,
+        processedAt: new Date(),
         paymentMethod: transaction.paymentMethod || 'bank_transfer',
       });
     } catch (error) {

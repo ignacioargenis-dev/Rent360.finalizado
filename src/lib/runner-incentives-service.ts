@@ -715,9 +715,13 @@ export class RunnerIncentivesService {
         return;
       }
 
-      await NotificationService.notifyCommissionPaid({
-        brokerId: incentive.runnerId,
-        amount: (incentive.rewardsGranted as any)?.totalValue || 0,
+      await NotificationService.notifyRunnerIncentiveAchieved({
+        runnerId: incentive.runnerId,
+        incentiveType: rule.name,
+        rewardValue: (incentive.rewardsGranted as any)?.totalValue || 0,
+        rewardType: (incentive.rewardsGranted as any)?.type || 'cash',
+        achievedAt: incentive.earnedAt,
+        description: rule.description,
       });
     } catch (error) {
       logger.error('Error notificando incentivo:', error as Error);

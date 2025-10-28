@@ -2,7 +2,7 @@ import { db } from './db';
 import { logger } from './logger';
 import { DatabaseError, BusinessLogicError } from './errors';
 import { RunnerPayoutService } from './payout-service';
-import { NotificationService } from './notification-service';
+import { NotificationService, NotificationType } from './notification-service';
 
 export interface RunnerPerformanceMetrics {
   runnerId: string;
@@ -113,7 +113,6 @@ export interface RunnerRankingData {
  * Servicio avanzado de reportes y análisis para runners
  */
 export class RunnerReportsService {
-
   /**
    * Genera métricas de rendimiento completas para un runner
    */
@@ -128,8 +127,8 @@ export class RunnerReportsService {
         select: {
           id: true,
           name: true,
-          email: true
-        }
+          email: true,
+        },
       });
 
       if (!runner) {
@@ -146,18 +145,18 @@ export class RunnerReportsService {
           runnerId: runnerId,
           createdAt: {
             gte: startDate,
-            lte: endDate
-          }
+            lte: endDate,
+          },
         },
         include: {
           property: {
             select: {
               id: true,
               price: true,
-              type: true
-            }
-          }
-        }
+              type: true,
+            },
+          },
+        },
       });
 
       // Calcular métricas básicas
@@ -182,15 +181,20 @@ export class RunnerReportsService {
         .filter(v => v.createdAt >= twoWeeksAgo && v.createdAt < weekAgo)
         .reduce((sum, v) => sum + (v.earnings || 0), 0);
 
-      const earningsGrowth = earningsLastWeek > 0
-        ? ((earningsThisWeek - earningsLastWeek) / earningsLastWeek) * 100
-        : earningsThisWeek > 0 ? 100 : 0;
+      const earningsGrowth =
+        earningsLastWeek > 0
+          ? ((earningsThisWeek - earningsLastWeek) / earningsLastWeek) * 100
+          : earningsThisWeek > 0
+            ? 100
+            : 0;
 
       // Calcular métricas de tiempo
       const completedVisitsData = visits.filter(v => v.status === 'completed');
-      const averageVisitDuration = completedVisitsData.length > 0
-        ? completedVisitsData.reduce((sum, v) => sum + (v.duration || 0), 0) / completedVisitsData.length
-        : 0;
+      const averageVisitDuration =
+        completedVisitsData.length > 0
+          ? completedVisitsData.reduce((sum, v) => sum + (v.duration || 0), 0) /
+            completedVisitsData.length
+          : 0;
 
       // Calcular rating promedio (placeholder - implementar sistema de ratings)
       const averageRating = 4.5; // Placeholder
@@ -210,24 +214,27 @@ export class RunnerReportsService {
       const improvementAreas = this.calculateImprovementAreas({
         completionRate,
         averageRating,
-        visitsPerDay
+        visitsPerDay,
       });
 
       const strengths = this.calculateStrengths({
         completionRate,
         averageRating,
-        earningsGrowth
+        earningsGrowth,
       });
 
       // Análisis de tipos de propiedad favoritos
-      const propertyTypeCounts = visits.reduce((acc, visit) => {
-        const type = visit.property?.type || 'unknown';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const propertyTypeCounts = visits.reduce(
+        (acc, visit) => {
+          const type = visit.property?.type || 'unknown';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       const favoritePropertyTypes = Object.entries(propertyTypeCounts)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
         .map(([type]) => type);
 
@@ -276,9 +283,8 @@ export class RunnerReportsService {
         // Información adicional
         favoritePropertyTypes,
         mostActiveHours: ['09:00-12:00', '14:00-17:00'],
-        topClientTypes: ['first_time', 'investor', 'family']
+        topClientTypes: ['first_time', 'investor', 'family'],
       };
-
     } catch (error) {
       logger.error('Error generando métricas de rendimiento:', error as Error);
       throw error;
@@ -294,8 +300,8 @@ export class RunnerReportsService {
         where: { id: runnerId },
         select: {
           id: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
@@ -314,16 +320,16 @@ export class RunnerReportsService {
           runnerId: runnerId,
           createdAt: {
             gte: weekStart,
-            lte: weekEnd
-          }
+            lte: weekEnd,
+          },
         },
         include: {
           property: {
             select: {
-              address: true
-            }
-          }
-        }
+              address: true,
+            },
+          },
+        },
       });
 
       // Obtener visitas de la semana anterior
@@ -336,9 +342,9 @@ export class RunnerReportsService {
           runnerId: runnerId,
           createdAt: {
             gte: lastWeekStart,
-            lte: lastWeekEnd
-          }
-        }
+            lte: lastWeekEnd,
+          },
+        },
       });
 
       // Calcular métricas
@@ -347,13 +353,19 @@ export class RunnerReportsService {
       const previousWeekVisits = lastWeekVisits.filter(v => v.status === 'completed').length;
       const previousWeekEarnings = lastWeekVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
 
-      const visitsChange = previousWeekVisits > 0
-        ? ((visitsCompleted - previousWeekVisits) / previousWeekVisits) * 100
-        : visitsCompleted > 0 ? 100 : 0;
+      const visitsChange =
+        previousWeekVisits > 0
+          ? ((visitsCompleted - previousWeekVisits) / previousWeekVisits) * 100
+          : visitsCompleted > 0
+            ? 100
+            : 0;
 
-      const earningsChange = previousWeekEarnings > 0
-        ? ((earningsGenerated - previousWeekEarnings) / previousWeekEarnings) * 100
-        : earningsGenerated > 0 ? 100 : 0;
+      const earningsChange =
+        previousWeekEarnings > 0
+          ? ((earningsGenerated - previousWeekEarnings) / previousWeekEarnings) * 100
+          : earningsGenerated > 0
+            ? 100
+            : 0;
 
       // Generar rendimiento diario
       const dailyPerformance = [];
@@ -368,16 +380,17 @@ export class RunnerReportsService {
 
         const dayEarnings = dayVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
         const dayRating = 4.5; // Placeholder
-        const dayDuration = dayVisits.length > 0
-          ? dayVisits.reduce((sum, v) => sum + (v.duration || 0), 0) / dayVisits.length
-          : 0;
+        const dayDuration =
+          dayVisits.length > 0
+            ? dayVisits.reduce((sum, v) => sum + (v.duration || 0), 0) / dayVisits.length
+            : 0;
 
         dailyPerformance.push({
           date: date.toISOString().substring(0, 10),
           visits: dayVisits.length,
           earnings: dayEarnings,
           rating: dayRating,
-          duration: dayDuration
+          duration: dayDuration,
         });
       }
 
@@ -390,7 +403,7 @@ export class RunnerReportsService {
         earningsGenerated,
         rankingPosition,
         visitsChange,
-        earningsChange
+        earningsChange,
       });
 
       // Generar recomendaciones
@@ -399,7 +412,7 @@ export class RunnerReportsService {
         earningsGenerated,
         rankingPosition,
         visitsChange,
-        earningsChange
+        earningsChange,
       });
 
       // Próximas visitas
@@ -420,9 +433,8 @@ export class RunnerReportsService {
         earningsChange,
         achievements,
         recommendations,
-        upcomingVisits
+        upcomingVisits,
       };
-
     } catch (error) {
       logger.error('Error generando reporte semanal:', error as Error);
       throw error;
@@ -442,16 +454,16 @@ export class RunnerReportsService {
         by: ['runnerId'],
         where: {
           createdAt: {
-            gte: weekStart
+            gte: weekStart,
           },
-          status: 'completed'
+          status: 'completed',
         },
         _count: {
-          id: true
+          id: true,
         },
         _sum: {
-          earnings: true
-        }
+          earnings: true,
+        },
       });
 
       // Enriquecer con información de usuario
@@ -462,8 +474,8 @@ export class RunnerReportsService {
           where: { id: stat.runnerId },
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         });
 
         if (runner) {
@@ -472,11 +484,11 @@ export class RunnerReportsService {
             runnerName: runner.name || 'Runner',
             position: 0, // Se calculará después
             previousPosition: 0, // Placeholder
-            score: (stat._count.id * 10) + (stat._sum.earnings || 0) * 0.1,
+            score: stat._count.id * 10 + (stat._sum.earnings || 0) * 0.1,
             visitsThisWeek: stat._count.id,
             earningsThisWeek: stat._sum.earnings || 0,
             averageRating: 4.5, // Placeholder
-            trend: 'stable' // Placeholder
+            trend: 'stable', // Placeholder
           });
         }
       }
@@ -488,7 +500,6 @@ export class RunnerReportsService {
       });
 
       return rankingData;
-
     } catch (error) {
       logger.error('Error obteniendo ranking semanal:', error as Error);
       return [];
@@ -506,13 +517,13 @@ export class RunnerReportsService {
       const activeRunners = await db.user.findMany({
         where: {
           role: 'RUNNER',
-          isActive: true
+          isActive: true,
         },
         select: {
           id: true,
           name: true,
-          email: true
-        }
+          email: true,
+        },
       });
 
       let successCount = 0;
@@ -524,22 +535,28 @@ export class RunnerReportsService {
           const report = await this.generateWeeklyReport(runner.id);
 
           // Enviar notificación
-          await NotificationService.notifyRunnerWeeklyReport({
-            runnerId: runner.id,
-            visitsCompleted: report.visitsCompleted,
-            earningsGenerated: report.earningsGenerated,
-            averageRating: report.averageRating,
-            rankingPosition: report.rankingPosition
+          await NotificationService.create({
+            userId: runner.id,
+            type: NotificationType.NEW_MESSAGE,
+            title: '📊 Reporte Semanal Disponible',
+            message: `Tu reporte semanal está listo. Visitas: ${report.visitsCompleted}, Ganancias: $${report.earningsGenerated.toFixed(2)}, Rating: ${report.averageRating.toFixed(1)}`,
+            link: '/runner/reports',
+            metadata: {
+              visitsCompleted: report.visitsCompleted,
+              earningsGenerated: report.earningsGenerated,
+              averageRating: report.averageRating,
+              rankingPosition: report.rankingPosition,
+              type: 'weekly_report',
+            },
           });
 
           successCount++;
           logger.info('Reporte semanal enviado', { runnerId: runner.id });
-
         } catch (error) {
           errorCount++;
           logger.error('Error enviando reporte semanal', {
             runnerId: runner.id,
-            error: error instanceof Error ? error.message : String(error)
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -547,9 +564,8 @@ export class RunnerReportsService {
       logger.info('Envío de reportes semanales completado', {
         totalRunners: activeRunners.length,
         successCount,
-        errorCount
+        errorCount,
       });
-
     } catch (error) {
       logger.error('Error en envío masivo de reportes semanales:', error as Error);
     }
@@ -620,7 +636,7 @@ export class RunnerReportsService {
       achievements.push({
         name: 'Super Runner',
         description: 'Completaste 20+ visitas esta semana',
-        icon: '🏃‍♂️'
+        icon: '🏃‍♂️',
       });
     }
 
@@ -628,7 +644,7 @@ export class RunnerReportsService {
       achievements.push({
         name: 'Top Earner',
         description: 'Generaste más de $100.000 en ganancias',
-        icon: '💰'
+        icon: '💰',
       });
     }
 
@@ -636,7 +652,7 @@ export class RunnerReportsService {
       achievements.push({
         name: 'Top 3',
         description: 'Estás en el top 3 del ranking semanal',
-        icon: '🥇'
+        icon: '🥇',
       });
     }
 
@@ -644,7 +660,7 @@ export class RunnerReportsService {
       achievements.push({
         name: 'Growing Star',
         description: 'Incrementaste tus visitas en más del 20%',
-        icon: '📈'
+        icon: '📈',
       });
     }
 
@@ -661,7 +677,9 @@ export class RunnerReportsService {
     const recommendations: string[] = [];
 
     if (data.visitsCompleted < 10) {
-      recommendations.push('Considera aumentar el número de visitas semanales para maximizar tus ganancias');
+      recommendations.push(
+        'Considera aumentar el número de visitas semanales para maximizar tus ganancias'
+      );
     }
 
     if (data.visitsChange < 0) {
@@ -676,49 +694,52 @@ export class RunnerReportsService {
       recommendations.push('Evalúa qué tipos de visitas generan mejores ganancias');
     }
 
-    return recommendations.length > 0 ? recommendations : ['¡Sigue manteniendo tu excelente rendimiento!'];
+    return recommendations.length > 0
+      ? recommendations
+      : ['¡Sigue manteniendo tu excelente rendimiento!'];
   }
 
-  private static async getUpcomingVisits(runnerId: string): Promise<{
-    date: string;
-    time: string;
-    propertyAddress: string;
-    clientName: string;
-  }[]> {
+  private static async getUpcomingVisits(runnerId: string): Promise<
+    {
+      date: string;
+      time: string;
+      propertyAddress: string;
+      clientName: string;
+    }[]
+  > {
     try {
       const upcomingVisits = await db.visit.findMany({
         where: {
           runnerId: runnerId,
           status: 'scheduled',
           scheduledAt: {
-            gte: new Date()
-          }
+            gte: new Date(),
+          },
         },
         include: {
           property: {
             select: {
-              address: true
-            }
+              address: true,
+            },
           },
           tenant: {
             select: {
-              name: true
-            }
-          }
+              name: true,
+            },
+          },
         },
         orderBy: {
-          scheduledAt: 'asc'
+          scheduledAt: 'asc',
         },
-        take: 5
+        take: 5,
       });
 
       return upcomingVisits.map(visit => ({
         date: visit.scheduledAt.toISOString().substring(0, 10),
         time: visit.scheduledAt.toTimeString().substring(0, 5),
         propertyAddress: visit.property?.address || 'Dirección no disponible',
-        clientName: visit.tenant?.name || 'Cliente'
+        clientName: visit.tenant?.name || 'Cliente',
       }));
-
     } catch (error) {
       logger.error('Error obteniendo próximas visitas:', error as Error);
       return [];

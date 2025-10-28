@@ -29,6 +29,11 @@ export enum NotificationType {
   COMMISSION_PAID = 'COMMISSION_PAID',
   PAYOUT_READY = 'PAYOUT_READY',
 
+  // Runners y Proveedores
+  RUNNER_RATING_UPDATED = 'RUNNER_RATING_UPDATED',
+  RUNNER_INCENTIVE_ACHIEVED = 'RUNNER_INCENTIVE_ACHIEVED',
+  PROVIDER_PAYOUT_APPROVED = 'PROVIDER_PAYOUT_APPROVED',
+
   // General
   NEW_MESSAGE = 'NEW_MESSAGE',
   SYSTEM_ALERT = 'SYSTEM_ALERT',
@@ -502,6 +507,115 @@ export class NotificationService {
       logger.error('Error sending system alert notification', {
         error: error instanceof Error ? error.message : String(error),
         alertType: params.type,
+      });
+    }
+  }
+
+  /**
+   * Notifica actualización de rating de runner
+   */
+  static async notifyRunnerRatingUpdated(params: {
+    runnerId: string;
+    newRating: number;
+    previousRating: number;
+    totalRatings?: number;
+    feedbackCount?: number;
+  }): Promise<void> {
+    try {
+      await this.create({
+        userId: params.runnerId,
+        type: NotificationType.RUNNER_RATING_UPDATED,
+        title: '⭐ Rating Actualizado',
+        message: `Tu rating promedio ha cambiado de ${params.previousRating.toFixed(1)} a ${params.newRating.toFixed(1)} estrellas`,
+        link: '/runner/profile',
+        metadata: {
+          newRating: params.newRating,
+          previousRating: params.previousRating,
+          totalRatings: params.totalRatings,
+          feedbackCount: params.feedbackCount,
+        },
+        priority: 'medium',
+      });
+    } catch (error) {
+      logger.error('Error sending runner rating updated notification', {
+        error: error instanceof Error ? error.message : String(error),
+        runnerId: params.runnerId,
+      });
+    }
+  }
+
+  /**
+   * Notifica logro de incentivo para runner
+   */
+  static async notifyRunnerIncentiveAchieved(params: {
+    runnerId: string;
+    incentiveType: string;
+    rewardValue: number;
+    rewardType: 'cash' | 'bonus' | 'discount';
+    achievedAt: Date;
+    description?: string;
+  }): Promise<void> {
+    try {
+      const rewardTypeLabels = {
+        cash: 'dinero',
+        bonus: 'bono',
+        discount: 'descuento',
+      };
+
+      await this.create({
+        userId: params.runnerId,
+        type: NotificationType.RUNNER_INCENTIVE_ACHIEVED,
+        title: '🎉 ¡Incentivo Logrado!',
+        message: `Has logrado un incentivo: ${params.rewardValue} ${rewardTypeLabels[params.rewardType]} por ${params.incentiveType}`,
+        link: '/runner/incentives',
+        metadata: {
+          incentiveType: params.incentiveType,
+          rewardValue: params.rewardValue,
+          rewardType: params.rewardType,
+          achievedAt: params.achievedAt,
+          description: params.description,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending runner incentive achieved notification', {
+        error: error instanceof Error ? error.message : String(error),
+        runnerId: params.runnerId,
+      });
+    }
+  }
+
+  /**
+   * Notifica pago aprobado para proveedor
+   */
+  static async notifyProviderPayoutApproved(params: {
+    providerId: string;
+    amount: number;
+    serviceType: string;
+    payoutId?: string;
+    processedAt?: Date;
+    paymentMethod?: string;
+  }): Promise<void> {
+    try {
+      await this.create({
+        userId: params.providerId,
+        type: NotificationType.PROVIDER_PAYOUT_APPROVED,
+        title: '💰 Pago Aprobado',
+        message: `Se ha aprobado un pago de $${params.amount.toFixed(2)} por servicios de ${params.serviceType}`,
+        link: '/provider/payments',
+        metadata: {
+          amount: params.amount,
+          serviceType: params.serviceType,
+          payoutId: params.payoutId,
+          processedAt: params.processedAt,
+          paymentMethod: params.paymentMethod,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending provider payout approved notification', {
+        error: error instanceof Error ? error.message : String(error),
+        providerId: params.providerId,
       });
     }
   }

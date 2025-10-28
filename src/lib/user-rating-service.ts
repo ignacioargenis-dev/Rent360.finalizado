@@ -1,7 +1,7 @@
 import { db } from './db';
 import { logger } from './logger';
 import { DatabaseError, BusinessLogicError, ValidationError } from './errors';
-import { NotificationService } from './notification-service';
+import { NotificationService, NotificationType } from './notification-service';
 import { RatingContextType } from '@/types/index';
 
 export interface UserRatingData {
@@ -185,13 +185,20 @@ export class UserRatingService {
 
       // Enviar notificación al usuario calificado
       try {
-        await NotificationService.notifyUserRatingReceived({
-          recipientId: ratingData.toUserId,
-          raterId: ratingData.fromUserId,
-          raterName: fromUser.name,
-          rating: ratingData.overallRating,
-          contextType: ratingData.contextType,
-          ratingId: rating.id,
+        await NotificationService.create({
+          userId: ratingData.toUserId,
+          type: NotificationType.NEW_MESSAGE,
+          title: '⭐ Nueva Calificación Recibida',
+          message: `Has recibido una calificación de ${ratingData.overallRating} estrellas de ${fromUser.name || 'un usuario'}`,
+          link: '/profile/ratings',
+          metadata: {
+            raterId: ratingData.fromUserId,
+            raterName: fromUser.name,
+            rating: ratingData.overallRating,
+            contextType: ratingData.contextType,
+            ratingId: rating.id,
+            type: 'rating_received',
+          },
         });
       } catch (notificationError) {
         logger.warn('Error sending rating notification', { error: notificationError });

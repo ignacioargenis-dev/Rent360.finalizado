@@ -106,35 +106,35 @@ export class RunnerRatingService {
       isAnonymous: rating.isAnonymous,
       isVerified: rating.isVerified,
       createdAt: rating.createdAt,
-      updatedAt: rating.updatedAt
+      updatedAt: rating.updatedAt,
     };
   }
   private static readonly RATING_CRITERIA: RatingCriteria[] = [
     {
       name: 'overall',
       weight: 0.4,
-      description: 'Calificación general del servicio'
+      description: 'Calificación general del servicio',
     },
     {
       name: 'punctuality',
       weight: 0.25,
-      description: 'Puntualidad en las citas'
+      description: 'Puntualidad en las citas',
     },
     {
       name: 'professionalism',
       weight: 0.2,
-      description: 'Profesionalismo y actitud'
+      description: 'Profesionalismo y actitud',
     },
     {
       name: 'communication',
       weight: 0.1,
-      description: 'Calidad de la comunicación'
+      description: 'Calidad de la comunicación',
     },
     {
       name: 'property_knowledge',
       weight: 0.05,
-      description: 'Conocimiento de propiedades'
-    }
+      description: 'Conocimiento de propiedades',
+    },
   ];
 
   /**
@@ -163,23 +163,23 @@ export class RunnerRatingService {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           property: {
             select: {
               address: true,
-              type: true
-            }
+              type: true,
+            },
           },
           tenant: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       if (!visit) {
@@ -199,9 +199,9 @@ export class RunnerRatingService {
         where: {
           visitId_clientId: {
             visitId: ratingData.visitId,
-            clientId: ratingData.clientId
-          }
-        }
+            clientId: ratingData.clientId,
+          },
+        },
       });
 
       if (existingRating) {
@@ -214,7 +214,7 @@ export class RunnerRatingService {
         ratingData.punctualityRating,
         ratingData.professionalismRating,
         ratingData.communicationRating,
-        ratingData.propertyKnowledgeRating
+        ratingData.propertyKnowledgeRating,
       ];
 
       for (const rating of ratings) {
@@ -229,8 +229,8 @@ export class RunnerRatingService {
         select: {
           id: true,
           name: true,
-          email: true
-        }
+          email: true,
+        },
       });
 
       if (!client) {
@@ -260,15 +260,15 @@ export class RunnerRatingService {
           isAnonymous: ratingData.isAnonymous || false,
           isVerified: true, // Asumimos verificado por ahora
           createdAt: new Date(),
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       logger.info('Nueva calificación de runner creada', {
         ratingId: rating.id,
         runnerId: ratingData.runnerId,
         visitId: ratingData.visitId,
-        overallRating: ratingData.overallRating
+        overallRating: ratingData.overallRating,
       });
 
       // Enviar notificación al runner sobre la nueva calificación
@@ -279,7 +279,6 @@ export class RunnerRatingService {
       await this.checkRatingBasedIncentives(ratingData.runnerId);
 
       return ratingForNotification;
-
     } catch (error) {
       logger.error('Error creando calificación de runner:', error as Error);
       throw error;
@@ -299,8 +298,8 @@ export class RunnerRatingService {
         where: { id: runnerId },
         select: {
           id: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
@@ -316,12 +315,12 @@ export class RunnerRatingService {
           runnerId: runnerId,
           createdAt: {
             gte: startDate,
-            lte: endDate
-          }
+            lte: endDate,
+          },
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: 'desc',
+        },
       });
 
       if (ratings.length === 0) {
@@ -344,7 +343,7 @@ export class RunnerRatingService {
           verifiedRatingsPercentage: 0,
           currentRanking: 0,
           bestCategory: '',
-          worstCategory: ''
+          worstCategory: '',
         };
       }
 
@@ -359,31 +358,42 @@ export class RunnerRatingService {
       });
 
       // Promedios por categoría
-      const averagePunctuality = ratings.reduce((sum, r) => sum + r.punctualityRating, 0) / totalRatings;
-      const averageProfessionalism = ratings.reduce((sum, r) => sum + r.professionalismRating, 0) / totalRatings;
-      const averageCommunication = ratings.reduce((sum, r) => sum + r.communicationRating, 0) / totalRatings;
-      const averagePropertyKnowledge = ratings.reduce((sum, r) => sum + r.propertyKnowledgeRating, 0) / totalRatings;
+      const averagePunctuality =
+        ratings.reduce((sum, r) => sum + r.punctualityRating, 0) / totalRatings;
+      const averageProfessionalism =
+        ratings.reduce((sum, r) => sum + r.professionalismRating, 0) / totalRatings;
+      const averageCommunication =
+        ratings.reduce((sum, r) => sum + r.communicationRating, 0) / totalRatings;
+      const averagePropertyKnowledge =
+        ratings.reduce((sum, r) => sum + r.propertyKnowledgeRating, 0) / totalRatings;
 
       // Calcular tendencias (últimos 30 días vs 30 días anteriores)
       const last30Days = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
       const previous30Days = new Date(last30Days.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       const last30DaysRatings = ratings.filter(r => r.createdAt >= last30Days);
-      const previous30DaysRatings = ratings.filter(r =>
-        r.createdAt >= previous30Days && r.createdAt < last30Days
+      const previous30DaysRatings = ratings.filter(
+        r => r.createdAt >= previous30Days && r.createdAt < last30Days
       );
 
-      const last30DaysAverage = last30DaysRatings.length > 0
-        ? last30DaysRatings.reduce((sum, r) => sum + r.overallRating, 0) / last30DaysRatings.length
-        : 0;
+      const last30DaysAverage =
+        last30DaysRatings.length > 0
+          ? last30DaysRatings.reduce((sum, r) => sum + r.overallRating, 0) /
+            last30DaysRatings.length
+          : 0;
 
-      const previous30DaysAverage = previous30DaysRatings.length > 0
-        ? previous30DaysRatings.reduce((sum, r) => sum + r.overallRating, 0) / previous30DaysRatings.length
-        : 0;
+      const previous30DaysAverage =
+        previous30DaysRatings.length > 0
+          ? previous30DaysRatings.reduce((sum, r) => sum + r.overallRating, 0) /
+            previous30DaysRatings.length
+          : 0;
 
-      const ratingTrend = last30DaysAverage > previous30DaysAverage + 0.1 ? 'improving'
-        : last30DaysAverage < previous30DaysAverage - 0.1 ? 'declining'
-        : 'stable';
+      const ratingTrend =
+        last30DaysAverage > previous30DaysAverage + 0.1
+          ? 'improving'
+          : last30DaysAverage < previous30DaysAverage - 0.1
+            ? 'declining'
+            : 'stable';
 
       // Análisis de feedback
       const allPositiveFeedback = ratings.flatMap(r => r.positiveFeedback || []);
@@ -399,16 +409,17 @@ export class RunnerRatingService {
           status: 'completed',
           createdAt: {
             gte: startDate,
-            lte: endDate
-          }
-        }
+            lte: endDate,
+          },
+        },
       });
 
       const responseRate = totalVisits > 0 ? (totalRatings / totalVisits) * 100 : 0;
 
       // Porcentaje de calificaciones verificadas
       const verifiedRatings = ratings.filter(r => r.isVerified).length;
-      const verifiedRatingsPercentage = totalRatings > 0 ? (verifiedRatings / totalRatings) * 100 : 0;
+      const verifiedRatingsPercentage =
+        totalRatings > 0 ? (verifiedRatings / totalRatings) * 100 : 0;
 
       // Ranking actual (placeholder - implementar comparación real)
       const currentRanking = 5;
@@ -418,14 +429,14 @@ export class RunnerRatingService {
         punctuality: averagePunctuality,
         professionalism: averageProfessionalism,
         communication: averageCommunication,
-        propertyKnowledge: averagePropertyKnowledge
+        propertyKnowledge: averagePropertyKnowledge,
       };
 
-      const sortedCategories = Object.entries(categoryAverages)
-        .sort(([,a], [,b]) => b - a);
+      const sortedCategories = Object.entries(categoryAverages).sort(([, a], [, b]) => b - a);
 
       const bestCategory = sortedCategories.length > 0 ? sortedCategories[0]![0] : '';
-      const worstCategory = sortedCategories.length > 0 ? sortedCategories[sortedCategories.length - 1]![0] : '';
+      const worstCategory =
+        sortedCategories.length > 0 ? sortedCategories[sortedCategories.length - 1]![0] : '';
 
       return {
         runnerId,
@@ -446,9 +457,8 @@ export class RunnerRatingService {
         verifiedRatingsPercentage,
         currentRanking,
         bestCategory,
-        worstCategory
+        worstCategory,
       };
-
     } catch (error) {
       logger.error('Error obteniendo resumen de calificaciones:', error as Error);
       throw error;
@@ -468,7 +478,7 @@ export class RunnerRatingService {
         where: { runnerId },
         orderBy: { createdAt: 'desc' },
         take: limit,
-        skip: offset
+        skip: offset,
       });
 
       // Convertir objetos de Prisma a RunnerRating
@@ -482,35 +492,37 @@ export class RunnerRatingService {
   /**
    * Calcula el ranking global de runners basado en calificaciones
    */
-  static async calculateRunnerRanking(limit: number = 50): Promise<{
-    runnerId: string;
-    runnerName: string;
-    averageRating: number;
-    totalRatings: number;
-    rankingScore: number;
-    position: number;
-  }[]> {
+  static async calculateRunnerRanking(limit: number = 50): Promise<
+    {
+      runnerId: string;
+      runnerName: string;
+      averageRating: number;
+      totalRatings: number;
+      rankingScore: number;
+      position: number;
+    }[]
+  > {
     try {
       // Obtener estadísticas de todos los runners
       const runnerStats = await db.runnerRating.groupBy({
         by: ['runnerId'],
         _count: {
-          id: true
+          id: true,
         },
         _avg: {
           overallRating: true,
           punctualityRating: true,
           professionalismRating: true,
           communicationRating: true,
-          propertyKnowledgeRating: true
+          propertyKnowledgeRating: true,
         },
         having: {
           id: {
             _count: {
-              gt: 4 // Solo runners con al menos 5 calificaciones
-            }
-          }
-        }
+              gt: 4, // Solo runners con al menos 5 calificaciones
+            },
+          },
+        },
       });
 
       // Enriquecer con nombres de runners
@@ -521,20 +533,19 @@ export class RunnerRatingService {
           where: { id: stat.runnerId },
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         });
 
         if (runner) {
           // Calcular score ponderado
           const avg = stat._avg;
-          const score = (
+          const score =
             (avg.overallRating || 0) * 0.4 +
             (avg.punctualityRating || 0) * 0.25 +
             (avg.professionalismRating || 0) * 0.2 +
             (avg.communicationRating || 0) * 0.1 +
-            (avg.propertyKnowledgeRating || 0) * 0.05
-          );
+            (avg.propertyKnowledgeRating || 0) * 0.05;
 
           ranking.push({
             runnerId: stat.runnerId,
@@ -542,7 +553,7 @@ export class RunnerRatingService {
             averageRating: avg.overallRating || 0,
             totalRatings: stat._count.id,
             rankingScore: score,
-            position: 0 // Se asignará después de ordenar
+            position: 0, // Se asignará después de ordenar
           });
         }
       }
@@ -554,7 +565,6 @@ export class RunnerRatingService {
       });
 
       return ranking.slice(0, limit);
-
     } catch (error) {
       logger.error('Error calculando ranking de runners:', error as Error);
       return [];
@@ -573,7 +583,7 @@ export class RunnerRatingService {
     });
 
     return Object.entries(frequency)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, limit)
       .map(([item]) => item);
   }
@@ -588,11 +598,9 @@ export class RunnerRatingService {
         runnerId: rating.runnerId,
         newRating: summary.averageRating,
         previousRating: previousRating,
-        clientName: rating.clientName,
-        propertyAddress: rating.propertyAddress,
-        clientFeedback: rating.comment
+        totalRatings: summary.totalRatings,
+        feedbackCount: summary.totalRatings,
       });
-
     } catch (error) {
       logger.error('Error notificando calificación:', error as Error);
     }
@@ -606,11 +614,11 @@ export class RunnerRatingService {
       if (summary.averageRating >= 4.8 && summary.totalRatings >= 10) {
         await NotificationService.notifyRunnerIncentiveAchieved({
           runnerId,
-          incentiveName: 'Top Rater',
-          incentiveLevel: 'Gold',
-          rewardDescription: 'Badge especial "Top Rater" y prioridad en asignación de visitas premium',
-          visitCount: summary.totalRatings,
-          averageRating: summary.averageRating
+          incentiveType: 'Top Rater',
+          rewardValue: 0, // Badge reward, no monetary value
+          rewardType: 'bonus',
+          achievedAt: new Date(),
+          description: 'Badge especial "Top Rater" y prioridad en asignación de visitas premium',
         });
       }
 
@@ -618,14 +626,13 @@ export class RunnerRatingService {
       if (summary.ratingTrend === 'improving' && summary.last30DaysAverage >= 4.5) {
         await NotificationService.notifyRunnerIncentiveAchieved({
           runnerId,
-          incentiveName: 'Rising Star',
-          incentiveLevel: 'Silver',
-          rewardDescription: 'Badge "Rising Star" por mejora significativa en calificaciones',
-          visitCount: summary.totalRatings,
-          averageRating: summary.averageRating
+          incentiveType: 'Rising Star',
+          rewardValue: 0, // Badge reward, no monetary value
+          rewardType: 'bonus',
+          achievedAt: new Date(),
+          description: 'Badge "Rising Star" por mejora significativa en calificaciones',
         });
       }
-
     } catch (error) {
       logger.error('Error verificando incentivos por rating:', error as Error);
     }
@@ -639,34 +646,41 @@ export class RunnerRatingService {
       const visit = await db.visit.findUnique({
         where: { id: visitId },
         include: {
-          tenant: true
-        }
+          tenant: true,
+        },
       });
 
-      if (!visit) return false;
+      if (!visit) {
+        return false;
+      }
 
       // Solo visitas completadas pueden ser calificadas
-      if (visit.status !== 'completed') return false;
+      if (visit.status !== 'completed') {
+        return false;
+      }
 
       // Solo el tenant de la visita puede calificar
-      if (visit.tenant?.id !== clientId) return false;
+      if (visit.tenant?.id !== clientId) {
+        return false;
+      }
 
       // La visita debe haber terminado hace al menos 1 hora
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      if (visit.updatedAt > oneHourAgo) return false;
+      if (visit.updatedAt > oneHourAgo) {
+        return false;
+      }
 
       // No debe existir ya una calificación
       const existingRating = await db.runnerRating.findUnique({
         where: {
           visitId_clientId: {
             visitId: visitId,
-            clientId: clientId
-          }
-        }
+            clientId: clientId,
+          },
+        },
       });
 
       return !existingRating;
-
     } catch (error) {
       logger.error('Error validando si se puede calificar visita:', error as Error);
       return false;
