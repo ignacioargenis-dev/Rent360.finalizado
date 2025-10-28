@@ -139,10 +139,8 @@ export default function BrokerDashboardPage() {
         const isNewUser =
           !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
+        // Para usuarios nuevos, mostrar dashboard vacío con bienvenida
+        if (isNewUser) {
           setProperties([]);
           setClients([]);
           setRecentActivities([
