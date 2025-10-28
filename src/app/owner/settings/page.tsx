@@ -818,7 +818,7 @@ export default function OwnerSettingsPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(user.avatar, '_blank')}
+                            onClick={() => window.open(user.avatar!, '_blank')}
                             disabled={uploadingAvatar}
                           >
                             <Eye className="w-4 h-4 mr-2" />
