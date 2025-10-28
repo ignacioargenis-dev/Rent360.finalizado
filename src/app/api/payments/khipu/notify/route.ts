@@ -24,11 +24,13 @@ export async function POST(request: NextRequest) {
     const NOTIFICATION_TOKEN = process.env.KHIPU_NOTIFICATION_TOKEN;
 
     if (!notificationToken || notificationToken !== NOTIFICATION_TOKEN) {
-      logger.error('Token de notificación inválido:', { error: notificationToken instanceof Error ? notificationToken.message : String(notificationToken) });
-      return NextResponse.json(
-        { error: 'Token de notificación inválido' },
-        { status: 401 },
-      );
+      logger.error('Token de notificación inválido:', {
+        error:
+          notificationToken instanceof Error
+            ? notificationToken.message
+            : String(notificationToken),
+      });
+      return NextResponse.json({ error: 'Token de notificación inválido' }, { status: 401 });
     }
 
     logger.info('Notificación de Khipu recibida:', {
@@ -47,7 +49,9 @@ export async function POST(request: NextRequest) {
         customData = JSON.parse(custom);
       }
     } catch (error) {
-      logger.error('Error al parsear datos personalizados:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error al parsear datos personalizados:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // Actualizar estado del pago en la base de datos
@@ -86,7 +90,9 @@ export async function POST(request: NextRequest) {
       const updateData: any = {
         status: paymentStatus,
         paidDate: paymentStatus === 'COMPLETED' ? new Date() : null,
-        notes: payment.notes ? `${payment.notes}\nNotificación Khipu: ${status}` : `Notificación Khipu: ${status}`,
+        notes: payment.notes
+          ? `${payment.notes}\nNotificación Khipu: ${status}`
+          : `Notificación Khipu: ${status}`,
       };
 
       // Solo agregar transactionId si existe
@@ -117,7 +123,9 @@ export async function POST(request: NextRequest) {
             });
             logger.info('Contrato actualizado:', { contractId: customData.contract_id });
           } catch (error) {
-            logger.error('Error actualizando contrato:', { error: error instanceof Error ? error.message : String(error) });
+            logger.error('Error actualizando contrato:', {
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
         }
 
@@ -130,7 +138,7 @@ export async function POST(request: NextRequest) {
                 title: 'Pago Completado',
                 message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
                 type: 'SUCCESS',
-                data: JSON.stringify({
+                metadata: JSON.stringify({
                   payment_id: payment.id,
                   amount: amount,
                   currency: currency,
@@ -140,7 +148,9 @@ export async function POST(request: NextRequest) {
             });
             logger.info('Notificación creada para usuario:', { userId: customData.user_id });
           } catch (error) {
-            logger.error('Error creando notificación:', { error: error instanceof Error ? error.message : String(error) });
+            logger.error('Error creando notificación:', {
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
         }
       }
@@ -154,11 +164,10 @@ export async function POST(request: NextRequest) {
       message: 'Notificación recibida y procesada',
     });
   } catch (error) {
-    logger.error('Error procesando notificación de Khipu:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 },
-    );
+    logger.error('Error procesando notificación de Khipu:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -169,22 +178,17 @@ export async function GET(request: NextRequest) {
     const notificationToken = searchParams.get('notification_token');
 
     if (!notificationToken || notificationToken !== process.env.KHIPU_NOTIFICATION_TOKEN) {
-      return NextResponse.json(
-        { error: 'Token de notificación inválido' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Token de notificación inválido' }, { status: 401 });
     }
 
     return NextResponse.json({
       success: true,
       message: 'Endpoint de notificación activo',
     });
-
   } catch (error) {
-    logger.error('Error en verificación de endpoint:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 },
-    );
+    logger.error('Error en verificación de endpoint:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

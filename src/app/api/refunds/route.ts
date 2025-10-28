@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
           type: 'REFUND_REQUEST',
           title: 'Nueva solicitud de reembolso',
           message: `El inquilino ${user.name} ha solicitado un reembolso de $${validatedData.amount.toLocaleString()} por el contrato de ${contract.property.address}`,
-          data: JSON.stringify({ refundId: refund.id, contractId: contract.id }),
+          metametadata: JSON.stringify({ refundId: refund.id, contractId: contract.id }),
           createdAt: new Date(),
         },
         {
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
           type: 'REFUND_REQUEST',
           title: 'Nueva solicitud de reembolso',
           message: `El inquilino ${user.name} ha solicitado un reembolso de $${validatedData.amount.toLocaleString()} por el contrato de ${contract.property.address}`,
-          data: JSON.stringify({ refundId: refund.id, contractId: contract.id }),
+          metametadata: JSON.stringify({ refundId: refund.id, contractId: contract.id }),
           createdAt: new Date(),
         },
       ],
@@ -356,7 +356,7 @@ export async function PUT(request: NextRequest) {
         type: 'REFUND_STATUS_UPDATE',
         title: `Estado de reembolso actualizado`,
         message: `Tu solicitud de reembolso por $${existingRefund.requestedAmount.toLocaleString()} ha sido ${validatedData.status === 'approved' ? 'aprobada' : validatedData.status === 'rejected' ? 'rechazada' : 'actualizada'}`,
-        data: JSON.stringify({ refundId: refundId, status: validatedData.status }),
+        metametadata: JSON.stringify({ refundId: refundId, status: validatedData.status }),
         createdAt: new Date(),
       },
     });

@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
         title: 'Contrato Firmado',
         message: `El contrato ${contract.contractNumber} ha sido firmado por ${user.name}`,
         type: 'CONTRACT' as any,
-        data: JSON.stringify({ contractId, signerId: user.id }),
+        metadata: JSON.stringify({ contractId, signerId: user.id }),
       },
     });
 

@@ -40,14 +40,14 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Solo OWNER y TENANT pueden ver sus solicitudes
-    if (session.user.role !== 'OWNER' && session.user.role !== 'TENANT') {
+    if (user.role !== 'OWNER' && user.role !== 'TENANT') {
       return NextResponse.json(
         { success: false, error: 'Solo propietarios e inquilinos pueden crear solicitudes' },
         { status: 403 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
     const status = request.nextUrl.searchParams.get('status');
 
     const where: any = { userId };
@@ -116,14 +116,14 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request);
 
     // Solo OWNER y TENANT pueden crear solicitudes
-    if (session.user.role !== 'OWNER' && session.user.role !== 'TENANT') {
+    if (user.role !== 'OWNER' && user.role !== 'TENANT') {
       return NextResponse.json(
         { success: false, error: 'Solo propietarios e inquilinos pueden crear solicitudes' },
         { status: 403 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
     const body = await request.json();
     const data = createRequestSchema.parse(body);
 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     expiresAt.setDate(expiresAt.getDate() + data.expiresInDays);
 
     // Determinar userType basado en el role
-    const userType = session.user.role === 'OWNER' ? 'OWNER' : 'TENANT';
+    const userType = user.role === 'OWNER' ? 'OWNER' : 'TENANT';
 
     // Crear solicitud
     const serviceRequest = await db.brokerServiceRequest.create({
@@ -149,9 +149,9 @@ export async function POST(request: NextRequest) {
         title: data.title,
         description: data.description,
         urgency: data.urgency,
-        budget: data.budget ? JSON.stringify(data.budget) : null,
-        locations: data.locations ? JSON.stringify(data.locations) : null,
-        propertyTypes: data.propertyTypes ? JSON.stringify(data.propertyTypes) : null,
+        ...(data.budget && { budget: JSON.stringify(data.budget) }),
+        ...(data.locations && { locations: JSON.stringify(data.locations) }),
+        ...(data.propertyTypes && { propertyTypes: JSON.stringify(data.propertyTypes) }),
         expiresAt,
         status: 'OPEN',
       },

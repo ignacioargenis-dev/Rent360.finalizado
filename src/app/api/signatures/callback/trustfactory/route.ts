@@ -17,15 +17,15 @@ export async function POST(request: NextRequest) {
       status,
       eventType,
       signerCount: signerData?.length || 0,
-      hasCertificate: !!certificateData
+      hasCertificate: !!certificateData,
     });
 
     // Validar que el signatureId existe en nuestra base de datos
     const existingSignature = await db.signatureRequest.findUnique({
       where: { id: signatureId },
       include: {
-        signers: true
-      }
+        signers: true,
+      },
     });
 
     if (!existingSignature) {
@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
     const internalStatus = mapTrustFactoryStatus(status);
 
     // Actualizar el estado de la firma
-    const currentMetadata = existingSignature.metadata ? JSON.parse(existingSignature.metadata) : {};
+    const currentMetadata = existingSignature.metadata
+      ? JSON.parse(existingSignature.metadata)
+      : {};
     const updatedMetadata = {
       ...currentMetadata,
       trustFactoryCallback: {
@@ -45,16 +47,16 @@ export async function POST(request: NextRequest) {
         eventType,
         status,
         certificateData,
-        signerData
-      }
+        signerData,
+      },
     };
 
     await db.signatureRequest.update({
       where: { id: signatureId },
       data: {
         status: internalStatus,
-        metadata: JSON.stringify(updatedMetadata)
-      }
+        metametadata: JSON.stringify(updatedMetadata),
+      },
     });
 
     // Actualizar el estado de los firmantes si se proporciona información
@@ -63,17 +65,20 @@ export async function POST(request: NextRequest) {
         await db.signatureSigner.updateMany({
           where: {
             signatureRequestId: signatureId,
-            email: signer.email
+            email: signer.email,
           },
           data: {
             status: signer.status === 'completed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metadata: JSON.stringify({
-              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata ?
-                JSON.parse(existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}') : {}),
-              trustFactorySignerData: signer
-            })
-          }
+            metametadata: JSON.stringify({
+              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata
+                ? JSON.parse(
+                    existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}'
+                  )
+                : {}),
+              trustFactorySignerData: signer,
+            }),
+          },
         });
       }
     }
@@ -87,19 +92,15 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Callback processed successfully',
       signatureId,
-      status: internalStatus
+      status: internalStatus,
     });
-
   } catch (error) {
     logger.error('Error procesando callback de TrustFactory:', {
       error: error instanceof Error ? error.message : String(error),
-      body: await request.json().catch(() => ({}))
+      body: await request.json().catch(() => ({})),
     });
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -108,14 +109,14 @@ export async function POST(request: NextRequest) {
  */
 function mapTrustFactoryStatus(trustFactoryStatus: string): SignatureStatus {
   const statusMap: { [key: string]: SignatureStatus } = {
-    'PENDING': SignatureStatus.PENDING,
-    'IN_PROGRESS': SignatureStatus.IN_PROGRESS,
-    'WAITING_FOR_SIGNERS': SignatureStatus.IN_PROGRESS,
-    'COMPLETED': SignatureStatus.COMPLETED,
-    'CANCELLED': SignatureStatus.CANCELLED,
-    'EXPIRED': SignatureStatus.FAILED,
-    'FAILED': SignatureStatus.FAILED,
-    'REJECTED': SignatureStatus.FAILED
+    PENDING: SignatureStatus.PENDING,
+    IN_PROGRESS: SignatureStatus.IN_PROGRESS,
+    WAITING_FOR_SIGNERS: SignatureStatus.IN_PROGRESS,
+    COMPLETED: SignatureStatus.COMPLETED,
+    CANCELLED: SignatureStatus.CANCELLED,
+    EXPIRED: SignatureStatus.FAILED,
+    FAILED: SignatureStatus.FAILED,
+    REJECTED: SignatureStatus.FAILED,
   };
 
   return statusMap[trustFactoryStatus] || SignatureStatus.FAILED;

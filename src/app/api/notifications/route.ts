@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    const userId = session.user.id;
+    const userId = user.id;
     const notifications = await NotificationService.getUnread(userId);
 
     return NextResponse.json({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     if (action === 'markAllRead') {
-      const count = await NotificationService.markAllAsRead(session.user.id);
+      const count = await NotificationService.markAllAsRead(user.id);
       return NextResponse.json({
         success: true,
         message: `${count} notificaciones marcadas como leídas`,

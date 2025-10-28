@@ -18,15 +18,15 @@ export async function POST(request: NextRequest) {
       eventType,
       contractType,
       signerCount: signerData?.length || 0,
-      hasCertificate: !!certificateData
+      hasCertificate: !!certificateData,
     });
 
     // Validar que el contractId existe en nuestra base de datos
     const existingSignature = await db.signatureRequest.findUnique({
       where: { id: contractId },
       include: {
-        signers: true
-      }
+        signers: true,
+      },
     });
 
     if (!existingSignature) {
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
     const internalStatus = mapFirmaProStatus(status);
 
     // Actualizar el estado de la firma
-    const currentMetadata = existingSignature.metadata ? JSON.parse(existingSignature.metadata) : {};
+    const currentMetadata = existingSignature.metadata
+      ? JSON.parse(existingSignature.metadata)
+      : {};
     const updatedMetadata = {
       ...currentMetadata,
       firmaProCallback: {
@@ -47,16 +49,16 @@ export async function POST(request: NextRequest) {
         status,
         contractType,
         certificateData,
-        signerData
-      }
+        signerData,
+      },
     };
 
     await db.signatureRequest.update({
       where: { id: contractId },
       data: {
         status: internalStatus,
-        metadata: JSON.stringify(updatedMetadata)
-      }
+        metametadata: JSON.stringify(updatedMetadata),
+      },
     });
 
     // Actualizar el estado de los firmantes si se proporciona información
@@ -68,19 +70,22 @@ export async function POST(request: NextRequest) {
         await db.signatureSigner.updateMany({
           where: {
             signatureRequestId: contractId,
-            email: signer.email
+            email: signer.email,
           },
           data: {
             status: signer.status === 'signed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metadata: JSON.stringify({
-              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata ?
-                JSON.parse(existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}') : {}),
+            metametadata: JSON.stringify({
+              ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata
+                ? JSON.parse(
+                    existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}'
+                  )
+                : {}),
               firmaProSignerData: signer,
               signerRole: role,
-              contractType: 'ARRIENDO_INMUEBLE'
-            })
-          }
+              contractType: 'ARRIENDO_INMUEBLE',
+            }),
+          },
         });
       }
     }
@@ -92,19 +97,21 @@ export async function POST(request: NextRequest) {
         const signatureRequest = await db.signatureRequest.findUnique({
           where: { id: contractId },
           include: {
-            signers: true
-          }
+            signers: true,
+          },
         });
 
         if (signatureRequest && signatureRequest.contractId) {
           // Esta firma está relacionada con un contrato
           const contract = await db.contract.findUnique({
-            where: { id: signatureRequest.contractId }
+            where: { id: signatureRequest.contractId },
           });
 
           if (contract) {
             // Verificar si todas las firmas requeridas están completas
-            const completedSignatures = signatureRequest.signers.filter(signer => signer.status === 'signed');
+            const completedSignatures = signatureRequest.signers.filter(
+              signer => signer.status === 'signed'
+            );
             const requiredSignatures = signatureRequest.signers.filter(signer => {
               const metadata = signer.metadata ? JSON.parse(signer.metadata) : {};
               return metadata.isRequired !== false; // Por defecto son requeridas
@@ -116,23 +123,26 @@ export async function POST(request: NextRequest) {
                 where: { id: contract.id },
                 data: {
                   status: 'ACTIVE',
-                  signedAt: new Date()
-                }
+                  signedAt: new Date(),
+                },
               });
 
               logger.info('Contrato activado automáticamente después de firmas completas:', {
                 contractId: contract.id,
                 signatureId: contractId,
                 completedSignatures: completedSignatures.length,
-                requiredSignatures: requiredSignatures.length
+                requiredSignatures: requiredSignatures.length,
               });
             }
           }
         }
       } catch (contractUpdateError) {
         logger.error('Error actualizando contrato después de firmas:', {
-          error: contractUpdateError instanceof Error ? contractUpdateError.message : String(contractUpdateError),
-          contractId
+          error:
+            contractUpdateError instanceof Error
+              ? contractUpdateError.message
+              : String(contractUpdateError),
+          contractId,
         });
       }
     }
@@ -144,19 +154,15 @@ export async function POST(request: NextRequest) {
       message: 'Callback processed successfully',
       contractId,
       status: internalStatus,
-      contractType
+      contractType,
     });
-
   } catch (error) {
     logger.error('Error procesando callback de FirmaPro:', {
       error: error instanceof Error ? error.message : String(error),
-      body: await request.json().catch(() => ({}))
+      body: await request.json().catch(() => ({})),
     });
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -165,14 +171,14 @@ export async function POST(request: NextRequest) {
  */
 function mapFirmaProStatus(firmaProStatus: string): SignatureStatus {
   const statusMap: { [key: string]: SignatureStatus } = {
-    'PENDING': SignatureStatus.PENDING,
-    'IN_PROGRESS': SignatureStatus.IN_PROGRESS,
-    'WAITING_FOR_SIGNERS': SignatureStatus.IN_PROGRESS,
-    'COMPLETED': SignatureStatus.COMPLETED,
-    'CANCELLED': SignatureStatus.CANCELLED,
-    'EXPIRED': SignatureStatus.FAILED,
-    'FAILED': SignatureStatus.FAILED,
-    'REJECTED': SignatureStatus.FAILED
+    PENDING: SignatureStatus.PENDING,
+    IN_PROGRESS: SignatureStatus.IN_PROGRESS,
+    WAITING_FOR_SIGNERS: SignatureStatus.IN_PROGRESS,
+    COMPLETED: SignatureStatus.COMPLETED,
+    CANCELLED: SignatureStatus.CANCELLED,
+    EXPIRED: SignatureStatus.FAILED,
+    FAILED: SignatureStatus.FAILED,
+    REJECTED: SignatureStatus.FAILED,
   };
 
   return statusMap[firmaProStatus] || SignatureStatus.FAILED;
@@ -183,12 +189,12 @@ function mapFirmaProStatus(firmaProStatus: string): SignatureStatus {
  */
 function mapFirmaProRole(firmaProRole: string): string {
   const roleMap: { [key: string]: string } = {
-    'ARRENDADOR': 'OWNER',
-    'ARRENDATARIO': 'TENANT',
-    'FIADOR': 'GUARANTOR',
-    'OWNER': 'OWNER',
-    'TENANT': 'TENANT',
-    'GUARANTOR': 'GUARANTOR'
+    ARRENDADOR: 'OWNER',
+    ARRENDATARIO: 'TENANT',
+    FIADOR: 'GUARANTOR',
+    OWNER: 'OWNER',
+    TENANT: 'TENANT',
+    GUARANTOR: 'GUARANTOR',
   };
 
   return roleMap[firmaProRole] || firmaProRole;

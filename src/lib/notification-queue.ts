@@ -1,12 +1,12 @@
 import { db } from './db';
 import { logger } from './logger';
-import { NotificationService, CommissionNotification, SystemNotification } from './notification-service';
+import { NotificationService } from './notification-service';
 
 export interface QueuedNotification {
   id: string;
   type: 'commission' | 'system' | 'scheduled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  data: CommissionNotification | SystemNotification | ScheduledNotification;
+  data: any;
   scheduledFor: Date;
   createdAt: Date;
   processedAt?: Date | undefined;
@@ -20,10 +20,12 @@ export interface ScheduledNotification {
   type: 'payout_reminder' | 'commission_summary' | 'system_maintenance' | 'broker_performance';
   recipientIds: string[];
   templateData: Record<string, any>;
-  recurring?: {
-    interval: 'daily' | 'weekly' | 'monthly';
-    nextExecution: Date;
-  } | undefined;
+  recurring?:
+    | {
+        interval: 'daily' | 'weekly' | 'monthly';
+        nextExecution: Date;
+      }
+    | undefined;
 }
 
 /**
@@ -38,13 +40,15 @@ export class NotificationQueue {
   /**
    * Agrega una notificación a la cola
    */
-  static async addToQueue(notification: Omit<QueuedNotification, 'id' | 'createdAt' | 'retryCount' | 'status'>): Promise<string> {
+  static async addToQueue(
+    notification: Omit<QueuedNotification, 'id' | 'createdAt' | 'retryCount' | 'status'>
+  ): Promise<string> {
     const queuedNotification: QueuedNotification = {
       ...notification,
       id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date(),
       retryCount: 0,
-      status: 'pending'
+      status: 'pending',
     };
 
     this.queue.push(queuedNotification);
@@ -56,7 +60,7 @@ export class NotificationQueue {
       id: queuedNotification.id,
       type: queuedNotification.type,
       priority: queuedNotification.priority,
-      scheduledFor: queuedNotification.scheduledFor
+      scheduledFor: queuedNotification.scheduledFor,
     });
 
     return queuedNotification.id;
@@ -89,9 +93,10 @@ export class NotificationQueue {
       );
 
       await Promise.allSettled(promises);
-
     } catch (error) {
-      logger.error('Error processing notification queue', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error processing notification queue', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       this.isProcessing = false;
     }
@@ -108,19 +113,19 @@ export class NotificationQueue {
       logger.debug('Processing notification', {
         id: notification.id,
         type: notification.type,
-        retryCount: notification.retryCount
+        retryCount: notification.retryCount,
       });
 
       // Procesar según el tipo de notificación
       switch (notification.type) {
         case 'commission':
-          await this.processCommissionNotification(notification.data as CommissionNotification);
+          await this.processCommissionNotification(notification.data);
           break;
         case 'system':
-          await this.processSystemNotification(notification.data as SystemNotification);
+          await this.processSystemNotification(notification.data);
           break;
         case 'scheduled':
-          await this.processScheduledNotification(notification.data as ScheduledNotification);
+          await this.processScheduledNotification(notification.data);
           break;
       }
 
@@ -130,14 +135,13 @@ export class NotificationQueue {
 
       logger.info('Notification processed successfully', {
         id: notification.id,
-        type: notification.type
+        type: notification.type,
       });
-
     } catch (error) {
       logger.error('Error processing notification', {
         id: notification.id,
         type: notification.type,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       notification.errorMessage = error instanceof Error ? error.message : String(error);
@@ -146,17 +150,19 @@ export class NotificationQueue {
       if (notification.retryCount < notification.maxRetries) {
         notification.status = 'pending';
         // Programar reintento con backoff exponencial
-        notification.scheduledFor = new Date(Date.now() + Math.pow(2, notification.retryCount) * 60000);
+        notification.scheduledFor = new Date(
+          Date.now() + Math.pow(2, notification.retryCount) * 60000
+        );
         logger.info('Notification scheduled for retry', {
           id: notification.id,
           retryCount: notification.retryCount,
-          nextAttempt: notification.scheduledFor
+          nextAttempt: notification.scheduledFor,
         });
       } else {
         notification.status = 'failed';
         logger.warn('Notification failed permanently', {
           id: notification.id,
-          maxRetries: notification.maxRetries
+          maxRetries: notification.maxRetries,
         });
       }
     }
@@ -165,7 +171,7 @@ export class NotificationQueue {
   /**
    * Procesa notificación de comisión
    */
-  private static async processCommissionNotification(data: CommissionNotification): Promise<void> {
+  private static async processCommissionNotification(data: any): Promise<void> {
     switch (data.type) {
       case 'commission_calculated':
         await NotificationService.notifyCommissionCalculated(data);
@@ -184,18 +190,18 @@ export class NotificationQueue {
   /**
    * Procesa notificación del sistema
    */
-  private static async processSystemNotification(data: SystemNotification): Promise<void> {
+  private static async processSystemNotification(data: any): Promise<void> {
     await NotificationService.notifySystemAlert(data);
   }
 
   /**
    * Procesa notificación programada
    */
-  private static async processScheduledNotification(data: ScheduledNotification): Promise<void> {
+  private static async processScheduledNotification(data: any): Promise<void> {
     // Aquí iría la lógica específica para cada tipo de notificación programada
     logger.info('Processing scheduled notification', {
       type: data.type,
-      recipientCount: data.recipientIds.length
+      recipientCount: data.recipientIds.length,
     });
 
     // Implementar lógica específica según el tipo
@@ -218,33 +224,33 @@ export class NotificationQueue {
   /**
    * Procesa recordatorio de payout
    */
-  private static async processPayoutReminder(data: ScheduledNotification): Promise<void> {
+  private static async processPayoutReminder(data: any): Promise<void> {
     // Lógica para enviar recordatorios de payouts pendientes
     logger.info('Sending payout reminders', {
-      recipientCount: data.recipientIds.length
+      recipientCount: data.recipientIds.length,
     });
   }
 
   /**
    * Procesa resumen de comisiones
    */
-  private static async processCommissionSummary(data: ScheduledNotification): Promise<void> {
+  private static async processCommissionSummary(data: any): Promise<void> {
     // Lógica para enviar resúmenes mensuales de comisiones
     logger.info('Sending commission summaries', {
-      recipientCount: data.recipientIds.length
+      recipientCount: data.recipientIds.length,
     });
   }
 
   /**
    * Procesa notificación de mantenimiento del sistema
    */
-  private static async processSystemMaintenance(data: ScheduledNotification): Promise<void> {
-    const notification: SystemNotification = {
+  private static async processSystemMaintenance(data: any): Promise<void> {
+    const notification: any = {
       type: 'system_maintenance',
       title: 'Mantenimiento Programado del Sistema',
       message: data.templateData.message || 'El sistema estará en mantenimiento próximamente.',
       severity: 'medium',
-      targetUsers: data.recipientIds
+      targetUsers: data.recipientIds,
     };
 
     await NotificationService.notifySystemAlert(notification);
@@ -253,10 +259,10 @@ export class NotificationQueue {
   /**
    * Procesa reporte de rendimiento de corredores
    */
-  private static async processBrokerPerformance(data: ScheduledNotification): Promise<void> {
+  private static async processBrokerPerformance(data: any): Promise<void> {
     // Lógica para enviar reportes de rendimiento a corredores
     logger.info('Sending broker performance reports', {
-      recipientCount: data.recipientIds.length
+      recipientCount: data.recipientIds.length,
     });
   }
 
@@ -269,7 +275,9 @@ export class NotificationQueue {
     this.queue.sort((a, b) => {
       // Primero por prioridad
       const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
-      if (priorityDiff !== 0) return priorityDiff;
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
 
       // Luego por fecha programada
       return a.scheduledFor.getTime() - b.scheduledFor.getTime();
@@ -323,7 +331,7 @@ export class NotificationQueue {
         commission: this.queue.filter(n => n.type === 'commission').length,
         system: this.queue.filter(n => n.type === 'system').length,
         scheduled: this.queue.filter(n => n.type === 'scheduled').length,
-      }
+      },
     };
 
     return stats;
@@ -341,10 +349,10 @@ export class NotificationQueue {
         data: {
           type: 'payout_reminder',
           recipientIds: [], // Se llenará dinámicamente
-          templateData: {}
+          templateData: {},
         },
         scheduledFor: this.getNextWeeklyExecution(),
-        maxRetries: 3
+        maxRetries: 3,
       });
 
       // Programar resúmenes mensuales de comisiones
@@ -354,16 +362,17 @@ export class NotificationQueue {
         data: {
           type: 'commission_summary',
           recipientIds: [],
-          templateData: {}
+          templateData: {},
         },
         scheduledFor: this.getNextMonthlyExecution(),
-        maxRetries: 3
+        maxRetries: 3,
       });
 
       logger.info('Recurring notifications scheduled');
-
     } catch (error) {
-      logger.error('Error scheduling recurring notifications', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error scheduling recurring notifications', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -395,7 +404,7 @@ export class NotificationQueue {
    * Limpia notificaciones completadas antiguas
    */
   static cleanupOldNotifications(maxAgeHours: number = 24): void {
-    const cutoffTime = Date.now() - (maxAgeHours * 60 * 60 * 1000);
+    const cutoffTime = Date.now() - maxAgeHours * 60 * 60 * 1000;
 
     const initialLength = this.queue.length;
     this.queue = this.queue.filter(notification => {
@@ -416,9 +425,12 @@ export class NotificationQueue {
 NotificationQueue.startProcessing();
 
 // Limpiar notificaciones antiguas cada hora
-setInterval(() => {
-  NotificationQueue.cleanupOldNotifications();
-}, 60 * 60 * 1000);
+setInterval(
+  () => {
+    NotificationQueue.cleanupOldNotifications();
+  },
+  60 * 60 * 1000
+);
 
 // Programar notificaciones recurrentes al inicio
 setTimeout(() => {

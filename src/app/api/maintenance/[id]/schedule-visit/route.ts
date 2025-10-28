@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
-import { NotificationService } from '@/lib/notification-service';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 
 /**
  * POST /api/maintenance/[id]/schedule-visit
@@ -166,20 +166,24 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Notificar al prestador sobre la visita programada
     try {
-      await NotificationService.notifyMaintenanceVisitScheduled({
-        recipientId: maintenance.maintenanceProvider.user.id,
-        recipientName: maintenance.maintenanceProvider.user.name,
-        recipientEmail: maintenance.maintenanceProvider.user.email,
-        maintenanceId: maintenance.id,
-        maintenanceTitle: maintenance.title,
-        propertyAddress: maintenance.property.address,
-        scheduledDate,
-        scheduledTime,
-        estimatedDuration,
-        contactPerson: contactPerson || maintenance.requester.name,
-        contactPhone: contactPhone || '',
-        specialInstructions,
-        scheduledBy: user.name || 'Sistema',
+      await NotificationService.create({
+        userId: maintenance.maintenanceProvider.user.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: 'Visita de Mantenimiento Programada',
+        message: `Se ha programado una visita para el mantenimiento: ${maintenance.title}`,
+        link: `/maintenance/jobs/${maintenance.id}`,
+        metadata: {
+          maintenanceId: maintenance.id,
+          maintenanceTitle: maintenance.title,
+          propertyAddress: maintenance.property.address,
+          scheduledDate,
+          scheduledTime,
+          estimatedDuration,
+          contactPerson: contactPerson || maintenance.requester.name,
+          contactPhone: contactPhone || '',
+          specialInstructions,
+          scheduledBy: user.name || 'Sistema',
+        },
       });
     } catch (notificationError) {
       logger.error('Error enviando notificación de visita al prestador:', {
@@ -191,20 +195,24 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Notificar al solicitante sobre la visita programada
     try {
-      await NotificationService.notifyMaintenanceVisitScheduled({
-        recipientId: maintenance.requester.id,
-        recipientName: maintenance.requester.name,
-        recipientEmail: maintenance.requester.email,
-        maintenanceId: maintenance.id,
-        maintenanceTitle: maintenance.title,
-        propertyAddress: maintenance.property.address,
-        scheduledDate,
-        scheduledTime,
-        estimatedDuration,
-        contactPerson: contactPerson || maintenance.requester.name,
-        contactPhone: contactPhone || '',
-        specialInstructions,
-        scheduledBy: user.name || 'Sistema',
+      await NotificationService.create({
+        userId: maintenance.requester.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: 'Visita de Mantenimiento Programada',
+        message: `Se ha programado una visita para su solicitud de mantenimiento: ${maintenance.title}`,
+        link: `/maintenance/${maintenance.id}`,
+        metadata: {
+          maintenanceId: maintenance.id,
+          maintenanceTitle: maintenance.title,
+          propertyAddress: maintenance.property.address,
+          scheduledDate,
+          scheduledTime,
+          estimatedDuration,
+          contactPerson: contactPerson || maintenance.requester.name,
+          contactPhone: contactPhone || '',
+          specialInstructions,
+          scheduledBy: user.name || 'Sistema',
+        },
       });
     } catch (notificationError) {
       logger.error('Error enviando notificación de visita al solicitante:', {

@@ -231,15 +231,17 @@ export async function POST(request: NextRequest) {
         ...(signatureResult.metadata?.expiresAt && {
           expiresAt: new Date(signatureResult.metadata.expiresAt),
         }),
-        metadata: JSON.stringify({
+        metametadata: JSON.stringify({
           ...(signatureResult.metadata || {}),
           isContractSignature: !!contract,
-          contractData: contract ? {
-            id: contract.id,
-            propertyId: contract.propertyId,
-            tenantId: contract.tenantId,
-            ownerId: contract.ownerId,
-          } : null,
+          contractData: contract
+            ? {
+                id: contract.id,
+                propertyId: contract.propertyId,
+                tenantId: contract.tenantId,
+                ownerId: contract.ownerId,
+              }
+            : null,
         }),
         signers: {
           create: signersToUse.map(signer => ({
@@ -247,7 +249,7 @@ export async function POST(request: NextRequest) {
             name: signer.name || '',
             role: determineSignerRole(signer, signersToUse.length),
             status: 'pending',
-            metadata: JSON.stringify({
+            metametadata: JSON.stringify({
               rut: signer.rut,
               phone: signer.phone || '',
               order: signer.order,

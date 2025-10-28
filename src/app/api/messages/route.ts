@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { z } from 'zod';
-import { NotificationService } from '@/lib/notification-service';
+import { NotificationService, NotificationType } from '@/lib/notification-service';
 import { getUserFromRequest } from '@/lib/auth-token-validator';
 
 const messageSchema = z.object({
@@ -351,7 +351,23 @@ export async function POST(request: NextRequest) {
         notificationData.contractId = contractId;
       }
 
-      await NotificationService.notifyNewMessage(notificationData);
+      await NotificationService.create({
+        userId: notificationData.recipientId,
+        type: NotificationType.NEW_MESSAGE,
+        title: `Nuevo mensaje: ${subject}`,
+        message: content.length > 100 ? content.substring(0, 100) + '...' : content,
+        link: `/messages/${message.id}`,
+        metadata: {
+          messageId: message.id,
+          senderId: notificationData.senderId,
+          senderName: notificationData.senderName,
+          subject,
+          content,
+          type: notificationData.type,
+          propertyId: notificationData.propertyId,
+          contractId: notificationData.contractId,
+        },
+      });
     } catch (notificationError) {
       // No fallar la respuesta si hay error en notificaciones
       logger.warn('Error sending message notification', { error: notificationError });

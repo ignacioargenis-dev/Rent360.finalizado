@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             title: 'Nuevo Reporte de Usuario',
             message: `${user.email} ha reportado a ${reportedUser.email} por ${reason}`,
             isRead: false,
-            data: JSON.stringify({
+            metadata: JSON.stringify({
               reportId: report.id,
               reportedUserId: reportedUserId,
               reason: reason,

@@ -2,7 +2,7 @@ import { db } from './db';
 import { logger } from './logger';
 import { BusinessLogicError, DatabaseError } from './errors';
 import { cacheManager, CacheKeys, SYSTEM_METRICS_TTL } from './cache';
-import { NotificationService } from './notification-service';
+import { NotificationService, NotificationType } from './notification-service';
 
 export interface CommissionConfig {
   defaultCommissionRate: number; // Porcentaje por defecto (ej: 5%)
@@ -186,12 +186,16 @@ export class CommissionService {
 
       // Enviar notificación automática de comisión calculada
       try {
-        await NotificationService.notifyCommissionCalculated({
-          brokerId: brokerIdToUse,
-          type: 'commission_calculated',
-          amount: totalCommission,
-          contractId,
+        await NotificationService.create({
+          userId: brokerIdToUse,
+          type: NotificationType.NEW_MESSAGE,
+          title: 'Comisión Calculada',
+          message: `Se ha calculado una comisión de $${totalCommission.toFixed(2)} por el contrato ${contract.contractNumber}`,
+          link: `/broker/commissions`,
           metadata: {
+            type: 'commission_calculated',
+            amount: totalCommission,
+            contractId,
             effectiveRate,
             propertyType: contract.property?.type || 'apartment',
             propertyValue,
@@ -438,11 +442,15 @@ export class CommissionService {
 
       // Enviar notificación de pago procesado
       try {
-        await NotificationService.notifyCommissionPaid({
-          brokerId,
-          type: 'commission_paid',
-          amount,
+        await NotificationService.create({
+          userId: brokerId,
+          type: NotificationType.NEW_MESSAGE,
+          title: 'Comisión Pagada',
+          message: `Se ha procesado el pago de comisión por $${amount.toFixed(2)}`,
+          link: `/broker/payments`,
           metadata: {
+            type: 'commission_paid',
+            amount,
             payoutId,
             processedAt: new Date(),
             paymentMethod: 'bank_transfer',

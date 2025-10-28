@@ -7,13 +7,10 @@ import { SignatureStatus } from '@/lib/signature';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Verificar que es una notificación válida
     if (!body.signatureId || !body.status) {
-      return NextResponse.json(
-        { error: 'Datos de webhook inválidos' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Datos de webhook inválidos' }, { status: 400 });
     }
 
     const { signatureId, status, provider, metadata } = body as {
@@ -29,10 +26,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!signature) {
-      return NextResponse.json(
-        { error: 'Firma no encontrada' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Firma no encontrada' }, { status: 404 });
     }
 
     // Mapear el estado del proveedor al estado interno
@@ -64,10 +58,10 @@ export async function POST(request: NextRequest) {
     await db.contractSignature.update({
       where: { id: signatureId },
       data: {
-        signatureData: JSON.stringify({
+        signaturemetadata: JSON.stringify({
           status: internalStatus,
           provider,
-          metadata: metadata ? metadata as Record<string, any> : {},
+          metadata: metadata ? (metadata as Record<string, any>) : {},
           updatedAt: new Date().toISOString(),
         }),
         updatedAt: new Date(),
@@ -80,7 +74,7 @@ export async function POST(request: NextRequest) {
       status: internalStatus,
       provider,
     };
-    
+
     await db.notification.create({
       data: {
         userId: signature.signerId, // Obtener el ID del firmante del contrato
@@ -88,7 +82,7 @@ export async function POST(request: NextRequest) {
         title: 'Actualización de Firma',
         message: `La firma del documento ha sido ${internalStatus}`,
         isRead: false,
-        data: JSON.stringify(notificationData),
+        metadata: JSON.stringify(notificationData),
         createdAt: new Date(),
       },
     });
@@ -97,9 +91,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Webhook procesado correctamente',
     });
-
   } catch (error) {
-    logger.error('Error processing signature webhook:', { 
+    logger.error('Error processing signature webhook:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

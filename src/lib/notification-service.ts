@@ -24,6 +24,11 @@ export enum NotificationType {
   PROSPECT_CONVERTED = 'PROSPECT_CONVERTED',
   PROSPECT_ACTIVITY = 'PROSPECT_ACTIVITY',
 
+  // Comisiones y Pagos
+  COMMISSION_CALCULATED = 'COMMISSION_CALCULATED',
+  COMMISSION_PAID = 'COMMISSION_PAID',
+  PAYOUT_READY = 'PAYOUT_READY',
+
   // General
   NEW_MESSAGE = 'NEW_MESSAGE',
   SYSTEM_ALERT = 'SYSTEM_ALERT',
@@ -354,6 +359,149 @@ export class NotificationService {
         error: error instanceof Error ? error.message : String(error),
         notificationId,
         userId,
+      });
+    }
+  }
+
+  /**
+   * Notifica cálculo de comisión
+   */
+  static async notifyCommissionCalculated(params: {
+    brokerId: string;
+    contractId: string;
+    amount: number;
+    effectiveRate: number;
+    propertyType?: string;
+    propertyValue?: number;
+    baseCommission?: number;
+    bonusCommission?: number;
+  }): Promise<void> {
+    try {
+      await this.create({
+        userId: params.brokerId,
+        type: NotificationType.COMMISSION_CALCULATED,
+        title: '💰 Comisión Calculada',
+        message: `Se ha calculado una comisión de $${params.amount.toFixed(2)} por tu gestión`,
+        link: '/broker/commissions',
+        metadata: {
+          contractId: params.contractId,
+          amount: params.amount,
+          effectiveRate: params.effectiveRate,
+          propertyType: params.propertyType,
+          propertyValue: params.propertyValue,
+          baseCommission: params.baseCommission,
+          bonusCommission: params.bonusCommission,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending commission calculated notification', {
+        error: error instanceof Error ? error.message : String(error),
+        brokerId: params.brokerId,
+      });
+    }
+  }
+
+  /**
+   * Notifica pago de comisión
+   */
+  static async notifyCommissionPaid(params: {
+    brokerId: string;
+    amount: number;
+    payoutId?: string;
+    processedAt?: Date;
+    paymentMethod?: string;
+  }): Promise<void> {
+    try {
+      await this.create({
+        userId: params.brokerId,
+        type: NotificationType.COMMISSION_PAID,
+        title: '💸 Comisión Pagada',
+        message: `Se ha procesado el pago de $${params.amount.toFixed(2)} a tu cuenta`,
+        link: '/broker/payments',
+        metadata: {
+          amount: params.amount,
+          payoutId: params.payoutId,
+          processedAt: params.processedAt,
+          paymentMethod: params.paymentMethod,
+        },
+        priority: 'high',
+      });
+    } catch (error) {
+      logger.error('Error sending commission paid notification', {
+        error: error instanceof Error ? error.message : String(error),
+        brokerId: params.brokerId,
+      });
+    }
+  }
+
+  /**
+   * Notifica payout listo
+   */
+  static async notifyPayoutReady(params: {
+    brokerId: string;
+    amount: number;
+    payoutId: string;
+    readyAt?: Date;
+  }): Promise<void> {
+    try {
+      await this.create({
+        userId: params.brokerId,
+        type: NotificationType.PAYOUT_READY,
+        title: '🎉 Payout Listo para Cobro',
+        message: `Tu payout de $${params.amount.toFixed(2)} está listo para ser cobrado`,
+        link: '/broker/payments',
+        metadata: {
+          amount: params.amount,
+          payoutId: params.payoutId,
+          readyAt: params.readyAt,
+        },
+        priority: 'medium',
+      });
+    } catch (error) {
+      logger.error('Error sending payout ready notification', {
+        error: error instanceof Error ? error.message : String(error),
+        brokerId: params.brokerId,
+      });
+    }
+  }
+
+  /**
+   * Notifica alerta del sistema
+   */
+  static async notifySystemAlert(params: {
+    type: string;
+    title: string;
+    message: string;
+    severity?: 'low' | 'medium' | 'high' | 'critical';
+    targetUsers?: string[];
+    metadata?: any;
+  }): Promise<void> {
+    try {
+      // Si hay targetUsers específicos, enviar a cada uno
+      if (params.targetUsers && params.targetUsers.length > 0) {
+        for (const userId of params.targetUsers) {
+          await this.create({
+            userId,
+            type: NotificationType.SYSTEM_ALERT,
+            title: `🚨 ${params.title}`,
+            message: params.message,
+            priority: params.severity === 'critical' ? 'high' : 'medium',
+            metadata: params.metadata,
+          });
+        }
+      } else {
+        // Si no hay targets específicos, enviar a todos los usuarios activos
+        // (esto sería implementado según necesidades específicas)
+        logger.warn('System alert without target users - implement broadcast logic if needed', {
+          alertType: params.type,
+          title: params.title,
+        });
+      }
+    } catch (error) {
+      logger.error('Error sending system alert notification', {
+        error: error instanceof Error ? error.message : String(error),
+        alertType: params.type,
       });
     }
   }

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         title: validatedData.title,
         message: validatedData.message,
         type: validatedData.type || 'INFO',
-        data: JSON.stringify({
+        metadata: JSON.stringify({
           recipientEmail: validatedData.recipientEmail,
           priority: validatedData.priority.toUpperCase(),
           channels: validatedData.channels.join(','),

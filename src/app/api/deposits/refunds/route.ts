@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
           title: 'Nueva Solicitud de Devolución de Depósito',
           message: `El inquilino ${contract.tenant?.name || 'Sin nombre'} ha solicitado la devolución del depósito de garantía por $${validatedData.requestedAmount.toLocaleString()}`,
           type: 'INFO',
-          data: JSON.stringify({
+          metametadata: JSON.stringify({
             refundId: refund.id,
             contractId: contract.id,
             amount: validatedData.requestedAmount,
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
           title: 'Solicitud de Devolución Creada',
           message: `Tu solicitud de devolución de depósito ha sido creada exitosamente. Número: ${refundNumber}`,
           type: 'SUCCESS',
-          data: JSON.stringify({
+          metametadata: JSON.stringify({
             refundId: refund.id,
             contractId: contract.id,
             refundNumber,

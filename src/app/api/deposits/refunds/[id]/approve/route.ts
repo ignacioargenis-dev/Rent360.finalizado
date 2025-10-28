@@ -12,10 +12,7 @@ const approveRefundSchema = z.object({
 });
 
 // POST - Aprobar devolución
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -32,18 +29,15 @@ export async function POST(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos según el rol
@@ -74,10 +68,7 @@ export async function POST(
 
     // Verificar que la solicitud no esté procesada
     if (refund.status === 'PROCESSED') {
-      return NextResponse.json(
-        { error: 'La devolución ya ha sido procesada' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'La devolución ya ha sido procesada' }, { status: 400 });
     }
 
     // Verificar que no hay disputas activas
@@ -85,9 +76,9 @@ export async function POST(
       where: {
         refundId: id,
         status: {
-          in: ['OPEN', 'UNDER_MEDIATION']
-        }
-      }
+          in: ['OPEN', 'UNDER_MEDIATION'],
+        },
+      },
     });
 
     if (activeDisputes > 0) {
@@ -113,9 +104,9 @@ export async function POST(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     // Actualizar el estado de aprobación en la solicitud
@@ -150,11 +141,11 @@ export async function POST(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     // Crear log de auditoría
@@ -166,12 +157,12 @@ export async function POST(
         details: `${approvalReason}: ${validatedData.approved ? 'Aprobado' : 'Rechazado'}${validatedData.comments ? ` - ${validatedData.comments}` : ''}`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones
     const otherPartyId = user.id === refund.tenantId ? refund.ownerId : refund.tenantId;
-    
+
     await Promise.all([
       // Notificar al otro usuario
       db.notification.create({
@@ -180,41 +171,43 @@ export async function POST(
           title: validatedData.approved ? 'Devolución Aprobada' : 'Devolución Rechazada',
           message: `${user.name} ha ${validatedData.approved ? 'aprobado' : 'rechazado'} la devolución${validatedData.comments ? `: ${validatedData.comments}` : ''}`,
           type: validatedData.approved ? 'SUCCESS' : 'WARNING',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             approved: validatedData.approved,
             comments: validatedData.comments,
             approvedBy: user.name,
           }),
-        }
+        },
       }),
       // Si ambas partes aprobaron, notificar que está lista para procesar
-      ...(updatedRefund.status === 'APPROVED' ? [
-        db.notification.create({
-          data: {
-            userId: refund.tenantId,
-            title: 'Devolución Lista para Procesar',
-            message: 'Ambas partes han aprobado la devolución. Está lista para ser procesada.',
-            type: 'SUCCESS',
-            data: JSON.stringify({
-              refundId: id,
-              status: 'APPROVED',
+      ...(updatedRefund.status === 'APPROVED'
+        ? [
+            db.notification.create({
+              data: {
+                userId: refund.tenantId,
+                title: 'Devolución Lista para Procesar',
+                message: 'Ambas partes han aprobado la devolución. Está lista para ser procesada.',
+                type: 'SUCCESS',
+                metadata: JSON.stringify({
+                  refundId: id,
+                  status: 'APPROVED',
+                }),
+              },
             }),
-          }
-        }),
-        db.notification.create({
-          data: {
-            userId: refund.ownerId,
-            title: 'Devolución Lista para Procesar',
-            message: 'Ambas partes han aprobado la devolución. Está lista para ser procesada.',
-            type: 'SUCCESS',
-            data: JSON.stringify({
-              refundId: id,
-              status: 'APPROVED',
+            db.notification.create({
+              data: {
+                userId: refund.ownerId,
+                title: 'Devolución Lista para Procesar',
+                message: 'Ambas partes han aprobado la devolución. Está lista para ser procesada.',
+                type: 'SUCCESS',
+                metadata: JSON.stringify({
+                  refundId: id,
+                  status: 'APPROVED',
+                }),
+              },
             }),
-          }
-        })
-      ] : [])
+          ]
+        : []),
     ]);
 
     logger.info('Devolución aprobada:', {
@@ -231,9 +224,8 @@ export async function POST(
         approval,
         refund: updatedRefund,
       },
-      message: `Devolución ${validatedData.approved ? 'aprobada' : 'rechazada'} exitosamente`
+      message: `Devolución ${validatedData.approved ? 'aprobada' : 'rechazada'} exitosamente`,
     });
-
   } catch (error) {
     logger.error('Error aprobando devolución:', {
       error: error instanceof Error ? error.message : String(error),
@@ -248,9 +240,6 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
