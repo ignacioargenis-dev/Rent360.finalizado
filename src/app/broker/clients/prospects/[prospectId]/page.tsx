@@ -117,55 +117,48 @@ export default function ProspectDetailPage() {
     try {
       setLoading(true);
 
-      // Mock data - in a real app, this would come from an API
-      const mockProspects: Prospect[] = [
-        {
-          id: '1',
-          name: 'María González',
-          email: 'maria.gonzalez@email.com',
-          phone: '+56912345678',
-          interestedIn: ['departamento', 'casa'],
-          budget: { min: 800000, max: 1200000 },
-          preferredLocation: 'Providencia',
-          status: 'qualified',
-          source: 'website',
-          createdAt: '2024-01-15T10:30:00Z',
-          lastContact: '2024-01-20T14:15:00Z',
-          notes: 'Interesada en propiedades de 2-3 dormitorios. Prefiere vista al parque.',
-          ownerName: 'Carlos Rodríguez',
-          ownerEmail: 'carlos.rodriguez@email.com',
-          ownerPhone: '+56987654321',
-          propertyId: '1',
-          propertyTitle: 'Depto. 3D + 2B Providencia',
-          followUpDate: '2024-01-25T10:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'Pedro Sánchez',
-          email: 'pedro.sanchez@email.com',
-          phone: '+56955556666',
-          interestedIn: ['departamento'],
-          budget: { min: 600000, max: 900000 },
-          preferredLocation: 'Las Condes',
-          status: 'active',
-          source: 'referral',
-          createdAt: '2024-01-18T09:45:00Z',
-          lastContact: '2024-01-22T11:30:00Z',
-          notes: 'Busca primera vivienda. Tiene buen historial crediticio.',
-          followUpDate: '2024-01-28T15:00:00Z',
-        },
-      ];
+      // Obtener datos reales del prospecto desde la API
+      const response = await fetch(`/api/broker/clients/prospects/${prospectId}`);
+      if (response.ok) {
+        const data = await response.json();
 
-      const foundProspect = mockProspects.find(p => p.id === prospectId);
-      if (foundProspect) {
-        setProspect(foundProspect);
+        // Transformar datos de la API al formato esperado
+        const prospectData: Prospect = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          interestedIn: data.properties?.map((p: any) => p.type).filter(Boolean) || [
+            'departamento',
+          ],
+          budget: {
+            min: 500000, // Valor por defecto
+            max: 2000000, // Valor por defecto
+          },
+          preferredLocation: data.city || data.commune || data.region || 'Sin especificar',
+          status: 'active', // Por defecto para usuarios reales
+          source: 'platform', // Fuente: plataforma Rent360
+          createdAt: data.createdAt,
+          lastContact: data.updatedAt || data.createdAt,
+          notes: `Usuario registrado en Rent360. ${data.stats?.totalProperties || 0} propiedades publicadas. ${data.stats?.totalContracts || 0} contratos realizados.`,
+          ownerName: data.name,
+          ownerEmail: data.email,
+          ownerPhone: data.phone || '',
+          followUpDate: undefined,
+        };
+
+        setProspect(prospectData);
         setEditForm({
-          status: foundProspect.status,
-          notes: foundProspect.notes || '',
-          followUpDate: foundProspect.followUpDate || '',
+          status: prospectData.status,
+          notes: prospectData.notes || '',
+          followUpDate: prospectData.followUpDate || '',
         });
       } else {
-        setErrorMessage('Prospecto no encontrado');
+        if (response.status === 404) {
+          setErrorMessage('Prospecto no encontrado');
+        } else {
+          setErrorMessage('Error al cargar los datos del prospecto');
+        }
       }
     } catch (error) {
       logger.error('Error loading prospect data:', { error });
