@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * API para recomendaciones inteligentes de leads
@@ -394,12 +395,27 @@ export async function POST(request: NextRequest) {
       generated: newRecommendations.length,
     });
 
+    const ownersCount = newRecommendations.filter(r => r.leadType === 'OWNER_LEAD').length;
+    const tenantsCount = newRecommendations.filter(r => r.leadType === 'TENANT_LEAD').length;
+
+    // Notificar si se generaron recomendaciones
+    if (newRecommendations.length > 0) {
+      await NotificationService.notifyNewRecommendations({
+        brokerId,
+        count: newRecommendations.length,
+        ownersCount,
+        tenantsCount,
+      }).catch(err => {
+        logger.error('Error sending recommendations notification', { error: err });
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         generated: newRecommendations.length,
-        owners: newRecommendations.filter(r => r.leadType === 'OWNER_LEAD').length,
-        tenants: newRecommendations.filter(r => r.leadType === 'TENANT_LEAD').length,
+        owners: ownersCount,
+        tenants: tenantsCount,
       },
       message: `Se generaron ${newRecommendations.length} nuevas recomendaciones`,
     });

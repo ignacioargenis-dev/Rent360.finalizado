@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { CommissionValidator } from '@/lib/commission-validator';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * API para gestionar invitaciones de corredores a usuarios
@@ -142,6 +144,21 @@ export async function POST(request: NextRequest) {
       type: data.invitationType,
     });
 
+    // Validar comisión propuesta
+    if (data.proposedRate !== undefined && data.proposedRate !== null) {
+      const validation = await CommissionValidator.validateProposedCommission(data.proposedRate);
+      if (!validation.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: validation.error,
+            maxCommissionRate: validation.maxRate,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Verificar que el usuario existe
     const targetUser = await db.user.findUnique({
       where: { id: data.userId },
@@ -228,8 +245,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Enviar notificación al usuario
-    // await sendInvitationNotification(invitation);
+    // Enviar notificación al usuario
+    await NotificationService.notifyInvitationReceived({
+      userId: data.userId,
+      brokerName: session.user.name || 'Un corredor',
+      brokerId,
+      invitationType: data.invitationType,
+      invitationId: invitation.id,
+    }).catch(err => {
+      logger.error('Error sending invitation notification', { error: err });
+      // No fallar la creación si falla la notificación
+    });
 
     logger.info('✅ Invitation created', {
       brokerId,

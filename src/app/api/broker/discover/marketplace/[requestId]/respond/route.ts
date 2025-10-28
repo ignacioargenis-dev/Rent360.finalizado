@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { CommissionValidator } from '@/lib/commission-validator';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * API para responder a solicitudes de servicio
@@ -42,6 +44,21 @@ export async function POST(request: NextRequest, { params }: { params: { request
       brokerId,
       requestId,
     });
+
+    // Validar comisión propuesta
+    if (data.proposedRate !== undefined && data.proposedRate !== null) {
+      const validation = await CommissionValidator.validateProposedCommission(data.proposedRate);
+      if (!validation.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: validation.error,
+            maxCommissionRate: validation.maxRate,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Verificar que la solicitud existe y está abierta
     const serviceRequest = await db.brokerServiceRequest.findUnique({
@@ -130,8 +147,17 @@ export async function POST(request: NextRequest, { params }: { params: { request
       return response;
     });
 
-    // TODO: Enviar notificación al usuario
-    // await sendResponseNotification(serviceRequest, result);
+    // Enviar notificación al usuario
+    await NotificationService.notifyServiceRequestResponse({
+      userId: serviceRequest.userId,
+      brokerName: session.user.name || 'Un corredor',
+      brokerId,
+      requestId,
+      requestTitle: serviceRequest.title,
+    }).catch(err => {
+      logger.error('Error sending response notification', { error: err });
+      // No fallar la creación si falla la notificación
+    });
 
     logger.info('✅ Response created', {
       brokerId,

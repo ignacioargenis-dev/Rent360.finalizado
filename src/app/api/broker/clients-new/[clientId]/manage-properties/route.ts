@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { z } from 'zod';
+import { CommissionValidator } from '@/lib/commission-validator';
 
 // Forzar renderizado dinámico
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,22 @@ export async function POST(request: NextRequest, { params }: { params: { clientI
 
     // Validar datos
     const validatedData = managePropertiesSchema.parse(body);
+
+    // Validar comisión propuesta
+    if (validatedData.commissionRate !== undefined && validatedData.commissionRate !== null) {
+      const validation = await CommissionValidator.validateProposedCommission(
+        validatedData.commissionRate
+      );
+      if (!validation.valid) {
+        return NextResponse.json(
+          {
+            error: validation.error,
+            maxCommissionRate: validation.maxRate,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Verificar que el cliente existe y pertenece al corredor
     const client = await db.brokerClient.findUnique({

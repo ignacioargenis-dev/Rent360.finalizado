@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * API para que el usuario acepte/rechace respuestas de corredores
@@ -106,6 +107,17 @@ export async function PATCH(
           },
         });
 
+        // Notificar al corredor
+        await NotificationService.notifyResponseAccepted({
+          brokerId: response.brokerId,
+          userName: session.user.name || 'Un usuario',
+          userId: session.user.id,
+          requestId,
+          requestTitle: serviceRequest.title,
+        }).catch(err => {
+          logger.error('Error sending acceptance notification', { error: err });
+        });
+
         message = `Has aceptado la propuesta de ${response.broker.name}`;
         break;
 
@@ -114,6 +126,17 @@ export async function PATCH(
           status: 'REJECTED',
           respondedAt: new Date(),
         };
+
+        // Notificar al corredor
+        await NotificationService.notifyResponseRejected({
+          brokerId: response.brokerId,
+          userName: session.user.name || 'Un usuario',
+          userId: session.user.id,
+          requestId,
+        }).catch(err => {
+          logger.error('Error sending rejection notification', { error: err });
+        });
+
         message = 'Respuesta rechazada';
         break;
     }

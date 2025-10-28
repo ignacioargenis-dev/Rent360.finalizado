@@ -1,196 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { logger } from '@/lib/logger-minimal';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { NotificationService } from '@/lib/notification-service';
+import { logger } from '@/lib/logger';
 
+/**
+ * API para gestionar notificaciones del usuario
+ */
+
+/**
+ * GET - Obtener notificaciones no leídas
+ */
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    const session = await getServerSession(authOptions);
 
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const unreadOnly = searchParams.get('unreadOnly') === 'true';
-
-    // Construir filtros
-    const whereClause: any = {
-      userId: user.id,
-    };
-
-    if (unreadOnly) {
-      whereClause.read = false;
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
     }
 
-    // Obtener notificaciones del usuario
-    const notifications = await db.notification.findMany({
-      where: whereClause,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
-    });
-
-    // Contar notificaciones no leídas
-    const unreadCount = await db.notification.count({
-      where: {
-        userId: user.id,
-        isRead: false,
-      },
-    });
-
-    // Transformar datos al formato esperado
-    const transformedNotifications = notifications.map(notification => ({
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      read: notification.isRead,
-      createdAt: notification.createdAt.toISOString(),
-      data: notification.data ? JSON.parse(notification.data) : null,
-    }));
-
-    logger.info('Notificaciones obtenidas', {
-      userId: user.id,
-      count: transformedNotifications.length,
-      unreadCount,
-      unreadOnly,
-    });
+    const userId = session.user.id;
+    const notifications = await NotificationService.getUnread(userId);
 
     return NextResponse.json({
       success: true,
-      data: transformedNotifications,
-      unreadCount,
-      pagination: {
-        limit,
-        offset,
-        total: notifications.length,
-        hasMore: notifications.length === limit,
-      },
+      data: notifications,
+      count: notifications.length,
     });
-  } catch (error) {
-    logger.error('Error obteniendo notificaciones:', {
-      error: error instanceof Error ? error.message : String(error),
+  } catch (error: any) {
+    logger.error('Error fetching notifications', {
+      error: error.message,
+      stack: error.stack,
     });
 
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Error interno del servidor',
-      },
+      { success: false, error: 'Error al obtener notificaciones' },
       { status: 500 }
     );
   }
 }
 
+/**
+ * POST - Marcar todas como leídas
+ */
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
-    const body = await request.json();
+    const session = await getServerSession(authOptions);
 
-    const { title, message, type, metadata } = body;
-
-    // Validar campos requeridos
-    if (!title || !message || !type) {
-      return NextResponse.json(
-        { error: 'Campos requeridos: title, message, type' },
-        { status: 400 }
-      );
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
     }
 
-    // Crear notificación
-    const notification = await db.notification.create({
-      data: {
-        userId: user.id,
-        title,
-        message,
-        type,
-        data: metadata ? JSON.stringify(metadata) : null,
-        isRead: false,
-      },
-    });
+    const body = await request.json();
+    const { action } = body;
 
-    logger.info('Notificación creada', {
-      userId: user.id,
-      notificationId: notification.id,
-      type,
-    });
+    if (action === 'markAllRead') {
+      const count = await NotificationService.markAllAsRead(session.user.id);
+      return NextResponse.json({
+        success: true,
+        message: `${count} notificaciones marcadas como leídas`,
+      });
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        read: notification.isRead,
-        createdAt: notification.createdAt.toISOString(),
-        data: notification.data ? JSON.parse(notification.data) : null,
-      },
-    });
-  } catch (error) {
-    logger.error('Error creando notificación:', {
-      error: error instanceof Error ? error.message : String(error),
+    return NextResponse.json({ success: false, error: 'Acción no válida' }, { status: 400 });
+  } catch (error: any) {
+    logger.error('Error in notifications POST', {
+      error: error.message,
+      stack: error.stack,
     });
 
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Error interno del servidor',
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await requireAuth(request);
-    const body = await request.json();
-
-    const { notificationId, read } = body;
-
-    if (!notificationId || typeof read !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Campos requeridos: notificationId, read' },
-        { status: 400 }
-      );
-    }
-
-    // Actualizar notificación
-    const notification = await db.notification.update({
-      where: {
-        id: notificationId,
-        userId: user.id, // Asegurar que el usuario es el propietario
-      },
-      data: {
-        isRead: read,
-      },
-    });
-
-    logger.info('Notificación actualizada', {
-      userId: user.id,
-      notificationId,
-      read,
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: notification.id,
-        read: notification.isRead,
-      },
-    });
-  } catch (error) {
-    logger.error('Error actualizando notificación:', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Error interno del servidor',
-      },
+      { success: false, error: 'Error al procesar solicitud' },
       { status: 500 }
     );
   }
