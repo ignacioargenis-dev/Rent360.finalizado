@@ -41,7 +41,7 @@ class WebSocketClient {
       for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
         if (name === 'auth-token' || name === 'next-auth.session-token') {
-          return decodeURIComponent(value);
+          return value ? decodeURIComponent(value) : null;
         }
       }
       return null;
