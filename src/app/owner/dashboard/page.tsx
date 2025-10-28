@@ -152,9 +152,16 @@ export default function OwnerDashboard() {
         const pendingPayments = payments.filter((p: any) => p.status === 'PENDING').length;
         const totalTenants = contracts.length; // Usar contratos activos reales, no propiedades con status RENTED
 
-        // ✅ CORREGIDO: Calcular tasa de ocupación basada en contratos activos vs total de propiedades
+        // ✅ CORREGIDO: Calcular tasa de ocupación basada en propiedades con contratos activos
+        // Una propiedad está ocupada si tiene al menos un contrato activo
+        const occupiedProperties = properties.filter((prop: any) =>
+          contracts.some(
+            (contract: any) => contract.propertyId === prop.id && contract.status === 'ACTIVE'
+          )
+        ).length;
+
         const occupancyRate =
-          properties.length > 0 ? (contracts.length / properties.length) * 100 : 0;
+          properties.length > 0 ? (occupiedProperties / properties.length) * 100 : 0;
 
         // Calcular rating promedio
         const ratings = properties.flatMap((p: any) => p.reviews || []);

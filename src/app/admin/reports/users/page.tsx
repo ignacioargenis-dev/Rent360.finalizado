@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,46 +188,68 @@ export default function AdminUsersReportsPage() {
           },
         ];
 
-        setUserReports(mockUserReports);
+        // Obtener datos reales de usuarios desde la API
+        const response = await fetch('/api/admin/reports/users');
+        if (response.ok) {
+          const data = await response.json();
+          setUserReports(data.userReports || []);
+          setStats(
+            data.userStats || {
+              totalUsers: 0,
+              activeUsers: 0,
+              newUsersThisMonth: 0,
+              usersByRole: {},
+              verificationRate: 0,
+              averageActivityScore: 0,
+              topActiveUsers: [],
+              userGrowthTrend: [],
+            }
+          );
+        } else {
+          // Fallback a datos mock si falla la API
+          logger.warn('Failed to fetch real user reports, using mock data');
+          setUserReports(mockUserReports);
 
-        // Calculate stats
-        const activeUsers = mockUserReports.filter(u => u.status === 'active').length;
-        const newUsersThisMonth = mockUserReports.filter(
-          u => new Date(u.createdAt).getMonth() === new Date().getMonth()
-        ).length;
-        const verifiedUsers = mockUserReports.filter(u => u.verified).length;
-        const totalActivityScore = mockUserReports.reduce((sum, u) => sum + u.activityScore, 0);
-        const averageActivityScore = totalActivityScore / mockUserReports.length;
+          // Calculate stats
+          const activeUsers = mockUserReports.filter(u => u.status === 'active').length;
+          const newUsersThisMonth = mockUserReports.filter(
+            u => new Date(u.createdAt).getMonth() === new Date().getMonth()
+          ).length;
+          const verifiedUsers = mockUserReports.filter(u => u.verified).length;
+          const totalActivityScore = mockUserReports.reduce((sum, u) => sum + u.activityScore, 0);
+          const averageActivityScore = totalActivityScore / mockUserReports.length;
 
-        const usersByRole: { [key: string]: number } = {};
-        mockUserReports.forEach(u => {
-          usersByRole[u.role] = (usersByRole[u.role] || 0) + 1;
-        });
+          const usersByRole: { [key: string]: number } = {};
+          mockUserReports.forEach(u => {
+            usersByRole[u.role] = (usersByRole[u.role] || 0) + 1;
+          });
 
-        const verificationRate = (verifiedUsers / mockUserReports.length) * 100;
-        const topActiveUsers = [...mockUserReports]
-          .sort((a, b) => b.activityScore - a.activityScore)
-          .slice(0, 5);
+          const verificationRate = (verifiedUsers / mockUserReports.length) * 100;
+          const topActiveUsers = [...mockUserReports]
+            .sort((a, b) => b.activityScore - a.activityScore)
+            .slice(0, 5);
 
-        const userStats: UserStats = {
-          totalUsers: mockUserReports.length,
-          activeUsers,
-          newUsersThisMonth,
-          usersByRole,
-          verificationRate,
-          averageActivityScore,
-          topActiveUsers,
-          userGrowthTrend: [
-            { month: 'Ene', count: 15 },
-            { month: 'Feb', count: 18 },
-            { month: 'Mar', count: 22 },
-            { month: 'Abr', count: 25 },
-            { month: 'May', count: 28 },
-            { month: 'Jun', count: 32 },
-          ],
-        };
+          const userStats: UserStats = {
+            totalUsers: mockUserReports.length,
+            activeUsers,
+            newUsersThisMonth,
+            usersByRole,
+            verificationRate,
+            averageActivityScore,
+            topActiveUsers,
+            userGrowthTrend: [
+              { month: 'Ene', count: 15 },
+              { month: 'Feb', count: 18 },
+              { month: 'Mar', count: 22 },
+              { month: 'Abr', count: 25 },
+              { month: 'May', count: 28 },
+              { month: 'Jun', count: 32 },
+            ],
+          };
 
-        setStats(userStats);
+          setStats(userStats);
+        }
+
         setLoading(false);
       } catch (error) {
         logger.error('Error loading user reports data:', {

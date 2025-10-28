@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
@@ -194,32 +193,52 @@ export default function AdminPaymentsProvidersPage() {
           },
         ];
 
-        setPayouts(mockPayouts);
+        // Obtener datos reales de pagos a proveedores desde la API
+        const response = await fetch('/api/admin/payments/providers');
+        if (response.ok) {
+          const data = await response.json();
+          setPayouts(data.payouts || []);
+          setStats(
+            data.stats || {
+              totalPayouts: 0,
+              totalAmount: 0,
+              pendingPayouts: 0,
+              completedThisMonth: 0,
+              averagePayoutAmount: 0,
+              successRate: 0,
+            }
+          );
+        } else {
+          // Fallback a datos mock si falla la API
+          logger.warn('Failed to fetch real provider payouts, using mock data');
+          setPayouts(mockPayouts);
 
-        // Calculate stats
-        const completedPayouts = mockPayouts.filter(p => p.status === 'completed');
-        const pendingPayouts = mockPayouts.filter(p => p.status === 'pending').length;
-        const totalAmount = completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0);
-        const thisMonthPayouts = completedPayouts.filter(
-          p => new Date(p.paymentDate!).getMonth() === new Date().getMonth()
-        ).length;
-        const averageAmount =
-          completedPayouts.length > 0
-            ? completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0) /
-              completedPayouts.length
-            : 0;
-        const successRate = (completedPayouts.length / mockPayouts.length) * 100;
+          // Calculate stats
+          const completedPayouts = mockPayouts.filter(p => p.status === 'completed');
+          const pendingPayouts = mockPayouts.filter(p => p.status === 'pending').length;
+          const totalAmount = completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0);
+          const thisMonthPayouts = completedPayouts.filter(
+            p => new Date(p.paymentDate!).getMonth() === new Date().getMonth()
+          ).length;
+          const averageAmount =
+            completedPayouts.length > 0
+              ? completedPayouts.reduce((sum, payout) => sum + payout.totalAmount, 0) /
+                completedPayouts.length
+              : 0;
+          const successRate = (completedPayouts.length / mockPayouts.length) * 100;
 
-        const payoutStats: PayoutStats = {
-          totalPayouts: mockPayouts.length,
-          totalAmount,
-          pendingPayouts,
-          completedThisMonth: thisMonthPayouts,
-          averagePayoutAmount: averageAmount,
-          successRate,
-        };
+          const payoutStats: PayoutStats = {
+            totalPayouts: mockPayouts.length,
+            totalAmount,
+            pendingPayouts,
+            completedThisMonth: thisMonthPayouts,
+            averagePayoutAmount: averageAmount,
+            successRate,
+          };
 
-        setStats(payoutStats);
+          setStats(payoutStats);
+        }
+
         setLoading(false);
       } catch (error) {
         logger.error('Error loading payout data:', {

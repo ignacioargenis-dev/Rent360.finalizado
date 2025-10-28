@@ -3,7 +3,6 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 
@@ -157,9 +156,20 @@ export default function AdminFinancialReportsPage() {
         { category: 'Otros', amount: 290000, percentage: 8, budget: 300000, variance: -3.33 },
       ];
 
-      setFinancialData(mockFinancialData);
-      setRevenueByCategory(mockRevenueByCategory);
-      setExpenses(mockExpenses);
+      // Obtener datos financieros reales de la base de datos
+      const response = await fetch('/api/admin/reports/financial');
+      if (response.ok) {
+        const data = await response.json();
+        setFinancialData(data.financialData || []);
+        setRevenueByCategory(data.revenueByCategory || []);
+        setExpenses(data.expenses || []);
+      } else {
+        // Fallback a datos mock si falla la API
+        logger.warn('Failed to fetch real financial data, using mock data');
+        setFinancialData(mockFinancialData);
+        setRevenueByCategory(mockRevenueByCategory);
+        setExpenses(mockExpenses);
+      }
     } catch (error) {
       logger.error('Error fetching financial data:', {
         error: error instanceof Error ? error.message : String(error),

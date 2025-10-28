@@ -3,19 +3,25 @@
 // Forzar renderizado dinámico para evitar prerendering de páginas protegidas
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import {
-  Building, 
-  Search, 
-  Filter, 
+  Building,
+  Search,
+  Filter,
   Download,
   Eye,
   Edit,
@@ -30,10 +36,9 @@ import {
   Home,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { User } from '@/types';
-
 
 interface PropertySummary {
   id: string;
@@ -69,6 +74,7 @@ interface PropertyStats {
 }
 
 export default function AdminPropertiesReports() {
+  const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
 
@@ -104,7 +110,9 @@ export default function AdminPropertiesReports() {
           setUser(data.user);
         }
       } catch (error) {
-        logger.error('Error loading user data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading user data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -118,7 +126,7 @@ export default function AdminPropertiesReports() {
         if (response.ok) {
           const data = await response.json();
           const propertiesData = data.properties;
-          
+
           // Transform property data
           const transformedProperties: PropertySummary[] = propertiesData.map((property: any) => ({
             id: property.id,
@@ -130,39 +138,58 @@ export default function AdminPropertiesReports() {
             bedrooms: property.bedrooms || 0,
             bathrooms: property.bathrooms || 0,
             area: property.area || 0,
-            owner: property.ownerName || 'Sin asignar',
-            ownerEmail: property.ownerEmail || '',
+            owner: property.owner?.name || 'Sin asignar',
+            ownerEmail: property.owner?.email || '',
             createdAt: property.createdAt,
             lastUpdated: property.updatedAt || property.createdAt,
             views: property.views || 0,
             inquiries: property.inquiries || 0,
             rating: property.rating || 0,
-            imagesCount: property.imagesCount || 0,
+            imagesCount: property.images?.length || 0,
           }));
 
           setProperties(transformedProperties);
 
           // Calculate stats
-          const availableProperties = propertiesData.filter((p: any) => (p.status || 'available') === 'available').length;
+          const availableProperties = propertiesData.filter(
+            (p: any) => (p.status || 'available') === 'available'
+          ).length;
           const rentedProperties = propertiesData.filter((p: any) => p.status === 'rented').length;
-          const maintenanceProperties = propertiesData.filter((p: any) => p.status === 'maintenance').length;
-          const pendingProperties = propertiesData.filter((p: any) => p.status === 'pending').length;
-          
-          const totalPrice = propertiesData.reduce((sum: number, p: any) => sum + (p.price || 0), 0);
+          const maintenanceProperties = propertiesData.filter(
+            (p: any) => p.status === 'maintenance'
+          ).length;
+          const pendingProperties = propertiesData.filter(
+            (p: any) => p.status === 'pending'
+          ).length;
+
+          const totalPrice = propertiesData.reduce(
+            (sum: number, p: any) => sum + (p.price || 0),
+            0
+          );
           const averagePrice = propertiesData.length > 0 ? totalPrice / propertiesData.length : 0;
-          
-          const totalViews = propertiesData.reduce((sum: number, p: any) => sum + (p.views || 0), 0);
-          const totalInquiries = propertiesData.reduce((sum: number, p: any) => sum + (p.inquiries || 0), 0);
-          
-          const totalRating = propertiesData.reduce((sum: number, p: any) => sum + (p.rating || 0), 0);
+
+          const totalViews = propertiesData.reduce(
+            (sum: number, p: any) => sum + (p.views || 0),
+            0
+          );
+          const totalInquiries = propertiesData.reduce(
+            (sum: number, p: any) => sum + (p.inquiries || 0),
+            0
+          );
+
+          const totalRating = propertiesData.reduce(
+            (sum: number, p: any) => sum + (p.rating || 0),
+            0
+          );
           const averageRating = propertiesData.length > 0 ? totalRating / propertiesData.length : 0;
-          
+
           // Calculate top property type
           const typeCounts: { [key: string]: number } = {};
           propertiesData.forEach((p: any) => {
             typeCounts[p.type || 'departamento'] = (typeCounts[p.type || 'departamento'] || 0) + 1;
           });
-          const topPropertyType = Object.entries(typeCounts).reduce((a, b) => a[1] > b[1] ? a : b)?.[0] || 'Sin tipo';
+          const topPropertyType =
+            Object.entries(typeCounts).reduce((a, b) => (a[1] > b[1] ? a : b))?.[0] || 'Sin tipo';
 
           setStats({
             totalProperties: propertiesData.length,
@@ -178,7 +205,9 @@ export default function AdminPropertiesReports() {
           });
         }
       } catch (error) {
-        logger.error('Error loading properties data:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading properties data:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       } finally {
         setLoading(false);
       }
@@ -220,36 +249,55 @@ export default function AdminPropertiesReports() {
   };
 
   const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.owner.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.owner.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     const matchesType = typeFilter === 'all' || property.type === typeFilter;
-    
+
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const exportToCSV = () => {
-    const headers = ['Título', 'Dirección', 'Precio', 'Estado', 'Tipo', 'Dormitorios', 'Baños', 'Área', 'Propietario', 'Email Propietario', 'Fecha Creación', 'Vistas', 'Consultas', 'Calificación', 'Imágenes'];
+    const headers = [
+      'Título',
+      'Dirección',
+      'Precio',
+      'Estado',
+      'Tipo',
+      'Dormitorios',
+      'Baños',
+      'Área',
+      'Propietario',
+      'Email Propietario',
+      'Fecha Creación',
+      'Vistas',
+      'Consultas',
+      'Calificación',
+      'Imágenes',
+    ];
     const csvContent = [
       headers.join(','),
-      ...filteredProperties.map(property => [
-        property.title,
-        property.address,
-        formatPrice(property.price),
-        property.status,
-        property.type,
-        property.bedrooms,
-        property.bathrooms,
-        property.area,
-        property.owner,
-        property.ownerEmail,
-        formatDate(property.createdAt),
-        property.views,
-        property.inquiries,
-        property.rating.toFixed(1),
-        property.imagesCount,
-      ].join(',')),
+      ...filteredProperties.map(property =>
+        [
+          property.title,
+          property.address,
+          formatPrice(property.price),
+          property.status,
+          property.type,
+          property.bedrooms,
+          property.bathrooms,
+          property.area,
+          property.owner,
+          property.ownerEmail,
+          formatDate(property.createdAt),
+          property.views,
+          property.inquiries,
+          property.rating.toFixed(1),
+          property.imagesCount,
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -265,6 +313,16 @@ export default function AdminPropertiesReports() {
     }
   };
 
+  const handleViewProperty = (propertyId: string) => {
+    // Navegar a la página de detalles de la propiedad
+    router.push(`/admin/properties/${propertyId}`);
+  };
+
+  const handleEditProperty = (propertyId: string) => {
+    // Navegar a la página de edición de la propiedad
+    router.push(`/admin/properties/${propertyId}/edit`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -275,7 +333,10 @@ export default function AdminPropertiesReports() {
   }
 
   return (
-    <UnifiedDashboardLayout title="Reportes de Propiedades" subtitle="Análisis detallado de propiedades del sistema">
+    <UnifiedDashboardLayout
+      title="Reportes de Propiedades"
+      subtitle="Análisis detallado de propiedades del sistema"
+    >
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -326,7 +387,9 @@ export default function AdminPropertiesReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Precio Promedio</p>
-                  <p className="text-2xl font-bold text-purple-600">{formatPrice(stats.averagePrice)}</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatPrice(stats.averagePrice)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-purple-600" />
@@ -343,7 +406,9 @@ export default function AdminPropertiesReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Vistas</p>
-                  <p className="text-2xl font-bold text-indigo-600">{stats.totalViews.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {stats.totalViews.toLocaleString()}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
                   <Eye className="w-6 h-6 text-indigo-600" />
@@ -371,7 +436,9 @@ export default function AdminPropertiesReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Calificación Promedio</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.averageRating.toFixed(1)}</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {stats.averageRating.toFixed(1)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <Star className="w-6 h-6 text-yellow-600" />
@@ -385,7 +452,9 @@ export default function AdminPropertiesReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Tipo Más Popular</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{stats.topPropertyType}</p>
+                  <p className="text-lg font-bold text-gray-900 capitalize">
+                    {stats.topPropertyType}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-teal-600" />
@@ -417,12 +486,12 @@ export default function AdminPropertiesReports() {
                   <Input
                     placeholder="Buscar por título, dirección o propietario..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
               </div>
-              
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filtrar por estado" />
@@ -435,7 +504,7 @@ export default function AdminPropertiesReports() {
                   <SelectItem value="pending">Pendiente</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filtrar por tipo" />
@@ -466,7 +535,7 @@ export default function AdminPropertiesReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProperties.map((property) => (
+                  {filteredProperties.map(property => (
                     <tr key={property.id} className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-4 py-2">
                         <div>
@@ -488,7 +557,9 @@ export default function AdminPropertiesReports() {
                       </td>
                       <td className="border border-gray-300 px-4 py-2">
                         <div className="text-sm">
-                          <div>{property.bedrooms} dorm • {property.bathrooms} baños</div>
+                          <div>
+                            {property.bedrooms} dorm • {property.bathrooms} baños
+                          </div>
                           <div>{property.area} m²</div>
                           <div className="text-xs text-gray-500 capitalize">{property.type}</div>
                         </div>
@@ -517,10 +588,20 @@ export default function AdminPropertiesReports() {
                       </td>
                       <td className="border border-gray-300 px-4 py-2">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewProperty(property.id)}
+                            title="Ver detalles"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditProperty(property.id)}
+                            title="Editar propiedad"
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                         </div>
@@ -542,6 +623,3 @@ export default function AdminPropertiesReports() {
     </UnifiedDashboardLayout>
   );
 }
-
-
-
