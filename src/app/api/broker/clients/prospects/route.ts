@@ -88,6 +88,28 @@ export async function GET(request: NextRequest) {
           },
           take: 5,
         },
+        // Obtener contratos para análisis de perfil
+        contractsAsOwner: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+        contractsAsTenant: {
+          select: {
+            id: true,
+            status: true,
+            monthlyRent: true,
+            startDate: true,
+            endDate: true,
+            property: {
+              select: {
+                title: true,
+                address: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
