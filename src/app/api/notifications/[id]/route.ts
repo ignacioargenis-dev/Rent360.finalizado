@@ -1,111 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { notificationService } from '@/lib/notifications';
-import { handleApiError } from '@/lib/api-error-handler';
+import { NotificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger-minimal';
 
-export async function GET(
+/**
+ * PATCH - Marcar notificación como leída
+ */
+export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth(request);
     const notificationId = params.id;
 
-    // Obtener notificación específica
-    const notification = await notificationService.getUserNotifications(
-      user.id,
-      { limit: 1, offset: 0 },
-    ).then(notifications => 
-      notifications.find(n => n.id === notificationId),
-    );
-
-    if (!notification) {
-      return NextResponse.json(
-        { error: 'Notificación no encontrada' },
-        { status: 404 },
-      );
-    }
+    await NotificationService.markAsRead(notificationId, user.id);
 
     return NextResponse.json({
       success: true,
-      data: notification,
+      message: 'Notificación marcada como leída',
     });
-
-  } catch (error) {
-    return handleApiError(error, 'GET /api/notifications/[id]');
-  }
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
-  try {
-    const user = await requireAuth(request);
-    const notificationId = params.id;
-    const body = await request.json();
-
-    if (body.action === 'markAsRead') {
-      await notificationService.markAsRead(notificationId);
-      
-      logger.info('Notificación marcada como leída', { 
-        notificationId, 
-        userId: user.id, 
-      });
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Notificación marcada como leída',
-      });
-    }
+  } catch (error: any) {
+    logger.error('Error marking notification as read', {
+      error: error.message,
+      stack: error.stack,
+    });
 
     return NextResponse.json(
-      { error: 'Acción no válida' },
-      { status: 400 },
+      { success: false, error: 'Error al marcar notificación' },
+      { status: 500 }
     );
-
-  } catch (error) {
-    return handleApiError(error, 'GET /api/notifications/[id]');
   }
 }
 
+/**
+ * DELETE - Eliminar notificación
+ */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth(request);
     const notificationId = params.id;
 
-    // Verificar que la notificación pertenece al usuario
-    const notification = await notificationService.getUserNotifications(
-      user.id,
-      { limit: 1, offset: 0 },
-    ).then(notifications => 
-      notifications.find(n => n.id === notificationId),
-    );
-
-    if (!notification) {
-      return NextResponse.json(
-        { error: 'Notificación no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Eliminar notificación (implementación simulada)
-    // En una implementación real, esto eliminaría de la base de datos
-    logger.info('Notificación eliminada', { 
-      notificationId, 
-      userId: user.id, 
-    });
+    await NotificationService.delete(notificationId, user.id);
 
     return NextResponse.json({
       success: true,
       message: 'Notificación eliminada',
     });
+  } catch (error: any) {
+    logger.error('Error deleting notification', {
+      error: error.message,
+      stack: error.stack,
+    });
 
-  } catch (error) {
-    return handleApiError(error, 'GET /api/notifications/[id]');
+    return NextResponse.json(
+      { success: false, error: 'Error al eliminar notificación' },
+      { status: 500 }
+    );
   }
 }
