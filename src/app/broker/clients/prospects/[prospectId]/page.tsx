@@ -129,6 +129,7 @@ export default function ProspectDetailPage() {
           name: data.name,
           email: data.email,
           phone: data.phone || '',
+          role: data.role || 'TENANT',
           interestedIn: data.properties?.map((p: any) => p.type).filter(Boolean) || [
             'departamento',
           ],
@@ -142,10 +143,23 @@ export default function ProspectDetailPage() {
           createdAt: data.createdAt,
           lastContact: data.updatedAt || data.createdAt,
           notes: `Usuario registrado en Rent360. ${data.stats?.totalProperties || 0} propiedades publicadas. ${data.stats?.totalContracts || 0} contratos realizados.`,
+          avatar: data.avatar,
+          // Información específica por rol
+          ...(data.role === 'OWNER'
+            ? {
+                portfolioStats: data.portfolioStats,
+                recentProperties: data.recentProperties,
+              }
+            : {}),
+          ...(data.role === 'TENANT'
+            ? {
+                searchProfile: data.searchProfile,
+              }
+            : {}),
           ownerName: data.name,
           ownerEmail: data.email,
           ownerPhone: data.phone || '',
-          followUpDate: undefined,
+          followUpDate: null,
         };
 
         setProspect(prospectData);
