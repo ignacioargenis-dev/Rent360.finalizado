@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
       area: property.area,
       type: property.type,
       status: property.status,
-      features: property.features ? JSON.parse(property.features) : [],
+      features: property.features ? JSON.parse(String(property.features)) : [],
       images: property.images
         ? (Array.isArray(property.images) ? property.images : JSON.parse(property.images))
             .map((img: string) => {
@@ -232,18 +232,9 @@ export async function GET(request: NextRequest) {
                 return true;
               }
 
-              // Para URLs locales, verificar si el archivo existe
-              try {
-                const logical = imgPath.replace(/^\/api\//, '');
-                const fullPath = require('path').join(
-                  process.cwd(),
-                  'public',
-                  logical.replace(/^uploads\//, 'uploads/')
-                );
-                return require('fs').existsSync(fullPath);
-              } catch {
-                return false;
-              }
+              // Para URLs locales, siempre incluir por ahora (simplificación)
+              // TODO: Implementar verificación de existencia de archivos de forma segura
+              return true;
             })
             .map((imgPath: string) => {
               // No agregar timestamp a URLs de cloud storage
