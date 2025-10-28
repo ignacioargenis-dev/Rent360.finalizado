@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       where: { id: contractId },
       data: {
         status: internalStatus,
-        metametadata: JSON.stringify(updatedMetadata),
+        metametametadata: JSON.stringify(updatedMetadata),
       },
     });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           data: {
             status: signer.status === 'signed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metametadata: JSON.stringify({
+            metametametadata: JSON.stringify({
               ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata
                 ? JSON.parse(
                     existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}'

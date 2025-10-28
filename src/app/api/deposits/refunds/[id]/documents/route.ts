@@ -17,10 +17,7 @@ const uploadDocumentSchema = z.object({
 });
 
 // POST - Subir documento
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -36,24 +33,19 @@ export async function POST(
           include: {
             tenant: true,
             owner: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para subir documentos a esta solicitud' },
         { status: 403 }
@@ -84,7 +76,7 @@ export async function POST(
       'image/jpg',
       'image/png',
       'image/gif',
-      'image/webp'
+      'image/webp',
     ];
 
     if (!allowedMimeTypes.includes(validatedData.mimeType)) {
@@ -114,9 +106,9 @@ export async function POST(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     // Crear log de auditoría
@@ -128,25 +120,25 @@ export async function POST(
         details: `Documento subido: ${validatedData.fileName} (${validatedData.documentType})`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones
     const otherPartyId = user.id === refund.tenantId ? refund.ownerId : refund.tenantId;
-    
+
     await db.notification.create({
       data: {
         userId: otherPartyId,
         title: 'Nuevo Documento Subido',
         message: `${user.name} ha subido un nuevo documento: ${validatedData.fileName}`,
         type: 'INFO',
-        data: JSON.stringify({
+        metadata: JSON.stringify({
           refundId: id,
           documentId: document.id,
           documentType: validatedData.documentType,
           uploadedBy: user.name,
         }),
-      }
+      },
     });
 
     logger.info('Documento subido:', {
@@ -160,9 +152,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       data: document,
-      message: 'Documento subido exitosamente'
+      message: 'Documento subido exitosamente',
     });
-
   } catch (error) {
     logger.error('Error subiendo documento:', {
       error: error instanceof Error ? error.message : String(error),
@@ -177,18 +168,12 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // GET - Listar documentos
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -202,20 +187,15 @@ export async function GET(
       include: {
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver documentos de esta solicitud' },
         { status: 403 }
@@ -239,9 +219,9 @@ export async function GET(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     logger.info('Documentos listados:', {
@@ -253,9 +233,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: documents
+      data: documents,
     });
-
   } catch (error) {
     logger.error('Error listando documentos:', {
       error: error instanceof Error ? error.message : String(error),
@@ -263,9 +242,6 @@ export async function GET(
       userId: request.headers.get('user-id'),
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

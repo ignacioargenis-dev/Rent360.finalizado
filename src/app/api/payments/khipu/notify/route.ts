@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
                 title: 'Pago Completado',
                 message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
                 type: 'SUCCESS',
-                metadata: JSON.stringify({
+                metametadata: JSON.stringify({
                   payment_id: payment.id,
                   amount: amount,
                   currency: currency,

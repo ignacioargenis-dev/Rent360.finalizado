@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     await db.contractSignature.update({
       where: { id: signatureId },
       data: {
-        signaturemetadata: JSON.stringify({
+        signaturemetametadata: JSON.stringify({
           status: internalStatus,
           provider,
           metadata: metadata ? (metadata as Record<string, any>) : {},
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         title: 'Actualización de Firma',
         message: `La firma del documento ha sido ${internalStatus}`,
         isRead: false,
-        metadata: JSON.stringify(notificationData),
+        metametadata: JSON.stringify(notificationData),
         createdAt: new Date(),
       },
     });

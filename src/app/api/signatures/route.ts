@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         ...(signatureResult.metadata?.expiresAt && {
           expiresAt: new Date(signatureResult.metadata.expiresAt),
         }),
-        metametadata: JSON.stringify({
+        metametametadata: JSON.stringify({
           ...(signatureResult.metadata || {}),
           isContractSignature: !!contract,
           contractData: contract
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
             name: signer.name || '',
             role: determineSignerRole(signer, signersToUse.length),
             status: 'pending',
-            metametadata: JSON.stringify({
+            metametametadata: JSON.stringify({
               rut: signer.rut,
               phone: signer.phone || '',
               order: signer.order,

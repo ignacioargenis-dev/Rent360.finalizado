@@ -19,10 +19,7 @@ const resolveDisputeSchema = z.object({
 });
 
 // POST - Crear disputa
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -38,24 +35,19 @@ export async function POST(
           include: {
             tenant: true,
             owner: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos: solo inquilino, propietario o admin pueden crear disputas
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para crear disputas en esta solicitud' },
         { status: 403 }
@@ -76,9 +68,9 @@ export async function POST(
         refundId: id,
         disputeType: validatedData.disputeType,
         status: {
-          in: ['OPEN', 'UNDER_MEDIATION']
-        }
-      }
+          in: ['OPEN', 'UNDER_MEDIATION'],
+        },
+      },
     });
 
     if (existingDispute) {
@@ -105,15 +97,15 @@ export async function POST(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     // Actualizar estado de la solicitud a DISPUTED
     await db.depositRefund.update({
       where: { id },
-      data: { status: 'DISPUTED' }
+      data: { status: 'DISPUTED' },
     });
 
     // Crear log de auditoría
@@ -125,12 +117,12 @@ export async function POST(
         details: `Disputa creada: ${validatedData.disputeType} - $${validatedData.amount}`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones
     const otherPartyId = user.id === refund.tenantId ? refund.ownerId : refund.tenantId;
-    
+
     await Promise.all([
       // Notificar al otro usuario
       db.notification.create({
@@ -139,32 +131,34 @@ export async function POST(
           title: 'Nueva Disputa Creada',
           message: `${user.name} ha creado una disputa por $${validatedData.amount}: ${validatedData.description}`,
           type: 'WARNING',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             disputeId: dispute.id,
             disputeType: validatedData.disputeType,
             amount: validatedData.amount,
             initiatedBy: user.name,
           }),
-        }
+        },
       }),
       // Notificar a administradores si no es admin quien creó la disputa
-      ...(user.role !== 'ADMIN' ? [
-        db.notification.create({
-          data: {
-            userId: 'admin', // Esto debería ser el ID de un admin específico o usar un sistema de notificaciones para admins
-            title: 'Nueva Disputa Requiere Mediación',
-            message: `Disputa creada en solicitud ${refund.refundNumber} por ${user.name}`,
-            type: 'WARNING',
-            data: JSON.stringify({
-              refundId: id,
-              disputeId: dispute.id,
-              disputeType: validatedData.disputeType,
-              amount: validatedData.amount,
+      ...(user.role !== 'ADMIN'
+        ? [
+            db.notification.create({
+              data: {
+                userId: 'admin', // Esto debería ser el ID de un admin específico o usar un sistema de notificaciones para admins
+                title: 'Nueva Disputa Requiere Mediación',
+                message: `Disputa creada en solicitud ${refund.refundNumber} por ${user.name}`,
+                type: 'WARNING',
+                metadata: JSON.stringify({
+                  refundId: id,
+                  disputeId: dispute.id,
+                  disputeType: validatedData.disputeType,
+                  amount: validatedData.amount,
+                }),
+              },
             }),
-          }
-        })
-      ] : [])
+          ]
+        : []),
     ]);
 
     logger.info('Disputa creada:', {
@@ -178,9 +172,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       data: dispute,
-      message: 'Disputa creada exitosamente'
+      message: 'Disputa creada exitosamente',
     });
-
   } catch (error) {
     logger.error('Error creando disputa:', {
       error: error instanceof Error ? error.message : String(error),
@@ -195,18 +188,12 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 // GET - Listar disputas
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -220,20 +207,15 @@ export async function GET(
       include: {
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver disputas de esta solicitud' },
         { status: 403 }
@@ -257,7 +239,7 @@ export async function GET(
             name: true,
             email: true,
             role: true,
-          }
+          },
         },
         resolver: {
           select: {
@@ -265,9 +247,9 @@ export async function GET(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     logger.info('Disputas listadas:', {
@@ -279,9 +261,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: disputes
+      data: disputes,
     });
-
   } catch (error) {
     logger.error('Error listando disputas:', {
       error: error instanceof Error ? error.message : String(error),
@@ -289,9 +270,6 @@ export async function GET(
       userId: request.headers.get('user-id'),
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

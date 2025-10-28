@@ -18,14 +18,11 @@ export async function DELETE(
       include: {
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Obtener el documento
@@ -38,16 +35,13 @@ export async function DELETE(
             name: true,
             email: true,
             role: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!document) {
-      return NextResponse.json(
-        { error: 'Documento no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 });
     }
 
     // Verificar que el documento pertenece a la solicitud
@@ -76,7 +70,7 @@ export async function DELETE(
 
     // Eliminar el documento
     await db.refundDocument.delete({
-      where: { id: docId }
+      where: { id: docId },
     });
 
     // Crear log de auditoría
@@ -88,25 +82,25 @@ export async function DELETE(
         details: `Documento eliminado: ${document.fileName} (${document.documentType})`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificación al otro usuario
     const otherPartyId = user.id === refund.tenantId ? refund.ownerId : refund.tenantId;
-    
+
     await db.notification.create({
       data: {
         userId: otherPartyId,
         title: 'Documento Eliminado',
         message: `${user.name} ha eliminado el documento: ${document.fileName}`,
         type: 'WARNING',
-        data: JSON.stringify({
+        metadata: JSON.stringify({
           refundId,
           documentId: docId,
           documentType: document.documentType,
           deletedBy: user.name,
         }),
-      }
+      },
     });
 
     logger.info('Documento eliminado:', {
@@ -119,9 +113,8 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Documento eliminado exitosamente'
+      message: 'Documento eliminado exitosamente',
     });
-
   } catch (error) {
     logger.error('Error eliminando documento:', {
       error: error instanceof Error ? error.message : String(error),
@@ -130,9 +123,6 @@ export async function DELETE(
       userId: request.headers.get('user-id'),
     });
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
