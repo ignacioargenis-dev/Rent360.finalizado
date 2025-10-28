@@ -51,6 +51,7 @@ export default function DemoFase1Page() {
     loading: recommendationsLoading,
     generateRecommendations,
   } = useRecommendations();
+
   const {
     notify,
     success,

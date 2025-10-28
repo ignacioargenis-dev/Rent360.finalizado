@@ -31,9 +31,25 @@ class WebSocketClient {
       process.env.NEXT_PUBLIC_WS_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
+    // Obtener token de cookies en lugar de localStorage
+    const getTokenFromCookies = (): string | null => {
+      if (typeof document === 'undefined') {
+        return null;
+      }
+
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'auth-token' || name === 'next-auth.session-token') {
+          return decodeURIComponent(value);
+        }
+      }
+      return null;
+    };
+
     this.socket = io(serverUrl, {
       auth: {
-        token: token || localStorage.getItem('authToken'),
+        token: token || getTokenFromCookies(),
       },
       transports: ['websocket', 'polling'],
       timeout: 20000,
