@@ -1389,7 +1389,7 @@ Equipo Rent360`,
       // Crear notificación push a través de WebSocket
       const notificationData = {
         id: `msg_${messageData.messageId}`,
-        type: 'new_message',
+        type: 'message_received',
         title: 'Nuevo mensaje',
         message: `Tienes un nuevo mensaje de ${messageData.senderName}`,
         data: {
@@ -1397,13 +1397,31 @@ Equipo Rent360`,
           senderId: messageData.senderId,
           senderName: messageData.senderName,
           subject: messageData.subject,
+          content: messageData.content,
           type: messageData.type,
           propertyId: messageData.propertyId,
           contractId: messageData.contractId,
         },
         priority: 'medium' as const,
+        timestamp: new Date(),
         userId: messageData.recipientId,
       };
+
+      // Enviar notificación WebSocket en tiempo real
+      try {
+        const WebSocketServer = (global as any).websocketServer;
+        if (WebSocketServer && WebSocketServer.sendToUser) {
+          WebSocketServer.sendToUser(messageData.recipientId, 'new-message', notificationData);
+          logger.info('WebSocket notification sent for new message', {
+            recipientId: messageData.recipientId,
+            messageId: messageData.messageId,
+          });
+        } else {
+          logger.warn('WebSocket server not available for real-time notifications');
+        }
+      } catch (wsError) {
+        logger.error('Error sending WebSocket notification', { error: wsError });
+      }
 
       // Enviar notificación en tiempo real
       await this.sendNotification({

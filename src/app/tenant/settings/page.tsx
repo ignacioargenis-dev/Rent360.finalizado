@@ -48,6 +48,7 @@ import {
   Upload,
   Download,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import type { User } from '@/types';
 
@@ -68,6 +69,7 @@ interface TenantSettings {
     phone: string;
     emergencyContact: string;
     emergencyPhone: string;
+    avatar: string;
   };
   notifications: {
     emailNotifications: boolean;
@@ -93,6 +95,7 @@ export default function TenantSettingsPage() {
       phone: '',
       emergencyContact: '',
       emergencyPhone: '',
+      avatar: '',
     },
     notifications: {
       emailNotifications: true,
@@ -118,6 +121,7 @@ export default function TenantSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -143,6 +147,7 @@ export default function TenantSettingsPage() {
                 phone: data.user?.phone || '',
                 emergencyContact: '',
                 emergencyPhone: '',
+                avatar: data.user?.avatar || '',
               },
             }));
           }
@@ -287,6 +292,111 @@ export default function TenantSettingsPage() {
       setSaving(false);
       // Reset file input
       event.target.value = '';
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      setErrorMessage('');
+
+      logger.info('Subiendo avatar:', { fileName: file.name, size: file.size });
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el avatar');
+      }
+
+      const data = await response.json();
+
+      // Actualizar estado local
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          avatar: data.avatar.url,
+        },
+      }));
+
+      // Actualizar estado del usuario
+      setUser(prev => (prev ? { ...prev, avatar: data.avatar.url } : null));
+
+      setSuccessMessage('Avatar actualizado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      logger.info('Avatar subido exitosamente');
+    } catch (error) {
+      logger.error('Error subiendo avatar:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al subir el avatar. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      setUploadingAvatar(true);
+      setErrorMessage('');
+
+      logger.info('Eliminando avatar');
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar el avatar');
+      }
+
+      // Actualizar estado local
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          avatar: '',
+        },
+      }));
+
+      // Actualizar estado del usuario
+      setUser(prev => (prev ? { ...prev, avatar: '' } : null));
+
+      setSuccessMessage('Avatar eliminado exitosamente');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      logger.info('Avatar eliminado exitosamente');
+    } catch (error) {
+      logger.error('Error eliminando avatar:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al eliminar el avatar. Por favor, inténtalo nuevamente.'
+      );
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -443,6 +553,86 @@ export default function TenantSettingsPage() {
                       onChange={e => updateProfile('phone', e.target.value)}
                       placeholder="+56 9 1234 5678"
                     />
+                  </div>
+                </div>
+
+                {/* Sección de Avatar */}
+                <div className="space-y-4">
+                  <Label>Foto de Perfil</Label>
+                  <div className="flex items-center gap-4">
+                    {user?.avatar && user.avatar.trim() !== '' ? (
+                      <img
+                        src={user.avatar}
+                        alt="Foto de perfil"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+                        <UserIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={uploadingAvatar}
+                          asChild
+                        >
+                          <label className="cursor-pointer">
+                            <Upload className="w-4 h-4 mr-2" />
+                            {uploadingAvatar ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Subiendo...
+                              </>
+                            ) : (
+                              'Subir Foto'
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleAvatarUpload}
+                              className="hidden"
+                              disabled={uploadingAvatar}
+                            />
+                          </label>
+                        </Button>
+
+                        {user?.avatar && user.avatar.trim() !== '' && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(user.avatar, '_blank')}
+                            disabled={uploadingAvatar}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver
+                          </Button>
+                        )}
+
+                        {user?.avatar && user.avatar.trim() !== '' && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAvatarDelete}
+                            disabled={uploadingAvatar}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </Button>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-500">
+                        Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
