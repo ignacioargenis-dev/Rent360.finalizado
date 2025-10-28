@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
           where: {
             OR: [
               { contract: { ownerId: user.id } }, // Pagos a propietarios
-              { userId: user.id }, // Pagos directos al usuario
+              { payerId: user.id }, // Pagos realizados por el usuario
             ],
             status: 'COMPLETED',
           },

@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
         select: {
           amount: true,
           status: true,
-          type: true,
         },
       });
 
@@ -85,6 +84,11 @@ export async function GET(request: NextRequest) {
             createdAt: { gte: startDate },
           },
           include: {
+            tenant: {
+              select: {
+                name: true,
+              },
+            },
             payments: {
               where: {
                 status: 'COMPLETED',

@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     if (period) {
       // Filtrar por periodo (formato YYYY-MM)
       const [year, month] = period.split('-');
-      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const endDate = new Date(parseInt(year), parseInt(month), 0);
+      const startDate = new Date(parseInt(year!), parseInt(month!) - 1, 1);
+      const endDate = new Date(parseInt(year!), parseInt(month!), 0);
 
       where.createdAt = {
         gte: startDate,
