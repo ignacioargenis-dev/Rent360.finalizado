@@ -391,7 +391,7 @@ export default function TenantContractsPage() {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span>Depósito: {formatPrice((contract as any).depositAmount || 0)}</span>
+                        <span>Depósito: {formatPrice(contract.depositAmount || 0)}</span>
                       </div>
                     </div>
                   </div>
@@ -473,7 +473,7 @@ export default function TenantContractsPage() {
                                 <div className="flex justify-between">
                                   <span className="text-sm text-muted-foreground">Depósito:</span>
                                   <span className="font-medium">
-                                    {formatPrice((contract as any).depositAmount || 0)}
+                                    {formatPrice(contract.depositAmount || 0)}
                                   </span>
                                 </div>
                               </CardContent>

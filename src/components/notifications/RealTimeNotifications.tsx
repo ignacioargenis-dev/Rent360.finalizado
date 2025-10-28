@@ -20,14 +20,21 @@ import {
   Users,
   Settings,
   Wifi,
-  WifiOff
+  WifiOff,
 } from 'lucide-react';
 import { useWebSocket } from '@/lib/websocket/socket-client';
 import { useToast } from '@/components/notifications/NotificationSystem';
 
 interface NotificationItem {
   id: string;
-  type: 'contract_created' | 'payment_received' | 'message_received' | 'property_updated' | 'system_alert' | 'contract_signed' | 'payment_overdue';
+  type:
+    | 'contract_created'
+    | 'payment_received'
+    | 'message_received'
+    | 'property_updated'
+    | 'system_alert'
+    | 'contract_signed'
+    | 'payment_overdue';
   title: string;
   message: string;
   data?: any;
@@ -51,12 +58,14 @@ export default function RealTimeNotifications() {
         const parsed = JSON.parse(savedNotifications);
         const notificationsWithDates = parsed.map((n: any) => ({
           ...n,
-          timestamp: new Date(n.timestamp)
+          timestamp: new Date(n.timestamp),
         }));
         setNotifications(notificationsWithDates);
         setUnreadCount(notificationsWithDates.filter((n: NotificationItem) => !n.read).length);
       } catch (error) {
-        logger.error('Error loading notifications:', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Error loading notifications:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   }, []);
@@ -72,7 +81,7 @@ export default function RealTimeNotifications() {
         data: wsNotif.data,
         priority: wsNotif.priority || 'medium',
         timestamp: new Date(wsNotif.timestamp || Date.now()),
-        read: false
+        read: false,
       }));
 
       setNotifications(prev => {
@@ -105,17 +114,13 @@ export default function RealTimeNotifications() {
 
   const markAsRead = (notificationId: string) => {
     setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
+      prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
     setUnreadCount(0);
   };
 
@@ -178,10 +183,18 @@ export default function RealTimeNotifications() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return 'Ahora';
-    if (minutes < 60) return `Hace ${minutes}m`;
-    if (hours < 24) return `Hace ${hours}h`;
-    if (days < 7) return `Hace ${days}d`;
+    if (minutes < 1) {
+      return 'Ahora';
+    }
+    if (minutes < 60) {
+      return `Hace ${minutes}m`;
+    }
+    if (hours < 24) {
+      return `Hace ${hours}h`;
+    }
+    if (days < 7) {
+      return `Hace ${days}d`;
+    }
 
     return timestamp.toLocaleDateString();
   };
@@ -217,7 +230,7 @@ export default function RealTimeNotifications() {
 
       {/* Panel de notificaciones */}
       {showPanel && (
-        <Card className="absolute top-12 right-0 w-96 max-h-96 shadow-lg border-0 z-50">
+        <Card className="absolute top-8 right-0 w-96 max-h-96 shadow-lg border z-50">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -226,27 +239,20 @@ export default function RealTimeNotifications() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="text-xs"
-                  >
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs">
                     Marcar todas como leídas
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPanel(false)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setShowPanel(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+              />
               <span className="text-sm text-gray-600">
                 {isConnected ? 'Conectado' : 'Desconectado'}
               </span>
@@ -268,7 +274,7 @@ export default function RealTimeNotifications() {
               <>
                 <ScrollArea className="h-64">
                   <div className="space-y-1">
-                    {notifications.map((notification) => (
+                    {notifications.map(notification => (
                       <div
                         key={notification.id}
                         className={`p-3 border-l-4 ${getPriorityColor(notification.priority || 'low')} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}

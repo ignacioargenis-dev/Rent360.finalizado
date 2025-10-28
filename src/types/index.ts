@@ -166,7 +166,7 @@ export interface Contract {
   startDate: Date;
   endDate: Date;
   monthlyRent: number;
-  deposit: number;
+  depositAmount: number;
   status: 'DRAFT' | 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'CANCELLED';
   terms?: string;
   createdAt: Date;

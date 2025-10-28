@@ -3,10 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
 
@@ -72,23 +69,58 @@ export async function GET(
       user.role === 'ADMIN';
 
     if (!hasPermission) {
-      return NextResponse.json({ error: 'No tienes permisos para descargar este contrato' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'No tienes permisos para descargar este contrato' },
+        { status: 403 }
+      );
     }
 
     // Generar HTML del contrato
     const htmlContent = generateContractHTML(contract);
 
     // Usar puppeteer para generar PDF real
+    logger.info('Iniciando generación de PDF para contrato:', contractId);
+
     const puppeteer = await import('puppeteer');
-    const browser = await puppeteer.default.launch({
+
+    // Configuración especial para diferentes entornos
+    const launchOptions = {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+      ],
+    };
+
+    // En desarrollo, usar configuración más simple
+    if (process.env.NODE_ENV === 'development') {
+      launchOptions.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+    }
+
+    logger.info('Configuración de Puppeteer:', {
+      env: process.env.NODE_ENV,
+      args: launchOptions.args,
     });
 
+    const browser = await puppeteer.default.launch(launchOptions);
+
     try {
+      logger.info('Creando nueva página en Puppeteer');
       const page = await browser.newPage();
+
+      logger.info('Configurando contenido HTML');
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
+      // Agregar un pequeño delay para asegurar que el contenido se renderice
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      logger.info('Generando PDF');
       // Generar PDF
       const pdfBuffer = await page.pdf({
         format: 'A4',
@@ -97,10 +129,11 @@ export async function GET(
           top: '1cm',
           right: '1cm',
           bottom: '1cm',
-          left: '1cm'
-        }
+          left: '1cm',
+        },
       });
 
+      logger.info('PDF generado exitosamente, tamaño:', pdfBuffer.length);
       await browser.close();
 
       // Devolver el PDF real
@@ -110,19 +143,47 @@ export async function GET(
           'Content-Disposition': `attachment; filename="contrato-${contract.contractNumber || contract.id}.pdf"`,
         },
       });
-    } catch (error) {
+    } catch (pdfError) {
+      logger.error('Error generando PDF:', {
+        error: pdfError instanceof Error ? pdfError.message : String(pdfError),
+        contractId: params.id,
+      });
       await browser.close();
-      throw error;
+      throw pdfError;
     }
-
   } catch (error) {
-    logger.error('Error generando PDF del contrato:', {
+    logger.error('Error completo generando PDF del contrato:', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       contractId: params.id,
+      userId: user.id,
+      userRole: user.role,
+      nodeEnv: process.env.NODE_ENV,
     });
 
+    // Proporcionar mensaje de error más específico
+    let errorMessage = 'Error interno del servidor al generar el PDF';
+
+    if (error instanceof Error) {
+      if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+        errorMessage = 'Error de conexión al generar el PDF. Intente nuevamente.';
+      } else if (error.message.includes('Browser has been closed')) {
+        errorMessage = 'Error en el proceso de generación de PDF. Intente nuevamente.';
+      } else if (error.message.includes('Page crashed')) {
+        errorMessage = 'Error al renderizar el PDF. Intente nuevamente.';
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Error interno del servidor al generar el PDF' },
+      {
+        error: errorMessage,
+        details:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : String(error)
+            : undefined,
+      },
       { status: 500 }
     );
   }
@@ -227,7 +288,9 @@ function generateContractHTML(contract: any): string {
                 </div>
             </div>
 
-            ${contract.broker ? `
+            ${
+              contract.broker
+                ? `
             <div>
                 <h4>CORREDOR</h4>
                 <div class="info-item">
@@ -239,7 +302,9 @@ function generateContractHTML(contract: any): string {
                     <span class="value">${contract.broker.email}</span>
                 </div>
             </div>
-            ` : ''}
+            `
+                : ''
+            }
         </div>
 
         <div class="section">
@@ -272,12 +337,11 @@ function generateContractHTML(contract: any): string {
 // Función auxiliar para obtener el texto del estado
 function getStatusText(status: string): string {
   const statusMap: { [key: string]: string } = {
-    'DRAFT': 'Borrador',
-    'PENDING': 'Pendiente de Firma',
-    'ACTIVE': 'Activo',
-    'EXPIRED': 'Expirado',
-    'TERMINATED': 'Terminado',
+    DRAFT: 'Borrador',
+    PENDING: 'Pendiente de Firma',
+    ACTIVE: 'Activo',
+    EXPIRED: 'Expirado',
+    TERMINATED: 'Terminado',
   };
   return statusMap[status] || status;
 }
-

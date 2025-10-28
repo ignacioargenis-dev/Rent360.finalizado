@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import RealTimeNotifications from '@/components/notifications/RealTimeNotifications';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserType } from '@/types';
 import { logger } from '@/lib/logger-minimal';
@@ -770,6 +771,11 @@ export default function UnifiedSidebar({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Desktop Header */}
+        <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-3 justify-end items-center">
+          {showNotifications && <RealTimeNotifications />}
+        </div>
+
         {/* Mobile Header */}
         <div className="lg:hidden bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">

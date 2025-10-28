@@ -7,7 +7,6 @@ import { AuthProvider } from '@/components/auth/AuthProviderSimple';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { SkipLinks } from '@/components/ui/skip-links';
 import { NotificationProvider } from '@/components/ui/notification-provider';
-import RealTimeNotifications from '@/components/notifications/RealTimeNotifications';
 import { NotificationToast } from '@/components/ui/notification-toast';
 // import { DataSyncProvider } from '@/components/providers/DataSyncProvider';
 import dynamic from 'next/dynamic';
@@ -112,9 +111,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 {/* Componentes de la Fase 1 */}
                 <Chatbot position="bottom-right" initialOpen={false} />
-
-                {/* Notificaciones en tiempo real */}
-                <RealTimeNotifications />
 
                 <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
                 <Toaster />

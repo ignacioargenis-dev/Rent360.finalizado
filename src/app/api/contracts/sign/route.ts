@@ -257,7 +257,7 @@ Baños: ${contract.property?.bathrooms}
 3. CONDICIONES DEL ARRIENDO
 
 Monto Mensual: $${contract.monthlyRent.toLocaleString('es-CL')}
-Depósito: $${contract.deposit.toLocaleString('es-CL')}
+Depósito: $${contract.depositAmount.toLocaleString('es-CL')}
 Fecha de Inicio: ${new Date(contract.startDate).toLocaleDateString('es-CL')}
 Fecha de Término: ${new Date(contract.endDate).toLocaleDateString('es-CL')}
 
