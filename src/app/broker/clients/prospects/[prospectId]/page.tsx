@@ -715,32 +715,6 @@ export default function ProspectDetailPage() {
           </Card>
         </div>
 
-        {/* Property Information */}
-        {prospect.propertyId && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Home className="w-5 h-5" />
-                Propiedad de Interés
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-semibold">{prospect.propertyTitle}</h4>
-                  <p className="text-sm text-gray-600">Propietario: {prospect.ownerName}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/broker/properties/${prospect.propertyId}`)}
-                >
-                  Ver Propiedad
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Notes */}
         {prospect.notes && (
           <Card>
