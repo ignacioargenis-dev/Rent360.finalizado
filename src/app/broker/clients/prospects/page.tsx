@@ -146,7 +146,7 @@ export default function BrokerProspectsPage() {
 
     const loadProspectsData = async () => {
       try {
-        const response = await fetch('/api/broker/clients/prospects', {
+        const response = await fetch('/api/broker/prospects', {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -603,7 +603,7 @@ export default function BrokerProspectsPage() {
     setSubmittingProspect(true);
 
     try {
-      const response = await fetch('/api/broker/clients/prospects', {
+      const response = await fetch('/api/broker/prospects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -618,7 +618,7 @@ export default function BrokerProspectsPage() {
         setShowAddProspectModal(false);
 
         // Recargar la lista de prospectos
-        const prospectsResponse = await fetch('/api/broker/clients/prospects', {
+        const prospectsResponse = await fetch('/api/broker/prospects', {
           method: 'GET',
           credentials: 'include',
           headers: {
