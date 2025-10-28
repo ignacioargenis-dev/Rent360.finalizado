@@ -159,7 +159,7 @@ export default function ProspectDetailPage() {
           ownerName: data.name,
           ownerEmail: data.email,
           ownerPhone: data.phone || '',
-          followUpDate: null,
+          followUpDate: undefined,
         };
 
         setProspect(prospectData);
