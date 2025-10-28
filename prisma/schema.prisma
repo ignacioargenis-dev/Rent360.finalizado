@@ -136,6 +136,16 @@ model User {
   // Relaciones de incentivos para runners
   runnerIncentives RunnerIncentive[]
 
+  // Relaciones del sistema de prospects y clientes del corredor
+  brokerProspects          BrokerProspect[] @relation("BrokerProspects")
+  userProspects            BrokerProspect[] @relation("UserProspects")
+  brokerClients            BrokerClient[] @relation("BrokerClients")
+  clientRelationships      BrokerClient[] @relation("ClientRelationships")
+  brokerPropertyManagements BrokerPropertyManagement[] @relation("BrokerPropertyManagements")
+  prospectActivities       ProspectActivity[] @relation("BrokerProspectActivities")
+  clientActivities         ClientActivity[] @relation("BrokerClientActivities")
+  brokerPropertyShares     ProspectPropertyShare[] @relation("BrokerPropertyShares")
+
   @@map("users")
   @@index([email])
   @@index([role])
@@ -216,6 +226,10 @@ model Property {
 
   // Relación con tour virtual
   virtualTour       VirtualTour?       // Tour virtual de la propiedad
+
+  // Relaciones del sistema de prospects
+  sharedWithProspects ProspectPropertyShare[] @relation("SharedWithProspects")
+  managedByBroker     BrokerPropertyManagement[] @relation("ManagedByBroker")
 
   @@map("properties")
   @@index([ownerId])
@@ -1772,5 +1786,329 @@ model VirtualTourHotspot {
 
   @@map("virtual_tour_hotspots")
   @@index([sceneId])
+}
+
+// ============================================================================
+// SISTEMA DE GESTIÓN DE PROSPECTS Y CLIENTES DEL CORREDOR
+// ============================================================================
+
+// Prospect - Potenciales clientes del corredor
+model BrokerProspect {
+  id                String   @id @default(cuid())
+  brokerId          String   // Corredor que gestiona este prospect
+  userId            String?  // Usuario existente (opcional)
+  
+  // Datos básicos del prospect
+  name              String
+  email             String
+  phone             String
+  rut               String?
+  
+  // Tipo de prospect
+  prospectType      ProspectType // OWNER_LEAD, TENANT_LEAD
+  
+  // Estado en el pipeline
+  status            ProspectStatus @default(NEW) // NEW, CONTACTED, QUALIFIED, MEETING_SCHEDULED, PROPOSAL_SENT, NEGOTIATING, CONVERTED, LOST
+  
+  // Información de interés
+  interestedIn      String?  // JSON array de tipos de propiedades
+  budget            Json?    // { min, max }
+  preferredLocations String? // JSON array de ubicaciones
+  notes             String?  // Notas del corredor
+  
+  // Source tracking
+  source            String   @default("platform") // platform, referral, advertising, website, social, other
+  sourceDetails     String?  // Detalles adicionales de la fuente
+  
+  // Engagement tracking
+  lastContactDate   DateTime?
+  nextFollowUpDate  DateTime?
+  contactCount      Int      @default(0)
+  emailsSent        Int      @default(0)
+  emailsOpened      Int      @default(0)
+  propertiesShared  Int      @default(0)
+  
+  // Scoring
+  leadScore         Int      @default(0) // 0-100
+  conversionProbability Float @default(0) // 0-1
+  priority          String   @default("medium") // low, medium, high, urgent
+  
+  // Conversion tracking
+  convertedAt       DateTime?
+  convertedToClientId String?  @unique // ID del BrokerClient si fue convertido
+  lostReason        String?  // Razón si se perdió el lead
+  
+  // Metadata
+  tags              String?  // JSON array de tags
+  customFields      Json?    // Campos personalizados
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  broker            User     @relation("BrokerProspects", fields: [brokerId], references: [id], onDelete: Cascade)
+  user              User?    @relation("UserProspects", fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Actividades relacionadas
+  activities        ProspectActivity[]
+  sharedProperties  ProspectPropertyShare[]
+  convertedClient   BrokerClient? @relation("ConvertedProspect", fields: [convertedToClientId], references: [id], onDelete: SetNull)
+  
+  @@map("broker_prospects")
+  @@index([brokerId])
+  @@index([userId])
+  @@index([status])
+  @@index([prospectType])
+  @@index([leadScore])
+  @@index([createdAt])
+  @@index([nextFollowUpDate])
+}
+
+// Cliente activo del corredor
+model BrokerClient {
+  id                String   @id @default(cuid())
+  brokerId          String   // Corredor que gestiona este cliente
+  userId            String   // Usuario del sistema
+  prospectId        String?  // ID del prospect que se convirtió (opcional)
+  
+  // Tipo de cliente
+  clientType        ClientType // OWNER, TENANT, BOTH
+  
+  // Estado de la relación
+  status            ClientStatus @default(ACTIVE) // ACTIVE, INACTIVE, SUSPENDED, TERMINATED
+  relationshipType  String   @default("standard") // standard, exclusive, premium
+  
+  // Fechas clave
+  startDate         DateTime @default(now())
+  endDate           DateTime?
+  lastInteraction   DateTime?
+  
+  // Configuración de servicios
+  servicesOffered   String?  // JSON array de servicios
+  commissionRate    Float    @default(5.0) // Porcentaje de comisión
+  exclusiveAgreement Boolean @default(false)
+  
+  // Gestión de propiedades (para OWNER)
+  propertyManagementType String? // full, partial, none
+  
+  // Métricas
+  totalPropertiesManaged Int @default(0)
+  totalContracts        Int @default(0)
+  totalCommissions      Float @default(0)
+  satisfactionRating    Float? // 1-5
+  
+  // Notas y documentos
+  notes             String?
+  documents         Json?  // Array de documentos relacionados
+  
+  // Metadata
+  tags              String? // JSON array de tags
+  customFields      Json?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  broker            User     @relation("BrokerClients", fields: [brokerId], references: [id], onDelete: Cascade)
+  user              User     @relation("ClientRelationships", fields: [userId], references: [id], onDelete: Cascade)
+  prospect          BrokerProspect? @relation("ConvertedProspect")
+  
+  // Propiedades gestionadas (relación con Property)
+  managedProperties BrokerPropertyManagement[]
+  
+  // Actividades y notas
+  activities        ClientActivity[]
+  
+  @@unique([brokerId, userId]) // Un corredor no puede tener duplicados del mismo cliente
+  @@map("broker_clients")
+  @@index([brokerId])
+  @@index([userId])
+  @@index([status])
+  @@index([clientType])
+  @@index([createdAt])
+}
+
+// Gestión de propiedades del corredor
+model BrokerPropertyManagement {
+  id                String   @id @default(cuid())
+  brokerId          String   // Corredor
+  clientId          String   // Cliente propietario
+  propertyId        String   // Propiedad
+  
+  // Tipo de gestión
+  managementType    String   @default("full") // full, partial, marketing_only, lease_only
+  
+  // Servicios incluidos
+  services          String   // JSON array de servicios
+  
+  // Términos comerciales
+  commissionRate    Float    @default(5.0)
+  exclusivity       Boolean  @default(false)
+  
+  // Estado
+  status            String   @default("ACTIVE") // ACTIVE, PAUSED, TERMINATED
+  
+  // Fechas
+  startDate         DateTime @default(now())
+  endDate           DateTime?
+  
+  // Permisos del propietario
+  ownerCanEditProperty Boolean @default(true)
+  ownerCanViewStats    Boolean @default(true)
+  ownerCanApproveTenant Boolean @default(true)
+  
+  // Métricas
+  totalContracts    Int      @default(0)
+  totalCommissions  Float    @default(0)
+  
+  // Notas
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relaciones
+  broker            User     @relation("BrokerPropertyManagements", fields: [brokerId], references: [id], onDelete: Cascade)
+  client            BrokerClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  property          Property @relation("ManagedByBroker", fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@unique([brokerId, propertyId]) // Un corredor no puede gestionar la misma propiedad dos veces
+  @@map("broker_property_managements")
+  @@index([brokerId])
+  @@index([clientId])
+  @@index([propertyId])
+  @@index([status])
+}
+
+// Actividad del prospect
+model ProspectActivity {
+  id          String   @id @default(cuid())
+  prospectId  String
+  brokerId    String   // Corredor que realizó la actividad
+  
+  // Tipo de actividad
+  activityType String  // email, call, meeting, property_view, proposal, note, follow_up, other
+  
+  // Detalles
+  title       String
+  description String?
+  outcome     String?  // successful, unsuccessful, pending, scheduled
+  
+  // Scheduling (para actividades futuras)
+  scheduledFor DateTime?
+  completedAt  DateTime?
+  
+  // Metadata
+  metadata    Json?    // Información adicional específica del tipo
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  prospect    BrokerProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  broker      User           @relation("BrokerProspectActivities", fields: [brokerId], references: [id], onDelete: Cascade)
+  
+  @@map("prospect_activities")
+  @@index([prospectId])
+  @@index([brokerId])
+  @@index([activityType])
+  @@index([scheduledFor])
+  @@index([createdAt])
+}
+
+// Actividad del cliente
+model ClientActivity {
+  id          String   @id @default(cuid())
+  clientId    String
+  brokerId    String
+  
+  // Tipo de actividad
+  activityType String  // meeting, service, maintenance, contract_signed, payment_received, issue_resolved, other
+  
+  // Detalles
+  title       String
+  description String?
+  
+  // Metadata
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  
+  // Relaciones
+  client      BrokerClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  broker      User         @relation("BrokerClientActivities", fields: [brokerId], references: [id], onDelete: Cascade)
+  
+  @@map("client_activities")
+  @@index([clientId])
+  @@index([brokerId])
+  @@index([activityType])
+  @@index([createdAt])
+}
+
+// Propiedades compartidas con prospects
+model ProspectPropertyShare {
+  id          String   @id @default(cuid())
+  prospectId  String
+  propertyId  String
+  brokerId    String
+  
+  // Tracking
+  sharedAt    DateTime @default(now())
+  viewedAt    DateTime?
+  viewCount   Int      @default(0)
+  
+  // Mensaje personalizado
+  message     String?
+  
+  // Link tracking
+  shareLink   String?  // Link único de seguimiento
+  
+  // Feedback del prospect
+  interested  Boolean?
+  feedback    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  prospect    BrokerProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  property    Property       @relation("SharedWithProspects", fields: [propertyId], references: [id], onDelete: Cascade)
+  broker      User           @relation("BrokerPropertyShares", fields: [brokerId], references: [id], onDelete: Cascade)
+  
+  @@map("prospect_property_shares")
+  @@index([prospectId])
+  @@index([propertyId])
+  @@index([brokerId])
+  @@index([sharedAt])
+}
+
+// Enums para el sistema de prospects
+enum ProspectType {
+  OWNER_LEAD   // Potencial propietario
+  TENANT_LEAD  // Potencial inquilino
+}
+
+enum ProspectStatus {
+  NEW               // Nuevo lead
+  CONTACTED         // Contactado
+  QUALIFIED         // Calificado
+  MEETING_SCHEDULED // Reunión agendada
+  PROPOSAL_SENT     // Propuesta enviada
+  NEGOTIATING       // En negociación
+  CONVERTED         // Convertido a cliente
+  LOST              // Perdido
+}
+
+enum ClientType {
+  OWNER   // Solo propietario
+  TENANT  // Solo inquilino
+  BOTH    // Ambos roles
+}
+
+enum ClientStatus {
+  ACTIVE      // Relación activa
+  INACTIVE    // Inactivo temporalmente
+  SUSPENDED   // Suspendido
+  TERMINATED  // Terminado
 }
 
