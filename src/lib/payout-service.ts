@@ -3,7 +3,10 @@ import { logger } from './logger';
 import { DatabaseError, BusinessLogicError } from './errors';
 import { NotificationService } from './notification-service';
 import { BankAccountService, BankAccountInfo } from './bank-account-service';
-import { BankIntegrationFactory, BankIntegrationUtils } from './bank-integrations/bank-integration-factory';
+import {
+  BankIntegrationFactory,
+  BankIntegrationUtils,
+} from './bank-integrations/bank-integration-factory';
 import { PaymentConfigService } from './payment-config';
 import { KYCService } from './kyc-service';
 import { FraudDetectionService, TransactionData, FraudRiskLevel } from './fraud-detection';
@@ -46,9 +49,9 @@ export interface RunnerPayoutConfig {
 
   // Multiplicadores por tipo de visita
   visitTypeMultipliers: {
-    regular: number;    // 1.0
-    premium: number;    // 1.5
-    express: number;    // 1.2
+    regular: number; // 1.0
+    premium: number; // 1.5
+    express: number; // 1.2
   };
 
   // Límites de pago
@@ -147,14 +150,16 @@ export class PayoutService {
    * Obtiene la configuración del sistema de payouts
    */
   static async getConfig(): Promise<PayoutConfig> {
-    if (this.config) return this.config;
+    if (this.config) {
+      return this.config;
+    }
 
     try {
       const settings = await db.systemSetting.findMany({
         where: {
           category: 'payout',
-          isActive: true
-        }
+          isActive: true,
+        },
       });
 
       this.config = {
@@ -172,7 +177,7 @@ export class PayoutService {
         paymentProviderFee: 0.01, // 1%
         requireKYC: true,
         requireBankVerification: true,
-        fraudDetection: true
+        fraudDetection: true,
       };
 
       // Aplicar configuraciones desde DB
@@ -196,7 +201,7 @@ export class PayoutService {
       return this.config;
     } catch (error) {
       logger.error('Error obteniendo configuración de payouts:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw new DatabaseError('Error al obtener configuración de payouts');
     }
@@ -216,7 +221,7 @@ export class PayoutService {
 
       logger.info('Calculando payouts pendientes', {
         recipientType,
-        period: { startDate: period.startDate, endDate: period.endDate }
+        period: { startDate: period.startDate, endDate: period.endDate },
       });
 
       if (recipientType === 'broker') {
@@ -226,7 +231,7 @@ export class PayoutService {
       }
     } catch (error) {
       logger.error('Error calculando payouts pendientes:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -235,18 +240,21 @@ export class PayoutService {
   /**
    * Calcula payouts para corredores
    */
-  private static async calculateBrokerPayouts(period: { startDate: Date; endDate: Date }): Promise<PayoutCalculation[]> {
+  private static async calculateBrokerPayouts(period: {
+    startDate: Date;
+    endDate: Date;
+  }): Promise<PayoutCalculation[]> {
     // Obtener todos los corredores activos
     const brokers = await db.user.findMany({
       where: {
         role: 'BROKER',
-        isActive: true
+        isActive: true,
       },
       select: {
         id: true,
         name: true,
-        email: true
-      }
+        email: true,
+      },
     });
 
     const payouts: PayoutCalculation[] = [];
@@ -260,7 +268,7 @@ export class PayoutService {
       } catch (error) {
         logger.warn('Error calculando payout para broker', {
           brokerId: broker.id,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -282,20 +290,22 @@ export class PayoutService {
         status: 'ACTIVE',
         startDate: {
           gte: period.startDate,
-          lte: period.endDate
-        }
+          lte: period.endDate,
+        },
       },
       include: {
         property: {
           select: {
             price: true,
-            type: true
-          }
-        }
-      }
+            type: true,
+          },
+        },
+      },
     });
 
-    if (contracts.length === 0) return null;
+    if (contracts.length === 0) {
+      return null;
+    }
 
     const items: PayoutItem[] = [];
     let totalCommissions = 0;
@@ -308,13 +318,15 @@ export class PayoutService {
           referenceId: contract.id,
           amount: commission,
           description: `Comisión contrato ${contract.contractNumber}`,
-          date: contract.startDate
+          date: contract.startDate,
         });
         totalCommissions += commission;
       }
     }
 
-    if (totalCommissions === 0) return null;
+    if (totalCommissions === 0) {
+      return null;
+    }
 
     const config = await this.getConfig();
     const platformFee = totalCommissions * config.platformFee;
@@ -327,7 +339,7 @@ export class PayoutService {
       logger.info('Payout por debajo del mínimo', {
         brokerId,
         amount: netAmount,
-        minimum: config.minimumPayout
+        minimum: config.minimumPayout,
       });
       return null;
     }
@@ -342,16 +354,19 @@ export class PayoutService {
         commissions: totalCommissions,
         fees: totalFees,
         taxes: 0, // Por ahora sin impuestos
-        netAmount
+        netAmount,
       },
-      items
+      items,
     };
   }
 
   /**
    * Calcula payouts para propietarios
    */
-  private static async calculateOwnerPayouts(period: { startDate: Date; endDate: Date }): Promise<PayoutCalculation[]> {
+  private static async calculateOwnerPayouts(period: {
+    startDate: Date;
+    endDate: Date;
+  }): Promise<PayoutCalculation[]> {
     // Obtener propietarios con contratos activos
     const owners = await db.user.findMany({
       where: {
@@ -364,18 +379,18 @@ export class PayoutService {
                 status: 'ACTIVE',
                 startDate: {
                   gte: period.startDate,
-                  lte: period.endDate
-                }
-              }
-            }
-          }
-        }
+                  lte: period.endDate,
+                },
+              },
+            },
+          },
+        },
       },
       select: {
         id: true,
         name: true,
-        email: true
-      }
+        email: true,
+      },
     });
 
     const payouts: PayoutCalculation[] = [];
@@ -389,7 +404,7 @@ export class PayoutService {
       } catch (error) {
         logger.warn('Error calculando payout para owner', {
           ownerId: owner.id,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -409,13 +424,13 @@ export class PayoutService {
       where: {
         contract: {
           ownerId,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         status: 'PAID',
         dueDate: {
           gte: period.startDate,
-          lte: period.endDate
-        }
+          lte: period.endDate,
+        },
       },
       include: {
         contract: {
@@ -423,15 +438,17 @@ export class PayoutService {
             contractNumber: true,
             property: {
               select: {
-                title: true
-              }
-            }
-          }
-        }
-      }
+                title: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (rentalPayments.length === 0) return null;
+    if (rentalPayments.length === 0) {
+      return null;
+    }
 
     const items: PayoutItem[] = [];
     let totalRentalIncome = 0;
@@ -442,7 +459,7 @@ export class PayoutService {
         referenceId: payment.id,
         amount: payment.amount,
         description: `Renta contrato ${payment.contract.contractNumber}`,
-        date: payment.dueDate
+        date: payment.dueDate,
       });
       totalRentalIncome += payment.amount;
     }
@@ -458,7 +475,7 @@ export class PayoutService {
       logger.info('Payout por debajo del mínimo', {
         ownerId,
         amount: netAmount,
-        minimum: config.minimumPayout
+        minimum: config.minimumPayout,
       });
       return null;
     }
@@ -473,9 +490,9 @@ export class PayoutService {
         commissions: 0,
         fees: totalFees,
         taxes: 0,
-        netAmount
+        netAmount,
       },
-      items
+      items,
     };
   }
 
@@ -498,13 +515,13 @@ export class PayoutService {
         totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
         totalRecipients: payouts.length,
         payoutConfigs: payouts,
-        metadata: batchMetadata
+        metadata: batchMetadata,
       };
 
       logger.info('Procesando lote de payouts', {
         batchId: batch.id,
         totalRecipients: batch.totalRecipients,
-        totalAmount: batch.totalAmount
+        totalAmount: batch.totalAmount,
       });
 
       // Verificar límites diarios
@@ -520,7 +537,7 @@ export class PayoutService {
         logger.info('Lote requiere aprobación manual', {
           batchId: batch.id,
           amount: batch.totalAmount,
-          threshold: config.approvalThreshold
+          threshold: config.approvalThreshold,
         });
         return batch;
       }
@@ -534,13 +551,13 @@ export class PayoutService {
 
       logger.info('Lote de payouts completado', {
         batchId: batch.id,
-        processedRecipients: payouts.length
+        processedRecipients: payouts.length,
       });
 
       return batch;
     } catch (error) {
       logger.error('Error procesando lote de payouts:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -549,7 +566,10 @@ export class PayoutService {
   /**
    * Procesa payouts individuales
    */
-  private static async processPayouts(payouts: PayoutCalculation[], batchId: string): Promise<void> {
+  private static async processPayouts(
+    payouts: PayoutCalculation[],
+    batchId: string
+  ): Promise<void> {
     const results = await Promise.allSettled(
       payouts.map(payout => this.processIndividualPayout(payout, batchId))
     );
@@ -561,13 +581,13 @@ export class PayoutService {
       batchId,
       successful,
       failed,
-      total: payouts.length
+      total: payouts.length,
     });
 
     if (failed > 0) {
       logger.warn('Algunos payouts fallaron', {
         batchId,
-        failedCount: failed
+        failedCount: failed,
       });
     }
   }
@@ -613,7 +633,7 @@ export class PayoutService {
           recipientId: payout.recipientId,
           amount: payout.amount,
           riskLevel: fraudAssessment.riskLevel,
-          riskScore: fraudAssessment.riskScore
+          riskScore: fraudAssessment.riskScore,
         });
 
         // Marcar para aprobación manual
@@ -640,14 +660,14 @@ export class PayoutService {
       await this.recordPayout(payout, batchId, {
         success: transferResult.success,
         ...(transferResult.transactionId && { transactionId: transferResult.transactionId }),
-        ...(transferResult.errorMessage && { error: transferResult.errorMessage })
+        ...(transferResult.errorMessage && { error: transferResult.errorMessage }),
       });
 
       // 8. Enviar notificación
       await this.notifyPayoutProcessed(payout, {
         success: transferResult.success,
         ...(transferResult.transactionId && { transactionId: transferResult.transactionId }),
-        ...(transferResult.errorMessage && { error: transferResult.errorMessage })
+        ...(transferResult.errorMessage && { error: transferResult.errorMessage }),
       });
 
       logger.info('Payout procesado exitosamente', {
@@ -655,14 +675,13 @@ export class PayoutService {
         amount: payout.amount,
         bank: bankAccount.bankName,
         transactionId: transferResult.transactionId,
-        riskLevel: fraudAssessment.riskLevel
+        riskLevel: fraudAssessment.riskLevel,
       });
-
     } catch (error) {
       logger.error('Error procesando payout individual', {
         recipientId: payout.recipientId,
         amount: payout.amount,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -671,7 +690,9 @@ export class PayoutService {
   /**
    * Obtiene cuenta bancaria del destinatario
    */
-  private static async getRecipientBankAccount(recipientId: string): Promise<BankAccountInfo | null> {
+  private static async getRecipientBankAccount(
+    recipientId: string
+  ): Promise<BankAccountInfo | null> {
     try {
       const accounts = await BankAccountService.getUserBankAccounts(recipientId);
       const primaryAccount = accounts.find(account => account.isVerified);
@@ -683,11 +704,10 @@ export class PayoutService {
       // Si no hay cuenta primaria, usar la primera verificada
       const verifiedAccount = accounts.find(account => account.isVerified);
       return verifiedAccount || null;
-
     } catch (error) {
       logger.error('Error obteniendo cuenta bancaria del destinatario:', {
         recipientId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return null;
     }
@@ -699,10 +719,13 @@ export class PayoutService {
   private static async getPlatformBankAccount(): Promise<BankAccountInfo> {
     try {
       // Obtener configuración de la cuenta bancaria de la plataforma
-      const platformAccountConfig = await PaymentConfigService.getServiceConfig('platform_bank_account');
+      const platformAccountConfig =
+        await PaymentConfigService.getServiceConfig('platform_bank_account');
 
       if (!platformAccountConfig) {
-        throw new BusinessLogicError('Configuración de cuenta bancaria de plataforma no encontrada');
+        throw new BusinessLogicError(
+          'Configuración de cuenta bancaria de plataforma no encontrada'
+        );
       }
 
       // Retornar cuenta bancaria de la plataforma
@@ -723,15 +746,14 @@ export class PayoutService {
         metadata: {
           verificationAttempts: 1,
           riskScore: 0,
-          notes: 'Cuenta bancaria oficial de Rent360'
+          notes: 'Cuenta bancaria oficial de Rent360',
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-
     } catch (error) {
       logger.error('Error obteniendo cuenta bancaria de plataforma:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       // Fallback con cuenta simulada
@@ -751,10 +773,10 @@ export class PayoutService {
         verificationMethod: 'manual',
         metadata: {
           verificationAttempts: 1,
-          riskScore: 0
+          riskScore: 0,
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
     }
   }
@@ -767,20 +789,17 @@ export class PayoutService {
       const kycCheck = await KYCService.canReceivePayouts(recipientId);
 
       if (!kycCheck.canReceive) {
-        throw new BusinessLogicError(
-          `Usuario no elegible para payouts: ${kycCheck.reason}`
-        );
+        throw new BusinessLogicError(`Usuario no elegible para payouts: ${kycCheck.reason}`);
       }
 
       logger.info('Validación KYC exitosa', {
         recipientId,
-        kycLevel: kycCheck.currentLevel
+        kycLevel: kycCheck.currentLevel,
       });
-
     } catch (error) {
       logger.error('Error validando elegibilidad KYC:', {
         recipientId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -810,10 +829,10 @@ export class PayoutService {
             country: 'CL',
             city: 'Santiago',
             latitude: -33.4489,
-            longitude: -70.6693
+            longitude: -70.6693,
           },
-          previousTransactions: [] // En producción, obtener historial real
-        }
+          previousTransactions: [], // En producción, obtener historial real
+        },
       };
 
       const assessment = await FraudDetectionService.assessTransaction(transactionData);
@@ -822,15 +841,14 @@ export class PayoutService {
         recipientId: payout.recipientId,
         riskLevel: assessment.riskLevel,
         riskScore: assessment.riskScore,
-        patternsCount: assessment.patterns.length
+        patternsCount: assessment.patterns.length,
       });
 
       return assessment;
-
     } catch (error) {
       logger.error('Error evaluando riesgo de fraude:', {
         recipientId: payout.recipientId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       // En caso de error, asumir riesgo bajo pero marcar para revisión
@@ -842,7 +860,7 @@ export class PayoutService {
         recommendations: ['Error en evaluación automática - revisar manualmente'],
         requiresApproval: true,
         blockTransaction: false,
-        flags: ['evaluation_error']
+        flags: ['evaluation_error'],
       };
     }
   }
@@ -862,7 +880,7 @@ export class PayoutService {
         amount: payout.amount,
         batchId,
         riskLevel: fraudAssessment.riskLevel,
-        reasons: fraudAssessment.recommendations
+        reasons: fraudAssessment.recommendations,
       });
 
       // Notificar a administradores sobre aprobación pendiente
@@ -871,12 +889,11 @@ export class PayoutService {
         title: 'Aprobación Manual de Payout Requerida',
         message: `Payout de ${payout.amount.toLocaleString('es-CL')} CLP requiere aprobación manual. Nivel de riesgo: ${fraudAssessment.riskLevel}`,
         severity: 'medium',
-        targetUsers: [] // Notificar a todos los administradores
+        targetUsers: [], // Notificar a todos los administradores
       });
-
     } catch (error) {
       logger.error('Error marcando para aprobación manual:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -884,7 +901,9 @@ export class PayoutService {
   /**
    * Método obsoleto - mantener por compatibilidad
    */
-  private static async getRecipientPaymentMethod(recipientId: string): Promise<PaymentMethod | null> {
+  private static async getRecipientPaymentMethod(
+    recipientId: string
+  ): Promise<PaymentMethod | null> {
     // En implementación real, consultar tabla de métodos de pago
     // Por ahora, retornar método por defecto
     return {
@@ -896,10 +915,10 @@ export class PayoutService {
       details: {
         bankName: 'Banco Estado',
         accountNumber: '123456789',
-        accountHolder: 'Usuario Demo'
+        accountHolder: 'Usuario Demo',
       },
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -925,7 +944,7 @@ export class PayoutService {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -941,7 +960,7 @@ export class PayoutService {
     logger.info('Procesando transferencia bancaria', {
       recipientId: payout.recipientId,
       amount: payout.amount,
-      bankAccount: paymentMethod.details.accountNumber
+      bankAccount: paymentMethod.details.accountNumber,
     });
 
     // Simular delay de procesamiento
@@ -953,12 +972,12 @@ export class PayoutService {
     if (success) {
       return {
         success: true,
-        transactionId: `BANK_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+        transactionId: `BANK_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       };
     } else {
       return {
         success: false,
-        error: 'Fondos insuficientes en cuenta de origen'
+        error: 'Fondos insuficientes en cuenta de origen',
       };
     }
   }
@@ -974,14 +993,14 @@ export class PayoutService {
     logger.info('Procesando pago PayPal', {
       recipientId: payout.recipientId,
       amount: payout.amount,
-      paypalEmail: paymentMethod.details.paypalEmail
+      paypalEmail: paymentMethod.details.paypalEmail,
     });
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
     return {
       success: true,
-      transactionId: `PP_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+      transactionId: `PP_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     };
   }
 
@@ -996,14 +1015,14 @@ export class PayoutService {
     logger.info('Procesando pago Stripe', {
       recipientId: payout.recipientId,
       amount: payout.amount,
-      stripeAccount: paymentMethod.details.stripeAccountId
+      stripeAccount: paymentMethod.details.stripeAccountId,
     });
 
     await new Promise(resolve => setTimeout(resolve, 300));
 
     return {
       success: true,
-      transactionId: `STRIPE_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+      transactionId: `STRIPE_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     };
   }
 
@@ -1020,7 +1039,7 @@ export class PayoutService {
       recipientId: payout.recipientId,
       amount: payout.amount,
       transactionId: paymentResult.transactionId,
-      batchId
+      batchId,
     });
   }
 
@@ -1034,19 +1053,15 @@ export class PayoutService {
     try {
       await NotificationService.notifyCommissionPaid({
         brokerId: payout.recipientId,
-        type: 'commission_paid',
         amount: payout.amount,
-        metadata: {
-          payoutType: payout.recipientType,
-          ...(paymentResult.transactionId && { transactionId: paymentResult.transactionId }),
-          netAmount: payout.amount,
-          period: payout.period
-        }
+        ...(paymentResult.transactionId && { payoutId: paymentResult.transactionId }),
+        processedAt: new Date(),
+        paymentMethod: 'bank_transfer',
       });
     } catch (error) {
       logger.warn('Error enviando notificación de payout', {
         recipientId: payout.recipientId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -1079,7 +1094,7 @@ export class PayoutService {
 
     return {
       startDate: startOfMonth,
-      endDate: endOfMonth
+      endDate: endOfMonth,
     };
   }
 
@@ -1103,9 +1118,9 @@ export class PayoutService {
       byMethod: {
         bank_transfer: 1100,
         paypal: 120,
-        stripe: 30
+        stripe: 30,
       },
-      recentPayouts: []
+      recentPayouts: [],
     };
   }
 }
@@ -1122,7 +1137,7 @@ export class RunnerPayoutService {
     visitTypeMultipliers: {
       regular: 1.0,
       premium: 1.5,
-      express: 1.2
+      express: 1.2,
     },
     minimumPayout: 5000,
     maximumDailyPayout: 500000,
@@ -1134,7 +1149,7 @@ export class RunnerPayoutService {
     requireBankVerification: true,
     requireKYC: false,
     fraudDetectionEnabled: true,
-    platformFeePercentage: 5
+    platformFeePercentage: 5,
   };
 
   /**
@@ -1182,7 +1197,10 @@ export class RunnerPayoutService {
     endDate?: Date
   ): Promise<PayoutCalculation[]> {
     try {
-      const { startDate: periodStart, endDate: periodEnd } = this.getPeriodDates(startDate, endDate);
+      const { startDate: periodStart, endDate: periodEnd } = this.getPeriodDates(
+        startDate,
+        endDate
+      );
 
       // Obtener visitas completadas en el período
       const completedVisits = await db.visit.findMany({
@@ -1190,36 +1208,39 @@ export class RunnerPayoutService {
           status: 'completed',
           createdAt: {
             gte: periodStart,
-            lte: periodEnd
+            lte: periodEnd,
           },
           earnings: {
-            gt: 0
-          }
+            gt: 0,
+          },
         },
         include: {
           runner: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           property: {
             select: {
               id: true,
-              price: true
-            }
-          }
-        }
+              price: true,
+            },
+          },
+        },
       });
 
       // Agrupar por runner
-      const runnerPayouts = new Map<string, {
-        runner: any;
-        visits: any[];
-        totalEarnings: number;
-        visitCount: number;
-      }>();
+      const runnerPayouts = new Map<
+        string,
+        {
+          runner: any;
+          visits: any[];
+          totalEarnings: number;
+          visitCount: number;
+        }
+      >();
 
       for (const visit of completedVisits) {
         const runnerId = visit.runnerId;
@@ -1230,7 +1251,7 @@ export class RunnerPayoutService {
             runner: visit.runner,
             visits: [],
             totalEarnings: 0,
-            visitCount: 0
+            visitCount: 0,
           });
         }
 
@@ -1257,21 +1278,21 @@ export class RunnerPayoutService {
             currency: 'CLP',
             period: {
               startDate: periodStart,
-              endDate: periodEnd
+              endDate: periodEnd,
             },
             breakdown: {
               commissions: data.totalEarnings,
               fees: platformFee,
               taxes: 0,
-              netAmount
+              netAmount,
             },
             items: data.visits.map(visit => ({
               type: 'commission' as const,
               referenceId: visit.id,
               amount: visit.earnings,
               description: `Visita a propiedad ${visit.propertyId}`,
-              date: visit.createdAt
-            }))
+              date: visit.createdAt,
+            })),
           });
         }
       }
@@ -1279,14 +1300,13 @@ export class RunnerPayoutService {
       logger.info('Payouts de runners calculados', {
         period: { startDate: periodStart, endDate: periodEnd },
         totalRunners: payouts.length,
-        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0)
+        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
       });
 
       return payouts;
-
     } catch (error) {
       logger.error('Error calculando payouts de runners:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -1305,8 +1325,8 @@ export class RunnerPayoutService {
         const bankAccount = await db.bankAccount.findFirst({
           where: {
             userId: payout.recipientId,
-            isVerified: true
-          }
+            isVerified: true,
+          },
         });
 
         if (!bankAccount) {
@@ -1322,9 +1342,9 @@ export class RunnerPayoutService {
         where: {
           providerType: 'RUNNER',
           createdAt: {
-            gte: today
-          }
-        }
+            gte: today,
+          },
+        },
       });
 
       const todayTotal = todayPayouts.reduce((sum, p) => sum + p.amount, 0);
@@ -1346,29 +1366,28 @@ export class RunnerPayoutService {
           processedAt: null,
           approvedBy: adminUserId, // Para pagos automáticos de runners
           notes: `Pago automático de runner`,
-          reference: `RUNNER_PAYOUT_${payout.recipientId}_${Date.now()}`
-        }
+          reference: `RUNNER_PAYOUT_${payout.recipientId}_${Date.now()}`,
+        },
       });
 
       logger.info('Payout de runner procesado', {
         runnerId: payout.recipientId,
         amount: payout.amount,
         transactionId: transaction.id,
-        requiresApproval: this.config.requireManualApproval
+        requiresApproval: this.config.requireManualApproval,
       });
 
       return {
         success: true,
-        transactionId: transaction.id
+        transactionId: transaction.id,
       };
-
     } catch (error) {
       logger.error('Error procesando payout de runner:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido'
+        error: error instanceof Error ? error.message : 'Error desconocido',
       };
     }
   }
@@ -1390,12 +1409,12 @@ export class RunnerPayoutService {
               businessName: true,
               user: {
                 select: {
-                  email: true
-                }
-              }
-            }
-          }
-        }
+                  email: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!transaction) {
@@ -1417,8 +1436,8 @@ export class RunnerPayoutService {
             status: 'COMPLETED',
             processedAt: new Date(),
             approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
-            ...(paymentResult.transactionId && { reference: paymentResult.transactionId })
-          }
+            ...(paymentResult.transactionId && { reference: paymentResult.transactionId }),
+          },
         });
 
         // Enviar notificación al runner
@@ -1430,7 +1449,7 @@ export class RunnerPayoutService {
         logger.info('Payout de runner aprobado y procesado', {
           transactionId,
           runnerId: transaction.serviceProviderId,
-          amount: transaction.amount
+          amount: transaction.amount,
         });
 
         return { success: true };
@@ -1439,23 +1458,22 @@ export class RunnerPayoutService {
         await db.providerTransaction.update({
           where: { id: transactionId },
           data: {
-            status: 'FAILED'
-          }
+            status: 'FAILED',
+          },
         });
 
         return {
           success: false,
-          error: paymentResult.error || 'Error procesando pago'
+          error: paymentResult.error || 'Error procesando pago',
         };
       }
-
     } catch (error) {
       logger.error('Error aprobando payout de runner:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido'
+        error: error instanceof Error ? error.message : 'Error desconocido',
       };
     }
   }
@@ -1474,12 +1492,12 @@ export class RunnerPayoutService {
     if (success) {
       return {
         success: true,
-        transactionId: `RUNNER_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+        transactionId: `RUNNER_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       };
     } else {
       return {
         success: false,
-        error: 'Error en procesamiento bancario'
+        error: 'Error en procesamiento bancario',
       };
     }
   }
@@ -1487,21 +1505,18 @@ export class RunnerPayoutService {
   /**
    * Envía notificación al runner sobre el pago procesado
    */
-  private static async notifyRunnerPayout(
-    transaction: any,
-    adminUserId: string
-  ): Promise<void> {
+  private static async notifyRunnerPayout(transaction: any, adminUserId: string): Promise<void> {
     try {
       // Aquí iría la lógica de notificación
       logger.info('Notificación enviada a runner', {
         runnerId: transaction.serviceProviderId,
         amount: transaction.amount,
-        transactionId: transaction.id
+        transactionId: transaction.id,
       });
     } catch (error) {
       logger.warn('Error enviando notificación a runner:', {
         runnerId: transaction.serviceProviderId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -1529,7 +1544,7 @@ export class RunnerPayoutService {
 
     return {
       startDate: startOfWeek,
-      endDate: endOfWeek
+      endDate: endOfWeek,
     };
   }
 
@@ -1542,14 +1557,18 @@ export class RunnerPayoutService {
         where: { id: transaction.serviceProviderId },
         select: {
           id: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
-      if (!runner) return;
+      if (!runner) {
+        return;
+      }
 
       // Obtener información del período
-      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .substring(0, 10);
       const periodEnd = new Date().toISOString().substring(0, 10);
 
       // Obtener conteo de visitas para este período
@@ -1559,25 +1578,19 @@ export class RunnerPayoutService {
           status: 'completed',
           createdAt: {
             gte: new Date(periodStart),
-            lte: new Date(periodEnd)
-          }
-        }
+            lte: new Date(periodEnd),
+          },
+        },
       });
 
-      await NotificationService.notifyRunnerPayoutApproved({
-        runnerId: transaction.serviceProviderId,
-        runnerName: runner.name || 'Runner',
+      await NotificationService.notifyCommissionPaid({
+        brokerId: transaction.serviceProviderId,
         amount: transaction.amount,
-        netAmount: transaction.netAmount,
-        visitCount: visitCount,
-        periodStart: periodStart,
-        periodEnd: periodEnd,
-        paymentMethod: transaction.paymentMethod || 'bank_transfer'
+        paymentMethod: transaction.paymentMethod || 'bank_transfer',
       });
-
     } catch (error) {
       logger.error('Error sending runner payout notification:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -1597,13 +1610,13 @@ export class RunnerPayoutService {
         // Estadísticas generales
         db.providerTransaction.aggregate({
           where: {
-            providerType: 'RUNNER'
+            providerType: 'RUNNER',
           },
           _sum: {
             amount: true,
-            netAmount: true
+            netAmount: true,
           },
-          _count: true
+          _count: true,
         }),
 
         // Top earners (último mes)
@@ -1611,47 +1624,47 @@ export class RunnerPayoutService {
           where: {
             providerType: 'RUNNER',
             createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-            }
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
           },
           include: {
             serviceProvider: {
               select: {
                 id: true,
-                businessName: true
+                businessName: true,
               },
               include: {
                 user: {
                   select: {
-                    email: true
-                  }
-                }
-              }
-            }
+                    email: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
-            amount: 'desc'
+            amount: 'desc',
           },
-          take: 10
-        })
+          take: 10,
+        }),
       ]);
 
       const totalPaid = totalStats._sum?.netAmount || 0;
       const totalPending = await db.providerTransaction.count({
         where: {
           providerType: 'RUNNER',
-          status: 'PENDING'
-        }
+          status: 'PENDING',
+        },
       });
 
       const uniqueRunners = await db.providerTransaction.findMany({
         where: {
-          providerType: 'RUNNER'
+          providerType: 'RUNNER',
         },
         select: {
-          serviceProviderId: true
+          serviceProviderId: true,
         },
-        distinct: ['serviceProviderId']
+        distinct: ['serviceProviderId'],
       });
 
       return {
@@ -1664,20 +1677,19 @@ export class RunnerPayoutService {
           runnerName: te.serviceProvider?.businessName || 'N/A',
           runnerEmail: te.serviceProvider?.user?.email || 'N/A',
           amount: te.netAmount,
-          date: te.createdAt
-        }))
+          date: te.createdAt,
+        })),
       };
-
     } catch (error) {
       logger.error('Error obteniendo estadísticas de runners:', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return {
         totalRunners: 0,
         totalPaid: 0,
         totalPending: 0,
         averagePerRunner: 0,
-        topEarners: []
+        topEarners: [],
       };
     }
   }

@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-minimal';
+﻿import { logger } from '@/lib/logger-minimal';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
                 title: 'Pago Completado',
                 message: `Tu pago de ${amount} ${currency} ha sido procesado exitosamente.`,
                 type: 'SUCCESS',
-                metametadata: JSON.stringify({
+                metadata: JSON.stringify({
                   payment_id: payment.id,
                   amount: amount,
                   currency: currency,

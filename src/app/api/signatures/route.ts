@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { signatureService } from '@/lib/signature';
 import { logger } from '@/lib/logger-minimal';
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         ...(signatureResult.metadata?.expiresAt && {
           expiresAt: new Date(signatureResult.metadata.expiresAt),
         }),
-        metametametadata: JSON.stringify({
+        metametadata: JSON.stringify({
           ...(signatureResult.metadata || {}),
           isContractSignature: !!contract,
           contractData: contract
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
             name: signer.name || '',
             role: determineSignerRole(signer, signersToUse.length),
             status: 'pending',
-            metametametadata: JSON.stringify({
+            metametadata: JSON.stringify({
               rut: signer.rut,
               phone: signer.phone || '',
               order: signer.order,

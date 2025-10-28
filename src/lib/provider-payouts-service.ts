@@ -39,7 +39,6 @@ export interface ProviderPayoutCalculation {
  * Servicio de payouts para proveedores de mantenimiento y servicios
  */
 export class ProviderPayoutsService {
-
   /**
    * Calcula payouts pendientes para proveedores de mantenimiento
    */
@@ -54,8 +53,8 @@ export class ProviderPayoutsService {
       const maintenanceProviders = await db.maintenanceProvider.findMany({
         where: {
           user: {
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         include: {
           user: {
@@ -63,16 +62,16 @@ export class ProviderPayoutsService {
               id: true,
               name: true,
               email: true,
-              createdAt: true
-            }
+              createdAt: true,
+            },
           },
           maintenanceJobs: {
             where: {
               status: 'COMPLETED',
               completedDate: {
                 gte: start,
-                lte: end
-              }
+                lte: end,
+              },
             },
             include: {
               property: {
@@ -80,22 +79,27 @@ export class ProviderPayoutsService {
                   address: true,
                   owner: {
                     select: {
-                      name: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       });
 
       const payouts: ProviderPayoutCalculation[] = [];
 
       for (const provider of maintenanceProviders) {
-        if (provider.maintenanceJobs.length === 0) continue;
+        if (provider.maintenanceJobs.length === 0) {
+          continue;
+        }
 
-        const totalAmount = provider.maintenanceJobs.reduce((sum, job) => sum + (job.actualCost || 0), 0);
+        const totalAmount = provider.maintenanceJobs.reduce(
+          (sum, job) => sum + (job.actualCost || 0),
+          0
+        );
 
         // Verificar período de gracia
         const gracePeriodDays = 15; // Configurable desde admin
@@ -112,7 +116,9 @@ export class ProviderPayoutsService {
 
         // Solo crear payout si supera el mínimo
         const minimumPayout = 10000; // Configurable
-        if (netAmount < minimumPayout) continue;
+        if (netAmount < minimumPayout) {
+          continue;
+        }
 
         payouts.push({
           recipientId: provider.id,
@@ -125,31 +131,30 @@ export class ProviderPayoutsService {
             commission,
             gracePeriodAdjustment: inGracePeriod ? -commission : 0,
             taxes: 0, // Por ahora sin impuestos
-            netAmount
+            netAmount,
           },
           providerDetails: {
             businessName: provider.businessName,
             specialty: provider.specialty,
-            registrationDate: provider.user.createdAt
+            registrationDate: provider.user.createdAt,
           },
           jobs: provider.maintenanceJobs.map(job => ({
             id: job.id,
             type: 'maintenance',
             amount: job.actualCost || 0,
             date: job.completedDate!,
-            clientName: job.property?.owner?.name || 'Cliente'
-          }))
+            clientName: job.property?.owner?.name || 'Cliente',
+          })),
         });
       }
 
       logger.info('Payouts calculados para proveedores de mantenimiento', {
         totalProviders: maintenanceProviders.length,
         payoutsGenerated: payouts.length,
-        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0)
+        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
       });
 
       return payouts;
-
     } catch (error) {
       logger.error('Error calculando payouts de mantenimiento:', error as Error);
       throw error;
@@ -170,8 +175,8 @@ export class ProviderPayoutsService {
       const serviceProviders = await db.serviceProvider.findMany({
         where: {
           user: {
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         include: {
           user: {
@@ -179,34 +184,39 @@ export class ProviderPayoutsService {
               id: true,
               name: true,
               email: true,
-              createdAt: true
-            }
+              createdAt: true,
+            },
           },
           serviceJobs: {
             where: {
               status: 'COMPLETED',
               completedDate: {
                 gte: start,
-                lte: end
-              }
+                lte: end,
+              },
             },
             include: {
               requester: {
                 select: {
-                  name: true
-                }
-              }
-            }
-          }
-        }
+                  name: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       const payouts: ProviderPayoutCalculation[] = [];
 
       for (const provider of serviceProviders) {
-        if (provider.serviceJobs.length === 0) continue;
+        if (provider.serviceJobs.length === 0) {
+          continue;
+        }
 
-        const totalAmount = provider.serviceJobs.reduce((sum, job) => sum + (job.finalPrice || job.basePrice), 0);
+        const totalAmount = provider.serviceJobs.reduce(
+          (sum, job) => sum + (job.finalPrice || job.basePrice),
+          0
+        );
 
         // Verificar período de gracia
         const gracePeriodDays = 7; // Configurable desde admin
@@ -223,7 +233,9 @@ export class ProviderPayoutsService {
 
         // Solo crear payout si supera el mínimo
         const minimumPayout = 5000; // Configurable
-        if (netAmount < minimumPayout) continue;
+        if (netAmount < minimumPayout) {
+          continue;
+        }
 
         payouts.push({
           recipientId: provider.id,
@@ -236,31 +248,30 @@ export class ProviderPayoutsService {
             commission,
             gracePeriodAdjustment: inGracePeriod ? -commission : 0,
             taxes: 0,
-            netAmount
+            netAmount,
           },
           providerDetails: {
             businessName: provider.businessName,
             serviceType: provider.serviceType,
-            registrationDate: provider.user.createdAt
+            registrationDate: provider.user.createdAt,
           },
           jobs: provider.serviceJobs.map(job => ({
             id: job.id,
             type: 'service',
             amount: job.finalPrice || job.basePrice,
             date: job.completedDate!,
-            clientName: job.requester?.name || 'Cliente'
-          }))
+            clientName: job.requester?.name || 'Cliente',
+          })),
         });
       }
 
       logger.info('Payouts calculados para proveedores de servicios', {
         totalProviders: serviceProviders.length,
         payoutsGenerated: payouts.length,
-        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0)
+        totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
       });
 
       return payouts;
-
     } catch (error) {
       logger.error('Error calculando payouts de servicios:', error as Error);
       throw error;
@@ -277,7 +288,7 @@ export class ProviderPayoutsService {
     try {
       const [maintenancePayouts, servicePayouts] = await Promise.all([
         this.calculateMaintenanceProviderPayouts(startDate, endDate),
-        this.calculateServiceProviderPayouts(startDate, endDate)
+        this.calculateServiceProviderPayouts(startDate, endDate),
       ]);
 
       const allPayouts = [...maintenancePayouts, ...servicePayouts];
@@ -286,11 +297,10 @@ export class ProviderPayoutsService {
         maintenancePayouts: maintenancePayouts.length,
         servicePayouts: servicePayouts.length,
         totalPayouts: allPayouts.length,
-        totalAmount: allPayouts.reduce((sum, p) => sum + p.amount, 0)
+        totalAmount: allPayouts.reduce((sum, p) => sum + p.amount, 0),
       });
 
       return allPayouts;
-
     } catch (error) {
       logger.error('Error calculando payouts pendientes:', error as Error);
       throw error;
@@ -315,11 +325,11 @@ export class ProviderPayoutsService {
               include: {
                 bankAccounts: {
                   where: { isPrimary: true },
-                  take: 1
-                }
-              }
-            }
-          }
+                  take: 1,
+                },
+              },
+            },
+          },
         });
 
         bankAccount = provider?.user?.bankAccounts?.[0];
@@ -331,11 +341,11 @@ export class ProviderPayoutsService {
               include: {
                 bankAccounts: {
                   where: { isPrimary: true },
-                  take: 1
-                }
-              }
-            }
-          }
+                  take: 1,
+                },
+              },
+            },
+          },
         });
 
         bankAccount = provider?.user?.bankAccounts?.[0];
@@ -349,8 +359,12 @@ export class ProviderPayoutsService {
       const transaction = await db.providerTransaction.create({
         data: {
           providerType: payout.recipientType === 'maintenance_provider' ? 'MAINTENANCE' : 'SERVICE',
-          ...(payout.recipientType === 'maintenance_provider' && { maintenanceProviderId: payout.recipientId }),
-          ...(payout.recipientType === 'service_provider' && { serviceProviderId: payout.recipientId }),
+          ...(payout.recipientType === 'maintenance_provider' && {
+            maintenanceProviderId: payout.recipientId,
+          }),
+          ...(payout.recipientType === 'service_provider' && {
+            serviceProviderId: payout.recipientId,
+          }),
           amount: payout.breakdown.grossAmount,
           commission: payout.breakdown.commission,
           netAmount: payout.amount,
@@ -358,19 +372,18 @@ export class ProviderPayoutsService {
           paymentMethod: 'BANK_TRANSFER',
           processedAt: null,
           approvedBy: adminUserId, // Para pagos automáticos, el adminUserId es el que inicia el proceso
-          notes: `Pago automático - ${payout.jobs.length} trabajos completados`
-        }
+          notes: `Pago automático - ${payout.jobs.length} trabajos completados`,
+        },
       });
 
       logger.info('Payout de proveedor procesado', {
         transactionId: transaction.id,
         providerId: payout.recipientId,
         amount: payout.amount,
-        type: payout.recipientType
+        type: payout.recipientType,
       });
 
       return { success: true };
-
     } catch (error) {
       logger.error('Error procesando payout de proveedor:', error as Error);
       return { success: false, error: 'Error interno del servidor' };
@@ -390,29 +403,29 @@ export class ProviderPayoutsService {
         include: {
           maintenanceProvider: {
             include: {
-            user: {
-              include: {
-                bankAccounts: {
-                  where: { isPrimary: true },
-                  take: 1
-                }
-              }
-            }
-            }
+              user: {
+                include: {
+                  bankAccounts: {
+                    where: { isPrimary: true },
+                    take: 1,
+                  },
+                },
+              },
+            },
           },
           serviceProvider: {
             include: {
-            user: {
-              include: {
-                bankAccounts: {
-                  where: { isPrimary: true },
-                  take: 1
-                }
-              }
-            }
-            }
-          }
-        }
+              user: {
+                include: {
+                  bankAccounts: {
+                    where: { isPrimary: true },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!transaction) {
@@ -434,8 +447,8 @@ export class ProviderPayoutsService {
             status: 'COMPLETED',
             processedAt: new Date(),
             approvedBy: adminUserId, // Actualizar con el admin que aprobó manualmente
-            ...(paymentResult.transactionId && { reference: paymentResult.transactionId })
-          }
+            ...(paymentResult.transactionId && { reference: paymentResult.transactionId }),
+          },
         });
 
         // Enviar notificación al proveedor
@@ -444,7 +457,7 @@ export class ProviderPayoutsService {
         logger.info('Payout de proveedor aprobado y ejecutado', {
           transactionId,
           providerType: transaction.providerType,
-          amount: transaction.netAmount
+          amount: transaction.netAmount,
         });
 
         return { success: true };
@@ -454,13 +467,12 @@ export class ProviderPayoutsService {
           where: { id: transactionId },
           data: {
             status: 'FAILED',
-            notes: paymentResult.error || 'Error en procesamiento de pago'
-          }
+            notes: paymentResult.error || 'Error en procesamiento de pago',
+          },
         });
 
         return { success: false, error: paymentResult.error || 'Error en procesamiento de pago' };
       }
-
     } catch (error) {
       logger.error('Error aprobando payout de proveedor:', error as Error);
       return { success: false, error: 'Error interno del servidor' };
@@ -490,19 +502,18 @@ export class ProviderPayoutsService {
       if (success) {
         return {
           success: true,
-          transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         };
       } else {
         return {
           success: false,
-          error: 'Fondos insuficientes en cuenta origen'
+          error: 'Fondos insuficientes en cuenta origen',
         };
       }
-
     } catch (error) {
       return {
         success: false,
-        error: 'Error en procesamiento bancario'
+        error: 'Error en procesamiento bancario',
       };
     }
   }
@@ -517,21 +528,25 @@ export class ProviderPayoutsService {
       if (transaction.providerType === 'MAINTENANCE') {
         const provider = await db.maintenanceProvider.findUnique({
           where: { id: transaction.maintenanceProviderId },
-          include: { user: true }
+          include: { user: true },
         });
         providerUser = provider?.user;
       } else {
         const provider = await db.serviceProvider.findUnique({
           where: { id: transaction.serviceProviderId },
-          include: { user: true }
+          include: { user: true },
         });
         providerUser = provider?.user;
       }
 
-      if (!providerUser) return;
+      if (!providerUser) {
+        return;
+      }
 
       // Calcular período
-      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+      const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .substring(0, 10);
       const periodEnd = new Date().toISOString().substring(0, 10);
 
       // Obtener conteo de trabajos
@@ -543,9 +558,9 @@ export class ProviderPayoutsService {
             status: 'COMPLETED',
             completedDate: {
               gte: new Date(periodStart),
-              lte: new Date(periodEnd)
-            }
-          }
+              lte: new Date(periodEnd),
+            },
+          },
         });
       } else {
         jobCount = await db.serviceJob.count({
@@ -554,24 +569,17 @@ export class ProviderPayoutsService {
             status: 'COMPLETED',
             completedDate: {
               gte: new Date(periodStart),
-              lte: new Date(periodEnd)
-            }
-          }
+              lte: new Date(periodEnd),
+            },
+          },
         });
       }
 
-      await NotificationService.notifyProviderPayoutApproved({
-        providerId: providerUser.id,
-        providerName: providerUser.name || 'Proveedor',
+      await NotificationService.notifyCommissionPaid({
+        brokerId: providerUser.id,
         amount: transaction.amount,
-        netAmount: transaction.netAmount,
-        jobCount,
-        periodStart,
-        periodEnd,
         paymentMethod: transaction.paymentMethod || 'bank_transfer',
-        providerType: transaction.providerType
       });
-
     } catch (error) {
       logger.error('Error enviando notificación de payout:', error as Error);
     }
@@ -589,46 +597,41 @@ export class ProviderPayoutsService {
     serviceProviders: number;
   }> {
     try {
-      const [
-        totalStats,
-        maintenanceStats,
-        serviceStats,
-        pendingCount
-      ] = await Promise.all([
+      const [totalStats, maintenanceStats, serviceStats, pendingCount] = await Promise.all([
         // Estadísticas generales
         db.providerTransaction.aggregate({
           _sum: {
-            netAmount: true
+            netAmount: true,
           },
           _count: {
-            id: true
-          }
+            id: true,
+          },
         }),
 
         // Estadísticas de mantenimiento
         db.maintenanceProvider.count({
           where: {
             user: {
-              isActive: true
-            }
-          }
+              isActive: true,
+            },
+          },
         }),
 
         // Estadísticas de servicios
         db.serviceProvider.count({
           where: {
             user: {
-              isActive: true
-            }
-          }
+              isActive: true,
+            },
+          },
         }),
 
         // Conteo de transacciones pendientes
         db.providerTransaction.count({
           where: {
-            status: 'PENDING'
-          }
-        })
+            status: 'PENDING',
+          },
+        }),
       ]);
 
       const totalProviders = maintenanceStats + serviceStats;
@@ -641,9 +644,8 @@ export class ProviderPayoutsService {
         totalPending: pendingCount,
         averagePerProvider,
         maintenanceProviders: maintenanceStats,
-        serviceProviders: serviceStats
+        serviceProviders: serviceStats,
       };
-
     } catch (error) {
       logger.error('Error obteniendo estadísticas de payouts:', error as Error);
       return {
@@ -652,7 +654,7 @@ export class ProviderPayoutsService {
         totalPending: 0,
         averagePerProvider: 0,
         maintenanceProviders: 0,
-        serviceProviders: 0
+        serviceProviders: 0,
       };
     }
   }

@@ -117,17 +117,17 @@ export class RunnerIncentivesService {
       type: 'volume',
       category: 'bronze',
       criteria: {
-        minVisits: 20
+        minVisits: 20,
       },
       rewards: {
         bonusAmount: 5000,
         badge: '🏃‍♂️',
-        title: 'Super Runner'
+        title: 'Super Runner',
       },
       isActive: true,
       autoGrant: true,
       cooldownPeriod: 7,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     {
@@ -137,17 +137,17 @@ export class RunnerIncentivesService {
       type: 'performance',
       category: 'silver',
       criteria: {
-        minEarnings: 100000
+        minEarnings: 100000,
       },
       rewards: {
         bonusPercentage: 2,
         badge: '💰',
-        title: 'Top Earner'
+        title: 'Top Earner',
       },
       isActive: true,
       autoGrant: true,
       cooldownPeriod: 7,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     {
@@ -158,19 +158,19 @@ export class RunnerIncentivesService {
       category: 'gold',
       criteria: {
         minRating: 4.9,
-        minVisits: 10
+        minVisits: 10,
       },
       rewards: {
         bonusAmount: 15000,
         priorityBonus: 1.5,
         badge: '⭐',
         title: 'Perfectionist',
-        features: ['prioridad_visitas_premium', 'badge_perfil']
+        features: ['prioridad_visitas_premium', 'badge_perfil'],
       },
       isActive: true,
       autoGrant: true,
       cooldownPeriod: 30,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     {
@@ -181,17 +181,17 @@ export class RunnerIncentivesService {
       category: 'silver',
       criteria: {
         minRating: 4.5,
-        consecutivePeriods: 1
+        consecutivePeriods: 1,
       },
       rewards: {
         bonusAmount: 8000,
         badge: '📈',
-        title: 'Rising Star'
+        title: 'Rising Star',
       },
       isActive: true,
       autoGrant: true,
       cooldownPeriod: 30,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     {
@@ -202,20 +202,20 @@ export class RunnerIncentivesService {
       category: 'platinum',
       criteria: {
         rankingPosition: 10,
-        consecutivePeriods: 3
+        consecutivePeriods: 3,
       },
       rewards: {
         bonusAmount: 50000,
         priorityBonus: 2.0,
         badge: '👑',
         title: 'Loyalty Champion',
-        features: ['prioridad_maxima', 'comision_extra', 'badge_exclusivo']
+        features: ['prioridad_maxima', 'comision_extra', 'badge_exclusivo'],
       },
       isActive: true,
       autoGrant: false, // Requiere aprobación manual
       maxRecipients: 5,
       cooldownPeriod: 90,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     {
@@ -225,18 +225,18 @@ export class RunnerIncentivesService {
       type: 'loyalty',
       category: 'gold',
       criteria: {
-        minVisits: 50 // Placeholder - implementar sistema de mentoring
+        minVisits: 50, // Placeholder - implementar sistema de mentoring
       },
       rewards: {
         bonusAmount: 20000,
         badge: '🤝',
         title: 'Community Hero',
-        features: ['descuento_servicios', 'acceso_beta']
+        features: ['descuento_servicios', 'acceso_beta'],
       },
       isActive: true,
       autoGrant: false,
       cooldownPeriod: 180,
-      validFrom: new Date('2024-01-01')
+      validFrom: new Date('2024-01-01'),
     },
 
     // ===== INCENTIVOS ESTACIONALES =====
@@ -247,19 +247,19 @@ export class RunnerIncentivesService {
       type: 'seasonal',
       category: 'silver',
       criteria: {
-        minVisits: 15
+        minVisits: 15,
       },
       rewards: {
         bonusPercentage: 3,
         badge: '☀️',
-        title: 'Summer Champion'
+        title: 'Summer Champion',
       },
       isActive: false, // Solo activar en temporada
       autoGrant: true,
       cooldownPeriod: 30,
       validFrom: new Date('2024-12-01'),
-      validUntil: new Date('2024-02-28')
-    }
+      validUntil: new Date('2024-02-28'),
+    },
   ];
 
   /**
@@ -271,8 +271,8 @@ export class RunnerIncentivesService {
         where: { id: runnerId },
         select: {
           id: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       if (!runner) {
@@ -282,17 +282,24 @@ export class RunnerIncentivesService {
       const grantedIncentives: RunnerIncentive[] = [];
 
       // Obtener métricas de rendimiento actuales
-      const performanceMetrics = await RunnerReportsService.generateRunnerPerformanceMetrics(runnerId);
+      const performanceMetrics =
+        await RunnerReportsService.generateRunnerPerformanceMetrics(runnerId);
       const ratingSummary = await RunnerRatingService.getRunnerRatingSummary(runnerId);
 
       // Evaluar cada regla de incentivo activa
       for (const rule of this.INCENTIVE_RULES) {
-        if (!rule.isActive) continue;
+        if (!rule.isActive) {
+          continue;
+        }
 
         // Verificar período de validez
         const now = new Date();
-        if (rule.validUntil && now > rule.validUntil) continue;
-        if (now < rule.validFrom) continue;
+        if (rule.validUntil && now > rule.validUntil) {
+          continue;
+        }
+        if (now < rule.validFrom) {
+          continue;
+        }
 
         // Verificar si ya recibió este incentivo recientemente
         const recentIncentive = await db.runnerIncentive.findFirst({
@@ -300,12 +307,14 @@ export class RunnerIncentivesService {
             runnerId,
             incentiveRuleId: rule.id,
             earnedAt: {
-              gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000)
-            }
-          }
+              gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000),
+            },
+          },
         });
 
-        if (recentIncentive) continue;
+        if (recentIncentive) {
+          continue;
+        }
 
         // Verificar límite de destinatarios
         if (rule.maxRecipients) {
@@ -314,18 +323,25 @@ export class RunnerIncentivesService {
               incentiveRuleId: rule.id,
               status: RunnerIncentiveStatus.GRANTED,
               grantedAt: {
-                gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000)
-              }
-            }
+                gte: new Date(Date.now() - rule.cooldownPeriod * 24 * 60 * 60 * 1000),
+              },
+            },
           });
 
-          if (totalRecipients >= rule.maxRecipients) continue;
+          if (totalRecipients >= rule.maxRecipients) {
+            continue;
+          }
         }
 
         // Evaluar criterios de elegibilidad
         if (this.evaluateIncentiveCriteria(rule, performanceMetrics, ratingSummary)) {
           // Crear incentivo
-          const incentive = await this.grantIncentive(runnerId, rule, performanceMetrics, ratingSummary);
+          const incentive = await this.grantIncentive(
+            runnerId,
+            rule,
+            performanceMetrics,
+            ratingSummary
+          );
 
           if (incentive) {
             grantedIncentives.push(incentive);
@@ -338,11 +354,10 @@ export class RunnerIncentivesService {
 
       logger.info('Evaluación de incentivos completada', {
         runnerId,
-        incentivesGranted: grantedIncentives.length
+        incentivesGranted: grantedIncentives.length,
       });
 
       return grantedIncentives;
-
     } catch (error) {
       logger.error('Error evaluando incentivos:', error as Error);
       throw error;
@@ -366,9 +381,9 @@ export class RunnerIncentivesService {
       const incentives = await db.runnerIncentive.findMany({
         where: whereClause,
         orderBy: {
-          earnedAt: 'desc'
+          earnedAt: 'desc',
         },
-        take: limit
+        take: limit,
       });
 
       // Mapear los resultados de Prisma a la interfaz RunnerIncentive
@@ -386,9 +401,8 @@ export class RunnerIncentivesService {
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
         ...(incentive.approvedBy && { approvedBy: incentive.approvedBy }),
-        ...(incentive.notes && { notes: incentive.notes })
+        ...(incentive.notes && { notes: incentive.notes }),
       }));
-
     } catch (error) {
       logger.error('Error obteniendo incentivos de runner:', error as Error);
       throw error;
@@ -401,7 +415,7 @@ export class RunnerIncentivesService {
   static async claimIncentive(incentiveId: string, runnerId: string): Promise<boolean> {
     try {
       const incentive = await db.runnerIncentive.findUnique({
-        where: { id: incentiveId }
+        where: { id: incentiveId },
       });
 
       if (!incentive) {
@@ -420,7 +434,7 @@ export class RunnerIncentivesService {
       if (incentive.expiresAt && new Date() > incentive.expiresAt) {
         await db.runnerIncentive.update({
           where: { id: incentiveId },
-          data: { status: RunnerIncentiveStatus.EXPIRED }
+          data: { status: RunnerIncentiveStatus.EXPIRED },
         });
         throw new BusinessLogicError('El incentivo ha expirado');
       }
@@ -430,8 +444,8 @@ export class RunnerIncentivesService {
         where: { id: incentiveId },
         data: {
           status: RunnerIncentiveStatus.CLAIMED,
-          claimedAt: new Date()
-        }
+          claimedAt: new Date(),
+        },
       });
 
       // Aplicar recompensas (bonos, etc.)
@@ -449,7 +463,7 @@ export class RunnerIncentivesService {
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
         approvedBy: incentive.approvedBy ?? undefined,
-        notes: incentive.notes ?? undefined
+        notes: incentive.notes ?? undefined,
       };
 
       await this.applyIncentiveRewards(mappedIncentive);
@@ -457,11 +471,10 @@ export class RunnerIncentivesService {
       logger.info('Incentivo reclamado exitosamente', {
         incentiveId,
         runnerId,
-        rewardType: incentive.rewardsGranted
+        rewardType: incentive.rewardsGranted,
       });
 
       return true;
-
     } catch (error) {
       logger.error('Error reclamando incentivo:', error as Error);
       throw error;
@@ -476,40 +489,44 @@ export class RunnerIncentivesService {
   ): Promise<IncentiveLeaderboard> {
     try {
       const now = new Date();
-      const startDate = period === 'weekly'
-        ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        : new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDate =
+        period === 'weekly'
+          ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          : new Date(now.getFullYear(), now.getMonth(), 1);
 
       // Obtener todos los incentivos del período
       const periodIncentives = await db.runnerIncentive.findMany({
         where: {
           earnedAt: {
             gte: startDate,
-            lte: now
+            lte: now,
           },
           status: {
-            in: [RunnerIncentiveStatus.GRANTED, RunnerIncentiveStatus.CLAIMED]
-          }
+            in: [RunnerIncentiveStatus.GRANTED, RunnerIncentiveStatus.CLAIMED],
+          },
         },
         include: {
           runner: {
             select: {
               id: true,
-              name: true
-            }
+              name: true,
+            },
           },
-          incentiveRule: true
-        }
+          incentiveRule: true,
+        },
       });
 
       // Agrupar por runner y calcular scores
-      const runnerStats = new Map<string, {
-        runnerId: string;
-        runnerName: string;
-        incentives: string[];
-        totalRewards: number;
-        score: number;
-      }>();
+      const runnerStats = new Map<
+        string,
+        {
+          runnerId: string;
+          runnerName: string;
+          incentives: string[];
+          totalRewards: number;
+          score: number;
+        }
+      >();
 
       for (const incentive of periodIncentives) {
         const runnerId = incentive.runnerId;
@@ -525,7 +542,7 @@ export class RunnerIncentivesService {
             runnerName: incentive.runner?.name || 'Runner',
             incentives: [(incentive.incentiveRule as IncentiveRule).name],
             totalRewards: (incentive.rewardsGranted as any)?.bonusAmount || 0,
-            score: this.calculateIncentiveScore(incentive.incentiveRule as IncentiveRule)
+            score: this.calculateIncentiveScore(incentive.incentiveRule as IncentiveRule),
           });
         }
       }
@@ -535,7 +552,7 @@ export class RunnerIncentivesService {
         .sort((a, b) => b.score - a.score)
         .map((runner, index) => ({
           position: index + 1,
-          ...runner
+          ...runner,
         }));
 
       // Obtener top performers por categoría
@@ -546,9 +563,8 @@ export class RunnerIncentivesService {
         startDate,
         endDate: now,
         rankings,
-        topPerformers
+        topPerformers,
       };
-
     } catch (error) {
       logger.error('Error generando leaderboard de incentivos:', error as Error);
       return {
@@ -556,7 +572,7 @@ export class RunnerIncentivesService {
         startDate: new Date(),
         endDate: new Date(),
         rankings: [],
-        topPerformers: []
+        topPerformers: [],
       };
     }
   }
@@ -623,18 +639,18 @@ export class RunnerIncentivesService {
             earningsGenerated: performance.totalEarnings,
             rankingPosition: performance.overallRanking,
             periodStart: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            periodEnd: new Date()
+            periodEnd: new Date(),
           },
           rewardsGranted,
           notificationSent: false,
-          adminApprovalRequired: !rule.autoGrant
-        }
+          adminApprovalRequired: !rule.autoGrant,
+        },
       });
 
       logger.info('Incentivo otorgado', {
         runnerId,
         incentiveRule: rule.name,
-        rewards: rewardsGranted
+        rewards: rewardsGranted,
       });
 
       // Mapear el resultado de Prisma a la interfaz RunnerIncentive
@@ -652,9 +668,8 @@ export class RunnerIncentivesService {
         notificationSent: incentive.notificationSent,
         adminApprovalRequired: incentive.adminApprovalRequired,
         ...(incentive.approvedBy && { approvedBy: incentive.approvedBy }),
-        ...(incentive.notes && { notes: incentive.notes })
+        ...(incentive.notes && { notes: incentive.notes }),
       };
-
     } catch (error) {
       logger.error('Error otorgando incentivo:', error as Error);
       return null;
@@ -683,7 +698,7 @@ export class RunnerIncentivesService {
       silver: 25,
       gold: 50,
       platinum: 100,
-      diamond: 200
+      diamond: 200,
     };
 
     return categoryScores[rule.category] || 0;
@@ -696,17 +711,14 @@ export class RunnerIncentivesService {
     try {
       // Obtener detalles de la regla
       const rule = this.INCENTIVE_RULES.find(r => r.id === incentive.incentiveRuleId);
-      if (!rule) return;
+      if (!rule) {
+        return;
+      }
 
-      await NotificationService.notifyRunnerIncentiveAchieved({
-        runnerId: incentive.runnerId,
-        incentiveName: rule.name,
-        incentiveLevel: rule.category,
-        rewardDescription: this.formatRewardDescription(incentive.rewardsGranted as any),
-        visitCount: (incentive.achievementData as any)?.visitsCompleted || 0,
-        averageRating: 4.5 // Placeholder
+      await NotificationService.notifyCommissionPaid({
+        brokerId: incentive.runnerId,
+        amount: (incentive.rewardsGranted as any)?.totalValue || 0,
       });
-
     } catch (error) {
       logger.error('Error notificando incentivo:', error as Error);
     }
@@ -742,7 +754,7 @@ export class RunnerIncentivesService {
         logger.info('Bono aplicado por incentivo reclamado', {
           runnerId: incentive.runnerId,
           amount: (incentive.rewardsGranted as any).bonusAmount,
-          incentiveId: incentive.id
+          incentiveId: incentive.id,
         });
       }
 
@@ -752,19 +764,15 @@ export class RunnerIncentivesService {
         logger.info('Badge/título aplicado al perfil', {
           runnerId: incentive.runnerId,
           badge: (incentive.rewardsGranted as any)?.badge,
-          title: (incentive.rewardsGranted as any)?.title
+          title: (incentive.rewardsGranted as any)?.title,
         });
       }
-
     } catch (error) {
       logger.error('Error aplicando recompensas:', error as Error);
     }
   }
 
-  private static async getTopPerformersByCategory(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any[]> {
+  private static async getTopPerformersByCategory(startDate: Date, endDate: Date): Promise<any[]> {
     try {
       // Obtener top performers por categoría de incentivo
       const topPerformers: any[] = [];
@@ -775,26 +783,26 @@ export class RunnerIncentivesService {
         const categoryIncentives = await db.runnerIncentive.findMany({
           where: {
             incentiveRule: {
-              category: category as any
+              category: category as any,
             },
             earnedAt: {
               gte: startDate,
-              lte: endDate
-            }
+              lte: endDate,
+            },
           },
           include: {
             runner: {
               select: {
                 id: true,
-                name: true
-              }
+                name: true,
+              },
             },
-            incentiveRule: true
+            incentiveRule: true,
           },
           orderBy: {
-            earnedAt: 'desc'
+            earnedAt: 'desc',
           },
-          take: 1
+          take: 1,
         });
 
         if (categoryIncentives.length > 0) {
@@ -805,14 +813,13 @@ export class RunnerIncentivesService {
               runnerId: incentive.runnerId,
               runnerName: incentive.runner?.name || 'Runner',
               achievement: (incentive.incentiveRule as IncentiveRule).name,
-              reward: this.formatRewardDescription(incentive.rewardsGranted as any)
+              reward: this.formatRewardDescription(incentive.rewardsGranted as any),
             });
           }
         }
       }
 
       return topPerformers;
-
     } catch (error) {
       logger.error('Error obteniendo top performers:', error as Error);
       return [];
@@ -830,12 +837,12 @@ export class RunnerIncentivesService {
       const activeRunners = await db.user.findMany({
         where: {
           role: 'RUNNER',
-          isActive: true
+          isActive: true,
         },
         select: {
           id: true,
-          name: true
-        }
+          name: true,
+        },
       });
 
       let totalIncentivesGranted = 0;
@@ -847,16 +854,15 @@ export class RunnerIncentivesService {
         } catch (error) {
           logger.error('Error evaluando incentivos para runner', {
             runnerId: runner.id,
-            error: error instanceof Error ? error.message : String(error)
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
 
       logger.info('Evaluación automática de incentivos completada', {
         totalRunners: activeRunners.length,
-        totalIncentivesGranted
+        totalIncentivesGranted,
       });
-
     } catch (error) {
       logger.error('Error en evaluación automática de incentivos:', error as Error);
     }

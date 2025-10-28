@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           title: 'Pago Confirmado',
           message: `Tu pago de $${payment.amount} ha sido confirmado por el propietario.`,
           type: 'INFO',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             recipientEmail: payment.contract.tenant?.email || '',
             priority: 'MEDIUM',
             channels: 'in_app,email',

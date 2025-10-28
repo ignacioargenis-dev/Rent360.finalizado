@@ -6,23 +6,29 @@ import { handleApiError } from '@/lib/api-error-handler';
 import { requireAuth } from '@/lib/auth';
 
 // Definir tipos locales para enums de Prisma
-type RefundStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PROCESSED' | 'CANCELLED' | 'DISPUTED';
+type RefundStatus =
+  | 'PENDING'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'PROCESSED'
+  | 'CANCELLED'
+  | 'DISPUTED';
 
 // Esquemas de validación
 const updateRefundSchema = z.object({
   requestedAmount: z.number().min(0).optional(),
   tenantClaimed: z.number().min(0).optional(),
   ownerClaimed: z.number().min(0).optional(),
-  status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'PROCESSED', 'CANCELLED', 'DISPUTED']).optional(),
+  status: z
+    .enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'PROCESSED', 'CANCELLED', 'DISPUTED'])
+    .optional(),
   tenantApproved: z.boolean().optional(),
   ownerApproved: z.boolean().optional(),
 });
 
 // GET - Obtener solicitud específica
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -36,7 +42,7 @@ export async function GET(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
@@ -49,9 +55,9 @@ export async function GET(
                 name: true,
                 email: true,
                 role: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         disputes: {
           orderBy: { createdAt: 'desc' },
@@ -62,7 +68,7 @@ export async function GET(
                 name: true,
                 email: true,
                 role: true,
-              }
+              },
             },
             resolver: {
               select: {
@@ -70,9 +76,9 @@ export async function GET(
                 name: true,
                 email: true,
                 role: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         approvals: {
           orderBy: { approvedAt: 'desc' },
@@ -83,9 +89,9 @@ export async function GET(
                 name: true,
                 email: true,
                 role: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         auditLogs: {
           orderBy: { createdAt: 'desc' },
@@ -96,9 +102,9 @@ export async function GET(
                 name: true,
                 email: true,
                 role: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         _count: {
           select: {
@@ -106,22 +112,17 @@ export async function GET(
             disputes: true,
             approvals: true,
             auditLogs: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para ver esta solicitud de devolución' },
         { status: 403 }
@@ -136,9 +137,8 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: refund
+      data: refund,
     });
-
   } catch (error) {
     logger.error('Error obteniendo solicitud de devolución:', {
       error: error instanceof Error ? error.message : String(error),
@@ -151,10 +151,7 @@ export async function GET(
 }
 
 // PUT - Actualizar solicitud
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -170,18 +167,15 @@ export async function PUT(
           include: {
             tenant: true,
             owner: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!currentRefund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos según el rol
@@ -195,25 +189,19 @@ export async function PUT(
       // Inquilino puede actualizar ciertos campos
       canUpdate = true;
       updateReason = 'Actualización por inquilino';
-      
+
       // Inquilino no puede cambiar el estado a PROCESSED
       if (validatedData.status === 'PROCESSED') {
-        return NextResponse.json(
-          { error: 'No puedes procesar la devolución' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'No puedes procesar la devolución' }, { status: 403 });
       }
     } else if (user.id === currentRefund.ownerId) {
       // Propietario puede actualizar ciertos campos
       canUpdate = true;
       updateReason = 'Actualización por propietario';
-      
+
       // Propietario no puede cambiar el estado a PROCESSED
       if (validatedData.status === 'PROCESSED') {
-        return NextResponse.json(
-          { error: 'No puedes procesar la devolución' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'No puedes procesar la devolución' }, { status: 403 });
       }
     }
 
@@ -236,12 +224,24 @@ export async function PUT(
 
     // Construir objeto de actualización compatible con Prisma
     const prismaUpdateData: any = {};
-    if (validatedData.requestedAmount !== undefined) prismaUpdateData.requestedAmount = validatedData.requestedAmount;
-    if (validatedData.tenantClaimed !== undefined) prismaUpdateData.tenantClaimed = validatedData.tenantClaimed;
-    if (validatedData.ownerClaimed !== undefined) prismaUpdateData.ownerClaimed = validatedData.ownerClaimed;
-    if (validatedData.status !== undefined) prismaUpdateData.status = validatedData.status;
-    if (validatedData.tenantApproved !== undefined) prismaUpdateData.tenantApproved = validatedData.tenantApproved;
-    if (validatedData.ownerApproved !== undefined) prismaUpdateData.ownerApproved = validatedData.ownerApproved;
+    if (validatedData.requestedAmount !== undefined) {
+      prismaUpdateData.requestedAmount = validatedData.requestedAmount;
+    }
+    if (validatedData.tenantClaimed !== undefined) {
+      prismaUpdateData.tenantClaimed = validatedData.tenantClaimed;
+    }
+    if (validatedData.ownerClaimed !== undefined) {
+      prismaUpdateData.ownerClaimed = validatedData.ownerClaimed;
+    }
+    if (validatedData.status !== undefined) {
+      prismaUpdateData.status = validatedData.status;
+    }
+    if (validatedData.tenantApproved !== undefined) {
+      prismaUpdateData.tenantApproved = validatedData.tenantApproved;
+    }
+    if (validatedData.ownerApproved !== undefined) {
+      prismaUpdateData.ownerApproved = validatedData.ownerApproved;
+    }
 
     // Actualizar la solicitud
     const updatedRefund = await db.depositRefund.update({
@@ -253,11 +253,11 @@ export async function PUT(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     // Crear log de auditoría
@@ -269,7 +269,7 @@ export async function PUT(
         details: `${updateReason}: ${JSON.stringify(validatedData)}`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones si hay cambios importantes
@@ -282,12 +282,12 @@ export async function PUT(
             title: 'Estado de Devolución Actualizado',
             message: `El estado de tu solicitud de devolución ha cambiado a: ${validatedData.status}`,
             type: 'INFO',
-            data: JSON.stringify({
+            metadata: JSON.stringify({
               refundId: id,
               oldStatus: currentRefund.status,
               newStatus: validatedData.status,
             }),
-          }
+          },
         }),
         // Notificar al propietario
         db.notification.create({
@@ -296,13 +296,13 @@ export async function PUT(
             title: 'Estado de Devolución Actualizado',
             message: `El estado de la solicitud de devolución ha cambiado a: ${validatedData.status}`,
             type: 'INFO',
-            data: JSON.stringify({
+            metadata: JSON.stringify({
               refundId: id,
               oldStatus: currentRefund.status,
               newStatus: validatedData.status,
             }),
-          }
-        })
+          },
+        }),
       ]);
     }
 
@@ -316,9 +316,8 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       data: updatedRefund,
-      message: 'Solicitud de devolución actualizada exitosamente'
+      message: 'Solicitud de devolución actualizada exitosamente',
     });
-
   } catch (error) {
     logger.error('Error actualizando solicitud de devolución:', {
       error: error instanceof Error ? error.message : String(error),
@@ -331,10 +330,7 @@ export async function PUT(
 }
 
 // DELETE - Cancelar solicitud
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -347,24 +343,19 @@ export async function DELETE(
           include: {
             tenant: true,
             owner: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos
-    if (user.role !== 'ADMIN' && 
-        user.id !== refund.tenantId && 
-        user.id !== refund.ownerId) {
+    if (user.role !== 'ADMIN' && user.id !== refund.tenantId && user.id !== refund.ownerId) {
       return NextResponse.json(
         { error: 'No tienes permisos para cancelar esta solicitud' },
         { status: 403 }
@@ -389,11 +380,11 @@ export async function DELETE(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     // Crear log de auditoría
@@ -405,7 +396,7 @@ export async function DELETE(
         details: `Solicitud cancelada por ${user.name} (${user.role})`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones
@@ -417,11 +408,11 @@ export async function DELETE(
           title: 'Solicitud de Devolución Cancelada',
           message: `Tu solicitud de devolución de depósito ha sido cancelada`,
           type: 'WARNING',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             cancelledBy: user.name,
           }),
-        }
+        },
       }),
       // Notificar al propietario
       db.notification.create({
@@ -430,12 +421,12 @@ export async function DELETE(
           title: 'Solicitud de Devolución Cancelada',
           message: `La solicitud de devolución de depósito ha sido cancelada`,
           type: 'WARNING',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             cancelledBy: user.name,
           }),
-        }
-      })
+        },
+      }),
     ]);
 
     logger.info('Solicitud de devolución cancelada:', {
@@ -447,9 +438,8 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       data: cancelledRefund,
-      message: 'Solicitud de devolución cancelada exitosamente'
+      message: 'Solicitud de devolución cancelada exitosamente',
     });
-
   } catch (error) {
     logger.error('Error cancelando solicitud de devolución:', {
       error: error instanceof Error ? error.message : String(error),

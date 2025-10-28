@@ -13,10 +13,7 @@ const processRefundSchema = z.object({
 });
 
 // POST - Procesar devolución
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request);
     const { id } = params;
@@ -33,18 +30,15 @@ export async function POST(
             tenant: true,
             owner: true,
             property: true,
-          }
+          },
         },
         tenant: true,
         owner: true,
-      }
+      },
     });
 
     if (!refund) {
-      return NextResponse.json(
-        { error: 'Solicitud de devolución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Solicitud de devolución no encontrada' }, { status: 404 });
     }
 
     // Verificar permisos: solo admin puede procesar devoluciones
@@ -68,9 +62,9 @@ export async function POST(
       where: {
         refundId: id,
         status: {
-          in: ['OPEN', 'UNDER_MEDIATION']
-        }
-      }
+          in: ['OPEN', 'UNDER_MEDIATION'],
+        },
+      },
     });
 
     if (activeDisputes > 0) {
@@ -105,7 +99,7 @@ export async function POST(
     }
 
     // Procesar la devolución en una transacción
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async tx => {
       // Actualizar la solicitud de devolución
       const processedRefund = await tx.depositRefund.update({
         where: { id },
@@ -120,11 +114,11 @@ export async function POST(
               tenant: true,
               owner: true,
               property: true,
-            }
+            },
           },
           tenant: true,
           owner: true,
-        }
+        },
       });
 
       // Crear un pago de reembolso
@@ -140,7 +134,7 @@ export async function POST(
           method: validatedData.paymentMethod as any,
           transactionId: validatedData.transactionId ?? null,
           notes: `Devolución de depósito: ${validatedData.notes || ''}`,
-        }
+        },
       });
 
       return { processedRefund, refundPayment };
@@ -155,7 +149,7 @@ export async function POST(
         details: `Devolución procesada: $${finalAmount} - Método: ${validatedData.paymentMethod}${validatedData.transactionId ? ` - Transacción: ${validatedData.transactionId}` : ''}`,
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent'),
-      }
+      },
     });
 
     // Enviar notificaciones
@@ -167,13 +161,13 @@ export async function POST(
           title: 'Devolución de Depósito Procesada',
           message: `Tu devolución de depósito por $${finalAmount.toLocaleString()} ha sido procesada exitosamente.`,
           type: 'SUCCESS',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             amount: finalAmount,
             paymentMethod: validatedData.paymentMethod,
             transactionId: validatedData.transactionId,
           }),
-        }
+        },
       }),
       // Notificar al propietario
       db.notification.create({
@@ -182,14 +176,14 @@ export async function POST(
           title: 'Devolución de Depósito Procesada',
           message: `La devolución de depósito por $${finalAmount.toLocaleString()} ha sido procesada exitosamente.`,
           type: 'SUCCESS',
-          data: JSON.stringify({
+          metadata: JSON.stringify({
             refundId: id,
             amount: finalAmount,
             paymentMethod: validatedData.paymentMethod,
             transactionId: validatedData.transactionId,
           }),
-        }
-      })
+        },
+      }),
     ]);
 
     logger.info('Devolución procesada:', {
@@ -206,9 +200,8 @@ export async function POST(
         refund: result.processedRefund,
         payment: result.refundPayment,
       },
-      message: 'Devolución procesada exitosamente'
+      message: 'Devolución procesada exitosamente',
     });
-
   } catch (error) {
     logger.error('Error procesando devolución:', {
       error: error instanceof Error ? error.message : String(error),
@@ -223,9 +216,6 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

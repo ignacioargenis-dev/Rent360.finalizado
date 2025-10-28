@@ -56,7 +56,7 @@ export class NotificationService {
           type: params.type,
           title: params.title,
           message: params.message,
-          link: params.link,
+          link: params.link || null,
           metadata: params.metadata ? JSON.stringify(params.metadata) : null,
           isRead: false,
           priority: params.priority || 'medium',

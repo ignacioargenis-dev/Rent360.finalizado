@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger-minimal';
 import { db } from '@/lib/db';
 import { SignatureStatus } from '@/lib/signature/types';
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       where: { id: contractId },
       data: {
         status: internalStatus,
-        metametametadata: JSON.stringify(updatedMetadata),
+        metadata: JSON.stringify(updatedMetadata),
       },
     });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           data: {
             status: signer.status === 'signed' ? 'signed' : 'pending',
             signedAt: signer.signedAt ? new Date(signer.signedAt) : null,
-            metametametadata: JSON.stringify({
+            metadata: JSON.stringify({
               ...(existingSignature.signers.find(s => s.email === signer.email)?.metadata
                 ? JSON.parse(
                     existingSignature.signers.find(s => s.email === signer.email)?.metadata || '{}'

@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger-minimal';
+﻿import { logger } from '@/lib/logger-minimal';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     await db.contractSignature.update({
       where: { id: signatureId },
       data: {
-        signaturemetametadata: JSON.stringify({
+        signatureData: JSON.stringify({
           status: internalStatus,
           provider,
           metadata: metadata ? (metadata as Record<string, any>) : {},
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         title: 'Actualización de Firma',
         message: `La firma del documento ha sido ${internalStatus}`,
         isRead: false,
-        metametadata: JSON.stringify(notificationData),
+        metadata: JSON.stringify(notificationData),
         createdAt: new Date(),
       },
     });

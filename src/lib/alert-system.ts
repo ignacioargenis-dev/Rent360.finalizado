@@ -63,11 +63,13 @@ class AlertSystem {
       type: 'threshold',
       severity: 'high',
       enabled: true,
-      conditions: [{
-        metric: 'system.memory.usage',
-        operator: 'gt',
-        value: 80,
-      }],
+      conditions: [
+        {
+          metric: 'system.memory.usage',
+          operator: 'gt',
+          value: 80,
+        },
+      ],
       actions: [
         {
           type: 'notification',
@@ -80,7 +82,7 @@ class AlertSystem {
           target: 'admin@rent360.com',
           template: 'ALERTA: Memoria del sistema crítica ({{value}}%)',
           enabled: true,
-        }
+        },
       ],
       cooldown: 30,
       tags: ['system', 'memory', 'performance'],
@@ -94,18 +96,20 @@ class AlertSystem {
       type: 'threshold',
       severity: 'medium',
       enabled: true,
-      conditions: [{
-        metric: 'business.payments.overdue',
-        operator: 'gt',
-        value: 10,
-      }],
+      conditions: [
+        {
+          metric: 'business.payments.overdue',
+          operator: 'gt',
+          value: 10,
+        },
+      ],
       actions: [
         {
           type: 'notification',
           target: 'admin',
           template: '{{value}} pagos están vencidos',
           enabled: true,
-        }
+        },
       ],
       cooldown: 60,
       tags: ['business', 'payments', 'overdue'],
@@ -119,12 +123,14 @@ class AlertSystem {
       type: 'threshold',
       severity: 'high',
       enabled: true,
-      conditions: [{
-        metric: 'security.failed-logins',
-        operator: 'gt',
-        value: 5,
-        timeWindow: 1,
-      }],
+      conditions: [
+        {
+          metric: 'security.failed-logins',
+          operator: 'gt',
+          value: 5,
+          timeWindow: 1,
+        },
+      ],
       actions: [
         {
           type: 'notification',
@@ -137,7 +143,7 @@ class AlertSystem {
           target: 'security',
           template: 'Failed login attempts: {{value}}',
           enabled: true,
-        }
+        },
       ],
       cooldown: 5,
       tags: ['security', 'authentication', 'attack'],
@@ -151,11 +157,13 @@ class AlertSystem {
       type: 'threshold',
       severity: 'medium',
       enabled: true,
-      conditions: [{
-        metric: 'business.contracts.expiring-30-days',
-        operator: 'gt',
-        value: 0,
-      }],
+      conditions: [
+        {
+          metric: 'business.contracts.expiring-30-days',
+          operator: 'gt',
+          value: 0,
+        },
+      ],
       actions: [
         {
           type: 'notification',
@@ -168,7 +176,7 @@ class AlertSystem {
           target: 'admin@rent360.com',
           template: 'Recordatorio: {{value}} contratos requieren renovación',
           enabled: true,
-        }
+        },
       ],
       cooldown: 1440, // 24 horas
       tags: ['business', 'contracts', 'renewal'],
@@ -182,18 +190,20 @@ class AlertSystem {
       type: 'threshold',
       severity: 'medium',
       enabled: true,
-      conditions: [{
-        metric: 'performance.api.response-time',
-        operator: 'gt',
-        value: 2000,
-      }],
+      conditions: [
+        {
+          metric: 'performance.api.response-time',
+          operator: 'gt',
+          value: 2000,
+        },
+      ],
       actions: [
         {
           type: 'notification',
           target: 'admin',
           template: 'Tiempo de respuesta API: {{value}}ms',
           enabled: true,
-        }
+        },
       ],
       cooldown: 15,
       tags: ['performance', 'api', 'response-time'],
@@ -261,7 +271,9 @@ class AlertSystem {
 
   public async checkMetrics(metrics: Record<string, any>): Promise<void> {
     for (const [ruleId, rule] of this.rules) {
-      if (!rule.enabled) continue;
+      if (!rule.enabled) {
+        continue;
+      }
 
       // Verificar cooldown
       if (rule.lastTriggered) {
@@ -350,9 +362,15 @@ class AlertSystem {
     });
   }
 
-  private async executeActions(actions: AlertAction[], alert: AlertInstance, metrics: Record<string, any>): Promise<void> {
+  private async executeActions(
+    actions: AlertAction[],
+    alert: AlertInstance,
+    metrics: Record<string, any>
+  ): Promise<void> {
     for (const action of actions) {
-      if (!action.enabled) continue;
+      if (!action.enabled) {
+        continue;
+      }
 
       try {
         switch (action.type) {
@@ -391,7 +409,7 @@ class AlertSystem {
         type: 'system_alert',
         title: alert.title,
         message: alert.message,
-        data: JSON.stringify({ alertId: alert.id, severity: alert.severity }),
+        metadata: JSON.stringify({ alertId: alert.id, severity: alert.severity }),
         createdAt: new Date(),
       },
     });
@@ -498,9 +516,7 @@ class AlertSystem {
   }
 
   public getActiveAlerts(): AlertInstance[] {
-    return Array.from(this.activeAlerts.values()).filter(
-      alert => alert.status === 'active'
-    );
+    return Array.from(this.activeAlerts.values()).filter(alert => alert.status === 'active');
   }
 
   public getAllAlerts(): AlertInstance[] {
@@ -515,12 +531,7 @@ class AlertSystem {
   public async checkBusinessMetrics(): Promise<void> {
     try {
       // Obtener métricas de negocio
-      const [
-        overduePayments,
-        expiringContracts,
-        activeUsers,
-        failedPayments,
-      ] = await Promise.all([
+      const [overduePayments, expiringContracts, activeUsers, failedPayments] = await Promise.all([
         // Pagos vencidos
         db.payment.count({
           where: {
@@ -564,7 +575,6 @@ class AlertSystem {
       };
 
       await this.checkMetrics(businessMetrics);
-
     } catch (error) {
       logger.error('Error checking business metrics', {
         context: 'alerts.business-metrics-error',
@@ -575,14 +585,19 @@ class AlertSystem {
 
   // Método para iniciar el sistema de alertas
   public start(): void {
-    if (this.isRunning) return;
+    if (this.isRunning) {
+      return;
+    }
 
     this.isRunning = true;
 
     // Verificar métricas cada 5 minutos
-    setInterval(async () => {
-      await this.checkBusinessMetrics();
-    }, 5 * 60 * 1000);
+    setInterval(
+      async () => {
+        await this.checkBusinessMetrics();
+      },
+      5 * 60 * 1000
+    );
 
     logger.info('Alert system started', {
       context: 'alerts.started',
@@ -625,6 +640,8 @@ alertSystem.start();
 export const addAlertRule = (rule: AlertRule) => alertSystem.addRule(rule);
 export const removeAlertRule = (ruleId: string) => alertSystem.removeRule(ruleId);
 export const getAlertRules = () => alertSystem.getAllRules();
-export const acknowledgeAlert = (alertId: string, userId: string) => alertSystem.acknowledgeAlert(alertId, userId);
-export const resolveAlert = (alertId: string, userId: string) => alertSystem.resolveAlert(alertId, userId);
+export const acknowledgeAlert = (alertId: string, userId: string) =>
+  alertSystem.acknowledgeAlert(alertId, userId);
+export const resolveAlert = (alertId: string, userId: string) =>
+  alertSystem.resolveAlert(alertId, userId);
 export const getActiveAlerts = () => alertSystem.getActiveAlerts();
