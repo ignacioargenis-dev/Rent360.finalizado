@@ -176,13 +176,15 @@ export default function OwnerTicketsPage() {
       }
 
       const data = await response.json();
-      if (data.success) {
+      if (data.message && response.status === 201) {
         setShowCreateDialog(false);
         setNewTicket({ subject: '', description: '', priority: 'medium', category: 'general' });
         loadTickets();
         logger.info('Ticket creado exitosamente');
       } else {
-        logger.error('Error creando ticket:', { error: data.error });
+        const errorMessage = data.error || 'Error desconocido al crear el ticket';
+        logger.error('Error creando ticket:', { error: errorMessage });
+        setValidationError(errorMessage);
       }
     } catch (error) {
       logger.error('Error creando ticket:', {
