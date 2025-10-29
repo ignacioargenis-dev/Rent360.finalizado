@@ -669,13 +669,15 @@ export default function UnifiedSidebar({
   // Determinar rol del usuario de forma simple y estable
   const finalUserRole = user?.role?.toLowerCase() || 'guest';
 
-  // Debug: Log para verificar rol detectado
-  console.log('[UNIFIED SIDEBAR] Usuario:', {
-    id: user?.id,
-    role: user?.role,
-    finalUserRole,
-    pathname,
-  });
+  // Debug: Log para verificar rol detectado (solo en desarrollo)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[UNIFIED SIDEBAR] Usuario:', {
+      id: user?.id,
+      role: user?.role,
+      finalUserRole,
+      pathname,
+    });
+  }
 
   const items = menuItems[finalUserRole] || menuItems.tenant || [];
 
