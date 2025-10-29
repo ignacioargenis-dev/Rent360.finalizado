@@ -16,6 +16,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Wrench, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
 import { logger } from '@/lib/logger-minimal';
+import { toast } from 'sonner';
 
 export default function RequestServicePage() {
   const [formData, setFormData] = useState({
@@ -45,17 +46,19 @@ export default function RequestServicePage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
         setSubmitted(true);
+        toast.success(result.message || 'Solicitud de servicio enviada exitosamente');
         logger.info('Solicitud de servicio enviada:', formData);
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al enviar la solicitud');
+        toast.error(error.error || 'Error al enviar la solicitud');
       }
     } catch (error) {
       logger.error('Error enviando solicitud de servicio:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      alert('Error al conectar con el servidor');
+      toast.error('Error al conectar con el servidor');
     } finally {
       setIsSubmitting(false);
     }

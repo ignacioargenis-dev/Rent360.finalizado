@@ -171,6 +171,8 @@ export default function TenantBrokerServicesPage() {
 
   // Crear nueva solicitud
   const createRequest = async () => {
+    console.log('[TENANT BROKER SERVICES] Creando solicitud...', newRequest);
+
     if (newRequest.title.length < 10) {
       toast.error('El título debe tener al menos 10 caracteres');
       return;
@@ -181,12 +183,18 @@ export default function TenantBrokerServicesPage() {
     }
 
     try {
+      console.log('[TENANT BROKER SERVICES] Enviando petición a /api/service-requests');
+
       const res = await fetch('/api/service-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRequest),
       });
+
+      console.log('[TENANT BROKER SERVICES] Respuesta del servidor:', res.status, res.statusText);
+
       const data = await res.json();
+      console.log('[TENANT BROKER SERVICES] Datos de respuesta:', data);
 
       if (data.success) {
         toast.success(data.message);
@@ -200,9 +208,11 @@ export default function TenantBrokerServicesPage() {
         });
         loadMyRequests();
       } else {
+        console.error('[TENANT BROKER SERVICES] Error en respuesta:', data.error);
         toast.error(data.error);
       }
     } catch (error) {
+      console.error('[TENANT BROKER SERVICES] Error de red:', error);
       toast.error('Error al crear solicitud');
     }
   };

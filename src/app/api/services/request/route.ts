@@ -3,6 +3,79 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 
+export async function GET(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+
+    // Solo propietarios, inquilinos y corredores pueden ver sus solicitudes
+    if (!['OWNER', 'TENANT', 'BROKER'].includes(user.role)) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para ver solicitudes de servicios' },
+        { status: 403 }
+      );
+    }
+
+    const userId = user.id;
+
+    const serviceRequests = await db.serviceJob.findMany({
+      where: {
+        requesterId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        requester: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        serviceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+            contactName: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    // Transformar los datos para el frontend
+    const transformedRequests = serviceRequests.map(request => ({
+      id: request.id,
+      serviceType: request.serviceType,
+      title: request.title,
+      description: request.description,
+      status: request.status,
+      scheduledDate: request.scheduledDate,
+      basePrice: request.basePrice,
+      finalPrice: request.finalPrice,
+      rating: request.rating,
+      feedback: request.feedback,
+      createdAt: request.createdAt,
+      requesterName: request.requester.name,
+      serviceProviderName: request.serviceProvider?.businessName || null,
+      images: request.images ? JSON.parse(request.images) : [],
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: transformedRequests,
+    });
+  } catch (error) {
+    logger.error('Error obteniendo solicitudes de servicio:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      { success: false, error: 'Error al obtener solicitudes de servicio' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
@@ -25,38 +98,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // En un futuro real, crearíamos la solicitud en la base de datos
-    const serviceRequest = {
-      id: Date.now().toString(),
-      requesterId: user.id,
-      requesterName: user.name,
-      serviceType,
-      description,
-      urgency: urgency || 'Media',
-      preferredDate: preferredDate || null,
-      budget: budget || null,
-      status: 'Pendiente',
-      createdAt: new Date().toISOString()
-    };
+    // Crear la solicitud de servicio en la base de datos
+    const serviceRequest = await db.serviceJob.create({
+      data: {
+        requesterId: user.id,
+        title: `${serviceType} - Solicitud de ${user.name || 'Usuario'}`,
+        description,
+        serviceType,
+        status: 'PENDING',
+        scheduledDate: preferredDate ? new Date(preferredDate) : null,
+        basePrice: budget ? parseFloat(budget) : 0,
+      },
+      include: {
+        requester: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        serviceProvider: false, // No hay proveedor asignado aún
+      },
+    });
 
-    logger.info('Nueva solicitud de servicio creada:', {
+    logger.info('Nueva solicitud de servicio doméstico creada:', {
       requesterId: user.id,
       serviceType,
-      requestId: serviceRequest.id
+      requestId: serviceRequest.id,
     });
 
     return NextResponse.json({
       success: true,
-      request: serviceRequest,
-      message: 'Solicitud de servicio enviada exitosamente. Los proveedores disponibles recibirán tu solicitud.'
+      request: {
+        id: serviceRequest.id,
+        requesterId: serviceRequest.requesterId,
+        requesterName: serviceRequest.requester.name,
+        serviceType: serviceRequest.serviceType,
+        description: serviceRequest.description,
+        status: serviceRequest.status,
+        scheduledDate: serviceRequest.scheduledDate,
+        budget: serviceRequest.basePrice,
+        createdAt: serviceRequest.createdAt,
+      },
+      message:
+        'Solicitud de servicio enviada exitosamente. Los proveedores disponibles recibirán tu solicitud.',
     });
-
   } catch (error) {
-    logger.error('Error creando solicitud de servicio:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error creando solicitud de servicio:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -73,7 +163,7 @@ export async function GET(request: NextRequest) {
         description: 'Reparación de fuga en baño principal',
         urgency: 'Alta',
         status: 'Pendiente',
-        createdAt: '2024-12-14T10:00:00Z'
+        createdAt: '2024-12-14T10:00:00Z',
       },
       {
         id: '2',
@@ -82,20 +172,18 @@ export async function GET(request: NextRequest) {
         description: 'Instalación de tomacorrientes adicionales',
         urgency: 'Media',
         status: 'En proceso',
-        createdAt: '2024-12-13T14:30:00Z'
-      }
+        createdAt: '2024-12-13T14:30:00Z',
+      },
     ];
 
     return NextResponse.json({
       success: true,
-      requests: user.role === 'PROVIDER' ? mockRequests : []
+      requests: user.role === 'PROVIDER' ? mockRequests : [],
     });
-
   } catch (error) {
-    logger.error('Error obteniendo solicitudes de servicio:', { error: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    logger.error('Error obteniendo solicitudes de servicio:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
