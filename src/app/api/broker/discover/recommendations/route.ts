@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== '') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== '') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder a esta función' },
         { status: 403 }

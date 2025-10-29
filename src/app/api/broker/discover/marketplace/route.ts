@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
 
-    if (user.role !== '') {
+    if (user.role !== 'BROKER') {
       return NextResponse.json(
         { success: false, error: 'Solo corredores pueden acceder al marketplace' },
         { status: 403 }
