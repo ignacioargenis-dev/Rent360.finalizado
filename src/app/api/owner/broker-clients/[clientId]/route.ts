@@ -34,12 +34,6 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
             avatar: true,
           },
         },
-        // Incluir contratos donde el corredor está involucrado
-        _count: {
-          select: {
-            contracts: true,
-          },
-        },
       },
     });
 
@@ -63,7 +57,6 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       client: {
         ...brokerClient,
         managedPropertyIds,
-        totalContracts: brokerClient._count.contracts,
       },
     });
   } catch (error) {

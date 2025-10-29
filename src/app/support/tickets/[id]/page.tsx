@@ -147,11 +147,11 @@ export default function TicketDetailsPage() {
     }
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) {
+  const formatDate = (dateInput: string | Date | null | undefined) => {
+    if (!dateInput) {
       return 'Fecha no disponible';
     }
-    const date = new Date(dateString);
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     if (isNaN(date.getTime())) {
       return 'Fecha inválida';
     }

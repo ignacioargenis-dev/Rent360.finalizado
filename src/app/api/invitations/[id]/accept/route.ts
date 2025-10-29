@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     // Crear la relación cliente-corredor
-    await db.brokerClient.create({
+    const brokerClient = await db.brokerClient.create({
       data: {
         brokerId: invitation.brokerId,
         userId: user.id,
@@ -91,14 +91,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       invitationId,
       userId: user.id,
       brokerId: invitation.brokerId,
-      clientId: updatedClient.id,
+      clientId: brokerClient.id,
     });
 
     return NextResponse.json({
       success: true,
       message: 'Invitación aceptada exitosamente',
-      clientId: updatedClient.id,
-      redirectTo: '/owner/broker-services/select-properties?clientId=' + updatedClient.id,
+      clientId: brokerClient.id,
+      redirectTo: '/owner/broker-services/select-properties?clientId=' + brokerClient.id,
     });
   } catch (error: any) {
     logger.error('Error accepting invitation', {

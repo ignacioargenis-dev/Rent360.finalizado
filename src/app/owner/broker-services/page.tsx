@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ import {
 } from 'lucide-react';
 
 export default function BrokerServicesPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('invitations');
   const [loading, setLoading] = useState(false);
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);

@@ -29,13 +29,14 @@ interface BrokerClient {
   brokerId: string;
   userId: string;
   propertyManagementType: string | null;
-  managedProperties: string[] | null;
+  managedPropertyIds: string[] | null;
+  commissionRate: number;
 }
 
 export default function SelectPropertiesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clientId = searchParams.get('clientId');
+  const clientId = searchParams?.get('clientId');
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
@@ -76,8 +77,11 @@ export default function SelectPropertiesPage() {
         setBrokerClient(clientData.client);
 
         // Si ya hay propiedades seleccionadas, marcarlas
-        if (clientData.client.managedPropertyIds) {
-          setSelectedProperties(JSON.parse(clientData.client.managedPropertyIds));
+        if (
+          clientData.client.managedPropertyIds &&
+          Array.isArray(clientData.client.managedPropertyIds)
+        ) {
+          setSelectedProperties(clientData.client.managedPropertyIds);
         }
       }
     } catch (error) {
