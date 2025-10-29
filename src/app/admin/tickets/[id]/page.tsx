@@ -194,8 +194,14 @@ export default function AdminTicketDetailsPage() {
     }
   };
 
-  const formatDate = (dateInput: string | Date) => {
+  const formatDate = (dateInput: string | Date | null | undefined) => {
+    if (!dateInput) {
+      return 'Fecha no disponible';
+    }
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) {
+      return 'Fecha inválida';
+    }
     return date.toLocaleString('es-CL', {
       year: 'numeric',
       month: 'short',

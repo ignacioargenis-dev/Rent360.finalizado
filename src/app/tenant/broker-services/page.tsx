@@ -114,7 +114,13 @@ export default function TenantBrokerServicesPage() {
 
       if (data.success) {
         toast.success('Invitación aceptada exitosamente');
-        loadInvitations(); // Recargar invitaciones
+
+        // Redirigir a selección de propiedades si se proporciona la URL
+        if (data.redirectTo) {
+          router.push(data.redirectTo);
+        } else {
+          loadInvitations(); // Recargar invitaciones como fallback
+        }
       } else {
         toast.error(data.error || 'Error al aceptar invitación');
       }

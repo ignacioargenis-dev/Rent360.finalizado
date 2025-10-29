@@ -91,11 +91,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       invitationId,
       userId: user.id,
       brokerId: invitation.brokerId,
+      clientId: updatedClient.id,
     });
 
     return NextResponse.json({
       success: true,
       message: 'Invitación aceptada exitosamente',
+      clientId: updatedClient.id,
+      redirectTo: '/owner/broker-services/select-properties?clientId=' + updatedClient.id,
     });
   } catch (error: any) {
     logger.error('Error accepting invitation', {

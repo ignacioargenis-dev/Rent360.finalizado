@@ -147,8 +147,15 @@ export default function TicketDetailsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) {
+      return 'Fecha no disponible';
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Fecha inválida';
+    }
+    return date.toLocaleString('es-CL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -251,9 +258,7 @@ export default function TicketDetailsPage() {
                     {ticket?.resolvedAt && (
                       <div>
                         <span className="text-gray-600">Resuelto:</span>
-                        <span className="ml-2 font-medium">
-                          {formatDate(ticket.resolvedAt.toISOString())}
-                        </span>
+                        <span className="ml-2 font-medium">{formatDate(ticket.resolvedAt)}</span>
                       </div>
                     )}
                     {ticket?.assignedTo && (
@@ -402,9 +407,7 @@ export default function TicketDetailsPage() {
                     <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
                     <div>
                       <p className="text-sm font-medium">Resuelto</p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(ticket?.resolvedAt.toISOString())}
-                      </p>
+                      <p className="text-xs text-gray-500">{formatDate(ticket?.resolvedAt)}</p>
                     </div>
                   </div>
                 )}

@@ -1907,6 +1907,7 @@ model BrokerClient {
   
   // Gestión de propiedades (para OWNER)
   propertyManagementType String? // full, partial, none
+  managedPropertyIds     String? // JSON array of property IDs when partial
   
   // Métricas
   totalPropertiesManaged Int @default(0)
