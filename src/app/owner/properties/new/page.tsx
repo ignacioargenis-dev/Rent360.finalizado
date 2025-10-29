@@ -757,9 +757,11 @@ export default function NewPropertyPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setSuccessMessage('Propiedad creada exitosamente');
+        setSuccessMessage(
+          'Propiedad creada exitosamente. Aparecerá automáticamente en tu dashboard en unos segundos.'
+        );
         setTimeout(() => {
-          // Redirigir con parámetro de refresh para forzar recarga de datos
+          // Redirigir con parámetro de refresh para forzar recarga inmediata de datos
           router.push('/owner/properties?refresh=' + Date.now());
         }, 2000);
       } else {

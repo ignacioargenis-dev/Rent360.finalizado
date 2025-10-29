@@ -68,15 +68,20 @@ export default function TenantBrokerServicesPage() {
   const loadMyRequests = async () => {
     setLoading(true);
     try {
+      console.log('[TENANT BROKER SERVICES] Cargando solicitudes...');
       const res = await fetch('/api/service-requests');
       const data = await res.json();
+      console.log('[TENANT BROKER SERVICES] Respuesta solicitudes:', data);
 
       if (data.success) {
-        setMyRequests(data.data);
+        setMyRequests(data.data || []);
+        console.log('[TENANT BROKER SERVICES] Solicitudes cargadas:', data.data?.length || 0);
       } else {
+        console.error('[TENANT BROKER SERVICES] Error en API:', data.error);
         toast.error(data.error);
       }
     } catch (error) {
+      console.error('[TENANT BROKER SERVICES] Error de red:', error);
       toast.error('Error al cargar solicitudes');
     } finally {
       setLoading(false);
@@ -87,15 +92,20 @@ export default function TenantBrokerServicesPage() {
   const loadInvitations = async () => {
     setInvitationsLoading(true);
     try {
+      console.log('[TENANT BROKER SERVICES] Cargando invitaciones...');
       const res = await fetch('/api/invitations');
       const data = await res.json();
+      console.log('[TENANT BROKER SERVICES] Respuesta invitaciones:', data);
 
       if (data.success) {
-        setInvitations(data.data);
+        setInvitations(data.data || []);
+        console.log('[TENANT BROKER SERVICES] Invitaciones cargadas:', data.data?.length || 0);
       } else {
+        console.error('[TENANT BROKER SERVICES] Error en API invitaciones:', data.error);
         toast.error(data.error || 'Error al cargar invitaciones');
       }
     } catch (error) {
+      console.error('[TENANT BROKER SERVICES] Error de red invitaciones:', error);
       toast.error('Error al cargar invitaciones');
     } finally {
       setInvitationsLoading(false);

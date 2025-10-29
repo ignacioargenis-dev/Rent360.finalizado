@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { NotificationToast, NotificationType } from './notification-toast';
@@ -35,7 +35,9 @@ export const useNotifications = () => {
   if (!context) {
     // En lugar de lanzar error, retornar un contexto vacío para evitar crashes
     // durante SSR o hidratación
-    console.warn('useNotifications called outside NotificationProvider context');
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('useNotifications called outside NotificationProvider context');
+    }
     return {
       notifications: [],
       unreadCount: 0,
@@ -63,14 +65,16 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
-  maxNotifications = 5
+  maxNotifications = 5,
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showSplash, setShowSplash] = useState<boolean>(false);
 
   // Splash solo al ingresar a la web (no en cada cambio de ruta)
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     const afterLogin = sessionStorage.getItem('r360_splash_after_login');
     if (afterLogin) {
       setShowSplash(true);
@@ -87,69 +91,87 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   const generateId = () => `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const notify = useCallback((notification: Omit<Notification, 'id'>) => {
-    const id = generateId();
-    const newNotification: Notification = { ...notification, id };
+  const notify = useCallback(
+    (notification: Omit<Notification, 'id'>) => {
+      const id = generateId();
+      const newNotification: Notification = { ...notification, id };
 
-    setNotifications(prev => {
-      const updated = [newNotification, ...prev];
-      // Mantener solo las últimas N notificaciones
-      return updated.slice(0, maxNotifications);
-    });
+      setNotifications(prev => {
+        const updated = [newNotification, ...prev];
+        // Mantener solo las últimas N notificaciones
+        return updated.slice(0, maxNotifications);
+      });
 
-    return id;
-  }, [maxNotifications]);
+      return id;
+    },
+    [maxNotifications]
+  );
 
-  const success = useCallback((title: string, message?: string, options?: Partial<Notification>) => {
-    return notify({
-      type: 'success',
-      title,
-      ...(message && { message }),
-      duration: 5000,
-      ...options
-    });
-  }, [notify]);
+  const success = useCallback(
+    (title: string, message?: string, options?: Partial<Notification>) => {
+      return notify({
+        type: 'success',
+        title,
+        ...(message && { message }),
+        duration: 5000,
+        ...options,
+      });
+    },
+    [notify]
+  );
 
-  const error = useCallback((title: string, message?: string, options?: Partial<Notification>) => {
-    return notify({
-      type: 'error',
-      title,
-      ...(message && { message }),
-      duration: 7000,
-      persistent: true,
-      ...options
-    });
-  }, [notify]);
+  const error = useCallback(
+    (title: string, message?: string, options?: Partial<Notification>) => {
+      return notify({
+        type: 'error',
+        title,
+        ...(message && { message }),
+        duration: 7000,
+        persistent: true,
+        ...options,
+      });
+    },
+    [notify]
+  );
 
-  const warning = useCallback((title: string, message?: string, options?: Partial<Notification>) => {
-    return notify({
-      type: 'warning',
-      title,
-      ...(message && { message }),
-      duration: 6000,
-      ...options
-    });
-  }, [notify]);
+  const warning = useCallback(
+    (title: string, message?: string, options?: Partial<Notification>) => {
+      return notify({
+        type: 'warning',
+        title,
+        ...(message && { message }),
+        duration: 6000,
+        ...options,
+      });
+    },
+    [notify]
+  );
 
-  const info = useCallback((title: string, message?: string, options?: Partial<Notification>) => {
-    return notify({
-      type: 'info',
-      title,
-      ...(message && { message }),
-      duration: 5000,
-      ...options
-    });
-  }, [notify]);
+  const info = useCallback(
+    (title: string, message?: string, options?: Partial<Notification>) => {
+      return notify({
+        type: 'info',
+        title,
+        ...(message && { message }),
+        duration: 5000,
+        ...options,
+      });
+    },
+    [notify]
+  );
 
-  const loading = useCallback((title: string, message?: string, options?: Partial<Notification>) => {
-    return notify({
-      type: 'loading',
-      title,
-      ...(message && { message }),
-      persistent: true,
-      ...options
-    });
-  }, [notify]);
+  const loading = useCallback(
+    (title: string, message?: string, options?: Partial<Notification>) => {
+      return notify({
+        type: 'loading',
+        title,
+        ...(message && { message }),
+        persistent: true,
+        ...options,
+      });
+    },
+    [notify]
+  );
 
   const remove = useCallback((id: string) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id));
@@ -167,13 +189,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     info,
     loading,
     remove,
-    clear
+    clear,
   };
 
   return (
     <NotificationContext.Provider value={value}>
       <SplashScreen
-        logoUrl={"/logo-rent360.png"}
+        logoUrl={'/logo-rent360.png'}
         visible={showSplash}
         onHidden={() => setShowSplash(false)}
       />
@@ -182,11 +204,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       {/* Portal para notificaciones */}
       <div className="fixed top-0 right-0 z-50 space-y-2 p-4">
         {notifications.map(notification => (
-          <NotificationToast
-            key={notification.id}
-            {...notification}
-            onClose={remove}
-          />
+          <NotificationToast key={notification.id} {...notification} onClose={remove} />
         ))}
       </div>
     </NotificationContext.Provider>

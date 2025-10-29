@@ -113,16 +113,30 @@ export default function OwnerPropertiesPage() {
     setIsRefreshing(true);
     try {
       await loadPropertiesData(true); // Forzar refresh
-      setSuccessMessage('Datos actualizados exitosamente.');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      alert('✅ Datos actualizados exitosamente.');
     } catch (error) {
       logger.error('Error refreshing data:', error);
-      setErrorMessage('Error al actualizar los datos.');
-      setTimeout(() => setErrorMessage(''), 5000);
+      alert('❌ Error al actualizar los datos.');
     } finally {
       setIsRefreshing(false);
     }
   };
+
+  // Polling automático para mantener los datos actualizados
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      // Solo hacer polling si la pestaña está visible y no hay operaciones activas
+      if (!document.hidden && !isRefreshing && !loading) {
+        try {
+          await loadPropertiesData();
+        } catch (error) {
+          logger.error('Error en polling automático:', error);
+        }
+      }
+    }, 30000); // Actualizar cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, [isRefreshing, loading]);
 
   // Detectar si se regresa de eliminar una propiedad
   useEffect(() => {
@@ -165,8 +179,9 @@ export default function OwnerPropertiesPage() {
 
         // Si había parámetro de refresh, mostrar mensaje y limpiarlo de la URL
         if (shouldRefresh) {
-          setSuccessMessage('Propiedad creada exitosamente. Datos actualizados.');
-          setTimeout(() => setSuccessMessage(''), 5000);
+          alert(
+            '✅ Propiedad creada exitosamente. Los datos se mantienen actualizados automáticamente.'
+          );
 
           const url = new URL(window.location.href);
           url.searchParams.delete('refresh');
@@ -530,21 +545,11 @@ export default function OwnerPropertiesPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mis Propiedades</h1>
             <p className="text-gray-600">Gestiona y monitorea todas tus propiedades</p>
+            <p className="text-sm text-gray-500 mt-1">
+              💡 Las nuevas propiedades aparecen automáticamente cada 30 segundos
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleManualRefresh}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
-              )}
-              {isRefreshing ? 'Actualizando...' : 'Actualizar'}
-            </Button>
             <Link href="/owner/properties/new">
               <Button size="sm">
                 <Plus className="w-4 h-4 mr-2" />
