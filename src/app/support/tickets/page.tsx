@@ -77,6 +77,7 @@ export default function SupportTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validationError, setValidationError] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTicketDialog, setShowTicketDialog] = useState(false);
@@ -147,9 +148,12 @@ export default function SupportTicketsPage() {
   const handleCreateTicket = async () => {
     // Validar que la descripción tenga al menos 10 caracteres
     if (!newTicket.description || newTicket.description.trim().length < 10) {
-      setError('La descripción debe tener al menos 10 caracteres');
+      setValidationError('La descripción debe tener al menos 10 caracteres');
       return;
     }
+
+    // Limpiar error de validación si pasa la validación
+    setValidationError('');
 
     try {
       const response = await fetch('/api/tickets', {
@@ -301,10 +305,7 @@ export default function SupportTicketsPage() {
       }
 
       // Crear URL de descarga
-      // TODO: Implementar endpoint de export para tickets generales
-      // const exportUrl = `/api/tickets/export?${params.toString()}`;
-      toast.error('Funcionalidad de export no disponible aún');
-      return;
+      const exportUrl = `/api/tickets/export?${params.toString()}`;
 
       // Crear enlace temporal para descarga
       const link = document.createElement('a');
@@ -491,6 +492,9 @@ export default function SupportTicketsPage() {
                     value={newTicket.description}
                     onChange={e => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
                   />
+                  {validationError && (
+                    <p className="text-sm text-red-600 mt-1">{validationError}</p>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-2">
