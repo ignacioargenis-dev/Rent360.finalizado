@@ -72,6 +72,13 @@ export default function DiscoverClientsPage() {
   // Estado para invitaciones
   const [invitations, setInvitations] = useState([]);
   const [showInvitationDialog, setShowInvitationDialog] = useState(false);
+
+  // Estado para modal de respuesta a solicitudes
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [responseMessage, setResponseMessage] = useState('');
+  const [proposedRate, setProposedRate] = useState(5);
+  const [sendingResponse, setSendingResponse] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [invitationData, setInvitationData] = useState({
     invitationType: 'SERVICE_OFFER',
@@ -196,26 +203,48 @@ export default function DiscoverClientsPage() {
     }
   };
 
-  const respondToRequest = async (requestId: string, message: string) => {
+  const openResponseModal = (request: any) => {
+    setSelectedRequest(request);
+    setResponseMessage('');
+    setProposedRate(5);
+    setShowResponseModal(true);
+  };
+
+  const handleSendResponse = async () => {
+    if (!responseMessage.trim() || responseMessage.length < 50) {
+      toast.error('El mensaje debe tener al menos 50 caracteres');
+      return;
+    }
+
+    if (!selectedRequest) {
+      return;
+    }
+
+    setSendingResponse(true);
     try {
-      const res = await fetch(`/api/broker/discover/marketplace/${requestId}/respond`, {
+      const res = await fetch(`/api/broker/discover/marketplace/${selectedRequest.id}/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message,
-          proposedRate: 5,
+          message: responseMessage,
+          proposedRate,
         }),
       });
       const data = await res.json();
 
       if (data.success) {
         toast.success(data.message);
-        loadMarketplace();
+        setShowResponseModal(false);
+        setSelectedRequest(null);
+        setResponseMessage('');
+        loadMarketplace(); // Recargar para actualizar el estado alreadyResponded
       } else {
         toast.error(data.error);
       }
     } catch (error) {
       toast.error('Error al responder solicitud');
+    } finally {
+      setSendingResponse(false);
     }
   };
 
@@ -594,17 +623,7 @@ export default function DiscoverClientsPage() {
                   </div>
 
                   {!request.alreadyResponded && (
-                    <Button
-                      className="w-full"
-                      onClick={() => {
-                        const message = prompt('Escribe tu propuesta (mínimo 50 caracteres):');
-                        if (message && message.length >= 50) {
-                          respondToRequest(request.id, message);
-                        } else if (message) {
-                          toast.error('El mensaje es muy corto');
-                        }
-                      }}
-                    >
+                    <Button className="w-full" onClick={() => openResponseModal(request)}>
                       <Send className="h-4 w-4 mr-2" />
                       Responder Solicitud
                     </Button>
@@ -731,6 +750,112 @@ export default function DiscoverClientsPage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal para responder solicitudes del marketplace */}
+        <Dialog open={showResponseModal} onOpenChange={setShowResponseModal}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Responder Solicitud
+              </DialogTitle>
+              <DialogDescription>
+                Envía una propuesta personalizada para esta solicitud de servicios de corretaje.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedRequest && (
+              <div className="space-y-4">
+                {/* Información de la solicitud */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-sm mb-2">Solicitud de:</h4>
+                  <div className="text-sm space-y-1">
+                    <p>
+                      <strong>{selectedRequest.title}</strong>
+                    </p>
+                    <p className="text-gray-600">{selectedRequest.description}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {selectedRequest.user.name}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {selectedRequest.user.city}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Formulario de respuesta */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Tu Propuesta <span className="text-red-500">*</span>
+                    </label>
+                    <Textarea
+                      placeholder="Describe tu propuesta de servicios, experiencia, y por qué eres el corredor ideal para este cliente. Mínimo 50 caracteres."
+                      value={responseMessage}
+                      onChange={e => setResponseMessage(e.target.value)}
+                      rows={6}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {responseMessage.length}/50 caracteres mínimo
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Comisión Propuesta (%)</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={proposedRate}
+                      onChange={e => setProposedRate(parseFloat(e.target.value))}
+                      className="max-w-32"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Porcentaje de comisión que ofreces por tus servicios
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    onClick={handleSendResponse}
+                    disabled={sendingResponse || responseMessage.length < 50}
+                    className="flex-1"
+                  >
+                    {sendingResponse ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Enviar Respuesta
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowResponseModal(false);
+                      setSelectedRequest(null);
+                      setResponseMessage('');
+                    }}
+                    disabled={sendingResponse}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
