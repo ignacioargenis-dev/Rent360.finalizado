@@ -106,14 +106,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             disableTransitionOnChange
           >
             <NotificationProvider>
+              {/* Componentes que necesitan notificaciones pero no autenticación */}
+              <Chatbot position="bottom-right" initialOpen={false} />
+              <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
+              <Toaster />
+
               <AuthProvider>
                 {children}
-
-                {/* Componentes de la Fase 1 */}
-                <Chatbot position="bottom-right" initialOpen={false} />
-
-                <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
-                <Toaster />
               </AuthProvider>
             </NotificationProvider>
           </ThemeProvider>

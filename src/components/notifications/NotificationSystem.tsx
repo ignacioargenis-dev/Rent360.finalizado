@@ -44,27 +44,8 @@ interface NotificationContextType {
   refreshNotifications: () => void
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
-
-export function useNotifications() {
-  const context = useContext(NotificationContext);
-  if (!context) {
-    logger.error('useNotifications must be used within a NotificationProvider');
-    // Retornar un contexto por defecto para evitar crashes
-    return {
-      notifications: [],
-      unreadCount: 0,
-      loading: false,
-      addNotification: () => {},
-      markAsRead: () => {},
-      markAllAsRead: () => { /* Implementation */ },
-      removeNotification: () => {},
-      clearAll: () => {},
-      refreshNotifications: () => {},
-    };
-  }
-  return context;
-}
+// Usar el NotificationProvider del layout principal
+export { useNotifications } from '@/components/ui/notification-provider';
 
 interface NotificationProviderProps {
   children: React.ReactNode

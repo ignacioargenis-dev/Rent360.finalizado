@@ -106,6 +106,23 @@ export default function OwnerPropertiesPage() {
   const [justDeletedProperty, setJustDeletedProperty] = useState(false);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [deleteConfirmProperty, setDeleteConfirmProperty] = useState<Property | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Función para refrescar manualmente
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await loadPropertiesData(true); // Forzar refresh
+      setSuccessMessage('Datos actualizados exitosamente.');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      logger.error('Error refreshing data:', error);
+      setErrorMessage('Error al actualizar los datos.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Detectar si se regresa de eliminar una propiedad
   useEffect(() => {
@@ -143,11 +160,14 @@ export default function OwnerPropertiesPage() {
           setUser(data.user);
         }
 
-        // Load properties data
-        await loadPropertiesData();
+        // Load properties data - forzar refresh si viene del parámetro
+        await loadPropertiesData(shouldRefresh);
 
-        // Si había parámetro de refresh, limpiarlo de la URL
+        // Si había parámetro de refresh, mostrar mensaje y limpiarlo de la URL
         if (shouldRefresh) {
+          setSuccessMessage('Propiedad creada exitosamente. Datos actualizados.');
+          setTimeout(() => setSuccessMessage(''), 5000);
+
           const url = new URL(window.location.href);
           url.searchParams.delete('refresh');
           url.searchParams.delete('deleted');
@@ -265,20 +285,23 @@ export default function OwnerPropertiesPage() {
     }
   };
 
-  const loadPropertiesData = async () => {
+  const loadPropertiesData = async (forceRefresh = false) => {
     try {
       // Cargar propiedades reales desde la API
       // Agregar timestamp para evitar cache y forzar refresh
       const timestamp = Date.now();
+      const cacheBuster = forceRefresh ? `&_force=${Math.random()}` : '';
       const response = await fetch(
-        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=100&_t=${timestamp}`,
+        `${typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || ''}/api/properties/list?limit=100&_t=${timestamp}${cacheBuster}`,
         {
           credentials: 'include',
           headers: {
-            'Cache-Control': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
             Pragma: 'no-cache',
+            Expires: '0',
             Accept: 'application/json',
           },
+          cache: 'no-store',
         }
       );
 
@@ -509,6 +532,19 @@ export default function OwnerPropertiesPage() {
             <p className="text-gray-600">Gestiona y monitorea todas tus propiedades</p>
           </div>
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+            </Button>
             <Link href="/owner/properties/new">
               <Button size="sm">
                 <Plus className="w-4 h-4 mr-2" />

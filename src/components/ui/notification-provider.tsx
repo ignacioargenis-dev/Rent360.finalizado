@@ -33,7 +33,25 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    // En lugar de lanzar error, retornar un contexto vacío para evitar crashes
+    // durante SSR o hidratación
+    console.warn('useNotifications called outside NotificationProvider context');
+    return {
+      notifications: [],
+      unreadCount: 0,
+      loading: false,
+      addNotification: () => {},
+      markAsRead: () => {},
+      markAllAsRead: () => {},
+      removeNotification: () => {},
+      clearAll: () => {},
+      refreshNotifications: () => {},
+      notify: () => {},
+      success: () => {},
+      error: () => {},
+      warning: () => {},
+      info: () => {},
+    };
   }
   return context;
 };

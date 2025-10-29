@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     const bathrooms = searchParams.get('bathrooms') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const forceRefresh = searchParams.get('_force') !== null; // Si existe _force, forzar refresh
 
     // Construir filtros
     const where: any = {};
@@ -70,11 +71,15 @@ export async function GET(request: NextRequest) {
       sortOrder,
     });
 
-    // Intentar obtener del cache primero
-    const cachedResult = cache.get(cacheKey);
-    if (cachedResult) {
-      logger.debug('Properties list obtenido del cache', { cacheKey });
-      return NextResponse.json(cachedResult);
+    // Intentar obtener del cache primero (solo si no se fuerza refresh)
+    if (!forceRefresh) {
+      const cachedResult = cache.get(cacheKey);
+      if (cachedResult) {
+        logger.debug('Properties list obtenido del cache', { cacheKey });
+        return NextResponse.json(cachedResult);
+      }
+    } else {
+      logger.debug('Forzando refresh - omitiendo cache', { cacheKey });
     }
 
     // Filtros de búsqueda
@@ -310,14 +315,20 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Guardar en cache
-    cache.set(cacheKey, responseData, cacheTTL.MEDIUM);
-
-    logger.debug('Properties list guardado en cache', {
-      cacheKey,
-      propertiesCount: formattedProperties.length,
-      ttl: cacheTTL.MEDIUM,
-    });
+    // Guardar en cache (solo si no se forzó refresh)
+    if (!forceRefresh) {
+      cache.set(cacheKey, responseData, cacheTTL.MEDIUM);
+      logger.debug('Properties list guardado en cache', {
+        cacheKey,
+        propertiesCount: formattedProperties.length,
+        ttl: cacheTTL.MEDIUM,
+      });
+    } else {
+      logger.debug('Omitiendo guardado en cache por refresh forzado', {
+        cacheKey,
+        propertiesCount: formattedProperties.length,
+      });
+    }
 
     return NextResponse.json(responseData);
   } catch (error) {

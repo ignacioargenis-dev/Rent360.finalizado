@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth/AuthProviderSimple';
+import { NotificationProvider } from '@/components/ui/notification-provider';
 import Chatbot from '@/components/ai/Chatbot';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -41,7 +42,8 @@ export default async function LocaleLayout({ children, params: { locale } }: Loc
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>
+            <NotificationProvider>
+              <AuthProvider>
               <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
                 <UnifiedSidebar>{children}</UnifiedSidebar>
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -60,7 +62,8 @@ export default async function LocaleLayout({ children, params: { locale } }: Loc
               <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
 
               <Toaster />
-            </AuthProvider>
+              </AuthProvider>
+            </NotificationProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
