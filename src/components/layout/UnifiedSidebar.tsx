@@ -225,6 +225,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: UserPlus,
     },
     {
+      title: 'Mis Tickets',
+      url: '/tenant/tickets',
+      icon: MessageSquare,
+    },
+    {
       title: 'Mensajes',
       url: '/tenant/messages',
       icon: MessageSquare,
@@ -260,6 +265,11 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Servicios de Corredores',
       url: '/owner/broker-services',
       icon: UserPlus,
+    },
+    {
+      title: 'Mis Tickets',
+      url: '/owner/tickets',
+      icon: MessageSquare,
     },
     {
       title: 'Contratos',
@@ -383,6 +393,11 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Analytics',
       url: '/broker/analytics',
       icon: BarChart3,
+    },
+    {
+      title: 'Mis Tickets',
+      url: '/broker/tickets',
+      icon: MessageSquare,
     },
     {
       title: 'Configuración',
