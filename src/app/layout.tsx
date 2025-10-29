@@ -107,11 +107,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <NotificationProvider>
               {/* Componentes que necesitan notificaciones pero no autenticación */}
-              <Chatbot position="bottom-right" initialOpen={false} />
               <PWAInstallPrompt position="bottom" autoShow={true} delay={5000} />
               <Toaster />
 
               <AuthProvider>
+                {/* Componentes que necesitan autenticación */}
+                <Chatbot position="bottom-right" initialOpen={false} />
                 {children}
               </AuthProvider>
             </NotificationProvider>
