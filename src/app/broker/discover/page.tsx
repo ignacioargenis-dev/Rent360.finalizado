@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,7 +96,7 @@ export default function DiscoverClientsPage() {
     } else if (activeTab === 'invitations') {
       loadInvitations();
     }
-  }, [activeTab]);
+  }, [activeTab, loadMarketplace]);
 
   // 🔍 BÚSQUEDA INTELIGENTE
   const handleSearch = async () => {
@@ -178,7 +178,7 @@ export default function DiscoverClientsPage() {
   };
 
   // 🏪 MARKETPLACE
-  const loadMarketplace = async () => {
+  const loadMarketplace = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -201,7 +201,7 @@ export default function DiscoverClientsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [marketplaceFilters]);
 
   const openResponseModal = (request: any) => {
     setSelectedRequest(request);
@@ -239,7 +239,14 @@ export default function DiscoverClientsPage() {
         setResponseMessage('');
         loadMarketplace(); // Recargar para actualizar el estado alreadyResponded
       } else {
-        toast.error(data.error);
+        // Mostrar mensaje más específico para errores de comisión
+        if (data.maxCommissionRate) {
+          toast.error(`Comisión inválida: ${data.error}`, {
+            duration: 6000,
+          });
+        } else {
+          toast.error(data.error);
+        }
       }
     } catch (error) {
       toast.error('Error al responder solicitud');
@@ -459,8 +466,12 @@ export default function DiscoverClientsPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Recomendaciones Inteligentes</h3>
                   <p className="text-sm text-gray-600">
-                    Basadas en matching automático con tus preferencias
+                    Basadas en tu ubicación, clientes actuales y actividad en la plataforma
                   </p>
+                  <div className="text-xs text-gray-500 mt-1">
+                    El sistema analiza propietarios sin corredor y inquilinos activos para encontrar
+                    mejores oportunidades
+                  </div>
                 </div>
                 <Button onClick={generateRecommendations} disabled={generatingRecs}>
                   <Sparkles className="h-4 w-4 mr-2" />
@@ -526,6 +537,30 @@ export default function DiscoverClientsPage() {
                   </div>
                 </Card>
               ))}
+
+              {recommendations.length === 0 && (
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Sparkles className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        No hay recomendaciones disponibles
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Aún no tienes recomendaciones generadas. Haz clic en &quot;Generar
+                        Nuevas&quot; para que el sistema analice la plataforma y encuentre
+                        oportunidades potenciales basadas en tu perfil.
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Las recomendaciones se generan automáticamente analizando propietarios sin
+                        corredor asignado y inquilinos activos en tu zona.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
             </div>
           </TabsContent>
 

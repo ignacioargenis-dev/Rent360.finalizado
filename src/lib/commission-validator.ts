@@ -44,7 +44,7 @@ export class CommissionValidator {
         return {
           valid: false,
           maxRate,
-          error: `La comisión propuesta (${proposedRate}%) excede el máximo permitido (${maxRate}%)`,
+          error: `La comisión propuesta (${proposedRate}%) excede el máximo permitido por el sistema (${maxRate}%). Ajusta tu propuesta para continuar.`,
         };
       }
 
