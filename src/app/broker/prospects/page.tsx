@@ -331,15 +331,52 @@ export default function BrokerProspectsNewPage() {
                 Gestiona tu pipeline de ventas y convierte prospects en clientes
               </p>
             </div>
-            <Button
-              onClick={() => setShowAddProspectModal(true)}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Agregar Prospect
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => router.push('/broker/discover')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Target className="h-4 w-4" />
+                Buscar Clientes
+              </Button>
+              <Button
+                onClick={() => setShowAddProspectModal(true)}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Agregar Prospect
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Banner informativo sobre captación de clientes */}
+        {prospects.length === 0 && (
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <Target className="h-12 w-12 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    💡 ¿Necesitas encontrar nuevos clientes?
+                  </h3>
+                  <p className="text-gray-700 mb-3">
+                    Usa nuestro <strong>Sistema de Captación de Clientes</strong> para descubrir
+                    propietarios e inquilinos interesados, recibir recomendaciones inteligentes y
+                    responder a solicitudes del marketplace.
+                  </p>
+                  <Button onClick={() => router.push('/broker/discover')} variant="default">
+                    <Target className="h-4 w-4 mr-2" />
+                    Ir a Captación de Clientes
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Métricas */}
         {metrics && (
@@ -484,10 +521,31 @@ export default function BrokerProspectsNewPage() {
                     ? 'No tienes prospects aún'
                     : 'No se encontraron prospects con los filtros aplicados'}
                 </p>
-                {prospects.length === 0 && (
-                  <Button onClick={() => setShowAddProspectModal(true)}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Agregar Primer Prospect
+                {prospects.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex gap-2">
+                      <Button onClick={() => router.push('/broker/discover')} variant="default">
+                        <Target className="h-4 w-4 mr-2" />
+                        Buscar Clientes
+                      </Button>
+                      <Button onClick={() => setShowAddProspectModal(true)} variant="outline">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Agregar Manualmente
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 Tip: Usa "Buscar Clientes" para encontrar propietarios e inquilinos
+                      interesados
+                    </p>
+                  </div>
+                ) : (
+                  <Button onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setTypeFilter('all');
+                    setPriorityFilter('all');
+                  }}>
+                    Limpiar Filtros
                   </Button>
                 )}
               </div>

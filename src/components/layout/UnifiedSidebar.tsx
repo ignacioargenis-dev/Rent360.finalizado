@@ -324,7 +324,8 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: Users,
       submenu: [
         { title: 'Todos los Clientes', url: '/broker/clients', icon: Users },
-        { title: 'Clientes Potenciales', url: '/broker/clients/prospects', icon: UserPlus },
+        { title: 'Captación de Clientes', url: '/broker/discover', icon: Target },
+        { title: 'Potenciales', url: '/broker/prospects', icon: UserPlus },
         { title: 'Clientes Activos', url: '/broker/clients/active', icon: Star },
       ],
     },
