@@ -557,7 +557,7 @@ export default function BrokerNewPropertyPage() {
                           <SelectTrigger className="mt-1 bg-white">
                             <SelectValue placeholder="Seleccione región" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-h-60 overflow-y-auto">
                             <SelectItem value="metropolitana">Metropolitana</SelectItem>
                             <SelectItem value="valparaiso">Valparaíso</SelectItem>
                             <SelectItem value="biobio">Biobío</SelectItem>
@@ -674,7 +674,6 @@ export default function BrokerNewPropertyPage() {
                       </Select>
                     </div>
 
-
                     {/* Description */}
                     <div>
                       <Label htmlFor="description" className="text-sm font-medium">
@@ -691,9 +690,7 @@ export default function BrokerNewPropertyPage() {
 
                     {/* Features */}
                     <div>
-                      <Label className="text-sm font-medium mb-3 block">
-                        Características
-                      </Label>
+                      <Label className="text-sm font-medium mb-3 block">Características</Label>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {propertyFeatures.map(feature => {
                           const Icon = feature.icon;

@@ -220,6 +220,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: Zap,
     },
     {
+      title: 'Servicios de Corredores',
+      url: '/tenant/broker-services',
+      icon: UserPlus,
+    },
+    {
       title: 'Mensajes',
       url: '/tenant/messages',
       icon: MessageSquare,
@@ -250,6 +255,11 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Mis Inquilinos',
       url: '/owner/tenants',
       icon: Users,
+    },
+    {
+      title: 'Servicios de Corredores',
+      url: '/owner/broker-services',
+      icon: UserPlus,
     },
     {
       title: 'Contratos',

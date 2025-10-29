@@ -1,5 +1,6 @@
 import { db } from './db';
 import { logger } from './logger';
+import { sendNotification } from './websocket/socket-server';
 
 /**
  * Servicio de Notificaciones en Tiempo Real
@@ -73,6 +74,25 @@ export class NotificationService {
         userId: params.userId,
         type: params.type,
       });
+
+      // Enviar notificación en tiempo real vía WebSocket
+      try {
+        sendNotification(params.userId, params.type, {
+          id: notification.id,
+          title: params.title,
+          message: params.message,
+          link: params.link,
+          priority: params.priority,
+          timestamp: notification.createdAt,
+        });
+      } catch (wsError) {
+        logger.warn('Failed to send WebSocket notification', {
+          error: wsError instanceof Error ? wsError.message : String(wsError),
+          userId: params.userId,
+          notificationId: notification.id,
+        });
+        // No fallar la creación si falla el envío WebSocket
+      }
 
       return notification;
     } catch (error) {

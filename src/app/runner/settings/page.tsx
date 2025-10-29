@@ -661,7 +661,7 @@ export default function RunnerSettingsPage() {
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona una región" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-h-60 overflow-y-auto">
                             <SelectItem value="Región Metropolitana">
                               Región Metropolitana
                             </SelectItem>
@@ -702,7 +702,7 @@ export default function RunnerSettingsPage() {
                               }
                             />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-h-60 overflow-y-auto">
                             {/* This would be populated based on the selected region */}
                             <SelectItem value="Santiago Centro">Santiago Centro</SelectItem>
                             <SelectItem value="Providencia">Providencia</SelectItem>

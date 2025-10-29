@@ -146,14 +146,19 @@ export default function SupportTicketsPage() {
 
   const handleCreateTicket = async () => {
     try {
-      const response = await fetch('/api/support/tickets', {
+      const response = await fetch('/api/tickets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(newTicket),
+        body: JSON.stringify({
+          title: newTicket.subject,
+          description: newTicket.description,
+          priority: newTicket.priority,
+          category: newTicket.category,
+        }),
       });
 
       if (!response.ok) {
