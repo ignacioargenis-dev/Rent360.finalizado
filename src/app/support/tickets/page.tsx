@@ -117,7 +117,7 @@ export default function SupportTicketsPage() {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/support/tickets', {
+      const response = await fetch('/api/tickets', {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -145,6 +145,12 @@ export default function SupportTicketsPage() {
   };
 
   const handleCreateTicket = async () => {
+    // Validar que la descripción tenga al menos 10 caracteres
+    if (!newTicket.description || newTicket.description.trim().length < 10) {
+      setError('La descripción debe tener al menos 10 caracteres');
+      return;
+    }
+
     try {
       const response = await fetch('/api/tickets', {
         method: 'POST',
@@ -188,7 +194,7 @@ export default function SupportTicketsPage() {
 
     try {
       setSubmittingResponse(true);
-      const response = await fetch(`/api/support/tickets/${selectedTicket.id}/responses`, {
+      const response = await fetch(`/api/tickets/${selectedTicket.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +235,7 @@ export default function SupportTicketsPage() {
 
   const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
     try {
-      const response = await fetch('/api/support/tickets', {
+      const response = await fetch('/api/tickets', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -295,7 +301,10 @@ export default function SupportTicketsPage() {
       }
 
       // Crear URL de descarga
-      const exportUrl = `/api/support/tickets/export?${params.toString()}`;
+      // TODO: Implementar endpoint de export para tickets generales
+      // const exportUrl = `/api/tickets/export?${params.toString()}`;
+      toast.error('Funcionalidad de export no disponible aún');
+      return;
 
       // Crear enlace temporal para descarga
       const link = document.createElement('a');
