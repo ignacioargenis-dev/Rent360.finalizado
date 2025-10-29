@@ -131,10 +131,10 @@ export default function ProviderTicketsPage() {
       }
 
       const data = await response.json();
-      if (data.success) {
-        setTickets(data.data || []);
+      if (data.tickets) {
+        setTickets(data.tickets);
       } else {
-        logger.error('Error cargando tickets:', { error: data.error });
+        logger.error('Error cargando tickets: respuesta inesperada', { data });
       }
     } catch (error) {
       logger.error('Error cargando tickets:', {

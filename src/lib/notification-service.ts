@@ -113,20 +113,26 @@ export class NotificationService {
     brokerId: string;
     invitationType: string;
     invitationId: string;
+    userRole?: string;
   }) {
     const invitationTypeLabels: any = {
       SERVICE_OFFER: 'oferta de servicios',
       PROPERTY_MANAGEMENT: 'gestión de propiedades',
       PROPERTY_VIEWING: 'visualización de propiedades',
       CONSULTATION: 'consultoría',
+      PROPERTY_SEARCH: 'búsqueda de propiedades',
     };
+
+    // Determinar el link según el rol del usuario
+    const link =
+      params.userRole === 'TENANT' ? '/tenant/broker-services' : '/owner/broker-services';
 
     return this.create({
       userId: params.userId,
       type: NotificationType.INVITATION_RECEIVED,
       title: '📨 Nueva Invitación de Corredor',
       message: `${params.brokerName} te ha enviado una ${invitationTypeLabels[params.invitationType] || 'invitación'}`,
-      link: `/owner/broker-services`, // TODO: Link específico a la invitación
+      link: link,
       priority: 'high',
       metadata: {
         brokerId: params.brokerId,

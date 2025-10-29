@@ -243,6 +243,7 @@ export async function POST(request: NextRequest) {
       brokerId,
       invitationType: data.invitationType,
       invitationId: invitation.id,
+      userRole: invitation.user?.role,
     }).catch(err => {
       logger.error('Error sending invitation notification', { error: err });
       // No fallar la creación si falla la notificación

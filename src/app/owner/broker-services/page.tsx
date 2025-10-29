@@ -42,12 +42,16 @@ import {
 } from 'lucide-react';
 
 export default function BrokerServicesPage() {
-  const [activeTab, setActiveTab] = useState('my-requests');
+  const [activeTab, setActiveTab] = useState('invitations');
   const [loading, setLoading] = useState(false);
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
 
   // Estado para solicitudes
   const [myRequests, setMyRequests] = useState([]);
+
+  // Estado para invitaciones
+  const [invitations, setInvitations] = useState([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
 
   // Estado para nueva solicitud
   const [newRequest, setNewRequest] = useState({
@@ -77,8 +81,74 @@ export default function BrokerServicesPage() {
     }
   };
 
+  // Funciones para manejar invitaciones
+  const loadInvitations = async () => {
+    setInvitationsLoading(true);
+    try {
+      const res = await fetch('/api/invitations');
+      const data = await res.json();
+
+      if (data.success) {
+        setInvitations(data.data);
+      } else {
+        toast.error(data.error || 'Error al cargar invitaciones');
+      }
+    } catch (error) {
+      toast.error('Error al cargar invitaciones');
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
+
+  const handleAcceptInvitation = async (invitationId: string) => {
+    try {
+      const res = await fetch(`/api/invitations/${invitationId}/accept`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success('Invitación aceptada exitosamente');
+        loadInvitations(); // Recargar invitaciones
+      } else {
+        toast.error(data.error || 'Error al aceptar invitación');
+      }
+    } catch (error) {
+      toast.error('Error al aceptar invitación');
+    }
+  };
+
+  const handleRejectInvitation = async (invitationId: string) => {
+    try {
+      const res = await fetch(`/api/invitations/${invitationId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success('Invitación rechazada');
+        loadInvitations(); // Recargar invitaciones
+      } else {
+        toast.error(data.error || 'Error al rechazar invitación');
+      }
+    } catch (error) {
+      toast.error('Error al rechazar invitación');
+    }
+  };
+
   useEffect(() => {
     loadMyRequests();
+    loadInvitations();
   }, []);
 
   // Crear nueva solicitud
@@ -315,10 +385,111 @@ export default function BrokerServicesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="invitations">Invitaciones</TabsTrigger>
           <TabsTrigger value="my-requests">Mis Solicitudes</TabsTrigger>
           <TabsTrigger value="help">¿Cómo Funciona?</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="invitations" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Invitaciones de Corredores</h3>
+          </div>
+
+          {invitationsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Cargando invitaciones...</p>
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-12">
+              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tienes invitaciones pendientes
+              </h3>
+              <p className="text-gray-600">
+                Los corredores te enviarán invitaciones cuando estén interesados en trabajar
+                contigo.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {invitations.map((invitation: any) => (
+                <Card key={invitation.id} className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h4 className="text-sm font-medium text-gray-900">
+                            {invitation.broker?.name || 'Corredor'}
+                          </h4>
+                          <Badge variant="outline" className="text-xs">
+                            {invitation.invitationType === 'SERVICE_OFFER'
+                              ? 'Oferta de Servicios'
+                              : invitation.invitationType === 'PROPERTY_MANAGEMENT'
+                                ? 'Gestión de Propiedades'
+                                : invitation.invitationType === 'PROPERTY_VIEWING'
+                                  ? 'Visita de Propiedades'
+                                  : invitation.invitationType === 'CONSULTATION'
+                                    ? 'Consultoría'
+                                    : invitation.invitationType}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {invitation.status === 'SENT'
+                              ? 'Pendiente'
+                              : invitation.status === 'ACCEPTED'
+                                ? 'Aceptada'
+                                : invitation.status === 'REJECTED'
+                                  ? 'Rechazada'
+                                  : invitation.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{invitation.subject}</p>
+                        <p className="text-sm text-gray-700 mt-2">{invitation.message}</p>
+                        {invitation.proposedRate && (
+                          <p className="text-sm text-green-600 mt-1">
+                            Comisión propuesta: {invitation.proposedRate}%
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">
+                          Enviada el {new Date(invitation.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      {invitation.status === 'SENT' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptInvitation(invitation.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Aceptar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRejectInvitation(invitation.id)}
+                            className="border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Rechazar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="my-requests" className="space-y-4">
           {loading ? (

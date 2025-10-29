@@ -27,14 +27,7 @@ import { useToast } from '@/components/notifications/NotificationSystem';
 
 interface NotificationItem {
   id: string;
-  type:
-    | 'contract_created'
-    | 'payment_received'
-    | 'message_received'
-    | 'property_updated'
-    | 'system_alert'
-    | 'contract_signed'
-    | 'payment_overdue';
+  type: string; // Cambiar a string para aceptar cualquier tipo
   title: string;
   message: string;
   data?: any;
@@ -153,11 +146,16 @@ export default function RealTimeNotifications() {
       case 'payment_overdue':
         return <DollarSign className="h-4 w-4 text-green-600" />;
       case 'message_received':
+      case 'NEW_MESSAGE':
         return <MessageSquare className="h-4 w-4 text-purple-600" />;
       case 'property_updated':
         return <Settings className="h-4 w-4 text-orange-600" />;
       case 'system_alert':
+      case 'SYSTEM_ALERT':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
+      case 'invitation_received':
+      case 'INVITATION_RECEIVED':
+        return <Users className="h-4 w-4 text-indigo-600" />;
       default:
         return <Info className="h-4 w-4 text-gray-600" />;
     }
