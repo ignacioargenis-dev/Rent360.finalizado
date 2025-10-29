@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             businessName: true,
-            phone: true,
           },
         },
       },
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
       feedback: request.feedback,
       createdAt: request.createdAt,
       requesterName: request.requester.name,
-      serviceProviderName: request.serviceProvider?.businessName || null,
+      serviceProviderName: request.serviceProvider.businessName,
       images: request.images ? JSON.parse(request.images) : [],
     }));
 
@@ -98,8 +97,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear la solicitud de servicio en la base de datos
+    // Nota: Temporalmente asignamos el ID del requester como serviceProviderId
+    // hasta que se implemente la lógica de asignación de proveedores
     const serviceRequest = await db.serviceJob.create({
       data: {
+        serviceProviderId: user.id, // Temporal - cambiar cuando se asigne proveedor real
         requesterId: user.id,
         title: `${serviceType} - Solicitud de ${user.name || 'Usuario'}`,
         description,
@@ -115,7 +117,12 @@ export async function POST(request: NextRequest) {
             email: true,
           },
         },
-        serviceProvider: false, // No hay proveedor asignado aún
+        serviceProvider: {
+          select: {
+            id: true,
+            businessName: true,
+          },
+        },
       },
     });
 
@@ -131,6 +138,7 @@ export async function POST(request: NextRequest) {
         id: serviceRequest.id,
         requesterId: serviceRequest.requesterId,
         requesterName: serviceRequest.requester.name,
+        serviceProviderName: serviceRequest.serviceProvider.businessName,
         serviceType: serviceRequest.serviceType,
         description: serviceRequest.description,
         status: serviceRequest.status,
