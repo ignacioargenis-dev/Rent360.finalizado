@@ -462,6 +462,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: User,
     },
     {
+      title: 'Mis Tickets',
+      url: '/runner/tickets',
+      icon: MessageSquare,
+    },
+    {
       title: 'Configuración',
       url: '/runner/settings',
       icon: Settings,
@@ -553,6 +558,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: DollarSign,
     },
     {
+      title: 'Mis Tickets',
+      url: '/provider/tickets',
+      icon: MessageSquare,
+    },
+    {
       title: 'Configuración',
       url: '/provider/settings',
       icon: Settings,
@@ -593,6 +603,11 @@ const getMenuItems = (): RoleMenuItems => ({
       title: 'Calificaciones',
       url: '/maintenance/ratings',
       icon: Star,
+    },
+    {
+      title: 'Mis Tickets',
+      url: '/maintenance/tickets',
+      icon: MessageSquare,
     },
     {
       title: 'Configuración',
