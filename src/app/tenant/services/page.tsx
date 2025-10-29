@@ -83,7 +83,9 @@ export default function TenantServicesPage() {
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedProviderDetails, setSelectedProviderDetails] = useState<ServiceProvider | null>(null);
+  const [selectedProviderDetails, setSelectedProviderDetails] = useState<ServiceProvider | null>(
+    null
+  );
   const [serviceRequest, setServiceRequest] = useState<ServiceRequest>({
     serviceType: '',
     description: '',
@@ -94,78 +96,9 @@ export default function TenantServicesPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Mock data for service providers
-  const mockProviders: ServiceProvider[] = [
-    {
-      id: '1',
-      name: 'Juan Pérez',
-      serviceType: 'maintenance',
-      specialty: 'Plomería y Electricidad',
-      rating: 4.8,
-      reviewCount: 127,
-      hourlyRate: 15000,
-      location: 'Santiago Centro',
-      description:
-        'Especialista en reparaciones eléctricas y de plomería. Más de 10 años de experiencia.',
-      availability: 'available',
-      verified: true,
-      responseTime: '< 1 hora',
-      completedJobs: 89,
-      phone: '+56912345678',
-      email: 'juan.perez@servicios.cl',
-    },
-    {
-      id: '2',
-      name: 'María González',
-      serviceType: 'cleaning',
-      specialty: 'Limpieza Profesional',
-      rating: 4.9,
-      reviewCount: 203,
-      hourlyRate: 12000,
-      location: 'Providencia',
-      description: 'Servicio de limpieza profunda para hogares y oficinas. Productos ecológicos.',
-      availability: 'available',
-      verified: true,
-      responseTime: '< 2 horas',
-      completedJobs: 156,
-      phone: '+56987654321',
-      email: 'maria@limpieza.cl',
-    },
-    {
-      id: '3',
-      name: 'Carlos Rodríguez',
-      serviceType: 'maintenance',
-      specialty: 'Reparaciones Generales',
-      rating: 4.6,
-      reviewCount: 89,
-      hourlyRate: 18000,
-      location: 'Las Condes',
-      description: 'Servicio integral de mantenimiento y reparaciones para el hogar.',
-      availability: 'busy',
-      verified: true,
-      responseTime: '< 4 horas',
-      completedJobs: 67,
-      phone: '+56911223344',
-      email: 'carlos@reparaciones.cl',
-    },
-    {
-      id: '4',
-      name: 'Ana Silva',
-      serviceType: 'moving',
-      specialty: 'Mudanzas y Transporte',
-      rating: 4.7,
-      reviewCount: 145,
-      hourlyRate: 25000,
-      location: 'Vitacura',
-      description: 'Servicio completo de mudanzas con embalaje profesional y transporte seguro.',
-      availability: 'available',
-      verified: false,
-      responseTime: '< 6 horas',
-      completedJobs: 98,
-      phone: '+56955667788',
-      email: 'ana@mudanzas.cl',
-    },
-  ];
+  // Estado para proveedores de servicios
+  const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
 
   useEffect(() => {
     loadProviders();
@@ -177,17 +110,50 @@ export default function TenantServicesPage() {
 
   const loadProviders = async () => {
     try {
-      setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProviders(mockProviders);
-      logger.debug('Proveedores de servicios cargados');
+      setProvidersLoading(true);
+      const response = await fetch('/api/service-providers', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Transformar datos de la API al formato esperado por el componente
+          const transformedProviders = data.providers.map((provider: any) => ({
+            id: provider.id,
+            name: provider.businessName,
+            serviceType: provider.serviceType,
+            specialty: provider.serviceTypes
+              ? JSON.parse(provider.serviceTypes)[0]
+              : provider.serviceType,
+            rating: provider.rating || 0,
+            reviewCount: provider.totalRatings || 0,
+            hourlyRate: provider.basePrice || 0,
+            location: `${provider.city || ''} ${provider.region || ''}`.trim(),
+            description: provider.description || '',
+            availability: 'available', // TODO: calcular basado en disponibilidad real
+            verified: provider.isVerified,
+            responseTime: provider.responseTime ? `< ${provider.responseTime}h` : '< 24h',
+            completedJobs: provider.completedJobs || 0,
+            phone: provider.user?.phone || '',
+            email: provider.user?.email || '',
+          }));
+          setServiceProviders(transformedProviders);
+          setProviders(transformedProviders); // Para mantener compatibilidad con filterAndSortProviders
+          logger.debug('Proveedores de servicios cargados desde API');
+        } else {
+          setError('Error al cargar proveedores');
+        }
+      } else {
+        setError('Error al conectar con el servidor');
+      }
     } catch (error) {
       logger.error('Error loading providers:', {
         error: error instanceof Error ? error.message : String(error),
       });
       setError('Error al cargar proveedores');
     } finally {
+      setProvidersLoading(false);
       setLoading(false);
     }
   };
@@ -331,7 +297,7 @@ export default function TenantServicesPage() {
     return <Badge className={badgeConfig.color}>{badgeConfig.label}</Badge>;
   };
 
-  if (loading) {
+  if (providersLoading) {
     return (
       <UnifiedDashboardLayout title="Buscar Servicios" subtitle="Cargando...">
         <div className="flex items-center justify-center h-64">
@@ -495,7 +461,7 @@ export default function TenantServicesPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleViewProviderDetails(provider);
                     }}
@@ -509,7 +475,7 @@ export default function TenantServicesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleContactProvider(provider, 'phone');
                     }}
@@ -521,7 +487,7 @@ export default function TenantServicesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleContactProvider(provider, 'message');
                     }}
@@ -530,7 +496,7 @@ export default function TenantServicesPage() {
                   </Button>
                   <Button
                     size="sm"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleRequestService(provider);
                     }}
@@ -653,9 +619,7 @@ export default function TenantServicesPage() {
                   <Badge className="bg-blue-100 text-blue-800">Verificado</Badge>
                 )}
               </DialogTitle>
-              <DialogDescription>
-                Información completa del proveedor de servicios
-              </DialogDescription>
+              <DialogDescription>Información completa del proveedor de servicios</DialogDescription>
             </DialogHeader>
 
             {selectedProviderDetails && (
@@ -692,7 +656,9 @@ export default function TenantServicesPage() {
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="font-medium">{selectedProviderDetails.rating}</span>
-                        <span className="text-gray-500">({selectedProviderDetails.reviewCount} reseñas)</span>
+                        <span className="text-gray-500">
+                          ({selectedProviderDetails.reviewCount} reseñas)
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-400" />
@@ -782,9 +748,7 @@ export default function TenantServicesPage() {
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Enviar Mensaje
                   </Button>
-                  <Button
-                    onClick={() => handleRequestService(selectedProviderDetails)}
-                  >
+                  <Button onClick={() => handleRequestService(selectedProviderDetails)}>
                     Solicitar Servicio
                   </Button>
                 </div>
