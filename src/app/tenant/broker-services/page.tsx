@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -203,15 +204,11 @@ export default function TenantBrokerServicesPage() {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">🏠 Servicios de Corretaje</h1>
-          <p className="text-gray-600">
-            Encuentra corredores profesionales que te ayuden a encontrar tu propiedad ideal
-          </p>
-        </div>
-
+    <UnifiedDashboardLayout
+      title="🏠 Servicios de Corretaje"
+      subtitle="Encuentra corredores profesionales para ayudarte con tu búsqueda de vivienda"
+    >
+      <div className="flex justify-end mb-8">
         <Dialog open={showNewRequestDialog} onOpenChange={setShowNewRequestDialog}>
           <DialogTrigger asChild>
             <Button size="lg">
@@ -582,6 +579,6 @@ export default function TenantBrokerServicesPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </UnifiedDashboardLayout>
   );
 }

@@ -225,6 +225,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: UserPlus,
     },
     {
+      title: 'Soporte',
+      url: '/tenant/support',
+      icon: HelpCircle,
+    },
+    {
       title: 'Mensajes',
       url: '/tenant/messages',
       icon: MessageSquare,

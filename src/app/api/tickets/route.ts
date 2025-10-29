@@ -113,10 +113,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info('Creating ticket - authenticating user');
     const user = await requireAuth(request);
+    logger.info('User authenticated:', { userId: user.id, role: user.role });
 
+    logger.info('Parsing request body');
     const data = await request.json();
+    logger.info('Request data:', data);
+
+    logger.info('Validating data with schema');
     const validatedData = ticketSchema.parse(data);
+    logger.info('Data validated successfully:', validatedData);
 
     const { title, description, priority, category } = validatedData;
 
@@ -124,12 +131,20 @@ export async function POST(request: NextRequest) {
     const ticketNumber = `TKT-${Date.now().toString().slice(-6)}`;
 
     // Crear ticket
+    logger.info('Creating ticket in database', {
+      ticketNumber,
+      title,
+      priority: priority?.toUpperCase() || 'MEDIUM',
+      category: category || 'general',
+      userId: user.id,
+    });
+
     const ticket = await db.ticket.create({
       data: {
         ticketNumber,
         title,
         description,
-        priority: (priority || 'MEDIUM').toUpperCase() as any,
+        priority: priority?.toUpperCase() || 'MEDIUM',
         category: category || 'general',
         status: 'OPEN',
         userId: user.id,
@@ -152,6 +167,11 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    logger.info('Ticket created successfully:', {
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
     });
 
     return NextResponse.json(

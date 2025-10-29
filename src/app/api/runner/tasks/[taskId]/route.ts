@@ -84,12 +84,8 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
             const timeParts = timeString.split(' ');
 
             if (dateParts.length > 0 && timeParts.length > 0) {
-              const datePart = dateParts[0];
-              const timePart = timeParts[0];
-              if (datePart && timePart) {
-                scheduledDate = datePart;
-                scheduledTime = timePart.substring(0, 5);
-              }
+              scheduledDate = dateParts[0];
+              scheduledTime = timeParts[0].substring(0, 5);
             }
           }
         }
