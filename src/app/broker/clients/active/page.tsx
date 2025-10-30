@@ -204,6 +204,10 @@ export default function BrokerActiveClientsPage() {
         if (response.ok) {
           const data = await response.json();
           const clientsData = data.clients || data.data || [];
+          console.log(
+            `📥 [Frontend] Received ${clientsData.length} clients from API:`,
+            clientsData
+          );
 
           // Transformar datos de la API al formato esperado
           const transformedClients: ActiveClient[] = clientsData.map((client: any) => {

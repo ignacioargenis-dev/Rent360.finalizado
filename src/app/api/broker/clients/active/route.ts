@@ -9,6 +9,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
+    console.log(
+      `🔍 [API] /api/broker/clients/active called by user: ${user.name} (${user.id}), role: ${user.role}`
+    );
 
     if (user.role !== 'BROKER') {
       return NextResponse.json(
@@ -126,6 +129,21 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    console.log(`🔍 Found ${clients.length} clients for broker ${user.id} (${user.name})`);
+
+    // Log detailed information about each client found
+    clients.forEach((client, index) => {
+      console.log(`🔍 Client ${index + 1}: ${client.name} (${client.id})`);
+      console.log(`   - Has ${client.contractsAsOwner.length} contracts as owner`);
+      console.log(`   - Has ${client.contractsAsTenant.length} contracts as tenant`);
+      console.log(`   - Has ${client.clientRelationships.length} broker relationships`);
+      client.clientRelationships.forEach((rel, relIndex) => {
+        console.log(
+          `     Relationship ${relIndex + 1}: status=${rel.status}, brokerId=${rel.brokerId}`
+        );
+      });
     });
 
     // Transformar datos al formato esperado
