@@ -8,7 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { logger } from '@/lib/logger-minimal';
-import { Home, MapPin, DollarSign, Calendar, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  Home,
+  MapPin,
+  DollarSign,
+  Calendar,
+  CheckCircle,
+  ArrowLeft,
+  Loader2,
+  User,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Property {
@@ -24,34 +33,41 @@ interface Property {
   createdAt: string;
 }
 
-interface BrokerClient {
+interface InvitationData {
   id: string;
   brokerId: string;
-  userId: string;
-  propertyManagementType: string | null;
-  managedPropertyIds: string[] | null;
-  commissionRate: number;
+  brokerName: string;
+  servicesOffered: string;
+  proposedRate: number;
+}
+
+interface ProspectData {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export default function SelectPropertiesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clientId = searchParams?.get('clientId');
+  const invitationId = searchParams?.get('invitationId');
+  const prospectId = searchParams?.get('prospectId');
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [brokerClient, setBrokerClient] = useState<BrokerClient | null>(null);
+  const [invitation, setInvitation] = useState<InvitationData | null>(null);
+  const [prospect, setProspect] = useState<ProspectData | null>(null);
 
   useEffect(() => {
-    if (!clientId) {
-      toast.error('ID de cliente no proporcionado');
+    if (!invitationId || !prospectId) {
+      toast.error('Datos de invitación no proporcionados');
       router.push('/owner/broker-services');
       return;
     }
     loadData();
-  }, [clientId]);
+  }, [invitationId, prospectId]);
 
   const loadData = async () => {
     try {
@@ -68,25 +84,42 @@ export default function SelectPropertiesPage() {
       }
 
       // Cargar información del cliente corredor
-      const clientRes = await fetch(`/api/owner/broker-clients/${clientId}`, {
+      // Cargar información de la invitación
+      const invitationRes = await fetch(`/api/invitations/${invitationId}`, {
         credentials: 'include',
       });
 
-      if (clientRes.ok) {
-        const clientData = await clientRes.json();
-        setBrokerClient(clientData.client);
+      if (invitationRes.ok) {
+        const invitationData = await invitationRes.json();
+        setInvitation({
+          id: invitationData.invitation.id,
+          brokerId: invitationData.invitation.brokerId,
+          brokerName: invitationData.invitation.broker?.name || 'Corredor',
+          servicesOffered: invitationData.invitation.servicesOffered || '',
+          proposedRate: invitationData.invitation.proposedRate || 5,
+        });
+      } else {
+        toast.error('Error al cargar información de la invitación');
+      }
 
-        // Si ya hay propiedades seleccionadas, marcarlas
-        if (
-          clientData.client.managedPropertyIds &&
-          Array.isArray(clientData.client.managedPropertyIds)
-        ) {
-          setSelectedProperties(clientData.client.managedPropertyIds);
-        }
+      // Cargar información del prospect
+      const prospectRes = await fetch(`/api/broker/prospects/${prospectId}`, {
+        credentials: 'include',
+      });
+
+      if (prospectRes.ok) {
+        const prospectData = await prospectRes.json();
+        setProspect({
+          id: prospectData.prospect.id,
+          name: prospectData.prospect.name,
+          email: prospectData.prospect.email,
+        });
+      } else {
+        toast.error('Error al cargar información del prospecto');
       }
     } catch (error) {
       logger.error('Error loading data:', error);
-      toast.error('Error al cargar los datos');
+      toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
     }
@@ -107,7 +140,8 @@ export default function SelectPropertiesPage() {
   };
 
   const handleSave = async () => {
-    if (!clientId || !brokerClient) {
+    if (!invitationId || !prospectId || !invitation) {
+      toast.error('Faltan datos necesarios');
       return;
     }
 
@@ -121,13 +155,16 @@ export default function SelectPropertiesPage() {
             ? 'full'
             : 'partial';
 
-      const response = await fetch(`/api/owner/broker-clients/${clientId}/manage-properties`, {
-        method: 'PUT',
+      // Crear la relación BrokerClient con las propiedades seleccionadas
+      const response = await fetch('/api/owner/broker-services/complete-setup', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
+          invitationId,
+          prospectId,
           propertyManagementType: managementType,
           managedPropertyIds:
             selectedProperties.length === properties.length ? null : selectedProperties,
@@ -135,15 +172,16 @@ export default function SelectPropertiesPage() {
       });
 
       if (response.ok) {
-        toast.success('Configuración de propiedades guardada exitosamente');
+        const result = await response.json();
+        toast.success('Relación con corredor establecida exitosamente');
         router.push('/owner/broker-services');
       } else {
         const error = await response.json();
-        toast.error(error.error || 'Error al guardar la configuración');
+        toast.error(error.error || 'Error al completar la configuración');
       }
     } catch (error) {
-      logger.error('Error saving property configuration:', error);
-      toast.error('Error al guardar la configuración');
+      logger.error('Error completing broker setup:', error);
+      toast.error('Error al completar la configuración');
     } finally {
       setSaving(false);
     }
@@ -170,15 +208,20 @@ export default function SelectPropertiesPage() {
     >
       <div className="space-y-6">
         {/* Información del corredor */}
-        {brokerClient && (
+        {invitation && prospect && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Relación con Corredor Establecida
+                <User className="h-5 w-5 text-blue-600" />
+                Invitación de {invitation.brokerName}
               </CardTitle>
               <CardDescription>
-                Ahora configura qué propiedades quieres que administre este corredor.
+                Servicios ofrecidos:{' '}
+                {invitation.servicesOffered || 'Servicios generales de corretaje'}
+                <br />
+                Comisión propuesta: {invitation.proposedRate}%
+                <br />
+                Prospecto: {prospect.name} ({prospect.email})
               </CardDescription>
             </CardHeader>
           </Card>
@@ -217,7 +260,7 @@ export default function SelectPropertiesPage() {
                 <div>
                   <p className="text-2xl font-bold">
                     {selectedProperties.length > 0
-                      ? `${((brokerClient?.commissionRate || 5) * selectedProperties.length).toFixed(1)}%`
+                      ? `${(invitation?.proposedRate || 5) * selectedProperties.length}%`
                       : '0%'}
                   </p>
                   <p className="text-sm text-gray-600">Comisión Estimada</p>

@@ -143,27 +143,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       });
     }
 
-    // Crear la relación cliente-corredor
-    const brokerClient = await db.brokerClient.create({
-      data: {
-        brokerId: invitation.brokerId,
-        userId: user.id,
-        clientType: userData.role === 'OWNER' ? 'OWNER' : 'TENANT',
-        servicesOffered: invitation.servicesOffered,
-        commissionRate: invitation.proposedRate || 5.0,
-        status: 'ACTIVE',
-        startDate: new Date(),
-        prospectId: prospect.id, // Vincular con el prospect
-      },
-    });
+    // NO crear la relación cliente-corredor aquí
+    // Solo crear el prospect y redirigir a selección de propiedades
+    // La relación BrokerClient se creará cuando se complete la selección de propiedades
 
     // Si había un prospectId específico en la invitación, actualizarlo también
     if (invitation.prospectId && invitation.prospectId !== prospect.id) {
       await db.brokerProspect.update({
         where: { id: invitation.prospectId },
         data: {
-          status: 'CONVERTED',
-          notes: `Convertido a cliente. Relación activa creada con ID: ${brokerClient.id}`,
+          status: 'QUALIFIED', // Cambiar a calificado, no convertido aún
+          notes: `Invitación aceptada. Pendiente selección de propiedades.`,
         },
       });
     }
@@ -178,18 +168,25 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       logger.error('Error sending invitation accepted notification', { error: err });
     });
 
-    logger.info('Invitation accepted', {
+    logger.info('Invitation accepted - redirecting to property selection', {
       invitationId,
       userId: user.id,
       brokerId: invitation.brokerId,
-      clientId: brokerClient.id,
+      prospectId: prospect.id,
+      redirectTo: `/owner/broker-services/select-properties?invitationId=${invitationId}&prospectId=${prospect.id}`,
     });
+
+    // Redirigir a selección de propiedades con invitationId y prospectId
+    const redirectUrl =
+      userData.role === 'OWNER'
+        ? `/owner/broker-services/select-properties?invitationId=${invitationId}&prospectId=${prospect.id}`
+        : `/tenant/broker-services/select-properties?invitationId=${invitationId}&prospectId=${prospect.id}`;
 
     return NextResponse.json({
       success: true,
-      message: 'Invitación aceptada exitosamente',
-      clientId: brokerClient.id,
-      redirectTo: '/owner/broker-services/select-properties?clientId=' + brokerClient.id,
+      message:
+        'Invitación aceptada. Ahora selecciona las propiedades que deseas que gestione el corredor.',
+      redirectTo: redirectUrl,
     });
   } catch (error: any) {
     logger.error('Error accepting invitation', {

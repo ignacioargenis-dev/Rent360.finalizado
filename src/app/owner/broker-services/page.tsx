@@ -410,15 +410,30 @@ export default function BrokerServicesPage() {
               <p className="text-gray-600 mt-4">Cargando invitaciones...</p>
             </div>
           ) : invitations.length === 0 ? (
-            <div className="text-center py-12">
-              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No tienes invitaciones pendientes
-              </h3>
-              <p className="text-gray-600">
-                Los corredores te enviarán invitaciones cuando estén interesados en trabajar
-                contigo.
-              </p>
+            <div className="space-y-6">
+              {/* Mensaje de no invitaciones */}
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No tienes invitaciones pendientes
+                </h3>
+                <p className="text-gray-600">
+                  Los corredores te enviarán invitaciones cuando estén interesados en trabajar
+                  contigo.
+                </p>
+              </div>
+
+              {/* Relaciones activas con corredores */}
+              <div>
+                <h4 className="text-md font-semibold mb-4 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Tus Relaciones Activas
+                </h4>
+                <div className="text-sm text-gray-600 mb-4">
+                  Aquí aparecerán los corredores con los que tienes una relación activa una vez que
+                  completes el proceso de selección de propiedades.
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">

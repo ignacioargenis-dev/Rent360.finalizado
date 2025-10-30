@@ -188,6 +188,30 @@ export class NotificationService {
     });
   }
 
+  static async notifyInvitationCompleted(params: {
+    brokerId: string;
+    ownerName: string;
+    ownerId: string;
+    invitationId: string;
+    clientId: string;
+    propertyCount: number;
+  }) {
+    return this.create({
+      userId: params.brokerId,
+      type: NotificationType.INVITATION_ACCEPTED,
+      title: '🎉 ¡Nuevo Cliente Adquirido!',
+      message: `${params.ownerName} ha aceptado tu invitación y seleccionado ${params.propertyCount} propiedades para gestionar`,
+      link: `/broker/clients/${params.clientId}`,
+      priority: 'high',
+      metadata: {
+        ownerId: params.ownerId,
+        invitationId: params.invitationId,
+        clientId: params.clientId,
+        propertyCount: params.propertyCount,
+      },
+    });
+  }
+
   /**
    * Crea notificación cuando un corredor responde a una solicitud
    */
