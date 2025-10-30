@@ -49,15 +49,19 @@ export async function GET(request: NextRequest, { params }: { params: { prospect
 
     const user = await requireAuth(request);
 
-    if (user.role !== 'BROKER') {
+    // Verificar permisos: brokers siempre pueden acceder, owners solo a sus propios prospects
+    const isBroker = user.role === 'BROKER';
+    const isOwner = user.role === 'OWNER';
+
+    if (!isBroker && !isOwner) {
       return NextResponse.json(
-        { error: 'Acceso denegado. Se requieren permisos de corredor.' },
+        { error: 'Acceso denegado. Se requieren permisos de corredor o propietario.' },
         { status: 403 }
       );
     }
 
     const prospectId = params.prospectId;
-    console.log('📋 [PROSPECT_DETAIL] Prospecto ID:', prospectId);
+    console.log('📋 [PROSPECT_DETAIL] Prospecto ID:', prospectId, 'User role:', user.role);
 
     // Buscar el prospect con todas sus relaciones
     const prospect = await db.brokerProspect.findUnique({
@@ -147,9 +151,14 @@ export async function GET(request: NextRequest, { params }: { params: { prospect
       return NextResponse.json({ error: 'Prospecto no encontrado' }, { status: 404 });
     }
 
-    // Verificar que el prospect pertenece al corredor
-    if (prospect.brokerId !== user.id) {
+    // Verificar permisos según el rol del usuario
+    if (isBroker && prospect.brokerId !== user.id) {
       console.log('❌ [PROSPECT_DETAIL] Prospecto no pertenece al corredor');
+      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+    }
+
+    if (isOwner && prospect.userId !== user.id) {
+      console.log('❌ [PROSPECT_DETAIL] Prospecto no pertenece al propietario');
       return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
     }
 
