@@ -42,6 +42,7 @@ import { logger } from '@/lib/logger-minimal';
 
 interface ClientDetail {
   id: string;
+  clientId: string;
   name: string;
   email: string;
   phone: string;
@@ -128,6 +129,7 @@ export default function BrokerClientDetailPage() {
   // Mock data for client details
   const mockClient: ClientDetail = {
     id: clientId,
+    clientId: clientId,
     name: 'Ana López',
     email: 'ana.lopez@email.com',
     phone: '+56 9 5555 1234',
