@@ -168,9 +168,12 @@ export default function ProspectDetailPage() {
       const response = await fetch(`/api/broker/prospects/${prospectId}`);
       const data = await response.json();
 
-      if (data.success) {
-        setProspect(data.prospect);
-        setEditData(data.prospect);
+      if (response.ok && data.success) {
+        setProspect(data.data); // La API retorna data.data, no data.prospect
+        setEditData(data.data);
+      } else if (response.status === 404) {
+        // Prospecto no encontrado - mostrar mensaje de error
+        setProspect(null);
       } else {
         toast.error(data.error || 'Error al cargar el prospecto');
         router.push('/broker/prospects');
