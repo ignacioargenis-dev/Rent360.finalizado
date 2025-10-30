@@ -138,6 +138,11 @@ export async function GET(request: NextRequest) {
       const brokerClient = client.clientRelationships[0]; // Tomar la primera relación activa
       const hasBrokerClient = brokerClient && brokerClient.status === 'ACTIVE';
 
+      // Debug logs
+      console.log(
+        `🔍 Client ${client.id} (${client.name}): hasBrokerClient=${hasBrokerClient}, brokerClientId=${brokerClient?.id}, userId=${client.id}`
+      );
+
       // Calcular datos basados en contratos o en relación brokerClient
       let propertyType = 'residential';
       let propertyValue = 0;
@@ -177,7 +182,7 @@ export async function GET(request: NextRequest) {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       nextMonth.setDate(1);
 
-      return {
+      const response = {
         id: client.id,
         brokerClientId: hasBrokerClient ? brokerClient.id : null, // ID de la relación brokerClient
         name: client.name,
@@ -196,6 +201,11 @@ export async function GET(request: NextRequest) {
         satisfactionScore: 4.5, // Placeholder
         referralSource: hasBrokerClient ? 'invitation' : 'website', // Placeholder
       };
+
+      console.log(
+        `📤 Response for ${client.name}: id=${response.id}, brokerClientId=${response.brokerClientId}`
+      );
+      return response;
     });
 
     // Calcular estadísticas

@@ -133,6 +133,13 @@ export default function BrokerActiveClientsPage() {
   const handleViewClientDetails = (client: ActiveClient) => {
     // Usar brokerClientId si existe, sino usar el id del cliente (userId)
     const detailId = client.brokerClientId || client.id;
+    console.log(`🔗 Navigating to client details:`, {
+      clientName: client.name,
+      userId: client.id,
+      brokerClientId: client.brokerClientId,
+      detailId,
+      url: `/broker/clients/${detailId}`,
+    });
     router.push(`/broker/clients/${detailId}`);
   };
 
@@ -199,24 +206,32 @@ export default function BrokerActiveClientsPage() {
           const clientsData = data.clients || data.data || [];
 
           // Transformar datos de la API al formato esperado
-          const transformedClients: ActiveClient[] = clientsData.map((client: any) => ({
-            id: client.id || client.clientId,
-            name: client.name || client.clientName || 'Cliente',
-            email: client.email || '',
-            phone: client.phone || client.clientPhone || '',
-            propertyType: client.propertyType || client.property?.type || 'residential',
-            propertyValue: client.propertyValue || client.property?.value || 0,
-            monthlyRent: client.monthlyRent || client.rent || undefined,
-            commissionRate: client.commissionRate || client.commission || 0,
-            contractStart: client.contractStart || client.startDate,
-            contractEnd: client.contractEnd || client.endDate,
-            status: client.status || 'active',
-            lastContact: client.lastContact || client.updatedAt,
-            nextPayment: client.nextPayment || client.paymentDate,
-            totalCommission: client.totalCommission || client.commissionTotal || 0,
-            satisfactionScore: client.satisfactionScore || client.satisfaction || 0,
-            referralSource: client.referralSource || client.referral || '',
-          }));
+          const transformedClients: ActiveClient[] = clientsData.map((client: any) => {
+            const transformed = {
+              id: client.id || client.clientId,
+              brokerClientId: client.brokerClientId || null, // ID de la relación brokerClient
+              name: client.name || client.clientName || 'Cliente',
+              email: client.email || '',
+              phone: client.phone || client.clientPhone || '',
+              propertyType: client.propertyType || client.property?.type || 'residential',
+              propertyValue: client.propertyValue || client.property?.value || 0,
+              monthlyRent: client.monthlyRent || client.rent || undefined,
+              commissionRate: client.commissionRate || client.commission || 0,
+              contractStart: client.contractStart || client.startDate,
+              contractEnd: client.contractEnd || client.endDate,
+              status: client.status || 'active',
+              lastContact: client.lastContact || client.updatedAt,
+              nextPayment: client.nextPayment || client.paymentDate,
+              totalCommission: client.totalCommission || client.commissionTotal || 0,
+              satisfactionScore: client.satisfactionScore || client.satisfaction || 0,
+              referralSource: client.referralSource || client.referral || '',
+            };
+
+            console.log(
+              `🔄 Transformed client ${transformed.name}: id=${transformed.id}, brokerClientId=${transformed.brokerClientId}`
+            );
+            return transformed;
+          });
 
           setClients(transformedClients);
           setFilteredClients(transformedClients);
