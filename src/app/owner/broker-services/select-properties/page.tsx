@@ -187,6 +187,34 @@ export default function SelectPropertiesPage() {
     }
   };
 
+  const handleCancel = async () => {
+    if (!invitationId) {
+      router.push('/owner/broker-services');
+      return;
+    }
+
+    try {
+      // Cancelar la invitación - volver al estado inicial
+      const response = await fetch(`/api/invitations/${invitationId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        toast.success('Invitación cancelada. Puedes aceptarla nuevamente cuando estés listo.');
+      } else {
+        console.warn('No se pudo cancelar la invitación, pero continuando con la navegación');
+      }
+    } catch (error) {
+      console.warn('Error al cancelar invitación:', error);
+    } finally {
+      router.push('/owner/broker-services');
+    }
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Seleccionar Propiedades" subtitle="Cargando propiedades...">
@@ -362,11 +390,7 @@ export default function SelectPropertiesPage() {
 
         {/* Botones de acción */}
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/owner/broker-services')}
-            disabled={saving}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={saving}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>

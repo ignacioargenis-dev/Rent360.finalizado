@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
     const rawProperties = await db.property.findMany({
       where: {
         ownerId: user.id,
-        // Solo mostrar propiedades disponibles o alquiladas (no eliminadas)
+        // Mostrar propiedades disponibles, alquiladas y pendientes de aprobación
         status: {
-          in: ['AVAILABLE', 'RENTED'],
+          in: ['AVAILABLE', 'RENTED', 'PENDING'],
         },
       },
       select: {
@@ -42,6 +42,12 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    logger.info(`Owner properties loaded: ${rawProperties.length} properties for user ${user.id}`, {
+      userId: user.id,
+      propertiesCount: rawProperties.length,
+      statuses: rawProperties.map(p => p.status),
     });
 
     // Parsear imágenes JSON y asegurar que sean arrays
