@@ -88,6 +88,115 @@ export default function BrokerPropertiesPage() {
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const loadPropertiesData = async (statusFilter = filterStatus) => {
+    try {
+      // ✅ CORREGIDO: Usar la API específica de broker que incluye propiedades gestionadas
+      const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
+      const url = `${baseUrl}/api/broker/properties?status=${statusFilter}&limit=50`;
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const propertiesData = data.properties || [];
+
+        // Transformar datos de la API al formato esperado por el componente
+        const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({
+          id: property.id,
+          title: property.title,
+          address: `${property.address}, ${property.commune}, ${property.city}`,
+          type: property.type,
+          status: property.status,
+          price: property.price,
+          ownerName: property.owner?.name || 'No asignado',
+          tenantName: property.currentTenant?.name || undefined,
+          commissionEarned: property.commissionEarned || 0,
+          views: property.views || 0,
+          inquiries: property.inquiries || 0,
+          occupancyRate: property.status === 'rented' ? 100 : 0,
+          images:
+            property.images && property.images.length > 0
+              ? property.images
+              : ['/api/placeholder/400/300'],
+          createdAt: property.createdAt,
+          updatedAt: property.updatedAt,
+        }));
+
+        setProperties(transformedProperties);
+
+        // Calcular estadísticas reales
+        const availableProperties = transformedProperties.filter(
+          p => p.status === 'available'
+        ).length;
+        const rentedProperties = transformedProperties.filter(p => p.status === 'rented').length;
+        const totalPortfolioValue = transformedProperties
+          .filter(p => p.status === 'rented')
+          .reduce((sum, p) => sum + p.price, 0);
+        const totalViews = transformedProperties.reduce((sum, p) => sum + p.views, 0);
+        const totalInquiries = transformedProperties.reduce((sum, p) => sum + p.inquiries, 0);
+        const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;
+        const occupancyRate =
+          transformedProperties.length > 0
+            ? (rentedProperties / transformedProperties.length) * 100
+            : 0;
+
+        const propertyStats: PropertyStats = {
+          totalProperties: transformedProperties.length,
+          availableProperties,
+          rentedProperties,
+          totalPortfolioValue,
+          averageRent,
+          occupancyRate,
+          totalViews,
+          totalInquiries,
+        };
+
+        setStats(propertyStats);
+      } else {
+        logger.error('Error loading properties from API:', {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        // Fallback a datos vacíos si falla la API
+        setProperties([]);
+        setStats({
+          totalProperties: 0,
+          availableProperties: 0,
+          rentedProperties: 0,
+          totalPortfolioValue: 0,
+          averageRent: 0,
+          occupancyRate: 0,
+          totalViews: 0,
+          totalInquiries: 0,
+        });
+      }
+      setLoading(false);
+    } catch (error) {
+      logger.error('Error loading properties data:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Fallback a datos vacíos en caso de error
+      setProperties([]);
+      setStats({
+        totalProperties: 0,
+        availableProperties: 0,
+        rentedProperties: 0,
+        totalPortfolioValue: 0,
+        averageRent: 0,
+        occupancyRate: 0,
+        totalViews: 0,
+        totalInquiries: 0,
+      });
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -103,117 +212,17 @@ export default function BrokerPropertiesPage() {
       }
     };
 
-    const loadPropertiesData = async () => {
-      try {
-        // ✅ CORREGIDO: Cargar datos reales de propiedades desde la API
-        const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/properties/list?limit=50`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-            'Cache-Control': 'no-cache',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const propertiesData = data.properties || [];
-
-          // Transformar datos de la API al formato esperado por el componente
-          const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({
-            id: property.id,
-            title: property.title,
-            address: `${property.address}, ${property.commune}, ${property.city}`,
-            type: property.type,
-            status: property.status,
-            price: property.price,
-            ownerName: property.owner?.name || 'No asignado',
-            tenantName: property.currentTenant?.name || undefined,
-            commissionEarned: property.commissionEarned || 0,
-            views: property.views || 0,
-            inquiries: property.inquiries || 0,
-            occupancyRate: property.status === 'rented' ? 100 : 0,
-            images:
-              property.images && property.images.length > 0
-                ? property.images
-                : ['/api/placeholder/400/300'],
-            createdAt: property.createdAt,
-            updatedAt: property.updatedAt,
-          }));
-
-          setProperties(transformedProperties);
-
-          // Calcular estadísticas reales
-          const availableProperties = transformedProperties.filter(
-            p => p.status === 'available'
-          ).length;
-          const rentedProperties = transformedProperties.filter(p => p.status === 'rented').length;
-          const totalPortfolioValue = transformedProperties
-            .filter(p => p.status === 'rented')
-            .reduce((sum, p) => sum + p.price, 0);
-          const totalViews = transformedProperties.reduce((sum, p) => sum + p.views, 0);
-          const totalInquiries = transformedProperties.reduce((sum, p) => sum + p.inquiries, 0);
-          const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;
-          const occupancyRate =
-            transformedProperties.length > 0
-              ? (rentedProperties / transformedProperties.length) * 100
-              : 0;
-
-          const propertyStats: PropertyStats = {
-            totalProperties: transformedProperties.length,
-            availableProperties,
-            rentedProperties,
-            totalPortfolioValue,
-            averageRent,
-            occupancyRate,
-            totalViews,
-            totalInquiries,
-          };
-
-          setStats(propertyStats);
-        } else {
-          logger.error('Error loading properties from API:', {
-            status: response.status,
-            statusText: response.statusText,
-          });
-          // Fallback a datos vacíos si falla la API
-          setProperties([]);
-          setStats({
-            totalProperties: 0,
-            availableProperties: 0,
-            rentedProperties: 0,
-            totalPortfolioValue: 0,
-            averageRent: 0,
-            occupancyRate: 0,
-            totalViews: 0,
-            totalInquiries: 0,
-          });
-        }
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error loading properties data:', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Fallback a datos vacíos en caso de error
-        setProperties([]);
-        setStats({
-          totalProperties: 0,
-          availableProperties: 0,
-          rentedProperties: 0,
-          totalPortfolioValue: 0,
-          averageRent: 0,
-          occupancyRate: 0,
-          totalViews: 0,
-          totalInquiries: 0,
-        });
-        setLoading(false);
-      }
-    };
-
     loadUserData();
     loadPropertiesData();
   }, []);
+
+  // ✅ CORREGIDO: Recargar datos cuando cambia el filtro de status
+  useEffect(() => {
+    if (user) {
+      // Solo recargar si el usuario ya está cargado
+      loadPropertiesData();
+    }
+  }, [filterStatus]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {

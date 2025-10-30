@@ -113,14 +113,102 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Marcar la invitación como completada (podríamos agregar un campo 'completed' o usar el status)
-    await db.brokerInvitation.update({
-      where: { id: invitationId },
-      data: {
-        // Aquí podríamos agregar un campo 'completedAt' si existe en el schema
-        // Por ahora, podemos dejar la invitación como 'ACCEPTED'
-      },
-    });
+    // Crear registros de gestión de propiedades si se especificaron
+    if (
+      propertyManagementType === 'partial' &&
+      managedPropertyIds &&
+      managedPropertyIds.length > 0
+    ) {
+      // Verificar que las propiedades pertenecen al usuario
+      const properties = await db.property.findMany({
+        where: {
+          id: { in: managedPropertyIds },
+          ownerId: user.id,
+        },
+      });
+
+      if (properties.length !== managedPropertyIds.length) {
+        throw new Error('Algunas propiedades no pertenecen al usuario o no existen');
+      }
+
+      // Crear registros de brokerPropertyManagement para cada propiedad
+      for (const propertyId of managedPropertyIds) {
+        await db.brokerPropertyManagement.create({
+          data: {
+            brokerId: invitation.brokerId,
+            clientId: brokerClient.id,
+            propertyId: propertyId,
+            managementType: 'full', // Por defecto gestión completa
+            services: invitation.servicesOffered || JSON.stringify([]),
+            commissionRate: brokerClient.commissionRate,
+            exclusivity: false, // Por defecto no exclusivo
+            status: 'ACTIVE',
+            startDate: new Date(),
+          },
+        });
+
+        // Actualizar la propiedad para asignar el broker
+        await db.property.update({
+          where: { id: propertyId },
+          data: {
+            brokerId: invitation.brokerId,
+            status: 'MANAGED',
+          },
+        });
+      }
+
+      // Actualizar métricas del cliente
+      await db.brokerClient.update({
+        where: { id: brokerClient.id },
+        data: {
+          totalPropertiesManaged: managedPropertyIds.length,
+        },
+      });
+    } else if (propertyManagementType === 'full') {
+      // Obtener todas las propiedades del propietario
+      const allOwnerProperties = await db.property.findMany({
+        where: { ownerId: user.id },
+        select: { id: true },
+      });
+
+      if (allOwnerProperties.length > 0) {
+        // Crear registros de brokerPropertyManagement para todas las propiedades
+        for (const property of allOwnerProperties) {
+          await db.brokerPropertyManagement.create({
+            data: {
+              brokerId: invitation.brokerId,
+              clientId: brokerClient.id,
+              propertyId: property.id,
+              managementType: 'full',
+              services: invitation.servicesOffered || JSON.stringify([]),
+              commissionRate: brokerClient.commissionRate,
+              exclusivity: false,
+              status: 'ACTIVE',
+              startDate: new Date(),
+            },
+          });
+
+          // Actualizar la propiedad para asignar el broker
+          await db.property.update({
+            where: { id: property.id },
+            data: {
+              brokerId: invitation.brokerId,
+              status: 'MANAGED',
+            },
+          });
+        }
+
+        // Actualizar métricas del cliente
+        await db.brokerClient.update({
+          where: { id: brokerClient.id },
+          data: {
+            totalPropertiesManaged: allOwnerProperties.length,
+          },
+        });
+      }
+    }
+
+    // La invitación se mantiene en ACCEPTED - no necesitamos cambiar el status
 
     // Notificar al broker que la relación ha sido completada
     await NotificationService.notifyInvitationCompleted({

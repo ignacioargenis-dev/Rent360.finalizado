@@ -49,23 +49,39 @@ export async function GET(request: NextRequest) {
 
       // Estadísticas de propiedades
       Promise.all([
-        // Propiedades totales creadas por el broker
-        db.property
-          .count({
+        // Propiedades totales del broker (propias + gestionadas)
+        Promise.all([
+          // Propiedades propias del broker
+          db.property.count({
             where: { brokerId: user.id },
-          })
-          .then(count => {
-            logger.info('Total properties for broker', { brokerId: user.id, count });
-            return count;
           }),
-        // Propiedades disponibles
+          // Propiedades gestionadas por el broker
+          db.brokerPropertyManagement.count({
+            where: {
+              brokerId: user.id,
+              status: 'ACTIVE',
+            },
+          }),
+        ]).then(([ownProperties, managedProperties]) => {
+          const total = ownProperties + managedProperties;
+          logger.info('Total properties for broker', {
+            brokerId: user.id,
+            ownProperties,
+            managedProperties,
+            total,
+          });
+          return total;
+        }),
+
+        // Propiedades disponibles (propias)
         db.property.count({
           where: {
             brokerId: user.id,
             status: 'AVAILABLE',
           },
         }),
-        // Propiedades rentadas (con contratos activos)
+
+        // Propiedades rentadas (con contratos activos) - propias
         db.property.count({
           where: {
             brokerId: user.id,
@@ -76,13 +92,22 @@ export async function GET(request: NextRequest) {
             },
           },
         }),
-        // Propiedades recientes (últimos 30 días)
+
+        // Propiedades recientes (últimos 30 días) - propias
         db.property.count({
           where: {
             brokerId: user.id,
             createdAt: {
               gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
             },
+          },
+        }),
+
+        // Propiedades gestionadas activas
+        db.brokerPropertyManagement.count({
+          where: {
+            brokerId: user.id,
+            status: 'ACTIVE',
           },
         }),
       ]),
@@ -99,6 +124,50 @@ export async function GET(request: NextRequest) {
             startDate: true,
             createdAt: true,
           },
+        }),
+
+        // Estadísticas de clientes
+        Promise.all([
+          // Clientes de contratos tradicionales
+          db.user.count({
+            where: {
+              OR: [
+                {
+                  contractsAsOwner: {
+                    some: {
+                      brokerId: user.id,
+                      status: { in: ['ACTIVE', 'PENDING'] },
+                    },
+                  },
+                },
+                {
+                  contractsAsTenant: {
+                    some: {
+                      brokerId: user.id,
+                      status: { in: ['ACTIVE', 'PENDING'] },
+                    },
+                  },
+                },
+              ],
+            },
+          }),
+
+          // Clientes de relaciones BrokerClient activas
+          db.brokerClient.count({
+            where: {
+              brokerId: user.id,
+              status: 'ACTIVE',
+            },
+          }),
+        ]).then(([contractClients, brokerClients]) => {
+          const totalActiveClients = contractClients + brokerClients;
+          logger.info('Active clients for broker', {
+            brokerId: user.id,
+            contractClients,
+            brokerClients,
+            totalActiveClients,
+          });
+          return totalActiveClients;
         }),
       ]),
 
@@ -119,9 +188,14 @@ export async function GET(request: NextRequest) {
     ]);
 
     const [totalPropertiesManaged, activeContracts, totalContracts] = contractStats;
-    const [totalProperties, availableProperties, rentedProperties, recentPropertiesCount] =
-      propertyStats;
-    const [contractsForCommissions] = commissionData;
+    const [
+      totalProperties,
+      availableProperties,
+      rentedProperties,
+      recentPropertiesCount,
+      managedPropertiesCount,
+    ] = propertyStats;
+    const [contractsForCommissions, activeClientsCount] = commissionData;
 
     // Calcular comisiones dinámicamente
     // Asumiendo una comisión del 5% del arriendo mensual por contrato
@@ -240,20 +314,41 @@ export async function GET(request: NextRequest) {
       marketShare: 8.5, // porcentaje (mock por ahora)
     };
 
-    // Calcular valor total del portafolio (suma de precios de propiedades)
-    const portfolioValue = await db.property
-      .findMany({
-        where: { brokerId: user.id },
-        select: { price: true },
-      })
-      .then(properties => properties.reduce((sum, prop) => sum + (prop.price || 0), 0));
+    // Calcular valor total del portafolio (propias + gestionadas)
+    const [ownPropertiesValue, managedPropertiesValue] = await Promise.all([
+      // Valor de propiedades propias
+      db.property
+        .findMany({
+          where: { brokerId: user.id },
+          select: { price: true },
+        })
+        .then(properties => properties.reduce((sum, prop) => sum + (prop.price || 0), 0)),
+
+      // Valor de propiedades gestionadas
+      db.brokerPropertyManagement
+        .findMany({
+          where: {
+            brokerId: user.id,
+            status: 'ACTIVE',
+          },
+          include: {
+            property: {
+              select: { price: true },
+            },
+          },
+        })
+        .then(managedProps => managedProps.reduce((sum, mp) => sum + (mp.property.price || 0), 0)),
+    ]);
+
+    const portfolioValue = ownPropertiesValue + managedPropertiesValue;
 
     // Calcular estadísticas adicionales
     const stats = {
-      totalProperties: totalProperties || 0, // Propiedades totales creadas por el broker
+      totalProperties: totalProperties || 0, // Propiedades totales (propias + gestionadas)
       activeListings: availableProperties || 0, // Propiedades disponibles
       totalContracts: totalContracts || 0,
       activeContracts: activeContracts || 0,
+      activeClients: activeClientsCount || 0, // Clientes activos totales
       totalCommissions: Math.round(totalCommissions),
       pendingCommissions: Math.round(pendingCommissions),
       monthlyRevenue: Math.round(monthlyRevenue),
