@@ -6,6 +6,16 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔍 [AUTH-TEST] Testing authentication...');
 
+    // Verificar cookies en la request
+    const cookies = request.cookies;
+    console.log('🍪 [AUTH-TEST] Cookies received:', {
+      allCookies: cookies
+        .getAll()
+        .map(c => ({ name: c.name, value: c.value.substring(0, 20) + '...' })),
+      hasAuthToken: cookies.has('auth-token'),
+      hasRefreshToken: cookies.has('refresh-token'),
+    });
+
     // Verificar autenticación
     const user = await requireAuth(request);
     console.log('✅ [AUTH-TEST] User authenticated:', {

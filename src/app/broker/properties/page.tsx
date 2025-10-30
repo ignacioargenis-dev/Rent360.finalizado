@@ -104,7 +104,7 @@ export default function BrokerPropertiesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        const propertiesData = data.properties || [];
+        const propertiesData = data.data || [];
 
         // Transformar datos de la API al formato esperado por el componente
         const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({

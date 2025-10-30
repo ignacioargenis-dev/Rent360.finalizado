@@ -9,9 +9,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    console.log(
-      `🔍 [API] /api/broker/clients/active called by user: ${user.name} (${user.id}), role: ${user.role}`
-    );
 
     if (user.role !== 'BROKER') {
       return NextResponse.json(
@@ -131,20 +128,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log(`🔍 Found ${clients.length} clients for broker ${user.id} (${user.name})`);
-
-    // Log detailed information about each client found
-    clients.forEach((client, index) => {
-      console.log(`🔍 Client ${index + 1}: ${client.name} (${client.id})`);
-      console.log(`   - Has ${client.contractsAsOwner.length} contracts as owner`);
-      console.log(`   - Has ${client.contractsAsTenant.length} contracts as tenant`);
-      console.log(`   - Has ${client.clientRelationships.length} broker relationships`);
-      client.clientRelationships.forEach((rel, relIndex) => {
-        console.log(
-          `     Relationship ${relIndex + 1}: status=${rel.status}, brokerId=${rel.brokerId}`
-        );
-      });
-    });
+    // Procesar clientes encontrados
 
     // Transformar datos al formato esperado
     const transformedClients = clients.map(client => {
@@ -155,11 +139,6 @@ export async function GET(request: NextRequest) {
       // Si no hay contratos pero sí hay relaciones brokerClient activas
       const brokerClient = client.clientRelationships[0]; // Tomar la primera relación activa
       const hasBrokerClient = brokerClient && brokerClient.status === 'ACTIVE';
-
-      // Debug logs
-      console.log(
-        `🔍 Client ${client.id} (${client.name}): hasBrokerClient=${hasBrokerClient}, brokerClientId=${brokerClient?.id}, userId=${client.id}`
-      );
 
       // Calcular datos basados en contratos o en relación brokerClient
       let propertyType = 'residential';
@@ -220,9 +199,6 @@ export async function GET(request: NextRequest) {
         referralSource: hasBrokerClient ? 'invitation' : 'website', // Placeholder
       };
 
-      console.log(
-        `📤 Response for ${client.name}: id=${response.id}, brokerClientId=${response.brokerClientId}`
-      );
       return response;
     });
 
