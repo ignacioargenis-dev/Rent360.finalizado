@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener clientes activos del broker (con contratos activos)
+    // Obtener clientes activos del broker (con contratos activos o relaciones brokerClient activas)
     const clients = await db.user.findMany({
       where: {
         isActive: true,
@@ -34,6 +34,15 @@ export async function GET(request: NextRequest) {
           // Clientes que tienen contratos activos con este broker como inquilinos
           {
             contractsAsTenant: {
+              some: {
+                brokerId: user.id,
+                status: 'ACTIVE',
+              },
+            },
+          },
+          // Clientes que tienen una relación activa brokerClient con este corredor
+          {
+            clientRelationships: {
               some: {
                 brokerId: user.id,
                 status: 'ACTIVE',
@@ -89,6 +98,30 @@ export async function GET(request: NextRequest) {
             createdAt: 'desc',
           },
         },
+        clientRelationships: {
+          where: {
+            brokerId: user.id,
+            status: 'ACTIVE',
+          },
+          include: {
+            managedProperties: {
+              include: {
+                property: {
+                  select: {
+                    id: true,
+                    title: true,
+                    address: true,
+                    city: true,
+                    commune: true,
+                    region: true,
+                    price: true,
+                    type: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -99,10 +132,45 @@ export async function GET(request: NextRequest) {
     const transformedClients = clients.map(client => {
       // Combinar contratos activos como propietario y como inquilino
       const allContracts = [...client.contractsAsOwner, ...client.contractsAsTenant];
-      const totalCommission = allContracts.reduce(
-        (sum, contract) => sum + contract.monthlyRent * 0.05, // Ejemplo: 5% de comisión
-        0
-      );
+      const hasContracts = allContracts.length > 0;
+
+      // Si no hay contratos pero sí hay relaciones brokerClient activas
+      const brokerClient = client.clientRelationships[0]; // Tomar la primera relación activa
+      const hasBrokerClient = brokerClient && brokerClient.status === 'ACTIVE';
+
+      // Calcular datos basados en contratos o en relación brokerClient
+      let propertyType = 'residential';
+      let propertyValue = 0;
+      let monthlyRent = 0;
+      let contractStart = client.createdAt.toISOString();
+      let contractEnd = undefined;
+      let totalCommission = 0;
+
+      if (hasContracts) {
+        // Datos basados en contratos
+        propertyType = allContracts[0]?.property.type.toLowerCase() || 'residential';
+        propertyValue = allContracts.reduce((sum, c) => sum + Number(c.property.price), 0);
+        monthlyRent = allContracts.reduce((sum, c) => sum + c.monthlyRent, 0);
+        contractStart = allContracts[0]?.startDate.toISOString() || client.createdAt.toISOString();
+        contractEnd = allContracts[0]?.endDate.toISOString() || undefined;
+        totalCommission = allContracts.reduce(
+          (sum, contract) => sum + contract.monthlyRent * 0.05, // Ejemplo: 5% de comisión
+          0
+        );
+      } else if (hasBrokerClient) {
+        // Datos basados en relación brokerClient
+        const managedProps = brokerClient.managedProperties || [];
+        if (managedProps.length > 0 && managedProps[0]?.property) {
+          propertyType = managedProps[0].property.type.toLowerCase();
+          propertyValue = managedProps.reduce(
+            (sum, mp) => sum + Number(mp.property?.price || 0),
+            0
+          );
+        }
+        contractStart = brokerClient.startDate.toISOString();
+        // Calcular comisión basada en la tasa del brokerClient
+        totalCommission = propertyValue * (brokerClient.commissionRate / 100);
+      }
 
       // Calcular siguiente pago (primer día del próximo mes)
       const nextMonth = new Date();
@@ -114,18 +182,18 @@ export async function GET(request: NextRequest) {
         name: client.name,
         email: client.email,
         phone: client.phone || '',
-        propertyType: allContracts[0]?.property.type.toLowerCase() || 'residential',
-        propertyValue: allContracts.reduce((sum, c) => sum + Number(c.property.price), 0),
-        monthlyRent: allContracts.reduce((sum, c) => sum + c.monthlyRent, 0),
-        commissionRate: 5, // Ejemplo: 5%
-        contractStart: allContracts[0]?.startDate.toISOString() || client.createdAt.toISOString(),
-        contractEnd: allContracts[0]?.endDate.toISOString() || undefined,
+        propertyType,
+        propertyValue,
+        monthlyRent,
+        commissionRate: hasBrokerClient ? brokerClient.commissionRate : 5,
+        contractStart,
+        contractEnd,
         status: 'active' as const,
         lastContact: client.updatedAt.toISOString(),
         nextPayment: nextMonth.toISOString(),
         totalCommission,
         satisfactionScore: 4.5, // Placeholder
-        referralSource: 'website', // Placeholder
+        referralSource: hasBrokerClient ? 'invitation' : 'website', // Placeholder
       };
     });
 

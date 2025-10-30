@@ -9,6 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
   MessageCircle,
   Send,
   Phone,
@@ -22,6 +32,8 @@ import {
   Flag,
   Upload,
   X,
+  Users,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 
@@ -97,6 +109,19 @@ export default function UnifiedMessagingSystem({
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
+
+  // Estados para nuevo chat
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [recipientType, setRecipientType] = useState<
+    'broker' | 'owner' | 'tenant' | 'provider' | 'maintenance' | 'runner' | 'support' | ''
+  >('');
+  const [recipientSearch, setRecipientSearch] = useState('');
+  const [availableRecipients, setAvailableRecipients] = useState<any[]>([]);
+  const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
+  const [newChatSubject, setNewChatSubject] = useState('');
+  const [newChatMessage, setNewChatMessage] = useState('');
+  const [creatingChat, setCreatingChat] = useState(false);
+  const [searchingRecipients, setSearchingRecipients] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -291,6 +316,112 @@ export default function UnifiedMessagingSystem({
       window.history.replaceState({}, '', newUrl.toString());
     } catch (error) {
       logger.error('Error handling new conversation:', { error });
+    }
+  };
+
+  // Función para buscar destinatarios disponibles
+  const searchRecipients = async (searchTerm: string, type: string) => {
+    if (!searchTerm.trim() || !type) {
+      return;
+    }
+
+    try {
+      setSearchingRecipients(true);
+      const response = await fetch(
+        `/api/users/search?query=${encodeURIComponent(searchTerm)}&role=${type}&limit=20`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setAvailableRecipients(data.users || []);
+        } else {
+          setAvailableRecipients([]);
+        }
+      } else {
+        setAvailableRecipients([]);
+      }
+    } catch (error) {
+      logger.error('Error searching recipients:', error);
+      setAvailableRecipients([]);
+    } finally {
+      setSearchingRecipients(false);
+    }
+  };
+
+  // Función para crear un nuevo chat
+  const createNewChat = async () => {
+    if (!selectedRecipient || !newChatMessage.trim()) {
+      return;
+    }
+
+    try {
+      setCreatingChat(true);
+
+      // Crear el mensaje inicial
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: selectedRecipient.id,
+          content: newChatMessage,
+          subject: newChatSubject || `Nueva conversación con ${selectedRecipient.name}`,
+          type: 'direct',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Crear la conversación local
+        const newConversation: Conversation = {
+          id: `chat_${selectedRecipient.id}_${Date.now()}`,
+          participantId: selectedRecipient.id,
+          participantName: selectedRecipient.name,
+          participantRole: selectedRecipient.role,
+          participantAvatar: selectedRecipient.avatar,
+          lastMessage: {
+            content: newChatMessage,
+            timestamp: new Date().toISOString(),
+            senderName: user?.name || 'Tú',
+          },
+          unreadCount: 0,
+          status: 'active',
+        };
+
+        // Agregar a la lista de conversaciones
+        setConversations(prev => [newConversation, ...prev]);
+        setSelectedConversation(newConversation);
+
+        // Cerrar el modal y resetear estados
+        setShowNewChatDialog(false);
+        setSelectedRecipient(null);
+        setNewChatSubject('');
+        setNewChatMessage('');
+        setRecipientType('');
+        setRecipientSearch('');
+        setAvailableRecipients([]);
+
+        // Mostrar mensaje de éxito
+        logger.info('Nuevo chat creado exitosamente');
+      } else {
+        const error = await response.json();
+        logger.error('Error creando chat:', error);
+      }
+    } catch (error) {
+      logger.error('Error creando nuevo chat:', error);
+    } finally {
+      setCreatingChat(false);
     }
   };
 
@@ -566,7 +697,7 @@ export default function UnifiedMessagingSystem({
           <p className="text-gray-600 mt-2">{subtitle}</p>
         </div>
         {showNewChatButton && (
-          <Button className="flex items-center gap-2">
+          <Button onClick={() => setShowNewChatDialog(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nuevo Chat
           </Button>
@@ -1006,6 +1137,180 @@ export default function UnifiedMessagingSystem({
           </Card>
         </div>
       )}
+
+      {/* Modal para Nuevo Chat */}
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Iniciar Nueva Conversación
+            </DialogTitle>
+            <DialogDescription>
+              Selecciona el tipo de usuario y busca a la persona con la que quieres conversar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Selección del tipo de destinatario */}
+            <div>
+              <Label htmlFor="recipient-type">Tipo de Usuario</Label>
+              <select
+                id="recipient-type"
+                value={recipientType}
+                onChange={e => {
+                  setRecipientType(e.target.value as any);
+                  setRecipientSearch('');
+                  setAvailableRecipients([]);
+                  setSelectedRecipient(null);
+                }}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Selecciona el tipo</option>
+                <option value="broker">Corredor</option>
+                <option value="owner">Propietario</option>
+                <option value="tenant">Inquilino</option>
+                <option value="provider">Proveedor</option>
+                <option value="maintenance">Mantenimiento</option>
+                <option value="runner">Runner</option>
+                <option value="support">Soporte</option>
+              </select>
+            </div>
+
+            {/* Búsqueda de destinatarios */}
+            {recipientType && (
+              <div>
+                <Label htmlFor="recipient-search">Buscar Usuario</Label>
+                <Input
+                  id="recipient-search"
+                  type="text"
+                  placeholder="Ingresa nombre, email o ID..."
+                  value={recipientSearch}
+                  onChange={e => {
+                    setRecipientSearch(e.target.value);
+                    if (e.target.value.length >= 2) {
+                      searchRecipients(e.target.value, recipientType);
+                    } else {
+                      setAvailableRecipients([]);
+                    }
+                  }}
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            {/* Lista de destinatarios disponibles */}
+            {availableRecipients.length > 0 && (
+              <div>
+                <Label>Usuarios Encontrados</Label>
+                <div className="max-h-40 overflow-y-auto border rounded-md mt-1">
+                  {availableRecipients.map(recipient => (
+                    <div
+                      key={recipient.id}
+                      className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${
+                        selectedRecipient?.id === recipient.id ? 'bg-blue-50 border-blue-200' : ''
+                      }`}
+                      onClick={() => setSelectedRecipient(recipient)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={recipient.avatar} />
+                          <AvatarFallback>
+                            {recipient.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{recipient.name}</p>
+                          <p className="text-xs text-gray-600">{recipient.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {recipient.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Estado de búsqueda */}
+            {searchingRecipients && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                Buscando usuarios...
+              </div>
+            )}
+
+            {/* Mensaje inicial */}
+            {selectedRecipient && (
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-800">
+                    Conversación con: <strong>{selectedRecipient.name}</strong>
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="chat-subject">Asunto (opcional)</Label>
+                  <Input
+                    id="chat-subject"
+                    placeholder="Asunto de la conversación"
+                    value={newChatSubject}
+                    onChange={e => setNewChatSubject(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="chat-message">Mensaje Inicial *</Label>
+                  <Textarea
+                    id="chat-message"
+                    placeholder="Escribe tu mensaje inicial..."
+                    value={newChatMessage}
+                    onChange={e => setNewChatMessage(e.target.value)}
+                    rows={3}
+                    className="mt-1 resize-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowNewChatDialog(false);
+                setSelectedRecipient(null);
+                setNewChatSubject('');
+                setNewChatMessage('');
+                setRecipientType('');
+                setRecipientSearch('');
+                setAvailableRecipients([]);
+              }}
+              disabled={creatingChat}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={createNewChat}
+              disabled={!selectedRecipient || !newChatMessage.trim() || creatingChat}
+            >
+              {creatingChat ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Iniciar Conversación
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
