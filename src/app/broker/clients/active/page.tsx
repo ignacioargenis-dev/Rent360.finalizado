@@ -37,6 +37,7 @@ import { User } from '@/types';
 
 interface ActiveClient {
   id: string;
+  brokerClientId: string | null; // ID de la relación brokerClient
   name: string;
   email: string;
   phone: string;
@@ -129,8 +130,10 @@ export default function BrokerActiveClientsPage() {
     router.push('/broker/clients/new');
   };
 
-  const handleViewClientDetails = (clientId: string) => {
-    router.push(`/broker/clients/${clientId}`);
+  const handleViewClientDetails = (client: ActiveClient) => {
+    // Usar brokerClientId si existe, sino usar el id del cliente (userId)
+    const detailId = client.brokerClientId || client.id;
+    router.push(`/broker/clients/${detailId}`);
   };
 
   const handleContactClient = (client: ActiveClient, method: 'phone' | 'email' | 'message') => {
@@ -221,7 +224,8 @@ export default function BrokerActiveClientsPage() {
           // Calculate stats from real data
           const totalActiveClients = transformedClients.filter(c => c.status === 'active').length;
           const totalCommission = transformedClients.reduce((sum, c) => sum + c.totalCommission, 0);
-          const averageCommission = transformedClients.length > 0 ? totalCommission / transformedClients.length : 0;
+          const averageCommission =
+            transformedClients.length > 0 ? totalCommission / transformedClients.length : 0;
           const expiringContracts = transformedClients.filter(
             c =>
               c.contractEnd &&
@@ -636,7 +640,7 @@ export default function BrokerActiveClientsPage() {
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => handleViewClientDetails(client.id)}
+                        onClick={() => handleViewClientDetails(client)}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalles

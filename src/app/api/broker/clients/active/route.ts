@@ -179,6 +179,7 @@ export async function GET(request: NextRequest) {
 
       return {
         id: client.id,
+        brokerClientId: hasBrokerClient ? brokerClient.id : null, // ID de la relación brokerClient
         name: client.name,
         email: client.email,
         phone: client.phone || '',
