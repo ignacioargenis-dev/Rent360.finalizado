@@ -165,15 +165,19 @@ export async function POST(request: NextRequest) {
         },
       });
     } else if (propertyManagementType === 'full') {
-      // Obtener todas las propiedades del propietario
-      const allOwnerProperties = await db.property.findMany({
-        where: { ownerId: user.id },
+      // Para gestión completa, obtener TODAS las propiedades disponibles del propietario
+      // (AVAILABLE, RENTED, etc.) - las mismas que se mostraron para selección
+      const availableOwnerProperties = await db.property.findMany({
+        where: {
+          ownerId: user.id,
+          status: { in: ['AVAILABLE', 'RENTED', 'PENDING'] }, // Solo propiedades que pueden ser gestionadas
+        },
         select: { id: true },
       });
 
-      if (allOwnerProperties.length > 0) {
-        // Crear registros de brokerPropertyManagement para todas las propiedades
-        for (const property of allOwnerProperties) {
+      if (availableOwnerProperties.length > 0) {
+        // Crear registros de brokerPropertyManagement para todas las propiedades disponibles
+        for (const property of availableOwnerProperties) {
           await db.brokerPropertyManagement.create({
             data: {
               brokerId: invitation.brokerId,
@@ -202,7 +206,7 @@ export async function POST(request: NextRequest) {
         await db.brokerClient.update({
           where: { id: brokerClient.id },
           data: {
-            totalPropertiesManaged: allOwnerProperties.length,
+            totalPropertiesManaged: availableOwnerProperties.length,
           },
         });
       }
