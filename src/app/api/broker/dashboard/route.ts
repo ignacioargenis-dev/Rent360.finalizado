@@ -30,20 +30,20 @@ export async function GET(request: NextRequest) {
         // Propiedades totales gestionadas (contratos no draft)
         db.contract.count({
           where: {
-            ownerId: user.id,
+            brokerId: user.id,
             status: { not: 'DRAFT' },
           },
         }),
         // Contratos activos
         db.contract.count({
           where: {
-            ownerId: user.id,
+            brokerId: user.id,
             status: { in: ['ACTIVE', 'PENDING'] },
           },
         }),
         // Contratos totales
         db.contract.count({
-          where: { ownerId: user.id },
+          where: { brokerId: user.id },
         }),
       ]),
 
@@ -58,14 +58,14 @@ export async function GET(request: NextRequest) {
           // Propiedades gestionadas por el broker
           db.brokerPropertyManagement.count({
             where: {
-              ownerId: user.id,
+              brokerId: user.id,
               status: 'ACTIVE',
             },
           }),
         ]).then(([ownProperties, managedProperties]) => {
           const total = ownProperties + managedProperties;
           logger.info('Total properties for broker', {
-            ownerId: user.id,
+            brokerId: user.id,
             ownProperties,
             managedProperties,
             total,
@@ -75,10 +75,7 @@ export async function GET(request: NextRequest) {
 
         // Propiedades disponibles (propias)
         db.property.count({
-          where: {
-            ownerId: user.id,
-            status: 'AVAILABLE',
-          },
+          where: { ownerId: user.id, status: 'AVAILABLE' },
         }),
 
         // Propiedades rentadas (con contratos activos) - propias
@@ -106,7 +103,7 @@ export async function GET(request: NextRequest) {
         // Propiedades gestionadas activas
         db.brokerPropertyManagement.count({
           where: {
-            ownerId: user.id,
+            brokerId: user.id,
             status: 'ACTIVE',
           },
         }),
@@ -116,7 +113,7 @@ export async function GET(request: NextRequest) {
       Promise.all([
         // Todos los contratos del corredor para calcular comisiones
         db.contract.findMany({
-          where: { ownerId: user.id },
+          where: { brokerId: user.id },
           select: {
             id: true,
             monthlyRent: true,
@@ -135,7 +132,7 @@ export async function GET(request: NextRequest) {
                 {
                   contractsAsOwner: {
                     some: {
-                      ownerId: user.id,
+                      brokerId: user.id,
                       status: { in: ['ACTIVE', 'PENDING'] },
                     },
                   },
@@ -143,7 +140,7 @@ export async function GET(request: NextRequest) {
                 {
                   contractsAsTenant: {
                     some: {
-                      ownerId: user.id,
+                      brokerId: user.id,
                       status: { in: ['ACTIVE', 'PENDING'] },
                     },
                   },
@@ -155,14 +152,14 @@ export async function GET(request: NextRequest) {
           // Clientes de relaciones BrokerClient activas
           db.brokerClient.count({
             where: {
-              ownerId: user.id,
+              brokerId: user.id,
               status: 'ACTIVE',
             },
           }),
         ]).then(([contractClients, brokerClients]) => {
           const totalActiveClients = contractClients + brokerClients;
           logger.info('Active clients for broker', {
-            ownerId: user.id,
+            brokerId: user.id,
             contractClients,
             brokerClients,
             totalActiveClients,
@@ -236,7 +233,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener propiedades recientes creadas por el corredor
     const recentProperties = await db.property.findMany({
-      where: { ownerId: user.id },
+      where: { brokerId: user.id },
       include: {
         owner: {
           select: {
@@ -259,7 +256,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener contratos recientes
     const recentContracts = await db.contract.findMany({
-      where: { ownerId: user.id },
+      where: { brokerId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 5,
       include: {
@@ -319,7 +316,7 @@ export async function GET(request: NextRequest) {
       // Valor de propiedades propias
       db.property
         .findMany({
-          where: { ownerId: user.id },
+          where: { brokerId: user.id },
           select: { price: true },
         })
         .then(properties => properties.reduce((sum, prop) => sum + (prop.price || 0), 0)),
@@ -328,7 +325,7 @@ export async function GET(request: NextRequest) {
       db.brokerPropertyManagement
         .findMany({
           where: {
-            ownerId: user.id,
+            brokerId: user.id,
             status: 'ACTIVE',
           },
           include: {
