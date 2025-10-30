@@ -87,6 +87,32 @@ export default function DiscoverClientsPage() {
     proposedRate: 5,
   });
 
+  // 🏪 MARKETPLACE
+  const loadMarketplace = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+
+      // Solo incluir filtros que no sean "ALL"
+      Object.entries(marketplaceFilters).forEach(([key, value]) => {
+        if (value && value !== 'ALL') {
+          params.append(key, value);
+        }
+      });
+
+      const res = await fetch(`/api/broker/discover/marketplace?${params}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setMarketplaceRequests(data.data);
+      }
+    } catch (error) {
+      toast.error('Error al cargar marketplace');
+    } finally {
+      setLoading(false);
+    }
+  }, [marketplaceFilters]);
+
   // Cargar datos iniciales
   useEffect(() => {
     if (activeTab === 'recommendations') {
@@ -176,32 +202,6 @@ export default function DiscoverClientsPage() {
       toast.error('Error al actualizar recomendación');
     }
   };
-
-  // 🏪 MARKETPLACE
-  const loadMarketplace = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-
-      // Solo incluir filtros que no sean "ALL"
-      Object.entries(marketplaceFilters).forEach(([key, value]) => {
-        if (value && value !== 'ALL') {
-          params.append(key, value);
-        }
-      });
-
-      const res = await fetch(`/api/broker/discover/marketplace?${params}`);
-      const data = await res.json();
-
-      if (data.success) {
-        setMarketplaceRequests(data.data);
-      }
-    } catch (error) {
-      toast.error('Error al cargar marketplace');
-    } finally {
-      setLoading(false);
-    }
-  }, [marketplaceFilters]);
 
   const openResponseModal = (request: any) => {
     setSelectedRequest(request);
