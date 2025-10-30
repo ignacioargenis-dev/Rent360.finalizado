@@ -57,6 +57,7 @@ interface Prospect {
   email: string;
   phone?: string;
   rut?: string;
+  prospectType: string;
   status: string;
   priority: string;
   interestedIn: string[];
@@ -313,7 +314,10 @@ export default function ProspectDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          clientType: prospect.prospectType === 'OWNER_LEAD' ? 'OWNER' : 'TENANT',
           commissionRate: 5, // Default commission
+          relationshipType: 'standard',
+          exclusiveAgreement: false,
         }),
       });
 

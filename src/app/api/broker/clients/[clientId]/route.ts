@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     const clientId = params.clientId;
 
     // Buscar la relación brokerClient para este broker y cliente
+    console.log('🔍 [CLIENT_DETAIL] Buscando brokerClient:', { clientId, brokerId: user.id });
     const brokerClient = await db.brokerClient.findFirst({
       where: {
         id: clientId,
@@ -90,6 +91,12 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     });
 
     if (!brokerClient) {
+      console.log('❌ [CLIENT_DETAIL] Broker client relationship not found:', {
+        clientId,
+        brokerId: user.id,
+        userId: user.id,
+        userRole: user.role,
+      });
       logger.warn('Broker client relationship not found', {
         clientId,
         brokerId: user.id,
@@ -99,6 +106,13 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         { status: 404 }
       );
     }
+
+    console.log('✅ [CLIENT_DETAIL] Broker client encontrado:', {
+      id: brokerClient.id,
+      userId: brokerClient.userId,
+      userName: brokerClient.user.name,
+      status: brokerClient.status,
+    });
 
     // Obtener contratos activos si existen
     const contracts = await db.contract.findMany({

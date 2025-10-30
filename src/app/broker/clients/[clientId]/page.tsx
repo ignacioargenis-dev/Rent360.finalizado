@@ -254,28 +254,37 @@ export default function BrokerClientDetailPage() {
     setIsLoading(true);
     try {
       // Obtener datos reales desde la API
+      logger.info('Cargando detalles del cliente', { clientId });
       const response = await fetch(`/api/broker/clients/${clientId}`, {
         headers: {
           'Cache-Control': 'no-cache',
         },
       });
 
+      logger.info('Respuesta de la API', { status: response.status, ok: response.ok });
+
       if (response.ok) {
         const result = await response.json();
+        logger.info('Datos de la API', { result });
         if (result.success) {
           setClient(result.data);
           setIsLoading(false);
           return;
+        } else {
+          logger.error('API retornó success: false', { result });
         }
+      } else {
+        const errorText = await response.text();
+        logger.error('API retornó error', { status: response.status, errorText });
       }
 
-      // Fallback a datos mock si la API falla
-      logger.warn('API falló, usando datos mock');
+      // Solo usar datos mock como último recurso
+      logger.warn('API falló completamente, usando datos mock como fallback');
       await new Promise(resolve => setTimeout(resolve, 1000));
       setClient(mockClient);
     } catch (error) {
       logger.error('Error al cargar detalles del cliente', { error, clientId });
-      // Fallback a datos mock en caso de error
+      // Fallback a datos mock en caso de error de red
       setClient(mockClient);
     } finally {
       setIsLoading(false);
@@ -292,11 +301,10 @@ export default function BrokerClientDetailPage() {
     } else if (method === 'phone') {
       window.open(`tel:${client.phone}`, '_blank');
     } else {
-      // WhatsApp
-      const message = encodeURIComponent(
-        'Hola! Tengo algunas propiedades que podrían interesarte.'
+      // Abrir sistema de mensajería interno
+      router.push(
+        `/broker/messages?new=true&recipient=${client.clientId}&subject=Consulta sobre propiedades&message=Hola! Tengo algunas propiedades que podrían interesarte.`
       );
-      window.open(`https://wa.me/${client.phone.replace(/\s+/g, '')}?text=${message}`, '_blank');
     }
 
     logger.info('Contacto con cliente iniciado', { clientId, method });
