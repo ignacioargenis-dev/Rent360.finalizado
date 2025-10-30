@@ -8,12 +8,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 [BROKER-CLIENTS-ACTIVE] API called');
     const user = await requireAuth(request);
     console.log(
-      `🔍 [API] /api/broker/clients/active called by user: ${user.name} (${user.id}), role: ${user.role}`
+      `✅ [BROKER-CLIENTS-ACTIVE] User authenticated: ${user.name} (${user.id}), role: ${user.role}`
     );
 
     if (user.role !== 'BROKER') {
+      console.log('❌ [BROKER-CLIENTS-ACTIVE] User is not BROKER:', user.role);
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
@@ -260,6 +262,17 @@ export async function GET(request: NextRequest) {
       expiringContracts,
       newClientsThisMonth,
     };
+
+    console.log('📤 [BROKER-CLIENTS-ACTIVE] Returning data:', {
+      totalClients: transformedClients.length,
+      firstClient: transformedClients[0]
+        ? {
+            id: transformedClients[0].id,
+            brokerClientId: transformedClients[0].brokerClientId,
+            name: transformedClients[0].name,
+          }
+        : null,
+    });
 
     logger.info('Clientes activos de broker obtenidos', {
       brokerId: user.id,

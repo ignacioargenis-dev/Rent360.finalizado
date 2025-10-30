@@ -6,16 +6,22 @@ import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 [BROKER-DASHBOARD] API called');
     const user = await requireAuth(request);
+    console.log(
+      `✅ [BROKER-DASHBOARD] User authenticated: ${user.name} (${user.id}), role: ${user.role}`
+    );
 
     // Verificar que sea un corredor
     if (user.role !== 'BROKER') {
+      console.log('❌ [BROKER-DASHBOARD] User is not BROKER:', user.role);
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
       );
     }
 
+    console.log('🔍 [BROKER-DASHBOARD] Getting dashboard data for broker:', user.id);
     logger.info('Obteniendo dashboard del corredor', {
       userId: user.id,
       userRole: user.role,
@@ -399,6 +405,17 @@ export async function GET(request: NextRequest) {
         newValues: activity.newValues,
       })),
     };
+
+    console.log('📤 [BROKER-DASHBOARD] Returning dashboard data:', {
+      stats: {
+        totalProperties: stats.totalProperties,
+        activeClients: stats.activeClients,
+        portfolioValue: stats.portfolioValue,
+        monthlyRevenue: stats.monthlyRevenue,
+      },
+      managedPropertiesCount: managedPropertiesCount,
+      activeClientsCount: activeClientsCount,
+    });
 
     logger.info('Dashboard del corredor obtenido exitosamente', {
       userId: user.id,

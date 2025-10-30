@@ -12,9 +12,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest, { params }: { params: { clientId: string } }) {
   try {
+    console.log('🔍 [CLIENT_DETAIL] API called for clientId:', params.clientId);
     const user = await requireAuth(request);
+    console.log(
+      `✅ [CLIENT_DETAIL] User authenticated: ${user.name} (${user.id}), role: ${user.role}`
+    );
 
     if (user.role !== 'BROKER') {
+      console.log('❌ [CLIENT_DETAIL] User is not BROKER:', user.role);
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
@@ -22,9 +27,9 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     }
 
     const clientId = params.clientId;
+    console.log('🔍 [CLIENT_DETAIL] Looking for brokerClient:', { clientId, brokerId: user.id });
 
     // Buscar la relación brokerClient para este broker y cliente
-    console.log('🔍 [CLIENT_DETAIL] Buscando brokerClient:', { clientId, brokerId: user.id });
     const brokerClient = await db.brokerClient.findFirst({
       where: {
         id: clientId,
@@ -253,6 +258,12 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
           }
         : null,
     };
+
+    console.log('📤 [CLIENT_DETAIL] Returning client data:', {
+      clientId: clientDetail.id,
+      clientName: clientDetail.name,
+      managedProperties: clientDetail.managedProperties.length,
+    });
 
     logger.info('Client details retrieved successfully', {
       clientId,
