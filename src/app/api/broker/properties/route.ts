@@ -5,12 +5,9 @@ import { logger } from '@/lib/logger-minimal';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 [BROKER-PROPERTIES] API called');
     const user = await requireAuth(request);
-    console.log('✅ [BROKER-PROPERTIES] User authenticated:', user.id, user.role);
 
     if (user.role !== 'BROKER') {
-      console.log('❌ [BROKER-PROPERTIES] User is not BROKER:', user.role);
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
@@ -27,8 +24,6 @@ export async function GET(request: NextRequest) {
       brokerId: user.id,
       status: 'ACTIVE', // Solo gestión activa
     };
-
-    console.log('🔍 [BROKER-PROPERTIES] Querying managed properties with:', managedPropertiesWhere);
 
     // Obtener propiedades gestionadas por el broker
     const managedPropertyRecords = await db.brokerPropertyManagement.findMany({
@@ -70,8 +65,6 @@ export async function GET(request: NextRequest) {
         startDate: 'desc',
       },
     });
-
-    console.log('📊 [BROKER-PROPERTIES] Found managed properties:', managedPropertyRecords.length);
 
     // Filtrar por status si se especificó
     let filteredManagedProperties = managedPropertyRecords;
@@ -258,19 +251,6 @@ export async function GET(request: NextRequest) {
     const totalManagedCount = filteredManagedProperties.length;
     const totalOwnCount = await db.property.count({ where: ownPropertiesWhere });
     const totalCount = totalManagedCount + totalOwnCount;
-
-    console.log('📤 [BROKER-PROPERTIES] Returning data:', {
-      totalProperties: allProperties.length,
-      managedCount: transformedManagedProperties.length,
-      ownCount: transformedOwnProperties.length,
-      firstProperty: allProperties[0]
-        ? {
-            id: allProperties[0].id,
-            title: allProperties[0].title,
-            managementType: allProperties[0].managementType,
-          }
-        : null,
-    });
 
     logger.info('Propiedades de broker obtenidas', {
       brokerId: user.id,
