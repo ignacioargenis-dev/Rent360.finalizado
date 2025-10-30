@@ -68,7 +68,7 @@ export default function SelectPropertiesPage() {
       }
 
       // Cargar información del cliente corredor
-      const clientRes = await fetch(`/api/broker/clients/${clientId}`, {
+      const clientRes = await fetch(`/api/owner/broker-clients/${clientId}`, {
         credentials: 'include',
       });
 
@@ -121,7 +121,7 @@ export default function SelectPropertiesPage() {
             ? 'full'
             : 'partial';
 
-      const response = await fetch(`/api/broker/clients/${clientId}/manage-properties`, {
+      const response = await fetch(`/api/owner/broker-clients/${clientId}/manage-properties`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

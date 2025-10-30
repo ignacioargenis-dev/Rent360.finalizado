@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const properties = await db.property.findMany({
+    const rawProperties = await db.property.findMany({
       where: {
         ownerId: user.id,
         // Solo mostrar propiedades disponibles o alquiladas (no eliminadas)
@@ -43,6 +43,12 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc',
       },
     });
+
+    // Parsear imágenes JSON y asegurar que sean arrays
+    const properties = rawProperties.map(property => ({
+      ...property,
+      images: property.images ? JSON.parse(property.images) : [],
+    }));
 
     return NextResponse.json({
       success: true,
