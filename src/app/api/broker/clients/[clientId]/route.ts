@@ -24,7 +24,8 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     const clientId = params.clientId;
 
     // Buscar la relación brokerClient para este broker y cliente
-    const brokerClient = await db.brokerClient.findFirst({
+    // Primero intentar buscar por ID de brokerClient
+    let brokerClient = await db.brokerClient.findFirst({
       where: {
         id: clientId,
         brokerId: user.id,
@@ -88,6 +89,74 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         },
       },
     });
+
+    // Si no se encuentra por ID de brokerClient, buscar por userId
+    if (!brokerClient) {
+      brokerClient = await db.brokerClient.findFirst({
+        where: {
+          userId: clientId,
+          brokerId: user.id,
+          status: 'ACTIVE',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              avatar: true,
+              role: true,
+              rut: true,
+              address: true,
+              city: true,
+              commune: true,
+              region: true,
+              createdAt: true,
+              properties: {
+                select: {
+                  id: true,
+                  title: true,
+                  address: true,
+                  price: true,
+                  type: true,
+                  status: true,
+                  images: true,
+                  createdAt: true,
+                },
+                take: 10,
+              },
+            },
+          },
+          managedProperties: {
+            include: {
+              property: {
+                select: {
+                  id: true,
+                  title: true,
+                  address: true,
+                  price: true,
+                  type: true,
+                  status: true,
+                  images: true,
+                  createdAt: true,
+                },
+              },
+            },
+          },
+          prospect: {
+            select: {
+              id: true,
+              status: true,
+              priority: true,
+              notes: true,
+              lastContactDate: true,
+              nextFollowUpDate: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!brokerClient) {
       logger.warn('Broker client relationship not found', {

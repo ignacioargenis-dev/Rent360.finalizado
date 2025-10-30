@@ -43,6 +43,15 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        // Clientes que tienen una relación activa brokerClient con este corredor
+        {
+          clientRelationships: {
+            some: {
+              brokerId: user.id,
+              status: 'ACTIVE',
+            },
+          },
+        },
       ],
     };
 
@@ -102,6 +111,30 @@ export async function GET(request: NextRequest) {
             createdAt: 'desc',
           },
         },
+        clientRelationships: {
+          where: {
+            brokerId: user.id,
+            status: 'ACTIVE',
+          },
+          include: {
+            managedProperties: {
+              include: {
+                property: {
+                  select: {
+                    id: true,
+                    title: true,
+                    address: true,
+                    city: true,
+                    commune: true,
+                    region: true,
+                    price: true,
+                    type: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -115,8 +148,18 @@ export async function GET(request: NextRequest) {
       // Combinar contratos como propietario y como inquilino
       const allContracts = [...client.contractsAsOwner, ...client.contractsAsTenant];
 
+      // Obtener relación brokerClient activa si existe
+      const brokerClient = client.clientRelationships?.[0];
+      const hasBrokerClient = brokerClient && brokerClient.status === 'ACTIVE';
+
+      // Calcular propiedades gestionadas si hay relación brokerClient
+      const managedPropertiesCount = hasBrokerClient
+        ? brokerClient.managedProperties?.length || 0
+        : 0;
+
       return {
         id: client.id,
+        brokerClientId: hasBrokerClient ? brokerClient.id : null, // ID de la relación brokerClient
         name: client.name,
         email: client.email,
         phone: client.phone,
@@ -159,7 +202,7 @@ export async function GET(request: NextRequest) {
         lastActivity: client.updatedAt.toISOString(),
         notes: '',
         tags: [],
-        propertiesCount: allContracts.length,
+        propertiesCount: allContracts.length + managedPropertiesCount, // Incluir propiedades gestionadas
         createdAt: client.createdAt.toISOString(),
       };
     });

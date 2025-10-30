@@ -231,28 +231,80 @@ export async function GET(request: NextRequest) {
           allContractCommissions.length
         : 0;
 
-    // Obtener propiedades recientes creadas por el corredor
-    const recentProperties = await db.property.findMany({
-      where: { brokerId: user.id },
-      include: {
-        owner: {
-          select: {
-            name: true,
+    // Obtener propiedades recientes del corredor (propias + gestionadas)
+    const [ownRecentProperties, managedRecentProperties] = await Promise.all([
+      // Propiedades propias del broker
+      db.property.findMany({
+        where: { brokerId: user.id },
+        include: {
+          owner: {
+            select: {
+              name: true,
+            },
           },
-        },
-        _count: {
-          select: {
-            contracts: {
-              where: {
-                status: 'ACTIVE',
+          _count: {
+            select: {
+              contracts: {
+                where: {
+                  status: 'ACTIVE',
+                },
               },
             },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    });
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      // Propiedades gestionadas por el broker
+      db.brokerPropertyManagement.findMany({
+        where: {
+          brokerId: user.id,
+          status: 'ACTIVE',
+        },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  name: true,
+                },
+              },
+              _count: {
+                select: {
+                  contracts: {
+                    where: {
+                      status: 'ACTIVE',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { startDate: 'desc' },
+        take: 5,
+      }),
+    ]);
+
+    // Combinar y transformar propiedades gestionadas al mismo formato
+    const transformedManagedProperties = managedRecentProperties.map(record => ({
+      id: record.property.id,
+      title: record.property.title,
+      address: record.property.address,
+      status: record.property.status,
+      price: record.property.price,
+      type: record.property.type,
+      owner: { name: record.property.owner?.name || 'Gestionada' },
+      createdAt: record.startDate,
+      _count: record.property._count,
+    }));
+
+    // Combinar ambas listas y ordenar por fecha de creación/gestión
+    const allRecentProperties = [...ownRecentProperties, ...transformedManagedProperties]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 5);
+
+    const recentProperties = allRecentProperties;
 
     // Obtener contratos recientes
     const recentContracts = await db.contract.findMany({
@@ -362,13 +414,13 @@ export async function GET(request: NextRequest) {
         id: property.id,
         title: property.title,
         address: property.address,
-        status: property.status.toLowerCase(),
+        status: property.status?.toLowerCase() || 'unknown',
         price: property.price,
         type: property.type,
         owner: property.owner?.name || 'Sin propietario',
-        createdAt: property.createdAt.toISOString(),
+        createdAt: property.createdAt?.toISOString() || new Date().toISOString(),
         inquiriesCount: Math.floor(Math.random() * 10) + 1, // Mock data por ahora
-        contractsCount: property._count.contracts,
+        contractsCount: property._count?.contracts || 0,
       })),
       recentContracts: recentContracts.map(contract => ({
         id: contract.id,

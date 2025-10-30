@@ -219,8 +219,8 @@ export default function BrokerDashboardPage() {
 
           // Usar estadísticas reales de la API
           setStats({
-            totalProperties: data.stats.activeListings || data.stats.totalProperties, // Propiedades disponibles
-            activeClients: data.stats.activeContracts,
+            totalProperties: data.stats.totalProperties || 0, // ✅ Total (propias + gestionadas)
+            activeClients: data.stats.activeClients || 0, // ✅ Total clientes activos
             totalCommissions: data.stats.totalCommissions,
             monthlyRevenue: data.stats.monthlyRevenue,
             pendingAppointments: 0, // No disponible en la API actual
