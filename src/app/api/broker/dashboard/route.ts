@@ -233,9 +233,9 @@ export async function GET(request: NextRequest) {
 
     // Obtener propiedades recientes del corredor (propias + gestionadas)
     const [ownRecentProperties, managedRecentProperties] = await Promise.all([
-      // Propiedades propias del broker
+      // Propiedades propias del broker (usar ownerId para consistencia con totalProperties)
       db.property.findMany({
-        where: { brokerId: user.id },
+        where: { ownerId: user.id },
         include: {
           owner: {
             select: {
