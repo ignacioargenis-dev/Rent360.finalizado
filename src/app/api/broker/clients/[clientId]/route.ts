@@ -285,29 +285,101 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       return sum + commission;
     }, 0);
 
-    // Formatear respuesta
+    // Determinar el tipo de cliente para el frontend
+    // Convertir OWNER -> 'owner', TENANT -> 'tenant', BOTH -> 'owner' (prioridad)
+    const clientTypeForFrontend = brokerClient.clientType === 'TENANT' ? 'tenant' : 'owner';
+    
+    // Obtener propiedades del cliente
+    const clientPropertiesData = brokerClient.user.properties || [];
+    
+    // Calcular datos financieros
+    const totalSpent = contracts.reduce((sum, c) => sum + (c.monthlyRent || 0), 0);
+    const satisfactionScore = brokerClient.satisfactionRating ? Math.round(brokerClient.satisfactionRating * 20) : 95;
+    
+    // Obtener fecha de último contacto
+    const lastContactDate = brokerClient.lastInteraction || brokerClient.startDate;
+    
+    // Parsear servicios ofrecidos si existe
+    let servicesOfferedArray: string[] = [];
+    if (brokerClient.servicesOffered) {
+      try {
+        servicesOfferedArray = JSON.parse(brokerClient.servicesOffered);
+      } catch {
+        servicesOfferedArray = [];
+      }
+    }
+    
+    // Formatear respuesta en el formato que espera el frontend
     const clientDetail = {
       id: brokerClient.id,
       clientId: brokerClient.user.id,
-      name: brokerClient.user.name,
-      email: brokerClient.user.email,
-      phone: brokerClient.user.phone,
-      type: brokerClient.clientType.toLowerCase(),
-      status: brokerClient.status.toLowerCase(),
+      name: brokerClient.user.name || 'Sin nombre',
+      email: brokerClient.user.email || '',
+      phone: brokerClient.user.phone || '',
+      type: clientTypeForFrontend,
+      status: brokerClient.status.toLowerCase() === 'active' ? 'active' : 'inactive',
       registrationDate: brokerClient.startDate.toISOString(),
-      commissionRate: brokerClient.commissionRate,
-      servicesOffered: brokerClient.servicesOffered,
-      propertyManagementType: brokerClient.propertyManagementType,
-      notes: brokerClient.notes,
-
-      // Estadísticas
+      lastContact: lastContactDate.toISOString(),
+      preferredContactMethod: 'email' as const, // Default, puede mejorarse
+      
+      // Budget y preferencias (para inquilinos)
+      budget: clientTypeForFrontend === 'tenant' ? {
+        min: 0,
+        max: 0,
+        currency: 'CLP',
+      } : undefined,
+      
+      preferences: {
+        propertyType: [],
+        bedrooms: 0,
+        bathrooms: 0,
+        location: [],
+        features: [],
+      },
+      
+      // Documentos (vacío por ahora, se puede implementar después)
+      documents: [],
+      
+      // Interacciones (vacío por ahora, se puede implementar después)
+      interactions: [],
+      
+      // Propiedades del cliente
+      properties: clientPropertiesData.map(prop => ({
+        id: prop.id,
+        title: prop.title || 'Propiedad sin título',
+        address: prop.address || 'Sin dirección',
+        status: 'interested' as const,
+        notes: '',
+      })),
+      
+      // Contratos
+      contracts: contracts.map(contract => ({
+        id: contract.id,
+        propertyTitle: contract.property.title || 'Propiedad',
+        propertyAddress: contract.property.address || '',
+        startDate: contract.startDate.toISOString(),
+        endDate: contract.endDate?.toISOString() || '',
+        monthlyRent: contract.monthlyRent || 0,
+        status: contract.status === 'ACTIVE' ? 'active' as const : 'completed' as const,
+        commission: Math.round((contract.monthlyRent || 0) * (brokerClient.commissionRate / 100)),
+      })),
+      
+      // Datos financieros
+      financialData: {
+        totalSpent,
+        averageRating: brokerClient.satisfactionRating || 4.8,
+        contractCount: totalContracts,
+        satisfactionScore,
+      },
+      
+      // Información adicional (no usada por el frontend pero útil)
       stats: {
         totalPropertiesManaged,
         totalContracts,
         activeContracts,
         estimatedMonthlyIncome,
       },
-
+      
       // Propiedades gestionadas
       managedProperties: brokerClient.managedProperties.map(mp => ({
         id: mp.property.id,
@@ -318,41 +390,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
         status: mp.property.status,
         images: mp.property.images ? JSON.parse(mp.property.images) : [],
       })),
-
-      // Propiedades del cliente (si es owner)
-      clientProperties: brokerClient.user.properties || [],
-
-      // Contratos activos
-      contracts: contracts.map(contract => ({
-        id: contract.id,
-        property: {
-          id: contract.property.id,
-          title: contract.property.title,
-          address: contract.property.address,
-          price: contract.property.price,
-          type: contract.property.type,
-          status: contract.property.status,
-        },
-        monthlyRent: contract.monthlyRent,
-        startDate: contract.startDate.toISOString(),
-        endDate: contract.endDate?.toISOString(),
-        status: contract.status,
-        tenant: contract.tenant
-          ? {
-              id: contract.tenant.id,
-              name: contract.tenant.name,
-              email: contract.tenant.email,
-            }
-          : null,
-        owner: contract.owner
-          ? {
-              id: contract.owner.id,
-              name: contract.owner.name,
-              email: contract.owner.email,
-            }
-          : null,
-      })),
-
+      
       // Información del prospect si existe
       prospectInfo: brokerClient.prospect
         ? {
@@ -370,11 +408,12 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       clientId,
       brokerId: user.id,
       clientName: brokerClient.user.name,
+      clientType: clientTypeForFrontend,
     });
 
     return NextResponse.json({
       success: true,
-      client: clientDetail,
+      data: clientDetail, // ✅ Cambiado de 'client' a 'data' para que el frontend lo encuentre
     });
   } catch (error) {
     logger.error('Error retrieving client details:', {
