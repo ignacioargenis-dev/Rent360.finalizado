@@ -192,7 +192,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       concierge: property.concierge || false,
 
       // Campos adicionales
-      brokerId: property.brokerId,
       currency: 'CLP', // Valor por defecto
     };
 
