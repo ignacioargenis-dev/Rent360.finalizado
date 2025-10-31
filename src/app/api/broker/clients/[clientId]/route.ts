@@ -433,9 +433,18 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       data: clientDetail, // ✅ Cambiado de 'client' a 'data' para que el frontend lo encuentre
     });
   } catch (error) {
-    logger.error('Error retrieving client details:', {
-      error: error instanceof Error ? error.message : String(error),
+    // ✅ CRÍTICO: Log detallado de errores
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error('❌ [CLIENT_DETAIL] Error obteniendo detalles del cliente:', {
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
+    
+    // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
+    console.error('❌ [CLIENT_DETAIL] Error crítico:', errorMessage, errorStack);
 
     return NextResponse.json(
       {

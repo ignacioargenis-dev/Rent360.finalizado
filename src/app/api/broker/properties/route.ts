@@ -430,9 +430,18 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('Error obteniendo propiedades de broker:', {
-      error: error instanceof Error ? error.message : String(error),
+    // ✅ CRÍTICO: Log detallado de errores
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error('❌ [PROPERTIES] Error obteniendo propiedades de broker:', {
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
+    
+    // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
+    console.error('❌ [PROPERTIES] Error crítico:', errorMessage, errorStack);
 
     return NextResponse.json(
       {
