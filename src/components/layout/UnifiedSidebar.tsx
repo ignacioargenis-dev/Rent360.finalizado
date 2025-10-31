@@ -826,7 +826,7 @@ export default function UnifiedSidebar({
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-600 mb-4">Menú Principal</h3>
-            <nav className="space-y-2">{items.map(item => renderMenuItem(item))}</nav>
+            <nav className="space-y-2">{items && items.length > 0 ? items.map(item => renderMenuItem(item)) : <p className="text-sm text-gray-500">No hay opciones disponibles</p>}</nav>
           </div>
         </div>
 

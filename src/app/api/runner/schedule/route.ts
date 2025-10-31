@@ -148,9 +148,12 @@ export async function GET(request: NextRequest) {
       const adjustedIndex = dayIndex === 0 ? 6 : dayIndex - 1;
       
       if (adjustedIndex >= 0 && adjustedIndex < 7) {
-        weekSchedule[adjustedIndex].visits++;
-        if (visit.status === 'COMPLETED') {
-          weekSchedule[adjustedIndex].completed++;
+        const daySchedule = weekSchedule[adjustedIndex];
+        if (daySchedule) {
+          daySchedule.visits++;
+          if (visit.status === 'COMPLETED') {
+            daySchedule.completed++;
+          }
         }
       }
     });

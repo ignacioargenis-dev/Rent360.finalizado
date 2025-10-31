@@ -42,8 +42,10 @@ export async function GET(request: NextRequest) {
             description: true,
             type: true,
             category: true,
-            rewardAmount: true,
-            expiresAt: true,
+            rewards: true,
+            validUntil: true,
+            isActive: true,
+            autoGrant: true,
           },
         });
 

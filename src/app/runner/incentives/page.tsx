@@ -176,15 +176,20 @@ export default function RunnerIncentivesPage() {
         // Achievements data (puede mejorarse después con datos reales desde base de datos)
         const achievements: Achievement[] = transformedIncentives
           .filter(i => i.status === 'earned')
-          .map(i => ({
-            id: i.id,
-            name: i.title,
-            description: i.description,
-            icon: i.category === 'quality' ? 'star' : i.category === 'performance' ? 'trophy' : 'zap',
-            unlocked: true,
-            unlockedDate: i.earnedDate,
-            requirements: [i.description],
-          }));
+          .map(i => {
+            const achievement: Achievement = {
+              id: i.id,
+              name: i.title,
+              description: i.description,
+              icon: i.category === 'quality' ? 'star' : i.category === 'performance' ? 'trophy' : 'zap',
+              unlocked: true,
+              requirements: [i.description],
+            };
+            if (i.earnedDate) {
+              achievement.unlockedDate = i.earnedDate;
+            }
+            return achievement;
+          });
 
         setAchievements(achievements);
       } catch (error) {

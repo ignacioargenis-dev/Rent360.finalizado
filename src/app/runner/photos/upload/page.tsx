@@ -39,7 +39,7 @@ export default function RunnerPhotosUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useAuth();
-  const visitId = searchParams.get('visitId');
+  const visitId = searchParams?.get('visitId');
 
   const [visitInfo, setVisitInfo] = useState<VisitInfo | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

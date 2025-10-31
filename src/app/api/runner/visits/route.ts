@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           runnerRatings: {
             select: {
               overallRating: true,
-              feedback: true,
+              comment: true,
               createdAt: true,
             },
             orderBy: {
@@ -126,8 +126,8 @@ export async function GET(request: NextRequest) {
         const timeString = dateObj.toTimeString();
         const [timePart] = timeString.split(' ');
         return {
-          scheduledDate: datePart,
-          scheduledTime: timePart.substring(0, 5),
+          scheduledDate: datePart || '',
+          scheduledTime: timePart ? timePart.substring(0, 5) : '',
         };
       } catch {
         return { scheduledDate: '', scheduledTime: '' };
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     const transformedVisits = visits.map(visit => {
       const { scheduledDate, scheduledTime } = formatSafeDateTime(visit.scheduledAt);
       const rating = visit.runnerRatings[0]?.overallRating || visit.rating;
-      const feedback = visit.runnerRatings[0]?.feedback || visit.clientFeedback;
+      const feedback = visit.runnerRatings[0]?.comment || visit.clientFeedback;
 
       return {
         id: visit.id,

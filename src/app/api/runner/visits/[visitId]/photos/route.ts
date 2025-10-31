@@ -155,6 +155,10 @@ export async function POST(
     // Subir cada archivo
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      if (!file) {
+        console.warn(`File at index ${i} is undefined, skipping`);
+        continue;
+      }
       try {
         // Generar nombre único para la imagen
         const timestamp = Date.now();
@@ -185,7 +189,7 @@ export async function POST(
             alt: metadata,
             order: uploadedImages.length,
           },
-        });
+        }) as { id: string; url: string; createdAt: Date };
 
         uploadedImages.push({
           id: propertyImage.id,

@@ -1,9 +1,5 @@
 'use client';
 
-// Configuración para renderizado dinámico - configuración personalizada del usuario
-export const dynamic = 'force-dynamic';
-export const revalidate = 0; // No cache para configuración personal
-
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -109,31 +105,31 @@ export default function RunnerSettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<RunnerSettings>({
     profile: {
-      firstName: 'Juan',
-      lastName: 'Pérez',
-      email: 'juan.perez@ejemplo.com',
-      phone: '+56912345678',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
       avatar: '',
-      emergencyContact: 'María Pérez',
-      emergencyPhone: '+56987654321',
+      emergencyContact: '',
+      emergencyPhone: '',
     },
     workArea: {
-      regions: ['Santiago Centro', 'Providencia', 'Las Condes'],
+      regions: [],
       maxDistance: 50,
       preferredTimes: {
         morning: true,
         afternoon: true,
         evening: false,
       },
-      vehicleType: 'Auto',
-      licensePlate: 'AB-CD-12',
-      experience: '3 años',
-      specialties: ['Inspecciones rápidas', 'Fotografía profesional', 'Reportes detallados'],
-      languages: ['Español', 'Inglés'],
-      hourlyRate: 15000,
+      vehicleType: '',
+      licensePlate: '',
+      experience: '',
+      specialties: [],
+      languages: [],
+      hourlyRate: 0,
       availability: 'available',
-      services: ['Visitas de inspección', 'Seguimiento de propiedades', 'Reportes fotográficos'],
-      responseTime: '< 1 hora',
+      services: [],
+      responseTime: '',
     },
     notifications: {
       emailNotifications: true,
@@ -143,11 +139,11 @@ export default function RunnerSettingsPage() {
       ratingUpdates: true,
     },
     payment: {
-      bankName: 'Banco de Chile',
+      bankName: '',
       accountType: 'checking',
-      bankAccount: '001234567890',
+      bankAccount: '',
       paymentMethod: 'transfer',
-      taxId: '12.345.678-9',
+      taxId: '',
     },
   });
 
@@ -164,28 +160,69 @@ export default function RunnerSettingsPage() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
+        setLoading(true);
+        // ✅ CORREGIDO: Obtener datos reales desde las APIs
+        const [userResponse, profileResponse, bankResponse] = await Promise.all([
+          fetch('/api/auth/me', { credentials: 'include' }),
+          fetch('/api/runner/profile', { credentials: 'include' }),
+          fetch('/api/runner/bank-account', { credentials: 'include' }),
+        ]);
 
-          // Load settings from localStorage or API
-          const savedSettings = localStorage.getItem('tenant-settings');
-          if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
-          } else {
-            // Initialize with user data
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
+
+          // Dividir nombre en firstName y lastName
+          const nameParts = (userData.user?.name || '').split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            
             setSettings(prev => ({
               ...prev,
               profile: {
-                firstName: data.user?.firstName || '',
-                lastName: data.user?.lastName || '',
-                email: data.user?.email || '',
-                phone: data.user?.phone || '',
-                emergencyContact: '',
-                emergencyPhone: '',
+                firstName,
+                lastName,
+                email: userData.user?.email || '',
+                phone: userData.user?.phone || '',
+                avatar: userData.user?.avatar || '',
+                emergencyContact: userData.user?.emergencyContact || '',
+                emergencyPhone: userData.user?.emergencyPhone || '',
               },
             }));
+          } else {
+            // Fallback si no hay perfil específico
+            setSettings(prev => ({
+              ...prev,
+              profile: {
+                firstName,
+                lastName,
+                email: userData.user?.email || '',
+                phone: userData.user?.phone || '',
+                avatar: userData.user?.avatar || '',
+                emergencyContact: userData.user?.emergencyContact || '',
+                emergencyPhone: userData.user?.emergencyPhone || '',
+              },
+            }));
+          }
+
+          // Cargar datos bancarios
+          if (bankResponse.ok) {
+            const bankData = await bankResponse.json();
+            if (bankData.success && bankData.data) {
+              setSettings(prev => ({
+                ...prev,
+                payment: {
+                  bankName: bankData.data.bank || '',
+                  accountType: bankData.data.accountType || 'checking',
+                  bankAccount: bankData.data.accountNumber || '',
+                  paymentMethod: 'transfer',
+                  taxId: userData.user?.rut || '',
+                },
+              }));
+            }
           }
         }
       } catch (error) {
