@@ -33,6 +33,7 @@ import {
   Home,
   DollarSign,
   Award,
+  Eye,
 } from 'lucide-react';
 
 interface Runner {
@@ -64,10 +65,43 @@ interface RunnerFilters {
   locationSearch: string;
 }
 
+interface AssignedRunner {
+  runner: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    avatar?: string;
+    city?: string;
+    commune?: string;
+  };
+  stats: {
+    totalVisits: number;
+    completedVisits: number;
+    pendingVisits: number;
+    totalEarnings: number;
+    averageRating: number;
+    lastVisitDate: string | null;
+    firstAssignedDate: string;
+    propertiesCount: number;
+  };
+  recentVisits: Array<{
+    id: string;
+    propertyTitle: string;
+    propertyAddress: string;
+    scheduledAt: string;
+    status: string;
+    earnings: number;
+    photosTaken: number;
+  }>;
+}
+
 export default function OwnerRunnersPage() {
   const router = useRouter();
   const [runners, setRunners] = useState<Runner[]>([]);
+  const [assignedRunners, setAssignedRunners] = useState<AssignedRunner[]>([]);
   const [filteredRunners, setFilteredRunners] = useState<Runner[]>([]);
+  const [activeTab, setActiveTab] = useState<'available' | 'assigned'>('available');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
@@ -122,12 +156,51 @@ export default function OwnerRunnersPage() {
   }, [runners, filters]);
 
   useEffect(() => {
-    loadRunners();
-  }, []);
+    if (activeTab === 'available') {
+      loadRunners();
+    } else {
+      loadAssignedRunners();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+    if (activeTab === 'available') {
+      applyFilters();
+    }
+  }, [applyFilters, activeTab]);
+
+  const loadAssignedRunners = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/owner/runners/assigned', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAssignedRunners(data.runners || []);
+      } else {
+        throw new Error(data.error || 'Error al cargar runners asignados');
+      }
+
+      setLoading(false);
+    } catch (error) {
+      logger.error('Error loading assigned runners:', { error });
+      setError('Error al cargar runners asignados');
+      setLoading(false);
+    }
+  };
 
   const loadRunners = async () => {
     try {
@@ -280,21 +353,143 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Corredores Disponibles</h1>
-            <p className="text-gray-600">Encuentra y contrata corredores para tus propiedades</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Runners</h1>
+            <p className="text-gray-600">
+              {activeTab === 'available'
+                ? 'Encuentra y contrata corredores para tus propiedades'
+                : 'Visualiza la actividad y estadísticas de tus runners asignados'}
+            </p>
           </div>
-          <Button onClick={loadRunners} variant="outline" size="sm">
+          <Button
+            onClick={() => (activeTab === 'available' ? loadRunners() : loadAssignedRunners())}
+            variant="outline"
+            size="sm"
+          >
             <Filter className="w-4 h-4 mr-2" />
             Actualizar
           </Button>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('assigned')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'assigned'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Mis Runners ({assignedRunners.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('available')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'available'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Disponibles ({filteredRunners.length})
+            </button>
+          </nav>
+        </div>
+
+        {/* Assigned Runners Tab */}
+        {activeTab === 'assigned' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {assignedRunners.map((assignedRunner) => (
+              <Card key={assignedRunner.runner.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{assignedRunner.runner.name}</CardTitle>
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm text-gray-600">
+                            {assignedRunner.stats.averageRating.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-600">Visitas:</span>
+                        <span className="font-medium ml-1">{assignedRunner.stats.totalVisits}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Completadas:</span>
+                        <span className="font-medium ml-1">
+                          {assignedRunner.stats.completedVisits}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Propiedades:</span>
+                        <span className="font-medium ml-1">
+                          {assignedRunner.stats.propertiesCount}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Ganancias:</span>
+                        <span className="font-medium ml-1">
+                          ${assignedRunner.stats.totalEarnings.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    {assignedRunner.recentVisits.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs font-medium text-gray-600 mb-2">Últimas visitas:</p>
+                        <div className="space-y-1">
+                          {assignedRunner.recentVisits.slice(0, 3).map((visit) => (
+                            <div key={visit.id} className="text-xs text-gray-600">
+                              {visit.propertyTitle} - {new Date(visit.scheduledAt).toLocaleDateString()}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      className="w-full mt-4"
+                      onClick={() => router.push(`/owner/runners/${assignedRunner.runner.id}`)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Detalles
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {assignedRunners.length === 0 && !loading && (
+              <div className="col-span-full text-center py-12">
+                <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No tienes runners asignados
+                </h3>
+                <p className="text-gray-600">
+                  Contrata runners desde la pestaña "Disponibles"
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Filters - Solo para runners disponibles */}
+        {activeTab === 'available' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <Label htmlFor="location">Ubicación</Label>
@@ -380,8 +575,9 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
           </CardContent>
         </Card>
 
-        {/* Results */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Results - Solo para runners disponibles */}
+        {activeTab === 'available' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRunners.map(runner => (
             <Card key={runner.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -471,6 +667,8 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
             <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron corredores</h3>
             <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
+          </div>
+        )}
           </div>
         )}
 
