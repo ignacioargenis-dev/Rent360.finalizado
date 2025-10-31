@@ -21,6 +21,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     logger.info('Fetching property details', { propertyId });
 
+    // ✅ CRÍTICO: Intentar obtener usuario autenticado para verificar permisos de edición
+    let currentUser: { id: string; role: string } | null = null;
+    try {
+      const user = await requireAuth(request);
+      currentUser = { id: user.id, role: user.role };
+    } catch {
+      // Si no hay autenticación, continuar sin usuario (para acceso público)
+      currentUser = null;
+    }
+
     // Buscar la propiedad con información del propietario
     const property = await db.property.findUnique({
       where: {
@@ -104,6 +114,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Si hay BrokerPropertyManagement activo, NO es propia (está gestionada)
     // Si NO hay BrokerPropertyManagement Y ownerId === brokerId, es propia
     const isOwned = !managedProperty && property.ownerId === property.brokerId;
+    
+    // ✅ CORREGIDO: Determinar si el broker actual está gestionando esta propiedad
+    // Un broker puede editar si:
+    // 1. Es propiedad propia (isOwned === true)
+    // 2. Está gestionando activamente la propiedad (managedProperty.brokerId === currentUser.id)
+    const isManagedByCurrentUser = currentUser && 
+      managedProperty && 
+      managedProperty.brokerId === currentUser.id;
+    const canEdit = currentUser?.role === 'BROKER' && (isOwned || isManagedByCurrentUser);
 
     // Formatear la respuesta
     const formattedProperty = {
@@ -120,6 +139,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       ownerId: property.ownerId,
       brokerId: property.brokerId,
       isOwned: isOwned,
+      isManagedByCurrentUser: isManagedByCurrentUser || false,
+      canEdit: canEdit || false,
       managementType: managedProperty ? managedProperty.managementType : 'owner',
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
