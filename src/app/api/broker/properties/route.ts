@@ -5,19 +5,36 @@ import { logger } from '@/lib/logger-minimal';
 
 export async function GET(request: NextRequest) {
   try {
+    // ✅ CRÍTICO: Log inicial para verificar que la petición llega
+    logger.info('🔍 [PROPERTIES] Iniciando GET /api/broker/properties', {
+      url: request.url,
+      method: request.method,
+      hasCookies: !!request.cookies,
+      cookieNames: request.cookies.getAll().map(c => c.name),
+    });
+
     const user = await requireAuth(request);
 
     if (user.role !== 'BROKER') {
+      logger.warn('❌ [PROPERTIES] Usuario no es BROKER', { userId: user.id, role: user.role });
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
       );
     }
 
+    logger.info('✅ [PROPERTIES] Usuario autenticado como BROKER', {
+      userId: user.id,
+      userRole: user.role,
+      userName: user.name,
+    });
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'all';
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
+    
+    logger.info('📋 [PROPERTIES] Parámetros de consulta', { status, limit, offset });
 
     // Construir filtros para propiedades gestionadas
     const managedPropertiesWhere: any = {
@@ -377,7 +394,7 @@ export async function GET(request: NextRequest) {
     const totalOwnCount = filteredOwnProperties.length;
     const totalCount = totalManagedCount + totalOwnCount;
 
-    logger.info('Propiedades de broker obtenidas', {
+    logger.info('✅ [PROPERTIES] Propiedades de broker obtenidas exitosamente', {
       brokerId: user.id,
       count: allProperties.length,
       managedCount: transformedManagedPaginated.length,
@@ -393,6 +410,13 @@ export async function GET(request: NextRequest) {
       status,
       offset,
       limit,
+    });
+    
+    // ✅ CRÍTICO: Log adicional para debugging en producción
+    console.log('🔍 [PROPERTIES] Resumen:', {
+      totalRetornado: allProperties.length,
+      propiasEnDB: allOwnProperties.length,
+      gestionadasEnDB: managedPropertyRecords.length,
     });
 
     return NextResponse.json({

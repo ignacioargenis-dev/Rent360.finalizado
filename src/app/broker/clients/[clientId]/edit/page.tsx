@@ -120,7 +120,10 @@ export default function EditClientPage() {
       // ✅ CORREGIDO: Cargar datos reales desde la API
       logger.info('Cargando datos del cliente para edición', { clientId });
       const response = await fetch(`/api/broker/clients/${clientId}`, {
+        method: 'GET',
+        credentials: 'include', // ✅ CRÍTICO: Incluir cookies para autenticación
         headers: {
+          Accept: 'application/json',
           'Cache-Control': 'no-cache',
         },
       });

@@ -12,9 +12,18 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest, { params }: { params: { clientId: string } }) {
   try {
+    // ✅ CRÍTICO: Log inicial para verificar que la petición llega
+    logger.info('🔍 [CLIENT_DETAIL] Iniciando GET /api/broker/clients/[clientId]', {
+      url: request.url,
+      method: request.method,
+      hasCookies: !!request.cookies,
+      cookieNames: request.cookies.getAll().map(c => c.name),
+    });
+
     const user = await requireAuth(request);
 
     if (user.role !== 'BROKER') {
+      logger.warn('❌ [CLIENT_DETAIL] Usuario no es BROKER', { userId: user.id, role: user.role });
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
@@ -22,6 +31,11 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     }
 
     const clientId = params.clientId;
+    
+    logger.info('✅ [CLIENT_DETAIL] Usuario autenticado como BROKER', {
+      userId: user.id,
+      clientId,
+    });
 
     // Buscar la relación brokerClient para este broker y cliente
     // Primero intentar buscar por ID de brokerClient

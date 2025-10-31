@@ -97,11 +97,30 @@ export function verifyRefreshToken(request: NextRequest): DecodedRefreshToken | 
 }
 
 export async function requireAuth(request: NextRequest): Promise<DecodedToken> {
+  // ✅ CRÍTICO: Log para debugging de autenticación
+  const token = request.cookies.get('auth-token')?.value;
+  logger.info('🔐 [AUTH] Verificando autenticación', {
+    hasToken: !!token,
+    tokenLength: token?.length || 0,
+    cookieNames: request.cookies.getAll().map(c => c.name),
+    url: request.url,
+  });
+  
   const decoded = verifyToken(request);
 
   if (!decoded) {
+    logger.warn('❌ [AUTH] Token no válido o no encontrado', {
+      hasToken: !!token,
+      url: request.url,
+    });
     throw new Error('No autorizado');
   }
+
+  logger.info('✅ [AUTH] Token válido', {
+    userId: decoded.id,
+    role: decoded.role,
+    email: decoded.email,
+  });
 
   // CRÍTICO: Normalizar el rol a MAYÚSCULAS para que todas las comparaciones funcionen
   // sin importar si el código compara con 'admin' o 'ADMIN'

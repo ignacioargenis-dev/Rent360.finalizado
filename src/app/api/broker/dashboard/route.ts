@@ -6,17 +6,26 @@ import { handleApiError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
+    // ✅ CRÍTICO: Log inicial para verificar que la petición llega
+    logger.info('🔍 [DASHBOARD] Iniciando GET /api/broker/dashboard', {
+      url: request.url,
+      method: request.method,
+      hasCookies: !!request.cookies,
+      cookieNames: request.cookies.getAll().map(c => c.name),
+    });
+
     const user = await requireAuth(request);
 
     // Verificar que sea un corredor
     if (user.role !== 'BROKER') {
+      logger.warn('❌ [DASHBOARD] Usuario no es BROKER', { userId: user.id, role: user.role });
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren permisos de corredor.' },
         { status: 403 }
       );
     }
 
-    logger.info('Obteniendo dashboard del corredor', {
+    logger.info('✅ [DASHBOARD] Usuario autenticado como BROKER', {
       userId: user.id,
       userRole: user.role,
       userName: user.name,
@@ -471,7 +480,7 @@ export async function GET(request: NextRequest) {
       })),
     };
 
-    logger.info('Dashboard del corredor obtenido exitosamente', {
+    logger.info('✅ [DASHBOARD] Dashboard del corredor obtenido exitosamente', {
       userId: user.id,
       stats: {
         totalProperties: stats.totalProperties,
@@ -496,15 +505,28 @@ export async function GET(request: NextRequest) {
         portfolioValue,
       },
     });
+    
+    // ✅ CRÍTICO: Log adicional para debugging en producción
+    console.log('🔍 [DASHBOARD] Stats calculados:', JSON.stringify(stats, null, 2));
 
     return NextResponse.json({
       success: true,
       data: dashboardData,
     });
   } catch (error) {
-    logger.error('Error obteniendo dashboard del corredor:', {
-      error: error instanceof Error ? error.message : String(error),
+    // ✅ CRÍTICO: Log detallado de errores
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error('❌ [DASHBOARD] Error obteniendo dashboard del corredor:', {
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
     });
+    
+    // ✅ CRÍTICO: También usar console.error para asegurar que se vea en logs
+    console.error('❌ [DASHBOARD] Error crítico:', errorMessage, errorStack);
+    
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

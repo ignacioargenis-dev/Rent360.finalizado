@@ -6,7 +6,21 @@ const globalForPrisma = globalThis as unknown as {
 
 // Validar que DATABASE_URL esté configurada solo en el servidor
 if (typeof window === 'undefined' && !process.env.DATABASE_URL) {
+  console.error('❌ [DB] DATABASE_URL no configurada');
   throw new Error('DATABASE_URL es obligatorio. Configure la variable de entorno DATABASE_URL.');
+}
+
+// ✅ CRÍTICO: Log de configuración de base de datos (sin exponer credenciales)
+if (typeof window === 'undefined' && process.env.DATABASE_URL) {
+  const dbUrl = process.env.DATABASE_URL;
+  const dbInfo = {
+    hasUrl: !!dbUrl,
+    isPostgres: dbUrl?.startsWith('postgresql://'),
+    isSQLite: dbUrl?.startsWith('file:'),
+    hasRent360Db: dbUrl?.includes('rent360') || dbUrl?.includes('rent360-db'),
+    length: dbUrl?.length || 0,
+  };
+  console.log('✅ [DB] Configuración de base de datos:', dbInfo);
 }
 
 // Configuración optimizada para producción
@@ -31,10 +45,25 @@ if (process.env.NODE_ENV === 'production') {
 
 // Crear instancia de Prisma con configuración optimizada
 const createPrismaClient = () => {
-  return new PrismaClient(prismaConfig);
+  console.log('🔧 [DB] Creando instancia de PrismaClient');
+  const client = new PrismaClient(prismaConfig);
+  console.log('✅ [DB] PrismaClient creado exitosamente');
+  return client;
 };
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
+
+// ✅ CRÍTICO: Verificar conexión inicial en producción
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  // Verificar conexión de forma asíncrona sin bloquear el inicio
+  checkDatabaseHealth()
+    .then(health => {
+      console.log('✅ [DB] Health check inicial:', health);
+    })
+    .catch(error => {
+      console.error('❌ [DB] Error en health check inicial:', error);
+    });
+}
 
 // Función mejorada para verificar conexión DB con timeout
 export async function ensureDatabaseConnection(): Promise<boolean> {

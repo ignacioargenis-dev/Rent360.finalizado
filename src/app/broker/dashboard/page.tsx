@@ -168,7 +168,14 @@ export default function BrokerDashboardPage() {
         }
 
         // ✅ CORREGIDO: Cargar datos reales del dashboard del corredor
-        const response = await fetch('/api/broker/dashboard');
+        const response = await fetch('/api/broker/dashboard', {
+          method: 'GET',
+          credentials: 'include', // ✅ CRÍTICO: Incluir cookies para autenticación
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
         if (response.ok) {
           const result = await response.json();
           logger.info('Dashboard response received', { result, hasData: !!result.data, hasStats: !!result.data?.stats });
