@@ -110,11 +110,11 @@ export default function BrokerPropertiesPage() {
         const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({
           id: property.id,
           title: property.title,
-          address: `${property.address}, ${property.commune}, ${property.city}`,
+          address: `${property.address}${property.commune ? `, ${property.commune}` : ''}${property.city ? `, ${property.city}` : ''}`,
           type: property.type,
           status: property.status,
           price: property.price,
-          ownerName: property.owner?.name || 'No asignado',
+          ownerName: property.ownerName || property.owner?.name || 'No asignado', // ✅ Usar ownerName de la API primero
           tenantName: property.currentTenant?.name || undefined,
           commissionEarned: property.commissionEarned || 0,
           views: property.views || 0,
@@ -282,9 +282,11 @@ export default function BrokerPropertiesPage() {
     router.push(`/broker/properties/${propertyId}`);
   };
 
-  const handleEditProperty = (propertyId: string) => {
-    // Navigate to property edit page
-    router.push(`/broker/properties/${propertyId}/edit`);
+  const handleEditProperty = (propertyId: string, property: BrokerProperty) => {
+    // Para propiedades gestionadas, redirigir a detalles (no existe ruta de edición)
+    // Para propiedades propias, también redirigir a detalles por ahora
+    // El botón de editar solo muestra la opción si es necesario
+    router.push(`/broker/properties/${propertyId}`);
   };
 
   const handleAddProperty = () => {
@@ -522,7 +524,8 @@ export default function BrokerPropertiesPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleEditProperty(property.id)}
+                      onClick={() => handleEditProperty(property.id, property)}
+                      title={property.ownerName === 'Propia' ? 'Editar propiedad' : 'Ver detalles (propiedad gestionada)'}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>

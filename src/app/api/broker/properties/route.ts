@@ -60,6 +60,18 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        client: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         startDate: 'desc',
@@ -81,6 +93,9 @@ export async function GET(request: NextRequest) {
       const images = property.images ? JSON.parse(property.images) : [];
       const features = property.features ? JSON.parse(property.features) : [];
 
+      // Obtener el propietario: primero de la propiedad, si no del cliente que gestiona
+      const ownerInfo = property.owner || record.client?.user || null;
+
       return {
         id: property.id,
         title: property.title,
@@ -94,9 +109,9 @@ export async function GET(request: NextRequest) {
         price: property.price,
         currency: 'CLP',
         status: property.status.toLowerCase(),
-        ownerName: property.owner?.name || 'No asignado',
-        ownerEmail: property.owner?.email || 'No asignado',
-        ownerPhone: property.owner?.phone || 'No asignado',
+        ownerName: ownerInfo?.name || 'No asignado',
+        ownerEmail: ownerInfo?.email || 'No asignado',
+        ownerPhone: ownerInfo?.phone || 'No asignado',
         description: property.description,
         features,
         images,
@@ -215,12 +230,25 @@ export async function GET(request: NextRequest) {
     // Separar propiedades gestionadas y propias del rango paginado
     const paginatedManaged = paginatedCombined
       .filter(item => item.isManaged)
-      .map(item => filteredManagedProperties.find(mp => mp.property.id === item.id)!)
-      .filter(Boolean);
+      .map(item => {
+        const found = filteredManagedProperties.find(mp => mp.property.id === item.id);
+        if (!found) {
+          logger.warn('Property not found in filteredManagedProperties', { propertyId: item.id });
+        }
+        return found;
+      })
+      .filter(Boolean) as typeof filteredManagedProperties;
 
     const paginatedOwn = paginatedCombined
       .filter(item => !item.isManaged)
-      .map(item => item.property);
+      .map(item => {
+        const found = filteredOwnProperties.find(p => p.id === item.id);
+        if (!found) {
+          logger.warn('Property not found in filteredOwnProperties', { propertyId: item.id });
+        }
+        return found;
+      })
+      .filter(Boolean) as typeof filteredOwnProperties;
 
     // Transformar propiedades propias del rango paginado
     const transformedOwnProperties = paginatedOwn.map(property => {
@@ -300,9 +328,9 @@ export async function GET(request: NextRequest) {
         price: property.price,
         currency: 'CLP',
         status: property.status.toLowerCase(),
-        ownerName: property.owner?.name || 'No asignado',
-        ownerEmail: property.owner?.email || 'No asignado',
-        ownerPhone: property.owner?.phone || 'No asignado',
+        ownerName: property.owner?.name || record.client?.user?.name || 'No asignado',
+        ownerEmail: property.owner?.email || record.client?.user?.email || 'No asignado',
+        ownerPhone: property.owner?.phone || record.client?.user?.phone || 'No asignado',
         description: property.description,
         features,
         images,
@@ -356,7 +384,11 @@ export async function GET(request: NextRequest) {
       ownCount: transformedOwnProperties.length,
       totalManaged: filteredManagedProperties.length,
       totalOwn: filteredOwnProperties.length,
+      paginatedManagedCount: paginatedManaged.length,
+      paginatedOwnCount: paginatedOwn.length,
       status,
+      offset,
+      limit,
     });
 
     return NextResponse.json({

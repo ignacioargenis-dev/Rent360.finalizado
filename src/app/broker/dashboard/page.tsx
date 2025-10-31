@@ -171,6 +171,7 @@ export default function BrokerDashboardPage() {
         const response = await fetch('/api/broker/dashboard');
         if (response.ok) {
           const result = await response.json();
+          logger.info('Dashboard response received', { result, hasData: !!result.data, hasStats: !!result.data?.stats });
           const data = result.data;
 
           // Transformar datos para el formato esperado por el componente
@@ -218,16 +219,17 @@ export default function BrokerDashboardPage() {
           setRecentActivities(transformedActivities);
 
           // Usar estadísticas reales de la API
+          logger.info('Setting dashboard stats', { stats: data.stats });
           setStats({
-            totalProperties: data.stats.totalProperties || 0, // ✅ Total (propias + gestionadas)
-            activeClients: data.stats.activeClients || 0, // ✅ Total clientes activos
-            totalCommissions: data.stats.totalCommissions,
-            monthlyRevenue: data.stats.monthlyRevenue,
+            totalProperties: data.stats?.totalProperties ?? 0, // ✅ Total (propias + gestionadas)
+            activeClients: data.stats?.activeClients ?? 0, // ✅ Total clientes activos
+            totalCommissions: data.stats?.totalCommissions ?? 0,
+            monthlyRevenue: data.stats?.monthlyRevenue ?? 0,
             pendingAppointments: 0, // No disponible en la API actual
-            newInquiries: data.stats.recentInquiries,
-            conversionRate: data.stats.conversionRate,
-            averageCommission: data.stats.averageCommission,
-            portfolioValue: data.stats.portfolioValue || 0,
+            newInquiries: data.stats?.recentInquiries ?? 0,
+            conversionRate: data.stats?.conversionRate ?? 0,
+            averageCommission: data.stats?.averageCommission ?? 0,
+            portfolioValue: data.stats?.portfolioValue ?? 0,
           });
 
           // Cargar métricas de rendimiento reales

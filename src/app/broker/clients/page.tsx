@@ -257,13 +257,13 @@ export default function BrokerClientsPage() {
   };
 
   const handleViewClient = (clientId: string) => {
-    // Navigate to client detail view
-    window.open(`/broker/clients/${clientId}`, '_blank');
+    // Navigate to client detail view en la misma pestaña
+    router.push(`/broker/clients/${clientId}`);
   };
 
   const handleEditClient = (clientId: string) => {
-    // Navigate to client edit page
-    window.open(`/broker/clients/${clientId}/edit`, '_blank');
+    // Navigate to client edit page en la misma pestaña
+    router.push(`/broker/clients/${clientId}/edit`);
   };
 
   const handleContactClient = (clientId: string) => {

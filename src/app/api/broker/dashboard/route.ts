@@ -454,14 +454,24 @@ export async function GET(request: NextRequest) {
       stats: {
         totalProperties: stats.totalProperties,
         activeContracts: stats.activeContracts,
+        activeClients: stats.activeClients,
         monthlyRevenue: stats.monthlyRevenue,
         portfolioValue: stats.portfolioValue,
+        totalCommissions: stats.totalCommissions,
+        conversionRate: stats.conversionRate,
       },
       rawCounts: {
         totalProperties: totalProperties,
         availableProperties,
         rentedProperties,
         recentPropertiesCount,
+        managedPropertiesCount,
+        activeClientsCount,
+      },
+      portfolioDetails: {
+        ownPropertiesValue,
+        managedPropertiesValue,
+        portfolioValue,
       },
     });
 
