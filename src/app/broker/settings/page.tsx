@@ -2,9 +2,9 @@
 
 import { logger } from '@/lib/logger-minimal';
 
-// Configuración para renderizado dinámico - configuración personalizada del usuario
-export const dynamic = 'force-dynamic';
-export const revalidate = 0; // No cache para configuración personal
+// ✅ CORREGIDO: 'use client' no puede usar export const dynamic o revalidate
+// Las páginas del cliente se renderizan dinámicamente por defecto en el navegador
+// Los datos se cargan mediante fetch en useEffect, no durante el build
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

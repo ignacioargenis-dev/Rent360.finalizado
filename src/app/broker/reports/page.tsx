@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Configuración para renderizado dinámico - reportes con datos actualizados
-export const dynamic = 'force-dynamic';
-export const revalidate = 300; // Revalidar cada 5 minutos para reportes actualizados
+// ✅ CORREGIDO: 'use client' no puede usar export const dynamic o revalidate
+// Las páginas del cliente se renderizan dinámicamente por defecto en el navegador
+// Los datos se cargan mediante fetch en useEffect, no durante el build
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger-minimal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
