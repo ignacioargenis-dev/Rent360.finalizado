@@ -53,18 +53,6 @@ const createPrismaClient = () => {
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 
-// ✅ CRÍTICO: Verificar conexión inicial en producción
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-  // Verificar conexión de forma asíncrona sin bloquear el inicio
-  checkDatabaseHealth()
-    .then(health => {
-      console.log('✅ [DB] Health check inicial:', health);
-    })
-    .catch(error => {
-      console.error('❌ [DB] Error en health check inicial:', error);
-    });
-}
-
 // Función mejorada para verificar conexión DB con timeout
 export async function ensureDatabaseConnection(): Promise<boolean> {
   try {
