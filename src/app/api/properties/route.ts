@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
       // Si es OWNER, él mismo es el propietario
       ownerId = decoded.id;
     } else if (decoded.role === 'BROKER') {
-      // Si es BROKER, puede especificar el propietario real o crear propiedades sin propietario asignado
+      // Si es BROKER, puede especificar el propietario real o crear propiedades propias
       const specifiedOwnerId = formData.get('ownerId') as string;
       if (specifiedOwnerId && specifiedOwnerId.trim()) {
         // Verificar que el propietario especificado existe
@@ -212,11 +212,13 @@ export async function POST(request: NextRequest) {
 
         ownerId = specifiedOwnerId.trim();
       } else {
-        // Propiedad sin propietario asignado - común cuando los corredores traen propiedades de propietarios externos
-        ownerId = null;
-        logger.info('Broker creating property without assigned owner', {
+        // ✅ CORREGIDO: Si no se especifica ownerId, la propiedad es propia del broker
+        // Esto asegura que aparezca en el dashboard del broker como propiedad propia
+        ownerId = decoded.id;
+        logger.info('Broker creating own property', {
           brokerId: decoded.id,
           propertyTitle: title,
+          ownerId: decoded.id,
         });
       }
       brokerId = decoded.id; // El broker se asigna como broker

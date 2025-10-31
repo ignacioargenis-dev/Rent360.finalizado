@@ -131,6 +131,7 @@ export default function BrokerPropertyDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [canEdit, setCanEdit] = useState(false); // ✅ Para determinar si se puede editar
 
   // Mock data for property details
   const mockProperty: PropertyDetail = {
@@ -331,6 +332,27 @@ export default function BrokerPropertyDetailPage() {
           imageCount: propertyData.images ? propertyData.images.length : 0,
           images: propertyData.images ? propertyData.images.slice(0, 3) : [], // Primeras 3 URLs
           propertyDataKeys: Object.keys(propertyData),
+          ownerId: propertyData.ownerId,
+          brokerId: propertyData.brokerId,
+          isOwned: propertyData.isOwned,
+          managementType: propertyData.managementType,
+        });
+
+        // ✅ CORREGIDO: Determinar si se puede editar
+        // La propiedad es editable si:
+        // 1. isOwned es true (propiedad propia del broker)
+        // 2. ownerId es igual al userId del broker Y no está gestionada (managementType === 'owner' o no existe)
+        const propertyCanEdit = propertyData.isOwned === true || 
+          (propertyData.ownerId === user?.id && (propertyData.managementType === 'owner' || !propertyData.managementType));
+        setCanEdit(propertyCanEdit);
+        
+        console.log('✅ [PROPERTY_DETAIL] Propiedad puede editarse:', {
+          canEdit: propertyCanEdit,
+          isOwned: propertyData.isOwned,
+          ownerId: propertyData.ownerId,
+          brokerId: propertyData.brokerId,
+          userId: user?.id,
+          managementType: propertyData.managementType,
         });
 
         // Transformar datos de la API al formato esperado
@@ -468,7 +490,15 @@ export default function BrokerPropertyDetailPage() {
   };
 
   const handleEditProperty = () => {
-    router.push(`/broker/properties/${propertyId}/edit`);
+    if (!canEdit) {
+      // Si no se puede editar, mostrar mensaje informativo
+      alert('Esta propiedad es administrada por un propietario. Solo se pueden editar propiedades propias.');
+      return;
+    }
+    // ✅ CORREGIDO: Solo redirigir a edición si es propiedad propia
+    // Por ahora, redirigir a detalles ya que la ruta de edición no existe
+    // TODO: Crear ruta /broker/properties/[propertyId]/edit cuando sea necesario
+    router.push(`/broker/properties/${propertyId}`);
   };
 
   const handleScheduleViewing = () => {
@@ -621,7 +651,12 @@ export default function BrokerPropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleEditProperty}>
+            <Button 
+              variant="outline" 
+              onClick={handleEditProperty}
+              disabled={!canEdit}
+              title={canEdit ? 'Editar propiedad' : 'Solo se pueden editar propiedades propias'}
+            >
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </Button>

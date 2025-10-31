@@ -87,6 +87,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       // Filtrar URLs vacías o inválidas
       .filter((imgPath: string) => imgPath && imgPath.trim().length > 0);
 
+    // Verificar si la propiedad es administrada por algún broker
+    const managedProperty = await db.brokerPropertyManagement.findFirst({
+      where: {
+        propertyId: property.id,
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        brokerId: true,
+        managementType: true,
+      },
+    });
+
     // Formatear la respuesta
     const formattedProperty = {
       id: property.id,
@@ -98,6 +111,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       region: property.region,
       price: property.price,
       deposit: property.deposit,
+      // ✅ CRÍTICO: Información de ownership para determinar si se puede editar
+      ownerId: property.ownerId,
+      brokerId: property.brokerId,
+      isOwned: managedProperty ? false : true, // Si está gestionada, no es propia
+      managementType: managedProperty ? managedProperty.managementType : 'owner',
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
       area: property.area,
