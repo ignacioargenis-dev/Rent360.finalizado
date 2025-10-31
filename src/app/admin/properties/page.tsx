@@ -339,9 +339,60 @@ export default function AdminPropertiesPage() {
         const result = await response.json();
         logger.info('Property deleted successfully', { propertyId: property.id, result });
 
-        // Remover la propiedad de la lista local
+        // ✅ CORREGIDO: Recargar propiedades desde la API para asegurar que se actualice correctamente
+        // Remover primero de la lista local para feedback inmediato
         setProperties(prev => prev.filter(p => p.id !== property.id));
         setFilteredProperties(prev => prev.filter(p => p.id !== property.id));
+
+        // Recargar propiedades desde la API para sincronizar con el servidor
+        try {
+          const refreshResponse = await fetch('/api/properties/list?limit=100', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          });
+
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            if (refreshData.properties) {
+              const transformedProperties = refreshData.properties.map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                address: p.address,
+                city: p.city,
+                commune: p.commune,
+                region: p.region,
+                price: p.price,
+                status: p.status,
+                type: p.type,
+                bedrooms: p.bedrooms,
+                bathrooms: p.bathrooms,
+                area: p.area,
+                images: p.images || [],
+                ownerId: p.owner?.id || '',
+                owner: p.owner
+                  ? {
+                      id: p.owner.id,
+                      name: p.owner.name,
+                      email: p.owner.email,
+                      avatar: p.owner.avatar,
+                    }
+                  : undefined,
+                createdAt: p.createdAt,
+                updatedAt: p.updatedAt,
+              }));
+              setProperties(transformedProperties);
+              setFilteredProperties(transformedProperties);
+            }
+          }
+        } catch (refreshError) {
+          logger.error('Error refreshing properties after deletion', { error: refreshError });
+          // Continuar sin error ya que ya se removió de la lista local
+        }
 
         setSuccessMessage(`✅ Propiedad "${property.title}" eliminada exitosamente.`);
         setTimeout(() => setSuccessMessage(''), 5000);

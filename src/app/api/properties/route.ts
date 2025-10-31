@@ -434,8 +434,15 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar autenticación
-    const user = await requireAuth(request);
+    // ✅ CORREGIDO: Autenticación opcional para acceso público
+    let user: { id: string; role: string } | null = null;
+    try {
+      const authenticatedUser = await requireAuth(request);
+      user = { id: authenticatedUser.id, role: authenticatedUser.role };
+    } catch {
+      // Si no hay autenticación, continuar sin usuario (acceso público)
+      user = null;
+    }
 
     const startTime = Date.now();
 
@@ -606,19 +613,6 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       responseTime: endTime - startTime,
-    });
-
-    return NextResponse.json({
-      properties: paginatedProperties,
-      pagination: {
-        page,
-        limit,
-        total: totalCount,
-        pages: Math.ceil(totalCount / limit),
-        hasNext: page < Math.ceil(totalCount / limit),
-        hasPrev: page > 1,
-      },
-      success: true,
     });
 
     return NextResponse.json({
