@@ -82,110 +82,59 @@ export default function RunnerClientsPage() {
 
     const loadClientsData = async () => {
       try {
-        // Mock clients data
-        const mockClients: Client[] = [
-          {
-            id: 'c1',
-            name: 'María González',
-            email: 'maria.gonzalez@email.com',
-            phone: '+56912345678',
-            address: 'Av. Providencia 1234, Providencia',
-            propertyCount: 2,
-            lastServiceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            nextScheduledVisit: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-            rating: 4.8,
-            status: 'active',
-            preferredTimes: ['09:00-12:00', '14:00-17:00'],
-            specialInstructions: 'Tiene mascota - Labrador negro llamado Max',
-            totalServices: 15,
-            satisfactionScore: 95,
+        setLoading(true);
+        // ✅ CORREGIDO: Obtener datos reales desde la API
+        const response = await fetch('/api/runner/clients', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
           },
-          {
-            id: 'c2',
-            name: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            phone: '+56987654321',
-            address: 'Calle Los Militares 567, Las Condes',
-            propertyCount: 1,
-            lastServiceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-            rating: 4.9,
-            status: 'active',
-            preferredTimes: ['10:00-14:00'],
-            specialInstructions: 'Código de acceso: 1234#',
-            totalServices: 8,
-            satisfactionScore: 98,
-          },
-          {
-            id: 'c3',
-            name: 'Ana López',
-            email: 'ana.lopez@email.com',
-            phone: '+56955556666',
-            address: 'Pasaje Los Alpes 890, Vitacura',
-            propertyCount: 3,
-            lastServiceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-            nextScheduledVisit: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(),
-            rating: 4.5,
-            status: 'active',
-            preferredTimes: ['08:00-11:00'],
-            specialInstructions: 'Solo visitas los fines de semana',
-            totalServices: 22,
-            satisfactionScore: 88,
-          },
-          {
-            id: 'c4',
-            name: 'Pedro Martínez',
-            email: 'pedro.martinez@email.com',
-            phone: '+56977778888',
-            address: 'Av. Apoquindo 3456, Las Condes',
-            propertyCount: 1,
-            lastServiceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-            rating: 4.2,
-            status: 'inactive',
-            preferredTimes: ['13:00-16:00'],
-            totalServices: 3,
-            satisfactionScore: 75,
-          },
-          {
-            id: 'c5',
-            name: 'Laura Fernández',
-            email: 'laura.fernandez@email.com',
-            phone: '+56944443333',
-            address: 'Calle Nueva Costanera 789, Providencia',
-            propertyCount: 1,
-            lastServiceDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            rating: 4.7,
-            status: 'active',
-            preferredTimes: ['09:00-13:00', '15:00-18:00'],
-            specialInstructions: 'Tiene sistema de alarma - código de desactivación: 2468',
-            totalServices: 12,
-            satisfactionScore: 92,
-          },
-        ];
+        });
 
-        setClients(mockClients);
-        setFilteredClients(mockClients);
+        if (!response.ok) {
+          throw new Error(`Error al cargar clientes: ${response.status}`);
+        }
 
-        // Calculate stats
-        const activeClients = mockClients.filter(c => c.status === 'active').length;
-        const averageRating =
-          mockClients.reduce((sum, c) => sum + c.rating, 0) / mockClients.length;
-        const servicesThisMonth = mockClients.reduce((sum, c) => sum + c.totalServices, 0);
-        const upcomingVisits = mockClients.filter(c => c.nextScheduledVisit).length;
+        const result = await response.json();
+        const clientsData = result.clients || [];
+        const statsData = result.stats || {};
 
-        const clientStats: ClientStats = {
-          totalClients: mockClients.length,
-          activeClients,
-          averageRating,
-          servicesThisMonth,
-          upcomingVisits,
-        };
+        // Transformar datos al formato esperado
+        const transformedClients: Client[] = clientsData.map((client: any) => ({
+          id: client.id,
+          name: client.name || 'Sin nombre',
+          email: client.email || '',
+          phone: client.phone || 'No disponible',
+          address: client.address || 'No disponible',
+          propertyCount: client.propertyCount || 0,
+          lastServiceDate: client.lastServiceDate || '',
+          nextScheduledVisit: client.nextScheduledVisit || undefined,
+          rating: client.rating || 0,
+          status: client.status || 'inactive',
+          preferredTimes: client.preferredTimes || [],
+          specialInstructions: client.specialInstructions || undefined,
+          totalServices: client.totalServices || 0,
+          satisfactionScore: client.satisfactionScore || 0,
+        }));
 
-        setStats(clientStats);
-        setLoading(false);
+        setClients(transformedClients);
+        setFilteredClients(transformedClients);
+
+        // Setear estadísticas
+        setStats({
+          totalClients: statsData.totalClients || 0,
+          activeClients: statsData.activeClients || 0,
+          averageRating: statsData.averageRating || 0,
+          servicesThisMonth: statsData.servicesThisMonth || 0,
+          upcomingVisits: statsData.upcomingVisits || 0,
+        });
       } catch (error) {
         logger.error('Error loading clients data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+      } finally {
         setLoading(false);
       }
     };

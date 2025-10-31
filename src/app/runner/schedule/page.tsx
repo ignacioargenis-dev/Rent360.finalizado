@@ -66,62 +66,31 @@ export default function HorarioPage() {
       setLoading(true);
       setError(null);
 
-      // Mock schedule data for runner
-      const mockSchedule = {
-        overview: {
-          todayVisits: 3,
-          weekVisits: 12,
-          monthVisits: 45,
-          pendingVisits: 2,
-          completedToday: 1
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const response = await fetch('/api/runner/schedule', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        todaySchedule: [
-          {
-            id: '1',
-            time: '09:00',
-            duration: '1.5 horas',
-            type: 'Visita inicial',
-            property: 'Departamento Las Condes',
-            address: 'Av. Apoquindo 1234',
-            client: 'María González',
-            status: 'completed',
-            notes: 'Cliente interesado en propiedad de 2 dormitorios'
-          },
-          {
-            id: '2',
-            time: '11:30',
-            duration: '2 horas',
-            type: 'Fotografía',
-            property: 'Casa Providencia',
-            address: 'Providencia 5678',
-            client: 'Propietario Casa Providencia',
-            status: 'in_progress',
-            notes: 'Tomar fotos profesionales de todas las habitaciones'
-          },
-          {
-            id: '3',
-            time: '15:00',
-            duration: '45 minutos',
-            type: 'Entrega de llaves',
-            property: 'Estudio Centro',
-            address: 'Centro 999',
-            client: 'Carlos Rodríguez',
-            status: 'pending',
-            notes: 'Nuevo inquilino - verificar documentos'
-          }
-        ],
-        weekSchedule: [
-          { day: 'Lunes', visits: 4, completed: 4 },
-          { day: 'Martes', visits: 3, completed: 2 },
-          { day: 'Miércoles', visits: 5, completed: 3 },
-          { day: 'Jueves', visits: 4, completed: 4 },
-          { day: 'Viernes', visits: 2, completed: 1 },
-          { day: 'Sábado', visits: 1, completed: 0 },
-          { day: 'Domingo', visits: 0, completed: 0 }
-        ]
-      };
+      });
 
-      setData(mockSchedule);
+      if (!response.ok) {
+        throw new Error(`Error al cargar horario: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setData({
+          overview: result.overview || {},
+          todaySchedule: result.todaySchedule || [],
+          weekSchedule: result.weekSchedule || [],
+        });
+      } else {
+        throw new Error('Error en respuesta de la API');
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
