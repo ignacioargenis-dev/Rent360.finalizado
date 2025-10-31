@@ -82,77 +82,71 @@ export default function TareasPage() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      // Mock data for runner tasks
-      const mockTasks = {
-        overview: {
-          totalTasks: 24,
-          completedTasks: 18,
-          pendingTasks: 6,
-          inProgressTasks: 3,
-          todayTasks: 5,
-          thisWeekTasks: 12,
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const response = await fetch('/api/runner/tasks?status=all&limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        tasks: [
-          {
-            id: '1',
-            title: 'Visita inicial - Departamento Las Condes',
-            description: 'Realizar visita inicial para mostrar propiedad a potencial inquilino',
-            status: 'completed',
-            priority: 'high',
-            dueDate: '2024-01-15',
-            propertyAddress: 'Av. Apoquindo 1234, Las Condes',
-            clientName: 'María González',
-            estimatedDuration: '2 horas',
-          },
-          {
-            id: '2',
-            title: 'Fotografía - Casa Providencia',
-            description: 'Tomar fotografías profesionales de la propiedad para actualizar listado',
-            status: 'in_progress',
-            priority: 'medium',
-            dueDate: '2024-01-18',
-            propertyAddress: 'Providencia 5678',
-            clientName: 'Propietario Casa Providencia',
-            estimatedDuration: '1.5 horas',
-          },
-          {
-            id: '3',
-            title: 'Inspección mantenimiento - Edificio Centro',
-            description:
-              'Verificar estado de instalaciones y reportar necesidades de mantenimiento',
-            status: 'pending',
-            priority: 'high',
-            dueDate: '2024-01-20',
-            propertyAddress: 'Centro 999, Santiago Centro',
-            clientName: 'Administrador Edificio',
-            estimatedDuration: '3 horas',
-          },
-          {
-            id: '4',
-            title: 'Entrega de llaves - Estudio Ñuñoa',
-            description: 'Coordinar entrega de llaves al nuevo inquilino',
-            status: 'pending',
-            priority: 'medium',
-            dueDate: '2024-01-22',
-            propertyAddress: 'Ñuñoa 4321',
-            clientName: 'Carlos Rodríguez',
-            estimatedDuration: '30 minutos',
-          },
-          {
-            id: '5',
-            title: 'Actualización de precios - Portafolio completo',
-            description: 'Revisar y actualizar precios de propiedades según mercado actual',
-            status: 'pending',
-            priority: 'low',
-            dueDate: '2024-01-25',
-            propertyAddress: 'Múltiples propiedades',
-            clientName: 'Equipo de Ventas',
-            estimatedDuration: '4 horas',
-          },
-        ],
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar tareas: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const tasks = result.tasks || result.data || [];
+      
+      // Calcular estadísticas desde los datos reales
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+
+      const completedTasks = tasks.filter((t: any) => t.status === 'COMPLETED' || t.status === 'completed').length;
+      const pendingTasks = tasks.filter((t: any) => t.status === 'SCHEDULED' || t.status === 'scheduled' || t.status === 'PENDING' || t.status === 'pending').length;
+      const inProgressTasks = tasks.filter((t: any) => t.status === 'IN_PROGRESS' || t.status === 'in_progress').length;
+      
+      const todayTasks = tasks.filter((t: any) => {
+        if (!t.scheduledDate) return false;
+        const taskDate = new Date(t.scheduledDate);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      }).length;
+
+      const thisWeekTasks = tasks.filter((t: any) => {
+        if (!t.scheduledDate) return false;
+        const taskDate = new Date(t.scheduledDate);
+        return taskDate >= weekStart;
+      }).length;
+
+      const transformedData = {
+        overview: {
+          totalTasks: tasks.length,
+          completedTasks,
+          pendingTasks,
+          inProgressTasks,
+          todayTasks,
+          thisWeekTasks,
+        },
+        tasks: tasks.map((task: any) => ({
+          id: task.id,
+          title: task.propertyTitle || task.title || 'Sin título',
+          description: task.description || task.notes || '',
+          status: task.status?.toLowerCase() || 'pending',
+          priority: task.priority || 'medium',
+          dueDate: task.scheduledDate || '',
+          propertyAddress: task.propertyAddress || task.property?.address || '',
+          clientName: task.clientName || task.tenant?.name || task.tenantName || 'Sin cliente',
+          estimatedDuration: task.estimatedDuration || `${task.duration || 30} minutos`,
+          propertyId: task.propertyId,
+          tenantId: task.tenantId,
+        })),
       };
 
-      setData(mockTasks);
+      setData(transformedData);
       setError(null);
     } catch (error) {
       setError('Error al cargar los datos');

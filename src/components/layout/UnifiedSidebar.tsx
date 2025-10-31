@@ -666,8 +666,26 @@ export default function UnifiedSidebar({
     }));
   };
 
-  // Determinar rol del usuario de forma simple y estable
-  const finalUserRole = user?.role?.toLowerCase() || 'guest';
+  // ✅ CORREGIDO: Determinar rol del usuario de forma robusta
+  // Normalizar el rol a minúsculas de forma segura
+  let finalUserRole = 'guest';
+  if (user?.role) {
+    const normalizedRole = String(user.role).toUpperCase();
+    // Mapear roles a claves del menú
+    const roleMap: Record<string, string> = {
+      'RUNNER': 'runner',
+      'ADMIN': 'admin',
+      'OWNER': 'owner',
+      'BROKER': 'broker',
+      'TENANT': 'tenant',
+      'SUPPORT': 'support',
+      'PROVIDER': 'provider',
+      'SERVICE_PROVIDER': 'provider',
+      'MAINTENANCE_PROVIDER': 'maintenance',
+      'MAINTENANCE': 'maintenance',
+    };
+    finalUserRole = roleMap[normalizedRole] || normalizedRole.toLowerCase();
+  }
 
   // Debug: Log para verificar rol detectado (solo en desarrollo)
   if (process.env.NODE_ENV === 'development') {
@@ -676,10 +694,22 @@ export default function UnifiedSidebar({
       role: user?.role,
       finalUserRole,
       pathname,
+      menuItemsAvailable: Object.keys(menuItems),
     });
   }
 
-  const items = menuItems[finalUserRole] || menuItems.tenant || [];
+  // ✅ CORREGIDO: Fallback más inteligente - intentar con el rol original si no se encuentra
+  let items = menuItems[finalUserRole];
+  if (!items || items.length === 0) {
+    // Intentar con el rol en mayúsculas directamente
+    const uppercaseRole = user?.role?.toUpperCase();
+    if (uppercaseRole && menuItems[uppercaseRole.toLowerCase()]) {
+      items = menuItems[uppercaseRole.toLowerCase()];
+    } else {
+      // Fallback a tenant como último recurso
+      items = menuItems.tenant || menuItems.guest || [];
+    }
+  }
 
   const isActiveRoute = (url: string) => {
     return pathname === url || (pathname && pathname.startsWith(url + '/'));

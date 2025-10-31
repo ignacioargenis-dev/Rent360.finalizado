@@ -128,7 +128,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: transformedTasks,
+      tasks: transformedTasks,
+      data: transformedTasks, // Compatibilidad con código existente
       pagination: {
         limit,
         offset,
