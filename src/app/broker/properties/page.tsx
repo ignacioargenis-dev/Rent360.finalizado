@@ -131,13 +131,14 @@ export default function BrokerPropertiesPage() {
         setProperties(transformedProperties);
 
         // Calcular estadísticas reales
+        // El backend ya convierte status a minúsculas, así que buscamos 'available'
         const availableProperties = transformedProperties.filter(
-          p => p.status === 'available'
+          p => p.status?.toLowerCase() === 'available'
         ).length;
-        const rentedProperties = transformedProperties.filter(p => p.status === 'rented').length;
-        const totalPortfolioValue = transformedProperties
-          .filter(p => p.status === 'rented')
-          .reduce((sum, p) => sum + p.price, 0);
+        const rentedProperties = transformedProperties.filter(
+          p => p.status?.toLowerCase() === 'rented'
+        ).length;
+        const totalPortfolioValue = transformedProperties.reduce((sum, p) => sum + (p.price || 0), 0);
         const totalViews = transformedProperties.reduce((sum, p) => sum + p.views, 0);
         const totalInquiries = transformedProperties.reduce((sum, p) => sum + p.inquiries, 0);
         const averageRent = rentedProperties > 0 ? totalPortfolioValue / rentedProperties : 0;

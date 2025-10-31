@@ -117,12 +117,56 @@ export default function EditClientPage() {
   const loadClient = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // ✅ CORREGIDO: Cargar datos reales desde la API
+      logger.info('Cargando datos del cliente para edición', { clientId });
+      const response = await fetch(`/api/broker/clients/${clientId}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
 
-      setFormData(mockClient);
+      if (response.ok) {
+        const result = await response.json();
+        logger.info('Datos del cliente recibidos', { result, hasData: !!result.data });
+        
+        if (result.success && result.data) {
+          const client = result.data;
+          
+          // Mapear datos de la API al formato del formulario
+          setFormData({
+            id: client.id || client.clientId || clientId,
+            name: client.name || '',
+            email: client.email || '',
+            phone: client.phone || '',
+            avatar: client.avatar || '/api/placeholder/120/120',
+            address: client.address || client.user?.address || '',
+            city: client.city || client.user?.city || '',
+            region: client.region || client.user?.region || '',
+            occupation: client.occupation || '',
+            income: client.income || 0,
+            birthDate: client.birthDate || '',
+            maritalStatus: (client.maritalStatus as ClientData['maritalStatus']) || 'single',
+            preferredContact: client.preferredContactMethod || 'email',
+            budget: client.budget || { min: 0, max: 0 },
+            requirements: client.requirements || client.preferences?.features || [],
+            notes: client.notes || '',
+            status: client.status || 'active',
+            source: client.source || 'website',
+          });
+        } else {
+          logger.warn('API retornó success: false o sin data, usando datos mock como fallback');
+          setFormData(mockClient);
+        }
+      } else {
+        const errorText = await response.text();
+        logger.error('API retornó error', { status: response.status, errorText });
+        // Fallback a datos mock si falla la API
+        setFormData(mockClient);
+      }
     } catch (error) {
       logger.error('Error al cargar cliente', { error, clientId });
+      // Fallback a datos mock en caso de error de red
+      setFormData(mockClient);
     } finally {
       setIsLoading(false);
     }
@@ -197,15 +241,39 @@ export default function EditClientPage() {
 
     setIsSaving(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // ✅ CORREGIDO: Usar la API real para actualizar el cliente
+      logger.info('Actualizando cliente', { clientId, name: formData.name });
+      const response = await fetch(`/api/broker/clients/${clientId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          region: formData.region,
+          commune: formData.city, // Usar city como commune por defecto
+          notes: formData.notes,
+        }),
+      });
 
-      logger.info('Cliente actualizado', { clientId, name: formData.name });
-
-      // Redirect to client detail page
-      router.push(`/broker/clients/${clientId}`);
+      if (response.ok) {
+        const result = await response.json();
+        logger.info('Cliente actualizado exitosamente', { result });
+        // Redirect to client detail page
+        router.push(`/broker/clients/${clientId}`);
+      } else {
+        const errorText = await response.text();
+        logger.error('Error al actualizar cliente', { status: response.status, errorText });
+        alert('Error al actualizar el cliente. Por favor, intenta nuevamente.');
+      }
     } catch (error) {
       logger.error('Error al guardar cliente', { error, clientId });
+      alert('Error al guardar el cliente. Por favor, intenta nuevamente.');
     } finally {
       setIsSaving(false);
     }

@@ -73,9 +73,31 @@ export async function GET(request: NextRequest) {
           return total;
         }),
 
-        // Propiedades disponibles (propias)
-        db.property.count({
-          where: { ownerId: user.id, status: 'AVAILABLE' },
+        // Propiedades disponibles (propias + gestionadas con status AVAILABLE)
+        Promise.all([
+          // Propiedades propias disponibles
+          db.property.count({
+            where: { ownerId: user.id, status: 'AVAILABLE' },
+          }),
+          // Propiedades gestionadas disponibles
+          db.brokerPropertyManagement.count({
+            where: {
+              brokerId: user.id,
+              status: 'ACTIVE',
+              property: {
+                status: 'AVAILABLE',
+              },
+            },
+          }),
+        ]).then(([ownAvailable, managedAvailable]) => {
+          const totalAvailable = ownAvailable + managedAvailable;
+          logger.info('Available properties for broker', {
+            brokerId: user.id,
+            ownAvailable,
+            managedAvailable,
+            totalAvailable,
+          });
+          return totalAvailable;
         }),
 
         // Propiedades rentadas (con contratos activos) - propias

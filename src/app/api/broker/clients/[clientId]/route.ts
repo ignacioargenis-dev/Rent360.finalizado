@@ -432,3 +432,106 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     );
   }
 }
+
+/**
+ * PUT /api/broker/clients/[clientId]
+ * Actualiza información de un cliente específico del broker
+ */
+export async function PUT(request: NextRequest, { params }: { params: { clientId: string } }) {
+  try {
+    const user = await requireAuth(request);
+
+    if (user.role !== 'BROKER') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Se requieren permisos de corredor.' },
+        { status: 403 }
+      );
+    }
+
+    const clientId = params.clientId;
+    const body = await request.json();
+
+    // Buscar la relación brokerClient
+    let brokerClient = await db.brokerClient.findFirst({
+      where: {
+        id: clientId,
+        brokerId: user.id,
+      },
+    });
+
+    // Si no se encuentra por ID de brokerClient, buscar por userId
+    if (!brokerClient) {
+      brokerClient = await db.brokerClient.findFirst({
+        where: {
+          userId: clientId,
+          brokerId: user.id,
+          status: 'ACTIVE',
+        },
+      });
+    }
+
+    if (!brokerClient) {
+      return NextResponse.json(
+        { error: 'Cliente no encontrado o no autorizado.' },
+        { status: 404 }
+      );
+    }
+
+    // Actualizar datos del usuario
+    const updatedUser = await db.user.update({
+      where: { id: brokerClient.userId },
+      data: {
+        name: body.name || undefined,
+        email: body.email || undefined,
+        phone: body.phone || undefined,
+        address: body.address || undefined,
+        city: body.city || undefined,
+        region: body.region || undefined,
+        commune: body.commune || undefined,
+        bio: body.notes || undefined,
+      },
+    });
+
+    // Actualizar datos de brokerClient si se proporcionan
+    const updatedBrokerClient = await db.brokerClient.update({
+      where: { id: brokerClient.id },
+      data: {
+        notes: body.notes || undefined,
+        lastInteraction: new Date(),
+      },
+    });
+
+    logger.info('Cliente actualizado exitosamente', {
+      clientId,
+      brokerId: user.id,
+      clientName: updatedUser.name,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Cliente actualizado exitosamente',
+      client: {
+        id: updatedBrokerClient.id,
+        clientId: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        address: updatedUser.address,
+        city: updatedUser.city,
+        region: updatedUser.region,
+      },
+    });
+  } catch (error) {
+    logger.error('Error actualizando cliente:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+      },
+      { status: 500 }
+    );
+  }
+}
