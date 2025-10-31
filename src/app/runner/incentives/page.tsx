@@ -85,132 +85,113 @@ export default function RunnerIncentivesPage() {
 
     const loadIncentivesData = async () => {
       try {
-        // Mock incentives data
-        const mockIncentives: Incentive[] = [
-          {
-            id: '1',
-            title: 'Bonificación por Eficiencia',
-            description: 'Completar 10 visitas en menos de 30 minutos cada una',
-            type: 'bonus',
-            category: 'efficiency',
-            value: 25000,
-            currency: 'CLP',
-            status: 'earned',
-            earnedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+        setLoading(true);
+        // ✅ CORREGIDO: Obtener datos reales desde la API
+        const response = await fetch('/api/runner/incentives', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
           },
-          {
-            id: '2',
-            title: 'Cliente Satisfecho',
-            description: 'Mantener un rating promedio de 4.8 o superior',
-            type: 'achievement',
-            category: 'quality',
-            value: 5000,
-            currency: 'CLP',
-            status: 'earned',
-            earnedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-          },
-          {
-            id: '3',
-            title: 'Corredor del Mes',
-            description: 'Ser el corredor con mejor rendimiento del mes',
-            type: 'milestone',
-            category: 'performance',
-            value: 100000,
-            currency: 'CLP',
-            status: 'in_progress',
-            progress: 75,
-            target: 100,
-          },
-          {
-            id: '4',
-            title: 'Primera Semana Perfecta',
-            description: 'Completar todos los trabajos asignados en una semana sin retrasos',
-            type: 'achievement',
-            category: 'performance',
-            value: 15000,
-            currency: 'CLP',
-            status: 'available',
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-          },
-          {
-            id: '5',
-            title: 'Bonificación por Lealtad',
-            description: 'Trabajar con Rent360 por más de 6 meses',
-            type: 'bonus',
-            category: 'loyalty',
-            value: 30000,
-            currency: 'CLP',
-            status: 'earned',
-            earnedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-          },
-        ];
+        });
 
-        // Mock achievements data
-        const mockAchievements: Achievement[] = [
-          {
-            id: '1',
-            name: 'Primer Trabajo',
-            description: 'Completa tu primer trabajo exitosamente',
-            icon: 'star',
-            unlocked: true,
-            unlockedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-            requirements: ['Completar 1 trabajo'],
-          },
-          {
-            id: '2',
-            name: 'Cliente Feliz',
-            description: 'Recibe tu primera calificación de 5 estrellas',
-            icon: 'trophy',
-            unlocked: true,
-            unlockedDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-            requirements: ['Obtener calificación 5★'],
-          },
-          {
-            id: '3',
-            name: 'Eficiencia Máxima',
-            description: 'Completa 50 trabajos en tiempo récord',
-            icon: 'zap',
-            unlocked: false,
-            requirements: ['Completar 50 trabajos', 'Tiempo promedio < 25 min'],
-          },
-          {
-            id: '4',
-            name: 'Leyenda Rent360',
-            description: 'Alcanza el estatus de corredor legendario',
-            icon: 'award',
-            unlocked: false,
-            requirements: ['100 trabajos completados', 'Rating promedio 4.9+', '0 quejas'],
-          },
-        ];
+        if (!response.ok) {
+          throw new Error(`Error al cargar incentivos: ${response.status}`);
+        }
 
-        setIncentives(mockIncentives);
-        setAchievements(mockAchievements);
+        const result = await response.json();
+        const incentivesData = result.data || [];
 
-        // Calculate stats
-        const earnedIncentives = mockIncentives.filter(i => i.status === 'earned');
-        const activeIncentives = mockIncentives.filter(i => i.status === 'in_progress').length;
-        const completedThisMonth = earnedIncentives.filter(
-          i =>
-            i.earnedDate && new Date(i.earnedDate) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30)
-        ).length;
+        // Transformar datos al formato esperado
+        const transformedIncentives: Incentive[] = incentivesData.map((inc: any) => {
+          const achievementData = inc.achievementData || {};
+          const rewardsGranted = inc.rewardsGranted || {};
+          
+          // Mapear tipo de incentivo
+          const typeMap: Record<string, 'achievement' | 'bonus' | 'reward' | 'milestone'> = {
+            'performance': 'milestone',
+            'rating': 'achievement',
+            'volume': 'bonus',
+            'loyalty': 'reward',
+            'seasonal': 'achievement',
+          };
+          
+          // Mapear categoría
+          const categoryMap: Record<string, 'performance' | 'efficiency' | 'quality' | 'loyalty'> = {
+            'bronze': 'performance',
+            'silver': 'efficiency',
+            'gold': 'quality',
+            'platinum': 'quality',
+            'diamond': 'loyalty',
+          };
+          
+          const statusMap: Record<string, 'earned' | 'in_progress' | 'available' | 'expired'> = {
+            'EARNED': 'earned',
+            'GRANTED': 'earned',
+            'CLAIMED': 'earned',
+            'EXPIRED': 'expired',
+          };
+          
+          return {
+            id: inc.id,
+            title: inc.incentiveRule?.name || 'Incentivo',
+            description: inc.incentiveRule?.description || '',
+            type: typeMap[inc.incentiveRule?.type || 'performance'] || 'achievement',
+            category: categoryMap[inc.incentiveRule?.category || 'bronze'] || 'performance',
+            value: rewardsGranted.bonusAmount || inc.incentiveRule?.rewardAmount || 0,
+            currency: 'CLP',
+            status: statusMap[inc.status] || 'available',
+            earnedDate: inc.earnedAt ? new Date(inc.earnedAt).toISOString() : undefined,
+            progress: achievementData.visitsCompleted,
+            target: achievementData.target,
+            expiresAt: inc.expiresAt ? new Date(inc.expiresAt).toISOString() : undefined,
+          };
+        });
+
+        // Calcular estadísticas
+        const earnedIncentives = transformedIncentives.filter(i => i.status === 'earned');
+        const activeIncentives = transformedIncentives.filter(i => i.status === 'in_progress' || i.status === 'available').length;
+        const completedThisMonth = earnedIncentives.filter(i => {
+          if (!i.earnedDate) return false;
+          const earnedDate = new Date(i.earnedDate);
+          const monthStart = new Date();
+          monthStart.setDate(1);
+          monthStart.setHours(0, 0, 0, 0);
+          return earnedDate >= monthStart;
+        }).length;
         const totalEarnedMoney = earnedIncentives
           .filter(i => i.currency === 'CLP')
           .reduce((sum, i) => sum + i.value, 0);
 
-        const incentiveStats: IncentiveStats = {
+        setIncentives(transformedIncentives);
+        setStats({
           totalEarned: earnedIncentives.length,
           activeIncentives,
           completedThisMonth,
-          pointsBalance: totalEarnedMoney, // Ahora representa dinero ganado
-          nextMilestone: 'Corredor del Mes - 25% completado',
-        };
+          pointsBalance: totalEarnedMoney,
+          nextMilestone: transformedIncentives.find(i => i.status === 'available')?.title || 'Ninguno',
+        });
 
-        setStats(incentiveStats);
-        setLoading(false);
+        // Achievements data (puede mejorarse después con datos reales desde base de datos)
+        const achievements: Achievement[] = transformedIncentives
+          .filter(i => i.status === 'earned')
+          .map(i => ({
+            id: i.id,
+            name: i.title,
+            description: i.description,
+            icon: i.category === 'quality' ? 'star' : i.category === 'performance' ? 'trophy' : 'zap',
+            unlocked: true,
+            unlockedDate: i.earnedDate,
+            requirements: [i.description],
+          }));
+
+        setAchievements(achievements);
       } catch (error) {
         logger.error('Error loading incentives data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+      } finally {
         setLoading(false);
       }
     };

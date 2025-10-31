@@ -4,6 +4,7 @@ import { RunnerIncentivesService } from '@/lib/runner-incentives-service';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { RunnerIncentiveStatus } from '@prisma/client';
+import { db } from '@/lib/db';
 
 /**
  * GET /api/runner/incentives
@@ -30,9 +31,32 @@ export async function GET(request: NextRequest) {
       50 // limit
     );
 
+    // Obtener las reglas de incentivos para cada uno
+    const incentivesWithRules = await Promise.all(
+      incentives.map(async (incentive) => {
+        const rule = await db.incentiveRule.findUnique({
+          where: { id: incentive.incentiveRuleId },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            type: true,
+            category: true,
+            rewardAmount: true,
+            expiresAt: true,
+          },
+        });
+
+        return {
+          ...incentive,
+          incentiveRule: rule,
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      data: incentives
+      data: incentivesWithRules
     });
 
   } catch (error) {
