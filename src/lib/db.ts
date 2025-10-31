@@ -104,5 +104,19 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = db;
 }
 
+// ✅ CRÍTICO: Verificar conexión inicial en producción (después de definir checkDatabaseHealth)
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  // Verificar conexión de forma asíncrona sin bloquear el inicio (usar setTimeout para evitar problemas de orden)
+  setTimeout(() => {
+    checkDatabaseHealth()
+      .then(health => {
+        console.log('✅ [DB] Health check inicial:', health);
+      })
+      .catch(error => {
+        console.error('❌ [DB] Error en health check inicial:', error);
+      });
+  }, 2000); // Esperar 2 segundos para que el sistema se inicialice completamente
+}
+
 // Note: process.on is not available in Edge Runtime, so we skip this in production builds
 // The Prisma client will be disconnected automatically when the process ends
