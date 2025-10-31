@@ -115,143 +115,57 @@ export default function RunnerPhotosPage() {
   const [selectedReport, setSelectedReport] = useState<PhotoReport | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      const mockPhotoReports: PhotoReport[] = [
-        {
-          id: '1',
-          visitId: '3',
-          propertyTitle: 'Casa Vitacura',
-          propertyAddress: 'Av. Vitacura 8900, Vitacura',
-          clientName: 'Pedro Silva',
-          visitDate: '2024-03-15',
-          status: 'APPROVED',
-          earnings: 25000,
-          notes: 'Visita completada exitosamente, cliente muy satisfecho',
-          reviewerFeedback: 'Excelente calidad de fotos, buena cobertura de todas las áreas',
-          photos: [
-            {
-              id: '1',
-              url: 'https://via.placeholder.com/400x300',
-              filename: 'fachada.jpg',
-              size: 2048000,
-              uploadedAt: '2024-03-15 16:30',
-              category: 'exterior',
-              description: 'Fachada principal de la casa',
-              isMain: true,
-            },
-            {
-              id: '2',
-              url: 'https://via.placeholder.com/400x300',
-              filename: 'sala.jpg',
-              size: 1843200,
-              uploadedAt: '2024-03-15 16:35',
-              category: 'living',
-              description: 'Sala de estar principal',
-              isMain: false,
-            },
-            {
-              id: '3',
-              url: 'https://via.placeholder.com/400x300',
-              filename: 'cocina.jpg',
-              size: 1920000,
-              uploadedAt: '2024-03-15 16:40',
-              category: 'kitchen',
-              description: 'Cocina completamente equipada',
-              isMain: false,
-            },
-          ],
-          createdAt: '2024-03-15 16:20',
-          updatedAt: '2024-03-15 17:00',
-        },
-        {
-          id: '2',
-          visitId: '4',
-          propertyTitle: 'Departamento Providencia',
-          propertyAddress: 'Av. Providencia 2345, Providencia',
-          clientName: 'Laura Fernández',
-          visitDate: '2024-03-14',
-          status: 'UPLOADED',
-          earnings: 18000,
-          photos: [
-            {
-              id: '4',
-              url: 'https://via.placeholder.com/400x300',
-              filename: 'departamento.jpg',
-              size: 1760000,
-              uploadedAt: '2024-03-14 12:00',
-              category: 'general',
-              description: 'Vista general del departamento',
-              isMain: true,
-            },
-            {
-              id: '5',
-              url: 'https://via.placeholder.com/400x300',
-              filename: 'dormitorio.jpg',
-              size: 1680000,
-              uploadedAt: '2024-03-14 12:05',
-              category: 'bedroom',
-              description: 'Dormitorio principal',
-              isMain: false,
-            },
-          ],
-          createdAt: '2024-03-14 11:45',
-          updatedAt: '2024-03-14 12:10',
-        },
-        {
-          id: '3',
-          visitId: '1',
-          propertyTitle: 'Departamento Las Condes',
-          propertyAddress: 'Av. Apoquindo 3400, Las Condes',
-          clientName: 'Carlos Ramírez',
-          visitDate: '2024-03-15',
-          status: 'PENDING',
-          earnings: 15000,
-          notes: 'Visita pendiente por realizar',
-          photos: [],
-          createdAt: '2024-03-14 15:30',
-          updatedAt: '2024-03-14 15:30',
-        },
-      ];
+  const fetchPhotoReports = async () => {
+    try {
+      setLoading(true);
+      const urlParams = new URLSearchParams();
+      if (statusFilter !== 'all') {
+        urlParams.append('status', statusFilter);
+      }
+      if (dateFilter !== 'all') {
+        urlParams.append('dateFilter', dateFilter);
+      }
 
-      setPhotoReports(mockPhotoReports);
-
-      // Calculate stats
-      const totalPhotos = mockPhotoReports.reduce((sum, report) => sum + report.photos.length, 0);
-      const pendingUploads = mockPhotoReports.filter(report => report.status === 'PENDING').length;
-      const uploadedThisMonth = mockPhotoReports
-        .filter(report => {
-          const uploadDate = new Date(report.createdAt);
-          const now = new Date();
-          return (
-            uploadDate.getMonth() === now.getMonth() &&
-            uploadDate.getFullYear() === now.getFullYear()
-          );
-        })
-        .reduce((sum, report) => sum + report.photos.length, 0);
-      const approvedPhotos = mockPhotoReports
-        .filter(report => report.status === 'APPROVED')
-        .reduce((sum, report) => sum + report.photos.length, 0);
-      const totalEarnings = mockPhotoReports
-        .filter(report => report.status === 'APPROVED')
-        .reduce((sum, report) => sum + report.earnings, 0);
-      const averageRating = 4.7; // Mock value
-      const completionRate = ((totalPhotos - pendingUploads) / totalPhotos) * 100;
-
-      setStats({
-        totalPhotos,
-        pendingUploads,
-        uploadedThisMonth,
-        approvedPhotos,
-        totalEarnings,
-        averageRating,
-        completionRate: Number(completionRate.toFixed(1)),
+      const response = await fetch(`/api/runner/photos?${urlParams.toString()}`, {
+        credentials: 'include',
       });
 
+      if (!response.ok) {
+        throw new Error('Error al cargar los reportes fotográficos');
+      }
+
+      const result = await response.json();
+      setPhotoReports(result.photoReports || []);
+      setStats(result.stats || {
+        totalPhotos: 0,
+        pendingUploads: 0,
+        uploadedThisMonth: 0,
+        approvedPhotos: 0,
+        totalEarnings: 0,
+        averageRating: 0,
+        completionRate: 0,
+      });
+    } catch (error: any) {
+      console.error('Error fetching photo reports:', error);
+      setPhotoReports([]);
+      setStats({
+        totalPhotos: 0,
+        pendingUploads: 0,
+        uploadedThisMonth: 0,
+        approvedPhotos: 0,
+        totalEarnings: 0,
+        averageRating: 0,
+        completionRate: 0,
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
+
+  useEffect(() => {
+    fetchPhotoReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, dateFilter]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -335,12 +249,12 @@ export default function RunnerPhotosPage() {
     }
   };
 
-  const handleUploadPhotos = (reportId: string) => {
-    router.push(`/runner/photos/upload?reportId=${reportId}`);
+  const handleUploadPhotos = (visitId: string) => {
+    router.push(`/runner/photos/upload?visitId=${visitId}`);
   };
 
-  const handleViewReport = (reportId: string) => {
-    router.push(`/runner/photos/${reportId}`);
+  const handleViewReport = (visitId: string) => {
+    router.push(`/runner/photos/${visitId}`);
   };
 
   const handleDownloadReport = (reportId: string) => {
@@ -662,7 +576,7 @@ export default function RunnerPhotosPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1"
-                        onClick={() => handleViewReport(report.id)}
+                        onClick={() => handleViewReport(report.visitId)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver
@@ -671,7 +585,7 @@ export default function RunnerPhotosPage() {
                         <Button
                           size="sm"
                           className="flex-1"
-                          onClick={() => handleUploadPhotos(report.id)}
+                          onClick={() => handleUploadPhotos(report.visitId)}
                         >
                           <Upload className="w-4 h-4 mr-1" />
                           Subir
@@ -773,7 +687,7 @@ export default function RunnerPhotosPage() {
                     <Button
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleViewReport(report.id)}
+                      onClick={() => handleViewReport(report.visitId)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       Ver Detalles
@@ -782,7 +696,7 @@ export default function RunnerPhotosPage() {
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleUploadPhotos(report.id)}
+                        onClick={() => handleUploadPhotos(report.visitId)}
                       >
                         <Upload className="w-4 h-4 mr-2" />
                         Subir Fotos
