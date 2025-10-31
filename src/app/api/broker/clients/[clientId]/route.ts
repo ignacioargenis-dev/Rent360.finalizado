@@ -285,9 +285,9 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       return sum + commission;
     }, 0);
 
-    // Determinar el tipo de cliente para el frontend
-    // Convertir OWNER -> 'owner', TENANT -> 'tenant', BOTH -> 'owner' (prioridad)
-    const clientTypeForFrontend = brokerClient.clientType === 'TENANT' ? 'tenant' : 'owner';
+    // Determinar el tipo de cliente - mantener mayúsculas para consistencia con el sistema
+    // OWNER, TENANT, BOTH (en mayúsculas como el schema de Prisma)
+    const clientTypeValue = brokerClient.clientType; // OWNER, TENANT, o BOTH
     
     // Obtener propiedades del cliente
     const clientPropertiesData = brokerClient.user.properties || [];
@@ -310,20 +310,23 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
     }
     
     // Formatear respuesta en el formato que espera el frontend
+    // Nota: El frontend espera minúsculas en getTypeBadge, pero mantenemos mayúsculas aquí
+    // El frontend deberá hacer toLowerCase() al usarlo en getTypeBadge si es necesario
     const clientDetail = {
       id: brokerClient.id,
       clientId: brokerClient.user.id,
       name: brokerClient.user.name || 'Sin nombre',
       email: brokerClient.user.email || '',
       phone: brokerClient.user.phone || '',
-      type: clientTypeForFrontend,
+      type: clientTypeValue.toLowerCase(), // Convertir a minúsculas solo para el frontend en este endpoint específico
+      clientType: clientTypeValue, // Mantener mayúsculas en campo adicional para consistencia
       status: brokerClient.status.toLowerCase() === 'active' ? 'active' : 'inactive',
       registrationDate: brokerClient.startDate.toISOString(),
       lastContact: lastContactDate.toISOString(),
       preferredContactMethod: 'email' as const, // Default, puede mejorarse
       
       // Budget y preferencias (para inquilinos)
-      budget: clientTypeForFrontend === 'tenant' ? {
+      budget: clientTypeValue === 'TENANT' || clientTypeValue === 'BOTH' ? {
         min: 0,
         max: 0,
         currency: 'CLP',
@@ -408,7 +411,7 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       clientId,
       brokerId: user.id,
       clientName: brokerClient.user.name,
-      clientType: clientTypeForFrontend,
+      clientType: clientTypeValue, // Mantener mayúsculas para consistencia con el sistema
     });
 
     return NextResponse.json({

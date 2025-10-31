@@ -382,7 +382,9 @@ export default function BrokerClientDetailPage() {
   };
 
   const getTypeBadge = (type: string) => {
-    switch (type) {
+    // Manejar tanto mayúsculas como minúsculas para compatibilidad
+    const normalizedType = type?.toLowerCase() || '';
+    switch (normalizedType) {
       case 'tenant':
         return (
           <Badge variant="outline" className="text-blue-600 border-blue-600">
@@ -393,6 +395,12 @@ export default function BrokerClientDetailPage() {
         return (
           <Badge variant="outline" className="text-green-600 border-green-600">
             Propietario
+          </Badge>
+        );
+      case 'both':
+        return (
+          <Badge variant="outline" className="text-purple-600 border-purple-600">
+            Ambos
           </Badge>
         );
       default:
@@ -616,7 +624,8 @@ export default function BrokerClientDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Tipo de Cliente</label>
                       <p className="font-semibold">
-                        {client.type === 'tenant' ? 'Inquilino' : 'Propietario'}
+                        {client.type?.toLowerCase() === 'tenant' ? 'Inquilino' : 
+                         client.type?.toLowerCase() === 'both' ? 'Ambos' : 'Propietario'}
                       </p>
                     </div>
                     <div>
@@ -638,7 +647,7 @@ export default function BrokerClientDetailPage() {
               </Card>
 
               {/* Preferences */}
-              {client.type === 'tenant' && (
+              {(client.type?.toLowerCase() === 'tenant' || client.type?.toLowerCase() === 'both') && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Preferencias de Búsqueda</CardTitle>
