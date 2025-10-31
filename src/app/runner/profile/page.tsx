@@ -167,71 +167,34 @@ export default function PerfilPage() {
       setLoading(true);
       setError(null);
 
-      // Mock runner profile data
-      const mockProfile = {
-        personalInfo: {
-          name: 'Carlos Mendoza',
-          email: 'carlos.mendoza@email.com',
-          phone: '+56 9 8765 4321',
-          avatar: '',
-          location: 'Santiago Centro',
-          joinDate: '2023-03-15',
-          status: 'active',
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const response = await fetch('/api/runner/profile', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        stats: {
-          totalVisits: 245,
-          completedTasks: 238,
-          avgRating: 4.7,
-          totalEarnings: 1250000,
-          responseTime: '2.3 horas',
-          completionRate: 97.1,
-        },
-        skills: [
-          { name: 'Fotografía Profesional', level: 'Experto', verified: true },
-          { name: 'Inspección de Propiedades', level: 'Avanzado', verified: true },
-          { name: 'Entrega de Llaves', level: 'Intermedio', verified: true },
-          { name: 'Reportes Técnicos', level: 'Avanzado', verified: false },
-          { name: 'Atención al Cliente', level: 'Experto', verified: true },
-        ],
-        experience: [
-          {
-            company: 'Rent360',
-            position: 'Runner Senior',
-            period: 'Mar 2023 - Presente',
-            description:
-              'Responsable de visitas de propiedades, fotografías profesionales y coordinación con clientes.',
-          },
-          {
-            company: 'Propiedades Express',
-            position: 'Asistente de Ventas',
-            period: 'Ene 2022 - Feb 2023',
-            description: 'Apoyo en ventas de propiedades y coordinación de visitas.',
-          },
-        ],
-        certifications: [
-          {
-            name: 'Certificación Fotografía Inmobiliaria',
-            issuer: 'ChileProp',
-            date: '2023-08-10',
-            validUntil: '2025-08-10',
-          },
-          {
-            name: 'Curso Seguridad en Propiedades',
-            issuer: 'SENCE',
-            date: '2023-05-15',
-            validUntil: '2024-05-15',
-          },
-        ],
-        equipment: [
-          'Cámara DSLR Canon EOS R',
-          'Tripode profesional',
-          'Medidor láser',
-          'Kit de herramientas básicas',
-          'Dispositivo GPS',
-        ],
-      };
+      });
 
-      setData(mockProfile);
+      if (!response.ok) {
+        throw new Error(`Error al cargar perfil: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setData({
+          personalInfo: result.personalInfo || {},
+          stats: result.stats || {},
+          skills: result.skills || [],
+          experience: result.experience || [],
+          certifications: result.certifications || [],
+          equipment: result.equipment || [],
+        });
+      } else {
+        throw new Error('Error en respuesta de la API');
+      }
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
