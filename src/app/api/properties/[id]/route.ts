@@ -100,6 +100,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       },
     });
 
+    // ✅ CORREGIDO: Determinar si es propia del broker
+    // Si hay BrokerPropertyManagement activo, NO es propia (está gestionada)
+    // Si NO hay BrokerPropertyManagement Y ownerId === brokerId, es propia
+    const isOwned = !managedProperty && property.ownerId === property.brokerId;
+
     // Formatear la respuesta
     const formattedProperty = {
       id: property.id,
@@ -114,7 +119,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       // ✅ CRÍTICO: Información de ownership para determinar si se puede editar
       ownerId: property.ownerId,
       brokerId: property.brokerId,
-      isOwned: managedProperty ? false : true, // Si está gestionada, no es propia
+      isOwned: isOwned,
       managementType: managedProperty ? managedProperty.managementType : 'owner',
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
