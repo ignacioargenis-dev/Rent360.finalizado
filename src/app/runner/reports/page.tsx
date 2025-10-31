@@ -88,60 +88,63 @@ export default function ReportesPage() {
   useEffect(() => {
     // Cargar datos de la página
     loadPageData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.reportType, filters.dateFrom, filters.dateTo]);
 
   const loadPageData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Mock reports data for runner
-      const mockReports = {
-        overview: {
-          totalVisits: 156,
-          totalConversions: 23,
-          conversionRate: 14.7,
-          avgVisitDuration: 45,
-          topPerformingAreas: ['Las Condes', 'Providencia', 'Vitacura'],
-          monthlyGrowth: 8.5,
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const params = new URLSearchParams();
+      params.append('type', filters.reportType !== 'all' ? filters.reportType : 'performance');
+      if (filters.dateFrom) params.append('startDate', filters.dateFrom);
+      if (filters.dateTo) params.append('endDate', filters.dateTo);
+
+      const response = await fetch(`/api/runner/reports?${params.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        conversions: {
-          byType: [
-            { type: 'Alquiler', count: 12, percentage: 52.2 },
-            { type: 'Venta', count: 8, percentage: 34.8 },
-            { type: 'Información', count: 3, percentage: 13.0 },
-          ],
-          byProperty: [
-            { property: 'Departamento Las Condes', conversions: 5 },
-            { property: 'Casa Providencia', conversions: 3 },
-            { property: 'Estudio Centro', conversions: 2 },
-          ],
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar reportes: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const reportData = result.data || {};
+
+      // Transformar datos al formato esperado (adaptable según lo que devuelva el servicio)
+      const transformedData = {
+        overview: reportData.overview || {
+          totalVisits: reportData.totalVisits || 0,
+          totalConversions: reportData.totalConversions || 0,
+          conversionRate: reportData.conversionRate || 0,
+          avgVisitDuration: reportData.averageDuration || 0,
+          topPerformingAreas: reportData.topAreas || [],
+          monthlyGrowth: reportData.growth || 0,
         },
-        visits: {
-          byDay: [
-            { day: 'Lunes', visits: 28, conversions: 4 },
-            { day: 'Martes', visits: 32, conversions: 6 },
-            { day: 'Miércoles', visits: 35, conversions: 5 },
-            { day: 'Jueves', visits: 31, conversions: 4 },
-            { day: 'Viernes', visits: 30, conversions: 4 },
-          ],
-          byTime: [
-            { time: '09:00-11:00', visits: 25 },
-            { time: '11:00-13:00', visits: 35 },
-            { time: '14:00-16:00', visits: 42 },
-            { time: '16:00-18:00', visits: 38 },
-            { time: '18:00-20:00', visits: 16 },
-          ],
+        conversions: reportData.conversions || {
+          byType: reportData.conversionsByType || [],
+          byProperty: reportData.conversionsByProperty || [],
         },
-        performance: {
-          avgRating: 4.3,
-          totalPhotos: 1247,
-          reportsSubmitted: 89,
-          tasksCompleted: 145,
+        visits: reportData.visits || {
+          byDay: reportData.visitsByDay || [],
+          byTime: reportData.visitsByTime || [],
+        },
+        performance: reportData.performance || {
+          avgRating: reportData.averageRating || 0,
+          totalPhotos: reportData.totalPhotos || 0,
+          reportsSubmitted: reportData.reportsSubmitted || 0,
+          tasksCompleted: reportData.tasksCompleted || 0,
         },
       };
 
-      setData(mockReports);
+      setData(transformedData);
     } catch (error) {
       logger.error('Error loading page data:', {
         error: error instanceof Error ? error.message : String(error),
