@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Obtener estadísticas del dashboard
-    const [contractStats, propertyStats, commissionData, recentActivity] = await Promise.all([
+    const [contractStats, propertyStats, commissionData, ...recentActivityData] = await Promise.all([
       // Estadísticas de contratos
       Promise.all([
         // Propiedades totales gestionadas (contratos no draft)
@@ -199,11 +199,12 @@ export async function GET(request: NextRequest) {
         }),
       ]),
 
-      // Actividad reciente
+      // ✅ CORREGIDO: Actividad reciente - incluir múltiples fuentes
+      // Obtener actividades de auditLog
       db.auditLog.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
-        take: 10,
+        take: 20,
         select: {
           id: true,
           action: true,
@@ -211,6 +212,49 @@ export async function GET(request: NextRequest) {
           entityId: true,
           newValues: true,
           createdAt: true,
+        },
+      }),
+      
+      // Obtener propiedades creadas recientemente por el broker (últimos 30 días)
+      db.property.findMany({
+        where: {
+          OR: [
+            { ownerId: user.id },
+            { brokerId: user.id },
+          ],
+          createdAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+        },
+      }),
+      
+      // Obtener clientes creados recientemente (conversiones de prospectos, últimos 30 días)
+      db.brokerClient.findMany({
+        where: {
+          brokerId: user.id,
+          createdAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          userId: true,
+          clientType: true,
+          createdAt: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
     ]);
@@ -224,6 +268,7 @@ export async function GET(request: NextRequest) {
       managedPropertiesCount,
     ] = propertyStats;
     const [contractsForCommissions, activeClientsCount] = commissionData;
+    const [recentActivity, recentPropertiesCreated, recentClientsCreated] = recentActivityData;
 
     // Calcular comisiones dinámicamente
     // Asumiendo una comisión del 5% del arriendo mensual por contrato
@@ -470,14 +515,42 @@ export async function GET(request: NextRequest) {
         propertyTitle: commission.contract.property.title,
         createdAt: commission.createdAt.toISOString(),
       })),
-      recentActivity: recentActivity.map(activity => ({
-        id: activity.id,
-        action: activity.action,
-        entityType: activity.entityType,
-        entityId: activity.entityId,
-        createdAt: activity.createdAt.toISOString(),
-        newValues: activity.newValues,
-      })),
+      // ✅ CORREGIDO: Combinar actividades de múltiples fuentes
+      recentActivity: [
+        // Actividades de auditLog
+        ...recentActivity.map(activity => ({
+          id: `audit-${activity.id}`,
+          type: 'audit',
+          action: activity.action,
+          entityType: activity.entityType,
+          entityId: activity.entityId,
+          description: `${activity.action} en ${activity.entityType}`,
+          createdAt: activity.createdAt.toISOString(),
+          newValues: activity.newValues,
+        })),
+        // Propiedades creadas recientemente
+        ...recentPropertiesCreated.map(property => ({
+          id: `property-${property.id}`,
+          type: 'property_created',
+          action: 'CREATED',
+          entityType: 'PROPERTY',
+          entityId: property.id,
+          description: `Propiedad "${property.title}" creada`,
+          createdAt: property.createdAt.toISOString(),
+        })),
+        // Clientes creados recientemente (conversiones)
+        ...recentClientsCreated.map(client => ({
+          id: `client-${client.id}`,
+          type: 'client_converted',
+          action: 'CONVERTED',
+          entityType: 'CLIENT',
+          entityId: client.id,
+          description: `Cliente "${client.user?.name || 'Nuevo cliente'}" (${client.clientType}) agregado`,
+          createdAt: client.createdAt.toISOString(),
+        })),
+      ]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 20), // Limitar a las 20 más recientes
     };
 
     logger.info('✅ [DASHBOARD] Dashboard del corredor obtenido exitosamente', {

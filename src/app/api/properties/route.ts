@@ -238,15 +238,34 @@ export async function POST(request: NextRequest) {
       ownerId = decoded.id;
     }
 
-    // Verificar configuración de aprobación automática
-    const autoApprovalSetting = await db.systemSetting.findFirst({
-      where: {
-        category: 'property_approval',
-        key: 'auto_approval_enabled',
-      },
-    });
+    // ✅ CORREGIDO: Verificar configuración de aprobación automática
+    // Buscar ambas claves posibles (la que usa el admin es 'autoApproveProperties' en categoría 'properties')
+    const [autoApprovalSetting1, autoApprovalSetting2] = await Promise.all([
+      db.systemSetting.findFirst({
+        where: {
+          category: 'property_approval',
+          key: 'auto_approval_enabled',
+        },
+      }),
+      db.systemSetting.findFirst({
+        where: {
+          category: 'properties',
+          key: 'autoApproveProperties',
+        },
+      }),
+    ]);
 
-    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true';
+    const autoApprovalSetting = autoApprovalSetting1 || autoApprovalSetting2;
+    // Verificar si está habilitado (puede ser 'true' como string o true como booleano convertido a string)
+    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true' || autoApprovalSetting?.value === true || autoApprovalSetting?.value === '1';
+    
+    console.log('✅ [PROPERTIES] Configuración de aprobación automática:', {
+      found: !!autoApprovalSetting,
+      key: autoApprovalSetting?.key,
+      category: autoApprovalSetting?.category,
+      value: autoApprovalSetting?.value,
+      isEnabled: isAutoApprovalEnabled,
+    });
 
     // Crear propiedad en la base de datos
     console.log('💾 [PROPERTIES] Creando propiedad en la base de datos...');
