@@ -102,76 +102,89 @@ export default function RunnerEarningsPage() {
       setLoading(true);
       setError(null);
 
-      // Mock data for runner earnings
-      const mockPayments: VisitPayment[] = [
-        {
-          id: '1',
-          propertyTitle: 'Casa en Las Condes',
-          propertyAddress: 'Av. Las Condes 1234',
-          clientName: 'María González',
-          amount: 25000,
-          status: 'paid',
-          paymentDate: '2024-01-15',
-          visitDate: '2024-01-10',
-          dueDate: '2024-01-15',
-          rating: 5,
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const response = await fetch('/api/runner/earnings?period=month&limit=100', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        {
-          id: '2',
-          propertyTitle: 'Departamento Vitacura',
-          propertyAddress: 'Calle Vitacura 567',
-          clientName: 'Carlos Rodríguez',
-          amount: 30000,
-          status: 'paid',
-          paymentDate: '2024-02-01',
-          visitDate: '2024-01-25',
-          dueDate: '2024-02-01',
-          rating: 4,
-        },
-        {
-          id: '3',
-          propertyTitle: 'Oficina Providencia',
-          propertyAddress: 'Providencia 890',
-          clientName: 'Ana López',
-          amount: 20000,
-          status: 'pending',
-          visitDate: '2024-02-20',
-          dueDate: '2024-03-01',
-        },
-        {
-          id: '4',
-          propertyTitle: 'Local Santiago Centro',
-          propertyAddress: 'Centro 456',
-          clientName: 'Pedro Sánchez',
-          amount: 35000,
-          status: 'overdue',
-          visitDate: '2024-01-15',
-          dueDate: '2024-01-30',
-        },
-      ];
+      });
 
-      const mockStats: EarningsStats = {
-        totalEarned: 110000,
-        thisMonth: 30000,
-        pending: 20000,
-        averagePerVisit: 27500,
-        completionRate: 92,
-      };
+      if (!response.ok) {
+        throw new Error(`Error al cargar ganancias: ${response.status}`);
+      }
 
-      const mockEarnings: EarningsData = {
-        totalEarnings: 110000,
-        thisMonthEarnings: 30000,
-        pendingPayments: 55000,
-        completedVisits: 4,
-        averageRating: 4.5,
-      };
+      const result = await response.json();
+      const earningsData = result.data || {};
+      const earningsList = earningsData.earnings || [];
+      const statsData = earningsData.stats || {};
 
-      setPayments(mockPayments);
-      setStats(mockStats);
-      setEarnings(mockEarnings);
+      // Transformar datos al formato esperado
+      const transformedPayments: VisitPayment[] = earningsList.map((earning: any) => {
+        const visitDate = new Date(earning.visitDate);
+        const paymentDate = earning.status === 'PAID' ? visitDate : undefined;
+        const dueDate = new Date(visitDate);
+        dueDate.setDate(dueDate.getDate() + 7); // 7 días después de la visita
 
-      // Simular carga
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        // Determinar status basado en fecha
+        let paymentStatus: 'paid' | 'pending' | 'overdue' = 'pending';
+        const now = new Date();
+        if (earning.status === 'PAID' || paymentDate) {
+          paymentStatus = 'paid';
+        } else if (dueDate < now) {
+          paymentStatus = 'overdue';
+        }
+
+        return {
+          id: earning.id || earning.visitId,
+          propertyTitle: earning.propertyTitle || 'Sin título',
+          propertyAddress: earning.propertyAddress || '',
+          clientName: earning.clientName || 'Sin cliente',
+          amount: earning.earnings || 0,
+          status: paymentStatus,
+          paymentDate: paymentDate?.toISOString().split('T')[0],
+          visitDate: visitDate.toISOString().split('T')[0],
+          dueDate: dueDate.toISOString().split('T')[0],
+          rating: earning.rating || undefined,
+        };
+      });
+
+      // Calcular estadísticas adicionales
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const thisMonthEarnings = transformedPayments
+        .filter(p => {
+          if (!p.paymentDate) return false;
+          const paymentDate = new Date(p.paymentDate);
+          return paymentDate >= monthStart;
+        })
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const pendingPayments = transformedPayments
+        .filter(p => p.status === 'pending' || p.status === 'overdue')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const averagePerVisit = transformedPayments.length > 0
+        ? transformedPayments.reduce((sum, p) => sum + p.amount, 0) / transformedPayments.length
+        : 0;
+
+      setPayments(transformedPayments);
+      setStats({
+        totalEarned: statsData.totalEarnings || 0,
+        thisMonth: thisMonthEarnings,
+        pending: pendingPayments,
+        averagePerVisit: Math.round(averagePerVisit),
+        completionRate: 0, // TODO: Calcular desde visitas
+      });
+      setEarnings({
+        totalEarnings: statsData.totalEarnings || 0,
+        thisMonthEarnings,
+        pendingPayments,
+        completedVisits: statsData.totalVisits || 0,
+        averageRating: statsData.averageRating || 0,
+      });
     } catch (error) {
       logger.error('Error loading runner earnings:', {
         error: error instanceof Error ? error.message : String(error),
