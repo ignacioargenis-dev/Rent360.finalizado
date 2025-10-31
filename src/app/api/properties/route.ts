@@ -256,8 +256,8 @@ export async function POST(request: NextRequest) {
     ]);
 
     const autoApprovalSetting = autoApprovalSetting1 || autoApprovalSetting2;
-    // Verificar si está habilitado (puede ser 'true' como string o true como booleano convertido a string)
-    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true' || autoApprovalSetting?.value === true || autoApprovalSetting?.value === '1';
+    // Verificar si está habilitado (value es string, puede ser 'true' o '1')
+    const isAutoApprovalEnabled = autoApprovalSetting?.value === 'true' || autoApprovalSetting?.value === '1';
     
     console.log('✅ [PROPERTIES] Configuración de aprobación automática:', {
       found: !!autoApprovalSetting,
