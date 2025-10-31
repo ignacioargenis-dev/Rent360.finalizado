@@ -365,10 +365,10 @@ export async function GET(request: NextRequest) {
 
     // Calcular valor total del portafolio (propias + gestionadas)
     const [ownPropertiesValue, managedPropertiesValue] = await Promise.all([
-      // Valor de propiedades propias
+      // Valor de propiedades propias (usar ownerId para consistencia)
       db.property
         .findMany({
-          where: { brokerId: user.id },
+          where: { ownerId: user.id },
           select: { price: true },
         })
         .then(properties => properties.reduce((sum, prop) => sum + (prop.price || 0), 0)),

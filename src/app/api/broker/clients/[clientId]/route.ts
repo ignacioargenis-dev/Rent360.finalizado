@@ -158,6 +158,63 @@ export async function GET(request: NextRequest, { params }: { params: { clientId
       });
     }
 
+    // Si aún no se encuentra, buscar clientes que tienen contratos pero no relación BrokerClient
+    if (!brokerClient) {
+      // Verificar si el clienteId corresponde a un usuario con contratos
+      const clientUser = await db.user.findUnique({
+        where: { id: clientId },
+        include: {
+          contractsAsOwner: {
+            where: {
+              brokerId: user.id,
+              status: { in: ['ACTIVE', 'PENDING'] },
+            },
+            take: 1,
+          },
+          contractsAsTenant: {
+            where: {
+              brokerId: user.id,
+              status: { in: ['ACTIVE', 'PENDING'] },
+            },
+            take: 1,
+          },
+        },
+      });
+
+      if (clientUser && (clientUser.contractsAsOwner.length > 0 || clientUser.contractsAsTenant.length > 0)) {
+        // Crear un objeto similar a brokerClient para mantener compatibilidad
+        brokerClient = {
+          id: `temp_${clientUser.id}`,
+          userId: clientUser.id,
+          brokerId: user.id,
+          status: 'ACTIVE' as const,
+          managementType: 'FULL' as const,
+          commissionRate: 5,
+          exclusivity: false,
+          startDate: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          user: {
+            id: clientUser.id,
+            name: clientUser.name || '',
+            email: clientUser.email || '',
+            phone: clientUser.phone || null,
+            avatar: clientUser.avatar || null,
+            role: clientUser.role,
+            rut: clientUser.rut || null,
+            address: clientUser.address || null,
+            city: clientUser.city || null,
+            commune: clientUser.commune || null,
+            region: clientUser.region || null,
+            createdAt: clientUser.createdAt,
+            properties: [],
+          },
+          managedProperties: [],
+          prospect: null,
+        } as any;
+      }
+    }
+
     if (!brokerClient) {
       logger.warn('Broker client relationship not found', {
         clientId,
