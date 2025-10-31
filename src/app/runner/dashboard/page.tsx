@@ -113,14 +113,62 @@ export default function RunnerDashboard() {
   useEffect(() => {
     const loadRunnerData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
+        // ✅ CORREGIDO: Obtener datos reales desde la API
+        const response = await fetch('/api/runner/dashboard', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+          },
+        });
 
-        // SIEMPRE mostrar dashboard vacío para usuarios nuevos
-        // Los datos mock solo aparecen para usuarios seed con @rent360.cl (para testing)
-        if (isNewUser || !user?.email?.includes('@rent360.cl')) {
-          // Usuario nuevo O usuario real (no seed) - mostrar dashboard vacío con bienvenida
+        if (!response.ok) {
+          throw new Error(`Error al cargar dashboard: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          // Transformar visitas de hoy
+          const transformedTodayVisits = (result.todayVisits || []).map((visit: any) => ({
+            id: visit.id,
+            propertyTitle: visit.propertyTitle || 'Sin título',
+            address: visit.address || '',
+            clientName: visit.clientName || 'Sin cliente',
+            clientPhone: visit.clientPhone || 'No disponible',
+            scheduledDate: visit.scheduledDate?.split('T')[0] || '',
+            scheduledTime: visit.scheduledTime || '',
+            status: visit.status || 'PENDING',
+            priority: visit.priority || 'MEDIUM',
+            estimatedDuration: visit.estimatedDuration || 30,
+            notes: visit.notes || '',
+          }));
+
+          // Transformar actividad reciente
+          const transformedRecentActivity = (result.recentActivity || []).map((activity: any) => ({
+            id: activity.id,
+            type: activity.type || 'visit',
+            title: activity.title || 'Actividad',
+            description: activity.description || '',
+            date: activity.date || new Date().toISOString(),
+            status: activity.status,
+          }));
+
+          setStats({
+            totalVisits: result.stats?.totalVisits || 0,
+            completedVisits: result.stats?.completedVisits || 0,
+            pendingVisits: result.stats?.pendingVisits || 0,
+            monthlyEarnings: result.stats?.monthlyEarnings || 0,
+            averageRating: result.stats?.averageRating || 0,
+            responseTime: result.stats?.responseTime || 0,
+          });
+          
+          setTodayVisits(transformedTodayVisits);
+          setRecentActivity(transformedRecentActivity);
+          setPerformanceMetrics(result.performanceMetrics || []);
+        } else {
+          // Si no hay datos, mostrar dashboard vacío
           setStats({
             totalVisits: 0,
             completedVisits: 0,
@@ -130,126 +178,26 @@ export default function RunnerDashboard() {
             responseTime: 0,
           });
           setTodayVisits([]);
+          setRecentActivity([]);
           setPerformanceMetrics([]);
-          setLoading(false);
-          return;
-        } else {
-          // Solo usuarios seed con @rent360.cl ven datos mock (para testing)
-          setStats({
-            totalVisits: 156,
-            completedVisits: 142,
-            pendingVisits: 4,
-            monthlyEarnings: 450000,
-            averageRating: 4.9,
-            responseTime: 15,
-          });
-
-          setTodayVisits([
-            {
-              id: '1',
-              propertyTitle: 'Departamento Las Condes',
-              address: 'Av. Apoquindo 3400, Las Condes',
-              clientName: 'Carlos Ramírez',
-              clientPhone: '+56 9 1234 5678',
-              scheduledDate: '2024-03-15',
-              scheduledTime: '10:00',
-              status: 'PENDING',
-              priority: 'HIGH',
-              estimatedDuration: 30,
-              notes: 'Cliente necesita ver estacionamiento y bodega',
-            },
-            {
-              id: '2',
-              propertyTitle: 'Oficina Providencia',
-              address: 'Av. Providencia 1245, Providencia',
-              clientName: 'Ana Martínez',
-              clientPhone: '+56 9 8765 4321',
-              scheduledDate: '2024-03-15',
-              scheduledTime: '14:30',
-              status: 'PENDING',
-              priority: 'MEDIUM',
-              estimatedDuration: 45,
-            },
-            {
-              id: '3',
-              propertyTitle: 'Casa Vitacura',
-              address: 'Av. Vitacura 8900, Vitacura',
-              clientName: 'Pedro Silva',
-              clientPhone: '+56 9 2345 6789',
-              scheduledDate: '2024-03-15',
-              scheduledTime: '16:00',
-              status: 'COMPLETED',
-              priority: 'LOW',
-              estimatedDuration: 60,
-            },
-          ]);
-
-          setRecentActivity([
-            {
-              id: '1',
-              type: 'visit',
-              title: 'Visita completada',
-              description: 'Visita a Casa Vitacura finalizada exitosamente',
-              date: '2024-03-15 16:45',
-              status: 'COMPLETED',
-            },
-            {
-              id: '2',
-              type: 'rating',
-              title: 'Excelente calificación',
-              description: 'Pedro Silva te calificó con 5 estrellas',
-              date: '2024-03-15 17:00',
-            },
-            {
-              id: '3',
-              type: 'payment',
-              title: 'Pago recibido',
-              description: 'Pago por visita a Casa Vitacura: $15.000',
-              date: '2024-03-15 17:30',
-              status: 'COMPLETED',
-            },
-            {
-              id: '4',
-              type: 'message',
-              title: 'Nuevo mensaje',
-              description: 'Mensaje de Ana Martínez sobre visita de mañana',
-              date: '2024-03-15 18:00',
-            },
-          ]);
-
-          setPerformanceMetrics([
-            {
-              label: 'Tasa de Completitud',
-              value: '91%',
-              change: '+3%',
-              trend: 'up',
-            },
-            {
-              label: 'Tiempo Promedio',
-              value: '42 min',
-              change: '-5 min',
-              trend: 'up',
-            },
-            {
-              label: 'Satisfacción',
-              value: '4.9/5',
-              change: '+0.2',
-              trend: 'up',
-            },
-            {
-              label: 'Ingresos Mensuales',
-              value: '$450.000',
-              change: '+12%',
-              trend: 'up',
-            },
-          ]);
-
-          setLoading(false);
         }
       } catch (error) {
         logger.error('Error loading runner data:', {
           error: error instanceof Error ? error.message : String(error),
         });
+        // En caso de error, mostrar dashboard vacío
+        setStats({
+          totalVisits: 0,
+          completedVisits: 0,
+          pendingVisits: 0,
+          monthlyEarnings: 0,
+          averageRating: 0,
+          responseTime: 0,
+        });
+        setTodayVisits([]);
+        setRecentActivity([]);
+        setPerformanceMetrics([]);
+      } finally {
         setLoading(false);
       }
     };

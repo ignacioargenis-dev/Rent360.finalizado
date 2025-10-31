@@ -100,146 +100,85 @@ export default function RunnerVisitsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      const mockVisits: Visit[] = [
-        {
-          id: '1',
-          propertyTitle: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          clientName: 'Carlos Ramírez',
-          clientPhone: '+56 9 1234 5678',
-          clientEmail: 'carlos@ejemplo.com',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '10:00',
-          status: 'PENDING',
-          priority: 'HIGH',
-          estimatedDuration: 30,
-          earnings: 15000,
-          notes: 'Cliente necesita ver estacionamiento y bodega',
-          photosRequired: true,
-          photosUploaded: 0,
-          createdAt: '2024-03-14 15:30',
-          updatedAt: '2024-03-14 15:30',
+  const fetchVisits = async () => {
+    try {
+      setLoading(true);
+      // ✅ CORREGIDO: Obtener datos reales desde la API
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
+      
+      const response = await fetch(`/api/runner/visits?${params.toString()}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
         },
-        {
-          id: '2',
-          propertyTitle: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          clientName: 'Ana Martínez',
-          clientPhone: '+56 9 8765 4321',
-          clientEmail: 'ana@ejemplo.com',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '14:30',
-          status: 'IN_PROGRESS',
-          priority: 'MEDIUM',
-          estimatedDuration: 45,
-          actualDuration: 0,
-          earnings: 20000,
-          photosRequired: true,
-          photosUploaded: 0,
-          createdAt: '2024-03-14 16:45',
-          updatedAt: '2024-03-15 14:30',
-        },
-        {
-          id: '3',
-          propertyTitle: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          clientName: 'Pedro Silva',
-          clientPhone: '+56 9 2345 6789',
-          clientEmail: 'pedro@ejemplo.com',
-          scheduledDate: '2024-03-15',
-          scheduledTime: '16:00',
-          status: 'COMPLETED',
-          priority: 'LOW',
-          estimatedDuration: 60,
-          actualDuration: 55,
-          earnings: 25000,
-          notes: 'Visita exitosa, cliente muy interesado',
-          photosRequired: true,
-          photosUploaded: 12,
-          clientRating: 5,
-          clientFeedback: 'Excelente servicio, muy profesional',
-          createdAt: '2024-03-14 09:20',
-          updatedAt: '2024-03-15 17:00',
-        },
-        {
-          id: '4',
-          propertyTitle: 'Departamento Providencia',
-          address: 'Av. Providencia 2345, Providencia',
-          clientName: 'Laura Fernández',
-          clientPhone: '+56 9 3456 7890',
-          clientEmail: 'laura@ejemplo.com',
-          scheduledDate: '2024-03-14',
-          scheduledTime: '11:00',
-          status: 'COMPLETED',
-          priority: 'MEDIUM',
-          estimatedDuration: 40,
-          actualDuration: 42,
-          earnings: 18000,
-          photosRequired: true,
-          photosUploaded: 8,
-          clientRating: 4,
-          clientFeedback: 'Buen servicio, puntual y amable',
-          createdAt: '2024-03-13 14:15',
-          updatedAt: '2024-03-14 11:45',
-        },
-        {
-          id: '5',
-          propertyTitle: 'Local Comercial Centro',
-          address: 'Ahumada 456, Santiago',
-          clientName: 'Roberto Gómez',
-          clientPhone: '+56 9 4567 8901',
-          clientEmail: 'roberto@ejemplo.com',
-          scheduledDate: '2024-03-16',
-          scheduledTime: '09:00',
-          status: 'PENDING',
-          priority: 'URGENT',
-          estimatedDuration: 30,
-          earnings: 22000,
-          notes: 'Cliente necesita visita urgente antes de fin de mes',
-          photosRequired: true,
-          photosUploaded: 0,
-          createdAt: '2024-03-15 18:20',
-          updatedAt: '2024-03-15 18:20',
-        },
-      ];
-
-      setVisits(mockVisits);
-
-      // Calculate stats
-      const totalVisits = mockVisits.length;
-      const completedVisits = mockVisits.filter(v => v.status === 'COMPLETED').length;
-      const pendingVisits = mockVisits.filter(v => v.status === 'PENDING').length;
-      const inProgressVisits = mockVisits.filter(v => v.status === 'IN_PROGRESS').length;
-      const cancelledVisits = mockVisits.filter(v => v.status === 'CANCELLED').length;
-      const totalEarnings = mockVisits
-        .filter(v => v.status === 'COMPLETED')
-        .reduce((sum, v) => sum + v.earnings, 0);
-      const averageRating =
-        mockVisits.filter(v => v.clientRating).reduce((sum, v) => sum + (v.clientRating || 0), 0) /
-        mockVisits.filter(v => v.clientRating).length;
-      const completionRate = (completedVisits / totalVisits) * 100;
-      const averageResponseTime = 15; // Mock value
-
-      setStats({
-        totalVisits,
-        completedVisits,
-        pendingVisits,
-        inProgressVisits,
-        cancelledVisits,
-        totalEarnings,
-        averageRating: Number(averageRating.toFixed(1)),
-        completionRate: Number(completionRate.toFixed(1)),
-        averageResponseTime,
       });
 
+      if (!response.ok) {
+        throw new Error(`Error al cargar visitas: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const visitsData = result.visits || [];
+      const statsData = result.stats || {};
+
+      // Transformar datos al formato esperado
+      const transformedVisits: Visit[] = visitsData.map((visit: any) => ({
+        id: visit.id,
+        propertyTitle: visit.propertyTitle || 'Sin título',
+        address: visit.address || '',
+        clientName: visit.clientName || 'Sin cliente',
+        clientPhone: visit.clientPhone || 'No disponible',
+        clientEmail: visit.clientEmail || 'No disponible',
+        scheduledDate: visit.scheduledDate || '',
+        scheduledTime: visit.scheduledTime || '',
+        status: visit.status || 'PENDING',
+        priority: visit.priority || 'MEDIUM',
+        estimatedDuration: visit.estimatedDuration || 30,
+        actualDuration: visit.actualDuration,
+        earnings: visit.earnings || 0,
+        notes: visit.notes || '',
+        photosRequired: visit.photosRequired !== undefined ? visit.photosRequired : true,
+        photosUploaded: visit.photosUploaded || 0,
+        clientRating: visit.clientRating,
+        clientFeedback: visit.clientFeedback,
+        createdAt: visit.createdAt || new Date().toISOString(),
+        updatedAt: visit.updatedAt || new Date().toISOString(),
+      }));
+
+      setVisits(transformedVisits);
+      setStats({
+        totalVisits: statsData.totalVisits || 0,
+        completedVisits: statsData.completedVisits || 0,
+        pendingVisits: statsData.pendingVisits || 0,
+        inProgressVisits: statsData.inProgressVisits || 0,
+        cancelledVisits: statsData.cancelledVisits || 0,
+        totalEarnings: statsData.totalEarnings || 0,
+        averageRating: statsData.averageRating || 0,
+        completionRate: statsData.completionRate || 0,
+        averageResponseTime: statsData.averageResponseTime || 0,
+      });
+      setError(null);
+    } catch (error) {
+      setError('Error al cargar las visitas');
+      logger.error('Error fetching visits:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
+
+  useEffect(() => {
+    // ✅ CORREGIDO: Cargar datos reales
+    fetchVisits();
+  }, [statusFilter, priorityFilter, dateFilter]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
