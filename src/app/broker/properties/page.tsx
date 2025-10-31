@@ -90,6 +90,8 @@ export default function BrokerPropertiesPage() {
 
   const loadPropertiesData = async (statusFilter = filterStatus) => {
     try {
+      console.log('🔍 [PROPERTIES] Iniciando carga de propiedades...', { statusFilter });
+      
       // ✅ CORREGIDO: Usar la API específica de broker que incluye propiedades gestionadas
       const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
       const url = `${baseUrl}/api/broker/properties?status=${statusFilter}&limit=50`;
@@ -102,9 +104,25 @@ export default function BrokerPropertiesPage() {
         },
       });
 
+      console.log('📡 [PROPERTIES] Respuesta recibida:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      });
+
       if (response.ok) {
         const data = await response.json();
         const propertiesData = data.data || [];
+        
+        console.log('📊 [PROPERTIES] Propiedades recibidas:', {
+          count: propertiesData.length,
+          propiedades: propertiesData.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            ownerName: p.ownerName,
+            managementType: p.managementType
+          }))
+        });
 
         // Transformar datos de la API al formato esperado por el componente
         const transformedProperties: BrokerProperty[] = propertiesData.map((property: any) => ({
@@ -158,8 +176,15 @@ export default function BrokerPropertiesPage() {
           totalInquiries,
         };
 
+        console.log('✅ [PROPERTIES] Estadísticas calculadas:', propertyStats);
         setStats(propertyStats);
       } else {
+        const errorText = await response.text();
+        console.error('❌ [PROPERTIES] Error al cargar propiedades:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
         logger.error('Error loading properties from API:', {
           status: response.status,
           statusText: response.statusText,
@@ -179,6 +204,10 @@ export default function BrokerPropertiesPage() {
       }
       setLoading(false);
     } catch (error) {
+      console.error('❌ [PROPERTIES] Error crítico:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       logger.error('Error loading properties data:', {
         error: error instanceof Error ? error.message : String(error),
       });

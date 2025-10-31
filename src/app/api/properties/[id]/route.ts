@@ -10,6 +10,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const propertyId = params.id;
 
+    // ✅ CRÍTICO: Log inicial para debugging
+    console.log('🔍 [GET_PROPERTY] Iniciando GET /api/properties/[id]', {
+      propertyId,
+      url: request.url,
+      method: request.method,
+      hasCookies: !!request.cookies,
+      cookieNames: request.cookies.getAll().map(c => c.name),
+    });
+
     logger.info('Fetching property details', { propertyId });
 
     // Buscar la propiedad con información del propietario
@@ -47,9 +56,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     });
 
     if (!property) {
+      console.warn('⚠️ [GET_PROPERTY] Propiedad no encontrada', { propertyId });
       logger.warn('Property not found', { propertyId });
       return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
+    
+    console.log('✅ [GET_PROPERTY] Propiedad encontrada', {
+      propertyId,
+      title: property.title,
+      ownerId: property.ownerId,
+      brokerId: property.brokerId,
+      hasImages: !!property.images,
+    });
 
     // Obtener las imágenes de la propiedad
     const originalImages = property.images
@@ -134,6 +152,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       currency: 'CLP', // Valor por defecto
     };
 
+    console.log('✅ [GET_PROPERTY] Detalles de propiedad obtenidos exitosamente', {
+      propertyId,
+      title: formattedProperty.title,
+      hasImages: transformedImages.length > 0,
+      imageCount: transformedImages.length,
+      ownerId: property.owner?.id,
+      ownerName: property.owner?.name,
+      brokerId: property.brokerId,
+      price: property.price,
+    });
+    
     logger.info('Property details fetched successfully', {
       propertyId,
       hasImages: transformedImages.length > 0,

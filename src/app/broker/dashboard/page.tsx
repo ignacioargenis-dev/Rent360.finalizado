@@ -135,39 +135,10 @@ export default function BrokerDashboardPage() {
 
     const loadBrokerData = async () => {
       try {
-        // Detectar si es un usuario nuevo (menos de 1 hora desde creación)
-        const isNewUser =
-          !user?.createdAt || Date.now() - new Date(user.createdAt).getTime() < 3600000;
-
-        // Para usuarios nuevos, mostrar dashboard vacío con bienvenida
-        if (isNewUser) {
-          setProperties([]);
-          setClients([]);
-          setRecentActivities([
-            {
-              id: 'welcome',
-              type: 'commission',
-              description:
-                '¡Bienvenido a Rent360! Tu cuenta de corredor ha sido creada exitosamente.',
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          setStats({
-            totalProperties: 0,
-            activeClients: 0,
-            totalCommissions: 0,
-            monthlyRevenue: 0,
-            pendingAppointments: 0,
-            newInquiries: 0,
-            conversionRate: 0,
-            averageCommission: 0,
-            portfolioValue: 0,
-          });
-          setLoading(false);
-          return;
-        }
-
-        // ✅ CORREGIDO: Cargar datos reales del dashboard del corredor
+        // ✅ CORREGIDO: Cargar datos reales del dashboard del corredor SIEMPRE
+        // No verificar si es usuario nuevo - siempre mostrar los datos reales
+        console.log('🔍 [DASHBOARD] Iniciando carga de datos del dashboard...');
+        
         const response = await fetch('/api/broker/dashboard', {
           method: 'GET',
           credentials: 'include', // ✅ CRÍTICO: Incluir cookies para autenticación
@@ -176,8 +147,23 @@ export default function BrokerDashboardPage() {
             'Cache-Control': 'no-cache',
           },
         });
+        
+        console.log('📡 [DASHBOARD] Respuesta recibida:', { 
+          ok: response.ok, 
+          status: response.status,
+          statusText: response.statusText 
+        });
+        
         if (response.ok) {
           const result = await response.json();
+          console.log('📊 [DASHBOARD] Datos recibidos:', {
+            hasData: !!result.data,
+            hasStats: !!result.data?.stats,
+            stats: result.data?.stats,
+            propertiesCount: result.data?.recentProperties?.length,
+            contractsCount: result.data?.recentContracts?.length,
+          });
+          
           logger.info('Dashboard response received', { result, hasData: !!result.data, hasStats: !!result.data?.stats });
           const data = result.data;
 
@@ -226,8 +212,7 @@ export default function BrokerDashboardPage() {
           setRecentActivities(transformedActivities);
 
           // Usar estadísticas reales de la API
-          logger.info('Setting dashboard stats', { stats: data.stats });
-          setStats({
+          const newStats = {
             totalProperties: data.stats?.totalProperties ?? 0, // ✅ Total (propias + gestionadas)
             activeClients: data.stats?.activeClients ?? 0, // ✅ Total clientes activos
             totalCommissions: data.stats?.totalCommissions ?? 0,
@@ -237,7 +222,11 @@ export default function BrokerDashboardPage() {
             conversionRate: data.stats?.conversionRate ?? 0,
             averageCommission: data.stats?.averageCommission ?? 0,
             portfolioValue: data.stats?.portfolioValue ?? 0,
-          });
+          };
+          
+          console.log('✅ [DASHBOARD] Estableciendo estadísticas:', newStats);
+          logger.info('Setting dashboard stats', { stats: data.stats });
+          setStats(newStats);
 
           // Cargar métricas de rendimiento reales
           try {
@@ -255,6 +244,12 @@ export default function BrokerDashboardPage() {
           }
         } else {
           // Si la API falla, mostrar datos vacíos en lugar de mock
+          const errorText = await response.text();
+          console.error('❌ [DASHBOARD] API dashboard falló:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
           logger.warn('API dashboard failed, showing empty data');
           setProperties([]);
           setClients([]);
@@ -274,6 +269,10 @@ export default function BrokerDashboardPage() {
 
         setLoading(false);
       } catch (error) {
+        console.error('❌ [DASHBOARD] Error crítico cargando datos:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         logger.error('Error loading broker data:', {
           error: error instanceof Error ? error.message : String(error),
         });

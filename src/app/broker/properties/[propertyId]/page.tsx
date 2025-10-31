@@ -281,11 +281,15 @@ export default function BrokerPropertyDetailPage() {
   }, [propertyId]);
 
   const loadPropertyDetails = async () => {
+    console.log('🔍 [PROPERTY_DETAIL] Iniciando carga de detalles de la propiedad:', { propertyId });
     setIsLoading(true);
     try {
       // ✅ CORREGIDO: Cargar datos reales de la API
       const baseUrl = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+      const url = `${baseUrl}/api/properties/${propertyId}`;
+      console.log('🔗 [PROPERTY_DETAIL] URL de la API:', url);
+      
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -294,8 +298,21 @@ export default function BrokerPropertyDetailPage() {
         },
       });
 
+      console.log('📡 [PROPERTY_DETAIL] Respuesta recibida:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (response.ok) {
         const responseData = await response.json();
+        console.log('📊 [PROPERTY_DETAIL] Datos recibidos:', {
+          success: responseData.success,
+          hasProperty: !!responseData.property,
+          propertyId: responseData.property?.id,
+          title: responseData.property?.title
+        });
 
         if (!responseData.success || !responseData.property) {
           logger.error('Invalid response format from API', { responseData });
@@ -368,8 +385,22 @@ export default function BrokerPropertyDetailPage() {
 
         setProperty(transformedProperty);
       } else {
-        console.error('Error loading property:', response.status, response.statusText);
-        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text();
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        
+        console.error('❌ [PROPERTY_DETAIL] Error al cargar propiedad:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          errorText,
+          propertyId
+        });
+        
         logger.error('Error al cargar detalles de la propiedad', {
           status: response.status,
           statusText: response.statusText,
@@ -378,6 +409,11 @@ export default function BrokerPropertyDetailPage() {
         setError(`Error ${response.status}: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
+      console.error('❌ [PROPERTY_DETAIL] Error crítico:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        propertyId
+      });
       logger.error('Error al cargar detalles de la propiedad', { error, propertyId });
       setError('Error al cargar los detalles de la propiedad. Intente nuevamente.');
     } finally {
