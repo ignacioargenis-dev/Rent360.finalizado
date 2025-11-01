@@ -26,7 +26,14 @@ export async function GET(request: NextRequest) {
     };
 
     if (status !== 'all') {
-      whereClause.status = status.toUpperCase();
+      // Manejar múltiples estados pendientes
+      const statusUpper = status.toUpperCase();
+      if (statusUpper === 'PENDING') {
+        // Incluir tanto PENDING como SCHEDULED (estado por defecto)
+        whereClause.status = { in: ['PENDING', 'SCHEDULED'] };
+      } else {
+        whereClause.status = statusUpper;
+      }
     }
 
     // Filtro por fecha
@@ -230,6 +237,95 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error obteniendo visitas de runner:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Error interno del servidor',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+
+    if (user.role !== 'RUNNER') {
+      return NextResponse.json(
+        { error: 'Acceso denegado. Se requieren permisos de runner.' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { propertyId, tenantId, scheduledAt, duration, priority, notes, earnings } = body;
+
+    // Validar campos requeridos
+    if (!propertyId || !scheduledAt || !duration) {
+      return NextResponse.json(
+        { error: 'Faltan campos requeridos: propertyId, scheduledAt, duration' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que la propiedad existe
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      return NextResponse.json(
+        { error: 'Propiedad no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Crear la visita
+    const visit = await db.visit.create({
+      data: {
+        propertyId,
+        runnerId: user.id,
+        tenantId: tenantId || null,
+        scheduledAt: new Date(scheduledAt),
+        duration: parseInt(String(duration)),
+        status: 'SCHEDULED',
+        notes: notes || null,
+        earnings: earnings ? parseFloat(String(earnings)) : 0,
+      },
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            address: true,
+          },
+        },
+      },
+    });
+
+    logger.info('Visita creada por runner', {
+      runnerId: user.id,
+      visitId: visit.id,
+      propertyId,
+    });
+
+    return NextResponse.json({
+      success: true,
+      visit: {
+        id: visit.id,
+        property: visit.property,
+        scheduledAt: visit.scheduledAt.toISOString(),
+        duration: visit.duration,
+        status: visit.status,
+        earnings: visit.earnings,
+      },
+    });
+  } catch (error) {
+    logger.error('Error creando visita:', {
       error: error instanceof Error ? error.message : String(error),
     });
 

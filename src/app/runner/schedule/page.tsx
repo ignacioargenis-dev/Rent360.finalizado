@@ -61,25 +61,55 @@ export default function HorarioPage() {
     loadPageData();
   }, []);
 
-  // Refrescar datos periódicamente cada 30 segundos
+  // Refrescar datos periódicamente cada 30 segundos (silencioso)
   useEffect(() => {
     if (loading) {
       return;
     }
     const interval = setInterval(() => {
-      loadPageData();
+      // Recarga silenciosa sin mostrar loading
+      const silentLoad = async () => {
+        try {
+          const response = await fetch('/api/runner/schedule', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setData({
+                overview: result.overview || {},
+                todaySchedule: result.todaySchedule || [],
+                weekSchedule: result.weekSchedule || [],
+              });
+            }
+          }
+        } catch (error) {
+          // Silenciosamente ignorar errores en refresh automático
+          logger.debug('Error en refresh silencioso:', error);
+        }
+      };
+      silentLoad();
     }, 30000); // 30 segundos
 
     return () => clearInterval(interval);
   }, [loading]);
 
-  const loadPageData = async () => {
+  const loadPageData = async (weekStart?: string) => {
     try {
       setLoading(true);
       setError(null);
 
       // ✅ CORREGIDO: Obtener datos reales desde la API
-      const response = await fetch('/api/runner/schedule', {
+      const url = weekStart 
+        ? `/api/runner/schedule?weekStart=${weekStart}`
+        : '/api/runner/schedule';
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -113,6 +143,30 @@ export default function HorarioPage() {
     }
   };
 
+  const loadPageDataWithWeek = async (weekStart: string) => {
+    await loadPageData(weekStart);
+  };
+
+  const handlePreviousWeek = async () => {
+    const currentWeek = new Date();
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(currentWeek.getDate() - 7);
+    const weekStart = newWeek.toISOString().split('T')[0];
+    if (weekStart) {
+      await loadPageDataWithWeek(weekStart);
+    }
+  };
+
+  const handleNextWeek = async () => {
+    const currentWeek = new Date();
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(currentWeek.getDate() + 7);
+    const weekStart = newWeek.toISOString().split('T')[0];
+    if (weekStart) {
+      await loadPageDataWithWeek(weekStart);
+    }
+  };
+
   if (loading) {
     return (
       <UnifiedDashboardLayout title="Horario" subtitle="Cargando información...">
@@ -135,7 +189,7 @@ export default function HorarioPage() {
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={loadPageData}>
+              <Button onClick={() => loadPageData()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -333,8 +387,30 @@ export default function HorarioPage() {
         {/* Resumen semanal */}
         <Card>
           <CardHeader>
-            <CardTitle>Resumen Semanal</CardTitle>
-            <CardDescription>Visitas programadas por día de la semana</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Resumen Semanal</CardTitle>
+                <CardDescription>Visitas programadas por día de la semana</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousWeek}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Semana Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextWeek}
+                >
+                  Semana Siguiente
+                  <Calendar className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-4">

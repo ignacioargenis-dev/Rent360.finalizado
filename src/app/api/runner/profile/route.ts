@@ -83,8 +83,26 @@ export async function GET(request: NextRequest) {
     // Calcular tiempo promedio de respuesta (simplificado)
     const responseTime = '2.3 horas'; // TODO: Calcular desde mensajes/notificaciones
 
-    // Skills, experience, certifications y equipment pueden venir de campos personalizados
-    // Por ahora usamos valores por defecto o vacíos, pueden mejorarse después
+    // Parsear datos adicionales del campo bio (JSON)
+    let skills: any[] = [];
+    let experience: any[] = [];
+    let certifications: any[] = [];
+    let equipment: string[] = [];
+
+    if (userProfile.bio) {
+      try {
+        const bioData = typeof userProfile.bio === 'string' ? JSON.parse(userProfile.bio) : userProfile.bio;
+        if (bioData && typeof bioData === 'object') {
+          skills = bioData.skills || [];
+          experience = bioData.experience || [];
+          certifications = bioData.certifications || [];
+          equipment = bioData.equipment || [];
+        }
+      } catch (error) {
+        logger.debug('Error parsing bio JSON, using empty arrays', { error });
+      }
+    }
+
     const location = userProfile.commune && userProfile.city
       ? `${userProfile.commune}, ${userProfile.city}`
       : userProfile.region || 'No disponible';
@@ -92,6 +110,7 @@ export async function GET(request: NextRequest) {
     logger.info('Perfil de runner obtenido', {
       runnerId: user.id,
       totalVisits,
+      hasBioData: !!userProfile.bio,
     });
 
     return NextResponse.json({
@@ -113,10 +132,10 @@ export async function GET(request: NextRequest) {
         responseTime,
         completionRate: Math.round(completionRate * 10) / 10,
       },
-      skills: [], // TODO: Agregar modelo de skills si es necesario
-      experience: [], // TODO: Agregar modelo de experience si es necesario
-      certifications: [], // TODO: Agregar modelo de certifications si es necesario
-      equipment: [], // TODO: Agregar modelo de equipment si es necesario
+      skills: skills || [],
+      experience: experience || [],
+      certifications: certifications || [],
+      equipment: equipment || [],
     });
   } catch (error) {
     logger.error('Error obteniendo perfil de runner:', {

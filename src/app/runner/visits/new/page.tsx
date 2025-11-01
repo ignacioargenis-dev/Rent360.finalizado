@@ -106,88 +106,45 @@ export default function NewVisitPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    // Mock data for demo
-    setTimeout(() => {
-      const mockProperties: PropertyOption[] = [
-        {
-          id: '1',
-          title: 'Departamento Las Condes',
-          address: 'Av. Apoquindo 3400, Las Condes',
-          city: 'Santiago',
-          commune: 'Las Condes',
-          price: 550000,
-          status: 'AVAILABLE',
-        },
-        {
-          id: '2',
-          title: 'Oficina Providencia',
-          address: 'Av. Providencia 1245, Providencia',
-          city: 'Santiago',
-          commune: 'Providencia',
-          price: 350000,
-          status: 'AVAILABLE',
-        },
-        {
-          id: '3',
-          title: 'Casa Vitacura',
-          address: 'Av. Vitacura 8900, Vitacura',
-          city: 'Santiago',
-          commune: 'Vitacura',
-          price: 1200000,
-          status: 'AVAILABLE',
-        },
-        {
-          id: '4',
-          title: 'Departamento Providencia',
-          address: 'Av. Providencia 2345, Providencia',
-          city: 'Santiago',
-          commune: 'Providencia',
-          price: 800000,
-          status: 'AVAILABLE',
-        },
-      ];
+    // Cargar datos reales
+    const loadData = async () => {
+      try {
+        // Cargar propiedades
+        const propertiesResponse = await fetch('/api/runner/visits/properties', {
+          credentials: 'include',
+        });
+        if (propertiesResponse.ok) {
+          const propertiesData = await propertiesResponse.json();
+          if (propertiesData.success) {
+            setProperties(propertiesData.properties || []);
+          }
+        }
 
-      const mockClients: ClientOption[] = [
-        {
-          id: '1',
-          name: 'Carlos Ramírez',
-          email: 'carlos@ejemplo.com',
-          phone: '+56 9 1234 5678',
-          type: 'TENANT',
-        },
-        {
-          id: '2',
-          name: 'Ana Martínez',
-          email: 'ana@ejemplo.com',
-          phone: '+56 9 8765 4321',
-          type: 'TENANT',
-        },
-        {
-          id: '3',
-          name: 'María González',
-          email: 'maria@ejemplo.com',
-          phone: '+56 9 2345 6789',
-          type: 'OWNER',
-        },
-        {
-          id: '4',
-          name: 'Pedro Silva',
-          email: 'pedro@ejemplo.com',
-          phone: '+56 9 3456 7890',
-          type: 'OWNER',
-        },
-        {
-          id: '5',
-          name: 'Laura Fernández',
-          email: 'laura@ejemplo.com',
-          phone: '+56 9 4567 8901',
-          type: 'TENANT',
-        },
-      ];
+        // Cargar clientes
+        const clientsResponse = await fetch('/api/runner/clients', {
+          credentials: 'include',
+        });
+        if (clientsResponse.ok) {
+          const clientsData = await clientsResponse.json();
+          if (clientsData.success) {
+            const clientOptions: ClientOption[] = (clientsData.clients || []).map((client: any) => ({
+              id: client.id,
+              name: client.name,
+              email: client.email || 'No disponible',
+              phone: client.phone || 'No disponible',
+              type: 'TENANT' as const, // Por defecto, los clientes de runner suelen ser tenants
+            }));
+            setClients(clientOptions);
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading data for new visit:', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
 
-      setProperties(mockProperties);
-      setClients(mockClients);
-    }, 500);
+    loadData();
   }, []);
 
   const validateStep = (currentStep: number) => {
@@ -268,22 +225,46 @@ export default function NewVisitPage() {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Combinar fecha y hora
+      const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
 
-      // Here you would normally send the data to your API
-      logger.debug('Visit data:', { formData });
+      const response = await fetch('/api/runner/visits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          propertyId: formData.propertyId,
+          tenantId: formData.clientId,
+          scheduledAt: scheduledDateTime.toISOString(),
+          duration: formData.estimatedDuration,
+          priority: formData.priority,
+          notes: formData.notes || undefined,
+          earnings: formData.earnings,
+        }),
+      });
 
-      // Show success message and redirect
-      setSuccessMessage('Visita programada exitosamente');
-      setTimeout(() => {
-        router.push('/runner/visits');
-      }, 2000);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al programar la visita');
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccessMessage('Visita programada exitosamente');
+        setTimeout(() => {
+          router.push('/runner/visits');
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Error al programar la visita');
+      }
     } catch (error) {
       logger.error('Error creating visit:', {
         error: error instanceof Error ? error.message : String(error),
       });
-      setErrorMessage('Error al programar la visita. Por favor, inténtalo nuevamente.');
+      setErrorMessage(error instanceof Error ? error.message : 'Error al programar la visita. Por favor, inténtalo nuevamente.');
     } finally {
       setLoading(false);
     }

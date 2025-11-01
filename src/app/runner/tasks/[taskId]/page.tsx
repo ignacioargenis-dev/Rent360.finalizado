@@ -362,54 +362,68 @@ export default function TaskDetailPage() {
                     {getStatusBadge(task.status)}
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {task.status === 'pending' && (
-                      <Button
-                        onClick={() => handleStatusUpdate('in_progress')}
-                        disabled={isUpdating}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        <Clock className="w-4 h-4 mr-2" />
-                        Iniciar Tarea
-                      </Button>
-                    )}
-                    {task.status === 'in_progress' && (
-                      <>
-                        <Button 
-                          onClick={() => handleStatusUpdate('completed')} 
+                    {(() => {
+                      const statusLower = task.status?.toLowerCase() || '';
+                      const isPending = statusLower === 'pending' || statusLower === 'scheduled' || statusLower === 'SCHEDULED'.toLowerCase();
+                      return isPending && (
+                        <Button
+                          onClick={() => handleStatusUpdate('in_progress')}
                           disabled={isUpdating}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Completar Tarea
+                          <Clock className="w-4 h-4 mr-2" />
+                          Iniciar Tarea
                         </Button>
+                      );
+                    })()}
+                    {(() => {
+                      const statusLower = task.status?.toLowerCase() || '';
+                      const isInProgress = statusLower === 'in_progress' || statusLower === 'IN_PROGRESS'.toLowerCase();
+                      return isInProgress && (
+                        <>
+                          <Button 
+                            onClick={() => handleStatusUpdate('completed')} 
+                            disabled={isUpdating}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Completar Tarea
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => router.push(`/runner/photos/upload?visitId=${task.id}`)}
+                            className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                          >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Subir Fotos
+                          </Button>
+                        </>
+                      );
+                    })()}
+                    {(() => {
+                      const statusLower = task.status?.toLowerCase() || '';
+                      const isCompleted = statusLower === 'completed' || statusLower === 'COMPLETED'.toLowerCase();
+                      return isCompleted && (
                         <Button
                           variant="outline"
-                          onClick={() => router.push(`/runner/photos/upload?visitId=${task.id}`)}
-                          className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                          onClick={() => router.push(`/runner/photos?visitId=${task.id}`)}
+                          className="border-purple-600 text-purple-600 hover:bg-purple-50"
                         >
                           <Camera className="w-4 h-4 mr-2" />
-                          Subir Fotos
+                          Ver Fotos
                         </Button>
-                      </>
-                    )}
-                    {task.status === 'completed' && (
+                      );
+                    })()}
+                    {task.propertyId && (
                       <Button
                         variant="outline"
-                        onClick={() => router.push(`/runner/photos?visitId=${task.id}`)}
-                        className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                        onClick={() => router.push(`/properties/${task.propertyId}`)}
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
                       >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Ver Fotos
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Ver Propiedad
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push(`/properties/${task.propertyId}`)}
-                      className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Ver Propiedad
-                    </Button>
                   </div>
                 </div>
 
