@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from 'react';
 
-// Configuración para renderizado dinámico - datos en tiempo real
-export const dynamic = 'force-dynamic';
-export const revalidate = 30; // Revalidar cada 30 segundos para datos frescos
 import { logger } from '@/lib/logger-minimal';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -449,7 +446,7 @@ export default function RunnerDashboard() {
               <p className="text-sm text-gray-600 mb-4">Gestiona tus visitas programadas</p>
               <div className="flex items-center justify-between">
                 <Link
-                  href="/runner/visits"
+                  href={`/runner/visits${stats.pendingVisits > 0 ? '?status=PENDING' : ''}`}
                   className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
                 >
                   Ver visitas
@@ -457,7 +454,7 @@ export default function RunnerDashboard() {
                 </Link>
                 {stats.pendingVisits > 0 && (
                   <Badge className="bg-red-100 text-red-800 text-xs">
-                    {stats.pendingVisits} pendientes
+                    {stats.pendingVisits} pendiente{stats.pendingVisits !== 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +76,7 @@ interface VisitStats {
 
 export default function RunnerVisitsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: userLoading } = useAuth();
 
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -96,7 +97,10 @@ export default function RunnerVisitsPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Inicializar filtro de estado desde query params si existe
+  const [statusFilter, setStatusFilter] = useState<string>(
+    searchParams?.get('status') || 'all'
+  );
 
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
@@ -175,6 +179,14 @@ export default function RunnerVisitsPage() {
       setLoading(false);
     }
   };
+
+  // Efecto para inicializar el filtro desde query params
+  useEffect(() => {
+    const statusParam = searchParams?.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // ✅ CORREGIDO: Cargar datos reales

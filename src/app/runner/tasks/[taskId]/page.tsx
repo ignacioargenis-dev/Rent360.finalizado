@@ -176,22 +176,39 @@ export default function TaskDetailPage() {
 
     setIsUpdating(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       const newNotes = task.notes
         ? `${task.notes}\n\n${new Date().toLocaleString('es-CL')}: ${updateNotes}`
         : `${new Date().toLocaleString('es-CL')}: ${updateNotes}`;
 
-      setTask(prev =>
-        prev ? { ...prev, notes: newNotes, updatedAt: new Date().toISOString() } : null
-      );
-      setUpdateNotes('');
-      setShowNotesForm(false);
+      const response = await fetch(`/api/runner/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          notes: newNotes,
+        }),
+      });
 
-      logger.info('Notas agregadas a tarea', { taskId });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Recargar la tarea para obtener los datos actualizados
+        await loadTask();
+        setUpdateNotes('');
+        setShowNotesForm(false);
+        logger.info('Notas agregadas a tarea', { taskId });
+      } else {
+        throw new Error(data.error || 'Error al agregar las notas');
+      }
     } catch (error) {
       logger.error('Error al agregar notas', { error, taskId });
+      alert('Error al agregar las notas. Por favor intente nuevamente.');
     } finally {
       setIsUpdating(false);
     }
@@ -344,22 +361,55 @@ export default function TaskDetailPage() {
                     <p className="text-sm text-gray-600">Estado actual</p>
                     {getStatusBadge(task.status)}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {task.status === 'pending' && (
                       <Button
                         onClick={() => handleStatusUpdate('in_progress')}
                         disabled={isUpdating}
+                        className="bg-emerald-600 hover:bg-emerald-700"
                       >
                         <Clock className="w-4 h-4 mr-2" />
                         Iniciar Tarea
                       </Button>
                     )}
                     {task.status === 'in_progress' && (
-                      <Button onClick={() => handleStatusUpdate('completed')} disabled={isUpdating}>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Completar Tarea
+                      <>
+                        <Button 
+                          onClick={() => handleStatusUpdate('completed')} 
+                          disabled={isUpdating}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Completar Tarea
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/runner/photos/upload?visitId=${task.id}`)}
+                          className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          Subir Fotos
+                        </Button>
+                      </>
+                    )}
+                    {task.status === 'completed' && (
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push(`/runner/photos?visitId=${task.id}`)}
+                        className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Ver Fotos
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push(`/properties/${task.propertyId}`)}
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Ver Propiedad
+                    </Button>
                   </div>
                 </div>
 

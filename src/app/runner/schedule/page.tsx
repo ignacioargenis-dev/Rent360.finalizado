@@ -61,6 +61,18 @@ export default function HorarioPage() {
     loadPageData();
   }, []);
 
+  // Refrescar datos periódicamente cada 30 segundos
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    const interval = setInterval(() => {
+      loadPageData();
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const loadPageData = async () => {
     try {
       setLoading(true);
@@ -326,19 +338,25 @@ export default function HorarioPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-4">
-              {data?.weekSchedule.map((day: any, index: number) => (
-                <div key={index} className="text-center">
-                  <div className="text-sm font-medium text-gray-700 mb-2">{day.day}</div>
-                  <div className="space-y-1">
-                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                      {day.visits} programadas
-                    </div>
-                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                      {day.completed} completadas
+              {data?.weekSchedule && data.weekSchedule.length > 0 ? (
+                data.weekSchedule.map((day: any, index: number) => (
+                  <div key={index} className="text-center">
+                    <div className="text-sm font-medium text-gray-700 mb-2">{day.day}</div>
+                    <div className="space-y-1">
+                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                        {day.visits || 0} programada{(day.visits || 0) !== 1 ? 's' : ''}
+                      </div>
+                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                        {day.completed || 0} completada{(day.completed || 0) !== 1 ? 's' : ''}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-span-7 text-center py-4 text-gray-500">
+                  No hay visitas programadas para esta semana
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
