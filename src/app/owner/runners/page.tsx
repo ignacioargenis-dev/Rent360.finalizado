@@ -124,6 +124,8 @@ export default function OwnerRunnersPage() {
     urgency: 'normal',
     propertyId: '', // Agregado para selección de propiedad
   });
+  const [ownerProperties, setOwnerProperties] = useState<Array<{ id: string; title: string; address: string }>>([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
 
   const applyFilters = useCallback(() => {
     let filtered = runners;
@@ -154,6 +156,39 @@ export default function OwnerRunnersPage() {
 
     setFilteredRunners(filtered);
   }, [runners, filters]);
+
+  const loadOwnerProperties = async () => {
+    try {
+      setLoadingProperties(true);
+      const response = await fetch('/api/owner/properties', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOwnerProperties(
+          data.properties.map((prop: any) => ({
+            id: prop.id,
+            title: prop.title,
+            address: prop.address || `${prop.city || ''}, ${prop.commune || ''}`,
+          }))
+        );
+      }
+    } catch (error) {
+      logger.error('Error loading owner properties:', { error });
+    } finally {
+      setLoadingProperties(false);
+    }
+  };
 
   const loadAssignedRunners = async () => {
     try {
@@ -209,25 +244,47 @@ export default function OwnerRunnersPage() {
 
       if (data.success) {
         // Transformar datos de la API al formato esperado por la UI
-        const transformedRunners: Runner[] = data.runners.map((runner: any) => ({
-          id: runner.id,
-          name: runner.name,
-          email: runner.email,
-          phone: runner.phone,
-          rating: runner.stats.averageRating,
-          totalJobs: runner.stats.totalVisits,
-          verified: true, // Asumimos que todos los corredores en la API están verificados
-          location: `${runner.city || 'Santiago'}, ${runner.commune || 'Centro'}`,
-          services: ['Visitas de inspección', 'Reportes fotográficos', 'Evaluaciones'], // Servicios por defecto
-          experience: 'Verificado', // Podría venir de la API en el futuro
-          hourlyRate: 15000, // Podría venir de la API en el futuro
-          availability: 'available', // Podría venir de la API en el futuro
-          specialties: ['Inspecciones profesionales', 'Fotografía especializada'],
-          languages: ['Español'],
-          lastActive: runner.memberSince,
-          completedJobs: runner.stats.totalVisits,
-          responseTime: '< 2 horas', // Podría venir de la API en el futuro
-        }));
+        const transformedRunners: Runner[] = data.runners.map((runner: any) => {
+          // Parsear configuraciones del runner desde bio (JSON)
+          let runnerSettings: any = {};
+          if (runner.bio) {
+            try {
+              runnerSettings = JSON.parse(runner.bio);
+            } catch (e) {
+              logger.warn('Error parsing runner bio', { runnerId: runner.id, error: e });
+            }
+          }
+
+          // Obtener datos reales del runner
+          const hourlyRate = runnerSettings.hourlyRate || 15000;
+          const specialties = runnerSettings.specialties || ['Inspecciones profesionales', 'Fotografía especializada'];
+          const languages = runnerSettings.languages || ['Español'];
+          const services = runnerSettings.services || ['Visitas de inspección', 'Reportes fotográficos', 'Evaluaciones'];
+          const availability = runnerSettings.availability || 'available';
+          const responseTime = runnerSettings.responseTime || '< 2 horas';
+          const experience = runnerSettings.experience || 'Verificado';
+
+          return {
+            id: runner.id,
+            name: runner.name,
+            email: runner.email,
+            phone: runner.phone || '',
+            avatar: runner.avatar,
+            rating: runner.stats.averageRating || 0,
+            totalJobs: runner.stats.totalVisits,
+            verified: true, // Asumimos que todos los corredores en la API están verificados
+            location: `${runner.city || 'Santiago'}, ${runner.commune || 'Centro'}`,
+            services,
+            experience,
+            hourlyRate,
+            availability: availability as 'available' | 'busy' | 'offline',
+            specialties,
+            languages,
+            lastActive: runner.memberSince ? new Date(runner.memberSince).toISOString() : new Date().toISOString(),
+            completedJobs: runner.stats.totalVisits,
+            responseTime,
+          };
+        });
 
         setRunners(transformedRunners);
       } else {
@@ -252,6 +309,11 @@ export default function OwnerRunnersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Cargar propiedades del propietario cuando se monta el componente
+  useEffect(() => {
+    loadOwnerProperties();
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'available') {
       applyFilters();
@@ -270,6 +332,15 @@ export default function OwnerRunnersPage() {
         hireData,
       });
 
+      // Validar fecha y hora
+      if (!hireData.preferredDate || !hireData.preferredTime) {
+        alert('Por favor selecciona fecha y hora preferidas');
+        return;
+      }
+
+      // Formatear fecha y hora en formato ISO 8601 para el backend
+      const scheduledAt = new Date(`${hireData.preferredDate}T${hireData.preferredTime}:00Z`).toISOString();
+
       // Llamar a la API de asignación de corredor
       const response = await fetch(`/api/owner/runners/${selectedRunner.id}/assign`, {
         method: 'POST',
@@ -279,9 +350,9 @@ export default function OwnerRunnersPage() {
         credentials: 'include',
         body: JSON.stringify({
           propertyId: hireData.propertyId,
-          scheduledAt: hireData.preferredDate + 'T' + hireData.preferredTime + ':00Z',
+          scheduledAt: scheduledAt,
           duration: hireData.estimatedHours * 60, // Convertir horas a minutos
-          notes: hireData.specialInstructions,
+          notes: hireData.specialInstructions || undefined,
           estimatedEarnings: selectedRunner.hourlyRate * hireData.estimatedHours,
         }),
       });
@@ -678,8 +749,8 @@ export default function OwnerRunnersPage() {
 
         {/* Contact Modal */}
         {showContactModal && selectedRunner && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
               <h3 className="text-lg font-semibold mb-4">Contactar a {selectedRunner.name}</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
@@ -715,26 +786,38 @@ export default function OwnerRunnersPage() {
 
         {/* Hire Modal */}
         {showHireModal && selectedRunner && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl">
               <h3 className="text-lg font-semibold mb-4">Contratar a {selectedRunner.name}</h3>
 
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="property">Seleccionar Propiedad</Label>
-                  <Select
-                    value={hireData.propertyId}
-                    onValueChange={value => setHireData({ ...hireData, propertyId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una propiedad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {/* TODO: Cargar propiedades reales del propietario */}
-                      <SelectItem value="prop-1">Departamento Las Condes</SelectItem>
-                      <SelectItem value="prop-2">Casa Providencia</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {loadingProperties ? (
+                    <div className="text-sm text-gray-500 py-2">Cargando propiedades...</div>
+                  ) : (
+                    <Select
+                      value={hireData.propertyId}
+                      onValueChange={value => setHireData({ ...hireData, propertyId: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una propiedad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ownerProperties.length > 0 ? (
+                          ownerProperties.map(prop => (
+                            <SelectItem key={prop.id} value={prop.id}>
+                              {prop.title} - {prop.address}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No hay propiedades disponibles
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 <div>
