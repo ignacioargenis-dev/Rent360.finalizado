@@ -68,27 +68,6 @@ export default function TaskDetailPage() {
   const [updateNotes, setUpdateNotes] = useState('');
   const [showNotesForm, setShowNotesForm] = useState(false);
 
-  // Mock task data
-  const mockTask: TaskDetails = {
-    id: taskId,
-    propertyId: '1',
-    propertyAddress: 'Av. Providencia 1234, Santiago',
-    tenantName: 'María González',
-    tenantPhone: '+56987654321',
-    tenantEmail: 'maria@email.com',
-    taskType: 'visit',
-    priority: 'medium',
-    status: 'pending',
-    scheduledDate: '2024-12-15',
-    scheduledTime: '14:00',
-    estimatedDuration: '60',
-    description:
-      'Realizar visita de rutina a la propiedad. Verificar estado general, revisar instalaciones y documentar hallazgos.',
-    specialInstructions: 'Código de acceso: 1234. El inquilino prefiere contacto por WhatsApp.',
-    contactMethod: 'whatsapp',
-    createdAt: '2024-12-10T10:00:00Z',
-    updatedAt: '2024-12-10T10:00:00Z',
-  };
 
   useEffect(() => {
     loadTask();
@@ -97,11 +76,55 @@ export default function TaskDetailPage() {
   const loadTask = async () => {
     setIsLoading(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setTask(mockTask);
+      const response = await fetch(`/api/runner/tasks/${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          logger.warn('Tarea no encontrada', { taskId });
+          setTask(null);
+        } else {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        // Transformar datos de la API al formato esperado por el componente
+        const taskData = data.data;
+        setTask({
+          id: taskData.id,
+          propertyId: taskData.propertyId,
+          propertyAddress: taskData.propertyAddress,
+          tenantName: taskData.tenantName,
+          tenantPhone: taskData.tenantPhone || '',
+          tenantEmail: taskData.tenantEmail || '',
+          taskType: 'visit', // La API devuelve 'property_visit' pero el componente espera 'visit'
+          priority: taskData.priority || 'medium',
+          status: taskData.status as TaskDetails['status'],
+          scheduledDate: taskData.scheduledDate,
+          scheduledTime: taskData.scheduledTime,
+          estimatedDuration: String(taskData.estimatedDuration || 60),
+          description: taskData.description || '',
+          specialInstructions: taskData.specialInstructions || undefined,
+          contactMethod: taskData.contactMethod || 'phone',
+          notes: taskData.specialInstructions || undefined,
+          createdAt: taskData.createdAt,
+          updatedAt: taskData.updatedAt,
+        });
+      } else {
+        throw new Error(data.error || 'Error al cargar la tarea');
+      }
     } catch (error) {
       logger.error('Error al cargar tarea', { error, taskId });
+      setTask(null);
     } finally {
       setIsLoading(false);
     }
@@ -114,24 +137,33 @@ export default function TaskDetailPage() {
 
     setIsUpdating(true);
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/runner/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: newStatus.toUpperCase(),
+        }),
+      });
 
-      const updates: TaskUpdate = { status: newStatus };
-
-      if (newStatus === 'in_progress' && !task.actualStartTime) {
-        updates.status = 'in_progress';
-        // In a real app, you'd set actualStartTime to current time
-      } else if (newStatus === 'completed' && !task.actualEndTime) {
-        updates.status = 'completed';
-        // In a real app, you'd set actualEndTime to current time
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
-      setTask(prev => (prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null));
+      const data = await response.json();
 
-      logger.info('Estado de tarea actualizado', { taskId, newStatus });
+      if (data.success) {
+        // Recargar la tarea para obtener los datos actualizados
+        await loadTask();
+        logger.info('Estado de tarea actualizado', { taskId, newStatus });
+      } else {
+        throw new Error(data.error || 'Error al actualizar la tarea');
+      }
     } catch (error) {
       logger.error('Error al actualizar tarea', { error, taskId });
+      alert('Error al actualizar el estado de la tarea. Por favor intente nuevamente.');
     } finally {
       setIsUpdating(false);
     }
