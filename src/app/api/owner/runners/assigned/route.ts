@@ -63,16 +63,42 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Obtener todas las calificaciones de runners para calcular promedios
+    const allRunnerRatings = await db.runnerRating.findMany({
+      where: {
+        runnerId: {
+          in: Array.from(new Set(visits.map(v => v.runnerId))),
+        },
+      },
+      select: {
+        runnerId: true,
+        overallRating: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Agrupar calificaciones por runner
+    const ratingsByRunner = new Map<string, number[]>();
+    allRunnerRatings.forEach(rating => {
+      if (!ratingsByRunner.has(rating.runnerId)) {
+        ratingsByRunner.set(rating.runnerId, []);
+      }
+      ratingsByRunner.get(rating.runnerId)!.push(rating.overallRating);
+    });
+
     // Agrupar por runner y calcular estadísticas
     const runnerMap = new Map<string, any>();
 
     visits.forEach((visit) => {
       const runnerId = visit.runnerId;
       if (!runnerMap.has(runnerId)) {
-        const ratings = visit.runner.runnerRatings || [];
+        const ratings = ratingsByRunner.get(runnerId) || [];
         const averageRating =
           ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
+            ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
             : 0;
 
         runnerMap.set(runnerId, {

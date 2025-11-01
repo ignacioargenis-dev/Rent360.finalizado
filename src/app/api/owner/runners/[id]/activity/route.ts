@@ -4,12 +4,12 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 
 /**
- * GET /api/owner/runners/[runnerId]/activity
+ * GET /api/owner/runners/[id]/activity
  * Obtiene la actividad completa de un runner en propiedades del propietario
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { runnerId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth(request);
@@ -21,9 +21,11 @@ export async function GET(
       );
     }
 
+    const runnerId = params.id;
+
     // Verificar que el runner existe
     const runner = await db.user.findUnique({
-      where: { id: params.runnerId, role: 'RUNNER' },
+      where: { id: runnerId, role: 'RUNNER' },
       select: { id: true, name: true },
     });
 
@@ -34,7 +36,7 @@ export async function GET(
     // Obtener todas las visitas del runner en propiedades del propietario
     const visits = await db.visit.findMany({
       where: {
-        runnerId: params.runnerId,
+        runnerId: runnerId,
         property: {
           ownerId: user.id,
         },
@@ -67,7 +69,7 @@ export async function GET(
     // Obtener incentivos del runner
     const incentives = await db.runnerIncentive.findMany({
       where: {
-        runnerId: params.runnerId,
+        runnerId: runnerId,
       },
       include: {
         incentiveRule: {
@@ -89,7 +91,7 @@ export async function GET(
     // Obtener audit logs relacionados (si hay algún sistema de tracking)
     const auditLogs = await db.auditLog.findMany({
       where: {
-        userId: params.runnerId,
+        userId: runnerId,
         action: {
           in: ['VISIT_CREATED', 'VISIT_COMPLETED', 'PHOTO_UPLOADED', 'TASK_COMPLETED'],
         },
@@ -116,7 +118,18 @@ export async function GET(
             }, 0) / visits.length
           : 0,
       totalIncentives: incentives.length,
-      totalIncentiveValue: incentives.reduce((sum, i) => sum + (i.amount || 0), 0),
+      totalIncentiveValue: incentives.reduce((sum, i) => {
+        // Parsear rewardsGranted para obtener el valor
+        try {
+          const rewardsGranted = typeof i.rewardsGranted === 'string' 
+            ? JSON.parse(i.rewardsGranted) 
+            : i.rewardsGranted;
+          const amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
+          return sum + (typeof amount === 'number' ? amount : 0);
+        } catch {
+          return sum;
+        }
+      }, 0),
     };
 
     // Formatear actividad reciente
@@ -141,19 +154,35 @@ export async function GET(
       },
       stats,
       recentActivity,
-      incentives: incentives.map((inc) => ({
-        id: inc.id,
-        name: inc.incentiveRule.name,
-        description: inc.incentiveRule.description,
-        type: inc.incentiveRule.type,
-        category: inc.incentiveRule.category,
-        amount: inc.amount,
-        earnedAt: inc.earnedAt,
-      })),
+      incentives: incentives.map((inc) => {
+        // Parsear rewardsGranted para obtener el valor
+        let amount = 0;
+        try {
+          const rewardsGranted = typeof inc.rewardsGranted === 'string' 
+            ? JSON.parse(inc.rewardsGranted) 
+            : inc.rewardsGranted;
+          amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
+        } catch {
+          amount = 0;
+        }
+        
+        return {
+          id: inc.id,
+          name: inc.incentiveRule.name,
+          description: inc.incentiveRule.description,
+          type: inc.incentiveRule.type,
+          category: inc.incentiveRule.category,
+          amount: typeof amount === 'number' ? amount : 0,
+          earnedAt: inc.earnedAt,
+        };
+      }),
       auditLogs: auditLogs.map((log) => ({
         id: log.id,
         action: log.action,
-        details: log.details,
+        entityType: log.entityType,
+        entityId: log.entityId,
+        oldValues: log.oldValues,
+        newValues: log.newValues,
         createdAt: log.createdAt,
       })),
     });

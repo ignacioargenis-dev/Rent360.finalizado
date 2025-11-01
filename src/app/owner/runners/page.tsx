@@ -155,20 +155,6 @@ export default function OwnerRunnersPage() {
     setFilteredRunners(filtered);
   }, [runners, filters]);
 
-  useEffect(() => {
-    if (activeTab === 'available') {
-      loadRunners();
-    } else {
-      loadAssignedRunners();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'available') {
-      applyFilters();
-    }
-  }, [applyFilters, activeTab]);
-
   const loadAssignedRunners = async () => {
     try {
       setLoading(true);
@@ -256,6 +242,23 @@ export default function OwnerRunnersPage() {
     }
   };
 
+  // Hooks - deben estar después de las funciones que usan
+  useEffect(() => {
+    if (activeTab === 'available') {
+      loadRunners();
+    } else {
+      loadAssignedRunners();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'available') {
+      applyFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyFilters, activeTab]);
+
   const handleSubmitHire = async () => {
     if (!selectedRunner || !hireData.propertyId) {
       return;
@@ -290,14 +293,8 @@ export default function OwnerRunnersPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`¡Contratación exitosa!
-
-Runner: ${selectedRunner.name}
-Fecha preferida: ${hireData.preferredDate || 'Por coordinar'}
-Horas estimadas: ${hireData.estimatedHours}
-Costo estimado: $${(selectedRunner.hourlyRate * hireData.estimatedHours).toLocaleString()}
-
-Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
+        const successMessage = `¡Contratación exitosa!\n\nRunner: ${selectedRunner.name}\nFecha preferida: ${hireData.preferredDate || 'Por coordinar'}\nHoras estimadas: ${hireData.estimatedHours}\nCosto estimado: $${(selectedRunner.hourlyRate * hireData.estimatedHours).toLocaleString()}\n\nSe ha enviado la solicitud al runner. Recibirás una confirmación pronto.`;
+        alert(successMessage);
 
         setShowHireModal(false);
         setSelectedRunner(null);
@@ -315,6 +312,14 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
     } catch (error) {
       logger.error('Error en contratación:', { error });
       alert('Error al procesar la contratación. Intente nuevamente.');
+    }
+  };
+
+  const handleRetry = () => {
+    if (activeTab === 'available') {
+      loadRunners();
+    } else {
+      loadAssignedRunners();
     }
   };
 
@@ -338,7 +343,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-600 mx-auto" />
             <p className="mt-4 text-gray-600">{error}</p>
-            <Button onClick={loadRunners} className="mt-4">
+            <Button onClick={handleRetry} className="mt-4">
               Reintentar
             </Button>
           </div>
@@ -574,6 +579,7 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Results - Solo para runners disponibles */}
         {activeTab === 'available' && (
@@ -660,16 +666,14 @@ Se ha enviado la solicitud al runner. Recibirás una confirmación pronto.`);
               </CardContent>
             </Card>
           ))}
+          {filteredRunners.length === 0 && !loading && (
+            <div className="col-span-full text-center py-12">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron corredores</h3>
+              <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
+            </div>
+          )}
         </div>
-
-        {filteredRunners.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron corredores</h3>
-            <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
-          </div>
-        )}
-          </div>
         )}
 
         {/* Contact Modal */}
