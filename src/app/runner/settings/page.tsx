@@ -69,6 +69,7 @@ interface RunnerSettings {
   };
   workArea: {
     regions: string[];
+    communes: string[];
     maxDistance: number;
     preferredTimes: {
       morning: boolean;
@@ -96,7 +97,7 @@ interface RunnerSettings {
     bankName: string;
     accountType: string;
     bankAccount: string;
-    paymentMethod: 'transfer' | 'cash' | 'wallet';
+    paymentMethod: 'transfer' | 'wallet';
     taxId: string;
   };
 }
@@ -113,24 +114,25 @@ export default function RunnerSettingsPage() {
       emergencyContact: '',
       emergencyPhone: '',
     },
-    workArea: {
-      regions: [],
-      maxDistance: 50,
-      preferredTimes: {
-        morning: true,
-        afternoon: true,
-        evening: false,
-      },
-      vehicleType: '',
-      licensePlate: '',
-      experience: '',
-      specialties: [],
-      languages: [],
-      hourlyRate: 0,
-      availability: 'available',
-      services: [],
-      responseTime: '',
+  workArea: {
+    regions: [],
+    communes: [],
+    maxDistance: 50,
+    preferredTimes: {
+      morning: true,
+      afternoon: true,
+      evening: false,
     },
+    vehicleType: '',
+    licensePlate: '',
+    experience: '',
+    specialties: [],
+    languages: [],
+    hourlyRate: 0,
+    availability: 'available',
+    services: [],
+    responseTime: '',
+  },
     notifications: {
       emailNotifications: true,
       smsNotifications: false,
@@ -157,14 +159,35 @@ export default function RunnerSettingsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [maxHourlyRate, setMaxHourlyRate] = useState<number>(30000);
+  const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
+  const [availableCommunes] = useState<string[]>([
+    'Santiago Centro',
+    'Providencia',
+    'Las Condes',
+    'Vitacura',
+    'Ñuñoa',
+    'La Reina',
+    'Macul',
+    'San Miguel',
+    'Puente Alto',
+    'Maipú',
+    'La Florida',
+    'Peñalolén',
+    'San Bernardo',
+    'La Cisterna',
+    'El Bosque',
+    'Lo Espejo',
+  ]);
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
         setLoading(true);
         // ✅ CORREGIDO: Obtener datos reales desde las APIs
-        const [userResponse, profileResponse, bankResponse] = await Promise.all([
+        const [userResponse, settingsResponse, bankResponse] = await Promise.all([
           fetch('/api/auth/me', { credentials: 'include' }),
-          fetch('/api/runner/profile', { credentials: 'include' }),
+          fetch('/api/runner/settings', { credentials: 'include' }),
           fetch('/api/runner/bank-account', { credentials: 'include' }),
         ]);
 
@@ -177,35 +200,36 @@ export default function RunnerSettingsPage() {
           const firstName = nameParts[0] || '';
           const lastName = nameParts.slice(1).join(' ') || '';
 
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json();
-            
-            setSettings(prev => ({
-              ...prev,
-              profile: {
-                firstName,
-                lastName,
-                email: userData.user?.email || '',
-                phone: userData.user?.phone || '',
-                avatar: userData.user?.avatar || '',
-                emergencyContact: userData.user?.emergencyContact || '',
-                emergencyPhone: userData.user?.emergencyPhone || '',
-              },
-            }));
-          } else {
-            // Fallback si no hay perfil específico
-            setSettings(prev => ({
-              ...prev,
-              profile: {
-                firstName,
-                lastName,
-                email: userData.user?.email || '',
-                phone: userData.user?.phone || '',
-                avatar: userData.user?.avatar || '',
-                emergencyContact: userData.user?.emergencyContact || '',
-                emergencyPhone: userData.user?.emergencyPhone || '',
-              },
-            }));
+          setSettings(prev => ({
+            ...prev,
+            profile: {
+              firstName,
+              lastName,
+              email: userData.user?.email || '',
+              phone: userData.user?.phone || '',
+              avatar: userData.user?.avatar || '',
+              emergencyContact: userData.user?.emergencyContact || '',
+              emergencyPhone: userData.user?.emergencyPhone || '',
+            },
+          }));
+
+          // Cargar configuraciones del runner
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json();
+            if (settingsData.success && settingsData.settings) {
+              setSettings(prev => ({
+                ...prev,
+                workArea: {
+                  ...prev.workArea,
+                  ...settingsData.settings.workArea,
+                  regions: settingsData.settings.workArea.regions || [],
+                  communes: settingsData.settings.workArea.communes || [],
+                },
+                notifications: settingsData.settings.notifications || prev.notifications,
+              }));
+              setSelectedCommunes(settingsData.settings.workArea.communes || []);
+              setMaxHourlyRate(settingsData.maxHourlyRate || 30000);
+            }
           }
 
           // Cargar datos bancarios
@@ -243,30 +267,70 @@ export default function RunnerSettingsPage() {
     setErrorMessage('');
 
     try {
-      // Guardar configuración del perfil usando la API correcta
-      const response = await fetch('/api/user/profile', {
+      // Guardar perfil y configuraciones en paralelo
+      const [profileResponse, settingsResponse] = await Promise.all([
+        // Guardar configuración del perfil
+        fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: `${settings.profile.firstName} ${settings.profile.lastName}`,
+            phone: settings.profile.phone,
+            avatar: settings.profile.avatar,
+            emergencyContact: settings.profile.emergencyContact,
+            emergencyPhone: settings.profile.emergencyPhone,
+          }),
+        }),
+        // Guardar configuraciones del runner (workArea y notifications)
+        fetch('/api/runner/settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            workArea: {
+              ...settings.workArea,
+              communes: selectedCommunes,
+            },
+            notifications: settings.notifications,
+          }),
+        }),
+      ]);
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.json();
+        throw new Error(errorData.error || 'Error al guardar el perfil');
+      }
+
+      if (!settingsResponse.ok) {
+        const errorData = await settingsResponse.json();
+        throw new Error(errorData.error || 'Error al guardar las configuraciones');
+      }
+
+      // Guardar datos bancarios si han cambiado
+      const bankResponse = await fetch('/api/runner/bank-account', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          name: `${settings.profile.firstName} ${settings.profile.lastName}`,
-          phone: settings.profile.phone,
-          avatar: settings.profile.avatar,
-          emergencyContact: settings.profile.emergencyContact,
-          emergencyPhone: settings.profile.emergencyPhone,
+          bank: settings.payment.bankName,
+          accountType: settings.payment.accountType,
+          accountNumber: settings.payment.bankAccount,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al guardar la configuración');
+      if (!bankResponse.ok) {
+        logger.warn('Error al guardar datos bancarios, pero otras configuraciones se guardaron');
       }
 
-      const data = await response.json();
-
       setSuccessMessage('Configuración guardada exitosamente.');
+      setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       logger.error('Error saving settings:', {
         error: error instanceof Error ? error.message : String(error),
@@ -276,6 +340,7 @@ export default function RunnerSettingsPage() {
           ? error.message
           : 'Error al guardar la configuración. Intente nuevamente.'
       );
+      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setSaving(false);
     }
@@ -415,7 +480,7 @@ export default function RunnerSettingsPage() {
 
   return (
     <UnifiedDashboardLayout
-      title="Configuración del Corredor"
+      title="Configuración de Runner360"
       subtitle="Gestión de perfil y preferencias"
     >
       <div className="container mx-auto px-4 py-6">
@@ -556,10 +621,31 @@ export default function RunnerSettingsPage() {
                       <Input
                         id="hourlyRate"
                         type="number"
+                        min="0"
+                        max={maxHourlyRate}
                         value={settings.workArea.hourlyRate}
-                        onChange={e => updateWorkArea('hourlyRate', Number(e.target.value))}
+                        onChange={e => {
+                          const value = Number(e.target.value);
+                          if (value <= maxHourlyRate) {
+                            updateWorkArea('hourlyRate', value);
+                          }
+                        }}
                         placeholder="15000"
+                        className={
+                          settings.workArea.hourlyRate > maxHourlyRate
+                            ? 'border-red-500'
+                            : ''
+                        }
                       />
+                      {settings.workArea.hourlyRate > maxHourlyRate && (
+                        <p className="text-sm text-red-600">
+                          La tarifa no puede exceder ${maxHourlyRate.toLocaleString()} CLP/hora
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Tarifa máxima configurada por administrador: ${maxHourlyRate.toLocaleString()} CLP/hora.
+                        Puedes establecer una tarifa menor para captar más clientes.
+                      </p>
                     </div>
                   </div>
 
@@ -723,10 +809,13 @@ export default function RunnerSettingsPage() {
                       <div className="space-y-2">
                         <Label htmlFor="workCommune">Comunas de Trabajo</Label>
                         <Select
-                          value="" // This would need to be stored separately if we want multiple communes
+                          value=""
                           onValueChange={value => {
-                            // For now, we'll just show the functionality
-                            alert(`Comuna seleccionada: ${value}`);
+                            if (value && !selectedCommunes.includes(value)) {
+                              const newCommunes = [...selectedCommunes, value];
+                              setSelectedCommunes(newCommunes);
+                              updateWorkArea('communes', newCommunes);
+                            }
                           }}
                           disabled={!settings.workArea.regions[0]}
                         >
@@ -734,22 +823,45 @@ export default function RunnerSettingsPage() {
                             <SelectValue
                               placeholder={
                                 settings.workArea.regions[0]
-                                  ? 'Selecciona comunas'
+                                  ? 'Agregar comuna'
                                   : 'Primero selecciona región'
                               }
                             />
                           </SelectTrigger>
                           <SelectContent className="max-h-60 overflow-y-auto">
-                            {/* This would be populated based on the selected region */}
-                            <SelectItem value="Santiago Centro">Santiago Centro</SelectItem>
-                            <SelectItem value="Providencia">Providencia</SelectItem>
-                            <SelectItem value="Las Condes">Las Condes</SelectItem>
-                            <SelectItem value="Vitacura">Vitacura</SelectItem>
-                            <SelectItem value="Ñuñoa">Ñuñoa</SelectItem>
-                            <SelectItem value="La Reina">La Reina</SelectItem>
-                            <SelectItem value="Macul">Macul</SelectItem>
+                            {availableCommunes
+                              .filter(commune => !selectedCommunes.includes(commune))
+                              .map(commune => (
+                                <SelectItem key={commune} value={commune}>
+                                  {commune}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
+                        {selectedCommunes.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedCommunes.map(commune => (
+                              <Badge
+                                key={commune}
+                                variant="default"
+                                className="flex items-center gap-1"
+                              >
+                                {commune}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newCommunes = selectedCommunes.filter(c => c !== commune);
+                                    setSelectedCommunes(newCommunes);
+                                    updateWorkArea('communes', newCommunes);
+                                  }}
+                                  className="ml-1 hover:text-red-600"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-gray-500">
                           Puedes seleccionar múltiples comunas según tu disponibilidad
                         </p>
@@ -995,16 +1107,6 @@ export default function RunnerSettingsPage() {
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="cash"
-                          checked={settings.payment.paymentMethod === 'cash'}
-                          onChange={e => updatePayment('paymentMethod', e.target.value)}
-                        />
-                        <span>Efectivo</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
                           value="wallet"
                           checked={settings.payment.paymentMethod === 'wallet'}
                           onChange={e => updatePayment('paymentMethod', e.target.value)}
@@ -1035,7 +1137,7 @@ export default function RunnerSettingsPage() {
                   Documentos Personales
                 </CardTitle>
                 <CardDescription>
-                  Sube tus documentos personales y antecedentes para completar tu perfil de corredor
+                  Sube tus documentos personales y antecedentes para completar tu perfil de Runner360
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

@@ -182,60 +182,101 @@ export default function EditRunnerProfilePage() {
 
   const loadProfile = async () => {
     try {
-      // Simular carga de perfil existente
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Obtener datos reales del usuario y configuraciones
+      const [userResponse, profileResponse, settingsResponse] = await Promise.all([
+        fetch('/api/auth/me', { credentials: 'include' }),
+        fetch('/api/runner/profile', { credentials: 'include' }),
+        fetch('/api/runner/settings', { credentials: 'include' }),
+      ]);
 
-      // Mock data - en producción vendría de la API
-      const mockProfile: RunnerProfile = {
-        personalInfo: {
-          firstName: 'Juan',
-          lastName: 'Pérez',
-          email: 'juan.perez@email.com',
-          phone: '+56912345678',
-          mobile: '+56987654321',
-          dateOfBirth: '1990-05-15',
-          profileImage: '/api/placeholder/150/150',
-        },
-        address: {
-          street: 'Av. Providencia 123',
-          city: 'Santiago',
-          region: 'Metropolitana',
-          postalCode: '7500000',
-        },
-        professional: {
-          experience: 5,
-          specialties: ['Reparaciones Eléctricas', 'Fontanería', 'Cerrajería'],
-          certifications: ['Certificación Eléctrica Básica', 'Primeros Auxilios'],
-          languages: ['Español', 'Inglés'],
-          availability: {
-            weekdays: true,
-            weekends: true,
-            evenings: false,
-            emergencies: true,
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const user = userData.user;
+
+        // Dividir nombre
+        const nameParts = (user?.name || '').split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        // Parsear configuración del runner si existe
+        let runnerSettings: any = {};
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          if (settingsData.success && settingsData.settings) {
+            runnerSettings = settingsData.settings.workArea || {};
+          }
+        }
+
+        // Obtener datos del perfil
+        let profileData: any = {};
+        if (profileResponse.ok) {
+          profileData = await profileResponse.json();
+        }
+
+        // Construir perfil desde datos reales
+        const loadedProfile: RunnerProfile = {
+          personalInfo: {
+            firstName,
+            lastName,
+            email: user?.email || '',
+            phone: user?.phone || '',
+            mobile: user?.phoneSecondary || '',
+            dateOfBirth: (() => {
+              if (!user?.dateOfBirth) return '';
+              try {
+                const date =
+                  user.dateOfBirth instanceof Date
+                    ? user.dateOfBirth
+                    : new Date(user.dateOfBirth);
+                return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+              } catch {
+                return '';
+              }
+            })(),
+            profileImage: user?.avatar || '',
           },
-        },
-        vehicle: {
-          hasVehicle: true,
-          type: 'Automóvil',
-          model: 'Toyota Corolla',
-          year: 2020,
-          licensePlate: 'AB-CD-12',
-          insurance: true,
-        },
-        serviceArea: {
-          regions: ['Metropolitana', 'Valparaíso', "O'Higgins"],
-          maxDistance: 100,
-        },
-        preferences: {
-          notifications: true,
-          marketingEmails: false,
-          language: 'es',
-        },
-      };
+          address: {
+            street: user?.address || '',
+            city: user?.city || '',
+            region: user?.region || '',
+            postalCode: '',
+          },
+          professional: {
+            experience: parseInt(runnerSettings.experience) || 0,
+            specialties: runnerSettings.specialties || [],
+            certifications: [], // TODO: Agregar si hay modelo de certificaciones
+            languages: runnerSettings.languages || ['Español'],
+            availability: {
+              weekdays: runnerSettings.preferredTimes?.morning !== false,
+              weekends: runnerSettings.preferredTimes?.afternoon !== false,
+              evenings: runnerSettings.preferredTimes?.evening === true,
+              emergencies: false, // TODO: Agregar si hay campo específico
+            },
+          },
+          vehicle: {
+            hasVehicle: !!runnerSettings.vehicleType,
+            type: runnerSettings.vehicleType || '',
+            model: '',
+            year: new Date().getFullYear(),
+            licensePlate: runnerSettings.licensePlate || '',
+            insurance: false,
+          },
+          serviceArea: {
+            regions: runnerSettings.regions || (user?.region ? [user.region] : []),
+            maxDistance: runnerSettings.maxDistance || 50,
+          },
+          preferences: {
+            notifications: true,
+            marketingEmails: false,
+            language: 'es',
+          },
+        };
 
-      setProfile(mockProfile);
+        setProfile(loadedProfile);
+      }
     } catch (error) {
       logger.error('Error al cargar perfil', { error });
+      setErrorMessage('Error al cargar el perfil. Por favor intente nuevamente.');
     }
   };
 
@@ -404,8 +445,68 @@ export default function EditRunnerProfilePage() {
     setIsSubmitting(true);
 
     try {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Actualizar perfil del usuario
+      const profileResponse = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: `${profile.personalInfo.firstName} ${profile.personalInfo.lastName}`,
+          phone: profile.personalInfo.phone,
+          phoneSecondary: profile.personalInfo.mobile,
+          avatar: profile.personalInfo.profileImage,
+          address: profile.address.street,
+          city: profile.address.city,
+          region: profile.address.region,
+          dateOfBirth: profile.personalInfo.dateOfBirth
+            ? new Date(profile.personalInfo.dateOfBirth).toISOString()
+            : null,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.json();
+        throw new Error(errorData.error || 'Error al actualizar el perfil');
+      }
+
+      // Actualizar configuraciones del runner
+      const settingsResponse = await fetch('/api/runner/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          workArea: {
+            regions: profile.serviceArea.regions,
+            communes: [], // TODO: Si se agrega selector de comunas en edit
+            maxDistance: profile.serviceArea.maxDistance,
+            preferredTimes: {
+              morning: profile.professional.availability.weekdays,
+              afternoon: profile.professional.availability.weekends,
+              evening: profile.professional.availability.evenings,
+            },
+            vehicleType: profile.vehicle.type,
+            licensePlate: profile.vehicle.licensePlate,
+            experience: String(profile.professional.experience),
+            specialties: profile.professional.specialties,
+            languages: profile.professional.languages,
+            hourlyRate: 0, // Se configura en settings
+            availability: 'available',
+            services: [],
+            responseTime: '',
+          },
+        }),
+      });
+
+      if (!settingsResponse.ok) {
+        const errorData = await settingsResponse.json();
+        logger.warn('Error al actualizar configuraciones, pero el perfil se actualizó', {
+          error: errorData.error,
+        });
+      }
 
       logger.info('Perfil de runner actualizado exitosamente', {
         email: profile.personalInfo.email,
@@ -419,7 +520,11 @@ export default function EditRunnerProfilePage() {
       }, 2000);
     } catch (error) {
       logger.error('Error al actualizar perfil', { error });
-      setErrorMessage('Error al actualizar el perfil. Por favor intente nuevamente.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar el perfil. Por favor intente nuevamente.'
+      );
     } finally {
       setIsSubmitting(false);
     }
