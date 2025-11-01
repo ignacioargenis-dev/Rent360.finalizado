@@ -22,7 +22,6 @@ import {
   MapPin,
   Star,
   Phone,
-  Mail,
   User,
   Calendar,
   Clock,
@@ -105,7 +104,6 @@ export default function OwnerRunnersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
-  const [showContactModal, setShowContactModal] = useState(false);
   const [showHireModal, setShowHireModal] = useState(false);
   const [filters, setFilters] = useState<RunnerFilters>({
     location: 'all',
@@ -713,8 +711,16 @@ export default function OwnerRunnersPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setSelectedRunner(runner);
-                        setShowContactModal(true);
+                        // Guardar datos del runner para iniciar conversación
+                        const recipientData = {
+                          id: runner.id,
+                          name: runner.name,
+                          email: runner.email,
+                          phone: runner.phone,
+                          type: 'runner' as const,
+                        };
+                        sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
+                        router.push('/owner/messages?new=true');
                       }}
                       className="flex-1"
                     >
@@ -745,43 +751,6 @@ export default function OwnerRunnersPage() {
             </div>
           )}
         </div>
-        )}
-
-        {/* Contact Modal */}
-        {showContactModal && selectedRunner && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-semibold mb-4">Contactar a {selectedRunner.name}</h3>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <Mail className="w-5 h-5 mr-3 text-gray-500" />
-                  <span>{selectedRunner.email}</span>
-                </div>
-                <div className="flex items-center">
-                  <Phone className="w-5 h-5 mr-3 text-gray-500" />
-                  <span>{selectedRunner.phone}</span>
-                </div>
-              </div>
-              <div className="flex space-x-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowContactModal(false)}
-                  className="flex-1"
-                >
-                  Cerrar
-                </Button>
-                <Button
-                  onClick={() => {
-                    window.location.href = `mailto:${selectedRunner.email}`;
-                    setShowContactModal(false);
-                  }}
-                  className="flex-1"
-                >
-                  Enviar Email
-                </Button>
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Hire Modal */}
