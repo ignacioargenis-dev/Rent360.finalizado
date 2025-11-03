@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
+import { RunnerIncentivesService } from '@/lib/runner-incentives-service';
 
 export async function GET(request: NextRequest, { params }: { params: { taskId: string } }) {
   try {
@@ -209,11 +210,43 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
       },
     });
 
+    // Si la visita se completó, evaluar incentivos automáticamente
+    const wasCompleted =
+      status &&
+      status.toUpperCase() === 'COMPLETED' &&
+      existingVisit.status.toUpperCase() !== 'COMPLETED';
+
+    if (wasCompleted) {
+      try {
+        // Evaluar incentivos en segundo plano (no bloquear la respuesta)
+        RunnerIncentivesService.evaluateRunnerIncentives(user.id).catch(error => {
+          logger.error('Error evaluando incentivos después de completar visita:', {
+            runnerId: user.id,
+            visitId: taskId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+
+        logger.info('Evaluación de incentivos iniciada para visita completada', {
+          runnerId: user.id,
+          visitId: taskId,
+        });
+      } catch (error) {
+        // No fallar la actualización si hay error en evaluación de incentivos
+        logger.warn('Error iniciando evaluación de incentivos:', {
+          runnerId: user.id,
+          visitId: taskId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     logger.info('Visita actualizada', {
       runnerId: user.id,
       taskId,
       status: updatedVisit.status,
       changes: { status, notes, photosTaken, rating, clientFeedback },
+      incentivesEvaluated: wasCompleted,
     });
 
     return NextResponse.json({

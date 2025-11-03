@@ -263,6 +263,41 @@ export class RunnerIncentivesService {
   ];
 
   /**
+   * Obtiene todas las reglas de incentivos activas (desde BD y hardcodeadas)
+   */
+  private static async getAllActiveIncentiveRules(): Promise<IncentiveRule[]> {
+    // Obtener reglas desde la base de datos
+    const dbRules = await db.incentiveRule.findMany({
+      where: {
+        isActive: true,
+      },
+    });
+
+    // Convertir reglas de BD al formato IncentiveRule
+    const dbRulesFormatted: IncentiveRule[] = dbRules.map(rule => ({
+      id: rule.id,
+      name: rule.name,
+      description: rule.description,
+      type: rule.type as IncentiveRule['type'],
+      category: rule.category as IncentiveRule['category'],
+      criteria: JSON.parse(rule.criteria),
+      rewards: JSON.parse(rule.rewards),
+      isActive: rule.isActive,
+      autoGrant: rule.autoGrant,
+      maxRecipients: rule.maxRecipients || undefined,
+      cooldownPeriod: rule.cooldownPeriod,
+      validFrom: rule.validFrom,
+      validUntil: rule.validUntil || undefined,
+    }));
+
+    // Combinar reglas de BD con reglas hardcodeadas (las hardcodeadas tienen prioridad si hay duplicados)
+    const hardcodedRuleIds = new Set(this.INCENTIVE_RULES.map(r => r.id));
+    const uniqueDbRules = dbRulesFormatted.filter(r => !hardcodedRuleIds.has(r.id));
+
+    return [...this.INCENTIVE_RULES, ...uniqueDbRules];
+  }
+
+  /**
    * Evalúa y otorga incentivos a un runner
    */
   static async evaluateRunnerIncentives(runnerId: string): Promise<RunnerIncentive[]> {
@@ -286,8 +321,11 @@ export class RunnerIncentivesService {
         await RunnerReportsService.generateRunnerPerformanceMetrics(runnerId);
       const ratingSummary = await RunnerRatingService.getRunnerRatingSummary(runnerId);
 
+      // Obtener todas las reglas activas (desde BD y hardcodeadas)
+      const allRules = await this.getAllActiveIncentiveRules();
+
       // Evaluar cada regla de incentivo activa
-      for (const rule of this.INCENTIVE_RULES) {
+      for (const rule of allRules) {
         if (!rule.isActive) {
           continue;
         }
@@ -621,6 +659,23 @@ export class RunnerIncentivesService {
     rating: any
   ): Promise<RunnerIncentive | null> {
     try {
+      // Verificar que la regla existe en BD (necesario para crear el incentivo)
+      // Si es una regla hardcodeada, verificar si existe en BD; si no, saltar esta evaluación
+      let ruleIdToUse = rule.id;
+      const existingRuleInDb = await db.incentiveRule.findUnique({
+        where: { id: rule.id },
+      });
+
+      // Si la regla no existe en BD y es hardcodeada, no podemos crear el incentivo
+      // porque necesitamos una foreign key válida
+      if (!existingRuleInDb) {
+        logger.warn('Regla de incentivo no encontrada en BD, no se puede otorgar incentivo', {
+          ruleId: rule.id,
+          ruleName: rule.name,
+        });
+        return null;
+      }
+
       // Calcular recompensas
       const rewardsGranted = this.calculateRewards(rule, performance, rating);
 
@@ -628,16 +683,16 @@ export class RunnerIncentivesService {
       const incentive = await db.runnerIncentive.create({
         data: {
           runnerId,
-          incentiveRuleId: rule.id,
+          incentiveRuleId: ruleIdToUse,
           status: rule.autoGrant ? RunnerIncentiveStatus.GRANTED : RunnerIncentiveStatus.EARNED,
           earnedAt: new Date(),
           grantedAt: rule.autoGrant ? new Date() : null,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días para reclamar
           achievementData: {
-            visitsCompleted: performance.totalVisits,
-            ratingAchieved: rating.averageRating,
-            earningsGenerated: performance.totalEarnings,
-            rankingPosition: performance.overallRanking,
+            visitsCompleted: performance.totalVisits || 0,
+            ratingAchieved: rating.averageRating || 0,
+            earningsGenerated: performance.totalEarnings || 0,
+            rankingPosition: performance.overallRanking || 0,
             periodStart: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
             periodEnd: new Date(),
           },
@@ -709,9 +764,13 @@ export class RunnerIncentivesService {
     runnerName: string
   ): Promise<void> {
     try {
-      // Obtener detalles de la regla
-      const rule = this.INCENTIVE_RULES.find(r => r.id === incentive.incentiveRuleId);
+      // Obtener detalles de la regla (desde BD o hardcodeadas)
+      const allRules = await this.getAllActiveIncentiveRules();
+      const rule = allRules.find(r => r.id === incentive.incentiveRuleId);
       if (!rule) {
+        logger.warn('Regla de incentivo no encontrada para notificación', {
+          incentiveRuleId: incentive.incentiveRuleId,
+        });
         return;
       }
 
