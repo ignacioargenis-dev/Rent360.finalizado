@@ -112,12 +112,17 @@ export default function RunnerClientsPage() {
           lastServiceDate: client.lastServiceDate || '',
           nextScheduledVisit: client.nextScheduledVisit || undefined,
           rating: client.rating || 0,
-          status: client.status || 'inactive',
+          status: (client.status || 'inactive') as 'active' | 'inactive' | 'pending',
           preferredTimes: client.preferredTimes || [],
           specialInstructions: client.specialInstructions || undefined,
           totalServices: client.totalServices || 0,
           satisfactionScore: client.satisfactionScore || 0,
         }));
+
+        logger.info('Clientes transformados', {
+          totalClients: transformedClients.length,
+          stats: statsData,
+        });
 
         setClients(transformedClients);
         setFilteredClients(transformedClients);
