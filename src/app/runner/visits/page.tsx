@@ -346,7 +346,7 @@ export default function RunnerVisitsPage() {
   };
 
   const handleViewDetails = (visitId: string) => {
-    router.push(`/runner/visits/${visitId}`);
+    router.push(`/runner/tasks/${visitId}`);
   };
 
   const handleContactClient = (visitId: string) => {
@@ -639,20 +639,20 @@ export default function RunnerVisitsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm text-gray-600 mb-1">Contacto</p>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-4 h-4" />
-                            <span>{visit.clientPhone}</span>
+                        <div className="flex flex-col gap-2 text-sm">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Phone className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{visit.clientPhone}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Mail className="w-4 h-4" />
-                            <span>{visit.clientEmail}</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate break-all">{visit.clientEmail}</span>
                           </div>
                         </div>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm text-gray-600 mb-1">Fotos requeridas</p>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
