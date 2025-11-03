@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
 import { z } from 'zod';
+import { RunnerIncentivesService } from '@/lib/runner-incentives-service';
 
 // Schema de validación para crear/actualizar reglas de incentivos
 const incentiveRuleSchema = z.object({
