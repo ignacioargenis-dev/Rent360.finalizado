@@ -148,9 +148,9 @@ export default function ReportesPage() {
           },
           performance: {
             avgRating: reportData.averageRating || 0,
-            totalPhotos: 0, // TODO: Obtener de reportData
-            reportsSubmitted: reportData.completedVisits || 0,
-            tasksCompleted: reportData.completedVisits || 0,
+            totalPhotos: reportData.totalPhotos || 0,
+            reportsSubmitted: reportData.reportsSubmitted || 0,
+            tasksCompleted: reportData.tasksCompleted || reportData.completedVisits || 0,
           },
         };
       } else if (filters.reportType === 'weekly') {
@@ -170,9 +170,9 @@ export default function ReportesPage() {
           },
           performance: {
             avgRating: reportData.averageRating || 0,
-            totalPhotos: 0,
-            reportsSubmitted: reportData.visitsCompleted || 0,
-            tasksCompleted: reportData.visitsCompleted || 0,
+            totalPhotos: reportData.totalPhotos || 0,
+            reportsSubmitted: reportData.reportsSubmitted || reportData.visitsCompleted || 0,
+            tasksCompleted: reportData.tasksCompleted || reportData.visitsCompleted || 0,
           },
         };
       } else {
@@ -192,9 +192,9 @@ export default function ReportesPage() {
           },
           performance: {
             avgRating: reportData.averageRating || 0,
-            totalPhotos: 0,
-            reportsSubmitted: 0,
-            tasksCompleted: 0,
+            totalPhotos: reportData.totalPhotos || 0,
+            reportsSubmitted: reportData.reportsSubmitted || 0,
+            tasksCompleted: reportData.tasksCompleted || 0,
           },
         };
       }

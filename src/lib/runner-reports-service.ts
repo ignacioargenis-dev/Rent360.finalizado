@@ -139,7 +139,7 @@ export class RunnerReportsService {
       const endDate = periodEnd || new Date();
       const startDate = periodStart || new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Obtener visitas del período
+      // Obtener visitas del período con información completa
       const visits = await db.visit.findMany({
         where: {
           runnerId: runnerId,
@@ -154,6 +154,18 @@ export class RunnerReportsService {
               id: true,
               price: true,
               type: true,
+              propertyImages: {
+                where: {
+                  alt: {
+                    contains: runnerId,
+                  },
+                },
+                select: {
+                  id: true,
+                  alt: true,
+                  createdAt: true,
+                },
+              },
             },
           },
         },
@@ -161,8 +173,12 @@ export class RunnerReportsService {
 
       // Calcular métricas básicas
       const totalVisits = visits.length;
-      const completedVisits = visits.filter(v => v.status === 'completed').length;
-      const cancelledVisits = visits.filter(v => v.status === 'cancelled').length;
+      const completedVisits = visits.filter(
+        v => v.status?.toUpperCase() === 'COMPLETED' || v.status === 'completed'
+      ).length;
+      const cancelledVisits = visits.filter(
+        v => v.status?.toUpperCase() === 'CANCELLED' || v.status === 'cancelled'
+      ).length;
       const completionRate = totalVisits > 0 ? (completedVisits / totalVisits) * 100 : 0;
 
       // Calcular ganancias
@@ -189,7 +205,9 @@ export class RunnerReportsService {
             : 0;
 
       // Calcular métricas de tiempo
-      const completedVisitsData = visits.filter(v => v.status === 'completed');
+      const completedVisitsData = visits.filter(
+        v => v.status?.toUpperCase() === 'COMPLETED' || v.status === 'completed'
+      );
       const averageVisitDuration =
         completedVisitsData.length > 0
           ? completedVisitsData.reduce((sum, v) => sum + (v.duration || 0), 0) /
@@ -295,6 +313,50 @@ export class RunnerReportsService {
         .slice(0, 3)
         .map(([hour]) => hour);
 
+      // Calcular totalPhotos: contar PropertyImage asociadas a visitas del runner
+      let totalPhotos = 0;
+      const visitIds = visits.map(v => v.id);
+
+      // Obtener todas las PropertyImage que pertenecen a visitas del runner
+      if (visitIds.length > 0) {
+        // Buscar imágenes que tengan metadata con visitId en el campo alt
+        const allPropertyImages = await db.propertyImage.findMany({
+          where: {
+            alt: {
+              not: null,
+            },
+          },
+          select: {
+            id: true,
+            alt: true,
+          },
+        });
+
+        // Filtrar imágenes que realmente pertenecen a visitas del runner
+        totalPhotos = allPropertyImages.filter(img => {
+          if (!img.alt) {
+            return false;
+          }
+          try {
+            const metadata = JSON.parse(img.alt);
+            return metadata && metadata.visitId && visitIds.includes(metadata.visitId);
+          } catch {
+            // Si no se puede parsear, verificar si el alt contiene algún visitId como string
+            return visitIds.some(vid => img.alt?.includes(vid));
+          }
+        }).length;
+      }
+
+      // Calcular reportsSubmitted: visitas completadas con notas o fotos
+      const reportsSubmitted = completedVisitsData.filter(v => {
+        const hasNotes = v.notes && v.notes.trim().length > 0;
+        const hasPhotos = v.photosTaken && v.photosTaken > 0;
+        return hasNotes || hasPhotos;
+      }).length;
+
+      // tasksCompleted es igual a completedVisits
+      const tasksCompleted = completedVisits;
+
       return {
         runnerId,
         runnerName: runner.name || 'Runner',
@@ -341,6 +403,11 @@ export class RunnerReportsService {
         favoritePropertyTypes,
         mostActiveHours: mostActiveHours.length > 0 ? mostActiveHours : [],
         topClientTypes: [], // Los runners360 no hacen conversiones, eliminar
+
+        // Métricas de actividad real
+        totalPhotos,
+        reportsSubmitted,
+        tasksCompleted,
       };
     } catch (error) {
       logger.error('Error generando métricas de rendimiento:', error as Error);

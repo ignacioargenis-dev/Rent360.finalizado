@@ -92,14 +92,12 @@ export async function GET(request: NextRequest) {
     // Agrupar por runner y calcular estadísticas
     const runnerMap = new Map<string, any>();
 
-    visits.forEach((visit) => {
+    visits.forEach(visit => {
       const runnerId = visit.runnerId;
       if (!runnerMap.has(runnerId)) {
         const ratings = ratingsByRunner.get(runnerId) || [];
         const averageRating =
-          ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-            : 0;
+          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
 
         runnerMap.set(runnerId, {
           runner: visit.runner,
@@ -122,9 +120,10 @@ export async function GET(request: NextRequest) {
       runnerData.stats.totalEarnings += visit.earnings || 0;
       runnerData.properties.add(visit.propertyId);
 
-      if (visit.status === 'COMPLETED') {
+      const visitStatus = visit.status?.toUpperCase() || visit.status || '';
+      if (visitStatus === 'COMPLETED') {
         runnerData.stats.completedVisits++;
-      } else if (visit.status === 'SCHEDULED' || visit.status === 'PENDING') {
+      } else if (visitStatus === 'SCHEDULED' || visitStatus === 'PENDING') {
         runnerData.stats.pendingVisits++;
       }
 
@@ -144,7 +143,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Convertir a array y formatear
-    const assignedRunners = Array.from(runnerMap.values()).map((data) => ({
+    const assignedRunners = Array.from(runnerMap.values()).map(data => ({
       runner: data.runner,
       stats: {
         ...data.stats,
@@ -165,4 +164,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
-

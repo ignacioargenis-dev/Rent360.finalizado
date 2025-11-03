@@ -169,53 +169,86 @@ export async function GET(
     // Formatear actividad reciente con fotos
     const recentActivity = visits.map(visit => {
       // Obtener fotos asociadas a esta visita desde PropertyImage
-      const visitPhotos = visit.property.propertyImages
-        .map(img => {
-          try {
-            const metadata = img.alt ? JSON.parse(img.alt) : null;
-            if (metadata && metadata.visitId === visit.id) {
-              return {
-                id: img.id,
-                url: img.url,
-                filename: img.url.split('/').pop() || 'image.jpg',
-                uploadedAt: img.createdAt.toISOString(),
-                category: metadata.category || 'general',
-                description: metadata.description || '',
-                isMain: metadata.isMain || false,
-              };
+      let visitPhotos: any[] = [];
+
+      if (
+        visit.property &&
+        visit.property.propertyImages &&
+        Array.isArray(visit.property.propertyImages)
+      ) {
+        visitPhotos = visit.property.propertyImages
+          .map(img => {
+            if (!img || !img.alt) {
+              return null;
             }
-            return null;
-          } catch {
-            return null;
-          }
-        })
-        .filter(photo => photo !== null) as any[];
+            try {
+              const metadata = JSON.parse(img.alt);
+              if (metadata && metadata.visitId === visit.id) {
+                return {
+                  id: img.id,
+                  url: img.url,
+                  filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                  uploadedAt: img.createdAt
+                    ? img.createdAt.toISOString()
+                    : new Date().toISOString(),
+                  category: metadata.category || 'general',
+                  description: metadata.description || '',
+                  isMain: metadata.isMain || false,
+                };
+              }
+              return null;
+            } catch {
+              // Si no se puede parsear, verificar si el alt contiene el visitId como string
+              if (img.alt.includes(visit.id)) {
+                return {
+                  id: img.id,
+                  url: img.url,
+                  filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                  uploadedAt: img.createdAt
+                    ? img.createdAt.toISOString()
+                    : new Date().toISOString(),
+                  category: 'general',
+                  description: '',
+                  isMain: false,
+                };
+              }
+              return null;
+            }
+          })
+          .filter(photo => photo !== null) as any[];
+      }
 
       return {
         id: visit.id,
         type: 'visit',
-        propertyTitle: visit.property.title,
-        propertyAddress: visit.property.address,
-        propertyId: visit.propertyId,
-        scheduledAt: visit.scheduledAt.toISOString(),
-        status: visit.status,
+        propertyTitle: visit.property?.title || 'Propiedad no disponible',
+        propertyAddress: visit.property?.address || 'Dirección no disponible',
+        propertyId: visit.propertyId || '',
+        scheduledAt: visit.scheduledAt ? visit.scheduledAt.toISOString() : new Date().toISOString(),
+        status: visit.status || 'UNKNOWN',
         earnings: visit.earnings || 0,
         photosTaken: visit.photosTaken || 0,
         duration: visit.duration || 0,
         notes: visit.notes || '',
-        rating: visit.runnerRatings[0]?.overallRating || visit.rating || null,
-        feedback: visit.runnerRatings[0]?.comment || visit.clientFeedback || null,
+        rating:
+          visit.runnerRatings && visit.runnerRatings.length > 0
+            ? visit.runnerRatings[0]?.overallRating || visit.rating || null
+            : visit.rating || null,
+        feedback:
+          visit.runnerRatings && visit.runnerRatings.length > 0
+            ? visit.runnerRatings[0]?.comment || visit.clientFeedback || null
+            : visit.clientFeedback || null,
         photos: visitPhotos,
         tenant: visit.tenant
           ? {
-              id: visit.tenant.id,
-              name: visit.tenant.name,
-              email: visit.tenant.email,
-              phone: visit.tenant.phone,
+              id: visit.tenant.id || '',
+              name: visit.tenant.name || '',
+              email: visit.tenant.email || '',
+              phone: visit.tenant.phone || '',
             }
           : null,
-        createdAt: visit.createdAt.toISOString(),
-        updatedAt: visit.updatedAt.toISOString(),
+        createdAt: visit.createdAt ? visit.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: visit.updatedAt ? visit.updatedAt.toISOString() : new Date().toISOString(),
       };
     });
 
