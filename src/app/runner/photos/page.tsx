@@ -531,12 +531,23 @@ export default function RunnerPhotosPage() {
                               className="w-full h-24 object-cover rounded-lg bg-gray-100"
                               crossOrigin="anonymous"
                               onError={e => {
-                                console.error('Error loading photo preview:', {
-                                  photoId: photo.id,
-                                  url: photo.url,
-                                });
-                                e.currentTarget.src = '/placeholder-image.jpg';
-                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                const img = e.currentTarget;
+                                // Evitar bucle infinito
+                                if (
+                                  img.src.includes('placeholder') ||
+                                  img.getAttribute('data-error') === 'true'
+                                ) {
+                                  return;
+                                }
+                                img.setAttribute('data-error', 'true');
+                                img.style.display = 'none';
+                                if (!img.getAttribute('data-logged')) {
+                                  img.setAttribute('data-logged', 'true');
+                                  console.warn('Photo preview failed to load:', {
+                                    photoId: photo.id,
+                                    url: photo.url,
+                                  });
+                                }
                               }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
@@ -683,12 +694,23 @@ export default function RunnerPhotosPage() {
                               className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity bg-gray-100"
                               crossOrigin="anonymous"
                               onError={e => {
-                                console.error('Error loading photo thumbnail:', {
-                                  photoId: photo.id,
-                                  url: photo.url,
-                                });
-                                e.currentTarget.src = '/placeholder-image.jpg';
-                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                const img = e.currentTarget;
+                                // Evitar bucle infinito
+                                if (
+                                  img.src.includes('placeholder') ||
+                                  img.getAttribute('data-error') === 'true'
+                                ) {
+                                  return;
+                                }
+                                img.setAttribute('data-error', 'true');
+                                img.style.display = 'none';
+                                if (!img.getAttribute('data-logged')) {
+                                  img.setAttribute('data-logged', 'true');
+                                  console.warn('Photo thumbnail failed to load:', {
+                                    photoId: photo.id,
+                                    url: photo.url,
+                                  });
+                                }
                               }}
                             />
                             {photo.isMain && (

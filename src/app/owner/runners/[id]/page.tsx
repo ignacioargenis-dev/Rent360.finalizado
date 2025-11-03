@@ -559,15 +559,31 @@ export default function RunnerDetailPage() {
                                 className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors bg-gray-100"
                                 crossOrigin="anonymous"
                                 onError={e => {
-                                  logger.error('Error loading photo preview:', {
-                                    photoId: photo.id,
-                                    url: photo.url,
-                                  });
-                                  // Mostrar placeholder en lugar de imagen rota
-                                  e.currentTarget.src = '/placeholder-image.jpg';
-                                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                  const img = e.currentTarget;
+                                  // Evitar bucle infinito: si ya es el placeholder o tiene el atributo data-error, no hacer nada
+                                  if (
+                                    img.src.includes('placeholder') ||
+                                    img.getAttribute('data-error') === 'true'
+                                  ) {
+                                    return;
+                                  }
+                                  // Marcar como error para evitar reintentos
+                                  img.setAttribute('data-error', 'true');
+                                  // Ocultar la imagen y mostrar un fondo gris en su lugar
+                                  img.style.display = 'none';
+                                  // Log solo una vez
+                                  if (!img.getAttribute('data-logged')) {
+                                    img.setAttribute('data-logged', 'true');
+                                    logger.warn('Photo preview failed to load:', {
+                                      photoId: photo.id,
+                                      url: photo.url,
+                                    });
+                                  }
                                 }}
-                                onLoad={() => {
+                                onLoad={e => {
+                                  const img = e.currentTarget;
+                                  // Si se carga exitosamente, mostrar la imagen
+                                  img.style.display = '';
                                   logger.info('Photo preview loaded successfully:', {
                                     photoId: photo.id,
                                     url: photo.url,
@@ -728,18 +744,27 @@ export default function RunnerDetailPage() {
                             className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors bg-gray-100"
                             crossOrigin="anonymous"
                             onError={e => {
-                              logger.error('Error loading photo in modal:', {
-                                photoId: photo.id,
-                                url: photo.url,
-                              });
-                              e.currentTarget.src = '/placeholder-image.jpg';
-                              e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              const img = e.currentTarget;
+                              // Evitar bucle infinito
+                              if (
+                                img.src.includes('placeholder') ||
+                                img.getAttribute('data-error') === 'true'
+                              ) {
+                                return;
+                              }
+                              img.setAttribute('data-error', 'true');
+                              img.style.display = 'none';
+                              if (!img.getAttribute('data-logged')) {
+                                img.setAttribute('data-logged', 'true');
+                                logger.warn('Photo failed to load in modal:', {
+                                  photoId: photo.id,
+                                  url: photo.url,
+                                });
+                              }
                             }}
-                            onLoad={() => {
-                              logger.info('Photo loaded successfully in modal:', {
-                                photoId: photo.id,
-                                url: photo.url,
-                              });
+                            onLoad={e => {
+                              const img = e.currentTarget;
+                              img.style.display = '';
                             }}
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
