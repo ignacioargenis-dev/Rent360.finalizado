@@ -738,7 +738,7 @@ export class BankAccountService {
     accountId: string,
     accountData: {
       bankCode: string;
-      accountType: 'checking' | 'savings' | 'business';
+      accountType: 'checking' | 'savings' | 'business' | 'rut';
       accountNumber: string;
       accountHolder: string;
       rut?: string | undefined;
