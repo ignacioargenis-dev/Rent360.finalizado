@@ -113,6 +113,12 @@ export default function TaskDetailPage() {
       if (data.success && data.data) {
         // Transformar datos de la API al formato esperado por el componente
         const taskData = data.data;
+
+        // Actualizar estado de hasRatedOwner desde la API
+        if (taskData.hasRatedOwner !== undefined) {
+          setHasRatedOwner(taskData.hasRatedOwner);
+        }
+
         setTask({
           id: taskData.id,
           propertyId: taskData.propertyId,

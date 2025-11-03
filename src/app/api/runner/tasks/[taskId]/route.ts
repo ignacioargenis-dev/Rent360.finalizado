@@ -59,6 +59,18 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
       );
     }
 
+    // Verificar si el runner ya calificó al propietario para esta visita
+    const existingOwnerRating = await db.userRating.findFirst({
+      where: {
+        fromUserId: user.id,
+        toUserId: visit.property.ownerId || '',
+        contextType: 'PROPERTY_VISIT',
+        contextId: visit.id,
+      },
+    });
+
+    const hasRatedOwner = !!existingOwnerRating;
+
     // Calcular fechas de manera segura
     let scheduledDate = new Date().toISOString().split('T')[0];
     let scheduledTime = '00:00';
@@ -121,6 +133,7 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
       clientFeedback: visit.clientFeedback,
       contactMethod: 'phone',
       assignedBy: 'Sistema',
+      hasRatedOwner, // Flag para saber si ya se calificó al propietario
       createdAt: visit.createdAt.toISOString(),
       updatedAt: visit.updatedAt.toISOString(),
     };

@@ -136,15 +136,17 @@ export default function RunnerPhotosPage() {
 
       const result = await response.json();
       setPhotoReports(result.photoReports || []);
-      setStats(result.stats || {
-        totalPhotos: 0,
-        pendingUploads: 0,
-        uploadedThisMonth: 0,
-        approvedPhotos: 0,
-        totalEarnings: 0,
-        averageRating: 0,
-        completionRate: 0,
-      });
+      setStats(
+        result.stats || {
+          totalPhotos: 0,
+          pendingUploads: 0,
+          uploadedThisMonth: 0,
+          approvedPhotos: 0,
+          totalEarnings: 0,
+          averageRating: 0,
+          completionRate: 0,
+        }
+      );
     } catch (error: any) {
       console.error('Error fetching photo reports:', error);
       setPhotoReports([]);
@@ -515,8 +517,8 @@ export default function RunnerPhotosPage() {
                     {report.photos.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
                         {report.photos.slice(0, 4).map(photo => (
-                          <div 
-                            key={photo.id} 
+                          <div
+                            key={photo.id}
                             className="relative group cursor-pointer"
                             onClick={() => {
                               // Abrir imagen en nueva ventana/modal
@@ -526,7 +528,16 @@ export default function RunnerPhotosPage() {
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
-                              className="w-full h-24 object-cover rounded-lg"
+                              className="w-full h-24 object-cover rounded-lg bg-gray-100"
+                              crossOrigin="anonymous"
+                              onError={e => {
+                                console.error('Error loading photo preview:', {
+                                  photoId: photo.id,
+                                  url: photo.url,
+                                });
+                                e.currentTarget.src = '/placeholder-image.jpg';
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                               <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -658,8 +669,8 @@ export default function RunnerPhotosPage() {
                       <p className="text-sm font-medium text-gray-700 mb-2">Fotos recientes:</p>
                       <div className="flex gap-2">
                         {report.photos.slice(0, 3).map(photo => (
-                          <div 
-                            key={photo.id} 
+                          <div
+                            key={photo.id}
                             className="relative cursor-pointer"
                             onClick={() => {
                               // Abrir imagen en nueva ventana/modal
@@ -669,7 +680,16 @@ export default function RunnerPhotosPage() {
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
-                              className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity"
+                              className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity bg-gray-100"
+                              crossOrigin="anonymous"
+                              onError={e => {
+                                console.error('Error loading photo thumbnail:', {
+                                  photoId: photo.id,
+                                  url: photo.url,
+                                });
+                                e.currentTarget.src = '/placeholder-image.jpg';
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              }}
                             />
                             {photo.isMain && (
                               <Badge className="absolute top-0 left-0 bg-blue-500 text-white text-xs rounded-tl-lg rounded-br-lg">

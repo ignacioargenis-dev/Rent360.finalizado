@@ -90,6 +90,11 @@ export async function POST(request: NextRequest) {
         contextType: 'PROPERTY_VISIT',
         contextId: visitId,
       },
+      select: {
+        id: true,
+        createdAt: true,
+        overallRating: true,
+      },
     });
 
     logger.info('Verificando calificación existente', {
@@ -97,6 +102,7 @@ export async function POST(request: NextRequest) {
       runnerId: user.id,
       ownerId: visit.property.ownerId,
       existingRatingId: existingRating?.id || null,
+      hasExistingRating: !!existingRating,
     });
 
     if (existingRating) {
@@ -105,9 +111,15 @@ export async function POST(request: NextRequest) {
         runnerId: user.id,
         ownerId: visit.property.ownerId,
         existingRatingId: existingRating.id,
+        existingRatingCreatedAt: existingRating.createdAt,
       });
       return NextResponse.json(
-        { error: 'Ya has calificado este propietario para esta visita' },
+        {
+          success: false,
+          error: 'Ya has calificado este propietario para esta visita',
+          code: 'ALREADY_RATED',
+          existingRatingId: existingRating.id,
+        },
         { status: 409 }
       );
     }
