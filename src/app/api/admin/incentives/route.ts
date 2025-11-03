@@ -213,9 +213,15 @@ export async function POST(request: NextRequest) {
       ruleName: rule.name,
     });
 
-    // Si la regla está activa y tiene autoGrant, evaluar incentivos para todos los runners activos
+    // Si la regla está activa, evaluar incentivos para todos los runners activos
     // Esto se hace en segundo plano para no bloquear la respuesta
-    if (validatedData.isActive && validatedData.autoGrant) {
+    if (validatedData.isActive) {
+      logger.info('Regla activa creada, iniciando evaluación para todos los runners', {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        autoGrant: validatedData.autoGrant,
+      });
+
       // Obtener todos los runners activos y evaluar incentivos en segundo plano
       db.user
         .findMany({
@@ -226,19 +232,48 @@ export async function POST(request: NextRequest) {
             id: true,
           },
         })
-        .then(runners => {
-          runners.forEach(runner => {
-            RunnerIncentivesService.evaluateRunnerIncentives(runner.id).catch(error => {
-              logger.warn('Error evaluando incentivos después de crear regla:', {
-                runnerId: runner.id,
-                ruleId: rule.id,
-                error: error instanceof Error ? error.message : String(error),
-              });
-            });
+        .then(async runners => {
+          logger.info(`Evaluando incentivos para ${runners.length} runners`, {
+            ruleId: rule.id,
+          });
+
+          // Evaluar en paralelo con límite de concurrencia
+          const evaluations = runners.map(runner =>
+            RunnerIncentivesService.evaluateRunnerIncentives(runner.id)
+              .then(incentives => {
+                const granted = incentives.filter(
+                  inc => inc.incentiveRuleId === rule.id && inc.status === 'GRANTED'
+                ).length;
+                if (granted > 0) {
+                  logger.info('Incentivo otorgado después de crear regla', {
+                    runnerId: runner.id,
+                    ruleId: rule.id,
+                    grantedCount: granted,
+                  });
+                }
+                return { runnerId: runner.id, granted };
+              })
+              .catch(error => {
+                logger.warn('Error evaluando incentivos después de crear regla:', {
+                  runnerId: runner.id,
+                  ruleId: rule.id,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+                return { runnerId: runner.id, granted: 0 };
+              })
+          );
+
+          const results = await Promise.all(evaluations);
+          const totalGranted = results.reduce((sum, r) => sum + r.granted, 0);
+
+          logger.info('Evaluación de incentivos completada', {
+            ruleId: rule.id,
+            totalRunners: runners.length,
+            totalIncentivesGranted: totalGranted,
           });
         })
         .catch(error => {
-          logger.warn('Error obteniendo runners para evaluación de incentivos:', {
+          logger.error('Error obteniendo runners para evaluación de incentivos:', {
             error: error instanceof Error ? error.message : String(error),
           });
         });
