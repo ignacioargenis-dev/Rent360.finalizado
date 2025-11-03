@@ -397,7 +397,7 @@ export default function RunnerIncentivesPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Ganado</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(stats.totalEarned * 10000, 'CLP')}
+                    {formatCurrency(stats.pointsBalance, 'CLP')}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">

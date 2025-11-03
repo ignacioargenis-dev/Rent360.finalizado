@@ -80,48 +80,58 @@ export async function GET(request: NextRequest) {
         const progressDetails: Record<string, { current: number; target: number }> = {};
 
         // Calcular porcentaje de progreso de forma más precisa
-        // Si hay múltiples criterios, calcular el porcentaje promedio de cumplimiento
-        let totalCriteria = 0;
-        let totalProgress = 0;
+        // Si hay múltiples criterios, usamos el MÍNIMO progreso (el criterio más difícil)
+        // porque todos los criterios deben cumplirse (AND lógico)
+        const individualProgresses: number[] = [];
 
         if (criteria.minVisits) {
-          totalCriteria++;
           const current = performanceMetrics.totalVisits || 0;
           const target = criteria.minVisits;
-          totalProgress += Math.min(100, (current / target) * 100);
+          const progress = Math.min(100, (current / target) * 100);
+          individualProgresses.push(progress);
+          progressDetails.visits = { current, target };
         }
 
         if (criteria.minRating) {
-          totalCriteria++;
           const current = ratingSummary.averageRating || 0;
           const target = criteria.minRating;
-          totalProgress += Math.min(100, (current / target) * 100);
+          // Para rating, si el target es 4.5 y tiene 5.0, está al 111%, limitamos a 100%
+          const progress = Math.min(100, (current / target) * 100);
+          individualProgresses.push(progress);
+          progressDetails.rating = { current, target };
         }
 
         if (criteria.minEarnings) {
-          totalCriteria++;
           const current = performanceMetrics.totalEarnings || 0;
           const target = criteria.minEarnings;
-          totalProgress += Math.min(100, (current / target) * 100);
+          const progress = Math.min(100, (current / target) * 100);
+          individualProgresses.push(progress);
+          progressDetails.earnings = { current, target };
         }
 
         if (criteria.minCompletionRate) {
-          totalCriteria++;
           const current = performanceMetrics.completionRate || 0;
           const target = criteria.minCompletionRate;
-          totalProgress += Math.min(100, (current / target) * 100);
+          const progress = Math.min(100, (current / target) * 100);
+          individualProgresses.push(progress);
+          progressDetails.completionRate = { current, target };
         }
 
         if (criteria.rankingPosition) {
-          totalCriteria++;
           const current = performanceMetrics.overallRanking || 999;
           const target = criteria.rankingPosition;
-          // Para ranking, cuanto menor mejor, así que invertimos
-          totalProgress += Math.min(100, (target / Math.max(1, current)) * 100);
+          // Para ranking, cuanto menor mejor
+          // Si el target es posición 5 y está en posición 10, tiene 50% de progreso
+          // Si está en posición 2 (mejor que el target), tiene 100%
+          const progress = current <= target ? 100 : Math.min(100, (target / current) * 100);
+          individualProgresses.push(progress);
+          progressDetails.ranking = { current, target };
         }
 
+        // El progreso total es el mínimo de todos los criterios
+        // porque TODOS deben cumplirse (AND lógico)
         const progressPercentage =
-          totalCriteria > 0 ? Math.round(totalProgress / totalCriteria) : 0;
+          individualProgresses.length > 0 ? Math.round(Math.min(...individualProgresses)) : 0;
 
         // Verificar si cumple todos los criterios
         const meetsCriteria =
