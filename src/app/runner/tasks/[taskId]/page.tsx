@@ -21,18 +21,30 @@ import {
   FileText,
   MessageSquare,
   Send,
+  Star,
 } from 'lucide-react';
 import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface TaskDetails {
   id: string;
   propertyId: string;
   propertyAddress: string;
+  propertyTitle?: string;
   tenantName: string;
   tenantPhone: string;
   tenantEmail: string;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
   taskType: 'visit' | 'maintenance' | 'inspection' | 'delivery' | 'other';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
@@ -67,10 +79,12 @@ export default function TaskDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateNotes, setUpdateNotes] = useState('');
   const [showNotesForm, setShowNotesForm] = useState(false);
-
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [hasRatedOwner, setHasRatedOwner] = useState(false);
 
   useEffect(() => {
     loadTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const loadTask = async () => {
@@ -103,9 +117,13 @@ export default function TaskDetailPage() {
           id: taskData.id,
           propertyId: taskData.propertyId,
           propertyAddress: taskData.propertyAddress,
+          propertyTitle: taskData.propertyTitle,
           tenantName: taskData.tenantName,
           tenantPhone: taskData.tenantPhone || '',
           tenantEmail: taskData.tenantEmail || '',
+          ownerName: taskData.ownerName,
+          ownerPhone: taskData.ownerPhone,
+          ownerEmail: taskData.ownerEmail,
           taskType: 'visit', // La API devuelve 'property_visit' pero el componente espera 'visit'
           priority: taskData.priority || 'medium',
           status: taskData.status as TaskDetails['status'],
@@ -239,6 +257,48 @@ export default function TaskDetailPage() {
     logger.info('Contacto iniciado con inquilino', { taskId, method });
   };
 
+  const handleSubmitOwnerRating = async (ratingData: any) => {
+    if (!task || !user) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/visit/rate-owner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          visitId: task.id,
+          overallRating: ratingData.overallRating,
+          communicationRating: ratingData.communicationRating || ratingData.overallRating,
+          reliabilityRating: ratingData.reliabilityRating || ratingData.overallRating,
+          professionalismRating: ratingData.professionalismRating || ratingData.overallRating,
+          qualityRating: ratingData.qualityRating || ratingData.overallRating,
+          punctualityRating: ratingData.punctualityRating || ratingData.overallRating,
+          comment: ratingData.comment || '',
+          positiveFeedback: ratingData.positiveFeedback || [],
+          improvementAreas: ratingData.improvementAreas || [],
+          isAnonymous: ratingData.isAnonymous || false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar la calificación');
+      }
+
+      logger.info('Calificación de propietario enviada exitosamente');
+      setShowRatingModal(false);
+      setHasRatedOwner(true);
+      await loadTask(); // Recargar datos
+    } catch (error) {
+      logger.error('Error enviando calificación de propietario:', { error });
+      alert('Error al enviar la calificación. Por favor intenta nuevamente.');
+    }
+  };
+
   const handleBack = () => {
     router.push('/runner/tasks');
   };
@@ -364,54 +424,80 @@ export default function TaskDetailPage() {
                   <div className="flex gap-2 flex-wrap">
                     {(() => {
                       const statusLower = task.status?.toLowerCase() || '';
-                      const isPending = statusLower === 'pending' || statusLower === 'scheduled' || statusLower === 'SCHEDULED'.toLowerCase();
-                      return isPending && (
-                        <Button
-                          onClick={() => handleStatusUpdate('in_progress')}
-                          disabled={isUpdating}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          <Clock className="w-4 h-4 mr-2" />
-                          Iniciar Tarea
-                        </Button>
-                      );
-                    })()}
-                    {(() => {
-                      const statusLower = task.status?.toLowerCase() || '';
-                      const isInProgress = statusLower === 'in_progress' || statusLower === 'IN_PROGRESS'.toLowerCase();
-                      return isInProgress && (
-                        <>
-                          <Button 
-                            onClick={() => handleStatusUpdate('completed')} 
-                            disabled={isUpdating}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Completar Tarea
-                          </Button>
+                      const isPending =
+                        statusLower === 'pending' ||
+                        statusLower === 'scheduled' ||
+                        statusLower === 'SCHEDULED'.toLowerCase();
+                      return (
+                        isPending && (
                           <Button
-                            variant="outline"
-                            onClick={() => router.push(`/runner/photos/upload?visitId=${task.id}`)}
-                            className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                            onClick={() => handleStatusUpdate('in_progress')}
+                            disabled={isUpdating}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
                           >
-                            <Camera className="w-4 h-4 mr-2" />
-                            Subir Fotos
+                            <Clock className="w-4 h-4 mr-2" />
+                            Iniciar Tarea
                           </Button>
-                        </>
+                        )
                       );
                     })()}
                     {(() => {
                       const statusLower = task.status?.toLowerCase() || '';
-                      const isCompleted = statusLower === 'completed' || statusLower === 'COMPLETED'.toLowerCase();
-                      return isCompleted && (
-                        <Button
-                          variant="outline"
-                          onClick={() => router.push(`/runner/photos?visitId=${task.id}`)}
-                          className="border-purple-600 text-purple-600 hover:bg-purple-50"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          Ver Fotos
-                        </Button>
+                      const isInProgress =
+                        statusLower === 'in_progress' ||
+                        statusLower === 'IN_PROGRESS'.toLowerCase();
+                      return (
+                        isInProgress && (
+                          <>
+                            <Button
+                              onClick={() => handleStatusUpdate('completed')}
+                              disabled={isUpdating}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Completar Tarea
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                router.push(`/runner/photos/upload?visitId=${task.id}`)
+                              }
+                              className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                            >
+                              <Camera className="w-4 h-4 mr-2" />
+                              Subir Fotos
+                            </Button>
+                          </>
+                        )
+                      );
+                    })()}
+                    {(() => {
+                      const statusLower = task.status?.toLowerCase() || '';
+                      const isCompleted =
+                        statusLower === 'completed' || statusLower === 'COMPLETED'.toLowerCase();
+                      return (
+                        isCompleted && (
+                          <>
+                            <Button
+                              variant="outline"
+                              onClick={() => router.push(`/runner/photos?visitId=${task.id}`)}
+                              className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                            >
+                              <Camera className="w-4 h-4 mr-2" />
+                              Ver Fotos
+                            </Button>
+                            {!hasRatedOwner && (
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowRatingModal(true)}
+                                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                              >
+                                <Star className="w-4 h-4 mr-2" />
+                                Calificar Propietario
+                              </Button>
+                            )}
+                          </>
+                        )
                       );
                     })()}
                     {task.propertyId && (
@@ -670,7 +756,156 @@ export default function TaskDetailPage() {
             </Card>
           </div>
         </div>
+
+        {/* Modal de Calificación del Propietario */}
+        <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Calificar Propietario</DialogTitle>
+              <DialogDescription>
+                Comparte tu experiencia trabajando con el propietario
+              </DialogDescription>
+            </DialogHeader>
+            {task && (
+              <OwnerRatingForm
+                onSubmit={handleSubmitOwnerRating}
+                onCancel={() => setShowRatingModal(false)}
+                ownerName={task.ownerName || 'Propietario'}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
+  );
+}
+
+// Componente de formulario de calificación del propietario
+interface OwnerRatingFormProps {
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+  ownerName: string;
+}
+
+function OwnerRatingForm({ onSubmit, onCancel, ownerName }: OwnerRatingFormProps) {
+  const [rating, setRating] = useState({
+    overallRating: 0,
+    communicationRating: 0,
+    reliabilityRating: 0,
+    professionalismRating: 0,
+    qualityRating: 0,
+    punctualityRating: 0,
+    comment: '',
+    isAnonymous: false,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating.overallRating === 0) {
+      alert('Por favor selecciona una calificación general');
+      return;
+    }
+    onSubmit(rating);
+  };
+
+  const StarRatingInput = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+  }) => (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex items-center gap-2">
+        {[1, 2, 3, 4, 5].map(star => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="focus:outline-none"
+          >
+            <Star
+              className={`w-6 h-6 ${
+                star <= value
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-gray-300 hover:text-yellow-400'
+              } transition-colors`}
+            />
+          </button>
+        ))}
+        <span className="text-sm text-gray-600 ml-2">{value > 0 ? `${value}/5` : ''}</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+      <StarRatingInput
+        label="Calificación General *"
+        value={rating.overallRating}
+        onChange={value => setRating(prev => ({ ...prev, overallRating: value }))}
+      />
+      <StarRatingInput
+        label="Comunicación"
+        value={rating.communicationRating}
+        onChange={value => setRating(prev => ({ ...prev, communicationRating: value }))}
+      />
+      <StarRatingInput
+        label="Confiabilidad"
+        value={rating.reliabilityRating}
+        onChange={value => setRating(prev => ({ ...prev, reliabilityRating: value }))}
+      />
+      <StarRatingInput
+        label="Profesionalismo"
+        value={rating.professionalismRating}
+        onChange={value => setRating(prev => ({ ...prev, professionalismRating: value }))}
+      />
+      <StarRatingInput
+        label="Calidad del Trabajo"
+        value={rating.qualityRating}
+        onChange={value => setRating(prev => ({ ...prev, qualityRating: value }))}
+      />
+      <StarRatingInput
+        label="Puntualidad"
+        value={rating.punctualityRating}
+        onChange={value => setRating(prev => ({ ...prev, punctualityRating: value }))}
+      />
+
+      <div className="space-y-2">
+        <Label htmlFor="comment">Comentario</Label>
+        <Textarea
+          id="comment"
+          placeholder="Describe tu experiencia trabajando con el propietario..."
+          value={rating.comment}
+          onChange={e => setRating(prev => ({ ...prev, comment: e.target.value }))}
+          rows={4}
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isAnonymousOwner"
+          checked={rating.isAnonymous}
+          onChange={e => setRating(prev => ({ ...prev, isAnonymous: e.target.checked }))}
+          className="rounded"
+        />
+        <Label htmlFor="isAnonymousOwner" className="text-sm font-normal cursor-pointer">
+          Enviar calificación de forma anónima
+        </Label>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={rating.overallRating === 0}>
+          Enviar Calificación
+        </Button>
+      </div>
+    </form>
   );
 }

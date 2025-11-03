@@ -24,16 +24,23 @@ export async function POST(request: NextRequest) {
       comment,
       positiveFeedback,
       improvementAreas,
-      isAnonymous = false
+      isAnonymous = false,
     } = body;
 
     // Validar campos requeridos
-    if (!visitId || !overallRating || !punctualityRating || !professionalismRating ||
-        !communicationRating || !propertyKnowledgeRating) {
+    if (
+      !visitId ||
+      !overallRating ||
+      !punctualityRating ||
+      !professionalismRating ||
+      !communicationRating ||
+      !propertyKnowledgeRating
+    ) {
       return NextResponse.json(
         {
-          error: 'Campos requeridos: visitId, overallRating, punctualityRating, professionalismRating, communicationRating, propertyKnowledgeRating',
-          missingFields: []
+          error:
+            'Campos requeridos: visitId, overallRating, punctualityRating, professionalismRating, communicationRating, propertyKnowledgeRating',
+          missingFields: [],
         },
         { status: 400 }
       );
@@ -44,43 +51,46 @@ export async function POST(request: NextRequest) {
       where: { id: visitId },
       include: {
         runner: { select: { id: true } },
-        tenant: { select: { id: true } }
-      }
+        tenant: { select: { id: true } },
+        property: {
+          select: {
+            id: true,
+            ownerId: true,
+          },
+        },
+      },
     });
 
     if (!visit) {
-      return NextResponse.json(
-        { error: 'Visita no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Visita no encontrada' }, { status: 404 });
     }
 
-    // Verificar que el usuario es el cliente de la visita
-    if (visit.tenantId !== user.id) {
+    // Verificar que el usuario es el cliente (tenant) o el propietario (owner) de la visita
+    const isTenant = visit.tenantId === user.id;
+    const isOwner = visit.property.ownerId === user.id;
+
+    if (!isTenant && !isOwner) {
       return NextResponse.json(
         { error: 'No tienes permiso para calificar esta visita' },
         { status: 403 }
       );
     }
 
-    // Verificar que no haya una calificación existente
+    // Verificar que no haya una calificación existente para este usuario (tenant o owner)
     const existingRating = await db.runnerRating.findUnique({
       where: {
         visitId_clientId: {
           visitId,
-          clientId: user.id
-        }
-      }
+          clientId: user.id,
+        },
+      },
     });
 
     if (existingRating) {
-      return NextResponse.json(
-        { error: 'Ya has calificado esta visita' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'Ya has calificado esta visita' }, { status: 409 });
     }
 
-    // Crear la calificación
+    // Usar el ID del usuario como clientId (tanto tenant como owner pueden calificar)
     const rating = await RunnerRatingService.createRunnerRating({
       visitId,
       runnerId: visit.runner.id,
@@ -93,24 +103,25 @@ export async function POST(request: NextRequest) {
       comment: comment || null,
       positiveFeedback: positiveFeedback || [],
       improvementAreas: improvementAreas || [],
-      isAnonymous
+      isAnonymous,
     });
 
     logger.info('Nueva calificación creada', {
       visitId,
       clientId: user.id,
       overallRating,
-      ratingId: rating.id
+      ratingId: rating.id,
     });
 
     return NextResponse.json({
       success: true,
       data: rating,
-      message: 'Calificación enviada exitosamente'
+      message: 'Calificación enviada exitosamente',
     });
-
   } catch (error) {
-    logger.error('Error creando calificación:', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error creando calificación:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

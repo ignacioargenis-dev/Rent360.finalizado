@@ -9,6 +9,15 @@ import UnifiedDashboardLayout from '@/components/layout/UnifiedDashboardLayout';
 import { useAuth } from '@/components/auth/AuthProviderSimple';
 import { logger } from '@/lib/logger-minimal';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
   ArrowLeft,
   User,
   Star,
@@ -25,6 +34,7 @@ import {
   ZoomIn,
   Eye,
   Download,
+  X,
 } from 'lucide-react';
 
 interface RunnerPhoto {
@@ -84,11 +94,16 @@ export default function RunnerDetailPage() {
   const [incentives, setIncentives] = useState<RunnerIncentive[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<RunnerActivity | null>(null);
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedVisitForRating, setSelectedVisitForRating] = useState<RunnerActivity | null>(null);
 
   useEffect(() => {
     if (runnerId) {
       loadRunnerActivity();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runnerId]);
 
   const loadRunnerActivity = async () => {
@@ -139,9 +154,58 @@ export default function RunnerDetailPage() {
       CANCELLED: { label: 'Cancelada', color: 'bg-red-100 text-red-800' },
       IN_PROGRESS: { label: 'En Progreso', color: 'bg-purple-100 text-purple-800' },
     };
-    const defaultConfig: { label: string; color: string } = { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' };
+    const defaultConfig: { label: string; color: string } = {
+      label: 'Pendiente',
+      color: 'bg-yellow-100 text-yellow-800',
+    };
     const config = statusConfig[status] || defaultConfig;
     return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const handleRateRunner = (activity: RunnerActivity) => {
+    setSelectedVisitForRating(activity);
+    setShowRatingModal(true);
+  };
+
+  const handleSubmitRating = async (ratingData: any) => {
+    if (!selectedVisitForRating || !user) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/visit/rate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          visitId: selectedVisitForRating.id,
+          overallRating: ratingData.overallRating,
+          punctualityRating: ratingData.punctualityRating || ratingData.overallRating,
+          professionalismRating: ratingData.professionalismRating || ratingData.overallRating,
+          communicationRating: ratingData.communicationRating || ratingData.overallRating,
+          propertyKnowledgeRating: ratingData.propertyKnowledgeRating || ratingData.overallRating,
+          comment: ratingData.comment || '',
+          positiveFeedback: ratingData.positiveFeedback || [],
+          improvementAreas: ratingData.improvementAreas || [],
+          isAnonymous: ratingData.isAnonymous || false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar la calificación');
+      }
+
+      logger.info('Calificación enviada exitosamente');
+      setShowRatingModal(false);
+      setSelectedVisitForRating(null);
+      loadRunnerActivity(); // Recargar datos
+    } catch (error) {
+      logger.error('Error enviando calificación:', { error });
+      alert('Error al enviar la calificación. Por favor intenta nuevamente.');
+    }
   };
 
   if (loading) {
@@ -203,9 +267,7 @@ export default function RunnerDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalVisits || 0}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {stats.pendingVisits || 0} pendientes
-                </p>
+                <p className="text-xs text-gray-500 mt-1">{stats.pendingVisits || 0} pendientes</p>
               </CardContent>
             </Card>
             <Card>
@@ -217,30 +279,37 @@ export default function RunnerDetailPage() {
                   {stats.completedVisits || 0}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {stats.totalVisits > 0 
-                    ? Math.round(((stats.completedVisits || 0) / stats.totalVisits) * 100) 
-                    : 0}% de tasa de completación
+                  {stats.totalVisits > 0
+                    ? Math.round(((stats.completedVisits || 0) / stats.totalVisits) * 100)
+                    : 0}
+                  % de tasa de completación
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Ganancias Totales</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Ganancias Totales
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-600">
                   ${(stats.totalEarnings || 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Promedio: ${stats.totalVisits > 0 
-                    ? Math.round((stats.totalEarnings || 0) / stats.totalVisits).toLocaleString() 
-                    : 0} por visita
+                  Promedio: $
+                  {stats.totalVisits > 0
+                    ? Math.round((stats.totalEarnings || 0) / stats.totalVisits).toLocaleString()
+                    : 0}{' '}
+                  por visita
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Calificación Promedio</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Calificación Promedio
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-1">
@@ -270,9 +339,10 @@ export default function RunnerDetailPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalPhotos || 0}</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {stats.completedVisits > 0 
+                  {stats.completedVisits > 0
                     ? Math.round((stats.totalPhotos || 0) / stats.completedVisits).toFixed(1)
-                    : 0} fotos por visita en promedio
+                    : 0}{' '}
+                  fotos por visita en promedio
                 </p>
               </CardContent>
             </Card>
@@ -301,9 +371,7 @@ export default function RunnerDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{stats.cancelledVisits || 0}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Visitas canceladas o no realizadas
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Visitas canceladas o no realizadas</p>
               </CardContent>
             </Card>
           </div>
@@ -317,7 +385,8 @@ export default function RunnerDetailPage() {
               Registros y Actividades Completas
             </CardTitle>
             <CardDescription>
-              Historial completo de visitas, fotos y acciones realizadas por el runner en tus propiedades
+              Historial completo de visitas, fotos y acciones realizadas por el runner en tus
+              propiedades
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -332,7 +401,9 @@ export default function RunnerDetailPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-900 text-lg">{activity.propertyTitle}</h3>
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            {activity.propertyTitle}
+                          </h3>
                           {getStatusBadge(activity.status)}
                         </div>
                         <p className="text-sm text-gray-600 flex items-center gap-1">
@@ -343,10 +414,14 @@ export default function RunnerDetailPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/properties/${activity.propertyId}`)}
+                        onClick={() => {
+                          // Mostrar modal o expandir detalles de la visita
+                          setSelectedVisit(activity);
+                          setShowVisitModal(true);
+                        }}
                       >
                         <Eye className="w-4 h-4 mr-2" />
-                        Ver Propiedad
+                        Ver Detalles de Visita
                       </Button>
                     </div>
 
@@ -356,8 +431,15 @@ export default function RunnerDetailPage() {
                         <Calendar className="w-4 h-4 text-gray-500" />
                         <div>
                           <p className="text-gray-600">Fecha</p>
-                          <p className="font-medium">{new Date(activity.scheduledAt).toLocaleDateString('es-CL')}</p>
-                          <p className="text-xs text-gray-500">{new Date(activity.scheduledAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="font-medium">
+                            {new Date(activity.scheduledAt).toLocaleDateString('es-CL')}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(activity.scheduledAt).toLocaleTimeString('es-CL', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
                         </div>
                       </div>
                       {activity.duration && (
@@ -374,7 +456,9 @@ export default function RunnerDetailPage() {
                           <DollarSign className="w-4 h-4 text-gray-500" />
                           <div>
                             <p className="text-gray-600">Ganancias</p>
-                            <p className="font-medium text-green-600">${activity.earnings.toLocaleString()}</p>
+                            <p className="font-medium text-green-600">
+                              ${activity.earnings.toLocaleString()}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -413,7 +497,9 @@ export default function RunnerDetailPage() {
                           <FileText className="w-4 h-4" />
                           Notas de la Visita
                         </p>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{activity.notes}</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {activity.notes}
+                        </p>
                       </div>
                     )}
 
@@ -424,7 +510,23 @@ export default function RunnerDetailPage() {
                           <Star className="w-4 h-4" />
                           Feedback del Cliente
                         </p>
-                        <p className="text-sm text-gray-700 italic">"{activity.feedback}"</p>
+                        <p className="text-sm text-gray-700 italic">
+                          &quot;{activity.feedback}&quot;
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Botón para calificar si está completada y no calificada */}
+                    {activity.status === 'COMPLETED' && !activity.rating && (
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRateRunner(activity)}
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          Calificar Servicio
+                        </Button>
                       </div>
                     )}
 
@@ -461,7 +563,10 @@ export default function RunnerDetailPage() {
                                 </Badge>
                               )}
                               {photo.category && (
-                                <Badge variant="outline" className="absolute bottom-1 right-1 text-xs">
+                                <Badge
+                                  variant="outline"
+                                  className="absolute bottom-1 right-1 text-xs"
+                                >
                                   {photo.category}
                                 </Badge>
                               )}
@@ -479,7 +584,9 @@ export default function RunnerDetailPage() {
             ) : (
               <div className="text-center py-12">
                 <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg font-medium mb-2">No hay actividad registrada</p>
+                <p className="text-gray-500 text-lg font-medium mb-2">
+                  No hay actividad registrada
+                </p>
                 <p className="text-gray-400 text-sm">
                   Este runner aún no ha realizado visitas en tus propiedades
                 </p>
@@ -525,8 +632,272 @@ export default function RunnerDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Modal de Detalles de Visita */}
+        <Dialog open={showVisitModal} onOpenChange={setShowVisitModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detalles de la Visita</DialogTitle>
+              <DialogDescription>
+                Información completa de la visita realizada por el runner
+              </DialogDescription>
+            </DialogHeader>
+            {selectedVisit && (
+              <div className="space-y-6 mt-4">
+                {/* Información básica */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Propiedad</Label>
+                    <p className="text-lg font-semibold">{selectedVisit.propertyTitle}</p>
+                    <p className="text-sm text-gray-600">{selectedVisit.propertyAddress}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Estado</Label>
+                    <div className="mt-1">{getStatusBadge(selectedVisit.status)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Fecha y Hora</Label>
+                    <p className="text-sm">
+                      {new Date(selectedVisit.scheduledAt).toLocaleDateString('es-CL')} a las{' '}
+                      {new Date(selectedVisit.scheduledAt).toLocaleTimeString('es-CL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  {selectedVisit.duration && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Duración</Label>
+                      <p className="text-sm">{selectedVisit.duration} minutos</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notas */}
+                {selectedVisit.notes && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Notas del Runner
+                    </Label>
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {selectedVisit.notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fotos */}
+                {selectedVisit.photos && selectedVisit.photos.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
+                      <Camera className="w-4 h-4" />
+                      Fotos Subidas ({selectedVisit.photos.length})
+                    </Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {selectedVisit.photos.map(photo => (
+                        <div
+                          key={photo.id}
+                          className="relative group cursor-pointer"
+                          onClick={() => window.open(photo.url, '_blank')}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={photo.description || photo.filename}
+                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                            <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          {photo.isMain && (
+                            <Badge className="absolute top-2 left-2 bg-blue-500 text-white text-xs">
+                              Principal
+                            </Badge>
+                          )}
+                          {photo.category && (
+                            <Badge
+                              variant="outline"
+                              className="absolute bottom-2 right-2 text-xs bg-white"
+                            >
+                              {photo.category}
+                            </Badge>
+                          )}
+                          {photo.description && (
+                            <p className="mt-2 text-xs text-gray-600 truncate">
+                              {photo.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Botón para calificar */}
+                {selectedVisit.status === 'COMPLETED' && !selectedVisit.rating && (
+                  <div className="border-t pt-4">
+                    <Button
+                      onClick={() => {
+                        setShowVisitModal(false);
+                        handleRateRunner(selectedVisit);
+                      }}
+                      className="w-full"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      Calificar Servicio del Runner
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Calificación */}
+        <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Calificar Servicio del Runner</DialogTitle>
+              <DialogDescription>
+                Comparte tu experiencia con el servicio del runner360
+              </DialogDescription>
+            </DialogHeader>
+            {selectedVisitForRating && (
+              <RatingForm
+                onSubmit={handleSubmitRating}
+                onCancel={() => {
+                  setShowRatingModal(false);
+                  setSelectedVisitForRating(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </UnifiedDashboardLayout>
   );
 }
 
+// Componente de formulario de calificación
+interface RatingFormProps {
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+}
+
+function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
+  const [rating, setRating] = useState({
+    overallRating: 0,
+    punctualityRating: 0,
+    professionalismRating: 0,
+    communicationRating: 0,
+    propertyKnowledgeRating: 0,
+    comment: '',
+    isAnonymous: false,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating.overallRating === 0) {
+      alert('Por favor selecciona una calificación general');
+      return;
+    }
+    onSubmit(rating);
+  };
+
+  const StarRatingInput = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+  }) => (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex items-center gap-2">
+        {[1, 2, 3, 4, 5].map(star => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="focus:outline-none"
+          >
+            <Star
+              className={`w-6 h-6 ${
+                star <= value
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-gray-300 hover:text-yellow-400'
+              } transition-colors`}
+            />
+          </button>
+        ))}
+        <span className="text-sm text-gray-600 ml-2">{value > 0 ? `${value}/5` : ''}</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+      <StarRatingInput
+        label="Calificación General *"
+        value={rating.overallRating}
+        onChange={value => setRating(prev => ({ ...prev, overallRating: value }))}
+      />
+      <StarRatingInput
+        label="Puntualidad"
+        value={rating.punctualityRating}
+        onChange={value => setRating(prev => ({ ...prev, punctualityRating: value }))}
+      />
+      <StarRatingInput
+        label="Profesionalismo"
+        value={rating.professionalismRating}
+        onChange={value => setRating(prev => ({ ...prev, professionalismRating: value }))}
+      />
+      <StarRatingInput
+        label="Comunicación"
+        value={rating.communicationRating}
+        onChange={value => setRating(prev => ({ ...prev, communicationRating: value }))}
+      />
+      <StarRatingInput
+        label="Conocimiento de la Propiedad"
+        value={rating.propertyKnowledgeRating}
+        onChange={value => setRating(prev => ({ ...prev, propertyKnowledgeRating: value }))}
+      />
+
+      <div className="space-y-2">
+        <Label htmlFor="comment">Comentario</Label>
+        <Textarea
+          id="comment"
+          placeholder="Describe tu experiencia con el servicio del runner..."
+          value={rating.comment}
+          onChange={e => setRating(prev => ({ ...prev, comment: e.target.value }))}
+          rows={4}
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isAnonymous"
+          checked={rating.isAnonymous}
+          onChange={e => setRating(prev => ({ ...prev, isAnonymous: e.target.checked }))}
+          className="rounded"
+        />
+        <Label htmlFor="isAnonymous" className="text-sm font-normal cursor-pointer">
+          Enviar calificación de forma anónima
+        </Label>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={rating.overallRating === 0}>
+          Enviar Calificación
+        </Button>
+      </div>
+    </form>
+  );
+}

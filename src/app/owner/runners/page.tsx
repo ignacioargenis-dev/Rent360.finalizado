@@ -122,7 +122,9 @@ export default function OwnerRunnersPage() {
     urgency: 'normal',
     propertyId: '', // Agregado para selección de propiedad
   });
-  const [ownerProperties, setOwnerProperties] = useState<Array<{ id: string; title: string; address: string }>>([]);
+  const [ownerProperties, setOwnerProperties] = useState<
+    Array<{ id: string; title: string; address: string }>
+  >([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
   const applyFilters = useCallback(() => {
@@ -255,9 +257,16 @@ export default function OwnerRunnersPage() {
 
           // Obtener datos reales del runner
           const hourlyRate = runnerSettings.hourlyRate || 15000;
-          const specialties = runnerSettings.specialties || ['Inspecciones profesionales', 'Fotografía especializada'];
+          const specialties = runnerSettings.specialties || [
+            'Inspecciones profesionales',
+            'Fotografía especializada',
+          ];
           const languages = runnerSettings.languages || ['Español'];
-          const services = runnerSettings.services || ['Visitas de inspección', 'Reportes fotográficos', 'Evaluaciones'];
+          const services = runnerSettings.services || [
+            'Visitas de inspección',
+            'Reportes fotográficos',
+            'Evaluaciones',
+          ];
           const availability = runnerSettings.availability || 'available';
           const responseTime = runnerSettings.responseTime || '< 2 horas';
           const experience = runnerSettings.experience || 'Verificado';
@@ -278,7 +287,9 @@ export default function OwnerRunnersPage() {
             availability: availability as 'available' | 'busy' | 'offline',
             specialties,
             languages,
-            lastActive: runner.memberSince ? new Date(runner.memberSince).toISOString() : new Date().toISOString(),
+            lastActive: runner.memberSince
+              ? new Date(runner.memberSince).toISOString()
+              : new Date().toISOString(),
             completedJobs: runner.stats.totalVisits,
             responseTime,
           };
@@ -299,9 +310,10 @@ export default function OwnerRunnersPage() {
 
   // Hooks - deben estar después de las funciones que usan
   useEffect(() => {
+    // Cargar datos iniciales según el tab activo
     if (activeTab === 'available') {
       loadRunners();
-    } else {
+    } else if (activeTab === 'assigned') {
       loadAssignedRunners();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,7 +349,9 @@ export default function OwnerRunnersPage() {
       }
 
       // Formatear fecha y hora en formato ISO 8601 para el backend
-      const scheduledAt = new Date(`${hireData.preferredDate}T${hireData.preferredTime}:00Z`).toISOString();
+      const scheduledAt = new Date(
+        `${hireData.preferredDate}T${hireData.preferredTime}:00Z`
+      ).toISOString();
 
       // Llamar a la API de asignación de corredor
       const response = await fetch(`/api/owner/runners/${selectedRunner.id}/assign`, {
@@ -473,7 +487,7 @@ export default function OwnerRunnersPage() {
         {/* Assigned Runners Tab */}
         {activeTab === 'assigned' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignedRunners.map((assignedRunner) => (
+            {assignedRunners.map(assignedRunner => (
               <Card key={assignedRunner.runner.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -523,9 +537,10 @@ export default function OwnerRunnersPage() {
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-xs font-medium text-gray-600 mb-2">Últimas visitas:</p>
                         <div className="space-y-1">
-                          {assignedRunner.recentVisits.slice(0, 3).map((visit) => (
+                          {assignedRunner.recentVisits.slice(0, 3).map(visit => (
                             <div key={visit.id} className="text-xs text-gray-600">
-                              {visit.propertyTitle} - {new Date(visit.scheduledAt).toLocaleDateString()}
+                              {visit.propertyTitle} -{' '}
+                              {new Date(visit.scheduledAt).toLocaleDateString()}
                             </div>
                           ))}
                         </div>
@@ -550,7 +565,7 @@ export default function OwnerRunnersPage() {
                   No tienes runners asignados
                 </h3>
                 <p className="text-gray-600">
-                  Contrata runners desde la pestaña "Disponibles"
+                  Contrata runners desde la pestaña &quot;Disponibles&quot;
                 </p>
               </div>
             )}
@@ -564,193 +579,198 @@ export default function OwnerRunnersPage() {
               <CardTitle className="text-lg">Filtros</CardTitle>
             </CardHeader>
             <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <Label htmlFor="location">Ubicación</Label>
-                <Select
-                  value={filters.location}
-                  onValueChange={value => setFilters({ ...filters, location: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas las ubicaciones" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las ubicaciones</SelectItem>
-                    <SelectItem value="santiago">Santiago</SelectItem>
-                    <SelectItem value="providencia">Providencia</SelectItem>
-                    <SelectItem value="las condes">Las Condes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                  <Label htmlFor="location">Ubicación</Label>
+                  <Select
+                    value={filters.location}
+                    onValueChange={value => setFilters({ ...filters, location: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las ubicaciones" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las ubicaciones</SelectItem>
+                      <SelectItem value="santiago">Santiago</SelectItem>
+                      <SelectItem value="providencia">Providencia</SelectItem>
+                      <SelectItem value="las condes">Las Condes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label htmlFor="rating">Calificación mínima</Label>
-                <Select
-                  value={filters.rating}
-                  onValueChange={value => setFilters({ ...filters, rating: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas las calificaciones" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las calificaciones</SelectItem>
-                    <SelectItem value="4.5">4.5+ estrellas</SelectItem>
-                    <SelectItem value="4.0">4.0+ estrellas</SelectItem>
-                    <SelectItem value="3.5">3.5+ estrellas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="rating">Calificación mínima</Label>
+                  <Select
+                    value={filters.rating}
+                    onValueChange={value => setFilters({ ...filters, rating: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas las calificaciones" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las calificaciones</SelectItem>
+                      <SelectItem value="4.5">4.5+ estrellas</SelectItem>
+                      <SelectItem value="4.0">4.0+ estrellas</SelectItem>
+                      <SelectItem value="3.5">3.5+ estrellas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label htmlFor="availability">Disponibilidad</Label>
-                <Select
-                  value={filters.availability}
-                  onValueChange={value => setFilters({ ...filters, availability: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="available">Disponible</SelectItem>
-                    <SelectItem value="busy">Ocupado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="availability">Disponibilidad</Label>
+                  <Select
+                    value={filters.availability}
+                    onValueChange={value => setFilters({ ...filters, availability: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="available">Disponible</SelectItem>
+                      <SelectItem value="busy">Ocupado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label htmlFor="maxRate">Precio máximo por hora</Label>
-                <Select
-                  value={filters.maxRate}
-                  onValueChange={value => setFilters({ ...filters, maxRate: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sin límite" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Sin límite</SelectItem>
-                    <SelectItem value="15000">$15.000</SelectItem>
-                    <SelectItem value="20000">$20.000</SelectItem>
-                    <SelectItem value="25000">$25.000</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="maxRate">Precio máximo por hora</Label>
+                  <Select
+                    value={filters.maxRate}
+                    onValueChange={value => setFilters({ ...filters, maxRate: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin límite" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Sin límite</SelectItem>
+                      <SelectItem value="15000">$15.000</SelectItem>
+                      <SelectItem value="20000">$20.000</SelectItem>
+                      <SelectItem value="25000">$25.000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label htmlFor="search">Buscar por ubicación</Label>
-                <Input
-                  id="search"
-                  placeholder="Ej: Santiago Centro"
-                  value={filters.locationSearch}
-                  onChange={e => setFilters({ ...filters, locationSearch: e.target.value })}
-                />
+                <div>
+                  <Label htmlFor="search">Buscar por ubicación</Label>
+                  <Input
+                    id="search"
+                    placeholder="Ej: Santiago Centro"
+                    value={filters.locationSearch}
+                    onChange={e => setFilters({ ...filters, locationSearch: e.target.value })}
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         )}
 
         {/* Results - Solo para runners disponibles */}
         {activeTab === 'available' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRunners.map(runner => (
-            <Card key={runner.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{runner.name}</CardTitle>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">{runner.rating}</span>
-                        <span className="text-sm text-gray-500">
-                          ({runner.completedJobs} trabajos)
-                        </span>
+            {filteredRunners.map(runner => (
+              <Card key={runner.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{runner.name}</CardTitle>
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm text-gray-600">{runner.rating}</span>
+                          <span className="text-sm text-gray-500">
+                            ({runner.completedJobs} trabajos)
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  {runner.verified && (
-                    <Badge className="bg-green-100 text-green-800">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Verificado
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {runner.location}
-                  </div>
-
-                  <div className="flex items-center text-sm text-gray-600">
-                    <DollarSign className="w-4 h-4 mr-2" />${runner.hourlyRate.toLocaleString()} por
-                    hora
-                  </div>
-
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {runner.responseTime}
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {runner.specialties.slice(0, 2).map((specialty, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {specialty}
+                    {runner.verified && (
+                      <Badge className="bg-green-100 text-green-800">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Verificado
                       </Badge>
-                    ))}
+                    )}
                   </div>
+                </CardHeader>
 
-                  <div className="flex space-x-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Guardar datos del runner para iniciar conversación
-                        const recipientData = {
-                          id: runner.id,
-                          name: runner.name,
-                          email: runner.email,
-                          phone: runner.phone,
-                          type: 'runner' as const,
-                        };
-                        sessionStorage.setItem('newMessageRecipient', JSON.stringify(recipientData));
-                        router.push('/owner/messages?new=true');
-                      }}
-                      className="flex-1"
-                    >
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Contactar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setSelectedRunner(runner);
-                        setShowHireModal(true);
-                      }}
-                      className="flex-1"
-                    >
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Contratar
-                    </Button>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {runner.location}
+                    </div>
+
+                    <div className="flex items-center text-sm text-gray-600">
+                      <DollarSign className="w-4 h-4 mr-2" />${runner.hourlyRate.toLocaleString()}{' '}
+                      por hora
+                    </div>
+
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {runner.responseTime}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {runner.specialties.slice(0, 2).map((specialty, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    <div className="flex space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Guardar datos del runner para iniciar conversación
+                          const recipientData = {
+                            id: runner.id,
+                            name: runner.name,
+                            email: runner.email,
+                            phone: runner.phone,
+                            type: 'runner' as const,
+                          };
+                          sessionStorage.setItem(
+                            'newMessageRecipient',
+                            JSON.stringify(recipientData)
+                          );
+                          router.push('/owner/messages?new=true');
+                        }}
+                        className="flex-1"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Contactar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRunner(runner);
+                          setShowHireModal(true);
+                        }}
+                        className="flex-1"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Contratar
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {filteredRunners.length === 0 && !loading && (
-            <div className="col-span-full text-center py-12">
-              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron corredores</h3>
-              <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
-            </div>
-          )}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+            {filteredRunners.length === 0 && !loading && (
+              <div className="col-span-full text-center py-12">
+                <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No se encontraron corredores
+                </h3>
+                <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Hire Modal */}
