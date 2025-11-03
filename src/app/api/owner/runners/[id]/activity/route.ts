@@ -269,7 +269,7 @@ export async function GET(
             Array.isArray(visit.property.propertyImages)
           ) {
             visitPhotos = visit.property.propertyImages
-              .map(img => {
+              .map((img: any) => {
                 if (!img || !img.alt || !visit?.id) {
                   return null;
                 }
