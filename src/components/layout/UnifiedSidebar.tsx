@@ -140,6 +140,11 @@ const getMenuItems = (): RoleMenuItems => ({
       ],
     },
     {
+      title: 'Incentivos de Runners',
+      url: '/admin/incentives',
+      icon: Trophy,
+    },
+    {
       title: 'Soporte',
       url: '/admin/tickets',
       icon: Ticket,
@@ -678,16 +683,16 @@ export default function UnifiedSidebar({
     const normalizedRole = String(user.role).toUpperCase();
     // Mapear roles a claves del menú
     const roleMap: Record<string, string> = {
-      'RUNNER': 'runner',
-      'ADMIN': 'admin',
-      'OWNER': 'owner',
-      'BROKER': 'broker',
-      'TENANT': 'tenant',
-      'SUPPORT': 'support',
-      'PROVIDER': 'provider',
-      'SERVICE_PROVIDER': 'provider',
-      'MAINTENANCE_PROVIDER': 'maintenance',
-      'MAINTENANCE': 'maintenance',
+      RUNNER: 'runner',
+      ADMIN: 'admin',
+      OWNER: 'owner',
+      BROKER: 'broker',
+      TENANT: 'tenant',
+      SUPPORT: 'support',
+      PROVIDER: 'provider',
+      SERVICE_PROVIDER: 'provider',
+      MAINTENANCE_PROVIDER: 'maintenance',
+      MAINTENANCE: 'maintenance',
     };
     finalUserRole = roleMap[normalizedRole] || normalizedRole.toLowerCase();
   }
@@ -831,7 +836,13 @@ export default function UnifiedSidebar({
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-600 mb-4">Menú Principal</h3>
-            <nav className="space-y-2">{items && items.length > 0 ? items.map(item => renderMenuItem(item)) : <p className="text-sm text-gray-500">No hay opciones disponibles</p>}</nav>
+            <nav className="space-y-2">
+              {items && items.length > 0 ? (
+                items.map(item => renderMenuItem(item))
+              ) : (
+                <p className="text-sm text-gray-500">No hay opciones disponibles</p>
+              )}
+            </nav>
           </div>
         </div>
 
