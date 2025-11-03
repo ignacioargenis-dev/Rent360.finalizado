@@ -60,14 +60,17 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     }
 
     // Verificar si el runner ya calificó al propietario para esta visita
-    const existingOwnerRating = await db.userRating.findFirst({
-      where: {
-        fromUserId: user.id,
-        toUserId: visit.property.ownerId || '',
-        contextType: 'PROPERTY_VISIT',
-        contextId: visit.id,
-      },
-    });
+    const ownerId = visit.property.owner?.id || null;
+    const existingOwnerRating = ownerId
+      ? await db.userRating.findFirst({
+          where: {
+            fromUserId: user.id,
+            toUserId: ownerId,
+            contextType: 'PROPERTY_VISIT',
+            contextId: visit.id,
+          },
+        })
+      : null;
 
     const hasRatedOwner = !!existingOwnerRating;
 
