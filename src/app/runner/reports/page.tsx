@@ -99,8 +99,12 @@ export default function ReportesPage() {
       // ✅ CORREGIDO: Obtener datos reales desde la API
       const params = new URLSearchParams();
       params.append('type', filters.reportType !== 'all' ? filters.reportType : 'performance');
-      if (filters.dateFrom) params.append('startDate', filters.dateFrom);
-      if (filters.dateTo) params.append('endDate', filters.dateTo);
+      if (filters.dateFrom) {
+        params.append('startDate', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        params.append('endDate', filters.dateTo);
+      }
 
       const response = await fetch(`/api/runner/reports?${params.toString()}`, {
         method: 'GET',
@@ -126,26 +130,20 @@ export default function ReportesPage() {
         transformedData = {
           overview: {
             totalVisits: reportData.totalVisits || 0,
-            totalConversions: reportData.completedVisits || 0,
-            conversionRate: reportData.completionRate || 0,
+            completedVisits: reportData.completedVisits || 0,
+            completionRate: reportData.completionRate || 0,
             avgVisitDuration: reportData.averageVisitDuration || 0,
             topPerformingAreas: reportData.favoritePropertyTypes || [],
             monthlyGrowth: reportData.earningsGrowth || 0,
           },
-          conversions: {
-            byType: reportData.topClientTypes ? reportData.topClientTypes.map((type: string) => ({
-              type,
-              count: 1,
-              percentage: 0,
-            })) : [],
-            byProperty: [],
-          },
           visits: {
-            byDay: reportData.mostActiveHours ? reportData.mostActiveHours.map((hour: string) => ({
-              day: hour,
-              visits: 1,
-              conversions: 1,
-            })) : [],
+            byDay: reportData.mostActiveHours
+              ? reportData.mostActiveHours.map((hour: string) => ({
+                  day: hour,
+                  visits: 1,
+                  completed: 1,
+                }))
+              : [],
             byTime: [],
           },
           performance: {
@@ -160,15 +158,11 @@ export default function ReportesPage() {
         transformedData = {
           overview: {
             totalVisits: reportData.visitsCompleted || 0,
-            totalConversions: reportData.visitsCompleted || 0,
-            conversionRate: 100,
+            completedVisits: reportData.visitsCompleted || 0,
+            completionRate: 100,
             avgVisitDuration: 0,
             topPerformingAreas: [],
             monthlyGrowth: reportData.earningsChange || 0,
-          },
-          conversions: {
-            byType: [],
-            byProperty: [],
           },
           visits: {
             byDay: reportData.dailyPerformance || [],
@@ -186,15 +180,11 @@ export default function ReportesPage() {
         transformedData = {
           overview: {
             totalVisits: reportData.totalVisits || 0,
-            totalConversions: 0,
-            conversionRate: 0,
+            completedVisits: 0,
+            completionRate: 0,
             avgVisitDuration: 0,
             topPerformingAreas: [],
             monthlyGrowth: 0,
-          },
-          conversions: {
-            byType: [],
-            byProperty: [],
           },
           visits: {
             byDay: [],
@@ -282,11 +272,14 @@ export default function ReportesPage() {
     const csvContent = [
       ['Métrica', 'Valor'],
       ['Visitas Totales', data.overview.totalVisits.toString()],
-      ['Conversiones Totales', data.overview.totalConversions.toString()],
-      ['Tasa de Conversión', `${data.overview.conversionRate}%`],
-      ['Duración Promedio Visita', `${data.overview.avgVisitDuration} min`],
-      ['Crecimiento Mensual', `${data.overview.monthlyGrowth}%`],
-      ['Calificación Promedio', data.performance.avgRating.toString()],
+      ['Visitas Completadas', (data.overview.completedVisits || 0).toString()],
+      ['Tasa de Finalización', `${data.overview.completionRate || 0}%`],
+      ['Duración Promedio Visita', `${data.overview.avgVisitDuration || 0} min`],
+      ['Crecimiento Mensual', `${data.overview.monthlyGrowth || 0}%`],
+      [
+        'Calificación Promedio',
+        data.performance.avgRating > 0 ? data.performance.avgRating.toFixed(1) : 'N/A',
+      ],
       ['Fotos Totales', data.performance.totalPhotos.toString()],
       ['Reportes Enviados', data.performance.reportsSubmitted.toString()],
       ['Tareas Completadas', data.performance.tasksCompleted.toString()],
@@ -324,13 +317,13 @@ export default function ReportesPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conversiones</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Visitas Completadas</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.overview.totalConversions || 0}</div>
+              <div className="text-2xl font-bold">{data?.overview.completedVisits || 0}</div>
               <p className="text-xs text-muted-foreground">
-                Tasa: {data?.overview.conversionRate || 0}%
+                Tasa: {data?.overview.completionRate || 0}%
               </p>
             </CardContent>
           </Card>
@@ -352,37 +345,19 @@ export default function ReportesPage() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.performance.avgRating || 0}</div>
-              <p className="text-xs text-muted-foreground">Promedio de clientes</p>
+              <div className="text-2xl font-bold">
+                {data?.performance.avgRating > 0 ? data.performance.avgRating.toFixed(1) : 'N/A'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {data?.performance.avgRating > 0
+                  ? 'Promedio de clientes'
+                  : 'Sin calificaciones aún'}
+              </p>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Conversiones por tipo */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversiones por Tipo</CardTitle>
-              <CardDescription>Distribución de conversiones según el tipo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {data?.conversions.byType.map((item: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-sm font-medium">{item.type}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{item.count}</div>
-                      <div className="text-xs text-gray-600">{item.percentage}%</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Visitas por día */}
           <Card>
             <CardHeader>
@@ -397,7 +372,7 @@ export default function ReportesPage() {
                     <div className="flex items-center gap-4">
                       <div className="text-sm text-gray-600">{item.visits} visitas</div>
                       <div className="text-sm font-medium text-green-600">
-                        {item.conversions} conv.
+                        {item.completed || 0} completadas
                       </div>
                     </div>
                   </div>

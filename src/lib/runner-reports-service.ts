@@ -196,11 +196,40 @@ export class RunnerReportsService {
             completedVisitsData.length
           : 0;
 
-      // Calcular rating promedio (placeholder - implementar sistema de ratings)
-      const averageRating = 4.5; // Placeholder
+      // Calcular rating promedio desde RunnerRating real
+      const ratings = await db.runnerRating.findMany({
+        where: {
+          runnerId: runnerId,
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        select: {
+          overallRating: true,
+        },
+      });
+
+      const averageRating =
+        ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.overallRating, 0) / ratings.length
+          : 0;
+
+      // Distribución de calificaciones
+      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      ratings.forEach(rating => {
+        const ratingValue = Math.round(rating.overallRating);
+        if (ratingValue >= 1 && ratingValue <= 5) {
+          ratingDistribution[ratingValue as keyof typeof ratingDistribution]++;
+        }
+      });
 
       // Calcular eficiencia
-      const visitsPerDay = totalVisits / 30; // Asumiendo 30 días
+      const daysInPeriod = Math.max(
+        1,
+        Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
+      );
+      const visitsPerDay = totalVisits / daysInPeriod;
 
       // Rankings (placeholder - implementar comparación con otros runners)
       const overallRanking = 5;
@@ -238,6 +267,34 @@ export class RunnerReportsService {
         .slice(0, 3)
         .map(([type]) => type);
 
+      // Calcular horas más activas desde visitas reales
+      const hourCounts: Record<string, number> = {};
+      visits.forEach(visit => {
+        if (visit.scheduledAt) {
+          const hour = visit.scheduledAt.getHours();
+          let hourRange = '';
+          if (hour >= 6 && hour < 9) {
+            hourRange = '06:00-09:00';
+          } else if (hour >= 9 && hour < 12) {
+            hourRange = '09:00-12:00';
+          } else if (hour >= 12 && hour < 15) {
+            hourRange = '12:00-15:00';
+          } else if (hour >= 15 && hour < 18) {
+            hourRange = '15:00-18:00';
+          } else if (hour >= 18 && hour < 21) {
+            hourRange = '18:00-21:00';
+          } else {
+            hourRange = '21:00-06:00';
+          }
+          hourCounts[hourRange] = (hourCounts[hourRange] || 0) + 1;
+        }
+      });
+
+      const mostActiveHours = Object.entries(hourCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([hour]) => hour);
+
       return {
         runnerId,
         runnerName: runner.name || 'Runner',
@@ -262,7 +319,7 @@ export class RunnerReportsService {
 
         // Métricas de calidad
         averageRating,
-        ratingDistribution: { 5: 60, 4: 30, 3: 8, 2: 2, 1: 0 },
+        ratingDistribution,
         clientSatisfactionScore: averageRating * 20,
 
         // Métricas de eficiencia
@@ -282,8 +339,8 @@ export class RunnerReportsService {
 
         // Información adicional
         favoritePropertyTypes,
-        mostActiveHours: ['09:00-12:00', '14:00-17:00'],
-        topClientTypes: ['first_time', 'investor', 'family'],
+        mostActiveHours: mostActiveHours.length > 0 ? mostActiveHours : [],
+        topClientTypes: [], // Los runners360 no hacen conversiones, eliminar
       };
     } catch (error) {
       logger.error('Error generando métricas de rendimiento:', error as Error);

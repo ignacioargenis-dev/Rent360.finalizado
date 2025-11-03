@@ -9,7 +9,7 @@ import { logger } from '@/lib/logger-minimal';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const user = await requireAuth(request);
@@ -21,7 +21,13 @@ export async function GET(
       );
     }
 
-    const runnerId = params.id;
+    // Manejar params como Promise o objeto directo (Next.js 13+)
+    const resolvedParams = 'then' in params ? await params : params;
+    const runnerId = resolvedParams.id;
+
+    if (!runnerId) {
+      return NextResponse.json({ error: 'ID de runner requerido' }, { status: 400 });
+    }
 
     // Verificar que el runner existe
     const runner = await db.user.findUnique({
@@ -124,28 +130,34 @@ export async function GET(
       take: 50,
     });
 
+    // Obtener todas las calificaciones del runner para calcular promedio real
+    const allRunnerRatings = await db.runnerRating.findMany({
+      where: {
+        runnerId: runnerId,
+      },
+      select: {
+        overallRating: true,
+      },
+    });
+
     // Calcular estadísticas
     const stats = {
       totalVisits: visits.length,
-      completedVisits: visits.filter((v) => v.status === 'COMPLETED').length,
-      pendingVisits: visits.filter((v) => v.status === 'SCHEDULED' || v.status === 'PENDING').length,
-      cancelledVisits: visits.filter((v) => v.status === 'CANCELLED').length,
+      completedVisits: visits.filter(v => v.status === 'COMPLETED').length,
+      pendingVisits: visits.filter(v => v.status === 'SCHEDULED' || v.status === 'PENDING').length,
+      cancelledVisits: visits.filter(v => v.status === 'CANCELLED').length,
       totalEarnings: visits.reduce((sum, v) => sum + (v.earnings || 0), 0),
       totalPhotos: visits.reduce((sum, v) => sum + (v.photosTaken || 0), 0),
       averageRating:
-        visits.length > 0
-          ? visits.reduce((sum, v) => {
-              const rating = v.runnerRatings[0]?.overallRating || v.rating || 0;
-              return sum + rating;
-            }, 0) / visits.length
+        allRunnerRatings.length > 0
+          ? allRunnerRatings.reduce((sum, r) => sum + r.overallRating, 0) / allRunnerRatings.length
           : 0,
       totalIncentives: incentives.length,
       totalIncentiveValue: incentives.reduce((sum, i) => {
         // Parsear rewardsGranted para obtener el valor
         try {
-          const rewardsGranted = typeof i.rewardsGranted === 'string' 
-            ? JSON.parse(i.rewardsGranted) 
-            : i.rewardsGranted;
+          const rewardsGranted =
+            typeof i.rewardsGranted === 'string' ? JSON.parse(i.rewardsGranted) : i.rewardsGranted;
           const amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
           return sum + (typeof amount === 'number' ? amount : 0);
         } catch {
@@ -155,10 +167,10 @@ export async function GET(
     };
 
     // Formatear actividad reciente con fotos
-    const recentActivity = visits.map((visit) => {
+    const recentActivity = visits.map(visit => {
       // Obtener fotos asociadas a esta visita desde PropertyImage
       const visitPhotos = visit.property.propertyImages
-        .map((img) => {
+        .map(img => {
           try {
             const metadata = img.alt ? JSON.parse(img.alt) : null;
             if (metadata && metadata.visitId === visit.id) {
@@ -177,7 +189,7 @@ export async function GET(
             return null;
           }
         })
-        .filter((photo) => photo !== null) as any[];
+        .filter(photo => photo !== null) as any[];
 
       return {
         id: visit.id,
@@ -194,12 +206,14 @@ export async function GET(
         rating: visit.runnerRatings[0]?.overallRating || visit.rating || null,
         feedback: visit.runnerRatings[0]?.comment || visit.clientFeedback || null,
         photos: visitPhotos,
-        tenant: visit.tenant ? {
-          id: visit.tenant.id,
-          name: visit.tenant.name,
-          email: visit.tenant.email,
-          phone: visit.tenant.phone,
-        } : null,
+        tenant: visit.tenant
+          ? {
+              id: visit.tenant.id,
+              name: visit.tenant.name,
+              email: visit.tenant.email,
+              phone: visit.tenant.phone,
+            }
+          : null,
         createdAt: visit.createdAt.toISOString(),
         updatedAt: visit.updatedAt.toISOString(),
       };
@@ -213,18 +227,19 @@ export async function GET(
       },
       stats,
       recentActivity,
-      incentives: incentives.map((inc) => {
+      incentives: incentives.map(inc => {
         // Parsear rewardsGranted para obtener el valor
         let amount = 0;
         try {
-          const rewardsGranted = typeof inc.rewardsGranted === 'string' 
-            ? JSON.parse(inc.rewardsGranted) 
-            : inc.rewardsGranted;
+          const rewardsGranted =
+            typeof inc.rewardsGranted === 'string'
+              ? JSON.parse(inc.rewardsGranted)
+              : inc.rewardsGranted;
           amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
         } catch {
           amount = 0;
         }
-        
+
         return {
           id: inc.id,
           name: inc.incentiveRule.name,
@@ -235,7 +250,7 @@ export async function GET(
           earnedAt: inc.earnedAt,
         };
       }),
-      auditLogs: auditLogs.map((log) => ({
+      auditLogs: auditLogs.map(log => ({
         id: log.id,
         action: log.action,
         entityType: log.entityType,
@@ -246,8 +261,16 @@ export async function GET(
       })),
     });
   } catch (error) {
-    logger.error('Error fetching runner activity:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    logger.error('Error fetching runner activity:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor',
+        message: error instanceof Error ? error.message : 'Error desconocido',
+      },
+      { status: 500 }
+    );
   }
 }
-
