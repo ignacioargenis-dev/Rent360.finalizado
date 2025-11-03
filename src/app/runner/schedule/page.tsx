@@ -216,7 +216,7 @@ export default function HorarioPage() {
   };
 
   const handleViewVisit = (visitId: string) => {
-    router.push(`/runner/visits/${visitId}`);
+    router.push(`/runner/tasks/${visitId}`);
   };
 
   const handleExportSchedule = () => {

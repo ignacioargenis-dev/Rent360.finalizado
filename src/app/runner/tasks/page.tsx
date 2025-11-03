@@ -247,10 +247,40 @@ export default function TareasPage() {
     router.push(`/runner/tasks/${taskId}`);
   };
 
-  const handleMarkCompleted = (taskId: string) => {
-    // In a real app, this would make an API call
-    // For now, just refresh the data to simulate completion
-    fetchTasks(); // Refresh data
+  const handleMarkCompleted = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/runner/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'completed',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al completar la tarea');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Recargar las tareas para mostrar el estado actualizado
+        await fetchTasks();
+        logger.info('Tarea completada exitosamente', { taskId });
+      } else {
+        throw new Error(result.error || 'Error al completar la tarea');
+      }
+    } catch (error) {
+      logger.error('Error completando tarea:', {
+        error: error instanceof Error ? error.message : String(error),
+        taskId,
+      });
+      alert('Error al completar la tarea. Por favor, inténtalo nuevamente.');
+    }
   };
 
   const handleExportTasks = () => {

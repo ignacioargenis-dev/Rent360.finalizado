@@ -254,7 +254,7 @@ export default function RunnerPhotosPage() {
   };
 
   const handleViewReport = (visitId: string) => {
-    router.push(`/runner/photos/${visitId}`);
+    router.push(`/runner/tasks/${visitId}`);
   };
 
   const handleDownloadReport = (reportId: string) => {
@@ -515,7 +515,14 @@ export default function RunnerPhotosPage() {
                     {report.photos.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
                         {report.photos.slice(0, 4).map(photo => (
-                          <div key={photo.id} className="relative group">
+                          <div 
+                            key={photo.id} 
+                            className="relative group cursor-pointer"
+                            onClick={() => {
+                              // Abrir imagen en nueva ventana/modal
+                              window.open(photo.url, '_blank');
+                            }}
+                          >
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
@@ -651,11 +658,18 @@ export default function RunnerPhotosPage() {
                       <p className="text-sm font-medium text-gray-700 mb-2">Fotos recientes:</p>
                       <div className="flex gap-2">
                         {report.photos.slice(0, 3).map(photo => (
-                          <div key={photo.id} className="relative">
+                          <div 
+                            key={photo.id} 
+                            className="relative cursor-pointer"
+                            onClick={() => {
+                              // Abrir imagen en nueva ventana/modal
+                              window.open(photo.url, '_blank');
+                            }}
+                          >
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
-                              className="w-16 h-16 object-cover rounded-lg"
+                              className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity"
                             />
                             {photo.isMain && (
                               <Badge className="absolute top-0 left-0 bg-blue-500 text-white text-xs rounded-tl-lg rounded-br-lg">

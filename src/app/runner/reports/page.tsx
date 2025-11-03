@@ -118,31 +118,96 @@ export default function ReportesPage() {
       const result = await response.json();
       const reportData = result.data || {};
 
-      // Transformar datos al formato esperado (adaptable según lo que devuelva el servicio)
-      const transformedData = {
-        overview: reportData.overview || {
-          totalVisits: reportData.totalVisits || 0,
-          totalConversions: reportData.totalConversions || 0,
-          conversionRate: reportData.conversionRate || 0,
-          avgVisitDuration: reportData.averageDuration || 0,
-          topPerformingAreas: reportData.topAreas || [],
-          monthlyGrowth: reportData.growth || 0,
-        },
-        conversions: reportData.conversions || {
-          byType: reportData.conversionsByType || [],
-          byProperty: reportData.conversionsByProperty || [],
-        },
-        visits: reportData.visits || {
-          byDay: reportData.visitsByDay || [],
-          byTime: reportData.visitsByTime || [],
-        },
-        performance: reportData.performance || {
-          avgRating: reportData.averageRating || 0,
-          totalPhotos: reportData.totalPhotos || 0,
-          reportsSubmitted: reportData.reportsSubmitted || 0,
-          tasksCompleted: reportData.tasksCompleted || 0,
-        },
-      };
+      // Transformar datos al formato esperado según el tipo de reporte
+      let transformedData: any = {};
+
+      if (filters.reportType === 'performance' || filters.reportType === 'all') {
+        // Datos de performance metrics
+        transformedData = {
+          overview: {
+            totalVisits: reportData.totalVisits || 0,
+            totalConversions: reportData.completedVisits || 0,
+            conversionRate: reportData.completionRate || 0,
+            avgVisitDuration: reportData.averageVisitDuration || 0,
+            topPerformingAreas: reportData.favoritePropertyTypes || [],
+            monthlyGrowth: reportData.earningsGrowth || 0,
+          },
+          conversions: {
+            byType: reportData.topClientTypes ? reportData.topClientTypes.map((type: string) => ({
+              type,
+              count: 1,
+              percentage: 0,
+            })) : [],
+            byProperty: [],
+          },
+          visits: {
+            byDay: reportData.mostActiveHours ? reportData.mostActiveHours.map((hour: string) => ({
+              day: hour,
+              visits: 1,
+              conversions: 1,
+            })) : [],
+            byTime: [],
+          },
+          performance: {
+            avgRating: reportData.averageRating || 0,
+            totalPhotos: 0, // TODO: Obtener de reportData
+            reportsSubmitted: reportData.completedVisits || 0,
+            tasksCompleted: reportData.completedVisits || 0,
+          },
+        };
+      } else if (filters.reportType === 'weekly') {
+        // Datos de weekly report
+        transformedData = {
+          overview: {
+            totalVisits: reportData.visitsCompleted || 0,
+            totalConversions: reportData.visitsCompleted || 0,
+            conversionRate: 100,
+            avgVisitDuration: 0,
+            topPerformingAreas: [],
+            monthlyGrowth: reportData.earningsChange || 0,
+          },
+          conversions: {
+            byType: [],
+            byProperty: [],
+          },
+          visits: {
+            byDay: reportData.dailyPerformance || [],
+            byTime: [],
+          },
+          performance: {
+            avgRating: reportData.averageRating || 0,
+            totalPhotos: 0,
+            reportsSubmitted: reportData.visitsCompleted || 0,
+            tasksCompleted: reportData.visitsCompleted || 0,
+          },
+        };
+      } else {
+        // Datos por defecto para otros tipos de reporte
+        transformedData = {
+          overview: {
+            totalVisits: reportData.totalVisits || 0,
+            totalConversions: 0,
+            conversionRate: 0,
+            avgVisitDuration: 0,
+            topPerformingAreas: [],
+            monthlyGrowth: 0,
+          },
+          conversions: {
+            byType: [],
+            byProperty: [],
+          },
+          visits: {
+            byDay: [],
+            byTime: [],
+          },
+          performance: {
+            avgRating: reportData.averageRating || 0,
+            totalPhotos: 0,
+            reportsSubmitted: 0,
+            tasksCompleted: 0,
+          },
+        };
+      }
 
       setData(transformedData);
     } catch (error) {
