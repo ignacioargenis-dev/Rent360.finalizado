@@ -344,12 +344,41 @@ export async function GET(
                   return null;
                 }
                 try {
-                  const metadata = JSON.parse(img.alt);
+                  const metadata = img.alt ? JSON.parse(img.alt) : null;
                   if (metadata && metadata.visitId === visit.id) {
+                    const imageUrl = img.url || '';
+                    // Validar que la URL no esté vacía
+                    if (!imageUrl || imageUrl.trim() === '') {
+                      logger.warn('PropertyImage con URL vacía', {
+                        imageId: img.id,
+                        visitId: visit.id,
+                      });
+                      return null;
+                    }
+
+                    // Asegurar que la URL sea válida
+                    let finalUrl = imageUrl.trim();
+
+                    // Si la URL no empieza con http/https, puede ser relativa
+                    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                      // Si es una ruta relativa que empieza con /, mantenerla
+                      if (finalUrl.startsWith('/')) {
+                        // No hacer nada, mantener la ruta relativa
+                      } else {
+                        // Si no tiene protocolo ni empieza con /, puede ser un error
+                        logger.warn('PropertyImage con URL inválida', {
+                          imageId: img.id,
+                          originalUrl: imageUrl,
+                          visitId: visit.id,
+                        });
+                        return null;
+                      }
+                    }
+
                     return {
                       id: img.id || '',
-                      url: img.url || '',
-                      filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                      url: finalUrl,
+                      filename: finalUrl ? finalUrl.split('/').pop() || 'image.jpg' : 'image.jpg',
                       uploadedAt: img.createdAt
                         ? img.createdAt.toISOString()
                         : new Date().toISOString(),
@@ -359,13 +388,30 @@ export async function GET(
                     };
                   }
                   return null;
-                } catch {
+                } catch (parseError) {
                   // Si no se puede parsear, verificar si el alt contiene el visitId como string
                   if (img.alt && visit.id && img.alt.includes(visit.id)) {
+                    const imageUrl = img.url || '';
+                    if (!imageUrl || imageUrl.trim() === '') {
+                      return null;
+                    }
+
+                    let finalUrl = imageUrl.trim();
+                    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                      if (!finalUrl.startsWith('/')) {
+                        logger.warn('PropertyImage con URL inválida (fallback)', {
+                          imageId: img.id,
+                          originalUrl: imageUrl,
+                          visitId: visit.id,
+                        });
+                        return null;
+                      }
+                    }
+
                     return {
                       id: img.id || '',
-                      url: img.url || '',
-                      filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                      url: finalUrl,
+                      filename: finalUrl ? finalUrl.split('/').pop() || 'image.jpg' : 'image.jpg',
                       uploadedAt: img.createdAt
                         ? img.createdAt.toISOString()
                         : new Date().toISOString(),

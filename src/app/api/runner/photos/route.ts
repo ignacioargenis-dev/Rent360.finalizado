@@ -63,18 +63,36 @@ export async function GET(request: NextRequest) {
     });
 
     // Transformar visitas en PhotoReport
-    const photoReports = visits.map((visit) => {
+    const photoReports = visits.map(visit => {
       // Obtener fotos asociadas a esta visita desde PropertyImage
       // Las fotos tienen metadata JSON en el campo 'alt' con visitId
       const visitPhotos = visit.property.propertyImages
-        .map((img) => {
+        .map(img => {
           try {
             const metadata = img.alt ? JSON.parse(img.alt) : null;
             if (metadata && metadata.visitId === visit.id) {
+              const imageUrl = img.url || '';
+              // Validar que la URL no esté vacía
+              if (!imageUrl || imageUrl.trim() === '') {
+                return null;
+              }
+
+              // Asegurar que la URL sea válida
+              let finalUrl = imageUrl.trim();
+
+              // Si la URL no empieza con http/https, puede ser relativa
+              if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                // Si es una ruta relativa que empieza con /, mantenerla
+                if (!finalUrl.startsWith('/')) {
+                  // Si no tiene protocolo ni empieza con /, es inválida
+                  return null;
+                }
+              }
+
               return {
                 id: img.id,
-                url: img.url,
-                filename: img.url.split('/').pop() || 'image.jpg',
+                url: finalUrl,
+                filename: finalUrl ? finalUrl.split('/').pop() || 'image.jpg' : 'image.jpg',
                 size: 0, // No tenemos tamaño en PropertyImage
                 uploadedAt: img.createdAt.toISOString(),
                 category: metadata.category || 'general',
@@ -88,7 +106,7 @@ export async function GET(request: NextRequest) {
             return null;
           }
         })
-        .filter((photo) => photo !== null) as any[];
+        .filter(photo => photo !== null) as any[];
 
       // Determinar status basado en la visita y fotos
       let status: 'PENDING' | 'UPLOADED' | 'REVIEWED' | 'APPROVED' | 'REJECTED' = 'PENDING';
@@ -125,10 +143,10 @@ export async function GET(request: NextRequest) {
 
     // Calcular estadísticas
     const totalPhotos = photoReports.reduce((sum, report) => sum + report.photos.length, 0);
-    const pendingUploads = photoReports.filter((report) => report.status === 'PENDING').length;
+    const pendingUploads = photoReports.filter(report => report.status === 'PENDING').length;
     const now = new Date();
     const uploadedThisMonth = photoReports
-      .filter((report) => {
+      .filter(report => {
         const uploadDate = new Date(report.createdAt);
         return (
           uploadDate.getMonth() === now.getMonth() &&
@@ -138,14 +156,14 @@ export async function GET(request: NextRequest) {
       })
       .reduce((sum, report) => sum + report.photos.length, 0);
     const approvedPhotos = photoReports
-      .filter((report) => report.status === 'APPROVED')
+      .filter(report => report.status === 'APPROVED')
       .reduce((sum, report) => sum + report.photos.length, 0);
     const totalEarnings = photoReports
-      .filter((report) => report.status === 'APPROVED')
+      .filter(report => report.status === 'APPROVED')
       .reduce((sum, report) => sum + report.earnings, 0);
 
     // Calcular promedio de ratings
-    const ratedVisits = visits.filter((v) => v.rating !== null);
+    const ratedVisits = visits.filter(v => v.rating !== null);
     const averageRating =
       ratedVisits.length > 0
         ? ratedVisits.reduce((sum, v) => sum + (v.rating || 0), 0) / ratedVisits.length
@@ -176,4 +194,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

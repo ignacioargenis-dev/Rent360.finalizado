@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
     const clientMap = new Map<string, any>();
 
     visits.forEach(visit => {
-      if (!visit.tenant) return;
+      if (!visit.tenant) {
+        return;
+      }
 
       const tenantId = visit.tenant.id;
       const existing = clientMap.get(tenantId);
@@ -68,25 +70,36 @@ export async function GET(request: NextRequest) {
       if (!existing) {
         // Crear nuevo cliente
         const tenantVisits = visits.filter(v => v.tenantId === tenantId);
-        const completedVisits = tenantVisits.filter(v => v.status === 'COMPLETED');
-        const pendingVisits = tenantVisits.filter(v => v.status === 'SCHEDULED' || v.status === 'PENDING');
-        
+        const completedVisits = tenantVisits.filter(v => {
+          const status = (v.status || '').toString().toUpperCase();
+          return status === 'COMPLETED';
+        });
+        const pendingVisits = tenantVisits.filter(v => {
+          const status = (v.status || '').toString().toUpperCase();
+          return status === 'SCHEDULED' || status === 'PENDING';
+        });
+
         // Última fecha de servicio
         const lastServiceDate = tenantVisits
-          .filter(v => v.status === 'COMPLETED')
-          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0]?.scheduledAt;
+          .filter(v => {
+            const status = (v.status || '').toString().toUpperCase();
+            return status === 'COMPLETED';
+          })
+          .sort(
+            (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+          )[0]?.scheduledAt;
 
         // Próxima visita programada
-        const nextVisit = pendingVisits
-          .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
+        const nextVisit = pendingVisits.sort(
+          (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+        )[0];
 
         // Calificación promedio
         const ratings = tenantVisits
           .map(v => v.runnerRatings[0]?.overallRating || v.rating)
           .filter((r): r is number => r !== null && r !== undefined && r > 0);
-        const averageRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-          : 0;
+        const averageRating =
+          ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
 
         // Propiedades únicas visitadas
         const uniqueProperties = new Set(tenantVisits.map(v => v.propertyId));
@@ -95,17 +108,22 @@ export async function GET(request: NextRequest) {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const lastService = lastServiceDate ? new Date(lastServiceDate) : null;
-        const status: 'active' | 'inactive' | 'pending' = 
-          pendingVisits.length > 0 ? 'active' :
-          lastService && lastService >= thirtyDaysAgo ? 'active' :
-          'inactive';
+        const status: 'active' | 'inactive' | 'pending' =
+          pendingVisits.length > 0
+            ? 'active'
+            : lastService && lastService >= thirtyDaysAgo
+              ? 'active'
+              : 'inactive';
 
         clientMap.set(tenantId, {
           id: tenantId,
           name: visit.tenant.name,
           email: visit.tenant.email,
           phone: visit.tenant.phone || 'No disponible',
-          address: visit.tenant.address || `${visit.tenant.commune || ''}, ${visit.tenant.city || ''}`.trim() || 'No disponible',
+          address:
+            visit.tenant.address ||
+            `${visit.tenant.commune || ''}, ${visit.tenant.city || ''}`.trim() ||
+            'No disponible',
           propertyCount: uniqueProperties.size,
           lastServiceDate: lastServiceDate ? lastServiceDate.toISOString() : null,
           nextScheduledVisit: nextVisit ? nextVisit.scheduledAt.toISOString() : null,
@@ -123,15 +141,15 @@ export async function GET(request: NextRequest) {
 
     // Calcular estadísticas
     const activeClients = clients.filter(c => c.status === 'active').length;
-    const averageRating = clients.length > 0
-      ? clients.reduce((sum, c) => sum + c.rating, 0) / clients.length
-      : 0;
+    const averageRating =
+      clients.length > 0 ? clients.reduce((sum, c) => sum + c.rating, 0) / clients.length : 0;
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const servicesThisMonth = visits.filter(v => {
       const visitDate = new Date(v.scheduledAt);
-      return visitDate >= monthStart && v.status === 'COMPLETED';
+      const status = (v.status || '').toString().toUpperCase();
+      return visitDate >= monthStart && status === 'COMPLETED';
     }).length;
 
     const upcomingVisits = clients.filter(c => c.nextScheduledVisit).length;
@@ -167,4 +185,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

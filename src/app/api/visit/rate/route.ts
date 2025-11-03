@@ -4,6 +4,7 @@ import { RunnerRatingService } from '@/lib/runner-rating-service';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger-minimal';
 import { handleApiError } from '@/lib/api-error-handler';
+import { BusinessLogicError } from '@/lib/errors';
 
 /**
  * POST /api/visit/rate
@@ -121,7 +122,37 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Error creando calificación:', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
+
+    // Si es un BusinessLogicError, devolver el mensaje específico con el código correcto
+    if (error instanceof BusinessLogicError) {
+      // Si el mensaje indica que ya existe una calificación, devolver 409
+      if (
+        error.message.includes('Ya existe una calificación') ||
+        error.message.includes('Ya has calificado')
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: error.message,
+            code: 'CONFLICT_ERROR',
+          },
+          { status: 409 }
+        );
+      }
+
+      // Otros errores de negocio devuelven 400
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          code: 'BUSINESS_LOGIC_ERROR',
+        },
+        { status: 400 }
+      );
+    }
+
     const errorResponse = handleApiError(error);
     return errorResponse;
   }

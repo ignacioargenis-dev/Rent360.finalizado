@@ -190,8 +190,12 @@ export class RunnerRatingService {
         throw new BusinessLogicError('La visita no pertenece al runner especificado');
       }
 
-      if (visit.status !== 'completed') {
-        throw new BusinessLogicError('Solo se pueden calificar visitas completadas');
+      // Verificar que la visita esté completada (comparación case-insensitive)
+      const visitStatus = (visit.status || '').toString().toUpperCase();
+      if (visitStatus !== 'COMPLETED') {
+        throw new BusinessLogicError(
+          `Solo se pueden calificar visitas completadas. Estado actual: ${visit.status}`
+        );
       }
 
       // Verificar que no exista ya una calificación para esta visita por este cliente
