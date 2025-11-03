@@ -221,17 +221,36 @@ export default function AdminIncentivesPage() {
       const payload = {
         ...formData,
         criteria: Object.fromEntries(
-          Object.entries(formData.criteria).filter(([_, v]) => v !== undefined && v !== '')
+          Object.entries(formData.criteria).filter(([_, v]) => {
+            // Los números son válidos si no son undefined o null
+            if (typeof v === 'number') {
+              return true;
+            }
+            // Para strings, verificar que no estén vacíos
+            if (typeof v === 'string') {
+              return v !== '';
+            }
+            // Excluir undefined y null
+            return v !== undefined && v !== null;
+          })
         ),
         rewards: Object.fromEntries(
           Object.entries(formData.rewards).filter(([_, v]) => {
             if (Array.isArray(v)) {
               return v.length > 0;
             }
-            return v !== undefined && v !== '';
+            if (typeof v === 'number') {
+              return true; // Los números siempre son válidos
+            }
+            if (typeof v === 'string') {
+              return v !== '';
+            }
+            return v !== undefined && v !== null;
           })
         ),
-        validFrom: new Date(formData.validFrom).toISOString(),
+        validFrom: formData.validFrom
+          ? new Date(formData.validFrom).toISOString()
+          : new Date().toISOString(),
         validUntil: formData.validUntil ? new Date(formData.validUntil).toISOString() : null,
       };
 
@@ -385,8 +404,22 @@ export default function AdminIncentivesPage() {
       description: rule.description,
       type: rule.type,
       category: rule.category,
-      criteria: rule.criteria,
-      rewards: rule.rewards,
+      criteria: {
+        minVisits: rule.criteria.minVisits,
+        minRating: rule.criteria.minRating,
+        minEarnings: rule.criteria.minEarnings,
+        minCompletionRate: rule.criteria.minCompletionRate,
+        consecutivePeriods: rule.criteria.consecutivePeriods,
+        rankingPosition: rule.criteria.rankingPosition,
+      },
+      rewards: {
+        bonusAmount: rule.rewards.bonusAmount,
+        bonusPercentage: rule.rewards.bonusPercentage,
+        priorityBonus: rule.rewards.priorityBonus,
+        badge: rule.rewards.badge || '',
+        title: rule.rewards.title || '',
+        features: rule.rewards.features || [],
+      },
       isActive: rule.isActive,
       autoGrant: rule.autoGrant,
       maxRecipients: rule.maxRecipients,
