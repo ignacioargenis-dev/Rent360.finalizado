@@ -40,81 +40,148 @@ export async function GET(
     }
 
     // Obtener todas las visitas del runner en propiedades del propietario
-    const visits = await db.visit.findMany({
-      where: {
-        runnerId: runnerId,
-        property: {
-          ownerId: user.id,
+    // Usar select explícito para evitar problemas con relaciones corruptas
+    let visits: any[] = [];
+
+    try {
+      visits = await db.visit.findMany({
+        where: {
+          runnerId: runnerId,
+          property: {
+            ownerId: user.id,
+          },
         },
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            address: true,
+        include: {
+          property: {
+            select: {
+              id: true,
+              title: true,
+              address: true,
+            },
+            include: {
+              propertyImages: {
+                select: {
+                  id: true,
+                  url: true,
+                  alt: true,
+                  createdAt: true,
+                  order: true,
+                },
+                orderBy: {
+                  createdAt: 'desc',
+                },
+              },
+            },
+          },
+          runnerRatings: {
+            select: {
+              overallRating: true,
+              comment: true,
+              createdAt: true,
+              clientName: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        orderBy: {
+          scheduledAt: 'desc',
+        },
+      });
+    } catch (visitError) {
+      logger.error('Error fetching visits:', {
+        error: visitError instanceof Error ? visitError.message : String(visitError),
+        runnerId,
+        ownerId: user.id,
+      });
+      // Intentar obtener visitas sin incluir propertyImages para evitar errores
+      try {
+        visits = await db.visit.findMany({
+          where: {
+            runnerId: runnerId,
+            property: {
+              ownerId: user.id,
+            },
           },
           include: {
-            propertyImages: {
+            property: {
               select: {
                 id: true,
-                url: true,
-                alt: true,
+                title: true,
+                address: true,
+              },
+            },
+            runnerRatings: {
+              select: {
+                overallRating: true,
+                comment: true,
                 createdAt: true,
-                order: true,
+                clientName: true,
               },
               orderBy: {
                 createdAt: 'desc',
               },
             },
-          },
-        },
-        runnerRatings: {
-          select: {
-            overallRating: true,
-            comment: true,
-            createdAt: true,
-            clientName: true,
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc',
+            scheduledAt: 'desc',
           },
-        },
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
-      orderBy: {
-        scheduledAt: 'desc',
-      },
-    });
+        });
+      } catch (fallbackError) {
+        logger.error('Error in fallback visits query:', {
+          error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        });
+        visits = [];
+      }
+    }
 
-    // Obtener incentivos del runner
-    const incentives = await db.runnerIncentive.findMany({
-      where: {
-        runnerId: runnerId,
-      },
-      include: {
-        incentiveRule: {
-          select: {
-            name: true,
-            description: true,
-            type: true,
-            category: true,
-            rewards: true,
+    // Obtener incentivos del runner con manejo defensivo
+    let incentives: any[] = [];
+    try {
+      incentives = await db.runnerIncentive.findMany({
+        where: {
+          runnerId: runnerId,
+        },
+        include: {
+          incentiveRule: {
+            select: {
+              name: true,
+              description: true,
+              type: true,
+              category: true,
+              rewards: true,
+            },
           },
         },
-      },
-      orderBy: {
-        earnedAt: 'desc',
-      },
-      take: 20,
-    });
+        orderBy: {
+          earnedAt: 'desc',
+        },
+        take: 20,
+      });
+    } catch (incentiveError) {
+      logger.error('Error fetching incentives:', {
+        error: incentiveError instanceof Error ? incentiveError.message : String(incentiveError),
+        runnerId,
+      });
+      incentives = [];
+    }
 
     // Obtener audit logs relacionados (si hay algún sistema de tracking)
     const auditLogs = await db.auditLog.findMany({
@@ -140,117 +207,164 @@ export async function GET(
       },
     });
 
-    // Calcular estadísticas
+    // Calcular estadísticas con manejo defensivo
     const stats = {
-      totalVisits: visits.length,
-      completedVisits: visits.filter(v => v.status === 'COMPLETED').length,
-      pendingVisits: visits.filter(v => v.status === 'SCHEDULED' || v.status === 'PENDING').length,
-      cancelledVisits: visits.filter(v => v.status === 'CANCELLED').length,
-      totalEarnings: visits.reduce((sum, v) => sum + (v.earnings || 0), 0),
-      totalPhotos: visits.reduce((sum, v) => sum + (v.photosTaken || 0), 0),
+      totalVisits: visits?.length || 0,
+      completedVisits:
+        visits?.filter(v => {
+          const status = v?.status?.toUpperCase() || v?.status || '';
+          return status === 'COMPLETED';
+        }).length || 0,
+      pendingVisits:
+        visits?.filter(v => {
+          const status = v?.status?.toUpperCase() || v?.status || '';
+          return status === 'SCHEDULED' || status === 'PENDING';
+        }).length || 0,
+      cancelledVisits:
+        visits?.filter(v => {
+          const status = v?.status?.toUpperCase() || v?.status || '';
+          return status === 'CANCELLED';
+        }).length || 0,
+      totalEarnings: visits?.reduce((sum, v) => sum + (Number(v?.earnings) || 0), 0) || 0,
+      totalPhotos: visits?.reduce((sum, v) => sum + (Number(v?.photosTaken) || 0), 0) || 0,
       averageRating:
-        allRunnerRatings.length > 0
-          ? allRunnerRatings.reduce((sum, r) => sum + r.overallRating, 0) / allRunnerRatings.length
+        allRunnerRatings?.length > 0
+          ? allRunnerRatings.reduce((sum, r) => sum + (Number(r?.overallRating) || 0), 0) /
+            allRunnerRatings.length
           : 0,
-      totalIncentives: incentives.length,
-      totalIncentiveValue: incentives.reduce((sum, i) => {
-        // Parsear rewardsGranted para obtener el valor
-        try {
-          const rewardsGranted =
-            typeof i.rewardsGranted === 'string' ? JSON.parse(i.rewardsGranted) : i.rewardsGranted;
-          const amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
-          return sum + (typeof amount === 'number' ? amount : 0);
-        } catch {
-          return sum;
-        }
-      }, 0),
+      totalIncentives: incentives?.length || 0,
+      totalIncentiveValue:
+        incentives?.reduce((sum, i) => {
+          // Parsear rewardsGranted para obtener el valor
+          if (!i) {
+            return sum;
+          }
+          try {
+            const rewardsGranted =
+              typeof i.rewardsGranted === 'string'
+                ? JSON.parse(i.rewardsGranted)
+                : i.rewardsGranted;
+            const amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
+            return sum + (typeof amount === 'number' ? amount : 0);
+          } catch {
+            return sum;
+          }
+        }, 0) || 0,
     };
 
-    // Formatear actividad reciente con fotos
-    const recentActivity = visits.map(visit => {
-      // Obtener fotos asociadas a esta visita desde PropertyImage
-      let visitPhotos: any[] = [];
+    // Formatear actividad reciente con fotos - manejo defensivo
+    const recentActivity = (visits || [])
+      .map(visit => {
+        if (!visit || !visit.id) {
+          return null;
+        }
 
-      if (
-        visit.property &&
-        visit.property.propertyImages &&
-        Array.isArray(visit.property.propertyImages)
-      ) {
-        visitPhotos = visit.property.propertyImages
-          .map(img => {
-            if (!img || !img.alt) {
-              return null;
-            }
-            try {
-              const metadata = JSON.parse(img.alt);
-              if (metadata && metadata.visitId === visit.id) {
-                return {
-                  id: img.id,
-                  url: img.url,
-                  filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
-                  uploadedAt: img.createdAt
-                    ? img.createdAt.toISOString()
-                    : new Date().toISOString(),
-                  category: metadata.category || 'general',
-                  description: metadata.description || '',
-                  isMain: metadata.isMain || false,
-                };
-              }
-              return null;
-            } catch {
-              // Si no se puede parsear, verificar si el alt contiene el visitId como string
-              if (img.alt.includes(visit.id)) {
-                return {
-                  id: img.id,
-                  url: img.url,
-                  filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
-                  uploadedAt: img.createdAt
-                    ? img.createdAt.toISOString()
-                    : new Date().toISOString(),
-                  category: 'general',
-                  description: '',
-                  isMain: false,
-                };
-              }
-              return null;
-            }
-          })
-          .filter(photo => photo !== null) as any[];
-      }
+        // Obtener fotos asociadas a esta visita desde PropertyImage
+        let visitPhotos: any[] = [];
 
-      return {
-        id: visit.id,
-        type: 'visit',
-        propertyTitle: visit.property?.title || 'Propiedad no disponible',
-        propertyAddress: visit.property?.address || 'Dirección no disponible',
-        propertyId: visit.propertyId || '',
-        scheduledAt: visit.scheduledAt ? visit.scheduledAt.toISOString() : new Date().toISOString(),
-        status: visit.status || 'UNKNOWN',
-        earnings: visit.earnings || 0,
-        photosTaken: visit.photosTaken || 0,
-        duration: visit.duration || 0,
-        notes: visit.notes || '',
-        rating:
-          visit.runnerRatings && visit.runnerRatings.length > 0
-            ? visit.runnerRatings[0]?.overallRating || visit.rating || null
-            : visit.rating || null,
-        feedback:
-          visit.runnerRatings && visit.runnerRatings.length > 0
-            ? visit.runnerRatings[0]?.comment || visit.clientFeedback || null
-            : visit.clientFeedback || null,
-        photos: visitPhotos,
-        tenant: visit.tenant
-          ? {
-              id: visit.tenant.id || '',
-              name: visit.tenant.name || '',
-              email: visit.tenant.email || '',
-              phone: visit.tenant.phone || '',
-            }
-          : null,
-        createdAt: visit.createdAt ? visit.createdAt.toISOString() : new Date().toISOString(),
-        updatedAt: visit.updatedAt ? visit.updatedAt.toISOString() : new Date().toISOString(),
-      };
-    });
+        try {
+          if (
+            visit.property &&
+            visit.property.propertyImages &&
+            Array.isArray(visit.property.propertyImages)
+          ) {
+            visitPhotos = visit.property.propertyImages
+              .map(img => {
+                if (!img || !img.alt || !visit?.id) {
+                  return null;
+                }
+                try {
+                  const metadata = JSON.parse(img.alt);
+                  if (metadata && metadata.visitId === visit.id) {
+                    return {
+                      id: img.id || '',
+                      url: img.url || '',
+                      filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                      uploadedAt: img.createdAt
+                        ? img.createdAt.toISOString()
+                        : new Date().toISOString(),
+                      category: metadata.category || 'general',
+                      description: metadata.description || '',
+                      isMain: metadata.isMain || false,
+                    };
+                  }
+                  return null;
+                } catch {
+                  // Si no se puede parsear, verificar si el alt contiene el visitId como string
+                  if (img.alt && visit.id && img.alt.includes(visit.id)) {
+                    return {
+                      id: img.id || '',
+                      url: img.url || '',
+                      filename: img.url ? img.url.split('/').pop() || 'image.jpg' : 'image.jpg',
+                      uploadedAt: img.createdAt
+                        ? img.createdAt.toISOString()
+                        : new Date().toISOString(),
+                      category: 'general',
+                      description: '',
+                      isMain: false,
+                    };
+                  }
+                  return null;
+                }
+              })
+              .filter(photo => photo !== null) as any[];
+          }
+        } catch (photoError) {
+          logger.error('Error processing photos for visit:', {
+            visitId: visit.id,
+            error: photoError instanceof Error ? photoError.message : String(photoError),
+          });
+          visitPhotos = [];
+        }
+
+        try {
+          return {
+            id: visit.id || '',
+            type: 'visit',
+            propertyTitle: visit.property?.title || 'Propiedad no disponible',
+            propertyAddress: visit.property?.address || 'Dirección no disponible',
+            propertyId: visit.propertyId || '',
+            scheduledAt: visit.scheduledAt
+              ? visit.scheduledAt.toISOString()
+              : new Date().toISOString(),
+            status: visit.status || 'UNKNOWN',
+            earnings: Number(visit.earnings) || 0,
+            photosTaken: Number(visit.photosTaken) || 0,
+            duration: Number(visit.duration) || 0,
+            notes: visit.notes || '',
+            rating:
+              visit.runnerRatings &&
+              Array.isArray(visit.runnerRatings) &&
+              visit.runnerRatings.length > 0
+                ? Number(visit.runnerRatings[0]?.overallRating) || Number(visit.rating) || null
+                : Number(visit.rating) || null,
+            feedback:
+              visit.runnerRatings &&
+              Array.isArray(visit.runnerRatings) &&
+              visit.runnerRatings.length > 0
+                ? visit.runnerRatings[0]?.comment || visit.clientFeedback || null
+                : visit.clientFeedback || null,
+            photos: visitPhotos,
+            tenant: visit.tenant
+              ? {
+                  id: visit.tenant.id || '',
+                  name: visit.tenant.name || '',
+                  email: visit.tenant.email || '',
+                  phone: visit.tenant.phone || '',
+                }
+              : null,
+            createdAt: visit.createdAt ? visit.createdAt.toISOString() : new Date().toISOString(),
+            updatedAt: visit.updatedAt ? visit.updatedAt.toISOString() : new Date().toISOString(),
+          };
+        } catch (activityError) {
+          logger.error('Error formatting activity for visit:', {
+            visitId: visit.id,
+            error: activityError instanceof Error ? activityError.message : String(activityError),
+          });
+          return null;
+        }
+      })
+      .filter(activity => activity !== null);
 
     return NextResponse.json({
       success: true,
@@ -260,29 +374,49 @@ export async function GET(
       },
       stats,
       recentActivity,
-      incentives: incentives.map(inc => {
-        // Parsear rewardsGranted para obtener el valor
-        let amount = 0;
-        try {
-          const rewardsGranted =
-            typeof inc.rewardsGranted === 'string'
-              ? JSON.parse(inc.rewardsGranted)
-              : inc.rewardsGranted;
-          amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
-        } catch {
-          amount = 0;
-        }
+      incentives: (incentives || [])
+        .map(inc => {
+          if (!inc) {
+            return null;
+          }
 
-        return {
-          id: inc.id,
-          name: inc.incentiveRule.name,
-          description: inc.incentiveRule.description,
-          type: inc.incentiveRule.type,
-          category: inc.incentiveRule.category,
-          amount: typeof amount === 'number' ? amount : 0,
-          earnedAt: inc.earnedAt,
-        };
-      }),
+          // Parsear rewardsGranted para obtener el valor
+          let amount = 0;
+          try {
+            const rewardsGranted =
+              typeof inc.rewardsGranted === 'string'
+                ? JSON.parse(inc.rewardsGranted)
+                : inc.rewardsGranted;
+            amount = rewardsGranted?.amount || rewardsGranted?.value || 0;
+          } catch {
+            amount = 0;
+          }
+
+          // Manejo defensivo para incentiveRule que puede no existir
+          if (!inc.incentiveRule) {
+            logger.warn('Incentive without incentiveRule:', { incentiveId: inc.id });
+            return {
+              id: inc.id || '',
+              name: 'Incentivo sin regla asociada',
+              description: 'No hay descripción disponible',
+              type: 'unknown',
+              category: 'unknown',
+              amount: typeof amount === 'number' ? amount : 0,
+              earnedAt: inc.earnedAt || new Date(),
+            };
+          }
+
+          return {
+            id: inc.id || '',
+            name: inc.incentiveRule?.name || 'Sin nombre',
+            description: inc.incentiveRule?.description || 'Sin descripción',
+            type: inc.incentiveRule?.type || 'unknown',
+            category: inc.incentiveRule?.category || 'unknown',
+            amount: typeof amount === 'number' ? amount : 0,
+            earnedAt: inc.earnedAt || new Date(),
+          };
+        })
+        .filter(inc => inc !== null),
       auditLogs: auditLogs.map(log => ({
         id: log.id,
         action: log.action,
