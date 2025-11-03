@@ -48,6 +48,20 @@ export async function GET(
             title: true,
             address: true,
           },
+          include: {
+            propertyImages: {
+              select: {
+                id: true,
+                url: true,
+                alt: true,
+                createdAt: true,
+                order: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
+          },
         },
         runnerRatings: {
           select: {
@@ -58,6 +72,14 @@ export async function GET(
           },
           orderBy: {
             createdAt: 'desc',
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
           },
         },
       },
@@ -132,19 +154,56 @@ export async function GET(
       }, 0),
     };
 
-    // Formatear actividad reciente
-    const recentActivity = visits.map((visit) => ({
-      id: visit.id,
-      type: 'visit',
-      propertyTitle: visit.property.title,
-      propertyAddress: visit.property.address,
-      scheduledAt: visit.scheduledAt,
-      status: visit.status,
-      earnings: visit.earnings,
-      photosTaken: visit.photosTaken,
-      rating: visit.runnerRatings[0]?.overallRating || visit.rating,
-      feedback: visit.runnerRatings[0]?.comment || visit.clientFeedback,
-    }));
+    // Formatear actividad reciente con fotos
+    const recentActivity = visits.map((visit) => {
+      // Obtener fotos asociadas a esta visita desde PropertyImage
+      const visitPhotos = visit.property.propertyImages
+        .map((img) => {
+          try {
+            const metadata = img.alt ? JSON.parse(img.alt) : null;
+            if (metadata && metadata.visitId === visit.id) {
+              return {
+                id: img.id,
+                url: img.url,
+                filename: img.url.split('/').pop() || 'image.jpg',
+                uploadedAt: img.createdAt.toISOString(),
+                category: metadata.category || 'general',
+                description: metadata.description || '',
+                isMain: metadata.isMain || false,
+              };
+            }
+            return null;
+          } catch {
+            return null;
+          }
+        })
+        .filter((photo) => photo !== null) as any[];
+
+      return {
+        id: visit.id,
+        type: 'visit',
+        propertyTitle: visit.property.title,
+        propertyAddress: visit.property.address,
+        propertyId: visit.propertyId,
+        scheduledAt: visit.scheduledAt.toISOString(),
+        status: visit.status,
+        earnings: visit.earnings || 0,
+        photosTaken: visit.photosTaken || 0,
+        duration: visit.duration || 0,
+        notes: visit.notes || '',
+        rating: visit.runnerRatings[0]?.overallRating || visit.rating || null,
+        feedback: visit.runnerRatings[0]?.comment || visit.clientFeedback || null,
+        photos: visitPhotos,
+        tenant: visit.tenant ? {
+          id: visit.tenant.id,
+          name: visit.tenant.name,
+          email: visit.tenant.email,
+          phone: visit.tenant.phone,
+        } : null,
+        createdAt: visit.createdAt.toISOString(),
+        updatedAt: visit.updatedAt.toISOString(),
+      };
+    });
 
     return NextResponse.json({
       success: true,

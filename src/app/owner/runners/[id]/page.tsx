@@ -19,19 +19,47 @@ import {
   Clock,
   Award,
   Activity,
+  Camera,
+  FileText,
+  Image as ImageIcon,
+  ZoomIn,
+  Eye,
+  Download,
 } from 'lucide-react';
+
+interface RunnerPhoto {
+  id: string;
+  url: string;
+  filename: string;
+  uploadedAt: string;
+  category: string;
+  description?: string;
+  isMain: boolean;
+}
 
 interface RunnerActivity {
   id: string;
   type: string;
   propertyTitle: string;
   propertyAddress: string;
+  propertyId: string;
   scheduledAt: string;
   status: string;
   earnings?: number;
   photosTaken?: number;
+  duration?: number;
+  notes?: string;
   rating?: number;
   feedback?: string;
+  photos?: RunnerPhoto[];
+  tenant?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface RunnerIncentive {
@@ -166,7 +194,7 @@ export default function RunnerDetailPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Expandidas */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
@@ -175,6 +203,9 @@ export default function RunnerDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalVisits || 0}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.pendingVisits || 0} pendientes
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -185,6 +216,11 @@ export default function RunnerDetailPage() {
                 <div className="text-2xl font-bold text-green-600">
                   {stats.completedVisits || 0}
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.totalVisits > 0 
+                    ? Math.round(((stats.completedVisits || 0) / stats.totalVisits) * 100) 
+                    : 0}% de tasa de completación
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -195,6 +231,11 @@ export default function RunnerDetailPage() {
                 <div className="text-2xl font-bold text-emerald-600">
                   ${(stats.totalEarnings || 0).toLocaleString()}
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Promedio: ${stats.totalVisits > 0 
+                    ? Math.round((stats.totalEarnings || 0) / stats.totalVisits).toLocaleString() 
+                    : 0} por visita
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -208,63 +249,241 @@ export default function RunnerDetailPage() {
                     {(stats.averageRating || 0).toFixed(1)}
                   </span>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Basado en {stats.completedVisits || 0} visitas
+                </p>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Recent Activity */}
+        {/* Stats adicionales */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Fotos Totales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalPhotos || 0}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.completedVisits > 0 
+                    ? Math.round((stats.totalPhotos || 0) / stats.completedVisits).toFixed(1)
+                    : 0} fotos por visita en promedio
+                </p>
+              </CardContent>
+            </Card>
+            {stats.totalIncentives > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <Award className="w-4 h-4" />
+                    Incentivos Ganados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalIncentives || 0}</div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Valor total: ${(stats.totalIncentiveValue || 0).toLocaleString()}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Canceladas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{stats.cancelledVisits || 0}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Visitas canceladas o no realizadas
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Recent Activity - Expandida */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="w-5 h-5" />
-              Actividad Reciente
+              Registros y Actividades Completas
             </CardTitle>
             <CardDescription>
-              Últimas visitas y acciones realizadas por el runner
+              Historial completo de visitas, fotos y acciones realizadas por el runner en tus propiedades
             </CardDescription>
           </CardHeader>
           <CardContent>
             {recentActivity.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivity.slice(0, 10).map(activity => (
+              <div className="space-y-6">
+                {recentActivity.map(activity => (
                   <div
                     key={activity.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{activity.propertyTitle}</h3>
-                        {getStatusBadge(activity.status)}
+                    {/* Header de la actividad */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-gray-900 text-lg">{activity.propertyTitle}</h3>
+                          {getStatusBadge(activity.status)}
+                        </div>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {activity.propertyAddress}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-600">{activity.propertyAddress}</p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(activity.scheduledAt).toLocaleDateString('es-CL')}
-                        </span>
-                        {activity.earnings && (
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" />
-                            ${activity.earnings.toLocaleString()}
-                          </span>
-                        )}
-                        {activity.rating && (
-                          <span className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                            {activity.rating.toFixed(1)}
-                          </span>
-                        )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/properties/${activity.propertyId}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Ver Propiedad
+                      </Button>
+                    </div>
+
+                    {/* Información de la visita */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <p className="text-gray-600">Fecha</p>
+                          <p className="font-medium">{new Date(activity.scheduledAt).toLocaleDateString('es-CL')}</p>
+                          <p className="text-xs text-gray-500">{new Date(activity.scheduledAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
                       </div>
-                      {activity.feedback && (
-                        <p className="text-xs text-gray-500 mt-2 italic">"{activity.feedback}"</p>
+                      {activity.duration && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-gray-600">Duración</p>
+                            <p className="font-medium">{activity.duration} min</p>
+                          </div>
+                        </div>
+                      )}
+                      {activity.earnings && activity.earnings > 0 && (
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="text-gray-600">Ganancias</p>
+                            <p className="font-medium text-green-600">${activity.earnings.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      )}
+                      {activity.rating && activity.rating > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <div>
+                            <p className="text-gray-600">Calificación</p>
+                            <p className="font-medium">{activity.rating.toFixed(1)}/5.0</p>
+                          </div>
+                        </div>
                       )}
                     </div>
+
+                    {/* Información del tenant */}
+                    {activity.tenant && (
+                      <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Inquilino Asignado
+                        </p>
+                        <p className="text-sm text-gray-600">{activity.tenant.name}</p>
+                        {activity.tenant.email && (
+                          <p className="text-xs text-gray-500">{activity.tenant.email}</p>
+                        )}
+                        {activity.tenant.phone && (
+                          <p className="text-xs text-gray-500">{activity.tenant.phone}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notas de la visita */}
+                    {activity.notes && (
+                      <div className="bg-yellow-50 p-3 rounded-lg mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Notas de la Visita
+                        </p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{activity.notes}</p>
+                      </div>
+                    )}
+
+                    {/* Feedback del cliente */}
+                    {activity.feedback && (
+                      <div className="bg-green-50 p-3 rounded-lg mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                          <Star className="w-4 h-4" />
+                          Feedback del Cliente
+                        </p>
+                        <p className="text-sm text-gray-700 italic">"{activity.feedback}"</p>
+                      </div>
+                    )}
+
+                    {/* Fotos subidas por el runner */}
+                    {activity.photos && activity.photos.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                            <Camera className="w-4 h-4" />
+                            Fotos Subidas ({activity.photos.length})
+                          </p>
+                          <Badge className="bg-blue-100 text-blue-800">
+                            {activity.photosTaken || activity.photos.length} fotos
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {activity.photos.map(photo => (
+                            <div
+                              key={photo.id}
+                              className="relative group cursor-pointer"
+                              onClick={() => window.open(photo.url, '_blank')}
+                            >
+                              <img
+                                src={photo.url}
+                                alt={photo.description || photo.filename}
+                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                                <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                              {photo.isMain && (
+                                <Badge className="absolute top-1 left-1 bg-blue-500 text-white text-xs">
+                                  Principal
+                                </Badge>
+                              )}
+                              {photo.category && (
+                                <Badge variant="outline" className="absolute bottom-1 right-1 text-xs">
+                                  {photo.category}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Separador */}
+                    <div className="border-t mt-4"></div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No hay actividad reciente</p>
+              <div className="text-center py-12">
+                <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg font-medium mb-2">No hay actividad registrada</p>
+                <p className="text-gray-400 text-sm">
+                  Este runner aún no ha realizado visitas en tus propiedades
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
