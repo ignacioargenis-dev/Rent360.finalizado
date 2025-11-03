@@ -158,7 +158,10 @@ export async function GET(request: NextRequest) {
         scheduledDate,
         scheduledTime,
         status: visit.status,
-        priority: visit.status === 'SCHEDULED' && new Date(visit.scheduledAt) < new Date() ? 'HIGH' : 'MEDIUM',
+        priority:
+          visit.status === 'SCHEDULED' && new Date(visit.scheduledAt) < new Date()
+            ? 'HIGH'
+            : 'MEDIUM',
         estimatedDuration: visit.duration,
         actualDuration: visit.status === 'COMPLETED' ? visit.duration : undefined,
         earnings: visit.earnings || 0,
@@ -174,7 +177,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Calcular estadísticas
+    // Calcular estadísticas - usar comparaciones robustas
     const allVisits = await db.visit.findMany({
       where: { runnerId: user.id },
       select: {
@@ -190,28 +193,53 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const completedVisits = allVisits.filter(v => v.status === 'COMPLETED');
-    const pendingVisits = allVisits.filter(v => v.status === 'SCHEDULED' || v.status === 'PENDING');
-    const inProgressVisits = allVisits.filter(v => v.status === 'IN_PROGRESS');
-    const cancelledVisits = allVisits.filter(v => v.status === 'CANCELLED' || v.status === 'NO_SHOW');
-    
+    // Usar comparaciones robustas para el estado
+    const completedVisits = allVisits.filter(v => {
+      const status = (v.status || '').toString().toUpperCase();
+      return status === 'COMPLETED';
+    });
+    const pendingVisits = allVisits.filter(v => {
+      const status = (v.status || '').toString().toUpperCase();
+      return status === 'SCHEDULED' || status === 'PENDING';
+    });
+    const inProgressVisits = allVisits.filter(v => {
+      const status = (v.status || '').toString().toUpperCase();
+      return status === 'IN_PROGRESS';
+    });
+    const cancelledVisits = allVisits.filter(v => {
+      const status = (v.status || '').toString().toUpperCase();
+      return status === 'CANCELLED' || status === 'NO_SHOW';
+    });
+
     const totalEarnings = completedVisits.reduce((sum, v) => sum + (v.earnings || 0), 0);
-    const averageRating = completedVisits.length > 0
-      ? completedVisits.reduce((sum, v) => {
-          const rating = v.runnerRatings[0]?.overallRating || 0;
-          return sum + (rating || 0);
-        }, 0) / completedVisits.length
-      : 0;
-    
-    const completionRate = allVisits.length > 0
-      ? (completedVisits.length / allVisits.length) * 100
-      : 0;
+
+    // Calcular rating promedio solo de visitas completadas con rating
+    const ratingsWithValue = completedVisits
+      .map(v => v.runnerRatings[0]?.overallRating)
+      .filter((r): r is number => r !== null && r !== undefined && r > 0);
+    const averageRating =
+      ratingsWithValue.length > 0
+        ? ratingsWithValue.reduce((sum, r) => sum + r, 0) / ratingsWithValue.length
+        : 0;
+
+    const completionRate =
+      allVisits.length > 0 ? (completedVisits.length / allVisits.length) * 100 : 0;
 
     logger.info('Visitas de runner obtenidas', {
       runnerId: user.id,
       count: transformedVisits.length,
       total: totalCount,
       status,
+      stats: {
+        totalVisits: allVisits.length,
+        completedVisits: completedVisits.length,
+        pendingVisits: pendingVisits.length,
+        inProgressVisits: inProgressVisits.length,
+        cancelledVisits: cancelledVisits.length,
+        totalEarnings,
+        averageRating: Math.round(averageRating * 10) / 10,
+        completionRate: Math.round(completionRate * 10) / 10,
+      },
     });
 
     return NextResponse.json({
@@ -278,10 +306,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!property) {
-      return NextResponse.json(
-        { error: 'Propiedad no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Propiedad no encontrada' }, { status: 404 });
     }
 
     // Crear la visita
@@ -338,4 +363,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

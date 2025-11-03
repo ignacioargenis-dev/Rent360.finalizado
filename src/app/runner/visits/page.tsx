@@ -98,9 +98,7 @@ export default function RunnerVisitsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Inicializar filtro de estado desde query params si existe
-  const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams?.get('status') || 'all'
-  );
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams?.get('status') || 'all');
 
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
@@ -113,9 +111,13 @@ export default function RunnerVisitsPage() {
       setLoading(true);
       // ✅ CORREGIDO: Obtener datos reales desde la API
       const params = new URLSearchParams();
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
-      
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      if (dateFilter !== 'all') {
+        params.append('dateFilter', dateFilter);
+      }
+
       const response = await fetch(`/api/runner/visits?${params.toString()}`, {
         method: 'GET',
         credentials: 'include',
@@ -158,17 +160,27 @@ export default function RunnerVisitsPage() {
       }));
 
       setVisits(transformedVisits);
-      setStats({
-        totalVisits: statsData.totalVisits || 0,
-        completedVisits: statsData.completedVisits || 0,
-        pendingVisits: statsData.pendingVisits || 0,
-        inProgressVisits: statsData.inProgressVisits || 0,
-        cancelledVisits: statsData.cancelledVisits || 0,
-        totalEarnings: statsData.totalEarnings || 0,
-        averageRating: statsData.averageRating || 0,
-        completionRate: statsData.completionRate || 0,
-        averageResponseTime: statsData.averageResponseTime || 0,
+
+      // Asegurar que las estadísticas se establezcan correctamente
+      const finalStats = {
+        totalVisits: Number(statsData.totalVisits) || 0,
+        completedVisits: Number(statsData.completedVisits) || 0,
+        pendingVisits: Number(statsData.pendingVisits) || 0,
+        inProgressVisits: Number(statsData.inProgressVisits) || 0,
+        cancelledVisits: Number(statsData.cancelledVisits) || 0,
+        totalEarnings: Number(statsData.totalEarnings) || 0,
+        averageRating: Number(statsData.averageRating) || 0,
+        completionRate: Number(statsData.completionRate) || 0,
+        averageResponseTime: Number(statsData.averageResponseTime) || 0,
+      };
+
+      setStats(finalStats);
+
+      logger.info('Estadísticas de visitas cargadas', {
+        stats: finalStats,
+        visitsCount: transformedVisits.length,
       });
+
       setError(null);
     } catch (error) {
       setError('Error al cargar las visitas');
