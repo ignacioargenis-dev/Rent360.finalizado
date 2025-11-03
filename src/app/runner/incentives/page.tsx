@@ -168,35 +168,6 @@ export default function RunnerIncentivesPage() {
           };
         });
 
-        // Calcular estadísticas
-        const earnedIncentives = transformedIncentives.filter(i => i.status === 'earned');
-        const activeIncentives = transformedIncentives.filter(
-          i => i.status === 'in_progress' || i.status === 'available'
-        ).length;
-        const completedThisMonth = earnedIncentives.filter(i => {
-          if (!i.earnedDate) {
-            return false;
-          }
-          const earnedDate = new Date(i.earnedDate);
-          const monthStart = new Date();
-          monthStart.setDate(1);
-          monthStart.setHours(0, 0, 0, 0);
-          return earnedDate >= monthStart;
-        }).length;
-        const totalEarnedMoney = earnedIncentives
-          .filter(i => i.currency === 'CLP')
-          .reduce((sum, i) => sum + i.value, 0);
-
-        setIncentives(transformedIncentives);
-        setStats({
-          totalEarned: earnedIncentives.length,
-          activeIncentives,
-          completedThisMonth,
-          pointsBalance: totalEarnedMoney,
-          nextMilestone:
-            transformedIncentives.find(i => i.status === 'available')?.title || 'Ninguno',
-        });
-
         // Achievements data (puede mejorarse después con datos reales desde base de datos)
         const achievements: Achievement[] = transformedIncentives
           .filter(i => i.status === 'earned')
@@ -216,17 +187,56 @@ export default function RunnerIncentivesPage() {
             return achievement;
           });
 
+        setIncentives(transformedIncentives);
         setAchievements(achievements);
         setAvailableRules(availableRulesData);
 
-        // Actualizar estadísticas con reglas disponibles
-        const availableCount = availableRulesData.filter(
-          r => r?.isAvailable && !r?.isEarned
-        ).length;
-        setStats(prev => ({
-          ...prev,
-          activeIncentives: prev.activeIncentives + availableCount,
-        }));
+        // Calcular estadísticas completas con incentivos ganados y reglas disponibles
+        const earnedIncentives = transformedIncentives.filter(i => i.status === 'earned');
+
+        // Filtrar reglas disponibles (no ganadas)
+        const availableRulesNotEarned = availableRulesData.filter(r => r && !r.isEarned);
+        const inProgressRules = availableRulesNotEarned.filter(
+          r => !r.isAvailable && r.progress > 0
+        );
+        const availableRulesReady = availableRulesNotEarned.filter(r => r.isAvailable);
+
+        // Total de incentivos activos = en progreso + disponibles
+        const activeIncentivesCount = inProgressRules.length + availableRulesReady.length;
+
+        // Calcular total ganado en dinero (CLP)
+        const totalEarnedMoney = earnedIncentives
+          .filter(i => i.currency === 'CLP')
+          .reduce((sum, i) => sum + i.value, 0);
+
+        // Completados este mes
+        const completedThisMonth = earnedIncentives.filter(i => {
+          if (!i.earnedDate) {
+            return false;
+          }
+          const earnedDate = new Date(i.earnedDate);
+          const monthStart = new Date();
+          monthStart.setDate(1);
+          monthStart.setHours(0, 0, 0, 0);
+          return earnedDate >= monthStart;
+        }).length;
+
+        // Próximo hito (primer incentivo disponible o en progreso)
+        const nextMilestone =
+          availableRulesReady.length > 0
+            ? availableRulesReady[0]?.name
+            : inProgressRules.length > 0
+              ? inProgressRules[0]?.name
+              : 'Ninguno';
+
+        // Actualizar todas las estadísticas de una vez
+        setStats({
+          totalEarned: earnedIncentives.length,
+          activeIncentives: activeIncentivesCount,
+          completedThisMonth,
+          pointsBalance: totalEarnedMoney,
+          nextMilestone,
+        });
       } catch (error) {
         logger.error('Error loading incentives data:', {
           error: error instanceof Error ? error.message : String(error),
