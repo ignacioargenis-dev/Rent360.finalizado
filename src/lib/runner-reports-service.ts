@@ -50,6 +50,11 @@ export interface RunnerPerformanceMetrics {
   favoritePropertyTypes: string[];
   mostActiveHours: string[];
   topClientTypes: string[];
+
+  // Métricas de actividad real
+  totalPhotos: number;
+  reportsSubmitted: number;
+  tasksCompleted: number;
 }
 
 export interface RunnerWeeklyReport {
