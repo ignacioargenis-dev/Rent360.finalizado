@@ -550,58 +550,63 @@ export default function RunnerDetailPage() {
                           {activity.photos.map(photo => (
                             <div
                               key={photo.id}
-                              className="relative group cursor-pointer"
+                              className="relative group cursor-pointer overflow-hidden rounded-lg"
                               onClick={() => window.open(photo.url, '_blank')}
                             >
-                              <img
-                                src={photo.url}
-                                alt={photo.description || photo.filename}
-                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
-                                onError={e => {
-                                  const img = e.currentTarget;
-                                  if (img.getAttribute('data-error') === 'true') {
-                                    return;
-                                  }
-                                  img.setAttribute('data-error', 'true');
-                                  img.style.display = 'none';
-                                  const fallback = img.nextElementSibling as HTMLElement;
-                                  if (fallback && fallback.classList.contains('photo-fallback')) {
-                                    fallback.style.display = 'flex';
-                                  }
-                                  if (!img.getAttribute('data-logged')) {
-                                    img.setAttribute('data-logged', 'true');
-                                    logger.warn('Photo preview failed to load:', {
+                              <div className="relative w-full h-32 bg-gray-100 overflow-hidden rounded-lg">
+                                <img
+                                  src={photo.url}
+                                  alt={photo.description || photo.filename}
+                                  className="w-full h-full object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                                  onError={e => {
+                                    const img = e.currentTarget;
+                                    if (img.getAttribute('data-error') === 'true') {
+                                      return;
+                                    }
+                                    img.setAttribute('data-error', 'true');
+                                    img.style.display = 'none';
+                                    const fallback = img.parentElement?.querySelector(
+                                      '.photo-fallback'
+                                    ) as HTMLElement;
+                                    if (fallback) {
+                                      fallback.style.display = 'flex';
+                                    }
+                                    if (!img.getAttribute('data-logged')) {
+                                      img.setAttribute('data-logged', 'true');
+                                      logger.warn('Photo preview failed to load:', {
+                                        photoId: photo.id,
+                                        url: photo.url,
+                                      });
+                                    }
+                                  }}
+                                  onLoad={() => {
+                                    logger.info('Photo preview loaded successfully:', {
                                       photoId: photo.id,
                                       url: photo.url,
                                     });
-                                  }
-                                }}
-                                onLoad={() => {
-                                  logger.info('Photo preview loaded successfully:', {
-                                    photoId: photo.id,
-                                    url: photo.url,
-                                  });
-                                }}
-                              />
-                              {/* Fallback para imágenes que no cargan */}
-                              <div
-                                className="photo-fallback w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
-                                style={{ display: 'none' }}
-                              >
-                                <Camera className="w-6 h-6 text-gray-400" />
+                                  }}
+                                />
+                                {/* Fallback para imágenes que no cargan */}
+                                <div
+                                  className="photo-fallback w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                                  style={{ display: 'none' }}
+                                >
+                                  <Camera className="w-6 h-6 text-gray-400" />
+                                </div>
                               </div>
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                              {/* Overlay de hover - solo visible en hover, fuera del contenedor de la imagen */}
+                              <div className="absolute inset-0 bg-transparent group-hover:bg-black/30 transition-all rounded-lg flex items-center justify-center pointer-events-none">
                                 <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                               {photo.isMain && (
-                                <Badge className="absolute top-1 left-1 bg-blue-500 text-white text-xs">
+                                <Badge className="absolute top-1 left-1 bg-blue-500 text-white text-xs z-30">
                                   Principal
                                 </Badge>
                               )}
                               {photo.category && (
                                 <Badge
                                   variant="outline"
-                                  className="absolute bottom-1 right-1 text-xs"
+                                  className="absolute bottom-1 right-1 text-xs z-30"
                                 >
                                   {photo.category}
                                 </Badge>
@@ -738,38 +743,43 @@ export default function RunnerDetailPage() {
                           className="relative group cursor-pointer"
                           onClick={() => window.open(photo.url, '_blank')}
                         >
-                          <img
-                            src={photo.url}
-                            alt={photo.description || photo.filename}
-                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
-                            onError={e => {
-                              const img = e.currentTarget;
-                              if (img.getAttribute('data-error') === 'true') {
-                                return;
-                              }
-                              img.setAttribute('data-error', 'true');
-                              img.style.display = 'none';
-                              const fallback = img.nextElementSibling as HTMLElement;
-                              if (fallback && fallback.classList.contains('photo-fallback')) {
-                                fallback.style.display = 'flex';
-                              }
-                              if (!img.getAttribute('data-logged')) {
-                                img.setAttribute('data-logged', 'true');
-                                logger.warn('Photo failed to load in modal:', {
-                                  photoId: photo.id,
-                                  url: photo.url,
-                                });
-                              }
-                            }}
-                          />
-                          {/* Fallback para imágenes que no cargan */}
-                          <div
-                            className="photo-fallback w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
-                            style={{ display: 'none' }}
-                          >
-                            <Camera className="w-8 h-8 text-gray-400" />
+                          <div className="relative w-full h-48 bg-gray-100 overflow-hidden rounded-lg">
+                            <img
+                              src={photo.url}
+                              alt={photo.description || photo.filename}
+                              className="w-full h-full object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                              onError={e => {
+                                const img = e.currentTarget;
+                                if (img.getAttribute('data-error') === 'true') {
+                                  return;
+                                }
+                                img.setAttribute('data-error', 'true');
+                                img.style.display = 'none';
+                                const fallback = img.parentElement?.querySelector(
+                                  '.photo-fallback'
+                                ) as HTMLElement;
+                                if (fallback) {
+                                  fallback.style.display = 'flex';
+                                }
+                                if (!img.getAttribute('data-logged')) {
+                                  img.setAttribute('data-logged', 'true');
+                                  logger.warn('Photo failed to load in modal:', {
+                                    photoId: photo.id,
+                                    url: photo.url,
+                                  });
+                                }
+                              }}
+                            />
+                            {/* Fallback para imágenes que no cargan */}
+                            <div
+                              className="photo-fallback w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                              style={{ display: 'none' }}
+                            >
+                              <Camera className="w-8 h-8 text-gray-400" />
+                            </div>
                           </div>
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                          {/* Overlay de hover - solo visible en hover, fuera del contenedor de la imagen */}
+                          <div className="absolute inset-0 bg-transparent group-hover:bg-black/30 transition-all rounded-lg flex items-center justify-center pointer-events-none">
                             <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                           {photo.isMain && (
