@@ -725,7 +725,22 @@ export default function RunnerDetailPage() {
                           <img
                             src={photo.url}
                             alt={photo.description || photo.filename}
-                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors bg-gray-100"
+                            crossOrigin="anonymous"
+                            onError={e => {
+                              logger.error('Error loading photo in modal:', {
+                                photoId: photo.id,
+                                url: photo.url,
+                              });
+                              e.currentTarget.src = '/placeholder-image.jpg';
+                              e.currentTarget.style.backgroundColor = '#f3f4f6';
+                            }}
+                            onLoad={() => {
+                              logger.info('Photo loaded successfully in modal:', {
+                                photoId: photo.id,
+                                url: photo.url,
+                              });
+                            }}
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                             <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
