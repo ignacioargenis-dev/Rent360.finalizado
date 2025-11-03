@@ -895,7 +895,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                   </div>
                   <div className="flex gap-2">
                     <select
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       value={statusFilter}
                       onChange={e => setStatusFilter(e.target.value)}
                     >
@@ -906,7 +906,7 @@ Rent360 - Sistema de Gestión Inmobiliaria
                       <option value="CANCELLED">Cancelados</option>
                     </select>
                     <select
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       value={dateFilter}
                       onChange={e => setDateFilter(e.target.value)}
                     >

@@ -16,7 +16,7 @@ export interface BankAccountInfo {
   country: string; // País (CL, US, etc.)
 
   // Información de la cuenta
-  accountType: 'checking' | 'savings' | 'business';
+  accountType: 'checking' | 'savings' | 'business' | 'rut';
   accountNumber: string; // Número de cuenta enmascarado
   accountHolder: string; // Titular de la cuenta
   rut?: string | undefined; // RUT del titular (Chile)
@@ -147,7 +147,7 @@ export class BankAccountService {
     userId: string,
     accountData: {
       bankCode: string;
-      accountType: 'checking' | 'savings' | 'business';
+      accountType: 'checking' | 'savings' | 'business' | 'rut';
       accountNumber: string;
       accountHolder: string;
       rut?: string | undefined;
@@ -203,7 +203,7 @@ export class BankAccountService {
           bankCode: dbAccount.bank,
           bankName: bankInfo.name,
           country: 'CL',
-          accountType: dbAccount.accountType as 'checking' | 'savings' | 'business',
+          accountType: dbAccount.accountType as 'checking' | 'savings' | 'business' | 'rut',
           accountNumber: this.maskAccountNumber(dbAccount.accountNumber),
           accountHolder: dbAccount.holderName,
           rut: dbAccount.rut,
@@ -262,7 +262,7 @@ export class BankAccountService {
         bankCode: account.bank, // El campo bank contiene el código
         bankName: CHILEAN_BANK_CODES[account.bank as keyof typeof CHILEAN_BANK_CODES] || account.bank,
         country: 'CL',
-        accountType: account.accountType as 'checking' | 'savings' | 'business',
+        accountType: account.accountType as 'checking' | 'savings' | 'business' | 'rut',
         accountNumber: this.maskAccountNumber(account.accountNumber),
         accountHolder: account.holderName,
         rut: account.rut,

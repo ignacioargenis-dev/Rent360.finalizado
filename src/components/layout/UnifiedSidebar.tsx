@@ -267,6 +267,11 @@ const getMenuItems = (): RoleMenuItems => ({
       icon: UserPlus,
     },
     {
+      title: 'Runners',
+      url: '/owner/runners',
+      icon: Users,
+    },
+    {
       title: 'Mis Tickets',
       url: '/owner/tickets',
       icon: MessageSquare,

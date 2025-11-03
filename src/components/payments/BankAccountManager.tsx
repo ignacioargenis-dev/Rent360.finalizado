@@ -30,7 +30,7 @@ interface BankAccount {
   bankCode: string;
   bankName: string;
   country: string;
-  accountType: 'checking' | 'savings' | 'business';
+  accountType: 'checking' | 'savings' | 'business' | 'rut';
   accountNumber: string;
   accountHolder: string;
   rut?: string;
@@ -69,7 +69,7 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [formData, setFormData] = useState({
     bankCode: '',
-    accountType: 'checking' as 'checking' | 'savings' | 'business',
+    accountType: 'checking' as 'checking' | 'savings' | 'business' | 'rut',
     accountNumber: '',
     accountHolder: '',
     rut: '',
@@ -204,6 +204,8 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
         return 'Cuenta de Ahorro';
       case 'business':
         return 'Cuenta Empresarial';
+      case 'rut':
+        return 'Cuenta RUT';
       default:
         return type;
     }
@@ -249,6 +251,9 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
           <h3 className="text-lg font-semibold text-gray-900">Cuentas Bancarias</h3>
           <p className="text-sm text-gray-600">
             Configura tus cuentas bancarias para recibir pagos de arriendo
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Las cuentas se verifican automáticamente. El proceso puede tardar 1-2 días hábiles.
           </p>
         </div>
         <Button onClick={() => setShowAddDialog(true)}>
@@ -312,6 +317,11 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
                       <span className="text-xs text-gray-500">
                         Registrada el {new Date(account.createdAt).toLocaleDateString('es-CL')}
                       </span>
+                      {account.verificationStatus === 'pending' && !account.isVerified && (
+                        <span className="text-xs text-blue-600 italic">
+                          (Verificación en proceso automático)
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -398,6 +408,7 @@ export default function BankAccountManager({ userId }: BankAccountManagerProps) 
                 <SelectContent>
                   <SelectItem value="checking">Cuenta Corriente</SelectItem>
                   <SelectItem value="savings">Cuenta de Ahorro</SelectItem>
+                  <SelectItem value="rut">Cuenta RUT</SelectItem>
                   <SelectItem value="business">Cuenta Empresarial</SelectItem>
                 </SelectContent>
               </Select>
