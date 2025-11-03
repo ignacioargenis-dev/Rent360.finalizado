@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener tarifa máxima desde configuración del sistema
-    const maxRateSetting = await db.systemSetting.findFirst({
+    // Intentar múltiples combinaciones de category/key para encontrar el valor
+    let maxRateSetting = await db.systemSetting.findFirst({
       where: {
         category: 'runner',
         key: 'runnerBaseRatePerMinute',
@@ -48,9 +49,43 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const maxHourlyRate = maxRateSetting
-      ? Math.round(parseFloat(maxRateSetting.value) * 60) // Convertir de por minuto a por hora
-      : 30000; // Valor por defecto: 500/min * 60 = 30000/hora
+    // Si no se encuentra con 'runner', intentar con otras categorías
+    if (!maxRateSetting) {
+      maxRateSetting = await db.systemSetting.findFirst({
+        where: {
+          OR: [
+            { category: 'runners', key: 'runnerBaseRatePerMinute' },
+            { category: 'payments', key: 'runnerBaseRatePerMinute' },
+            { category: 'system', key: 'runnerBaseRatePerMinute' },
+          ],
+          isActive: true,
+        },
+      });
+    }
+
+    let maxHourlyRate = 30000; // Valor por defecto: 500/min * 60 = 30000/hora
+
+    if (maxRateSetting) {
+      try {
+        const ratePerMinute = parseFloat(maxRateSetting.value);
+        if (!isNaN(ratePerMinute) && ratePerMinute > 0) {
+          maxHourlyRate = Math.round(ratePerMinute * 60); // Convertir de por minuto a por hora
+        }
+      } catch (error) {
+        logger.warn('Error parseando runnerBaseRatePerMinute:', {
+          value: maxRateSetting.value,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    logger.info('Tarifa máxima de runner obtenida', {
+      maxHourlyRate,
+      settingFound: !!maxRateSetting,
+      settingValue: maxRateSetting?.value,
+      category: maxRateSetting?.category,
+      key: maxRateSetting?.key,
+    });
 
     return NextResponse.json({
       success: true,
@@ -86,10 +121,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error obteniendo configuración del runner:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -177,10 +209,6 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logger.error('Error guardando configuración del runner:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
-

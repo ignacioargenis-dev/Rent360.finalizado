@@ -114,25 +114,25 @@ export default function RunnerSettingsPage() {
       emergencyContact: '',
       emergencyPhone: '',
     },
-  workArea: {
-    regions: [],
-    communes: [],
-    maxDistance: 50,
-    preferredTimes: {
-      morning: true,
-      afternoon: true,
-      evening: false,
+    workArea: {
+      regions: [],
+      communes: [],
+      maxDistance: 50,
+      preferredTimes: {
+        morning: true,
+        afternoon: true,
+        evening: false,
+      },
+      vehicleType: '',
+      licensePlate: '',
+      experience: '',
+      specialties: [],
+      languages: [],
+      hourlyRate: 0,
+      availability: 'available',
+      services: [],
+      responseTime: '',
     },
-    vehicleType: '',
-    licensePlate: '',
-    experience: '',
-    specialties: [],
-    languages: [],
-    hourlyRate: 0,
-    availability: 'available',
-    services: [],
-    responseTime: '',
-  },
     notifications: {
       emailNotifications: true,
       smsNotifications: false,
@@ -228,7 +228,15 @@ export default function RunnerSettingsPage() {
                 notifications: settingsData.settings.notifications || prev.notifications,
               }));
               setSelectedCommunes(settingsData.settings.workArea.communes || []);
-              setMaxHourlyRate(settingsData.maxHourlyRate || 30000);
+
+              // Actualizar tarifa máxima desde la respuesta de la API
+              const maxRate = settingsData.maxHourlyRate || 30000;
+              setMaxHourlyRate(maxRate);
+
+              logger.info('Configuración de runner cargada', {
+                maxHourlyRate: maxRate,
+                hourlyRate: settingsData.settings.workArea?.hourlyRate,
+              });
             }
           }
 
@@ -632,9 +640,7 @@ export default function RunnerSettingsPage() {
                         }}
                         placeholder="15000"
                         className={
-                          settings.workArea.hourlyRate > maxHourlyRate
-                            ? 'border-red-500'
-                            : ''
+                          settings.workArea.hourlyRate > maxHourlyRate ? 'border-red-500' : ''
                         }
                       />
                       {settings.workArea.hourlyRate > maxHourlyRate && (
@@ -643,8 +649,9 @@ export default function RunnerSettingsPage() {
                         </p>
                       )}
                       <p className="text-xs text-gray-500">
-                        Tarifa máxima configurada por administrador: ${maxHourlyRate.toLocaleString()} CLP/hora.
-                        Puedes establecer una tarifa menor para captar más clientes.
+                        Tarifa máxima configurada por administrador: $
+                        {maxHourlyRate.toLocaleString()} CLP/hora. Puedes establecer una tarifa
+                        menor para captar más clientes.
                       </p>
                     </div>
                   </div>
@@ -1137,7 +1144,8 @@ export default function RunnerSettingsPage() {
                   Documentos Personales
                 </CardTitle>
                 <CardDescription>
-                  Sube tus documentos personales y antecedentes para completar tu perfil de Runner360
+                  Sube tus documentos personales y antecedentes para completar tu perfil de
+                  Runner360
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
