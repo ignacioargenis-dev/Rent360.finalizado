@@ -556,22 +556,18 @@ export default function RunnerDetailPage() {
                               <img
                                 src={photo.url}
                                 alt={photo.description || photo.filename}
-                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors bg-gray-100"
-                                crossOrigin="anonymous"
+                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
                                 onError={e => {
                                   const img = e.currentTarget;
-                                  // Evitar bucle infinito: si ya es el placeholder o tiene el atributo data-error, no hacer nada
-                                  if (
-                                    img.src.includes('placeholder') ||
-                                    img.getAttribute('data-error') === 'true'
-                                  ) {
+                                  if (img.getAttribute('data-error') === 'true') {
                                     return;
                                   }
-                                  // Marcar como error para evitar reintentos
                                   img.setAttribute('data-error', 'true');
-                                  // Ocultar la imagen y mostrar un fondo gris en su lugar
                                   img.style.display = 'none';
-                                  // Log solo una vez
+                                  const fallback = img.nextElementSibling as HTMLElement;
+                                  if (fallback && fallback.classList.contains('photo-fallback')) {
+                                    fallback.style.display = 'flex';
+                                  }
                                   if (!img.getAttribute('data-logged')) {
                                     img.setAttribute('data-logged', 'true');
                                     logger.warn('Photo preview failed to load:', {
@@ -580,16 +576,20 @@ export default function RunnerDetailPage() {
                                     });
                                   }
                                 }}
-                                onLoad={e => {
-                                  const img = e.currentTarget;
-                                  // Si se carga exitosamente, mostrar la imagen
-                                  img.style.display = '';
+                                onLoad={() => {
                                   logger.info('Photo preview loaded successfully:', {
                                     photoId: photo.id,
                                     url: photo.url,
                                   });
                                 }}
                               />
+                              {/* Fallback para imágenes que no cargan */}
+                              <div
+                                className="photo-fallback w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                                style={{ display: 'none' }}
+                              >
+                                <Camera className="w-6 h-6 text-gray-400" />
+                              </div>
                               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                                 <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
@@ -741,19 +741,18 @@ export default function RunnerDetailPage() {
                           <img
                             src={photo.url}
                             alt={photo.description || photo.filename}
-                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors bg-gray-100"
-                            crossOrigin="anonymous"
+                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors"
                             onError={e => {
                               const img = e.currentTarget;
-                              // Evitar bucle infinito
-                              if (
-                                img.src.includes('placeholder') ||
-                                img.getAttribute('data-error') === 'true'
-                              ) {
+                              if (img.getAttribute('data-error') === 'true') {
                                 return;
                               }
                               img.setAttribute('data-error', 'true');
                               img.style.display = 'none';
+                              const fallback = img.nextElementSibling as HTMLElement;
+                              if (fallback && fallback.classList.contains('photo-fallback')) {
+                                fallback.style.display = 'flex';
+                              }
                               if (!img.getAttribute('data-logged')) {
                                 img.setAttribute('data-logged', 'true');
                                 logger.warn('Photo failed to load in modal:', {
@@ -762,11 +761,14 @@ export default function RunnerDetailPage() {
                                 });
                               }
                             }}
-                            onLoad={e => {
-                              const img = e.currentTarget;
-                              img.style.display = '';
-                            }}
                           />
+                          {/* Fallback para imágenes que no cargan */}
+                          <div
+                            className="photo-fallback w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                            style={{ display: 'none' }}
+                          >
+                            <Camera className="w-8 h-8 text-gray-400" />
+                          </div>
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                             <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>

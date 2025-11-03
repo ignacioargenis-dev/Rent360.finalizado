@@ -528,19 +528,18 @@ export default function RunnerPhotosPage() {
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
-                              className="w-full h-24 object-cover rounded-lg bg-gray-100"
-                              crossOrigin="anonymous"
+                              className="w-full h-24 object-cover rounded-lg"
                               onError={e => {
                                 const img = e.currentTarget;
-                                // Evitar bucle infinito
-                                if (
-                                  img.src.includes('placeholder') ||
-                                  img.getAttribute('data-error') === 'true'
-                                ) {
+                                if (img.getAttribute('data-error') === 'true') {
                                   return;
                                 }
                                 img.setAttribute('data-error', 'true');
                                 img.style.display = 'none';
+                                const fallback = img.nextElementSibling as HTMLElement;
+                                if (fallback && fallback.classList.contains('photo-fallback')) {
+                                  fallback.style.display = 'flex';
+                                }
                                 if (!img.getAttribute('data-logged')) {
                                   img.setAttribute('data-logged', 'true');
                                   console.warn('Photo preview failed to load:', {
@@ -550,6 +549,13 @@ export default function RunnerPhotosPage() {
                                 }
                               }}
                             />
+                            {/* Fallback para imágenes que no cargan */}
+                            <div
+                              className="photo-fallback w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                              style={{ display: 'none' }}
+                            >
+                              <Camera className="w-4 h-4 text-gray-400" />
+                            </div>
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
                               <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
@@ -691,19 +697,18 @@ export default function RunnerPhotosPage() {
                             <img
                               src={photo.url}
                               alt={photo.description || photo.filename}
-                              className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity bg-gray-100"
-                              crossOrigin="anonymous"
+                              className="w-16 h-16 object-cover rounded-lg hover:opacity-75 transition-opacity"
                               onError={e => {
                                 const img = e.currentTarget;
-                                // Evitar bucle infinito
-                                if (
-                                  img.src.includes('placeholder') ||
-                                  img.getAttribute('data-error') === 'true'
-                                ) {
+                                if (img.getAttribute('data-error') === 'true') {
                                   return;
                                 }
                                 img.setAttribute('data-error', 'true');
                                 img.style.display = 'none';
+                                const fallback = img.nextElementSibling as HTMLElement;
+                                if (fallback && fallback.classList.contains('photo-fallback')) {
+                                  fallback.style.display = 'flex';
+                                }
                                 if (!img.getAttribute('data-logged')) {
                                   img.setAttribute('data-logged', 'true');
                                   console.warn('Photo thumbnail failed to load:', {
@@ -713,6 +718,13 @@ export default function RunnerPhotosPage() {
                                 }
                               }}
                             />
+                            {/* Fallback para imágenes que no cargan */}
+                            <div
+                              className="photo-fallback w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-lg absolute inset-0"
+                              style={{ display: 'none' }}
+                            >
+                              <Camera className="w-3 h-3 text-gray-400" />
+                            </div>
                             {photo.isMain && (
                               <Badge className="absolute top-0 left-0 bg-blue-500 text-white text-xs rounded-tl-lg rounded-br-lg">
                                 Principal
