@@ -60,6 +60,7 @@ interface RunnerActivity {
   duration?: number;
   notes?: string;
   rating?: number;
+  hasRated?: boolean;
   feedback?: string;
   photos?: RunnerPhoto[];
   tenant?: {
@@ -201,7 +202,10 @@ export default function RunnerDetailPage() {
       logger.info('Calificación enviada exitosamente');
       setShowRatingModal(false);
       setSelectedVisitForRating(null);
-      loadRunnerActivity(); // Recargar datos
+      // Recargar datos después de un breve delay para asegurar que la BD se actualizó
+      setTimeout(() => {
+        loadRunnerActivity();
+      }, 500);
     } catch (error) {
       logger.error('Error enviando calificación:', { error });
       alert('Error al enviar la calificación. Por favor intenta nuevamente.');
@@ -517,7 +521,7 @@ export default function RunnerDetailPage() {
                     )}
 
                     {/* Botón para calificar si está completada y no calificada */}
-                    {activity.status === 'COMPLETED' && !activity.rating && (
+                    {activity.status === 'COMPLETED' && !activity.hasRated && (
                       <div className="mt-4 flex justify-end">
                         <Button
                           variant="outline"
@@ -735,7 +739,7 @@ export default function RunnerDetailPage() {
                 )}
 
                 {/* Botón para calificar */}
-                {selectedVisit.status === 'COMPLETED' && !selectedVisit.rating && (
+                {selectedVisit.status === 'COMPLETED' && !selectedVisit.hasRated && (
                   <div className="border-t pt-4">
                     <Button
                       onClick={() => {
@@ -756,7 +760,7 @@ export default function RunnerDetailPage() {
 
         {/* Modal de Calificación */}
         <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Calificar Servicio del Runner</DialogTitle>
               <DialogDescription>

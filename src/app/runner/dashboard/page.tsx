@@ -125,7 +125,7 @@ export default function RunnerDashboard() {
         }
 
         const result = await response.json();
-        
+
         if (result.success) {
           // Transformar visitas de hoy
           const transformedTodayVisits = (result.todayVisits || []).map((visit: any) => ({
@@ -160,7 +160,7 @@ export default function RunnerDashboard() {
             averageRating: result.stats?.averageRating || 0,
             responseTime: result.stats?.responseTime || 0,
           });
-          
+
           setTodayVisits(transformedTodayVisits);
           setRecentActivity(transformedRecentActivity);
           setPerformanceMetrics(result.performanceMetrics || []);
@@ -233,7 +233,7 @@ export default function RunnerDashboard() {
   };
 
   const handleViewVisitDetails = (visitId: string) => {
-    router.push(`/runner/visits/${visitId}`);
+    router.push(`/runner/tasks/${visitId}`);
   };
 
   const handleUploadPhotos = (visitId: string) => {

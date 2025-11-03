@@ -75,10 +75,12 @@ export async function GET(
           },
           runnerRatings: {
             select: {
+              id: true,
               overallRating: true,
               comment: true,
               createdAt: true,
               clientName: true,
+              clientId: true,
             },
             orderBy: {
               createdAt: 'desc',
@@ -103,7 +105,7 @@ export async function GET(
         runnerId,
         ownerId: user.id,
       });
-      // Intentar obtener visitas sin incluir propertyImages para evitar errores
+      // Intentar obtener visitas con propertyImages pero sin select anidado
       try {
         visits = await db.visit.findMany({
           where: {
@@ -119,13 +121,25 @@ export async function GET(
                 title: true,
                 address: true,
               },
+              include: {
+                propertyImages: {
+                  select: {
+                    id: true,
+                    url: true,
+                    alt: true,
+                    createdAt: true,
+                  },
+                },
+              },
             },
             runnerRatings: {
               select: {
+                id: true,
                 overallRating: true,
                 comment: true,
                 createdAt: true,
                 clientName: true,
+                clientId: true,
               },
               orderBy: {
                 createdAt: 'desc',
@@ -336,13 +350,27 @@ export async function GET(
               visit.runnerRatings &&
               Array.isArray(visit.runnerRatings) &&
               visit.runnerRatings.length > 0
-                ? Number(visit.runnerRatings[0]?.overallRating) || Number(visit.rating) || null
+                ? // Buscar la calificación del owner (user.id es el ownerId)
+                  visit.runnerRatings.find((r: any) => r.clientId === user.id)?.overallRating ||
+                  visit.runnerRatings[0]?.overallRating ||
+                  Number(visit.rating) ||
+                  null
                 : Number(visit.rating) || null,
+            hasRated:
+              visit.runnerRatings &&
+              Array.isArray(visit.runnerRatings) &&
+              visit.runnerRatings.some((r: any) => r.clientId === user.id)
+                ? true
+                : false,
             feedback:
               visit.runnerRatings &&
               Array.isArray(visit.runnerRatings) &&
               visit.runnerRatings.length > 0
-                ? visit.runnerRatings[0]?.comment || visit.clientFeedback || null
+                ? // Buscar el feedback del owner
+                  visit.runnerRatings.find((r: any) => r.clientId === user.id)?.comment ||
+                  visit.runnerRatings[0]?.comment ||
+                  visit.clientFeedback ||
+                  null
                 : visit.clientFeedback || null,
             photos: visitPhotos,
             tenant: visit.tenant
