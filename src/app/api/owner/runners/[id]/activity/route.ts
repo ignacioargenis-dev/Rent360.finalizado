@@ -211,17 +211,17 @@ export async function GET(
     const stats = {
       totalVisits: visits?.length || 0,
       completedVisits:
-        visits?.filter(v => {
+        visits?.filter((v: any) => {
           const status = v?.status?.toUpperCase() || v?.status || '';
           return status === 'COMPLETED';
         }).length || 0,
       pendingVisits:
-        visits?.filter(v => {
+        visits?.filter((v: any) => {
           const status = v?.status?.toUpperCase() || v?.status || '';
           return status === 'SCHEDULED' || status === 'PENDING';
         }).length || 0,
       cancelledVisits:
-        visits?.filter(v => {
+        visits?.filter((v: any) => {
           const status = v?.status?.toUpperCase() || v?.status || '';
           return status === 'CANCELLED';
         }).length || 0,
@@ -254,7 +254,7 @@ export async function GET(
 
     // Formatear actividad reciente con fotos - manejo defensivo
     const recentActivity = (visits || [])
-      .map(visit => {
+      .map((visit: any) => {
         if (!visit || !visit.id) {
           return null;
         }
@@ -307,7 +307,7 @@ export async function GET(
                   return null;
                 }
               })
-              .filter(photo => photo !== null) as any[];
+              .filter((photo: any) => photo !== null) as any[];
           }
         } catch (photoError) {
           logger.error('Error processing photos for visit:', {
@@ -364,7 +364,7 @@ export async function GET(
           return null;
         }
       })
-      .filter(activity => activity !== null);
+      .filter((activity: any) => activity !== null);
 
     return NextResponse.json({
       success: true,
@@ -375,7 +375,7 @@ export async function GET(
       stats,
       recentActivity,
       incentives: (incentives || [])
-        .map(inc => {
+        .map((inc: any) => {
           if (!inc) {
             return null;
           }
@@ -416,8 +416,8 @@ export async function GET(
             earnedAt: inc.earnedAt || new Date(),
           };
         })
-        .filter(inc => inc !== null),
-      auditLogs: auditLogs.map(log => ({
+        .filter((inc: any) => inc !== null),
+      auditLogs: auditLogs.map((log: any) => ({
         id: log.id,
         action: log.action,
         entityType: log.entityType,
