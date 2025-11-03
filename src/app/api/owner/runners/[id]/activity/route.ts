@@ -43,6 +43,11 @@ export async function GET(
     // Usar select explícito para evitar problemas con relaciones corruptas
     let visits: any[] = [];
 
+    logger.info('Buscando visitas del runner en propiedades del owner', {
+      runnerId,
+      ownerId: user.id,
+    });
+
     try {
       visits = await db.visit.findMany({
         where: {
@@ -53,11 +58,6 @@ export async function GET(
         },
         include: {
           property: {
-            select: {
-              id: true,
-              title: true,
-              address: true,
-            },
             include: {
               propertyImages: {
                 select: {
@@ -99,13 +99,20 @@ export async function GET(
           scheduledAt: 'desc',
         },
       });
-    } catch (visitError) {
-      logger.error('Error fetching visits:', {
-        error: visitError instanceof Error ? visitError.message : String(visitError),
+
+      logger.info('Visitas encontradas', {
+        count: visits?.length || 0,
         runnerId,
         ownerId: user.id,
       });
-      // Intentar obtener visitas con propertyImages pero sin select anidado
+    } catch (visitError) {
+      logger.error('Error fetching visits:', {
+        error: visitError instanceof Error ? visitError.message : String(visitError),
+        stack: visitError instanceof Error ? visitError.stack : undefined,
+        runnerId,
+        ownerId: user.id,
+      });
+      // Intentar obtener visitas con propertyImages usando solo include
       try {
         visits = await db.visit.findMany({
           where: {
@@ -116,11 +123,6 @@ export async function GET(
           },
           include: {
             property: {
-              select: {
-                id: true,
-                title: true,
-                address: true,
-              },
               include: {
                 propertyImages: {
                   select: {
@@ -158,12 +160,66 @@ export async function GET(
             scheduledAt: 'desc',
           },
         });
+
+        logger.info('Visitas encontradas (fallback query)', {
+          count: visits?.length || 0,
+          runnerId,
+          ownerId: user.id,
+        });
       } catch (fallbackError) {
         logger.error('Error in fallback visits query:', {
           error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+          stack: fallbackError instanceof Error ? fallbackError.stack : undefined,
         });
         visits = [];
       }
+    }
+
+    // Si no hay visitas, intentar verificar si el runner tiene visitas en otras propiedades
+    if (visits.length === 0) {
+      logger.warn('No se encontraron visitas para el runner en propiedades del owner', {
+        runnerId,
+        ownerId: user.id,
+      });
+
+      // Verificar si hay visitas del runner en general (para debugging)
+      const allRunnerVisits = await db.visit.findMany({
+        where: {
+          runnerId: runnerId,
+        },
+        select: {
+          id: true,
+          propertyId: true,
+          status: true,
+        },
+        take: 5,
+      });
+
+      // Verificar propiedades del owner
+      const ownerProperties = await db.property.findMany({
+        where: {
+          ownerId: user.id,
+        },
+        select: {
+          id: true,
+          title: true,
+        },
+        take: 5,
+      });
+
+      logger.info('Información de debug', {
+        runnerVisitsCount: allRunnerVisits.length,
+        runnerVisitsSample: allRunnerVisits.map(v => ({
+          id: v.id,
+          propertyId: v.propertyId,
+          status: v.status,
+        })),
+        ownerPropertiesCount: ownerProperties.length,
+        ownerPropertiesSample: ownerProperties.map(p => ({
+          id: p.id,
+          title: p.title,
+        })),
+      });
     }
 
     // Obtener incentivos del runner con manejo defensivo
@@ -393,6 +449,15 @@ export async function GET(
         }
       })
       .filter((activity: any) => activity !== null);
+
+    logger.info('Respuesta de actividad del runner', {
+      runnerId,
+      ownerId: user.id,
+      visitsCount: visits?.length || 0,
+      recentActivityCount: recentActivity?.length || 0,
+      statsTotalVisits: stats.totalVisits,
+      statsCompletedVisits: stats.completedVisits,
+    });
 
     return NextResponse.json({
       success: true,

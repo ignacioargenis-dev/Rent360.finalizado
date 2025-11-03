@@ -92,7 +92,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    logger.info('Verificando calificación existente', {
+      visitId,
+      runnerId: user.id,
+      ownerId: visit.property.ownerId,
+      existingRatingId: existingRating?.id || null,
+    });
+
     if (existingRating) {
+      logger.warn('Intento de calificar propietario duplicado', {
+        visitId,
+        runnerId: user.id,
+        ownerId: visit.property.ownerId,
+        existingRatingId: existingRating.id,
+      });
       return NextResponse.json(
         { error: 'Ya has calificado este propietario para esta visita' },
         { status: 409 }
