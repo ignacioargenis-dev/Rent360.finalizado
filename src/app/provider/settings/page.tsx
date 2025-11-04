@@ -747,6 +747,50 @@ export default function ProviderSettingsPage() {
           </Card>
         )}
 
+        {/* Header con estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Servicios Configurados</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{servicesData.availableServices.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {servicesData.availableServices.filter(s => s.active).length} activos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Notificaciones Activas</CardTitle>
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {Object.values(notificationsData).filter(v => v === true).length}
+              </div>
+              <p className="text-xs text-muted-foreground">Preferencias configuradas</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Configuraciones Activas</CardTitle>
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {documentsData.documents.length +
+                  (profileData.companyName ? 1 : 0) +
+                  (profileData.phone ? 1 : 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Perfil y documentos</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Configuración por pestañas */}
         <Tabs defaultValue="profile" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
