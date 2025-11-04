@@ -269,12 +269,22 @@ export default function NewServicePage() {
           name: serviceData.name,
           category: serviceData.category,
           description: serviceData.description || serviceData.shortDescription,
+          shortDescription: serviceData.shortDescription,
           pricing: {
             type: serviceData.pricing.type,
-            amount: serviceData.pricing.amount,
+            amount: Math.round(serviceData.pricing.amount), // ✅ Asegurar entero
             currency: serviceData.pricing.currency,
-            minimumCharge: serviceData.pricing.minimumCharge,
+            minimumCharge: serviceData.pricing.minimumCharge
+              ? Math.round(serviceData.pricing.minimumCharge)
+              : undefined,
           },
+          duration: {
+            estimated: serviceData.duration.estimated,
+            unit: serviceData.duration.unit,
+          },
+          features: serviceData.features, // ✅ Incluir características
+          requirements: serviceData.requirements, // ✅ Incluir requisitos
+          tags: serviceData.tags, // ✅ Incluir etiquetas
           availability: {
             weekdays: serviceData.availability.regions.length > 0,
             weekends: serviceData.availability.regions.length > 0,

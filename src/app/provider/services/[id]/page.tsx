@@ -369,20 +369,6 @@ export default function ServiceDetailPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Conversión</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {service.stats.conversionRate}%
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-sm font-medium text-gray-600">Calificación</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {service.stats.averageRating}
@@ -405,19 +391,28 @@ export default function ServiceDetailPage() {
                 <p className="text-gray-700 leading-relaxed">{service.description}</p>
 
                 {/* Imágenes */}
-                {service.images.length > 0 && (
+                {service.images && service.images.length > 0 ? (
                   <div>
                     <Label className="text-base font-medium">Imágenes del Servicio</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                      {service.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`Imagen ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg"
-                        />
+                      {service.images.map((image: string, index: number) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={image}
+                            alt={`Imagen ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                            onError={e => {
+                              // Si la imagen falla al cargar, mostrar placeholder
+                              (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                            }}
+                          />
+                        </div>
                       ))}
                     </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 italic">
+                    No hay imágenes disponibles para este servicio
                   </div>
                 )}
               </CardContent>
@@ -433,14 +428,18 @@ export default function ServiceDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {service.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {service.features && service.features.length > 0 ? (
+                    <ul className="space-y-2">
+                      {service.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No hay características definidas</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -449,14 +448,18 @@ export default function ServiceDetailPage() {
                   <CardTitle>Requisitos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {service.requirements.map((requirement, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-sm text-gray-700">{requirement}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {service.requirements && service.requirements.length > 0 ? (
+                    <ul className="space-y-2">
+                      {service.requirements.map((requirement, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                          <span className="text-sm text-gray-700">{requirement}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No hay requisitos definidos</p>
+                  )}
                 </CardContent>
               </Card>
             </div>

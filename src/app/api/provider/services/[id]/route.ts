@@ -130,7 +130,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           serviceObj.description || freshServiceProvider.description || 'Servicio profesional',
         pricing: serviceObj.pricing || {
           type: 'fixed',
-          amount: freshServiceProvider.basePrice || 0,
+          amount: Math.round(freshServiceProvider.basePrice || 0), // ✅ Asegurar entero
           currency: 'CLP',
         },
         duration: serviceObj.duration || {

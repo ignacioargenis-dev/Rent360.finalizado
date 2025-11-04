@@ -238,31 +238,8 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      // Si no hay tipos de servicios definidos, crear uno por defecto con ID único
-      if (services.length === 0 && freshServiceProvider.serviceType) {
-        const defaultServiceId = `svc_${fullUser.serviceProvider.id}_${Date.now()}`;
-        services = [
-          {
-            id: defaultServiceId,
-            name: freshServiceProvider.serviceType,
-            description: freshServiceProvider.description || 'Servicio profesional',
-            category: freshServiceProvider.serviceType,
-            price: freshServiceProvider.basePrice || 0,
-            active: freshServiceProvider.status === 'ACTIVE',
-            totalJobs: 0,
-            avgRating: 0,
-            duration: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
-            responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
-            availability: {
-              weekdays: true,
-              weekends: false,
-              emergencies: false,
-            },
-            requirements: [],
-            lastUpdated: freshServiceProvider.updatedAt.toISOString().split('T')[0],
-          },
-        ];
-      }
+      // ✅ NO crear servicio por defecto - solo mostrar servicios creados explícitamente
+      // Si no hay servicios, devolver array vacío
     } else if (isMaintenanceProvider(user.role) && fullUser.maintenanceProvider) {
       // Para maintenance providers, usar la especialidad
       const mp = fullUser.maintenanceProvider;
@@ -408,7 +385,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, category, description, pricing, availability } = body;
+    const {
+      name,
+      category,
+      description,
+      shortDescription,
+      pricing,
+      duration,
+      features,
+      requirements,
+      tags,
+      images,
+      availability,
+    } = body;
 
     // Validación básica
     if (!name || !category) {
@@ -450,18 +439,35 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Este servicio ya está registrado' }, { status: 400 });
       }
 
-      // ✅ Agregar nuevo servicio como objeto con ID único
+      // ✅ Agregar nuevo servicio como objeto con ID único con todos los campos
       const newService = {
         id: serviceId,
         name,
         category,
         description: description || '',
-        pricing: pricing || { type: 'fixed', amount: 0, currency: 'CLP' },
-        duration: pricing?.amount ? { estimated: '2-4', unit: 'hours' } : undefined,
+        shortDescription: shortDescription || description?.substring(0, 100) || '',
+        // ✅ Asegurar que el precio se guarde como número entero (sin decimales)
+        pricing: pricing
+          ? {
+              type: pricing.type || 'fixed',
+              amount: Math.round(Number(pricing.amount)) || 0, // Redondear a entero
+              currency: pricing.currency || 'CLP',
+              minimumCharge: pricing.minimumCharge
+                ? Math.round(Number(pricing.minimumCharge))
+                : undefined,
+            }
+          : { type: 'fixed', amount: 0, currency: 'CLP' },
+        duration: duration || (pricing?.amount ? { estimated: '2-4', unit: 'hours' } : undefined),
+        // ✅ Incluir features y requirements del body
+        features: features || [],
+        requirements: requirements || [],
+        tags: tags || [],
+        images: images || [], // URLs de imágenes subidas
         availability: availability || {
           weekdays: true,
           weekends: false,
-          emergencies: false,
+          emergencies: availability?.emergency || false,
+          regions: availability?.regions || [],
         },
         active: true,
         createdAt: new Date().toISOString(),
