@@ -9,12 +9,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, EyeOff, Eye, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -144,7 +149,9 @@ export default function RegisterPage() {
           rut: rutValidation.cleanRut,
           // Campos opcionales
           phone: formData.phone || undefined,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined,
+          dateOfBirth: formData.dateOfBirth
+            ? new Date(formData.dateOfBirth).toISOString()
+            : undefined,
           gender: formData.gender || undefined,
           address: formData.address || undefined,
           city: formData.city || undefined,
@@ -174,13 +181,39 @@ export default function RegisterPage() {
           });
 
           if (loginResponse.ok) {
-            // Login exitoso, redirigir al dashboard
-            const dashboardUrl = getDashboardUrl(data.user.role);
+            const loginData = await loginResponse.json();
+
+            // CRÍTICO: Normalizar rol a MAYÚSCULAS y forzar actualización del estado
+            const normalizedRole = (
+              loginData.user?.role ||
+              data.user?.role ||
+              'TENANT'
+            ).toUpperCase();
+
+            // Actualizar localStorage con rol normalizado ANTES de redirigir
+            if (typeof window !== 'undefined') {
+              const completeUserData = {
+                ...loginData.user,
+                role: normalizedRole,
+              };
+              localStorage.setItem('user', JSON.stringify(completeUserData));
+              localStorage.setItem('userLoginTime', Date.now().toString());
+
+              // Forzar recarga del estado de autenticación
+              window.dispatchEvent(new Event('storage'));
+            }
+
+            // Login exitoso, redirigir al dashboard con rol normalizado
+            const dashboardUrl = getDashboardUrl(normalizedRole);
             try {
               sessionStorage.setItem('r360_splash_after_login', '1');
             } catch {}
-            router.push(dashboardUrl);
-            router.refresh();
+
+            // Pequeño delay para asegurar que localStorage se actualice
+            setTimeout(() => {
+              router.push(dashboardUrl);
+              router.refresh();
+            }, 100);
           } else {
             // Si falla el login automático, redirigir al login manual
             router.push('/auth/login?message=Registro exitoso, por favor inicia sesión');
@@ -196,24 +229,39 @@ export default function RegisterPage() {
         }
       }
     } catch (error) {
-      logger.error('Error en registro:', { error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error en registro:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       setError('Error al conectar con el servidor');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getDashboardUrl = (role: string) => {
-    switch (role.toLowerCase()) {
-      case 'admin': return '/admin/dashboard';
-      case 'tenant': return '/tenant/dashboard';
-      case 'owner': return '/owner/dashboard';
-      case 'broker': return '/broker/dashboard';
-      case 'runner': return '/runner/dashboard';
-      case 'support': return '/support/dashboard';
-      case 'provider': return '/provider/dashboard';
-      case 'maintenance': return '/maintenance';
-      default: return '/';
+  const getDashboardUrl = (role: string | undefined) => {
+    // Normalizar rol a MAYÚSCULAS primero para consistencia
+    const normalizedRole = role ? String(role).trim().toUpperCase() : 'TENANT';
+
+    switch (normalizedRole) {
+      case 'ADMIN':
+        return '/admin/dashboard';
+      case 'TENANT':
+        return '/tenant/dashboard';
+      case 'OWNER':
+        return '/owner/dashboard';
+      case 'BROKER':
+        return '/broker/dashboard';
+      case 'RUNNER':
+        return '/runner/dashboard';
+      case 'SUPPORT':
+        return '/support/dashboard';
+      case 'PROVIDER':
+        return '/provider/dashboard';
+      case 'MAINTENANCE':
+      case 'MAINTENANCE_PROVIDER':
+        return '/maintenance';
+      default:
+        return '/';
     }
   };
 
@@ -224,9 +272,7 @@ export default function RegisterPage() {
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary">
             <Building className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Crear Cuenta
-          </h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Crear Cuenta</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             ¿Ya tienes una cuenta?{' '}
             <Link href="/auth/login" className="font-medium text-primary hover:text-primary/80">
@@ -234,13 +280,11 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">
-                Nombre Completo
-              </Label>
+              <Label htmlFor="name">Nombre Completo</Label>
               <Input
                 id="name"
                 name="name"
@@ -251,11 +295,9 @@ export default function RegisterPage() {
                 placeholder="Juan Pérez"
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="email">
-                Email
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -282,8 +324,11 @@ export default function RegisterPage() {
                   value={formData.rut}
                   onChange={handleChange}
                   className={`pr-10 ${
-                    rutError ? 'border-destructive focus:border-destructive' :
-                    rutValid ? 'border-green-500 focus:border-green-500' : ''
+                    rutError
+                      ? 'border-destructive focus:border-destructive'
+                      : rutValid
+                        ? 'border-green-500 focus:border-green-500'
+                        : ''
                   }`}
                   placeholder="12.345.678-9"
                   maxLength={12}
@@ -296,19 +341,13 @@ export default function RegisterPage() {
                   ) : null}
                 </div>
               </div>
-              {rutError && (
-                <p className="mt-1 text-sm text-destructive">{rutError}</p>
-              )}
-              {rutValid && (
-                <p className="mt-1 text-sm text-green-600">RUT válido ✓</p>
-              )}
+              {rutError && <p className="mt-1 text-sm text-destructive">{rutError}</p>}
+              {rutValid && <p className="mt-1 text-sm text-green-600">RUT válido ✓</p>}
             </div>
 
             {/* Campo teléfono opcional */}
             <div>
-              <Label htmlFor="phone">
-                Teléfono
-              </Label>
+              <Label htmlFor="phone">Teléfono</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -322,9 +361,7 @@ export default function RegisterPage() {
             {/* Campos opcionales de perfil */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dateOfBirth">
-                  Fecha de Nacimiento
-                </Label>
+                <Label htmlFor="dateOfBirth">Fecha de Nacimiento</Label>
                 <Input
                   id="dateOfBirth"
                   name="dateOfBirth"
@@ -335,10 +372,11 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Label htmlFor="gender">
-                  Género
-                </Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData({...formData, gender: value})}>
+                <Label htmlFor="gender">Género</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={value => setFormData({ ...formData, gender: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar..." />
                   </SelectTrigger>
@@ -353,15 +391,16 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="role">
-                Tipo de Usuario
-              </Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+              <Label htmlFor="role">Tipo de Usuario</Label>
+              <Select
+                value={formData.role}
+                onValueChange={value => setFormData({ ...formData, role: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar tipo de usuario" />
                 </SelectTrigger>
                 <SelectContent>
-                  {roles.map((role) => (
+                  {roles.map(role => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}
                     </SelectItem>
@@ -369,11 +408,9 @@ export default function RegisterPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
-              <Label htmlFor="password">
-                Contraseña
-              </Label>
+              <Label htmlFor="password">Contraseña</Label>
               <div className="mt-1 relative">
                 <Input
                   id="password"
@@ -399,11 +436,9 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
-            
+
             <div>
-              <Label htmlFor="confirmPassword">
-                Confirmar Contraseña
-              </Label>
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
               <div className="mt-1 relative">
                 <Input
                   id="confirmPassword"
@@ -438,11 +473,7 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-            >
+            <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (

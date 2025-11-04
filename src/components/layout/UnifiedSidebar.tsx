@@ -677,11 +677,13 @@ export default function UnifiedSidebar({
   };
 
   // ✅ CORREGIDO: Determinar rol del usuario de forma robusta
-  // Normalizar el rol a minúsculas de forma segura
+  // Normalizar el rol a MAYÚSCULAS primero para asegurar consistencia
   let finalUserRole = 'guest';
   if (user?.role) {
-    const normalizedRole = String(user.role).toUpperCase();
-    // Mapear roles a claves del menú
+    // Normalizar a MAYÚSCULAS primero
+    const normalizedRole = String(user.role).trim().toUpperCase();
+
+    // Mapear roles a claves del menú (usando valores en minúsculas para las claves del objeto)
     const roleMap: Record<string, string> = {
       RUNNER: 'runner',
       ADMIN: 'admin',
@@ -694,6 +696,7 @@ export default function UnifiedSidebar({
       MAINTENANCE_PROVIDER: 'maintenance',
       MAINTENANCE: 'maintenance',
     };
+
     finalUserRole = roleMap[normalizedRole] || normalizedRole.toLowerCase();
   }
 
@@ -702,9 +705,12 @@ export default function UnifiedSidebar({
     console.log('[UNIFIED SIDEBAR] Usuario:', {
       id: user?.id,
       role: user?.role,
+      roleType: typeof user?.role,
       finalUserRole,
       pathname,
       menuItemsAvailable: Object.keys(menuItems),
+      hasItems: !!menuItems[finalUserRole],
+      itemsCount: menuItems[finalUserRole]?.length || 0,
     });
   }
 
@@ -712,12 +718,22 @@ export default function UnifiedSidebar({
   let items = menuItems[finalUserRole];
   if (!items || items.length === 0) {
     // Intentar con el rol en mayúsculas directamente
-    const uppercaseRole = user?.role?.toUpperCase();
-    if (uppercaseRole && menuItems[uppercaseRole.toLowerCase()]) {
-      items = menuItems[uppercaseRole.toLowerCase()];
+    const uppercaseRole = user?.role ? String(user.role).trim().toUpperCase() : '';
+    const lowerRole = uppercaseRole.toLowerCase();
+
+    if (uppercaseRole && menuItems[lowerRole]) {
+      items = menuItems[lowerRole];
+      finalUserRole = lowerRole;
     } else {
       // Fallback a tenant como último recurso
       items = menuItems.tenant || menuItems.guest || [];
+      finalUserRole = items.length > 0 ? 'tenant' : 'guest';
+
+      console.warn('[UNIFIED SIDEBAR] Rol no encontrado, usando fallback:', {
+        originalRole: user?.role,
+        normalizedRole: uppercaseRole,
+        finalUserRole,
+      });
     }
   }
 

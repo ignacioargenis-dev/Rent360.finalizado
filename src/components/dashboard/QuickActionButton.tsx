@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface QuickActionButtonProps {
   icon: LucideIcon;
@@ -21,6 +22,9 @@ export const QuickActionButton: React.FC<QuickActionButtonProps> = ({
   disabled = false,
   description,
 }) => {
+  // Para variant="default" (fondo verde esmeralda), usar texto blanco para mejor contraste
+  const isDefaultVariant = variant === 'default';
+
   return (
     <Button
       variant={variant}
@@ -30,9 +34,20 @@ export const QuickActionButton: React.FC<QuickActionButtonProps> = ({
     >
       <Icon className="w-8 h-8" />
       <div className="text-center">
-        <div className="font-medium text-sm leading-tight">{label}</div>
+        <div className={cn('font-medium text-sm leading-tight', isDefaultVariant && 'text-white')}>
+          {label}
+        </div>
         {description && (
-          <div className="text-xs text-muted-foreground mt-1 leading-tight">{description}</div>
+          <div
+            className={cn(
+              'text-xs mt-1 leading-tight',
+              isDefaultVariant
+                ? 'text-white/90' // Texto blanco semi-transparente sobre fondo verde
+                : 'text-muted-foreground' // Texto gris sobre fondo blanco/gris
+            )}
+          >
+            {description}
+          </div>
         )}
       </div>
     </Button>
