@@ -160,13 +160,17 @@ export async function GET(request: NextRequest) {
             pricing: serviceObj.pricing,
             duration: serviceObj.duration,
             availability: serviceObj.availability,
+            features: serviceObj.features || [],
+            requirements: serviceObj.requirements || [],
+            tags: serviceObj.tags || [],
+            images: serviceObj.images || [],
             active:
               serviceObj.active !== undefined
                 ? serviceObj.active
                 : freshServiceProvider.status === 'ACTIVE',
             createdAt: serviceObj.createdAt || new Date().toISOString(),
             updatedAt: serviceObj.updatedAt || freshServiceProvider.updatedAt.toISOString(),
-          });
+          } as any);
         }
       });
 
@@ -230,7 +234,26 @@ export async function GET(request: NextRequest) {
             `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           responseTime: `${freshServiceProvider.responseTime || 2}-${(freshServiceProvider.responseTime || 2) + 2} horas`,
           availability,
-          requirements: [],
+          requirements: Array.isArray((serviceObj as any).requirements)
+            ? (serviceObj as any).requirements
+            : (serviceObj as any).requirements
+              ? [(serviceObj as any).requirements]
+              : [],
+          features: Array.isArray((serviceObj as any).features)
+            ? (serviceObj as any).features
+            : (serviceObj as any).features
+              ? [(serviceObj as any).features]
+              : [],
+          tags: Array.isArray((serviceObj as any).tags)
+            ? (serviceObj as any).tags
+            : (serviceObj as any).tags
+              ? [(serviceObj as any).tags]
+              : [],
+          images: Array.isArray((serviceObj as any).images)
+            ? (serviceObj as any).images
+            : (serviceObj as any).images
+              ? [(serviceObj as any).images]
+              : [],
           lastUpdated:
             serviceObj.updatedAt ||
             freshServiceProvider.updatedAt.toISOString().split('T')[0] ||
@@ -288,10 +311,14 @@ export async function GET(request: NextRequest) {
             pricing: serviceObj.pricing,
             duration: serviceObj.duration,
             availability: serviceObj.availability,
+            features: serviceObj.features || [],
+            requirements: serviceObj.requirements || [],
+            tags: serviceObj.tags || [],
+            images: serviceObj.images || [],
             active: serviceObj.active !== undefined ? serviceObj.active : mp.status === 'ACTIVE',
             createdAt: serviceObj.createdAt || new Date().toISOString(),
             updatedAt: serviceObj.updatedAt || mp.updatedAt.toISOString(),
-          });
+          } as any);
         }
       });
 
@@ -315,7 +342,26 @@ export async function GET(request: NextRequest) {
           weekends: false,
           emergencies: true,
         },
-        requirements: [],
+        requirements: Array.isArray((serviceObj as any).requirements)
+          ? (serviceObj as any).requirements
+          : (serviceObj as any).requirements
+            ? [(serviceObj as any).requirements]
+            : [],
+        features: Array.isArray((serviceObj as any).features)
+          ? (serviceObj as any).features
+          : (serviceObj as any).features
+            ? [(serviceObj as any).features]
+            : [],
+        tags: Array.isArray((serviceObj as any).tags)
+          ? (serviceObj as any).tags
+          : (serviceObj as any).tags
+            ? [(serviceObj as any).tags]
+            : [],
+        images: Array.isArray((serviceObj as any).images)
+          ? (serviceObj as any).images
+          : (serviceObj as any).images
+            ? [(serviceObj as any).images]
+            : [],
         lastUpdated:
           serviceObj.updatedAt ||
           mp?.updatedAt.toISOString().split('T')[0] ||
@@ -503,6 +549,14 @@ export async function POST(request: NextRequest) {
         serviceId,
         serviceName: name,
         serviceCategory: category,
+        hasFeatures: Array.isArray(features) && features.length > 0,
+        hasRequirements: Array.isArray(requirements) && requirements.length > 0,
+        hasTags: Array.isArray(tags) && tags.length > 0,
+        hasImages: Array.isArray(images) && images.length > 0,
+        featuresCount: Array.isArray(features) ? features.length : 0,
+        requirementsCount: Array.isArray(requirements) ? requirements.length : 0,
+        tagsCount: Array.isArray(tags) ? tags.length : 0,
+        imagesCount: Array.isArray(images) ? images.length : 0,
       });
 
       return NextResponse.json({

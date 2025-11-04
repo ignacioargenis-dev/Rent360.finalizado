@@ -310,6 +310,10 @@ export default function NewServicePage() {
         serviceId: data.service?.id,
         name: serviceData.name,
         category: serviceData.category,
+        features: serviceData.features,
+        requirements: serviceData.requirements,
+        tags: serviceData.tags,
+        imagesCount: serviceData.images.length,
         response: data,
       });
 

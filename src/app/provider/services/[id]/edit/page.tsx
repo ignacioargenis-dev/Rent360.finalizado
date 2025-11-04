@@ -379,11 +379,14 @@ export default function EditServicePage() {
           name: serviceData.name,
           category: serviceData.category,
           description: serviceData.description,
+          shortDescription: serviceData.shortDescription,
           pricing: {
             type: serviceData.pricing.type,
-            amount: serviceData.pricing.amount,
+            amount: Math.round(serviceData.pricing.amount), // ✅ Asegurar entero
             currency: serviceData.pricing.currency,
-            minimumCharge: serviceData.pricing.minimumCharge,
+            minimumCharge: serviceData.pricing.minimumCharge
+              ? Math.round(serviceData.pricing.minimumCharge)
+              : undefined,
           },
           duration: {
             estimated: serviceData.duration.estimated,
@@ -394,9 +397,10 @@ export default function EditServicePage() {
             regions: serviceData.availability.regions,
             emergency: serviceData.availability.emergency,
           },
-          features: serviceData.features,
-          requirements: serviceData.requirements,
-          tags: serviceData.tags,
+          features: serviceData.features, // ✅ Incluir características
+          requirements: serviceData.requirements, // ✅ Incluir requisitos
+          tags: serviceData.tags, // ✅ Incluir etiquetas
+          images: serviceData.existingImages, // ✅ Incluir imágenes existentes (las nuevas se subirían por separado)
         }),
       });
 
@@ -415,6 +419,25 @@ export default function EditServicePage() {
         serviceId,
         name: serviceData.name,
         category: serviceData.category,
+        features: serviceData.features,
+        requirements: serviceData.requirements,
+        tags: serviceData.tags,
+        imagesCount: serviceData.existingImages.length,
+      });
+
+      console.log('✅ [PROVIDER SERVICES EDIT] Servicio actualizado:', {
+        serviceId,
+        name: serviceData.name,
+        features: serviceData.features,
+        requirements: serviceData.requirements,
+        tags: serviceData.tags,
+        images: serviceData.existingImages,
+        payload: {
+          features: serviceData.features,
+          requirements: serviceData.requirements,
+          tags: serviceData.tags,
+          images: serviceData.existingImages,
+        },
       });
 
       setSuccessMessage('Servicio actualizado exitosamente');

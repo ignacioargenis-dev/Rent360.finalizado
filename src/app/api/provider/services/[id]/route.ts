@@ -475,7 +475,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // ✅ El ID es el ID único del servicio
     const serviceId = params.id;
     const body = await request.json();
-    const { name, category, description, pricing, duration, availability } = body;
+    const {
+      name,
+      category,
+      description,
+      shortDescription,
+      pricing,
+      duration,
+      availability,
+      features,
+      requirements,
+      tags,
+      images,
+    } = body;
 
     // Obtener datos completos del usuario
     const fullUser = await db.user.findUnique({
@@ -545,9 +557,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (name) updatedService.name = name;
       if (category) updatedService.category = category;
       if (description) updatedService.description = description;
-      if (pricing) updatedService.pricing = pricing;
+      if (shortDescription !== undefined) updatedService.shortDescription = shortDescription;
+      // ✅ Asegurar que el precio se guarde como número entero
+      if (pricing) {
+        updatedService.pricing = {
+          type: pricing.type || 'fixed',
+          amount: Math.round(Number(pricing.amount)) || 0,
+          currency: pricing.currency || 'CLP',
+          minimumCharge: pricing.minimumCharge
+            ? Math.round(Number(pricing.minimumCharge))
+            : undefined,
+        };
+      }
       if (duration) updatedService.duration = duration;
-      if (availability) updatedService.availability = availability;
+      // ✅ Actualizar features, requirements, tags e images
+      if (features !== undefined) updatedService.features = Array.isArray(features) ? features : [];
+      if (requirements !== undefined)
+        updatedService.requirements = Array.isArray(requirements) ? requirements : [];
+      if (tags !== undefined) updatedService.tags = Array.isArray(tags) ? tags : [];
+      if (images !== undefined) updatedService.images = Array.isArray(images) ? images : [];
+      if (availability) {
+        updatedService.availability = {
+          ...(updatedService.availability || {}),
+          ...availability,
+          active:
+            availability.active !== undefined
+              ? availability.active
+              : updatedService.availability?.active !== false,
+          regions: availability.regions || updatedService.availability?.regions || [],
+          emergency:
+            availability.emergency !== undefined
+              ? availability.emergency
+              : updatedService.availability?.emergency || false,
+        };
+      }
 
       updatedService.updatedAt = new Date().toISOString();
       serviceTypes[serviceIndex] = updatedService;
@@ -594,7 +637,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       logger.info('Servicio actualizado', {
         serviceProviderId: user.id,
         serviceId,
-        changes: { name, category },
+        changes: {
+          name,
+          category,
+          hasFeatures: Array.isArray(features) && features.length > 0,
+          hasRequirements: Array.isArray(requirements) && requirements.length > 0,
+          hasTags: Array.isArray(tags) && tags.length > 0,
+          hasImages: Array.isArray(images) && images.length > 0,
+          featuresCount: Array.isArray(features) ? features.length : 0,
+          requirementsCount: Array.isArray(requirements) ? requirements.length : 0,
+          tagsCount: Array.isArray(tags) ? tags.length : 0,
+          imagesCount: Array.isArray(images) ? images.length : 0,
+        },
       });
 
       return NextResponse.json({
@@ -644,9 +698,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (name) updatedService.name = name;
       if (category) updatedService.category = category;
       if (description) updatedService.description = description;
-      if (pricing) updatedService.pricing = pricing;
+      if (shortDescription !== undefined) updatedService.shortDescription = shortDescription;
+      // ✅ Asegurar que el precio se guarde como número entero
+      if (pricing) {
+        updatedService.pricing = {
+          type: pricing.type || 'fixed',
+          amount: Math.round(Number(pricing.amount)) || 0,
+          currency: pricing.currency || 'CLP',
+          minimumCharge: pricing.minimumCharge
+            ? Math.round(Number(pricing.minimumCharge))
+            : undefined,
+        };
+      }
       if (duration) updatedService.duration = duration;
-      if (availability) updatedService.availability = availability;
+      // ✅ Actualizar features, requirements, tags e images
+      if (features !== undefined) updatedService.features = Array.isArray(features) ? features : [];
+      if (requirements !== undefined)
+        updatedService.requirements = Array.isArray(requirements) ? requirements : [];
+      if (tags !== undefined) updatedService.tags = Array.isArray(tags) ? tags : [];
+      if (images !== undefined) updatedService.images = Array.isArray(images) ? images : [];
+      if (availability) {
+        updatedService.availability = {
+          ...(updatedService.availability || {}),
+          ...availability,
+          active:
+            availability.active !== undefined
+              ? availability.active
+              : updatedService.availability?.active !== false,
+          regions: availability.regions || updatedService.availability?.regions || [],
+          emergency:
+            availability.emergency !== undefined
+              ? availability.emergency
+              : updatedService.availability?.emergency || false,
+        };
+      }
 
       updatedService.updatedAt = new Date().toISOString();
       specialties[serviceIndex] = updatedService;
